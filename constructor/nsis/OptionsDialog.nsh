@@ -138,7 +138,7 @@ Function RegisterSystemPython_OnClick
                 "A version of Python ${PY_VER} (${ARCH}) is already at$\n\
                 $2$\n\
                 We recommend that if you want Anaconda registered as your $\n\
-                system Python, you uninstall this Python first. If you really$\n\
+                system Python, you unregister this Python first. If you really$\n\
                 know this is what you want, click OK, otherwise$\n\
                 click cancel to continue.$\n$\n\
                 NOTE: Anaconda 1.3 and earlier lacked an uninstall, if$\n\
