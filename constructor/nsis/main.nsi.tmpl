@@ -732,6 +732,12 @@ Section "Install"
 SectionEnd
 
 Section "Uninstall"
+    # ensure that MSVC runtime DLLs are on PATH during uninstallation
+    ReadEnvStr $0 PATH
+    # set PATH for the installer process, so that MSVC runtimes get found OK
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
+                 "$INSTDIR\\Library\\bin;$INSTDIR\\Scripts;$INSTDIR;$0").r0'
+
     # Remove menu items, path entries
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmmenus'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
