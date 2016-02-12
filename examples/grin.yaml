@@ -11,9 +11,8 @@ channels: &id1
 specs:
   - python
   - grin
-  - conda
 #packages:
-#  - python-2.7.6-0.tar.bz2
+#  - python-2.7.11-0.tar.bz2
 #  - grin-1.2.1-py27_0.tar.bz2
 
 # ----------------- optional -----------------
