@@ -7,8 +7,8 @@ import tempfile
 from os.path import abspath, dirname, join
 from subprocess import check_call
 
-from conda_constructor.utils import preprocess
-import conda_constructor.common as common
+from constructor.utils import preprocess
+import constructor.common as common
 
 
 THIS_DIR = dirname(__file__)

@@ -9,8 +9,8 @@ import yaml
 import conda.config
 import conda.install
 
-from conda_constructor.utils import read_ascii_only
-import conda_constructor.common as common
+from constructor.utils import read_ascii_only
+import constructor.common as common
 
 
 def read_dists(packages):
@@ -79,7 +79,7 @@ def main_build(path, output_dir='.', verbose=True):
     if osname in ('linux', 'osx'):
         if sys.platform == 'win32':
             sys.exit("Error: Cannot create .sh installer on Windows platform.")
-        from conda_constructor.shar import create
+        from constructor.shar import create
 
     elif osname == 'win':
         if sys.platform != 'win32':
@@ -127,13 +127,13 @@ def main():
     opts, args = p.parse_args()
 
     if opts.version:
-        from conda_constructor import __version__
+        from constructor import __version__
         print('conda-constructor version:', __version__)
         return
 
     if opts.test:
-        import conda_constructor.test
-        conda_constructor.test.main()
+        import constructor.test
+        constructor.test.main()
         return
 
     if opts.debug:

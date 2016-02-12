@@ -11,8 +11,8 @@ from conda.utils import md5_file
 import conda.config
 import conda.install
 
-from conda_constructor.utils import preprocess, read_ascii_only
-import conda_constructor.common as common
+from constructor.utils import preprocess, read_ascii_only
+import constructor.common as common
 
 
 THIS_DIR = dirname(__file__)

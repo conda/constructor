@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 if __name__ == '__main__':
     import sys
-    from conda_constructor.main import main
+    from constructor.main import main
 
     sys.exit(main())
