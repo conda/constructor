@@ -21,8 +21,8 @@ specs:
 #platform: linux-64
 
 # The conda default channels which are used when running a conda which
-# was installed be the conda-constructor created (requires conda in the
-# specifications)
+# was installed be the constructor created (requires conda in the
+# specifications) installer
 conda_default_channels: *id1
 
 # installer filename (a reasonable default filename will determined by

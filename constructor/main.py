@@ -128,7 +128,7 @@ def main():
 
     if opts.version:
         from constructor import __version__
-        print('conda-constructor version:', __version__)
+        print('constructor version:', __version__)
         return
 
     if opts.test:

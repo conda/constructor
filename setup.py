@@ -14,7 +14,7 @@ setup(
     license = "BSD",
     description = "create installer from conda packages",
     packages = ['constructor'],
-    scripts = ['bin/conda-constructor'],
+    scripts = ['bin/constructor'],
 )
 
 
