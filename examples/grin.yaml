@@ -1,0 +1,37 @@
+# ----------------- required -----------------
+# name and version
+name: test
+version: 0.3.1
+
+# channels to pull packages from
+channels: &id1
+  - http://repo.continuum.io/pkgs/free/
+
+# specifications
+specs:
+  - python
+  - grin
+  - conda
+#packages:
+#  - python-2.7.6-0.tar.bz2
+#  - grin-1.2.1-py27_0.tar.bz2
+
+# ----------------- optional -----------------
+
+# platform e.g. linux-32, osx-64, defaults to current platform
+#platform: linux-64
+
+# The conda default channels which are used when running a conda which
+# was installed be the conda-constructor created (requires conda in the
+# specifications)
+conda_default_channels: *id1
+
+# installer filename (a reasonable default filename will determined by
+# the `name`, (optional) `version`, OS and installer type)
+#installer_filename: grin.sh
+
+# a file with a license text, which is shown during the install process
+license_file: eula.txt
+
+# default install prefix
+default_prefix: /opt/example

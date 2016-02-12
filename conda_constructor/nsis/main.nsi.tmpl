@@ -1,0 +1,845 @@
+# Installer template file for creating a Windows installer using NSIS.
+
+# Dependencies:
+#   NSIS 2.46      http://nsis.sourceforge.net/Download
+#
+# Plugin dependencies are now automatically handled by winexe.py.
+
+!include "WinMessages.nsh"
+!include "WordFunc.nsh"
+!include "LogicLib.nsh"
+!include "WinVer.nsh"
+!include "MUI2.nsh"
+!include "x64.nsh"
+
+!include "FileFunc.nsh"
+!insertmacro GetParameters
+!insertmacro GetOptions
+
+!include "UAC.nsh"
+!include "nsDialogs.nsh"
+
+!include "Utils.nsh"
+
+!define NAME __NAME__
+!define VERSION __VERSION__
+!define ARCH __ARCH__
+!define PY_VER __PY_VER__
+!define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
+!define PYVERSION __PYVERSION__
+!define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
+!define UNINSTALL_NAME "Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})"
+!define UNINSTREG "Software\Microsoft\Windows\CurrentVersion\
+                   \Uninstall\${UNINSTALL_NAME}"
+
+var /global INSTDIR_JUSTME
+!define INSTDIR_ALLUSERS    "C:\${NAME}"
+
+# UAC shield overlay
+!ifndef BCM_SETSHIELD
+    !define BCM_SETSHIELD 0x0000160C
+!endif
+
+!ifdef ANA_DEBUG
+var /global InstallDirLong
+var /global InstallDirShort
+var /global InstallDirUserProfileJunction
+
+var /global ARGV
+var /global ARGV_AdminRelaunch
+var /global ARGV_Elevate
+
+var /global DoElevate
+var /global ElevationFailed
+
+var /global UserInfo_AccountName
+var /global UserInfo_AccountType
+var /global UserInfo_OriginalAccountType
+!endif
+
+var /global IsDomainUser
+
+var /global InstModePage_RadioButton_JustMe
+var /global InstModePage_RadioButton_AllUsers
+
+var /global InstMode # 0 = Just Me, 1 = All Users.
+!define JUST_ME 0
+!define ALL_USERS 1
+
+# Include this one after our defines
+!include "OptionsDialog.nsh"
+
+CRCCheck On
+
+# Basic options
+Name "${PRODUCT_NAME}"
+OutFile __OUTFILE__
+ShowInstDetails "hide"
+ShowUninstDetails "hide"
+# This installer contains tar.bz2 files, which are already compressed
+SetCompress "off"
+
+# Start off with the lowest permissions and work our way up.
+RequestExecutionLevel user
+
+!ifdef ANA_DEBUG
+ReserveFile "@NSIS_DIR@\python27.dll"
+ReserveFile "@NSIS_DIR@\test-nspython.py"
+ReserveFile "@NSIS_DIR@\deps\elevate.exe"
+!endif
+
+# Version information & branding text
+VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
+VIAddVersionKey "FileVersion" "${VERSION}"
+VIAddVersionKey "ProductVersion" "${VERSION}"
+VIAddVersionKey "CompanyName" "Continuum Analytics, Inc."
+VIAddVersionKey "LegalCopyright" "(c) Continuum Analytics, Inc."
+VIAddVersionKey "FileDescription" "${NAME} Installer"
+VIProductVersion "${VERSION}.0"
+BrandingText /TRIMLEFT "Continuum Analytics, Inc."
+
+# Interface configuration
+!define MUI_ICON __ICONFILE__
+!define MUI_UNICON __ICONFILE__
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP __HEADERIMAGE__
+!define MUI_ABORTWARNING
+!define MUI_FINISHPAGE_NOAUTOCLOSE
+!define MUI_UNFINISHPAGE_NOAUTOCLOSE
+!define MUI_WELCOMEFINISHPAGE_BITMAP __WELCOMEIMAGE__
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP __WELCOMEIMAGE__
+#!define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
+
+# Shortcut-related glue
+!define ANA_PROMPT_NAME "Anaconda Command Prompt"
+!define ANA_BROWSE_NAME "Browse Anaconda Installation Directory..."
+
+!define START_MENU_PREFIX "$SMPROGRAMS\Anaconda (${ARCH})"
+!define BROWSE_SHORTCUT "${START_MENU_PREFIX}\${ANA_BROWSE_NAME}.lnk"
+!define PROMPT_SHORTCUT "${START_MENU_PREFIX}\${ANA_PROMPT_NAME}.lnk"
+
+!define CONSOLE_REG "Console\${ANA_PROMPT_NAME}"
+
+# Pages
+#!define MUI_PAGE_CUSTOMFUNCTION_SHOW OnStartup
+!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
+!insertmacro MUI_PAGE_WELCOME
+!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
+!insertmacro MUI_PAGE_LICENSE __LICENSEFILE__
+Page Custom InstModePage_Create InstModePage_Leave
+!define MUI_PAGE_CUSTOMFUNCTION_PRE DisableBackButtonIfUACInnerInstance
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE OnDirectoryLeave
+!insertmacro MUI_PAGE_DIRECTORY
+# Custom options now differ depending on installation mode.
+Page Custom mui_AnaCustomOptions_Show
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_WELCOME
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+
+# Language
+!insertmacro MUI_LANGUAGE "English"
+
+Function SkipPageIfUACInnerInstance
+    ${If} ${UAC_IsInnerInstance}
+        Abort
+    ${EndIf}
+FunctionEnd
+
+!macro DoElevation
+    GetDlgItem $1 $HWNDParent 1
+    System::Call user32::GetFocus()i.s
+    # Disable 'Next' button.
+    EnableWindow $1 0
+    !insertmacro UAC_PageElevation_RunElevated
+    EnableWindow $1 1
+    System::call user32::SetFocus(is)
+    ${If} $2 = 0x666
+        MessageBox MB_ICONEXCLAMATION \
+            "You need to log in with an administrative account \
+             in order to perform an 'All Users' installation."
+        Abort
+    ${ElseIf} $0 = 1223
+        # UAC canceled by user.
+        Abort
+    ${Else}
+        ${If} $0 <> 0
+            ${If} $0 = 1062
+                MessageBox MB_ICONSTOP \
+                    "Elevation failed; Secondary Logon service is \
+                     not running."
+            ${Else}
+                MessageBox MB_ICONSTOP \
+                    "Elevation failed; error code: $0."
+            ${EndIf}
+            Abort
+        ${EndIf}
+    ${EndIf}
+    # UAC worked, we're the outer installer, so we can quit.
+    Quit
+!macroend
+
+!ifdef ANA_DEBUG
+Function OnInit_Debug
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+    Push $4
+    Push $5
+    Push $6
+    Push $7
+    Push $8
+    Push $9
+
+    GetFullPathName $0 $EXEPATH
+    GetFullPathName /short $1 $EXEPATH
+
+    nsPython::eval "1+1"
+    Pop $2
+
+    nsPython::execFile "$PLUGINSDIR\test-nspython.py"
+    Pop $3
+
+    ClearErrors
+    UserInfo::GetName
+    IfErrors win9x
+    Pop $4
+    StrCpy $UserInfo_AccountName "$4"
+    UserInfo::GetAccountType
+    Pop $4
+    StrCpy $UserInfo_AccountType "$4"
+    UserInfo::GetOriginalAccountType
+    Pop $4
+    StrCpy $UserInfo_OriginalAccountType "$4"
+
+    ClearErrors
+    ${GetParameters} $ARGV
+    ${GetOptions} $ARGV "/AdminRelaunch" $4
+    ${If} ${Errors}
+        StrCpy $ARGV_AdminRelaunch "0"
+    ${Else}
+        StrCpy $ARGV_AdminRelaunch "1"
+    ${EndIf}
+
+    ${If} $ARGV_AdminRelaunch == "1"
+        # Check if the user is actually an admin.
+        ${If} $UserInfo_AccountType != "Admin"
+        ${AndIf} $UserInfo_OriginalAccountType != "Admin"
+              MessageBox MB_OK|MB_ICONEXCLAMATION \
+                "Error: not an admin, but AdminRelaunch provided."
+        ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/Elevate" $4
+    ${If} ${Errors}
+        StrCpy $ARGV_Elevate "0"
+    ${Else}
+        StrCpy $ARGV_Elevate "1"
+    ${EndIf}
+
+    ${If} $ARGV_Elevate == "1"
+        StrCpy $DoElevate "1"
+    ${EndIf}
+
+    ${If} $DoElevate == "1"
+        #Exec '"$PLUGINSDIR\elevate.exe" "$EXEPATH" /AdminRelaunch'
+        #Quit
+        Call RelaunchAsAdmin
+        ${If} $ElevationFailed == "0"
+            StrCpy $ARGV_AdminRelaunch "1"
+        ${EndIf}
+    ${EndIf}
+
+msgbox:
+    MessageBox MB_OK|MB_ICONEXCLAMATION \
+        "WINDIR: $WINDIR $\n\
+         EXEPATH: $EXEPATH $\n\
+         STARTMENU: $STARTMENU $\n\
+         long: $0$\n\
+         short: $1$\n\
+         APPDATA: $APPDATA $\n\
+         LOCALAPPDATA: $LOCALAPPDATA $\n\
+         PROFILE: $PROFILE$\n\
+         DOCUMENTS: $DOCUMENTS$\n\
+         STARTMENU: $STARTMENU$\n\
+         eval: $2$\n\
+         execfile: $3$\n\
+         ARGV: $ARGV$\n\
+         ARGV_AdminRelaunch: $ARGV_AdminRelaunch$\n\
+         ARGV_Elevate: $ARGV_AdminRelaunch$\n\
+         UserInfo_AccountName: $UserInfo_AccountName$\n\
+         UserInfo_AccountType: $UserInfo_AccountType$\n\
+         UserInfo_OriginalAccountType: $UserInfo_OriginalAccountType$\n\
+         DoElevate: $DoElevate$\n\
+         "
+    goto done
+
+win9x:
+    MessageBox MB_OK "This version of Windows is not supported."
+    Abort
+
+done:
+
+    Pop $9
+    Pop $8
+    Pop $7
+    Pop $6
+    Pop $5
+    Pop $4
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
+FunctionEnd
+
+Function RelaunchAsAdmin
+    Push $0
+    Push $1
+uac_tryagain:
+    StrCpy $ElevationFailed 1
+    !insertmacro UAC_RunElevated
+    ${Switch} $0
+        ${Case} 0
+            ${If} $1 = 1
+                # We are the outer process.
+                Quit
+            ${EndIf}
+            ${If} $3 <> 0
+                # We are admin.
+                StrCpy $ElevationFailed 0
+                ${Break}
+            ${EndIf}
+            ${If} $1 = 3
+                # Non-admin privileges provided.
+                MessageBox MB_YESNO|MB_ICONEXCLAMATION|\
+                           MB_TOPMOST|MB_SETFOREGROUND \
+                    "Administrative privileges required.  Try again?" \
+                        /SD IDNO IDYES uac_tryagain IDNO 0
+                ${Break}
+            ${EndIf}
+
+        ${Case} 1223
+            MessageBox MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND \
+                "Failed to re-launch installer with administrative\
+                 privileges.  Try again?" \
+                    /SD IDNO IDYES uac_tryagain IDNO 0
+            ${Break}
+        ${Case} 1062
+            MessageBox MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND \
+                "Logon service not running, unable to elevate in order\
+                 to perform an administrative installation.  Try again?" \
+                    /SD IDNO IDYES uac_tryagain IDNO 0
+            ${Break}
+        ${Default}
+            MessageBox MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND \
+                "Unable to elevate.  Error: $0.  Try again?" \
+                    /SD IDNO IDYES uac_tryagain IDNO 0
+            ${Break}
+    ${EndSwitch}
+end:
+    Pop $1
+    Pop $0
+FunctionEnd
+!endif
+
+Function InstModePage_RadioButton_OnClick
+    Exch $0
+    Push $1
+    Push $2
+
+    nsDialogs::GetUserData $0
+    Pop $1
+    GetDlgItem $2 $HWNDParent 1
+    SendMessage $2 ${BCM_SETSHIELD} 0 $1
+
+    Pop $2
+    Pop $1
+    Exch $0
+FunctionEnd
+
+Function InstModePage_Create
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+
+    ${If} ${UAC_IsInnerInstance}
+        Abort
+    ${EndIf}
+
+    !insertmacro MUI_HEADER_TEXT_PAGE \
+        "Select Installation Type" \
+        "Please select the type of installation you would like to perform \
+         for ${PRODUCT_NAME}."
+
+    GetFunctionAddress $0 InstModePage_RadioButton_OnClick
+    nsDialogs::Create /NOUNLOAD 1018
+    Pop $1
+    ${NSD_OnBack} RemoveNextBtnShield
+    ${NSD_CreateLabel} 0 20u 75% 20u "Install for:"
+    ${NSD_CreateRadioButton} 0 40u 75% 15u "Just Me (recommended)"
+    Pop $2
+    #MessageBox MB_OK "OnClick 2! 0: $0, 1: $1, 2: $2"
+    StrCpy $InstModePage_RadioButton_JustMe $2
+
+    nsDialogs::OnClick $2 $0
+    nsDialogs::SetUserData $2 0
+    SendMessage $2 ${BM_CLICK} 0 0
+
+    ${NSD_CreateRadioButton} 0 60u 75% 15u \
+        "All Users (requires admin privileges)"
+    #MessageBox MB_OK "OnClick 3! 0: $0, 1: $1, 2: $2, 3: $3"
+    Pop $3
+    StrCpy $InstModePage_RadioButton_AllUsers $3
+    nsDialogs::OnClick $3 $0
+    nsDialogs::SetUserData $3 1
+    ${IfThen} $InstMode <> ${JUST_ME} ${|} SendMessage $3 ${BM_CLICK} 0 0 ${|}
+    Push $3
+    nsDialogs::Show
+
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
+FunctionEnd
+
+Function DisableBackButtonIfUACInnerInstance
+    Push $0
+    ${If} ${UAC_IsInnerInstance}
+        GetDlgItem $0 $HWNDParent 3
+        EnableWindow $0 0
+    ${EndIf}
+    Pop $0
+FunctionEnd
+
+Function RemoveNextBtnShield
+    Push $0
+    GetDlgItem $0 $HWNDParent 1
+    SendMessage $0 ${BCM_SETSHIELD} 0 0
+    Pop $0
+FunctionEnd
+
+Function InstModeChanged
+    # When using the installer with /S (silent mode), the /D option sets $INSTDIR,
+    # and it is therefore important not to overwrite $INSTDIR here.
+    ${IfNot} ${Silent}
+        Push $0
+        ${If} $InstMode = ${JUST_ME}
+            SetShellVarContext Current
+            # If we're on Vista+, the installation directory will
+            # have a nice, no-space name like:
+            #   C:\Users\Trent\AppData\Local\Continuum\Anaconda.
+            # On 2003/XP, it will be in C:\Documents and Settings,
+            # with a space. We're allowing spaces now.
+            StrCpy $INSTDIR $INSTDIR_JUSTME
+        ${Else}
+            SetShellVarContext All
+            StrCpy $INSTDIR ${INSTDIR_ALLUSERS}
+        ${EndIf}
+        Pop $0
+    ${EndIf}
+FunctionEnd
+
+!macro SetInstMode mode
+    StrCpy $InstMode ${mode}
+    Call InstModeChanged
+!macroend
+
+Function InstModePage_Leave
+    Push $0
+    Push $1
+    Push $2
+
+    ${NSD_GetState} $InstModePage_RadioButton_AllUsers $0
+    ${If} $0 = 0
+        !insertmacro SetInstMode ${JUST_ME}
+    ${Else}
+        !insertmacro SetInstMode ${ALL_USERS}
+        ${IfNot} ${UAC_IsAdmin}
+            !insertmacro DoElevation
+        ${EndIf}
+    ${EndIf}
+
+    Pop $2
+    Pop $1
+    Pop $0
+FunctionEnd
+
+Function .onInit
+    Push $0
+    Push $1
+    Push $2
+    Push $R1
+    Push $R2
+
+    InitPluginsDir
+
+!ifdef ANA_DEBUG
+    File "/oname=$PLUGINSDIR\python27.dll" \
+         "@NSIS_DIR@\python27.dll"
+    File "/oname=$PLUGINSDIR\test-nspython.py" \
+         "@NSIS_DIR@\test-nspython.py#"
+    File "/oname=$PLUGINSDIR\elevate.exe" \
+         "@NSIS_DIR@\deps\elevate.exe"
+!endif
+
+    # Select the correct registry to look at, depending
+    # on whether it's a 32-bit or 64-bit installer
+    SetRegView @BITS@
+#if win64
+    # If we're a 64-bit installer, make sure it's 64-bit Windows
+    ${IfNot} ${RunningX64}
+        MessageBox MB_OK|MB_ICONEXCLAMATION \
+            "This installer is for a 64-bit version for @NAME@$\n\
+            but your system is 32-bit. Please use the 32-bit Windows$\n\
+            @NAME@ installer."
+        Abort
+    ${EndIf}
+#endif
+
+    !insertmacro UAC_PageElevation_OnInit
+    ${If} ${UAC_IsInnerInstance}
+    ${AndIfNot} ${UAC_IsAdmin}
+        SetErrorLevel 0x666
+        Quit
+    ${EndIf}
+
+    # Look for a number of signs that indicate the user is a domain user and
+    # alter the default installation directory for 'Just Me' accordingly.  We
+    # want to ensure that if we're a user domain account, we always install to
+    # %LOCALAPPDATA% (i.e. C:\Users\Trent\AppData\Local\Continuum\Anaconda),
+    # as this is the only place guaranteed to not be backed by a network share
+    # or included in a user's roaming profile.  However, if we're a normal user
+    # account, then C:\Users\Trent\Anaconda is fine.
+    ReadEnvStr $0 USERDNSDOMAIN
+    ${If} $0 != ""
+        # If not null, USERDNSDOMAIN is an unambiguous indication that we're
+        # logged into a domain account.
+        StrCpy $IsDomainUser 1
+    ${Else}
+        # If it's not set, apply some simple heuristics to discern whether or
+        # not we're logged in as a domain user.
+        ReadEnvStr $0 LOGONSERVER
+        ${If} $0 == ""
+            # This should never be unset; but if it is, we're definitely not
+            # a domain user.
+            StrCpy $IsDomainUser 0
+        ${Else}
+            StrCpy $1 $0 "" 2               # lop-off the leading \\.
+            ${StrFilter} $1 "+" "" "" $2    # convert to uppercase, store in $2
+            ${If} $2 == "MICROSOFTACCOUNT"
+                # The new Windows 8.x live accounts have \\MicrosoftAccount
+                # set as LOGONSERVER; interpret this as being a non-domain
+                # user.
+                StrCpy $IsDomainUser 0
+            ${Else}
+                ReadEnvStr $R1 COMPUTERNAME
+                ${If} $R1 == ""
+                    # This should never be unset either; if it is, assume
+                    # we're not a domain user.
+                    StrCpy $IsDomainUser 0
+                ${Else}
+                    # We've got a value for both LOGONSERVER and COMPUTERNAME
+                    # environment variables (which should always be the case).
+                    # Proceed to compare LOGONSERVER[-2:] to COMPUTERNAME; if
+                    # they match, assume we're not a domain user account.
+
+                    ${StrFilter} $R1 "+" "" "" $R2 # convert to uppercase
+                    ${If} $2 != $R2
+                        # COMPUTERNAME doesn't match LOGONSERVER; assume we're
+                        # logged in via a domain account.
+                        StrCpy $IsDomainUser 1
+                    ${Else}
+                        # COMPUTERNAME matches LOGONSERVER; safe to assume
+                        # we're logged in as a user account.  (I guess there's
+                        # the remote possibility a domain user has logged onto
+                        # a server that has the same NetBIOS name as the Active
+                        # Directory name...  if that's the case, potentially
+                        # installing Anaconda into an area that gets picked up
+                        # by a roaming profile is the very least of your
+                        # problems.)
+                        StrCpy $IsDomainUser 0
+
+                    ${EndIf} # LOGONSERVER[-2:] != COMPUTERNAME
+
+                ${EndIf} # COMPUTERNAME != ""
+
+            ${EndIf} # LOGONSERVER != "\\MicrosoftAccount"
+
+        ${EndIf} # LOGONSERVER != ""
+
+    ${EndIf} # USERDNSDOMAIN != ""
+
+    ${If} $IsDomainUser = 0
+        StrCpy $INSTDIR_JUSTME "$Profile\${NAME}"
+    ${ElseIf} $IsDomainUser = 1
+        StrCpy $INSTDIR_JUSTME "$LocalAppData\Continuum\${NAME}"
+    ${Else}
+        # Should never happen; indicates a logic error above.
+        MessageBox MB_OK "Internal error: IsUserDomain not set properly!"
+        Abort
+    ${EndIf}
+
+    StrCpy $InstMode ${JUST_ME}
+    ${IfThen} ${UAC_IsAdmin} ${|} StrCpy $InstMode ${ALL_USERS} ${|}
+    call InstModeChanged
+
+    # Initialize the default settings for the anaconda custom options
+    Call mui_AnaCustomOptions_InitDefaults
+
+!ifdef ANA_DEBUG
+    Call OnInit_Debug
+!endif
+
+    Pop $R2
+    Pop $R1
+    Pop $2
+    Pop $1
+    Pop $0
+FunctionEnd
+
+!ifdef ANA_DEBUG
+Function .onGUIEnd
+    nsPython::Finalize
+FunctionEnd
+!endif
+
+Function un.onInit
+    # Select the correct registry to look at, depending
+    # on whether it's a 32-bit or 64-bit installer
+    SetRegView @BITS@
+
+    # Since the switch to a dual-mode installer (All Users/Just Me), the
+    # uninstaller will inherit the requested execution level of the main
+    # installer -- which we now have to set to 'user'.  Thus, Windows will
+    # not automatically elevate the uninstaller for us -- we need to do it
+    # ourselves if we're not a 'Just Me' installation.
+    !insertmacro UAC_PageElevation_OnInit
+    ${IfNot} ${FileExists} "$INSTDIR\.nonadmin"
+    ${AndIfNot} ${UAC_IsAdmin}
+        !insertmacro DoElevation
+    ${EndIf}
+
+    ${If} ${FileExists} "$INSTDIR\.nonadmin"
+        SetShellVarContext Current
+    ${Else}
+        SetShellVarContext All
+    ${EndIf}
+FunctionEnd
+
+Function OnDirectoryLeave
+    ${If} ${FileExists} "$INSTDIR"
+        MessageBox MB_OK|MB_ICONEXCLAMATION \
+            "Directory '$INSTDIR' already exists,$\n\
+             please choose a different location."
+        Abort
+    ${EndIf}
+FunctionEnd
+
+Function AbortRetryExecWait
+    Pop $1
+    Pop $2
+    ${Do}
+        ExecWait $2 $0
+        ${If} $0 != "0"
+            MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
+                    $1 /SD IDIGNORE IDABORT abort IDRETRY retry
+            ; IDIGNORE: Continue anyway
+            StrCpy $0 "0"
+            goto retry
+          abort:
+            ; Abort installation
+            Abort
+          retry:
+            ; Retry the ExecWait command
+        ${EndIf}
+    ${LoopWhile} $0 != "0"
+FunctionEnd
+
+# Installer sections
+Section "Install"
+
+!macro Redist_Admin
+    SetOutPath "$TEMP"
+    # Install Visual Studio 2008 redistributable
+    File "@VCREDIST_DIR@\vcredist_2008_sp1_@XDD@.exe"
+    DetailPrint "Running Visual C++ 2008 SP1 Redistributable Setup..."
+    ExecWait '"$TEMP\vcredist_2008_sp1_@XDD@.exe" /q'
+    DetailPrint "Finished Visual C++ 2008 SP1 Redistributable Setup"
+    Delete "$TEMP\vcredist_2008_sp1_@XDD@.exe"
+
+    # Install Visual Studio 2010 redistributable
+    SetOutPath "$TEMP"
+    SetRegView @BITS@
+    ReadRegStr $0 HKLM "Software\Microsoft\VisualStudio\10.0\VC\VCRedist\@XDD@" "Installed"
+    ${If} $0 != "1"
+        File "@VCREDIST_DIR@\vcredist_2010_sp1_@XDD@.exe"
+        DetailPrint "Running Visual C++ 2010 SP1 Redistributable Setup..."
+        ExecWait '"$TEMP\vcredist_2010_sp1_@XDD@.exe" /q /norestart'
+        DetailPrint "Finished Visual C++ 2010 SP1 Redistributable Setup"
+        Delete "$TEMP\vcredist_2010_sp1_@XDD@.exe"
+    ${EndIf}
+!macroend
+!macro Redist_User
+    # We can't run the redistributable installers during a non-admin install
+    # because they require admin privileges.  The next best option: just put
+    # the DLLs we're dependent upon next to our python*.dll.
+    SetOutPath "$INSTDIR"
+    File "/oname=msvcr90.dll" "@VCREDIST_DIR@\msvcr90_2008_sp1_@XDD@.dll"
+    File "/oname=msvcp90.dll" "@VCREDIST_DIR@\msvcp90_2008_sp1_@XDD@.dll"
+    File "/oname=msvcr100.dll" "@VCREDIST_DIR@\msvcr100_2010_sp1_@XDD@.dll"
+    File "/oname=msvcp100.dll" "@VCREDIST_DIR@\msvcp100_2010_sp1_@XDD@.dll"
+!macroend
+
+    ${If} $InstMode = ${JUST_ME}
+        !insertmacro Redist_User
+    ${Else}
+        !insertmacro Redist_Admin
+    ${EndIf}
+
+    SetOutPath "$INSTDIR\Lib"
+    File "@NSIS_DIR@\_nsis.py"
+    File "@NSIS_DIR@\_system_path.py"
+
+    SetOutPath "$INSTDIR\pkgs"
+    @PKG_COMMANDS@
+
+    ${If} $InstMode = ${JUST_ME}
+        SetOutPath "$INSTDIR"
+        FileOpen $0 ".nonadmin" w
+        FileClose $0
+    ${EndIf}
+
+    DetailPrint "Creating @NAME@ menus..."
+    push '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" mkmenus'
+    push 'Failed to create menus'
+    call AbortRetryExecWait
+    push '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" mkdirs'
+    push 'Failed to initialize directories'
+    call AbortRetryExecWait
+    ${If} $Ana_AddToPath_State = ${BST_CHECKED}
+        push '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" addpath'
+        push 'Failed to add @NAME@ to the system PATH'
+        call AbortRetryExecWait
+    ${EndIf}
+
+
+    # OutPath controls the "work dir" element of CreateShortCut.  Make sure
+    # it's always set to whatever you want the work directory to be when you
+    # create shortcuts!  (Doesn't matter as much for directory shortcuts, but
+    # is very important for the console shortcuts.)
+    SetOutPath "$INSTDIR"
+
+!ifdef ANA_MENUS
+    CreateShortCut "${BROWSE_SHORTCUT}" "$INSTDIR"
+
+    # Set some nice, aesthetically-pleasing defaults for the Anaconda command
+    # prompt; the fixedsys default settings are eye-bleed inducing.
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable00" 0x00000000
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable01" 0x00800000
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable02" 0x00008000
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable03" 0x00808000
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable04" 0x00000080
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable05" 0x00800080
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable06" 0x00008080
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable07" 0x00c0c0c0
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable08" 0x00808080
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable09" 0x00ff0000
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable10" 0x0000ff00
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable11" 0x00ffff00
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable12" 0x000000ff
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable13" 0x00ff00ff
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable14" 0x0000ffff
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable15" 0x00ffffff
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "CursorSize" 0x00000019
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FontFamily" 0x00000036
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FontSize" 0x00100000
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FontWeight" 0x00000190
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FullScreen" 0x00000000
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "HistoryBufferSize" 0x00000032
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "InsertMode" 0x00000001
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "LoadConIme" 0x00000001
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "NumberOfHistoryBuffers" 0x00000004
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "PopupColors" 0x000000f5
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "QuickEdit" 0x00000001
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ScreenBufferSize" 0x270f0084
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ScreenColors" 0x00000007
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "WindowSize" 0x00320084
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "CurrentPage" 0x00000002
+    WriteRegDWORD SHCTX "${CONSOLE_REG}" "HistoryNoDup" 0x00000000
+
+    # Consolas > Lucida Console > *
+    ${If} ${AtMostWinXP}
+        WriteRegStr SHCTX "${CONSOLE_REG}" "FaceName" "Lucida Console"
+    ${Else}
+        WriteRegStr SHCTX "${CONSOLE_REG}" "FaceName" "Consolas"
+    ${EndIf}
+!endif
+
+    # Create registry entries saying this is the system Python
+    # (for this version)
+    !define PYREG "Software\Python\PythonCore\${PY_VER}"
+    ${If} $Ana_RegisterSystemPython_State == ${BST_CHECKED}
+        WriteRegStr SHCTX "${PYREG}\Help\Main Python Documentation" \
+            "Main Python Documentation" \
+            "$INSTDIR\Doc\python${PYVERSION_JUSTDIGITS}.chm"
+
+        WriteRegStr SHCTX "${PYREG}\InstallPath" "" "$INSTDIR"
+
+        WriteRegStr SHCTX "${PYREG}\InstallPath\InstallGroup" \
+            "" "Python ${PY_VER}"
+
+        WriteRegStr SHCTX "${PYREG}\Modules" "" ""
+        WriteRegStr SHCTX "${PYREG}\PythonPath" \
+            "" "$INSTDIR\Lib;$INSTDIR\DLLs"
+    ${EndIf}
+
+    # Registry uninstall info
+    WriteRegStr SHCTX "${UNINSTREG}" "DisplayName" "${UNINSTALL_NAME}"
+    WriteRegStr SHCTX "${UNINSTREG}" "DisplayVersion" "${VERSION}"
+    WriteRegStr SHCTX "${UNINSTREG}" "Publisher" "Continuum Analytics, Inc."
+    WriteRegStr SHCTX "${UNINSTREG}" "UninstallString" \
+        "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
+    WriteRegStr SHCTX "${UNINSTREG}" "QuietUninstallString" \
+        "$\"$INSTDIR\Uninstall-Anaconda.exe$\" /S"
+    WriteRegStr SHCTX "${UNINSTREG}" "DisplayIcon" \
+        "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
+
+    WriteRegDWORD SHCTX "${UNINSTREG}" "NoModify" 1
+    WriteRegDWORD SHCTX "${UNINSTREG}" "NoRepair" 1
+
+    WriteUninstaller "$INSTDIR\Uninstall-Anaconda.exe"
+SectionEnd
+
+Section "Uninstall"
+    # Remove menu items, path entries
+    ExecWait '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" rmmenus'
+    ExecWait '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" rmpath'
+
+!ifdef ANA_MENUS
+    # Remove the shortcuts we manually added during installation.
+    Delete /REBOOTOK "${BROWSE_SHORTCUT}"
+    Delete /REBOOTOK "${PROMPT_SHORTCUT}"
+    RMDir /REBOOTOK "${START_MENU_PREFIX}"
+    DeleteRegKey SHCTX "${CONSOLE_REG}"
+!endif
+
+    DeleteRegKey SHCTX "${UNINSTREG}"
+    # If Anaconda was registered as the official Python for this version,
+    # remove it from the registry
+    ReadRegStr $0 SHCTX "Software\Python\PythonCore\${PY_VER}\InstallPath" ""
+    ${If} $0 == "$INSTDIR"
+        DeleteRegKey SHCTX "Software\Python\PythonCore\${PY_VER}"
+    ${EndIf}
+
+    # Trivial removal of whole directory for now
+    RMDir /r /REBOOTOK "$INSTDIR"
+
+SectionEnd
+
+# vim:set ts=8 sw=4 sts=4 tw=0 et syntax=nsis:
