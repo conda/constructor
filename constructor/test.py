@@ -20,7 +20,7 @@ def main():
         shar.read_header_template()
 
     print("sys.prefix: %s" % sys.prefix)
-    print("sys.version: %s" % sys.version)
+    print("sys.version: %s ..." % (sys.version[:40],))
     print("OK")
 
 
