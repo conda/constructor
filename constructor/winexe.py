@@ -53,13 +53,11 @@ def make_nsi(info, dir_path):
     data = data.replace('__PYVERSION_JUSTDIGITS__',
                         str_esc(''.join(py_version.split('.'))))
     data = data.replace('__OUTFILE__', str_esc(info['_outpath']))
-    data = data.replace('__HEADERIMAGE__',
-                        str_esc(join(dir_path, 'header.bmp')))
-    data = data.replace('__WELCOMEIMAGE__',
-                        str_esc(join(dir_path, 'welcome.bmp')))
-    data = data.replace('__ICONFILE__',
-                        str_esc(join(dir_path, 'icon.ico')))
     data = data.replace('__LICENSEFILE__', str_esc(license_path))
+    for placeholder, fn in [('__HEADERIMAGE__', 'header.bmp'),
+                            ('__WELCOMEIMAGE__', 'welcome.bmp'),
+                            ('__ICONFILE__', 'icon.ico')]:
+        data = data.replace(placeholder, str_esc(join(dir_path, fn)))
 
     # these are unescaped (and unquoted)
     data = data.replace('@NAME@', name)
