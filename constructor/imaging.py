@@ -1,3 +1,9 @@
+# (c) 2016 Continuum Analytics, Inc. / http://continuum.io
+# All Rights Reserved
+#
+# constructor is distributed under the terms of the BSD 3-clause license.
+# Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+
 from os.path import dirname, join
 from random import randint
 
@@ -52,7 +58,7 @@ def write_images(info, dir_path):
     for tp, size, f, ext in [
         ('welcome', welcome_size, welcome_image, '.bmp'),
         ('header',  header_size,  header_image,  '.bmp'),
-        ('icon',    icon_size,    icon_image,    '.ico')
+        ('icon',    icon_size,    icon_image,    '.ico'),
         ]:
         key = tp + '_image'
         if key in info:
