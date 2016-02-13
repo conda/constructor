@@ -55,7 +55,7 @@ def main_build(path, output_dir='.', verbose=True):
 
     for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
         if key in info:
-            info[key] = join(dirname(path), info[key])
+            info[key] = abspath(join(dirname(path), info[key]))
 
     info.setdefault('platform', conda.config.subdir)
 
