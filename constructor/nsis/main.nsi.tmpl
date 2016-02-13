@@ -110,16 +110,6 @@ BrandingText /TRIMLEFT "Continuum Analytics, Inc."
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP __WELCOMEIMAGE__
 #!define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
 
-# Shortcut-related glue
-!define ANA_PROMPT_NAME "Anaconda Command Prompt"
-!define ANA_BROWSE_NAME "Browse Anaconda Installation Directory..."
-
-!define START_MENU_PREFIX "$SMPROGRAMS\Anaconda (${ARCH})"
-!define BROWSE_SHORTCUT "${START_MENU_PREFIX}\${ANA_BROWSE_NAME}.lnk"
-!define PROMPT_SHORTCUT "${START_MENU_PREFIX}\${ANA_PROMPT_NAME}.lnk"
-
-!define CONSOLE_REG "Console\${ANA_PROMPT_NAME}"
-
 # Pages
 #!define MUI_PAGE_CUSTOMFUNCTION_SHOW OnStartup
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
@@ -259,14 +249,12 @@ msgbox:
     MessageBox MB_OK|MB_ICONEXCLAMATION \
         "WINDIR: $WINDIR $\n\
          EXEPATH: $EXEPATH $\n\
-         STARTMENU: $STARTMENU $\n\
          long: $0$\n\
          short: $1$\n\
          APPDATA: $APPDATA $\n\
          LOCALAPPDATA: $LOCALAPPDATA $\n\
          PROFILE: $PROFILE$\n\
          DOCUMENTS: $DOCUMENTS$\n\
-         STARTMENU: $STARTMENU$\n\
          eval: $2$\n\
          execfile: $3$\n\
          ARGV: $ARGV$\n\
