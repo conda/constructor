@@ -10,11 +10,6 @@ import os
 import sys
 from os.path import abspath, dirname, isfile, join
 
-import yaml
-
-import conda.config
-import conda.install
-
 from constructor.utils import read_ascii_only
 import constructor.common as common
 
@@ -52,8 +47,8 @@ def get_output_filename(info):
 
 
 def main_build(path, output_dir='.', verbose=True):
-    with open(path) as fi:
-        info = yaml.load(fi.read())
+    info = common.parse_info(path)
+    print('platform: %s' % info['platform'])
 
     for req in 'name', 'version', 'channels':
         if req not in info:
@@ -62,8 +57,6 @@ def main_build(path, output_dir='.', verbose=True):
     for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
         if key in info:
             info[key] = abspath(join(dirname(path), info[key]))
-
-    info.setdefault('platform', conda.config.subdir)
 
     if 'license_file' in info:
         info['_license_text'] = read_ascii_only(info['license_file'])

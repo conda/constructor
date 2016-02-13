@@ -68,7 +68,7 @@ def get_header(tarball, info):
         sys.exit("Error: a Python package needs to be part of the "
                  "specifications")
 
-    data = preprocess(data, common.ns_info(info))
+    data = preprocess(data, common.ns_platform(info['platform']))
 
     # Needs to happen first -- can be templated
     data = data.replace('__NAME__', name)

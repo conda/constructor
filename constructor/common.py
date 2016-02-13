@@ -7,9 +7,13 @@
 from __future__ import print_function, division, absolute_import
 
 import os
+import re
 import sys
 from os.path import isdir, isfile, join
 
+import yaml
+
+import conda.config
 from conda.utils import md5_file
 from conda.fetch import fetch_index, fetch_pkg
 from conda.plan import add_defaults_to_specs
@@ -21,19 +25,42 @@ INDEX = None
 REPO_DIR = None
 
 
-def ns_info(info):
-    subdir = info['platform']
+def ns_platform(platform):
     return dict(
-        linux = subdir.startswith('linux-'),
-        linux32 = bool(subdir == 'linux-32'),
-        linux64 = bool(subdir == 'linux-64'),
-        armv7l = bool(subdir == 'linux-armv7l'),
-        ppc64le = bool(subdir == 'linux-ppc64le'),
-        osx = subdir.startswith('osx-'),
-        win = subdir.startswith('win-'),
-        win32 = bool(subdir == 'win-32'),
-        win64 = bool(subdir == 'win-64'),
+        linux = platform.startswith('linux-'),
+        linux32 = bool(platform == 'linux-32'),
+        linux64 = bool(platform == 'linux-64'),
+        armv7l = bool(platform == 'linux-armv7l'),
+        ppc64le = bool(platform == 'linux-ppc64le'),
+        osx = platform.startswith('osx-'),
+        win = platform.startswith('win-'),
+        win32 = bool(platform == 'win-32'),
+        win64 = bool(platform == 'win-64'),
     )
+
+
+sel_pat = re.compile(r'(.+?)\s*\[(.+)\]$')
+def select_lines(data, namespace):
+    lines = []
+    for line in data.splitlines():
+        line = line.rstrip()
+        m = sel_pat.match(line)
+        if m:
+            cond = m.group(2)
+            if eval(cond, namespace, {}):
+                lines.append(m.group(1))
+            continue
+        lines.append(line)
+    return '\n'.join(lines) + '\n'
+
+
+def parse_info(path):
+    with open(path) as fi:
+        data = fi.read()
+    platform = yaml.load(data).get('platform', conda.config.subdir)
+    info = yaml.load(select_lines(data, ns_platform(platform)))
+    info['platform'] = platform
+    return info
 
 
 def set_index(info):

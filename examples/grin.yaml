@@ -17,7 +17,7 @@ specs:
 
 # ----------------- optional -----------------
 
-# platform e.g. linux-32, osx-64, defaults to current platform
+# platform e.g. linux-32, osx-64, win-32 (defaults to current platform)
 #platform: linux-64
 
 # The conda default channels which are used when running a conda which
