@@ -23,8 +23,9 @@ if 'install' in sys.argv:
 
     if sys.platform == 'win32':
         sp_dir = join(sys.prefix, 'Lib', 'site-packages')
-        shutil.copytree(abspath('constructor/nsis'),
-                        join(sp_dir, 'constructor', 'nsis'))
+        for dn in 'nsis', 'ttf':
+            shutil.copytree(abspath(join('constructor', dn)),
+                            join(sp_dir, 'constructor', dn))
 
     else:
         sp_dir = join(sys.prefix, 'lib/python%d.%d/site-packages' %
