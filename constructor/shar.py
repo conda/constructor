@@ -102,9 +102,6 @@ def create(info):
         t.add(join(common.REPO_DIR, fn), 'tmp/' + fn)
     t.add(join(conda.install.__file__.rstrip('co')), 'tmp/install.py')
     t.add(join(THIS_DIR, 'post.py'), 'tmp/post.py')
-    for key in 'pre_install', 'post_install':
-        if key in info:
-            t.add(info[key], 'tmp/%s.sh' % key)
     t.close()
 
     header = get_header(tarball, info)

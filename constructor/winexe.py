@@ -8,8 +8,8 @@ from os.path import abspath, dirname, join
 from subprocess import check_call
 
 from constructor.utils import preprocess
+from constructor.imaging import write_images
 import constructor.common as common
-import constructor.imaging as imaging
 
 
 THIS_DIR = dirname(__file__)
@@ -28,16 +28,6 @@ def read_nsi_tmpl():
     print('Reading: %s' % path)
     with open(path) as fi:
         return fi.read()
-
-
-def write_images(info, dir_path):
-    dst = join(dir_path, 'welcome.bmp')
-    try:
-        src = info['welcome_image']
-        shutil.copyfile(src, dst)
-    except KeyError:
-        im = imaging.welcome_image(info['name'], info['version'])
-        im.save(dst)
 
 
 def make_nsi(info, dir_path):

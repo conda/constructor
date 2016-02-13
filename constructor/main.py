@@ -53,7 +53,7 @@ def main_build(path, output_dir='.', verbose=True):
         if req not in info:
             sys.exit("Required key '%s' not found in %s" % (req, path))
 
-    for key in 'pre_install', 'post_install', 'license_file':
+    for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
         if key in info:
             info[key] = join(dirname(path), info[key])
 
