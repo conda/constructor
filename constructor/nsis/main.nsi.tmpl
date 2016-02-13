@@ -664,44 +664,6 @@ FunctionEnd
 # Installer sections
 Section "Install"
 
-!macro Redist_Admin
-    SetOutPath "$TEMP"
-    # Install Visual Studio 2008 redistributable
-    File "@VCREDIST_DIR@\vcredist_2008_sp1_@XDD@.exe"
-    DetailPrint "Running Visual C++ 2008 SP1 Redistributable Setup..."
-    ExecWait '"$TEMP\vcredist_2008_sp1_@XDD@.exe" /q'
-    DetailPrint "Finished Visual C++ 2008 SP1 Redistributable Setup"
-    Delete "$TEMP\vcredist_2008_sp1_@XDD@.exe"
-
-    # Install Visual Studio 2010 redistributable
-    SetOutPath "$TEMP"
-    SetRegView @BITS@
-    ReadRegStr $0 HKLM "Software\Microsoft\VisualStudio\10.0\VC\VCRedist\@XDD@" "Installed"
-    ${If} $0 != "1"
-        File "@VCREDIST_DIR@\vcredist_2010_sp1_@XDD@.exe"
-        DetailPrint "Running Visual C++ 2010 SP1 Redistributable Setup..."
-        ExecWait '"$TEMP\vcredist_2010_sp1_@XDD@.exe" /q /norestart'
-        DetailPrint "Finished Visual C++ 2010 SP1 Redistributable Setup"
-        Delete "$TEMP\vcredist_2010_sp1_@XDD@.exe"
-    ${EndIf}
-!macroend
-!macro Redist_User
-    # We can't run the redistributable installers during a non-admin install
-    # because they require admin privileges.  The next best option: just put
-    # the DLLs we're dependent upon next to our python*.dll.
-    SetOutPath "$INSTDIR"
-    File "/oname=msvcr90.dll" "@VCREDIST_DIR@\msvcr90_2008_sp1_@XDD@.dll"
-    File "/oname=msvcp90.dll" "@VCREDIST_DIR@\msvcp90_2008_sp1_@XDD@.dll"
-    File "/oname=msvcr100.dll" "@VCREDIST_DIR@\msvcr100_2010_sp1_@XDD@.dll"
-    File "/oname=msvcp100.dll" "@VCREDIST_DIR@\msvcp100_2010_sp1_@XDD@.dll"
-!macroend
-
-    ${If} $InstMode = ${JUST_ME}
-        !insertmacro Redist_User
-    ${Else}
-        !insertmacro Redist_Admin
-    ${EndIf}
-
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
     File "@NSIS_DIR@\_system_path.py"
@@ -716,70 +678,18 @@ Section "Install"
     ${EndIf}
 
     DetailPrint "Creating @NAME@ menus..."
-    push '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" mkmenus'
+    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkmenus'
     push 'Failed to create menus'
     call AbortRetryExecWait
-    push '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" mkdirs'
+    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize directories'
     call AbortRetryExecWait
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-        push '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" addpath'
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath'
         push 'Failed to add @NAME@ to the system PATH'
         call AbortRetryExecWait
     ${EndIf}
 
-
-    # OutPath controls the "work dir" element of CreateShortCut.  Make sure
-    # it's always set to whatever you want the work directory to be when you
-    # create shortcuts!  (Doesn't matter as much for directory shortcuts, but
-    # is very important for the console shortcuts.)
-    SetOutPath "$INSTDIR"
-
-!ifdef ANA_MENUS
-    CreateShortCut "${BROWSE_SHORTCUT}" "$INSTDIR"
-
-    # Set some nice, aesthetically-pleasing defaults for the Anaconda command
-    # prompt; the fixedsys default settings are eye-bleed inducing.
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable00" 0x00000000
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable01" 0x00800000
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable02" 0x00008000
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable03" 0x00808000
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable04" 0x00000080
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable05" 0x00800080
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable06" 0x00008080
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable07" 0x00c0c0c0
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable08" 0x00808080
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable09" 0x00ff0000
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable10" 0x0000ff00
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable11" 0x00ffff00
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable12" 0x000000ff
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable13" 0x00ff00ff
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable14" 0x0000ffff
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ColorTable15" 0x00ffffff
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "CursorSize" 0x00000019
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FontFamily" 0x00000036
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FontSize" 0x00100000
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FontWeight" 0x00000190
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "FullScreen" 0x00000000
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "HistoryBufferSize" 0x00000032
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "InsertMode" 0x00000001
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "LoadConIme" 0x00000001
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "NumberOfHistoryBuffers" 0x00000004
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "PopupColors" 0x000000f5
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "QuickEdit" 0x00000001
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ScreenBufferSize" 0x270f0084
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "ScreenColors" 0x00000007
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "WindowSize" 0x00320084
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "CurrentPage" 0x00000002
-    WriteRegDWORD SHCTX "${CONSOLE_REG}" "HistoryNoDup" 0x00000000
-
-    # Consolas > Lucida Console > *
-    ${If} ${AtMostWinXP}
-        WriteRegStr SHCTX "${CONSOLE_REG}" "FaceName" "Lucida Console"
-    ${Else}
-        WriteRegStr SHCTX "${CONSOLE_REG}" "FaceName" "Consolas"
-    ${EndIf}
-!endif
 
     # Create registry entries saying this is the system Python
     # (for this version)
@@ -818,16 +728,8 @@ SectionEnd
 
 Section "Uninstall"
     # Remove menu items, path entries
-    ExecWait '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" rmmenus'
-    ExecWait '"$INSTDIR\pythonw.exe" -E "$INSTDIR\Lib\_nsis.py" rmpath'
-
-!ifdef ANA_MENUS
-    # Remove the shortcuts we manually added during installation.
-    Delete /REBOOTOK "${BROWSE_SHORTCUT}"
-    Delete /REBOOTOK "${PROMPT_SHORTCUT}"
-    RMDir /REBOOTOK "${START_MENU_PREFIX}"
-    DeleteRegKey SHCTX "${CONSOLE_REG}"
-!endif
+    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmmenus'
+    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
 
     DeleteRegKey SHCTX "${UNINSTREG}"
     # If Anaconda was registered as the official Python for this version,
@@ -841,5 +743,3 @@ Section "Uninstall"
     RMDir /r /REBOOTOK "$INSTDIR"
 
 SectionEnd
-
-# vim:set ts=8 sw=4 sts=4 tw=0 et syntax=nsis:

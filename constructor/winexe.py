@@ -9,6 +9,7 @@ from subprocess import check_call
 
 from constructor.utils import preprocess
 import constructor.common as common
+import constructor.imaging as imaging
 
 
 THIS_DIR = dirname(__file__)
@@ -29,6 +30,16 @@ def read_nsi_tmpl():
         return fi.read()
 
 
+def write_images(info, dir_path):
+    dst = join(dir_path, 'welcome.bmp')
+    try:
+        src = info['welcome_image']
+        shutil.copyfile(src, dst)
+    except KeyError:
+        im = imaging.welcome_image(info['name'], info['version'])
+        im.save(dst)
+
+
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
     data = read_nsi_tmpl()
@@ -45,7 +56,7 @@ def make_nsi(info, dir_path):
 
     data = preprocess(data, common.ns_info(info))
     data = data.replace('__NAME__', str_esc(name))
-    data = data.replace('__VERSION__', '1.0.0')
+    data = data.replace('__VERSION__', info['version'])
     data = data.replace('__ARCH__', str_esc('%d-bit' % arch))
     data = data.replace('__PY_VER__', py_version[:3])
     data = data.replace('__PYVERSION__', str_esc(py_version))
@@ -53,19 +64,17 @@ def make_nsi(info, dir_path):
                         str_esc(''.join(py_version.split('.'))))
     data = data.replace('__OUTFILE__', str_esc(info['_outpath']))
     data = data.replace('__HEADERIMAGE__',
-                        str_esc(join(NSIS_DIR, 'header.bmp')))
+                        str_esc(join(dir_path, 'header.bmp')))
     data = data.replace('__WELCOMEIMAGE__',
-                        str_esc(join(NSIS_DIR, 'installer.bmp')))
+                        str_esc(join(dir_path, 'welcome.bmp')))
     data = data.replace('__ICONFILE__',
-                        str_esc(join(NSIS_DIR, 'logo.ico')))
+                        str_esc(join(dir_path, 'icon.ico')))
     data = data.replace('__LICENSEFILE__', str_esc(license_path))
 
     # these are unescaped (and unquoted)
     data = data.replace('@NAME@', name)
     data = data.replace('@NSIS_DIR@', NSIS_DIR)
-    data = data.replace('@VCREDIST_DIR@', join(sys.prefix, 'VCREDIST'))
     data = data.replace('@BITS@', str(arch))
-    data = data.replace('@XDD@', {32: 'x86', 64: 'x64'}[arch])
 
     pkg_commands = []
     for fn in common.DISTS:
@@ -94,6 +103,7 @@ def make_nsi(info, dir_path):
 
 def create(info):
     tmp_dir = tempfile.mkdtemp()
+    write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
     args = [MAKENSIS_EXE, '/V2', nsi]
     print('Calling: %s' % args)

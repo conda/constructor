@@ -21,7 +21,7 @@ def new_background(size, color, bs=20, boxes=50):
     return im
 
 
-def front_image(name, version):
+def welcome_image(name, version):
     font = ImageFont.truetype(ttf_path, 20)
     im = new_background((164, 314), bg)
     d = ImageDraw.Draw(im)
@@ -47,7 +47,7 @@ def icon_image(name):
 
 
 if __name__ == '__main__':
-    #x = front_image('test', '0.3.1')
+    #x = welcome_image('test', '0.3.1')
     #x = header_image('test')
     x = icon_image('Test')
     x.save('logo.ico')
