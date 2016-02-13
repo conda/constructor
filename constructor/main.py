@@ -8,7 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
-from os.path import abspath, dirname, isfile, join
+from os.path import abspath, isdir, join
 
 from constructor.utils import read_ascii_only
 import constructor.common as common
@@ -46,17 +46,19 @@ def get_output_filename(info):
                             ext)
 
 
-def main_build(path, output_dir='.', verbose=True):
-    info = common.parse_info(path)
+def main_build(dir_path, output_dir='.', verbose=True):
+    construct_path = join(dir_path, 'construct.yaml')
+    info = common.parse_info(construct_path)
     print('platform: %s' % info['platform'])
 
     for req in 'name', 'version', 'channels':
         if req not in info:
-            sys.exit("Required key '%s' not found in %s" % (req, path))
+            sys.exit("Required key '%s' not found in %s" % (req,
+                                                            construct_path))
 
     for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
         if key in info:
-            info[key] = abspath(join(dirname(path), info[key]))
+            info[key] = abspath(join(dir_path, info[key]))
 
     if 'license_file' in info:
         info['_license_text'] = read_ascii_only(info['license_file'])
@@ -99,8 +101,8 @@ def main():
     from optparse import OptionParser
 
     p = OptionParser(
-        usage="usage: %prog [options] INSTALLER_SPEC_FILE",
-        description="build an installer from an installer spec file")
+        usage="usage: %prog [options] DIRECTORY",
+        description="build an installer from <DIRECTORY>/construct.yaml")
 
     p.add_option('--debug',
                  action="store_true")
@@ -142,11 +144,11 @@ def main():
     if len(args) != 1:
         p.error("exactly one argument expected")
 
-    path = args[0]
-    if not isfile(path):
-        p.error("no such file: %s" % path)
+    dir_path = args[0]
+    if not isdir(dir_path):
+        p.error("no such directory: %s" % dir_path)
 
-    main_build(path, output_dir=opts.output_dir,
+    main_build(dir_path, output_dir=opts.output_dir,
                verbose=opts.verbose)
 
 
