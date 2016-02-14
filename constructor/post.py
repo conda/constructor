@@ -10,8 +10,8 @@ info_dir = join(prefix, 'info')
 
 def post_extract(dist):
     files = list(yield_lines(join(info_dir, 'files')))
-    has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
 
+    has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
         try:
@@ -21,7 +21,8 @@ def post_extract(dist):
                      (placeholder, dist))
 
     mk_menus(prefix, files, remove=False)
-    run_script(prefix, dist, 'post-link')
+    if not run_script(prefix, dist, 'post-link'):
+        sys.exit("Error: post-link failed for: %s" % dist)
     create_meta(prefix, dist, info_dir, {'files': files})
 
 
