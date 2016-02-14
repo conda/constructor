@@ -34,4 +34,4 @@ conda_default_channels: *id1
 license_file: eula.txt
 
 # default install prefix
-default_prefix: /opt/example
+#default_prefix: /opt/example

@@ -17,7 +17,7 @@ from conda.utils import md5_file
 import conda.config
 import conda.install
 
-from constructor.utils import preprocess
+from constructor.utils import preprocess, read_ascii_only
 import constructor.common as common
 
 
@@ -59,10 +59,14 @@ def get_header(tarball, info):
     data = data.replace('__DEFAULT_PREFIX__',
                         info.get('default_prefix', '$HOME/' + name.lower()))
     data = data.replace('__PLAT__', info['platform'])
-    data = data.replace('__LICENSE__', info.get('_license_text',
-                                                'License text ...'))
     data = data.replace('__DIST0__', dists0)
     data = data.replace('__PY_VER__', py_version[:3])
+
+    has_license = bool('license_file' in info)
+    data = data.replace('__HAS_LICENSE__', str(int(has_license)))
+    if has_license:
+        data = data.replace('__LICENSE__',
+                            read_ascii_only(info['license_file']))
 
     lines = ['install_dist %s' % (fn[:-8],) for fn in common.DISTS]
     if 'conda_default_channels' in info:
@@ -86,6 +90,8 @@ def create(info):
     tmp_dir = tempfile.mkdtemp()
     tarball = join(tmp_dir, 'tmp.tar')
     t = tarfile.open(tarball, 'w')
+    if 'license_file' in info:
+        t.add(info['license_file'], 'LICENSE.txt')
     for fn in common.DISTS:
         t.add(join(common.REPO_DIR, fn), 'tmp/' + fn)
     t.add(join(conda.install.__file__.rstrip('co')), 'tmp/install.py')

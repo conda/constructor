@@ -10,7 +10,6 @@ import os
 import sys
 from os.path import abspath, isdir, join
 
-from constructor.utils import read_ascii_only
 import constructor.common as common
 
 
@@ -59,9 +58,6 @@ def main_build(dir_path, output_dir='.', verbose=True):
     for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
         if key in info:
             info[key] = abspath(join(dir_path, info[key]))
-
-    if 'license_file' in info:
-        info['_license_text'] = read_ascii_only(info['license_file'])
 
     common.set_index(info)
     if 'packages' in info:
