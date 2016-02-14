@@ -54,11 +54,15 @@ def select_lines(data, namespace):
     return '\n'.join(lines) + '\n'
 
 
-def parse_info(path):
+def parse_construct(path):
     with open(path) as fi:
         data = fi.read()
+    # try to get the platform from the construct data
     platform = yaml.load(data).get('platform', conda.config.subdir)
+    # now that we know the platform, we filter lines by selectors (if any),
+    # and get the final result
     info = yaml.load(select_lines(data, ns_platform(platform)))
+    # ensure result includes 'platform' key
     info['platform'] = platform
     return info
 

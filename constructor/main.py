@@ -47,7 +47,7 @@ def get_output_filename(info):
 
 def main_build(dir_path, output_dir='.', verbose=True):
     construct_path = join(dir_path, 'construct.yaml')
-    info = common.parse_info(construct_path)
+    info = common.parse_construct(construct_path)
     print('platform: %s' % info['platform'])
 
     for req in 'name', 'version', 'channels':
