@@ -200,7 +200,7 @@ if (( $? )); then
     exit 1
 fi
 
-PYTHON="$PREFIX/bin/python -E"
+PYTHON="$PREFIX/bin/python"
 MSGS=$PREFIX/.messages.txt
 touch $MSGS
 
@@ -213,9 +213,9 @@ install_dist()
     # conda.
     echo "installing: $1 ..."
     PKG=$PREFIX/tmp/$1.tar.bz2
-    tar xjf ${PKG} -C $PREFIX || exit 1
+    tar xjf $PKG -C $PREFIX --no-same-owner || exit 1
     if [[ $1 == '__DIST0__' ]]; then
-        $PYTHON -V
+        $PYTHON -E -V
         if (( $? )); then
             echo "ERROR:
 cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
@@ -223,10 +223,9 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
             exit 1
         fi
     fi
-    $PYTHON $PREFIX/tmp/post.py $1 || exit 1
-    rm -rf $PREFIX/info
-    mkdir -p $PREFIX/pkgs
-    mv ${PKG} $PREFIX/pkgs
+    $PYTHON -E -s $PREFIX/tmp/post.py $1 || exit 1
+    rm -r $PREFIX/info
+    rm $PKG
 }
 
 __INSTALL_COMMANDS__
