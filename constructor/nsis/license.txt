@@ -1,5 +1,0 @@
-==========================
-END USER LICENSE AGREEMENT
-==========================
-
-This is a sample license file.

@@ -86,27 +86,6 @@ def mk_menus(remove=False):
                     out("Processed %s successfully.\n" % shortcut)
 
 
-def mk_dirs():
-    os.mkdir(join(sys.prefix, 'envs'))
-    try:
-        from _license import get_license_dirs
-    except ImportError:
-        return
-    # try creating all license directories
-    for path in get_license_dirs():
-        if os.path.isdir(path):
-            out("%s already exists, skipping...\n" % path)
-            continue
-        try:
-            os.mkdir(path)
-        except Exception as e:
-            err("Failed to create %s.\n" % path)
-            err("Error: %s\n" % str(e))
-            err("Traceback: %s\n" % traceback.format_exc(20))
-        else:
-            out("Created %s.\n" % path)
-
-
 allusers = (not exists(join(sys.prefix, '.nonadmin')))
 
 def add_anaconda_to_path():
@@ -136,8 +115,6 @@ def main():
         mk_menus(remove=False)
     elif cmd == 'rmmenus':
         mk_menus(remove=True)
-    elif cmd == 'mkdirs':
-        mk_dirs()
     elif cmd == 'addpath':
         add_anaconda_to_path()
     elif cmd == 'rmpath':

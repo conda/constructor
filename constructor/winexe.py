@@ -48,7 +48,7 @@ def make_nsi(info, dir_path):
 
     arch = int(info['platform'].split('-')[1])
     license_path = abspath(info.get('license_file',
-                                    join(NSIS_DIR, 'license.txt')))
+                                 join(NSIS_DIR, 'placeholder_license.txt')))
 
     data = preprocess(data, common.ns_info(info))
     data = data.replace('__NAME__', str_esc(name))

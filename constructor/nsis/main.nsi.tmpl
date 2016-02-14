@@ -669,9 +669,6 @@ Section "Install"
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkmenus'
     push 'Failed to create menus'
     call AbortRetryExecWait
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
-    push 'Failed to initialize directories'
-    call AbortRetryExecWait
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath'
         push 'Failed to add @NAME@ to the system PATH'
