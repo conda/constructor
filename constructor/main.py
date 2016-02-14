@@ -11,6 +11,7 @@ import sys
 from os.path import abspath, isdir, join
 
 import constructor.common as common
+import constructor.construct as construct
 
 
 def read_dists(packages):
@@ -47,7 +48,7 @@ def get_output_filename(info):
 
 def main_build(dir_path, output_dir='.', verbose=True):
     construct_path = join(dir_path, 'construct.yaml')
-    info = common.parse_construct(construct_path)
+    info = construct.parse(construct_path)
     print('platform: %s' % info['platform'])
 
     for req in 'name', 'version', 'channels':

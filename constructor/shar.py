@@ -14,10 +14,10 @@ import tempfile
 from os.path import dirname, getsize, join
 
 from conda.utils import md5_file
-import conda.config
 import conda.install
 
 from constructor.utils import preprocess, read_ascii_only
+from constructor.construct import ns_platform
 import constructor.common as common
 
 
@@ -50,7 +50,7 @@ def get_header(tarball, info):
         sys.exit("Error: a Python package needs to be part of the "
                  "specifications")
 
-    data = preprocess(data, common.ns_platform(info['platform']))
+    data = preprocess(data, ns_platform(info['platform']))
 
     # Needs to happen first -- can be templated
     data = data.replace('__NAME__', name)
