@@ -17,7 +17,7 @@ from conda.utils import md5_file
 import conda.config
 import conda.install
 
-from constructor.utils import preprocess, read_ascii_only
+from constructor.utils import preprocess
 import constructor.common as common
 
 
@@ -29,24 +29,6 @@ def read_header_template():
     print('Reading: %s' % path)
     with open(path) as fi:
         return fi.read()
-
-
-def get_help_text(path=None):
-    if path is None:
-        return """\
-usage: $0 [options]
-
-Installs __NAME__
-
-    -b           run install in batch mode (without manual intervention),
-                 it is expected the license terms are agreed upon
-    -f           no error if install prefix already exists (force)
-    -h           print this help message and exit
-    -p PREFIX    install prefix, defaults to $PREFIX
-"""
-    else:
-        print('Reading custom help text file: %s' % path)
-        return read_ascii_only(path)
 
 
 def add_condarc(lines, info):
