@@ -23,6 +23,7 @@
 
 !define NAME __NAME__
 !define VERSION __VERSION__
+!define COMPANY __COMPANY__
 !define ARCH __ARCH__
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
@@ -92,11 +93,11 @@ ReserveFile "@NSIS_DIR@\deps\elevate.exe"
 VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
 VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "ProductVersion" "${VERSION}"
-VIAddVersionKey "CompanyName" "__COMPANY__"
-VIAddVersionKey "LegalCopyright" "(c) __COMPANY__"
+VIAddVersionKey "CompanyName" "${COMPANY}"
+VIAddVersionKey "LegalCopyright" "(c) ${COMPANY}"
 VIAddVersionKey "FileDescription" "${NAME} Installer"
 VIProductVersion "${VERSION}.0"
-BrandingText /TRIMLEFT "__COMPANY__"
+BrandingText /TRIMLEFT "${COMPANY}"
 
 # Interface configuration
 !define MUI_ICON __ICONFILE__
@@ -697,7 +698,7 @@ Section "Install"
     # Registry uninstall info
     WriteRegStr SHCTX "${UNINSTREG}" "DisplayName" "${UNINSTALL_NAME}"
     WriteRegStr SHCTX "${UNINSTREG}" "DisplayVersion" "${VERSION}"
-    WriteRegStr SHCTX "${UNINSTREG}" "Publisher" "__COMPANY__"
+    WriteRegStr SHCTX "${UNINSTREG}" "Publisher" "${COMPANY}"
     WriteRegStr SHCTX "${UNINSTREG}" "UninstallString" \
         "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
     WriteRegStr SHCTX "${UNINSTREG}" "QuietUninstallString" \
