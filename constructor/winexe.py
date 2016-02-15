@@ -10,7 +10,7 @@ import os
 import sys
 import shutil
 import tempfile
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, isfile, join
 from subprocess import check_call
 
 from constructor.construct import ns_platform
