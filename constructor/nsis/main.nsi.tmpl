@@ -92,11 +92,11 @@ ReserveFile "@NSIS_DIR@\deps\elevate.exe"
 VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
 VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "ProductVersion" "${VERSION}"
-VIAddVersionKey "CompanyName" "Continuum Analytics, Inc."
-VIAddVersionKey "LegalCopyright" "(c) Continuum Analytics, Inc."
+VIAddVersionKey "CompanyName" "__COMPANY__"
+VIAddVersionKey "LegalCopyright" "(c) __COMPANY__"
 VIAddVersionKey "FileDescription" "${NAME} Installer"
 VIProductVersion "${VERSION}.0"
-BrandingText /TRIMLEFT "Continuum Analytics, Inc."
+BrandingText /TRIMLEFT "__COMPANY__"
 
 # Interface configuration
 !define MUI_ICON __ICONFILE__
@@ -697,7 +697,7 @@ Section "Install"
     # Registry uninstall info
     WriteRegStr SHCTX "${UNINSTREG}" "DisplayName" "${UNINSTALL_NAME}"
     WriteRegStr SHCTX "${UNINSTREG}" "DisplayVersion" "${VERSION}"
-    WriteRegStr SHCTX "${UNINSTREG}" "Publisher" "Continuum Analytics, Inc."
+    WriteRegStr SHCTX "${UNINSTREG}" "Publisher" "__COMPANY__"
     WriteRegStr SHCTX "${UNINSTREG}" "UninstallString" \
         "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
     WriteRegStr SHCTX "${UNINSTREG}" "QuietUninstallString" \
