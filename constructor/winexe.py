@@ -13,6 +13,7 @@ import tempfile
 from os.path import abspath, dirname, join
 from subprocess import check_call
 
+from constructor.construct import ns_platform
 from constructor.utils import preprocess
 from constructor.imaging import write_images
 import constructor.common as common
@@ -50,7 +51,7 @@ def make_nsi(info, dir_path):
     license_path = abspath(info.get('license_file',
                                  join(NSIS_DIR, 'placeholder_license.txt')))
 
-    data = preprocess(data, common.ns_info(info))
+    data = preprocess(data, ns_platform(info['platform']))
     data = data.replace('__NAME__', str_esc(name))
     data = data.replace('__VERSION__', info['version'])
     data = data.replace('__ARCH__', str_esc('%d-bit' % arch))

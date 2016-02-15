@@ -8,7 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
-from os.path import isdir, isfile, join
+from os.path import expanduser, isdir, isfile, join
 
 from conda.utils import md5_file
 from conda.fetch import fetch_index, fetch_pkg
@@ -87,7 +87,7 @@ def check_dists():
 def fetch(info):
     global REPO_DIR
 
-    REPO_DIR = join(os.getenv('HOME'), '.conda/constructor',
+    REPO_DIR = join(expanduser('~'), '.conda', 'constructor',
                     info['platform'])
     if not isdir(REPO_DIR):
         os.makedirs(REPO_DIR)

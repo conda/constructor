@@ -83,7 +83,7 @@ def main_build(dir_path, output_dir='.', verbose=True):
         if sys.platform != 'win32':
             sys.exit("Error: Cannot create Windows .exe installer on "
                      "non-Windows platform.")
-        from winexe import create
+        from constructor.winexe import create
 
     else:
         raise
