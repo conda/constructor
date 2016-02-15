@@ -97,6 +97,12 @@ def make_nsi(info, dir_path):
 
 
 def create(info):
+    if not isfile(MAKENSIS_EXE):
+        sys.exit("""
+Error: no file %s
+    please make sure nsis is installed:
+    > conda install -n root nsis
+""" % MAKENSIS_EXE)
     tmp_dir = tempfile.mkdtemp()
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
