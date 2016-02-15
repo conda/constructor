@@ -14,7 +14,7 @@ ttf_path = join(dirname(__file__), 'ttf', 'Vera.ttf')
 welcome_size = 164, 314
 header_size = 150, 57
 icon_size = 256, 256
-bg = 0x33, 0x66, 0x99
+blue3 = 0x33, 0x66, 0x99
 white = 0xff, 0xff, 0xff
 
 
@@ -31,7 +31,7 @@ def new_background(size, color, bs=20, boxes=50):
 
 def welcome_image(name, version):
     font = ImageFont.truetype(ttf_path, 20)
-    im = new_background(welcome_size, bg)
+    im = new_background(welcome_size, blue3)
     d = ImageDraw.Draw(im)
     d.text((20, 100), name, fill=white, font=font)
     d.text((20, 130), version, fill=white, font=font)
@@ -40,15 +40,15 @@ def welcome_image(name, version):
 
 def header_image(name, unused=None):
     font = ImageFont.truetype(ttf_path, 20)
-    im = new_background(header_size, bg)
+    im = Image.new('RGB', header_size, color=white)
     d = ImageDraw.Draw(im)
-    d.text((20, 15), name, fill=white, font=font)
+    d.text((20, 15), name, fill=blue3, font=font)
     return im
 
 
 def icon_image(name, unused=None):
     font = ImageFont.truetype(ttf_path, 200)
-    im = new_background(icon_size, bg)
+    im = new_background(icon_size, blue3)
     d = ImageDraw.Draw(im)
     d.text((60, 20), name[0], fill=white, font=font)
     return im
@@ -71,6 +71,5 @@ def write_images(info, dir_path):
 
 
 if __name__ == '__main__':
-    info = {'name': 'test', 'version': '0.3.1',
-            'welcome_image': '/Users/ilan/Desktop/moit.png'}
+    info = {'name': 'test', 'version': '0.3.1'}
     write_images(info, 'tmp')
