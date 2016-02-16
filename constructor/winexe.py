@@ -98,13 +98,20 @@ def make_nsi(info, dir_path):
     return nsi_path
 
 
-def create(info):
+def verify_nsis_install():
     if not isfile(MAKENSIS_EXE):
         sys.exit("""
 Error: no file %s
     please make sure nsis is installed:
     > conda install -n root nsis
 """ % MAKENSIS_EXE)
+    untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'untgz.dll')
+    if not isfile(untgz_dll):
+         sys.exit("Error: no file %s")
+
+
+def create(info):
+    verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
