@@ -88,7 +88,7 @@ def mk_menus(remove=False):
 
 allusers = (not exists(join(sys.prefix, '.nonadmin')))
 
-def add_anaconda_to_path():
+def add_to_path():
     from _system_path import (add_to_system_path, remove_from_system_path,
                               broadcast_environment_settings_change)
     # if previous Anaconda installs left remnants, remove those
@@ -99,7 +99,7 @@ def add_anaconda_to_path():
     broadcast_environment_settings_change()
 
 
-def remove_anaconda_from_path():
+def remove_from_path():
     from _system_path import (remove_from_system_path,
                               broadcast_environment_settings_change)
     remove_from_system_path(sys.prefix, allusers)
@@ -116,9 +116,9 @@ def main():
     elif cmd == 'rmmenus':
         mk_menus(remove=True)
     elif cmd == 'addpath':
-        add_anaconda_to_path()
+        add_to_path()
     elif cmd == 'rmpath':
-        remove_anaconda_from_path()
+        remove_from_path()
     else:
         sys.exit("ERROR: did not expect %r" % cmd)
 
