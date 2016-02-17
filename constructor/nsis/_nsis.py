@@ -48,9 +48,6 @@ def create_conda_meta():
     with open(join(info_dir, 'index.json')) as fi:
         meta = json.load(fi)
 
-    if meta['name'] == '_cache':
-        return
-
     meta['files'] = []
     for line in open(join(info_dir, 'files')):
         line = line.strip()
