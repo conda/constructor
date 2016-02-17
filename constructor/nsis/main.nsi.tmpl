@@ -41,23 +41,6 @@ var /global INSTDIR_JUSTME
     !define BCM_SETSHIELD 0x0000160C
 !endif
 
-!ifdef ANA_DEBUG
-var /global InstallDirLong
-var /global InstallDirShort
-var /global InstallDirUserProfileJunction
-
-var /global ARGV
-var /global ARGV_AdminRelaunch
-var /global ARGV_Elevate
-
-var /global DoElevate
-var /global ElevationFailed
-
-var /global UserInfo_AccountName
-var /global UserInfo_AccountType
-var /global UserInfo_OriginalAccountType
-!endif
-
 var /global IsDomainUser
 
 var /global InstModePage_RadioButton_JustMe
@@ -82,12 +65,6 @@ SetCompress "off"
 
 # Start off with the lowest permissions and work our way up.
 RequestExecutionLevel user
-
-!ifdef ANA_DEBUG
-ReserveFile "@NSIS_DIR@\python27.dll"
-ReserveFile "@NSIS_DIR@\test-nspython.py"
-ReserveFile "@NSIS_DIR@\deps\elevate.exe"
-!endif
 
 # Version information & branding text
 VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
@@ -172,169 +149,6 @@ FunctionEnd
     # UAC worked, we're the outer installer, so we can quit.
     Quit
 !macroend
-
-!ifdef ANA_DEBUG
-Function OnInit_Debug
-    Push $0
-    Push $1
-    Push $2
-    Push $3
-    Push $4
-    Push $5
-    Push $6
-    Push $7
-    Push $8
-    Push $9
-
-    GetFullPathName $0 $EXEPATH
-    GetFullPathName /short $1 $EXEPATH
-
-    nsPython::eval "1+1"
-    Pop $2
-
-    nsPython::execFile "$PLUGINSDIR\test-nspython.py"
-    Pop $3
-
-    ClearErrors
-    UserInfo::GetName
-    IfErrors win9x
-    Pop $4
-    StrCpy $UserInfo_AccountName "$4"
-    UserInfo::GetAccountType
-    Pop $4
-    StrCpy $UserInfo_AccountType "$4"
-    UserInfo::GetOriginalAccountType
-    Pop $4
-    StrCpy $UserInfo_OriginalAccountType "$4"
-
-    ClearErrors
-    ${GetParameters} $ARGV
-    ${GetOptions} $ARGV "/AdminRelaunch" $4
-    ${If} ${Errors}
-        StrCpy $ARGV_AdminRelaunch "0"
-    ${Else}
-        StrCpy $ARGV_AdminRelaunch "1"
-    ${EndIf}
-
-    ${If} $ARGV_AdminRelaunch == "1"
-        # Check if the user is actually an admin.
-        ${If} $UserInfo_AccountType != "Admin"
-        ${AndIf} $UserInfo_OriginalAccountType != "Admin"
-              MessageBox MB_OK|MB_ICONEXCLAMATION \
-                "Error: not an admin, but AdminRelaunch provided."
-        ${EndIf}
-    ${EndIf}
-
-    ClearErrors
-    ${GetOptions} $ARGV "/Elevate" $4
-    ${If} ${Errors}
-        StrCpy $ARGV_Elevate "0"
-    ${Else}
-        StrCpy $ARGV_Elevate "1"
-    ${EndIf}
-
-    ${If} $ARGV_Elevate == "1"
-        StrCpy $DoElevate "1"
-    ${EndIf}
-
-    ${If} $DoElevate == "1"
-        #Exec '"$PLUGINSDIR\elevate.exe" "$EXEPATH" /AdminRelaunch'
-        #Quit
-        Call RelaunchAsAdmin
-        ${If} $ElevationFailed == "0"
-            StrCpy $ARGV_AdminRelaunch "1"
-        ${EndIf}
-    ${EndIf}
-
-msgbox:
-    MessageBox MB_OK|MB_ICONEXCLAMATION \
-        "WINDIR: $WINDIR $\n\
-         EXEPATH: $EXEPATH $\n\
-         long: $0$\n\
-         short: $1$\n\
-         APPDATA: $APPDATA $\n\
-         LOCALAPPDATA: $LOCALAPPDATA $\n\
-         PROFILE: $PROFILE$\n\
-         DOCUMENTS: $DOCUMENTS$\n\
-         eval: $2$\n\
-         execfile: $3$\n\
-         ARGV: $ARGV$\n\
-         ARGV_AdminRelaunch: $ARGV_AdminRelaunch$\n\
-         ARGV_Elevate: $ARGV_AdminRelaunch$\n\
-         UserInfo_AccountName: $UserInfo_AccountName$\n\
-         UserInfo_AccountType: $UserInfo_AccountType$\n\
-         UserInfo_OriginalAccountType: $UserInfo_OriginalAccountType$\n\
-         DoElevate: $DoElevate$\n\
-         "
-    goto done
-
-win9x:
-    MessageBox MB_OK "This version of Windows is not supported."
-    Abort
-
-done:
-
-    Pop $9
-    Pop $8
-    Pop $7
-    Pop $6
-    Pop $5
-    Pop $4
-    Pop $3
-    Pop $2
-    Pop $1
-    Pop $0
-FunctionEnd
-
-Function RelaunchAsAdmin
-    Push $0
-    Push $1
-uac_tryagain:
-    StrCpy $ElevationFailed 1
-    !insertmacro UAC_RunElevated
-    ${Switch} $0
-        ${Case} 0
-            ${If} $1 = 1
-                # We are the outer process.
-                Quit
-            ${EndIf}
-            ${If} $3 <> 0
-                # We are admin.
-                StrCpy $ElevationFailed 0
-                ${Break}
-            ${EndIf}
-            ${If} $1 = 3
-                # Non-admin privileges provided.
-                MessageBox MB_YESNO|MB_ICONEXCLAMATION|\
-                           MB_TOPMOST|MB_SETFOREGROUND \
-                    "Administrative privileges required.  Try again?" \
-                        /SD IDNO IDYES uac_tryagain IDNO 0
-                ${Break}
-            ${EndIf}
-
-        ${Case} 1223
-            MessageBox MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND \
-                "Failed to re-launch installer with administrative\
-                 privileges.  Try again?" \
-                    /SD IDNO IDYES uac_tryagain IDNO 0
-            ${Break}
-        ${Case} 1062
-            MessageBox MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND \
-                "Logon service not running, unable to elevate in order\
-                 to perform an administrative installation.  Try again?" \
-                    /SD IDNO IDYES uac_tryagain IDNO 0
-            ${Break}
-        ${Default}
-            MessageBox MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND \
-                "Unable to elevate.  Error: $0.  Try again?" \
-                    /SD IDNO IDYES uac_tryagain IDNO 0
-            ${Break}
-    ${EndSwitch}
-end:
-    Pop $1
-    Pop $0
-FunctionEnd
-!endif
 
 Function InstModePage_RadioButton_OnClick
     Exch $0
@@ -468,15 +282,6 @@ Function .onInit
 
     InitPluginsDir
 
-!ifdef ANA_DEBUG
-    File "/oname=$PLUGINSDIR\python27.dll" \
-         "@NSIS_DIR@\python27.dll"
-    File "/oname=$PLUGINSDIR\test-nspython.py" \
-         "@NSIS_DIR@\test-nspython.py#"
-    File "/oname=$PLUGINSDIR\elevate.exe" \
-         "@NSIS_DIR@\deps\elevate.exe"
-!endif
-
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
     SetRegView @BITS@
@@ -581,22 +386,12 @@ Function .onInit
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
 
-!ifdef ANA_DEBUG
-    Call OnInit_Debug
-!endif
-
     Pop $R2
     Pop $R1
     Pop $2
     Pop $1
     Pop $0
 FunctionEnd
-
-!ifdef ANA_DEBUG
-Function .onGUIEnd
-    nsPython::Finalize
-FunctionEnd
-!endif
 
 Function un.onInit
     # Select the correct registry to look at, depending
