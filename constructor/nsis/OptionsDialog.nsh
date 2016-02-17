@@ -1,5 +1,5 @@
 /*
-        Anaconda Custom Options Dialog
+    Custom Options Dialog
 */
 
 ;--------------------------------
