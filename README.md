@@ -3,7 +3,8 @@
 
 constructor is a tool which allows constructing an installer for
 a collection of conda packages.  Basically, it creates an Anaconda-like
-installer consisting of conda packages.
+installer consisting of conda packages.   This tool was previously
+proprietary and known as cas-installer.
 
 
 Installation:
@@ -15,7 +16,7 @@ The following command ensures that this happens:
 
     conda install -n root constructor
 
-Once installed, the cas-installer command will be available:
+Once installed, the constructor command will be available:
 
     constructor -h
 
