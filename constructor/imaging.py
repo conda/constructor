@@ -29,7 +29,7 @@ def new_background(size, color, bs=20, boxes=50):
     return im
 
 
-def welcome_image(name, version):
+def mk_welcome_image(name, version):
     font = ImageFont.truetype(ttf_path, 20)
     im = new_background(welcome_size, blue3)
     d = ImageDraw.Draw(im)
@@ -38,7 +38,7 @@ def welcome_image(name, version):
     return im
 
 
-def header_image(name, unused=None):
+def mk_header_image(name, unused=None):
     font = ImageFont.truetype(ttf_path, 20)
     im = Image.new('RGB', header_size, color=white)
     d = ImageDraw.Draw(im)
@@ -46,7 +46,7 @@ def header_image(name, unused=None):
     return im
 
 
-def icon_image(name, unused=None):
+def mk_icon_image(name, unused=None):
     font = ImageFont.truetype(ttf_path, 200)
     im = new_background(icon_size, blue3)
     d = ImageDraw.Draw(im)
@@ -56,9 +56,9 @@ def icon_image(name, unused=None):
 
 def write_images(info, dir_path):
     for tp, size, f, ext in [
-        ('welcome', welcome_size, welcome_image, '.bmp'),
-        ('header',  header_size,  header_image,  '.bmp'),
-        ('icon',    icon_size,    icon_image,    '.ico'),
+        ('welcome', welcome_size, mk_welcome_image, '.bmp'),
+        ('header',  header_size,  mk_header_image,  '.bmp'),
+        ('icon',    icon_size,    mk_icon_image,    '.ico'),
         ]:
         key = tp + '_image'
         if key in info:
