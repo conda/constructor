@@ -8,13 +8,11 @@ channels: &id1
   - http://repo.continuum.io/pkgs/free/
 
 # specifications
-specs:
-  - python
-  - grin
-  - pywin32                           [win]
-#packages:
-#  - python-2.7.11-0.tar.bz2
-#  - grin-1.2.1-py27_0.tar.bz2
+#specs:
+#  - python
+#  - grin
+#  - pywin32                           [win]
+packages: pkgs.txt
 
 # ----------------- optional -----------------
 

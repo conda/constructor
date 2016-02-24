@@ -8,6 +8,7 @@ fcp (fetch conda packages) module
 """
 from __future__ import print_function, division, absolute_import
 
+import re
 import os
 import sys
 from os.path import isdir, isfile, join
@@ -22,19 +23,32 @@ dists = None
 index = None
 
 
-def read_packages(packages):
-    global dists
-
-    res = []
-    for line in open(packages):
+url_pat = re.compile(r'''
+(?P<url>.+/)?                     # optional URL
+(?P<fn>[^/\#]+)                   # filename
+(:?\#(?P<md5>[0-9a-f]{32}))?      # optional MD5
+$                                 # EOL
+''', re.VERBOSE)
+def parse_packages(path):
+    for line in open(path):
         line = line.strip()
-        if line.startswith('#'):
+        if not line or line.startswith('#') or line == '@EXPLICIT':
             continue
-        if '=' in line:
-            res.append(line.replace('=', '-') + '.tar.bz2')
-        else:
-            res.append(line)
-    dists = res
+        m = url_pat.match(line)
+        if m is None:
+            sys.exit("Error: Could not parse: %s" % line)
+        fn = m.group('fn')
+        fn = fn.replace('=', '-')
+        if not fn.endswith('.tar.bz2'):
+            fn += '.tar.bz2'
+        yield m.group('url'), fn, m.group('md5')
+
+
+def packages(info):
+    urls = {}
+    md5s = {}
+    for url, fn, md5 in parse_packages(info['packages']):
+        print(url, fn, md5)
 
 
 def resolve(info):
@@ -108,15 +122,16 @@ def main(info, verbose=True):
     if 'specs' in info:
         resolve(info)
         sys.stdout.write('\n')
+        move_python_first()
     elif 'packages' in info:
-        read_packages(info['packages'])
+        packages(info)
     else:
         sys.exit("Error: neither 'specs' nor 'packages' defined")
 
-    move_python_first()
     if verbose:
         show(info)
     check_dists()
     fetch(info)
+
     info['_dists'] = dists
     info['_dist0'] = dists[0]
