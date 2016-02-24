@@ -2,6 +2,10 @@
 # $ conda create --name <env> --file <this file>
 # platform: osx-64
 
+python=2.7.11=0
+
+#conda=3.17.0=py27_1
+
 conda=3.17.0=py27_0
 conda-build=1.17.0=py27_0
 

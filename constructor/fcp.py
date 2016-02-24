@@ -12,6 +12,7 @@ import re
 import os
 import sys
 from os.path import isdir, isfile, join
+from pprint import pprint
 
 from conda.utils import md5_file
 from conda.fetch import fetch_index, fetch_pkg
@@ -19,13 +20,36 @@ from conda.plan import add_defaults_to_specs
 from conda.resolve import Resolve
 
 
-dists = None
-index = None
+dists = []
+index = {}
+urls = {}
+md5s = {}
+
+
+def resolve(info):
+    specs = info['specs']
+    r = Resolve(index)
+    add_defaults_to_specs(r, [], specs)
+    res = list(r.solve(specs))
+    sys.stdout.write('\n')
+
+    sort_info = {}
+    for d in res:
+        name, unused_version, unused_build = d.rsplit('-', 2)
+        sort_info[name] = d.rsplit('.tar.bz2', 1)[0]
+
+    res = map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info))
+
+    for dist in res:
+        if dist.rsplit('-', 2)[0] == 'python':
+            dists.insert(0, dist)
+        else:
+            dists.append(dist)
 
 
 url_pat = re.compile(r'''
 (?P<url>\S+/)?                    # optional URL
-(?P<fn>[^\s#]+)                   # filename
+(?P<fn>[^\s#/]+)                  # filename
 ([#](?P<md5>[0-9a-f]{32}))?       # optional MD5
 $                                 # EOL
 ''', re.VERBOSE)
@@ -44,42 +68,18 @@ def parse_packages(path):
         yield m.group('url'), fn, m.group('md5')
 
 
-def packages(info):
-    urls = {}
-    md5s = {}
+def handle_packages(info):
     for url, fn, md5 in parse_packages(info['packages']):
-        print(url, fn, md5)
-    sys.exit('XXX')
-
-
-def resolve(info):
-    global dists, index
-
-    index = fetch_index(tuple('%s/%s/' % (url.rstrip('/'), info['platform'])
-                              for url in info['channels']))
-    specs = info['specs']
-    r = Resolve(index)
-    add_defaults_to_specs(r, [], specs)
-    dists = list(r.solve(specs))
-
-    sort_info = {}
-    for d in dists:
-        name, unused_version, unused_build = d.rsplit('-', 2)
-        sort_info[name] = d.rsplit('.tar.bz2', 1)[0]
-
-    dists = map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info))
-
-
-def move_python_first():
-    global dists
-
-    res = []
-    for dist in dists:
-        if dist.rsplit('-', 2)[0] == 'python':
-            res.insert(0, dist)
+        dists.append(fn)
+        md5s[fn] = md5
+        if url:
+            urls[fn] = url
         else:
-            res.append(dist)
-    dists = res
+            try:
+                urls[fn] = index[fn]['channel']
+            except KeyError:
+                sys.exit("Error: did not find '%s' in any listed "
+                         "channels" % fn)
 
 
 def show(info):
@@ -111,6 +111,7 @@ def fetch(info):
     download_dir = info['_download_dir']
     if not isdir(download_dir):
         os.makedirs(download_dir)
+
     for fn in dists:
         path = join(download_dir, fn)
         if isfile(path) and md5_file(path) == index[fn]['md5']:
@@ -120,14 +121,19 @@ def fetch(info):
 
 
 def main(info, verbose=True):
+    if 'channels' in info:
+        global index
+        index = fetch_index(tuple('%s/%s/' % (url.rstrip('/'), info['platform'])
+                                  for url in info['channels']))
+
     if 'specs' in info:
         resolve(info)
-        sys.stdout.write('\n')
-        move_python_first()
-    elif 'packages' in info:
-        packages(info)
-    else:
-        sys.exit("Error: neither 'specs' nor 'packages' defined")
+
+    if 'packages' in info:
+        handle_packages(info)
+
+    pprint(urls)
+    pprint(md5s)
 
     if verbose:
         show(info)

@@ -8,11 +8,11 @@ channels: &id1
   - http://repo.continuum.io/pkgs/free/
 
 # specifications
-#specs:
-#  - python
-#  - grin
-#  - pywin32                           [win]
-packages: pkgs.txt
+specs:
+  - python
+  - grin
+  - pywin32                           [win]
+#packages: pkgs.txt
 
 # ----------------- optional -----------------
 
