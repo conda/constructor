@@ -3,7 +3,9 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
-
+"""
+fcp (fetch conda packages) module
+"""
 from __future__ import print_function, division, absolute_import
 
 import os
@@ -114,10 +116,10 @@ def fetch(info):
 
 
 def main(info, verbose=True):
-    set_index(info)
     if 'packages' in info:
         read_packages(info['packages'])
     else:
+        set_index(info)
         resolve(info)
         sys.stdout.write('\n')
 
@@ -126,3 +128,5 @@ def main(info, verbose=True):
         show(info)
     check_dists()
     fetch(info)
+    info['_dists'] = DISTS
+    info['_dist0'] = DISTS[0]

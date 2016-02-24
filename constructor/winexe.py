@@ -16,7 +16,6 @@ from subprocess import check_call
 from constructor.construct import ns_platform
 from constructor.utils import preprocess
 from constructor.imaging import write_images
-import constructor.common as common
 
 
 THIS_DIR = dirname(__file__)
@@ -41,8 +40,8 @@ def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
     data = read_nsi_tmpl()
     name = info['name']
-    dists0 = common.DISTS[0][:-8]
-    py_name, py_version, unused_build = dists0.rsplit('-', 2)
+    dist0 = info['_dist0'][:-8]
+    py_name, py_version, unused_build = dist0.rsplit('-', 2)
     if py_name != 'python':
         sys.exit("Error: a Python package needs to be part of the "
                  "specifications")
@@ -74,7 +73,7 @@ def make_nsi(info, dir_path):
     data = data.replace('@BITS@', str(arch))
 
     pkg_commands = []
-    for fn in common.DISTS:
+    for fn in info['_dists']:
         path = join(info['_download_dir'], fn)
         pkg_commands.append('# --> %s <--' % fn)
         pkg_commands.append('File %s' % str_esc(path))

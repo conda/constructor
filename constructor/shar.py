@@ -18,7 +18,6 @@ import conda.install
 
 from constructor.utils import preprocess, read_ascii_only
 from constructor.construct import ns_platform
-import constructor.common as common
 
 
 THIS_DIR = dirname(__file__)
@@ -44,8 +43,8 @@ def get_header(tarball, info):
     data = read_header_template()
 
     name = info['name']
-    dists0 = common.DISTS[0][:-8]
-    py_name, py_version, unused_build = dists0.rsplit('-', 2)
+    dist0 = info['_dist0'][:-8]
+    py_name, py_version, unused_build = dist0.rsplit('-', 2)
     if py_name != 'python':
         sys.exit("Error: a Python package needs to be part of the "
                  "specifications")
@@ -59,7 +58,7 @@ def get_header(tarball, info):
     data = data.replace('__DEFAULT_PREFIX__',
                         info.get('default_prefix', '$HOME/' + name.lower()))
     data = data.replace('__PLAT__', info['platform'])
-    data = data.replace('__DIST0__', dists0)
+    data = data.replace('__DIST0__', dist0)
     data = data.replace('__PY_VER__', py_version[:3])
 
     has_license = bool('license_file' in info)
@@ -68,7 +67,7 @@ def get_header(tarball, info):
         data = data.replace('__LICENSE__',
                             read_ascii_only(info['license_file']))
 
-    lines = ['install_dist %s' % (fn[:-8],) for fn in common.DISTS]
+    lines = ['install_dist %s' % (fn[:-8],) for fn in info['_dists']]
     if 'conda_default_channels' in info:
         add_condarc(lines, info)
     data = data.replace('__INSTALL_COMMANDS__', '\n'.join(lines))
@@ -92,7 +91,7 @@ def create(info):
     t = tarfile.open(tarball, 'w')
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
-    for fn in common.DISTS:
+    for fn in info['_dists']:
         t.add(join(info['_download_dir'], fn), 'tmp/' + fn)
     t.add(join(conda.install.__file__.rstrip('co')), 'tmp/install.py')
     t.add(join(THIS_DIR, 'post.py'), 'tmp/post.py')

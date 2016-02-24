@@ -10,7 +10,7 @@ import os
 import sys
 from os.path import abspath, expanduser, isdir, join
 
-import constructor.common as common
+import constructor.fcp as fcp
 import constructor.construct as construct
 
 
@@ -50,7 +50,7 @@ def main_build(dir_path, output_dir='.', verbose=True):
         if key in info:
             info[key] = abspath(join(dir_path, info[key]))
 
-    common.main(info)
+    fcp.main(info)
 
     osname, unused_arch = info['platform'].split('-')
     if osname in ('linux', 'osx'):
