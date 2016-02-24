@@ -50,7 +50,7 @@ def main_build(dir_path, output_dir='.', verbose=True):
         if key in info:
             info[key] = abspath(join(dir_path, info[key]))
 
-    fcp.main(info)
+    fcp.main(info, verbose=verbose)
 
     osname, unused_arch = info['platform'].split('-')
     if osname in ('linux', 'osx'):

@@ -18,64 +18,53 @@ from conda.plan import add_defaults_to_specs
 from conda.resolve import Resolve
 
 
-DISTS = None
-INDEX = None
+dists = None
+index = None
 
 
 def read_packages(packages):
-    global DISTS
+    global dists
 
     res = []
-    if isinstance(packages, list):
-        res = packages
-    else:
-        for line in open(packages):
-            line = line.strip()
-            if line.startswith('#'):
-                continue
-            if '=' in line:
-                res.append(line.replace('=', '-') + '.tar.bz2')
-            else:
-                res.append(line)
-    DISTS = res
-
-
-def set_index(info):
-    global INDEX
-
-    INDEX = fetch_index(tuple('%s/%s/' % (url.rstrip('/'), info['platform'])
-                              for url in info['channels']))
+    for line in open(packages):
+        line = line.strip()
+        if line.startswith('#'):
+            continue
+        if '=' in line:
+            res.append(line.replace('=', '-') + '.tar.bz2')
+        else:
+            res.append(line)
+    dists = res
 
 
 def resolve(info):
-    """
-    sets global DISTS and INDEX
-    """
-    global DISTS
+    global dists, index
 
+    index = fetch_index(tuple('%s/%s/' % (url.rstrip('/'), info['platform'])
+                              for url in info['channels']))
     specs = info['specs']
-    r = Resolve(INDEX)
+    r = Resolve(index)
     add_defaults_to_specs(r, [], specs)
-    DISTS = list(r.solve(specs))
+    dists = list(r.solve(specs))
 
     sort_info = {}
-    for d in DISTS:
+    for d in dists:
         name, unused_version, unused_build = d.rsplit('-', 2)
         sort_info[name] = d.rsplit('.tar.bz2', 1)[0]
 
-    DISTS = map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info))
+    dists = map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info))
 
 
 def move_python_first():
-    global DISTS
+    global dists
 
     res = []
-    for dist in DISTS:
+    for dist in dists:
         if dist.rsplit('-', 2)[0] == 'python':
             res.insert(0, dist)
         else:
             res.append(dist)
-    DISTS = res
+    dists = res
 
 
 def show(info):
@@ -84,14 +73,14 @@ name: %(name)s
 version: %(version)s
 platform: %(platform)s
 """ % info)
-    for fn in DISTS:
+    for fn in dists:
         print('    %s' % fn)
 
 
 def check_dists():
-    if len(DISTS) == 0:
+    if len(dists) == 0:
         sys.exit('Error: no packages specified')
-    for i, fn in enumerate(DISTS):
+    for i, fn in enumerate(dists):
         if not fn.endswith('.tar.bz2'):
             sys.exit("Error: '%s' does not end with '.tar.bz2'" % fn)
         dist = fn[:-8]
@@ -107,26 +96,27 @@ def fetch(info):
     download_dir = info['_download_dir']
     if not isdir(download_dir):
         os.makedirs(download_dir)
-    for fn in DISTS:
+    for fn in dists:
         path = join(download_dir, fn)
-        if isfile(path) and md5_file(path) == INDEX[fn]['md5']:
+        if isfile(path) and md5_file(path) == index[fn]['md5']:
             continue
         print('fetching: %s' % fn)
-        fetch_pkg(INDEX[fn], download_dir)
+        fetch_pkg(index[fn], download_dir)
 
 
 def main(info, verbose=True):
-    if 'packages' in info:
-        read_packages(info['packages'])
-    else:
-        set_index(info)
+    if 'specs' in info:
         resolve(info)
         sys.stdout.write('\n')
+    elif 'packages' in info:
+        read_packages(info['packages'])
+    else:
+        sys.exit("Error: neither 'specs' nor 'packages' defined")
 
     move_python_first()
     if verbose:
         show(info)
     check_dists()
     fetch(info)
-    info['_dists'] = DISTS
-    info['_dist0'] = DISTS[0]
+    info['_dists'] = dists
+    info['_dist0'] = dists[0]
