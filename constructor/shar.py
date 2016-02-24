@@ -93,7 +93,7 @@ def create(info):
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
     for fn in common.DISTS:
-        t.add(join(common.REPO_DIR, fn), 'tmp/' + fn)
+        t.add(join(info['_download_dir'], fn), 'tmp/' + fn)
     t.add(join(conda.install.__file__.rstrip('co')), 'tmp/install.py')
     t.add(join(THIS_DIR, 'post.py'), 'tmp/post.py')
     t.close()

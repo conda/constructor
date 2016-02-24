@@ -8,7 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
-from os.path import abspath, isdir, join
+from os.path import abspath, expanduser, isdir, join
 
 import constructor.common as common
 import constructor.construct as construct
@@ -50,6 +50,10 @@ def main_build(dir_path, output_dir='.', verbose=True):
     construct_path = join(dir_path, 'construct.yaml')
     info = construct.parse(construct_path)
     print('platform: %s' % info['platform'])
+    info['_download_dir'] = join(expanduser('~'), '.conda', 'constructor',
+                                 info['platform'])
+    if verbose:
+        print('conda packages download: %s' % info['_download_dir'])
 
     for req in 'name', 'version', 'channels':
         if req not in info:

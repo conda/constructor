@@ -8,7 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
-from os.path import expanduser, isdir, isfile, join
+from os.path import isdir, isfile, join
 
 from conda.utils import md5_file
 from conda.fetch import fetch_index, fetch_pkg
@@ -18,7 +18,6 @@ from conda.resolve import Resolve
 
 DISTS = None
 INDEX = None
-REPO_DIR = None
 
 
 def set_index(info):
@@ -85,15 +84,12 @@ def check_dists():
 
 
 def fetch(info):
-    global REPO_DIR
-
-    REPO_DIR = join(expanduser('~'), '.conda', 'constructor',
-                    info['platform'])
-    if not isdir(REPO_DIR):
-        os.makedirs(REPO_DIR)
+    download_dir = info['_download_dir']
+    if not isdir(download_dir):
+        os.makedirs(download_dir)
     for fn in DISTS:
-        path = join(REPO_DIR, fn)
+        path = join(download_dir, fn)
         if isfile(path) and md5_file(path) == INDEX[fn]['md5']:
             continue
         print('fetching: %s' % fn)
-        fetch_pkg(INDEX[fn], REPO_DIR)
+        fetch_pkg(INDEX[fn], download_dir)

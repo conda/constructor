@@ -75,7 +75,7 @@ def make_nsi(info, dir_path):
 
     pkg_commands = []
     for fn in common.DISTS:
-        path = join(common.REPO_DIR, fn)
+        path = join(info['_download_dir'], fn)
         pkg_commands.append('# --> %s <--' % fn)
         pkg_commands.append('File %s' % str_esc(path))
         pkg_commands.append('untgz::extract "-d" "$INSTDIR" '
