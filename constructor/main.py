@@ -14,21 +14,6 @@ import constructor.common as common
 import constructor.construct as construct
 
 
-def read_packages(packages):
-    res = []
-    if isinstance(packages, list):
-        res = packages
-    else:
-        for line in open(packages):
-            line = line.strip()
-            if line.startswith('#'):
-                continue
-            if '=' in line:
-                res.append(line.replace('=', '-') + '.tar.bz2')
-            else:
-                res.append(line)
-    return res
-
 
 def get_output_filename(info):
     try:
@@ -65,18 +50,7 @@ def main_build(dir_path, output_dir='.', verbose=True):
         if key in info:
             info[key] = abspath(join(dir_path, info[key]))
 
-    common.set_index(info)
-    if 'packages' in info:
-        common.DISTS = read_packages(info['packages'])
-    else:
-        common.resolve(info)
-        sys.stdout.write('\n')
-
-    common.move_python_first()
-    if verbose:
-        common.show(info)
-    common.check_dists()
-    common.fetch(info)
+    common.main(info)
 
     osname, unused_arch = info['platform'].split('-')
     if osname in ('linux', 'osx'):

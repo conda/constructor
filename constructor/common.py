@@ -20,6 +20,24 @@ DISTS = None
 INDEX = None
 
 
+def read_packages(packages):
+    global DISTS
+
+    res = []
+    if isinstance(packages, list):
+        res = packages
+    else:
+        for line in open(packages):
+            line = line.strip()
+            if line.startswith('#'):
+                continue
+            if '=' in line:
+                res.append(line.replace('=', '-') + '.tar.bz2')
+            else:
+                res.append(line)
+    DISTS = res
+
+
 def set_index(info):
     global INDEX
 
@@ -93,3 +111,18 @@ def fetch(info):
             continue
         print('fetching: %s' % fn)
         fetch_pkg(INDEX[fn], download_dir)
+
+
+def main(info, verbose=True):
+    set_index(info)
+    if 'packages' in info:
+        read_packages(info['packages'])
+    else:
+        resolve(info)
+        sys.stdout.write('\n')
+
+    move_python_first()
+    if verbose:
+        show(info)
+    check_dists()
+    fetch(info)
