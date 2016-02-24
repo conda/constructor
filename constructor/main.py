@@ -14,7 +14,7 @@ import constructor.common as common
 import constructor.construct as construct
 
 
-def read_dists(packages):
+def read_packages(packages):
     res = []
     if isinstance(packages, list):
         res = packages
@@ -56,13 +56,14 @@ def main_build(dir_path, output_dir='.', verbose=True):
             sys.exit("Required key '%s' not found in %s" % (req,
                                                             construct_path))
 
-    for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
+    for key in ('license_file', 'packages',
+                'welcome_image', 'header_image', 'icon_image'):
         if key in info:
             info[key] = abspath(join(dir_path, info[key]))
 
     common.set_index(info)
     if 'packages' in info:
-        common.DISTS = read_dists(info['packages'])
+        common.DISTS = read_packages(info['packages'])
     else:
         common.resolve(info)
         sys.stdout.write('\n')
