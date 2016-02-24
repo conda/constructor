@@ -12,7 +12,7 @@ specs:
   - python
   - grin
   - pywin32                           [win]
-#packages: pkgs.txt
+packages: pkgs.txt
 
 # ----------------- optional -----------------
 

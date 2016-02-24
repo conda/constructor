@@ -11,9 +11,11 @@ from __future__ import print_function, division, absolute_import
 import re
 import os
 import sys
+from collections import defaultdict
 from os.path import isdir, isfile, join
 from pprint import pprint
 
+from conda.compat import iteritems
 from conda.utils import md5_file
 from conda.fetch import fetch_index, fetch_pkg
 from conda.plan import add_defaults_to_specs
@@ -95,6 +97,7 @@ platform: %(platform)s
 def check_dists():
     if len(dists) == 0:
         sys.exit('Error: no packages specified')
+    map_name = defaultdict(list) # map package name to list of filenames
     for i, fn in enumerate(dists):
         if not fn.endswith('.tar.bz2'):
             sys.exit("Error: '%s' does not end with '.tar.bz2'" % fn)
@@ -103,8 +106,15 @@ def check_dists():
             name, version, build = dist.rsplit('-', 2)
         except ValueError:
             sys.exit("Error: Not a valid package filename: '%s'" % fn)
+
+        map_name[name].append(fn)
         if i == 0 and name != 'python':
             sys.exit("Error: 'python' needs to be the first package specified")
+
+    for name, files in iteritems(map_name):
+        if len(files) > 1:
+            sys.exit("Error: '%s' listed muptiple times: %s" %
+                     (name, ', '.join(files)))
 
 
 def fetch(info):
