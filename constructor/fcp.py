@@ -25,14 +25,14 @@ index = None
 
 url_pat = re.compile(r'''
 (?P<url>\S+/)?                    # optional URL
-(?P<fn>[\S^/\#]+)                 # filename
-(:?\#(?P<md5>[0-9a-f]{32}))?      # optional MD5
+(?P<fn>[^\s#]+)                   # filename
+([#](?P<md5>[0-9a-f]{32}))?       # optional MD5
 $                                 # EOL
 ''', re.VERBOSE)
 def parse_packages(path):
     for line in open(path):
         line = line.strip()
-        if not line or line.startswith('#') or line == '@EXPLICIT':
+        if not line or line.startswith(('#', '@')):
             continue
         m = url_pat.match(line)
         if m is None:
@@ -49,6 +49,7 @@ def packages(info):
     md5s = {}
     for url, fn, md5 in parse_packages(info['packages']):
         print(url, fn, md5)
+    sys.exit('XXX')
 
 
 def resolve(info):
