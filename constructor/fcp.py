@@ -24,8 +24,8 @@ index = None
 
 
 url_pat = re.compile(r'''
-(?P<url>.+/)?                     # optional URL
-(?P<fn>[^/\#]+)                   # filename
+(?P<url>\S+/)?                    # optional URL
+(?P<fn>[\S^/\#]+)                 # filename
 (:?\#(?P<md5>[0-9a-f]{32}))?      # optional MD5
 $                                 # EOL
 ''', re.VERBOSE)
