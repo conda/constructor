@@ -50,7 +50,7 @@ def make_nsi(info, dir_path):
     name = info['name']
     dists = info['_dists']
     py_name, py_version, unused_build = dists[0].rsplit('-', 2)
-    assert py_name != 'python'
+    assert py_name == 'python'
 
     arch = int(info['platform'].split('-')[1])
     license_path = abspath(info.get('license_file',
