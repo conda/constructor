@@ -55,10 +55,9 @@ url_pat = re.compile(r'''
 ([#](?P<md5>[0-9a-f]{32}))?       # optional MD5
 $                                 # EOL
 ''', re.VERBOSE)
-def parse_packages(path):
-    for line in open(path):
-        line = line.strip()
-        if not line or line.startswith(('#', '@')):
+def parse_packages(lines):
+    for line in lines:
+        if line.startswith('@'):
             continue
         m = url_pat.match(line)
         if m is None:

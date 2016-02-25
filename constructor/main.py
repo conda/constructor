@@ -10,6 +10,8 @@ import os
 import sys
 from os.path import abspath, expanduser, isdir, join
 
+from conda.install import yield_lines
+
 import constructor.fcp as fcp
 import constructor.construct as construct
 
@@ -42,13 +44,23 @@ def main_build(dir_path, output_dir='.', verbose=True):
 
     for req in 'name', 'version', 'channels':
         if req not in info:
-            sys.exit("Required key '%s' not found in %s" % (req,
-                                                            construct_path))
+            sys.exit("Error: Required key '%s' not found in %s" %
+                     (req, construct_path))
 
-    for key in ('license_file', 'packages',
-                'welcome_image', 'header_image', 'icon_image'):
+    for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
         if key in info:
             info[key] = abspath(join(dir_path, info[key]))
+
+    for key in 'specs', 'packages':
+        if key in info and isinstance(info[key], str):
+            info[key] = list(yield_lines(abspath(join(dir_path, info[key]))))
+        if not isinstance(info[key], list):
+            sys.exit("Error: Could not create list from key '%s' in %s" %
+                     (key, construct_path))
+
+        from pprint import pprint
+        print("KEY: %r" % key)
+        pprint(info[key])
 
     fcp.main(info, verbose=verbose)
 
