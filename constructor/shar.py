@@ -43,11 +43,9 @@ def get_header(tarball, info):
     data = read_header_template()
 
     name = info['name']
-    dist0 = info['_dist0'][:-8]
-    py_name, unused_version, unused_build = dist0.rsplit('-', 2)
-    if py_name != 'python':
-        sys.exit("Error: a Python package needs to be part of the "
-                 "specifications")
+    dists = [fn[:-8] for fn in info['_dists']]
+    dist0 = dists[0]
+    assert dist0.rsplit('-', 2)[0] == 'python'
 
     data = preprocess(data, ns_platform(info['platform']))
 
@@ -66,7 +64,7 @@ def get_header(tarball, info):
         data = data.replace('__LICENSE__',
                             read_ascii_only(info['license_file']))
 
-    lines = ['install_dist %s' % (fn[:-8],) for fn in info['_dists']]
+    lines = ['install_dist %s' % d for d in dists]
     if 'conda_default_channels' in info:
         add_condarc(lines, info)
     data = data.replace('__INSTALL_COMMANDS__', '\n'.join(lines))

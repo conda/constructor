@@ -36,15 +36,17 @@ def read_nsi_tmpl():
         return fi.read()
 
 
+def find_dist(dists, name):
+    
+
+
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
     data = read_nsi_tmpl()
     name = info['name']
-    dist0 = info['_dist0'][:-8]
-    py_name, py_version, unused_build = dist0.rsplit('-', 2)
-    if py_name != 'python':
-        sys.exit("Error: a Python package needs to be part of the "
-                 "specifications")
+    dists = info['_dists']
+    py_name, py_version, unused_build = dists[0].rsplit('-', 2)
+    assert py_name != 'python'
 
     arch = int(info['platform'].split('-')[1])
     license_path = abspath(info.get('license_file',
@@ -73,7 +75,7 @@ def make_nsi(info, dir_path):
     data = data.replace('@BITS@', str(arch))
 
     pkg_commands = []
-    for fn in info['_dists']:
+    for fn in dists:
         path = join(info['_download_dir'], fn)
         pkg_commands.append('# --> %s <--' % fn)
         pkg_commands.append('File %s' % str_esc(path))

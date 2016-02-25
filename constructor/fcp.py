@@ -20,6 +20,8 @@ from conda.fetch import fetch_index, fetch_pkg
 from conda.plan import add_defaults_to_specs
 from conda.resolve import Resolve
 
+from constructor.utils import name_dist
+
 
 dists = []
 index = {}
@@ -36,13 +38,13 @@ def resolve(info):
 
     sort_info = {}
     for d in res:
-        name, unused_version, unused_build = d.rsplit('-', 2)
+        name = name_dist(d)
         sort_info[name] = d.rsplit('.tar.bz2', 1)[0]
 
     res = map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info))
 
     for dist in res:
-        if dist.rsplit('-', 2)[0] == 'python':
+        if name_dist(dist) == 'python':
             dists.insert(0, dist)
         else:
             dists.append(dist)
@@ -98,18 +100,16 @@ def check_dists():
     if len(dists) == 0:
         sys.exit('Error: no packages specified')
     map_name = defaultdict(list) # map package name to list of filenames
-    for i, fn in enumerate(dists):
+    for fn in dists:
         if not fn.endswith('.tar.bz2'):
             sys.exit("Error: '%s' does not end with '.tar.bz2'" % fn)
-        dist = fn[:-8]
-        try:
-            name, version, build = dist.rsplit('-', 2)
-        except ValueError:
-            sys.exit("Error: Not a valid package filename: '%s'" % fn)
-
+        if fn.count('-') < 2:
+            sys.exit("Error: Not a valid conda package filename: '%s'" % fn)
+        name = name_dist(fn)
         map_name[name].append(fn)
-        if i == 0 and name != 'python':
-            sys.exit("Error: 'python' needs to be the first package specified")
+
+    if name_dist(dists[0]) != 'python':
+        sys.exit("Error: 'python' needs to be the first package specified")
 
     for name, files in iteritems(map_name):
         if len(files) > 1:
@@ -164,4 +164,3 @@ def main(info, verbose=True):
     fetch(info)
 
     info['_dists'] = dists
-    info['_dist0'] = dists[0]
