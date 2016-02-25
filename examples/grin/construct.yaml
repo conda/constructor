@@ -12,6 +12,8 @@ specs:
   - python
   - grin
   - pywin32                           [win]
+
+# explicitly listed packages
 packages: pkgs.txt
 
 # ----------------- optional -----------------
