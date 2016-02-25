@@ -13,7 +13,6 @@ import os
 import sys
 from collections import defaultdict
 from os.path import isdir, isfile, join
-from pprint import pprint
 
 from conda.compat import iteritems
 from conda.utils import md5_file
@@ -57,7 +56,8 @@ $                                 # EOL
 ''', re.VERBOSE)
 def parse_packages(lines):
     for line in lines:
-        if line.startswith('@'):
+        line = line.strip()
+        if not line or line.startswith(('#', '@')):
             continue
         m = url_pat.match(line)
         if m is None:
@@ -91,6 +91,7 @@ platform: %(platform)s
 """ % info)
     for fn in dists:
         print('    %s' % fn)
+    print()
 
 
 def check_dists():
@@ -156,9 +157,6 @@ def main(info, verbose=True):
 
     if 'packages' in info:
         handle_packages(info)
-
-    pprint(urls)
-    pprint(md5s)
 
     if verbose:
         show(info)

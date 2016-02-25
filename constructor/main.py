@@ -58,10 +58,6 @@ def main_build(dir_path, output_dir='.', verbose=True):
             sys.exit("Error: Could not create list from key '%s' in %s" %
                      (key, construct_path))
 
-        from pprint import pprint
-        print("KEY: %r" % key)
-        pprint(info[key])
-
     fcp.main(info, verbose=verbose)
 
     osname, unused_arch = info['platform'].split('-')
