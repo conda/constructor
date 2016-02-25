@@ -14,7 +14,7 @@ specs:
   - pywin32                           [win]
 
 # explicitly listed packages
-packages: pkgs.txt
+#packages: pkgs.txt
 
 # ----------------- optional -----------------
 
