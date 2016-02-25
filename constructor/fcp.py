@@ -124,10 +124,25 @@ def fetch(info):
 
     for fn in dists:
         path = join(download_dir, fn)
-        if isfile(path) and md5_file(path) == index[fn]['md5']:
+        url = urls.get(fn)
+        md5 = md5s.get(fn)
+        if url:
+            url_index = fetch_index((url,))
+            try:
+                info2 = url_index[fn]
+            except KeyError:
+                sys.exit("Error: no package '%s' in index" % fn)
+        else:
+            info2 = index[fn]
+
+        if md5 and md5 != info2['md5']:
+            sys.exit("Error: MD5 sum for '%s' in %s does not match remote "
+                     "index" % (fn, info.get('packages')))
+
+        if isfile(path) and md5_file(path) == info2['md5']:
             continue
         print('fetching: %s' % fn)
-        fetch_pkg(index[fn], download_dir)
+        fetch_pkg(info2, download_dir)
 
 
 def main(info, verbose=True):
