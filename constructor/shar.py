@@ -44,7 +44,7 @@ def get_header(tarball, info):
 
     name = info['name']
     dist0 = info['_dist0'][:-8]
-    py_name, py_version, unused_build = dist0.rsplit('-', 2)
+    py_name, unused_version, unused_build = dist0.rsplit('-', 2)
     if py_name != 'python':
         sys.exit("Error: a Python package needs to be part of the "
                  "specifications")
@@ -59,7 +59,6 @@ def get_header(tarball, info):
                         info.get('default_prefix', '$HOME/' + name.lower()))
     data = data.replace('__PLAT__', info['platform'])
     data = data.replace('__DIST0__', dist0)
-    data = data.replace('__PY_VER__', py_version[:3])
 
     has_license = bool('license_file' in info)
     data = data.replace('__HAS_LICENSE__', str(int(has_license)))
