@@ -8,6 +8,10 @@ import re
 import sys
 
 
+def name_dist(dist):
+    return dist.rsplit('-', 2)[0]
+
+
 def read_ascii_only(path):
     with open(path) as fi:
         data = fi.read()
