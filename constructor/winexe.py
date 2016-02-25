@@ -14,7 +14,7 @@ from os.path import abspath, dirname, isfile, join
 from subprocess import check_call
 
 from constructor.construct import ns_platform
-from constructor.utils import preprocess
+from constructor.utils import preprocess, name_dist
 from constructor.imaging import write_images
 
 
@@ -36,8 +36,12 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def find_dist(dists, name):
-    
+def find_msvc_runtime(dists):
+    # XXX can also be vs20??_runtime depending on Python version
+    for dist in dists:
+        if name_dist(dist) == 'msvc_runtime':
+            return dist
+    return None
 
 
 def make_nsi(info, dir_path):
@@ -75,15 +79,20 @@ def make_nsi(info, dir_path):
     data = data.replace('@BITS@', str(arch))
 
     pkg_commands = []
-    for fn in dists:
+    for n, fn in enumerate([find_msvc_runtime(dists)] + dists):
         path = join(info['_download_dir'], fn)
         pkg_commands.append('# --> %s <--' % fn)
         pkg_commands.append('File %s' % str_esc(path))
         pkg_commands.append('untgz::extract "-d" "$INSTDIR" '
                             '"-zbz2" "$INSTDIR\pkgs\%s"' % fn)
+        if n == 0:
+            # only extract MSVC runtimes first
+            assert 'runtime' in name_dist(fn)
+            continue
         pkg_commands.append('ExecWait \'"$INSTDIR\pythonw.exe" '
                             '"$INSTDIR\Lib\_nsis.py" postpkg\'')
         pkg_commands.append('')
+
     data = data.replace('@PKG_COMMANDS@', '\n    '.join(pkg_commands))
 
     nsi_path = join(dir_path, 'main.nsi')
