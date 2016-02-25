@@ -52,7 +52,9 @@ def main_build(dir_path, output_dir='.', verbose=True):
             info[key] = abspath(join(dir_path, info[key]))
 
     for key in 'specs', 'packages':
-        if key in info and isinstance(info[key], str):
+        if key not in info:
+            continue
+        if isinstance(info[key], str):
             info[key] = list(yield_lines(abspath(join(dir_path, info[key]))))
         if not isinstance(info[key], list):
             sys.exit("Error: Could not create list from key '%s' in %s" %
