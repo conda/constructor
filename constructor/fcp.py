@@ -129,20 +129,20 @@ def fetch(info):
         if url:
             url_index = fetch_index((url,))
             try:
-                meta = url_index[fn]
+                pkginfo = url_index[fn]
             except KeyError:
                 sys.exit("Error: no package '%s' in index" % fn)
         else:
-            meta = index[fn]
+            pkginfo = index[fn]
 
-        if md5 and md5 != meta['md5']:
+        if md5 and md5 != pkginfo['md5']:
             sys.exit("Error: MD5 sum for '%s' in %s does not match remote "
                      "index" % (fn, info.get('packages')))
 
-        if isfile(path) and md5_file(path) == meta['md5']:
+        if isfile(path) and md5_file(path) == pkginfo['md5']:
             continue
         print('fetching: %s' % fn)
-        fetch_pkg(meta, download_dir)
+        fetch_pkg(pkginfo, download_dir)
 
 
 def main(info, verbose=True):
