@@ -36,18 +36,13 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def find_msvc_runtime(dists, py_version):
-    vs_map=  {'2.7': 'vs2008_runtime',
+def find_msvc_runtimes(dists, py_version):
+    vs_map = {'2.7': 'vs2008_runtime',
               '3.4': 'vs2010_runtime',
               '3.5': 'vs2015_runtime'}
     vs_runtime = vs_map.get(py_version[:3])
-    res = []
-    for dist in dists:
-        if name_dist(dist) in (vs_runtime, 'msvc_runtime'):
-            res.append(dist)
-    if len(res) != 1:
-        sys.exit("Error: MSVC runtimes found: %s" % res)
-    return res[0]
+    return [dist for dist in dists
+            if name_dist(dist) in (vs_runtime, 'msvc_runtime')]
 
 
 def make_nsi(info, dir_path):
@@ -84,9 +79,12 @@ def make_nsi(info, dir_path):
     data = data.replace('@NSIS_DIR@', NSIS_DIR)
     data = data.replace('@BITS@', str(arch))
 
-    msvc_dist = find_msvc_runtime(dists, py_version)
+    msvc_dists = find_msvc_runtimes(dists, py_version)
+    if len(msvc_dists) != 1:
+        sys.exit("Error: MSVC runtimes found: %s" % msvc_dists)
+
     pkg_commands = []
-    for n, fn in enumerate([msvc_dist] + dists):
+    for n, fn in enumerate(msvc_dists + dists):
         path = join(info['_download_dir'], fn)
         pkg_commands.append('# --> %s <--' % fn)
         pkg_commands.append('File %s' % str_esc(path))
