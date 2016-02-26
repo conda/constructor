@@ -80,8 +80,9 @@ def make_nsi(info, dir_path):
     data = data.replace('@BITS@', str(arch))
 
     vs_dists = find_vs_runtimes(dists, py_version)
+    print("MSVC runtimes found: %s" % vs_dists)
     if len(vs_dists) != 1:
-        sys.exit("Error: MSVC runtimes found: %s" % vs_dists)
+        sys.exit("Error: number of MSVC runtimes found: %d" % len(vs_dists))
 
     pkg_commands = []
     for n, fn in enumerate(vs_dists + dists):
@@ -95,6 +96,8 @@ def make_nsi(info, dir_path):
             # by _nsis postpkg
             assert 'runtime' in name_dist(fn)
             continue
+        if n == 1:
+            assert name_dist(fn) == 'python'
         pkg_commands.append('ExecWait \'"$INSTDIR\pythonw.exe" '
                             '"$INSTDIR\Lib\_nsis.py" postpkg\'')
         pkg_commands.append('')
