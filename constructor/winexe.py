@@ -36,12 +36,18 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def find_msvc_runtime(dists):
-    # XXX can also be vs20??_runtime depending on Python version
+def find_msvc_runtime(dists, py_version):
+    vs_map=  {'2.7': 'vs2008_runtime',
+              '3.4': 'vs2010_runtime',
+              '3.5': 'vs2015_runtime'}
+    vs_runtime = vs_map.get(py_version[:3])
+    res = []
     for dist in dists:
-        if name_dist(dist) == 'msvc_runtime':
-            return dist
-    return None
+        if name_dist(dist) in (vs_runtime, 'msvc_runtime'):
+            res.append(dist)
+    if len(res) != 1:
+        sys.exit("Error: MSVC runtimes found: %s" % res)
+    return res[0]
 
 
 def make_nsi(info, dir_path):
@@ -78,15 +84,17 @@ def make_nsi(info, dir_path):
     data = data.replace('@NSIS_DIR@', NSIS_DIR)
     data = data.replace('@BITS@', str(arch))
 
+    msvc_dist = find_msvc_runtime(dists, py_version)
     pkg_commands = []
-    for n, fn in enumerate([find_msvc_runtime(dists)] + dists):
+    for n, fn in enumerate([msvc_dist] + dists):
         path = join(info['_download_dir'], fn)
         pkg_commands.append('# --> %s <--' % fn)
         pkg_commands.append('File %s' % str_esc(path))
         pkg_commands.append('untgz::extract "-d" "$INSTDIR" '
                             '"-zbz2" "$INSTDIR\pkgs\%s"' % fn)
         if n == 0:
-            # only extract MSVC runtimes first
+            # only extract MSVC runtimes first, so that Python can be used
+            # by _nsis postpkg
             assert 'runtime' in name_dist(fn)
             continue
         pkg_commands.append('ExecWait \'"$INSTDIR\pythonw.exe" '
