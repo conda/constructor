@@ -68,8 +68,3 @@ def write_images(info, dir_path):
             im = f(info['name'], info['version'])
         assert im.size == size
         im.save(join(dir_path, tp + ext))
-
-
-if __name__ == '__main__':
-    info = {'name': 'test', 'version': '0.3.1'}
-    write_images(info, 'tmp')

@@ -20,7 +20,10 @@ def main():
 
     if sys.platform == 'win32':
         import constructor.winexe as winexe
+        from constructor.tests.test_imaging import test_write_images
+
         winexe.read_nsi_tmpl()
+        test_write_images()
     else:
         import constructor.shar as shar
         shar.read_header_template()
