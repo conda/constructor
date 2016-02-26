@@ -14,7 +14,7 @@ from distutils.core import setup
 
 setup(
     name = "constructor",
-    version = "0.9.1",
+    version = "0.9.2",
     author = "Ilan Schnell",
     author_email = "ilan@continuum.io",
     license = "BSD",
