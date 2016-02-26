@@ -15,7 +15,7 @@ from os.path import dirname, getsize, join
 from conda.utils import md5_file
 import conda.install
 
-from constructor.utils import preprocess, read_ascii_only
+from constructor.utils import preprocess, read_ascii_only, name_dist
 from constructor.construct import ns_platform
 
 
@@ -44,7 +44,7 @@ def get_header(tarball, info):
     name = info['name']
     dists = [fn[:-8] for fn in info['_dists']]
     dist0 = dists[0]
-    assert dist0.rsplit('-', 2)[0] == 'python'
+    assert name_dist(dist0) == 'python'
 
     data = preprocess(data, ns_platform(info['platform']))
 
