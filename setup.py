@@ -19,7 +19,7 @@ setup(
     author_email = "ilan@continuum.io",
     license = "BSD",
     description = "create installer from conda packages",
-    packages = ['constructor'],
+    packages = ['constructor', 'constructor.tests'],
     scripts = ['bin/constructor'],
 )
 

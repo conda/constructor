@@ -119,8 +119,8 @@ def main():
         return
 
     if opts.test:
-        import constructor.test
-        constructor.test.main()
+        import constructor.tests
+        constructor.tests.main()
         return
 
     if opts.debug:
