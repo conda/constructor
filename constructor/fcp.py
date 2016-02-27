@@ -40,6 +40,33 @@ def resolve(info):
     dists.extend(d + '.tar.bz2' for d in r.graph_sort(sort_info))
 
 
+def check_duplicates():
+    map_name = defaultdict(list) # map package name to list of filenames
+    for fn in dists:
+        map_name[name_dist(fn)].append(fn)
+
+    for name, files in iteritems(map_name):
+        if len(files) > 1:
+            sys.exit("Error: '%s' listed multiple times: %s" %
+                     (name, ', '.join(files)))
+
+
+def exclude_packages(info):
+    check_duplicates()
+    for name in info.get('exclude', []):
+        for bad_char in '- =<>*':
+            if bad_char in name:
+                sys.exit("Error: did not expect '%s' in package name: %s" %
+                         name)
+        # find the package with name, and remove it
+        for dist in list(dists):
+            if name_dist(dist) == name:
+                dists.remove(dist)
+                break
+        else:
+            sys.exit("Error: no package named '%s' to remove" % name)
+
+
 url_pat = re.compile(r'''
 (?P<url>\S+/)?                    # optional URL
 (?P<fn>[^\s#/]+)                  # filename
@@ -75,33 +102,6 @@ def handle_packages(info):
             except KeyError:
                 sys.exit("Error: did not find '%s' in any listed "
                          "channels" % fn)
-
-
-def check_duplicates():
-    map_name = defaultdict(list) # map package name to list of filenames
-    for fn in dists:
-        map_name[name_dist(fn)].append(fn)
-
-    for name, files in iteritems(map_name):
-        if len(files) > 1:
-            sys.exit("Error: '%s' listed multiple times: %s" %
-                     (name, ', '.join(files)))
-
-
-def exclude_packages(info):
-    check_duplicates()
-    for name in info.get('exclude', []):
-        for bad_char in '- =<>*':
-            if bad_char in name:
-                sys.exit("Error: did not expect '%s' in package name: %s" %
-                         name)
-        # find the package with name, and remove it
-        for dist in list(dists):
-            if name_dist(dist) == name:
-                dists.remove(dist)
-                break
-        else:
-            sys.exit("Error: no package named '%s' to remove" % name)
 
 
 def move_python_first():
