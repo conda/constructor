@@ -180,8 +180,9 @@ directory.
                 continue
             fo.write("""
 `%s`: (%s)
-
+-----------------------
 %s
+
 """ % (key,
        'required' if required else 'optional',
        descr))
