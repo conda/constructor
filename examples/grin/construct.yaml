@@ -13,8 +13,12 @@ specs:
   - grin
   - pywin32                           [win]
 
+# exclude these packages (list of names)
+exclude:
+  - readline                          [unix]
+
 # explicitly listed packages
-#packages: pkgs.txt
+packages: pkgs.txt
 
 # ----------------- optional -----------------
 

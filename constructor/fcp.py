@@ -73,6 +73,8 @@ def parse_packages(lines):
 
 def handle_packages(info):
     for url, fn, md5 in parse_packages(info['packages']):
+        if fn.count('-') < 2:
+            sys.exit("Error: Not a valid conda package filename: '%s'" % fn)
         dists.append(fn)
         md5s[fn] = md5
         if url:
@@ -83,6 +85,32 @@ def handle_packages(info):
             except KeyError:
                 sys.exit("Error: did not find '%s' in any listed "
                          "channels" % fn)
+
+
+def check_duplicates():
+    map_name = defaultdict(list) # map package name to list of filenames
+    for fn in dists:
+        map_name[name_dist(fn)].append(fn)
+
+    for name, files in iteritems(map_name):
+        if len(files) > 1:
+            sys.exit("Error: '%s' listed multiple times: %s" %
+                     (name, ', '.join(files)))
+
+
+def exclude_packages(info):
+    check_duplicates()
+    for name in info.get('exclude', []):
+        for bad_char in '- =<>*':
+            if bad_char in name:
+                sys.exit("Error: did not expect '%s' in package name: %s" %
+                         name)
+        for dist in dists:
+            if name_dist(dist) == name:
+                dists.remove(dist)
+                break
+        else:
+            sys.exit("Error: no package named '%s' to remove" % name)
 
 
 def show(info):
@@ -99,22 +127,9 @@ platform: %(platform)s
 def check_dists():
     if len(dists) == 0:
         sys.exit('Error: no packages specified')
-    map_name = defaultdict(list) # map package name to list of filenames
-    for fn in dists:
-        if not fn.endswith('.tar.bz2'):
-            sys.exit("Error: '%s' does not end with '.tar.bz2'" % fn)
-        if fn.count('-') < 2:
-            sys.exit("Error: Not a valid conda package filename: '%s'" % fn)
-        name = name_dist(fn)
-        map_name[name].append(fn)
-
+    check_duplicates()
     if name_dist(dists[0]) != 'python':
         sys.exit("Error: 'python' needs to be the first package specified")
-
-    for name, files in iteritems(map_name):
-        if len(files) > 1:
-            sys.exit("Error: '%s' listed muptiple times: %s" %
-                     (name, ', '.join(files)))
 
 
 def fetch(info):
@@ -154,7 +169,7 @@ def main(info, verbose=True):
 
     if 'specs' in info:
         resolve(info)
-
+    exclude_packages(info)
     if 'packages' in info:
         handle_packages(info)
 

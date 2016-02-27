@@ -51,7 +51,7 @@ def main_build(dir_path, output_dir='.', verbose=True):
         if key in info:
             info[key] = abspath(join(dir_path, info[key]))
 
-    for key in 'specs', 'packages':
+    for key in 'specs', 'packages', 'exclude':
         if key not in info:
             continue
         if isinstance(info[key], str):
@@ -59,6 +59,7 @@ def main_build(dir_path, output_dir='.', verbose=True):
         if not isinstance(info[key], list):
             sys.exit("Error: Could not create list from key '%s' in %s" %
                      (key, construct_path))
+        info[key] = [line.strip() for line in info[key]]
 
     fcp.main(info, verbose=verbose)
 

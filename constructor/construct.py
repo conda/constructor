@@ -20,6 +20,7 @@ def ns_platform(platform):
         armv7l = bool(platform == 'linux-armv7l'),
         ppc64le = bool(platform == 'linux-ppc64le'),
         osx = platform.startswith('osx-'),
+        unix = platform.startswith(('linux-', 'osx-')),
         win = platform.startswith('win-'),
         win32 = bool(platform == 'win-32'),
         win64 = bool(platform == 'win-64'),
