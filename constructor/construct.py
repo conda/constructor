@@ -5,11 +5,30 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import re
+import sys
 
 import yaml
 
 import conda.config
 
+
+KEYS = [
+    'name',
+    'version',
+    'channels',
+    'specs',
+    'exclude',
+    'packages',
+    'sort_by_name',
+    'platform',
+    'conda_default_channels',
+    'installer_filename',
+    'license_file',
+    'default_prefix',
+    'welcome_image',
+    'header_image',
+    'icon_image',
+]
 
 
 def ns_platform(platform):
@@ -53,3 +72,14 @@ def parse(path):
     # ensure result includes 'platform' key
     info['platform'] = platform
     return info
+
+
+def verify(info):
+    for key in info:
+        if key not in KEYS:
+            sys.exit("Error: unknown key '%s' in construct.yaml" % key)
+
+    for key in 'name', 'version':
+        if key not in info:
+            sys.exit("Error: Required key '%s' not found in construct.yaml" %
+                     key)

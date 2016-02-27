@@ -36,16 +36,12 @@ def get_output_filename(info):
 def main_build(dir_path, output_dir='.', verbose=True):
     construct_path = join(dir_path, 'construct.yaml')
     info = construct.parse(construct_path)
+    construct.verify(info)
     print('platform: %s' % info['platform'])
     info['_download_dir'] = join(expanduser('~'), '.conda', 'constructor',
                                  info['platform'])
     if verbose:
         print('conda packages download: %s' % info['_download_dir'])
-
-    for req in 'name', 'version', 'channels':
-        if req not in info:
-            sys.exit("Error: Required key '%s' not found in %s" %
-                     (req, construct_path))
 
     for key in 'license_file', 'welcome_image', 'header_image', 'icon_image':
         if key in info:
