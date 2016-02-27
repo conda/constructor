@@ -6,6 +6,7 @@
 
 import re
 import sys
+from os.path import abspath
 
 import yaml
 
@@ -47,7 +48,7 @@ is contained as a result of resolving the specs for `python 2.7`.
 A list of explicit conda packages to be included, eg. `yaml-0.1.6-0.tar.bz2`.
 The packages may also be specified by their entire URL,
 eg.`https://repo.continuum.io/pkgs/free/osx-64/openssl-1.0.1k-1.tar.bz2`.
-Optionaly, the MD5 hash sum of the package, may be added after an immediate
+Optionally, the MD5 hash sum of the package, may be added after an immediate
 `#` character, eg. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 '''),
 
@@ -80,16 +81,16 @@ process.
 
     ('welcome_image',          False, str, '''
 Path to an image which is used as the welcome image for the Windows
-installer.  The image is resized to 164 x 314 pixels.
+installer.  The image is re-sized to 164 x 314 pixels.
 By default, an image is automatically generated.
 '''),
 
     ('header_image',           False, str, '''
-Like `welcome_image` for Windows, resized to 150 x 57 pixels.
+Like `welcome_image` for Windows, re-sized to 150 x 57 pixels.
 '''),
 
     ('icon_image',             False, str, '''
-Like `welcome_image` for Windows, resized to 256 x 256 pixels.
+Like `welcome_image` for Windows, re-sized to 256 x 256 pixels.
 '''),
 ]
 
@@ -161,11 +162,23 @@ def verify(info):
 
 
 def generate_doc():
-    for key, required, unused_types, descr in KEYS:
-        descr = descr.strip()
-        if descr == 'XXX':
-            continue
-        print("""
+    path = abspath('%s/../../CONSTRUCT.md5' % __file__)
+    print('generating: %s' % path)
+    with open(path, 'w') as fo:
+        fo.write('''\n
+Keys in `construct.yaml` file:
+==============================
+
+This document describes each of they keys in the `construct.yaml` file,
+which is the main configuration file of a constructor configuration
+directory.
+
+''')
+        for key, required, unused_types, descr in KEYS:
+            descr = descr.strip()
+            if descr == 'XXX':
+                continue
+            fo.write("""
 `%s`: (%s)
 
 %s
