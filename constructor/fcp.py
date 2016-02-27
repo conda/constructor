@@ -30,6 +30,8 @@ md5s = {}
 
 
 def resolve(info):
+    if not index:
+        sys.exit("Error: index is empty, maybe 'channels' are missing?")
     specs = info['specs']
     r = Resolve(index)
     add_defaults_to_specs(r, [], specs)
@@ -100,8 +102,7 @@ def handle_packages(info):
             try:
                 urls[fn] = index[fn]['channel']
             except KeyError:
-                sys.exit("Error: did not find '%s' in any listed "
-                         "channels" % fn)
+                sys.exit("Error: did not find '%s' in any channels" % fn)
 
 
 def move_python_first():
