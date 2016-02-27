@@ -148,8 +148,11 @@ def verify(info):
     for key in info:
         if key not in types_key:
             sys.exit("Error: unknown key '%s' in construct.yaml" % key)
-        if not isinstance(info[key], types_key[key]):
-            sys.exit("Error: key '%s' points to wrong type" % key)
+        elt = info[key]
+        types = types_key[key]
+        if not isinstance(elt, types):
+            sys.exit("Error: key '%s' points to %s,\n"
+                     "       expected %s" % (key, type(elt), types))
 
     for key in required_keys:
         if key not in info:
