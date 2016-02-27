@@ -166,9 +166,12 @@ def generate_doc():
         if descr == 'XXX':
             continue
         print("""
-`%s`:
-  %s
-""" % (key, '\n  '.join(descr.splitlines())))
+`%s`: (%s)
+
+%s
+""" % (key,
+       'required' if required else 'optional',
+       descr))
 
 
 if __name__ == '__main__':
