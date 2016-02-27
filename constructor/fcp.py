@@ -36,11 +36,8 @@ def resolve(info):
     res = list(r.solve(specs))
     sys.stdout.write('\n')
 
-    sort_info = {}
-    for d in res:
-        name = name_dist(d)
-        sort_info[name] = d.rsplit('.tar.bz2', 1)[0]
-    dists.extend(map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info)))
+    sort_info = {name_dist(d): d[:-8] for d in res}
+    dists.extend(d + '.tar.bz2' for d in r.graph_sort(sort_info))
 
 
 url_pat = re.compile(r'''
