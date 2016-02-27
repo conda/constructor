@@ -28,5 +28,7 @@ The `constructor` command takes an installer specification directory as its
 argument.  This directory needs to contain a file `construct.yaml`,
 which specifies the name of the installer, the conda channels to
 pull packages from, the conda packages included in the installer etc. .
+The complete list of keys in this file can be
+found <a href="./CONSTRUCT.md">here</a>.
 Also, the directory may contain some additional optional files (such as a
 license file, and image files for the Windows installer).
