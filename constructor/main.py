@@ -54,8 +54,9 @@ def main_build(dir_path, output_dir='.', verbose=True):
             info[key] = list(yield_lines(abspath(join(dir_path, info[key]))))
 
     for key in 'channels', 'specs', 'exclude', 'packages':
-        # ensure strings in those lists are stripped
-        info[key] = [line.strip() for line in info[key]]
+        if key in info:
+            # ensure strings in those lists are stripped
+            info[key] = [line.strip() for line in info[key]]
 
     fcp.main(info, verbose=verbose)
 

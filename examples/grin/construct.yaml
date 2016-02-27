@@ -1,5 +1,4 @@
-# ----------------- required -----------------
-# name and version
+# name and version (required)
 name: test
 version: 0.3.1
 
@@ -24,8 +23,6 @@ packages:
   - python-2.7.9-0.tar.bz2
 
 #sort_by_name: True
-
-# ----------------- optional -----------------
 
 # platform e.g. linux-32, osx-64, win-32 (defaults to current platform)
 #platform: linux-64
