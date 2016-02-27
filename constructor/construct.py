@@ -158,3 +158,18 @@ def verify(info):
         if key not in info:
             sys.exit("Error: Required key '%s' not found in construct.yaml" %
                      key)
+
+
+def generate_doc():
+    for key, required, unused_types, descr in KEYS:
+        descr = descr.strip()
+        if descr == 'XXX':
+            continue
+        print("""
+`%s`:
+  %s
+""" % (key, '\n  '.join(descr.splitlines())))
+
+
+if __name__ == '__main__':
+    generate_doc()
