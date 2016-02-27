@@ -173,18 +173,22 @@ This document describes each of they keys in the `construct.yaml` file,
 which is the main configuration file of a constructor configuration
 directory.
 
+All keys are optional, except otherwise noted.  Also, the keys `specs`
+and `packages` take either a list of items, or a path to a file,
+which contains one item per line (excluding lines starting with `#`).
+
 ''')
         for key, required, unused_types, descr in KEYS:
             descr = descr.strip()
             if descr == 'XXX':
                 continue
             fo.write("""
-`%s`: (%s)
------------------------
+`%s`:%s
+----------------
 %s
 
 """ % (key,
-       'required' if required else 'optional',
+       ' required' if required else '',
        descr))
 
 
