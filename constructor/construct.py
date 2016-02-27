@@ -162,7 +162,7 @@ def verify(info):
 
 
 def generate_doc():
-    path = abspath('%s/../../CONSTRUCT.md5' % __file__)
+    path = abspath('%s/../../CONSTRUCT.md' % __file__)
     print('generating: %s' % path)
     with open(path, 'w') as fo:
         fo.write('''\n
