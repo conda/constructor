@@ -94,8 +94,9 @@ process.
     ('default_prefix',         False, str, 'XXX'),
 
     ('welcome_image',          False, str, '''
-Path to an image which is used as the welcome image for the Windows
-installer.  The image is re-sized to 164 x 314 pixels.
+Path to an image (in any common image format `.png`, `.jpg`, `.tif`, etc.)
+which is used as the welcome image for the Windows installer.
+The image is re-sized to 164 x 314 pixels.
 By default, an image is automatically generated.
 '''),
 
@@ -105,6 +106,12 @@ Like `welcome_image` for Windows, re-sized to 150 x 57 pixels.
 
     ('icon_image',             False, str, '''
 Like `welcome_image` for Windows, re-sized to 256 x 256 pixels.
+'''),
+
+    ('default_image_color',    False, str, '''
+The color of the default images (when not providing explicit image files)
+used on Windows.  Possible values are `red`, `green`, `blue`, `yellow`.
+The default is `blue`.
 '''),
 ]
 

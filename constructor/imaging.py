@@ -4,6 +4,7 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
+import sys
 from os.path import dirname, join
 from random import randint
 
@@ -14,7 +15,6 @@ ttf_path = join(dirname(__file__), 'ttf', 'Vera.ttf')
 welcome_size = 164, 314
 header_size = 150, 57
 icon_size = 256, 256
-blue3 = 0x33, 0x66, 0x99
 white = 0xff, 0xff, 0xff
 
 
@@ -29,29 +29,43 @@ def new_background(size, color, bs=20, boxes=50):
     return im
 
 
-def mk_welcome_image(name, version):
+def mk_welcome_image(info):
     font = ImageFont.truetype(ttf_path, 20)
-    im = new_background(welcome_size, blue3)
+    im = new_background(welcome_size, info['_color'])
     d = ImageDraw.Draw(im)
-    d.text((20, 100), name, fill=white, font=font)
-    d.text((20, 130), version, fill=white, font=font)
+    d.text((20, 100), info['name'], fill=white, font=font)
+    d.text((20, 130), info['version'], fill=white, font=font)
     return im
 
 
-def mk_header_image(name, unused=None):
+def mk_header_image(info):
     font = ImageFont.truetype(ttf_path, 20)
     im = Image.new('RGB', header_size, color=white)
     d = ImageDraw.Draw(im)
-    d.text((20, 15), name, fill=blue3, font=font)
+    d.text((20, 15), info['name'], fill=info['_color'], font=font)
     return im
 
 
-def mk_icon_image(name, unused=None):
+def mk_icon_image(info):
     font = ImageFont.truetype(ttf_path, 200)
-    im = new_background(icon_size, blue3)
+    im = new_background(icon_size, info['_color'])
     d = ImageDraw.Draw(im)
-    d.text((60, 20), name[0], fill=white, font=font)
+    d.text((60, 20), info['name'][0], fill=white, font=font)
     return im
+
+
+def add_color_info(info):
+    color_map = {
+        'red': (0xcc, 0x33, 0x33),
+        'green': (0x33, 0x99, 0x33),
+        'blue': (0x33, 0x66, 0x99),
+        'yellow': (0xcc, 0xcc, 0x33),
+    }
+    color_name = info.get('default_image_color', 'blue')
+    try:
+        info['_color'] = color_map[color_name]
+    except KeyError:
+        sys.exit("Error: color '%s' not defined" % color_name)
 
 
 def write_images(info, dir_path):
@@ -65,6 +79,13 @@ def write_images(info, dir_path):
             im = Image.open(info[key])
             im = im.resize(size)
         else:
-            im = f(info['name'], info['version'])
+            add_color_info(info)
+            im = f(info)
         assert im.size == size
         im.save(join(dir_path, tp + ext))
+
+
+if __name__ == '__main__':
+    info = {'name': 'test', 'version': '0.3.1',
+            'default_image_color': 'yellow'}
+    write_images(info, '.')
