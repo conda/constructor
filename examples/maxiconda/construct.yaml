@@ -1,0 +1,24 @@
+name: Maxiconda
+version: 2.5.5
+
+channels:
+  - http://repo.continuum.io/pkgs/free/
+
+specs:
+  - python 3.5*
+  - nomkl
+  - numpy
+  - scipy
+  - pandas
+  - notebook
+  - matplotlib
+  - conda
+
+exclude:
+  - qt
+  - pyqt
+
+license_file: EULA.txt
+
+# Welcome image for Windows installer
+welcome_image: bird.png
