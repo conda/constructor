@@ -40,14 +40,7 @@ def resolve(info):
     for d in res:
         name = name_dist(d)
         sort_info[name] = d.rsplit('.tar.bz2', 1)[0]
-
-    res = map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info))
-
-    for dist in res:
-        if name_dist(dist) == 'python':
-            dists.insert(0, dist)
-        else:
-            dists.append(dist)
+    dists.extend(map(lambda d: d + '.tar.bz2', r.graph_sort(sort_info)))
 
 
 url_pat = re.compile(r'''
@@ -105,7 +98,8 @@ def exclude_packages(info):
             if bad_char in name:
                 sys.exit("Error: did not expect '%s' in package name: %s" %
                          name)
-        for dist in dists:
+        # find the package with name, and remove it
+        for dist in list(dists):
             if name_dist(dist) == name:
                 dists.remove(dist)
                 break
@@ -113,12 +107,20 @@ def exclude_packages(info):
             sys.exit("Error: no package named '%s' to remove" % name)
 
 
+def move_python_first():
+    for dist in list(dists):
+        if name_dist(dist) == 'python':
+            dists.remove(dist)
+            dists.insert(0, dist)
+            return
+
+
 def show(info):
     print("""
 name: %(name)s
 version: %(version)s
-platform: %(platform)s
-""" % info)
+platform: %(platform)s""" % info)
+    print("number of package: %d" % len(dists))
     for fn in dists:
         print('    %s' % fn)
     print()
@@ -128,8 +130,7 @@ def check_dists():
     if len(dists) == 0:
         sys.exit('Error: no packages specified')
     check_duplicates()
-    if name_dist(dists[0]) != 'python':
-        sys.exit("Error: 'python' needs to be the first package specified")
+    assert name_dist(dists[0]) == 'python'
 
 
 def fetch(info):
@@ -173,9 +174,13 @@ def main(info, verbose=True):
     if 'packages' in info:
         handle_packages(info)
 
+    if info.get('sort_by_name'):
+        dists.sort()
+    move_python_first()
+
     if verbose:
         show(info)
     check_dists()
     fetch(info)
 
-    info['_dists'] = dists
+    info['_dists'] = list(dists)
