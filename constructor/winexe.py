@@ -45,6 +45,29 @@ def find_vs_runtimes(dists, py_version):
             if name_dist(dist) in (vs_runtime, 'msvc_runtime')]
 
 
+def pkg_commands(download_dir, dists, py_version):
+    vs_dists = find_vs_runtimes(dists, py_version)
+    print("MSVC runtimes found: %s" % vs_dists)
+    if len(vs_dists) != 1:
+        sys.exit("Error: number of MSVC runtimes found: %d" % len(vs_dists))
+
+    for n, fn in enumerate(vs_dists + dists):
+        yield ''
+        yield '# --> %s <--' % fn
+        yield 'File %s' % str_esc(join(download_dir, fn))
+        yield ('untgz::extract "-d" "$INSTDIR" '
+               '"-zbz2" "$INSTDIR\\pkgs\\%s"' % fn)
+        if n == 0:
+            # only extract MSVC runtimes first, so that Python can be used
+            # by _nsis postpkg
+            assert 'runtime' in name_dist(fn)
+            continue
+        if n == 1:
+            assert name_dist(fn) == 'python'
+        yield ('ExecWait \'"$INSTDIR\pythonw.exe" '
+               '"$INSTDIR\\Lib\\_nsis.py" postpkg\'')
+
+
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
     name = info['name']
@@ -77,34 +100,13 @@ def make_nsi(info, dir_path):
     data = preprocess(data, ns_platform(info['platform']))
     data = fill_template(data, replace)
 
-    vs_dists = find_vs_runtimes(dists, py_version)
-    print("MSVC runtimes found: %s" % vs_dists)
-    if len(vs_dists) != 1:
-        sys.exit("Error: number of MSVC runtimes found: %d" % len(vs_dists))
-
-    pkg_commands = []
-    for n, fn in enumerate(vs_dists + dists):
-        pkg_commands.append('')
-        pkg_commands.append('# --> %s <--' % fn)
-        pkg_commands.append('File %s' %
-                            str_esc(join(info['_download_dir'], fn)))
-        pkg_commands.append('untgz::extract "-d" "$INSTDIR" '
-                            '"-zbz2" "$INSTDIR\\pkgs\\%s"' % fn)
-        if n == 0:
-            # only extract MSVC runtimes first, so that Python can be used
-            # by _nsis postpkg
-            assert 'runtime' in name_dist(fn)
-            continue
-        if n == 1:
-            assert name_dist(fn) == 'python'
-        pkg_commands.append('ExecWait \'"$INSTDIR\pythonw.exe" '
-                            '"$INSTDIR\\Lib\\_nsis.py" postpkg\'')
-
     # these are unescaped (and unquoted)
+    cmds = '\n    '.join(pkg_commands(info['_download_dir'], dists,
+                                      py_version))
     for key, value in [('NAME', name),
                        ('NSIS_DIR', NSIS_DIR),
                        ('BITS', str(arch)),
-                       ('PKG_COMMANDS', '\n    '.join(pkg_commands))]:
+                       ('PKG_COMMANDS', cmds)]:
         data = data.replace('@%s@' % key, value)
 
     nsi_path = join(dir_path, 'main.nsi')
