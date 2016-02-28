@@ -87,6 +87,7 @@ def make_nsi(info, dir_path):
     pkg_commands = []
     for n, fn in enumerate(vs_dists + dists):
         path = join(info['_download_dir'], fn)
+        pkg_commands.append('')
         pkg_commands.append('# --> %s <--' % fn)
         pkg_commands.append('File %s' % str_esc(path))
         pkg_commands.append('untgz::extract "-d" "$INSTDIR" '
@@ -100,7 +101,6 @@ def make_nsi(info, dir_path):
             assert name_dist(fn) == 'python'
         pkg_commands.append('ExecWait \'"$INSTDIR\pythonw.exe" '
                             '"$INSTDIR\Lib\_nsis.py" postpkg\'')
-        pkg_commands.append('')
 
     data = data.replace('@PKG_COMMANDS@', '\n    '.join(pkg_commands))
 
@@ -138,3 +138,13 @@ def create(info):
     print('Calling: %s' % args)
     check_call(args)
     shutil.rmtree(tmp_dir)
+
+
+if __name__ == '__main__':
+    make_nsi({'name': 'Maxi', 'version': '1.2',
+              'platform': 'win-64',
+              '_outpath': 'dummy.exe',
+              '_download_dir': 'dummy',
+              '_dists': ['python-2.7.9-0.tar.bz2',
+                         'vs2008_runtime-1.0-1.tar.bz2']},
+             '.')
