@@ -8,11 +8,12 @@ Maxiconda).
 
 We only want to construct installers which include:
   - Python 3.5 (because Python 3 is the way of the future)
+  - `conda`, so people can install additional packages
   - `numpy` (but not the MKL linked version, to safe space)
   - `scipy`, `pandas`
   - the Jupyter `notebook`
   - `matplotlib` (but not Qt and PyQt, again to safe space)
-  - `conda`, so people can install additional packages
+  - `lighttpd`, the web server, but only on Unix systems
 
 We also want to include our license file `EULA.txt`, which located in
 this directory.
