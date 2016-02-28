@@ -152,8 +152,11 @@ def select_lines(data, namespace):
 
 
 def parse(path):
-    with open(path) as fi:
-        data = fi.read()
+    try:
+        with open(path) as fi:
+            data = fi.read()
+    except IOError:
+        sys.exit("Error: could not open '%s' for reading" % path)
     # try to get the platform from the construct data
     platform = yaml.load(data).get('platform', conda.config.subdir)
     # now that we know the platform, we filter lines by selectors (if any),

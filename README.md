@@ -14,11 +14,11 @@ It is important that the `constructor` package is installed into the `root`
 conda environment (not to be confused with root user).
 The following command ensures that this happens:
 
-    conda install -n root constructor
+    $ conda install -n root constructor
 
 Once installed, the constructor command will be available:
 
-    constructor -h
+    $ constructor -h
 
 
 Usage:
