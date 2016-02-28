@@ -107,29 +107,28 @@ if [[ $BATCH == 0 ]] # interactive mode
 then
     echo "
 Welcome to __NAME__ __VERSION__"
-    if [[ __HAS_LICENSE__ == 1 ]]
-    then
-        echo -n "
+#if has_license
+    echo -n "
 In order to continue the installation process, please review the license
 agreement.
 Please, press ENTER to continue
 >>> "
-        read dummy
-        more <<EOF
+    read dummy
+    more <<EOF
 __LICENSE__
 EOF
-        echo -n "
+    echo -n "
 Do you approve the license terms? [yes|no]
 [no] >>> "
-        read ans
-        if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
-                ($ans != "y") && ($ans != "Y") ]]
-        then
-            echo "The license agreement wasn't approved, aborting installation."
-            echo "In order to approve the agreement, you need to type \"yes\"."
-            exit 2
-        fi
-    fi # HAS LICENSE
+    read ans
+    if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
+            ($ans != "y") && ($ans != "Y") ]]
+    then
+        echo "The license agreement wasn't approved, aborting installation."
+        echo "In order to approve the agreement, you need to type \"yes\"."
+        exit 2
+    fi
+#endif
 
     echo -n "
 __NAME__ will now be installed into this location:

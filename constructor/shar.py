@@ -46,7 +46,10 @@ def get_header(tarball, info):
     dist0 = dists[0]
     assert name_dist(dist0) == 'python'
 
-    data = preprocess(data, ns_platform(info['platform']))
+    has_license = bool('license_file' in info)
+    ppd = ns_platform(info['platform'])
+    ppd['has_license'] = has_license
+    data = preprocess(data, ppd)
 
     # Needs to happen first -- can be templated
     data = data.replace('__NAME__', name)
@@ -56,9 +59,6 @@ def get_header(tarball, info):
                         info.get('default_prefix', '$HOME/' + name.lower()))
     data = data.replace('__PLAT__', info['platform'])
     data = data.replace('__DIST0__', dist0)
-
-    has_license = bool('license_file' in info)
-    data = data.replace('__HAS_LICENSE__', str(int(has_license)))
     if has_license:
         data = data.replace('__LICENSE__',
                             read_ascii_only(info['license_file']))
