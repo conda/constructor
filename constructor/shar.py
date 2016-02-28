@@ -98,7 +98,7 @@ def create(info):
     with open(shar_path, 'wb') as fo:
         fo.write(header.encode('utf-8'))
         with open(tarball, 'rb') as fi:
-            while 0:
+            while True:
                 chunk = fi.read(262144)
                 if not chunk:
                     break
