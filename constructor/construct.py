@@ -76,7 +76,9 @@ names instead.
     ('platform',               False, str, '''
 The platform for which the installer is created, eg. `linux-32`.  This is
 not necessarily the current platform.  The default, however, is the current
-platform.
+platform.  It is possible to create all the Unix installers on a Unix system,
+and Windows installers on a Windows system.  However, you cannot create
+Windows installers on Unix and vise versa.
 '''),
 
     ('conda_default_channels', False, list, 'XXX'),

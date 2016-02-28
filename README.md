@@ -32,3 +32,5 @@ The complete list of keys in this file can be
 found in <a href="./CONSTRUCT.md">CONSTRUCT.md</a>.
 Also, the directory may contain some additional optional files (such as a
 license file, and image files for the Windows installer).
+An example is located
+in <a href="./examples/maxiconda">examples/maxiconda</a>.

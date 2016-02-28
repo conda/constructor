@@ -22,9 +22,13 @@ by constructor as well.
 
 Finally, to create a Maxiconda installer, you simply run (in this directory):
 
-    constructor .
+    $ constructor .
+    ...
+    $ ls -lh Maxi*
+    -rwxr-xr-x  1 ilan  staff    59M Feb 27 18:02 Maxiconda-2.5.5-MacOSX-x86_64.sh
 
+This was done on Mac OS X.
+A 60MB installer is not bad for all these packages, I would say.
 Note that `constructor` will be default create an installer for the platform
 which it is executed on.  However, it is also possible to build installers
 for other platforms, see <a href="../../CONSTRUCT.md">the platform key</a>.
-
