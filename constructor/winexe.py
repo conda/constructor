@@ -51,11 +51,9 @@ def make_nsi(info, dir_path):
     dists = info['_dists']
     py_name, py_version, unused_build = dists[0].rsplit('-', 2)
     assert py_name == 'python'
-
     arch = int(info['platform'].split('-')[1])
-    license_path = abspath(info.get('license_file',
-                                 join(NSIS_DIR, 'placeholder_license.txt')))
 
+    # these appear as __<key>__ in the template, and get escaped
     replace = {
         'NAME': name,
         'VERSION': info['version'],
@@ -65,23 +63,19 @@ def make_nsi(info, dir_path):
         'PYVERSION': py_version,
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
         'OUTFILE': info['_outpath'],
-        'LICENSEFILE': license_path,
+        'LICENSEFILE': abspath(info.get('license_file',
+                               join(NSIS_DIR, 'placeholder_license.txt'))),
     }
-    for placeholder, fn in [('HEADERIMAGE', 'header.bmp'),
-                            ('WELCOMEIMAGE', 'welcome.bmp'),
-                            ('ICONFILE', 'icon.ico')]:
-        replace[placeholder] = join(dir_path, fn)
+    for key, fn in [('HEADERIMAGE', 'header.bmp'),
+                    ('WELCOMEIMAGE', 'welcome.bmp'),
+                    ('ICONFILE', 'icon.ico')]:
+        replace[key] = join(dir_path, fn)
     for key in replace:
         replace[key] = str_esc(replace[key])
 
     data = read_nsi_tmpl()
     data = preprocess(data, ns_platform(info['platform']))
     data = fill_template(data, replace)
-
-    # these are unescaped (and unquoted)
-    data = data.replace('@NAME@', name)
-    data = data.replace('@NSIS_DIR@', NSIS_DIR)
-    data = data.replace('@BITS@', str(arch))
 
     vs_dists = find_vs_runtimes(dists, py_version)
     print("MSVC runtimes found: %s" % vs_dists)
@@ -90,12 +84,12 @@ def make_nsi(info, dir_path):
 
     pkg_commands = []
     for n, fn in enumerate(vs_dists + dists):
-        path = join(info['_download_dir'], fn)
         pkg_commands.append('')
         pkg_commands.append('# --> %s <--' % fn)
-        pkg_commands.append('File %s' % str_esc(path))
+        pkg_commands.append('File %s' %
+                            str_esc(join(info['_download_dir'], fn)))
         pkg_commands.append('untgz::extract "-d" "$INSTDIR" '
-                            '"-zbz2" "$INSTDIR\pkgs\%s"' % fn)
+                            '"-zbz2" "$INSTDIR\\pkgs\\%s"' % fn)
         if n == 0:
             # only extract MSVC runtimes first, so that Python can be used
             # by _nsis postpkg
@@ -104,9 +98,14 @@ def make_nsi(info, dir_path):
         if n == 1:
             assert name_dist(fn) == 'python'
         pkg_commands.append('ExecWait \'"$INSTDIR\pythonw.exe" '
-                            '"$INSTDIR\Lib\_nsis.py" postpkg\'')
+                            '"$INSTDIR\\Lib\\_nsis.py" postpkg\'')
 
-    data = data.replace('@PKG_COMMANDS@', '\n    '.join(pkg_commands))
+    # these are unescaped (and unquoted)
+    for key, value in [('NAME', name),
+                       ('NSIS_DIR', NSIS_DIR),
+                       ('BITS', str(arch)),
+                       ('PKG_COMMANDS', '\n    '.join(pkg_commands))]:
+        data = data.replace('@%s@' % key, value)
 
     nsi_path = join(dir_path, 'main.nsi')
     with open(nsi_path, 'w') as fo:
