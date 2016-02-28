@@ -15,7 +15,8 @@ from os.path import dirname, getsize, join
 from conda.utils import md5_file
 import conda.install
 
-from constructor.utils import preprocess, read_ascii_only, name_dist
+from constructor.utils import (preprocess, read_ascii_only, name_dist,
+                               fill_template)
 from constructor.construct import ns_platform
 
 
@@ -39,8 +40,6 @@ def add_condarc(lines, info):
 
 
 def get_header(tarball, info):
-    data = read_header_template()
-
     name = info['name']
     dists = [fn[:-8] for fn in info['_dists']]
     dist0 = dists[0]
@@ -49,36 +48,36 @@ def get_header(tarball, info):
     has_license = bool('license_file' in info)
     ppd = ns_platform(info['platform'])
     ppd['has_license'] = has_license
-    data = preprocess(data, ppd)
 
-    # Needs to happen first -- can be templated
-    data = data.replace('__NAME__', name)
-    data = data.replace('__name__', name.lower())
-    data = data.replace('__VERSION__', info['version'])
-    data = data.replace('__DEFAULT_PREFIX__',
-                        info.get('default_prefix', '$HOME/' + name.lower()))
-    data = data.replace('__PLAT__', info['platform'])
-    data = data.replace('__DIST0__', dist0)
-    if has_license:
-        data = data.replace('__LICENSE__',
-                            read_ascii_only(info['license_file']))
-
-    lines = ['install_dist %s' % d for d in dists]
+    install_lines = ['install_dist %s' % d for d in dists]
     if 'conda_default_channels' in info:
-        add_condarc(lines, info)
-    data = data.replace('__INSTALL_COMMANDS__', '\n'.join(lines))
+        add_condarc(install_lines, info)
+    # Needs to happen first -- can be templated
+    replace = {
+        'NAME': name,
+        'name': name.lower(),
+        'VERSION': info['version'],
+        'PLAT': info['platform'],
+        'DIST0': dist0,
+        'DEFAULT_PREFIX': info.get('default_prefix',
+                                   '$HOME/%s' % name.lower()),
+        'MD5': md5_file(tarball),
+        'INSTALL_COMMANDS': '\n'.join(install_lines),
+    }
+    if has_license:
+        replace['LICENSE'] = read_ascii_only(info['license_file'])
 
-    data = data.replace('__MD5__', md5_file(tarball))
-
+    data = read_header_template()
+    data = preprocess(data, ppd)
+    data = fill_template(data, replace)
     n = data.count('\n')
-    data = data.replace('__LINES__', str(n + 1))
+    data = data.replace('@@LINES@@', str(n + 1))
 
     # note that this replacement does not change the size of the header,
     # which would result into an inconsistency
     n = len(data) + getsize(tarball)
-    data = data.replace('___BYTES___', '%11d' % n)
+    data = data.replace('@@@BYTES@@@', '%11d' % n)
 
-    assert '__' not in data
     return data
 
 
@@ -99,7 +98,7 @@ def create(info):
     with open(shar_path, 'wb') as fo:
         fo.write(header.encode('utf-8'))
         with open(tarball, 'rb') as fi:
-            while True:
+            while 0:
                 chunk = fi.read(262144)
                 if not chunk:
                     break

@@ -8,6 +8,16 @@ import re
 import sys
 
 
+def fill_template(data, d):
+    pat = re.compile(r'__(\w+)__')
+
+    def replace(match):
+        key = match.group(1)
+        return d[key]
+
+    return pat.sub(replace, data)
+
+
 def name_dist(dist):
     return dist.rsplit('-', 2)[0]
 
