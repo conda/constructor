@@ -25,6 +25,9 @@ All keys are optional, except otherwise noted.  Also, the keys `specs`
 and `packages` take either a list of items, or a path to a file,
 which contains one item per line (excluding lines starting with `#`).
 
+Also note, that any line in `construct.yaml` may contain a selector at the
+end, in order to allow customization for selected platforms.
+
 '''
 
 # list of tuples (key name, required, type, description)
