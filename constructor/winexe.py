@@ -59,11 +59,11 @@ def make_nsi(info, dir_path):
 
     data = preprocess(data, ns_platform(info['platform']))
     data = data.replace('__NAME__', str_esc(name))
-    data = data.replace('__VERSION__', info['version'])
+    data = data.replace('__VERSION__', str_esc(info['version']))
     data = data.replace('__COMPANY__', str_esc(info.get('company',
                                                         'Unknown, Inc.')))
     data = data.replace('__ARCH__', str_esc('%d-bit' % arch))
-    data = data.replace('__PY_VER__', py_version[:3])
+    data = data.replace('__PY_VER__', str_esc(py_version[:3]))
     data = data.replace('__PYVERSION__', str_esc(py_version))
     data = data.replace('__PYVERSION_JUSTDIGITS__',
                         str_esc(''.join(py_version.split('.'))))
