@@ -78,6 +78,7 @@ def get_header(tarball, info):
     n = len(data) + getsize(tarball)
     data = data.replace('___BYTES___', '%11d' % n)
 
+    assert '__' not in data
     return data
 
 
