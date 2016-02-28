@@ -14,7 +14,7 @@ from os.path import abspath, dirname, isfile, join
 from subprocess import check_call
 
 from constructor.construct import ns_platform
-from constructor.utils import preprocess, name_dist
+from constructor.utils import preprocess, name_dist, fill_template
 from constructor.imaging import write_images
 
 
@@ -47,7 +47,6 @@ def find_vs_runtimes(dists, py_version):
 
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
-    data = read_nsi_tmpl()
     name = info['name']
     dists = info['_dists']
     py_name, py_version, unused_build = dists[0].rsplit('-', 2)
@@ -57,22 +56,25 @@ def make_nsi(info, dir_path):
     license_path = abspath(info.get('license_file',
                                  join(NSIS_DIR, 'placeholder_license.txt')))
 
+    replace = {
+        'NAME': str_esc(name),
+        'VERSION': str_esc(info['version']),
+        'COMPANY': str_esc(info.get('company', 'Unknown, Inc.')),
+        'ARCH': str_esc('%d-bit' % arch),
+        'PY_VER': str_esc(py_version[:3]),
+        'PYVERSION': str_esc(py_version),
+        'PYVERSION_JUSTDIGITS': str_esc(''.join(py_version.split('.'))),
+        'OUTFILE': str_esc(info['_outpath']),
+        'LICENSEFILE': str_esc(license_path),
+    }
+    for placeholder, fn in [('HEADERIMAGE', 'header.bmp'),
+                            ('WELCOMEIMAGE', 'welcome.bmp'),
+                            ('ICONFILE', 'icon.ico')]:
+        replace[placeholder] = str_esc(join(dir_path, fn))
+
+    data = read_nsi_tmpl()
     data = preprocess(data, ns_platform(info['platform']))
-    data = data.replace('__NAME__', str_esc(name))
-    data = data.replace('__VERSION__', str_esc(info['version']))
-    data = data.replace('__COMPANY__', str_esc(info.get('company',
-                                                        'Unknown, Inc.')))
-    data = data.replace('__ARCH__', str_esc('%d-bit' % arch))
-    data = data.replace('__PY_VER__', str_esc(py_version[:3]))
-    data = data.replace('__PYVERSION__', str_esc(py_version))
-    data = data.replace('__PYVERSION_JUSTDIGITS__',
-                        str_esc(''.join(py_version.split('.'))))
-    data = data.replace('__OUTFILE__', str_esc(info['_outpath']))
-    data = data.replace('__LICENSEFILE__', str_esc(license_path))
-    for placeholder, fn in [('__HEADERIMAGE__', 'header.bmp'),
-                            ('__WELCOMEIMAGE__', 'welcome.bmp'),
-                            ('__ICONFILE__', 'icon.ico')]:
-        data = data.replace(placeholder, str_esc(join(dir_path, fn)))
+    data = fill_template(data, replace)
 
     # these are unescaped (and unquoted)
     data = data.replace('@NAME@', name)
