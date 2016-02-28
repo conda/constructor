@@ -57,20 +57,22 @@ def make_nsi(info, dir_path):
                                  join(NSIS_DIR, 'placeholder_license.txt')))
 
     replace = {
-        'NAME': str_esc(name),
-        'VERSION': str_esc(info['version']),
-        'COMPANY': str_esc(info.get('company', 'Unknown, Inc.')),
-        'ARCH': str_esc('%d-bit' % arch),
-        'PY_VER': str_esc(py_version[:3]),
-        'PYVERSION': str_esc(py_version),
-        'PYVERSION_JUSTDIGITS': str_esc(''.join(py_version.split('.'))),
-        'OUTFILE': str_esc(info['_outpath']),
-        'LICENSEFILE': str_esc(license_path),
+        'NAME': name,
+        'VERSION': info['version'],
+        'COMPANY': info.get('company', 'Unknown, Inc.'),
+        'ARCH': '%d-bit' % arch,
+        'PY_VER': py_version[:3],
+        'PYVERSION': py_version,
+        'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
+        'OUTFILE': info['_outpath'],
+        'LICENSEFILE': license_path,
     }
     for placeholder, fn in [('HEADERIMAGE', 'header.bmp'),
                             ('WELCOMEIMAGE', 'welcome.bmp'),
                             ('ICONFILE', 'icon.ico')]:
-        replace[placeholder] = str_esc(join(dir_path, fn))
+        replace[placeholder] = join(dir_path, fn)
+    for key in replace:
+        replace[key] = str_esc(replace[key])
 
     data = read_nsi_tmpl()
     data = preprocess(data, ns_platform(info['platform']))
