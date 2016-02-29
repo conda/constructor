@@ -30,13 +30,16 @@ def read_header_template():
         return fi.read()
 
 
-def add_condarc(lines, info):
-    lines.append('# ----- add condarc')
-    lines.append('cat <<EOF >$PREFIX/.condarc')
-    lines.append('default_channels:')
-    for url in info['conda_default_channels']:
-        lines.append('  - %s' % url)
-    lines.append('EOF')
+def add_condarc(info):
+    channels = info.get('conda_default_channels')
+    if not channels:
+        return
+    yield '# ----- add condarc'
+    yield 'cat <<EOF >$PREFIX/.condarc'
+    yield 'default_channels:'
+    for url in channels:
+        yield '  - %s' % url
+    yield 'EOF'
 
 
 def get_header(tarball, info):
@@ -50,8 +53,7 @@ def get_header(tarball, info):
     ppd['has_license'] = has_license
 
     install_lines = ['install_dist %s' % d for d in dists]
-    if 'conda_default_channels' in info:
-        add_condarc(install_lines, info)
+    install_lines.extend(add_condarc(info))
     # Needs to happen first -- can be templated
     replace = {
         'NAME': name,
