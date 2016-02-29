@@ -9,7 +9,7 @@ from __future__ import print_function, division, absolute_import
 import sys
 
 import constructor
-from constructor.tests import test_parser
+from constructor.tests import test_parser, test_utils
 
 
 def main():
@@ -29,6 +29,7 @@ def main():
         shar.read_header_template()
 
     test_parser.test_1()
+    test_utils.main()
     print("OK")
 
 
