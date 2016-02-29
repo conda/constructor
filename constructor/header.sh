@@ -121,11 +121,16 @@ EOF
 Do you approve the license terms? [yes|no]
 [no] >>> "
     read ans
-    if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
-            ($ans != "y") && ($ans != "Y") ]]
+    while [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
+             ($ans != "no") && ($ans != "No") && ($ans != "NO") ]]
+    do
+        echo -n "Please answer 'yes' or 'no':
+>>> "
+        read ans
+    done
+    if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") ]]
     then
         echo "The license agreement wasn't approved, aborting installation."
-        echo "In order to approve the agreement, you need to type \"yes\"."
         exit 2
     fi
 #endif
