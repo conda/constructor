@@ -78,6 +78,7 @@ def get_header(tarball, info):
     # which would result into an inconsistency
     n = len(data) + getsize(tarball)
     data = data.replace('@SIZE_BYTES@', '%12d' % n)
+    assert len(data) + getsize(tarball) == n
 
     return data
 
