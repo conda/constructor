@@ -51,11 +51,11 @@ is contained as a result of resolving the specs for `python 2.7`.
 
 `packages`:
 ----------------
-A list of explicit conda packages to be included, eg. `yaml-0.1.6-0.tar.bz2`.
+A list of explicit conda packages to be included, e.g. `yaml-0.1.6-0.tar.bz2`.
 The packages may also be specified by their entire URL,
-eg.`https://repo.continuum.io/pkgs/free/osx-64/openssl-1.0.1k-1.tar.bz2`.
+e.g.`https://repo.continuum.io/pkgs/free/osx-64/openssl-1.0.1k-1.tar.bz2`.
 Optionally, the MD5 hash sum of the package, may be added after an immediate
-`#` character, eg. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
+`#` character, e.g. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 
 
 `sort_by_name`:
@@ -68,7 +68,7 @@ names instead.
 
 `platform`:
 ----------------
-The platform for which the installer is created, eg. `linux-32`.  This is
+The platform for which the installer is created, e.g. `linux-32`.  This is
 not necessarily the current platform.  The default, however, is the current
 platform.  It is possible to create all the Unix installers on a Unix system,
 and Windows installers on a Windows system.  However, you cannot create
