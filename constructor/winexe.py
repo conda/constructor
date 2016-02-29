@@ -71,6 +71,7 @@ def pkg_commands(download_dir, dists, py_version):
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
     name = info['name']
+    download_dir = info['_download_dir']
     dists = info['_dists']
     py_name, py_version, unused_build = dists[0].rsplit('-', 2)
     assert py_name == 'python'
@@ -101,8 +102,7 @@ def make_nsi(info, dir_path):
     data = fill_template(data, replace)
 
     # these are unescaped (and unquoted)
-    cmds = '\n    '.join(pkg_commands(info['_download_dir'], dists,
-                                      py_version))
+    cmds = '\n    '.join(pkg_commands(download_dir, dists, py_version))
     for key, value in [('NAME', name),
                        ('NSIS_DIR', NSIS_DIR),
                        ('BITS', str(arch)),
