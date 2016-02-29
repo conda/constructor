@@ -8,6 +8,8 @@ from __future__ import print_function, division, absolute_import
 
 import sys
 
+import conda
+
 import constructor
 from constructor.tests import test_parser, test_utils
 
@@ -16,6 +18,7 @@ def main():
     print("sys.prefix: %s" % sys.prefix)
     print("sys.version: %s ..." % (sys.version[:40],))
     print('constructor version:', constructor.__version__)
+    print('conda version:', conda.__version__)
     print('location:', constructor.__file__)
 
     if sys.platform == 'win32':
