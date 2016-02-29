@@ -103,11 +103,11 @@ def make_nsi(info, dir_path):
 
     # these are unescaped (and unquoted)
     cmds = '\n    '.join(pkg_commands(download_dir, dists, py_version))
-    for key, value in [('NAME', name),
-                       ('NSIS_DIR', NSIS_DIR),
-                       ('BITS', str(arch)),
-                       ('PKG_COMMANDS', cmds)]:
-        data = data.replace('@%s@' % key, value)
+    for key, value in [('@NAME@', name),
+                       ('@NSIS_DIR@', NSIS_DIR),
+                       ('@BITS@', str(arch)),
+                       ('@PKG_COMMANDS@', cmds)]:
+        data = data.replace(key, value)
 
     nsi_path = join(dir_path, 'main.nsi')
     with open(nsi_path, 'w') as fo:

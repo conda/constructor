@@ -32,14 +32,13 @@ def read_header_template():
 
 def add_condarc(info):
     channels = info.get('conda_default_channels')
-    if not channels:
-        return
-    yield '# ----- add condarc'
-    yield 'cat <<EOF >$PREFIX/.condarc'
-    yield 'default_channels:'
-    for url in channels:
-        yield '  - %s' % url
-    yield 'EOF'
+    if channels:
+        yield '# ----- add condarc'
+        yield 'cat <<EOF >$PREFIX/.condarc'
+        yield 'default_channels:'
+        for url in channels:
+            yield '  - %s' % url
+        yield 'EOF'
 
 
 def get_header(tarball, info):
