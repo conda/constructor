@@ -7,7 +7,7 @@ channels:
 specs:
   - python 3.5*
   - conda
-  - nomkl
+  - nomkl                                [not win]
   - numpy
   - scipy
   - pandas
