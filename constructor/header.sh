@@ -3,8 +3,8 @@
 # NAME:  __NAME__
 # VER:   __VERSION__
 # PLAT:  __PLAT__
-# BYTES: @@@BYTES@@@
-# LINES: @@LINES@@
+# BYTES: @SIZE_BYTES@
+# LINES: @LINES@
 # MD5:   __MD5__
 
 #if osx
@@ -97,9 +97,9 @@ fi
 #endif
 
 # verify the size of the installer
-wc -c "$THIS_PATH" | grep @@@BYTES@@@ >/dev/null
+wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null
 if (( $? )); then
-    echo "ERROR: size of $THIS_FILE should be @@@BYTES@@@ bytes" >&2
+    echo "ERROR: size of $THIS_FILE should be @SIZE_BYTES@ bytes" >&2
     exit 1
 fi
 
@@ -178,9 +178,9 @@ echo "PREFIX=$PREFIX"
 
 # verify the MD5 sum of the tarball appended to this header
 #if osx
-MD5=$(tail -n +@@LINES@@ $THIS_PATH | md5)
+MD5=$(tail -n +@LINES@ $THIS_PATH | md5)
 #else
-MD5=$(tail -n +@@LINES@@ $THIS_PATH | md5sum -)
+MD5=$(tail -n +@LINES@ $THIS_PATH | md5sum -)
 #endif
 echo $MD5 | grep __MD5__ >/dev/null
 if (( $? )); then
@@ -193,9 +193,9 @@ fi
 # for all the packages which get installed below
 cd $PREFIX
 
-tail -n +@@LINES@@ $THIS_PATH | tar xf -
+tail -n +@LINES@ $THIS_PATH | tar xf -
 if (( $? )); then
-    echo "ERROR: could not extract tar starting at line @@LINES@@" >&2
+    echo "ERROR: could not extract tar starting at line @LINES@" >&2
     exit 1
 fi
 

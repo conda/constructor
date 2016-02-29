@@ -72,12 +72,12 @@ def get_header(tarball, info):
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
     n = data.count('\n')
-    data = data.replace('@@LINES@@', str(n + 1))
+    data = data.replace('@LINES@', str(n + 1))
 
     # note that this replacement does not change the size of the header,
     # which would result into an inconsistency
     n = len(data) + getsize(tarball)
-    data = data.replace('@@@BYTES@@@', '%11d' % n)
+    data = data.replace('@SIZE_BYTES@', '%12d' % n)
 
     return data
 
