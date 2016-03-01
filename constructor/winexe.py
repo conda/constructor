@@ -75,7 +75,7 @@ def make_nsi(info, dir_path):
     dists = info['_dists']
     py_name, py_version, unused_build = dists[0].rsplit('-', 2)
     assert py_name == 'python'
-    arch = int(info['platform'].split('-')[1])
+    arch = int(info['_platform'].split('-')[1])
 
     # these appear as __<key>__ in the template, and get escaped
     replace = {
@@ -98,7 +98,7 @@ def make_nsi(info, dir_path):
         replace[key] = str_esc(replace[key])
 
     data = read_nsi_tmpl()
-    data = preprocess(data, ns_platform(info['platform']))
+    data = preprocess(data, ns_platform(info['_platform']))
     data = fill_template(data, replace)
 
     # these are unescaped (and unquoted)
@@ -147,7 +147,7 @@ def create(info):
 
 if __name__ == '__main__':
     make_nsi({'name': 'Maxi', 'version': '1.2',
-              'platform': 'win-64',
+              '_platform': 'win-64',
               '_outpath': 'dummy.exe',
               '_download_dir': 'dummy',
               '_dists': ['python-2.7.9-0.tar.bz2',

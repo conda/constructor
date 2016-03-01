@@ -10,6 +10,7 @@ import os
 import sys
 from os.path import abspath, expanduser, isdir, join
 
+from conda.config import subdir as cc_platform
 from conda.install import yield_lines
 
 import constructor.fcp as fcp
@@ -23,7 +24,7 @@ def get_output_filename(info):
     except KeyError:
         pass
 
-    osname, arch = info['platform'].split('-')
+    osname, arch = info['_platform'].split('-')
     os_map = {'linux': 'Linux', 'osx': 'MacOSX', 'win': 'Windows'}
     arch_name_map = {'64': 'x86_64', '32': 'x86'}
     ext = 'exe' if osname == 'win' else 'sh'
@@ -33,13 +34,14 @@ def get_output_filename(info):
                             ext)
 
 
-def main_build(dir_path, output_dir='.', verbose=True):
+def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
+    print('platform: %s' % platform)
     construct_path = join(dir_path, 'construct.yaml')
-    info = construct.parse(construct_path)
+    info = construct.parse(construct_path, platform)
     construct.verify(info)
-    print('platform: %s' % info['platform'])
+    info['_platform'] = platform
     info['_download_dir'] = join(expanduser('~'), '.conda', 'constructor',
-                                 info['platform'])
+                                 platform)
     if verbose:
         print('conda packages download: %s' % info['_download_dir'])
 
@@ -60,7 +62,7 @@ def main_build(dir_path, output_dir='.', verbose=True):
 
     fcp.main(info, verbose=verbose)
 
-    osname, unused_arch = info['platform'].split('-')
+    osname, unused_arch = platform.split('-')
     if osname in ('linux', 'osx'):
         if sys.platform == 'win32':
             sys.exit("Error: Cannot create .sh installer on Windows platform.")
@@ -98,6 +100,12 @@ def main():
                       'to, defaults to CWD (%default)',
                  metavar='PATH')
 
+    p.add_option('--platform',
+                 action="store",
+                 default=cc_platform,
+                 help="the platform for which installer is for, "
+                      "defaults to '%default'")
+
     p.add_option('--test',
                  help="perform some self tests and exit",
                  action="store_true")
@@ -132,7 +140,7 @@ def main():
     if not isdir(dir_path):
         p.error("no such directory: %s" % dir_path)
 
-    main_build(dir_path, output_dir=opts.output_dir,
+    main_build(dir_path, output_dir=opts.output_dir, platform=opts.platform,
                verbose=opts.verbose)
 
 

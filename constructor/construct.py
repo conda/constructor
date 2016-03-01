@@ -10,8 +10,6 @@ from os.path import abspath
 
 import yaml
 
-import conda.config
-
 
 PREABLE = '''\n
 Keys in `construct.yaml` file:
@@ -76,19 +74,11 @@ of the packages to be installed.  This option allows sorting by the package
 names instead.
 '''),
 
-    ('platform',               False, str, '''
-The platform for which the installer is created, e.g. `linux-32`.  This is
-not necessarily the current platform.  The default, however, is the current
-platform.  It is possible to create all the Unix installers on a Unix system,
-and Windows installers on a Windows system.  However, you cannot create
-Windows installers on Unix and vise versa.
-'''),
-
     ('conda_default_channels', False, list, 'XXX'),
 
     ('installer_filename',     False, str, '''
 The filename of the installer being created.  A reasonable default filename
-will determined by the `name`, `version`, `platform` and installer type.
+will determined by the `name`, `version`, platform and installer type.
 '''),
 
     ('license_file',           False, str, '''
@@ -151,20 +141,13 @@ def select_lines(data, namespace):
     return '\n'.join(lines) + '\n'
 
 
-def parse(path):
+def parse(path, platform):
     try:
         with open(path) as fi:
             data = fi.read()
     except IOError:
         sys.exit("Error: could not open '%s' for reading" % path)
-    # try to get the platform from the construct data
-    platform = yaml.load(data).get('platform', conda.config.subdir)
-    # now that we know the platform, we filter lines by selectors (if any),
-    # and get the final result
-    info = yaml.load(select_lines(data, ns_platform(platform)))
-    # ensure result includes 'platform' key
-    info['platform'] = platform
-    return info
+    return yaml.load(select_lines(data, ns_platform(platform)))
 
 
 def verify(info):

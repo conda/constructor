@@ -48,7 +48,7 @@ def get_header(tarball, info):
     assert name_dist(dist0) == 'python'
 
     has_license = bool('license_file' in info)
-    ppd = ns_platform(info['platform'])
+    ppd = ns_platform(info['_platform'])
     ppd['has_license'] = has_license
 
     install_lines = ['install_dist %s' % d for d in dists]
@@ -58,7 +58,7 @@ def get_header(tarball, info):
         'NAME': name,
         'name': name.lower(),
         'VERSION': info['version'],
-        'PLAT': info['platform'],
+        'PLAT': info['_platform'],
         'DIST0': dist0,
         'DEFAULT_PREFIX': info.get('default_prefix',
                                    '$HOME/%s' % name.lower()),

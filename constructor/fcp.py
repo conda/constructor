@@ -117,7 +117,7 @@ def show(info):
     print("""
 name: %(name)s
 version: %(version)s
-platform: %(platform)s""" % info)
+platform: %(_platform)s""" % info)
     print("number of package: %d" % len(dists))
     for fn in dists:
         print('    %s' % fn)
@@ -163,8 +163,8 @@ def main(info, verbose=True):
     if 'channels' in info:
         global index
         index = fetch_index(
-                      tuple('%s/%s/' % (url.rstrip('/'), info['platform'])
-                            for url in info['channels']))
+                  tuple('%s/%s/' % (url.rstrip('/'), info['_platform'])
+                        for url in info['channels']))
 
     if 'specs' in info:
         resolve(info)
