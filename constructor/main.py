@@ -36,6 +36,23 @@ def get_output_filename(info):
 
 def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
     print('platform: %s' % platform)
+    try:
+        osname, unused_arch = platform.split('-')
+    except ValueError:
+        sys.exit("Error: invalid platform string '%s'" % platform)
+
+    if osname in ('linux', 'osx'):
+        if sys.platform == 'win32':
+            sys.exit("Error: Cannot create .sh installer on Windows platform.")
+        from constructor.shar import create
+    elif osname == 'win':
+        if sys.platform != 'win32':
+            sys.exit("Error: Cannot create Windows .exe installer on "
+                     "non-Windows platform.")
+        from constructor.winexe import create
+    else:
+        sys.exit("Error: invalid OS name '%s'" % osname)
+
     construct_path = join(dir_path, 'construct.yaml')
     info = construct.parse(construct_path, platform)
     construct.verify(info)
@@ -62,25 +79,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
 
     fcp.main(info, verbose=verbose)
 
-    osname, unused_arch = platform.split('-')
-    if osname in ('linux', 'osx'):
-        if sys.platform == 'win32':
-            sys.exit("Error: Cannot create .sh installer on Windows platform.")
-        from constructor.shar import create
-
-    elif osname == 'win':
-        if sys.platform != 'win32':
-            sys.exit("Error: Cannot create Windows .exe installer on "
-                     "non-Windows platform.")
-        from constructor.winexe import create
-
-    else:
-        raise
-
-    outpath = abspath(join(output_dir, get_output_filename(info)))
-    info['_outpath'] = outpath
+    info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
     create(info)
-    print('Succussfully created %r.' % outpath)
+    print("Succussfully created '%(_outpath)s'." % info)
 
 
 def main():
