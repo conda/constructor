@@ -9,7 +9,7 @@ Maxiconda).
 We only want to construct installers which include:
   - Python 3.5 (because Python 3 is the way of the future)
   - `conda`, so people can install additional packages
-  - `numpy` (but not the MKL linked version, to safe space)
+  - `numpy` (but not the MKL linked version, to save space)
   - `scipy`, `pandas`
   - the Jupyter `notebook`
   - `matplotlib` (but not Qt and PyQt, again to safe space)
