@@ -66,19 +66,10 @@ of the packages to be installed.  This option allows sorting by the package
 names instead.
 
 
-`platform`:
-----------------
-The platform for which the installer is created, e.g. `linux-32`.  This is
-not necessarily the current platform.  The default, however, is the current
-platform.  It is possible to create all the Unix installers on a Unix system,
-and Windows installers on a Windows system.  However, you cannot create
-Windows installers on Unix and vise versa.
-
-
 `installer_filename`:
 ----------------
 The filename of the installer being created.  A reasonable default filename
-will determined by the `name`, `version`, `platform` and installer type.
+will determined by the `name`, `version`, platform and installer type.
 
 
 `license_file`:
