@@ -10,11 +10,12 @@ channels: &id1
 specs:
   - python
   - grin
-  - pywin32                           [win]
 
 # exclude these packages (list of names)
 exclude:
+  - openssl                           [unix]
   - readline                          [unix]
+  - tk                                [unix]
   - python
 
 # explicitly listed packages
