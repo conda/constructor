@@ -27,6 +27,7 @@ def main():
         from constructor.tests.test_imaging import test_write_images
 
         print('pillow version: %s' % PIL.PILLOW_VERSION)
+        winexe.verify_nsis_install()
         winexe.read_nsi_tmpl()
         test_write_images()
     else:
