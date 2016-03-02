@@ -23,7 +23,7 @@ exclude:
 packages:
   - python-2.7.9-0.tar.bz2
 
-#sort_by_name: True
+#install_in_dependency_order: True
 
 # The conda default channels which are used when running a conda which
 # was installed be the constructor created (requires conda in the

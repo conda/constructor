@@ -38,8 +38,11 @@ def resolve(info):
     res = list(r.solve(specs))
     sys.stdout.write('\n')
 
-    sort_info = {name_dist(d): d[:-8] for d in res}
-    dists.extend(d + '.tar.bz2' for d in r.graph_sort(sort_info))
+    if 'install_in_dependency_order' in info:
+        sort_info = {name_dist(d): d[:-8] for d in res}
+        dists.extend(d + '.tar.bz2' for d in r.graph_sort(sort_info))
+    else:
+        dists.extend(res)
 
 
 def check_duplicates():
@@ -172,7 +175,7 @@ def main(info, verbose=True):
     if 'packages' in info:
         handle_packages(info)
 
-    if info.get('sort_by_name'):
+    if not info.get('install_in_dependency_order'):
         dists.sort()
     move_python_first()
 

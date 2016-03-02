@@ -58,12 +58,12 @@ Optionally, the MD5 hash sum of the package, may be added after an immediate
 `#` character, e.g. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 
 
-`sort_by_name`:
+`install_in_dependency_order`:
 ----------------
-By default packages are sorted by install dependency order (unless the
-explicit list in `packages` is used.  Python is always moved to the front
-of the packages to be installed.  This option allows sorting by the package
-names instead.
+By default the conda packages included in the created installer are installed
+in alphabetical order, Python is always installed first for technical
+reasons.  Using this option, the packages are installed in their dependency
+order (unless the explicit list in `packages` is used).
 
 
 `installer_filename`:
