@@ -12,7 +12,7 @@ We only want to construct installers which include:
   - `numpy` (but not the MKL linked version, to save space)
   - `scipy`, `pandas`
   - the Jupyter `notebook`
-  - `matplotlib` (but not Qt and PyQt, again to safe space)
+  - `matplotlib` (but not Qt and PyQt, again to save space)
   - `lighttpd`, the web server, but only on Unix systems
 
 We also want to include our license file `EULA.txt`, which located in
