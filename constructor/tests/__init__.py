@@ -22,9 +22,11 @@ def main():
     print('location:', constructor.__file__)
 
     if sys.platform == 'win32':
+        import PIL
         import constructor.winexe as winexe
         from constructor.tests.test_imaging import test_write_images
 
+        print('pillow version: %s' % PIL.PILLOW_VERSION)
         winexe.read_nsi_tmpl()
         test_write_images()
     else:
