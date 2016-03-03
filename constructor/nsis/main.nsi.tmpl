@@ -28,6 +28,7 @@
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
+!define DEFAULT_PREFIX __DEFAULT_PREFIX__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})"
 !define UNINSTREG "Software\Microsoft\Windows\CurrentVersion\
@@ -372,7 +373,7 @@ Function .onInit
     ${If} $IsDomainUser = 0
         StrCpy $INSTDIR_JUSTME "$Profile\${NAME}"
     ${ElseIf} $IsDomainUser = 1
-        StrCpy $INSTDIR_JUSTME "$LocalAppData\Continuum\${NAME}"
+        StrCpy $INSTDIR_JUSTME ${DEFAULT_PREFIX}
     ${Else}
         # Should never happen; indicates a logic error above.
         MessageBox MB_OK "Internal error: IsUserDomain not set properly!"
