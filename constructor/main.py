@@ -55,8 +55,6 @@ def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
 
     construct_path = join(dir_path, 'construct.yaml')
     info = construct.parse(construct_path, platform)
-    if 'version' in info:
-        info['version'] = str(info['version'])
     construct.verify(info)
     info['_platform'] = platform
     info['_download_dir'] = join(expanduser('~'), '.conda', 'constructor',

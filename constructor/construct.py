@@ -147,7 +147,12 @@ def parse(path, platform):
             data = fi.read()
     except IOError:
         sys.exit("Error: could not open '%s' for reading" % path)
-    return yaml.load(select_lines(data, ns_platform(platform)))
+    res = yaml.load(select_lines(data, ns_platform(platform)))
+    try:
+        res['version'] = str(res['version'])
+    except KeyError:
+        pass
+    return res
 
 
 def verify(info):
