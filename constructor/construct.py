@@ -86,6 +86,14 @@ Path to the license file being displayed by the installer during the install
 process.
 '''),
 
+    ('pre_install',            False, str, '''
+Path to a pre install (bash - Unix only) script.
+'''),
+
+    ('post_install',           False, str, '''
+Path to a post install (bash - Unix only) script.
+'''),
+
     ('default_prefix',         False, str, 'XXX'),
 
     ('welcome_image',          False, str, '''

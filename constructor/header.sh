@@ -204,6 +204,14 @@ if (( $? )); then
     exit 1
 fi
 
+#if has_pre_install
+bash "$PREFIX/tmp/pre_install.sh"
+if (( $? )); then
+    echo "ERROR: executing pre_install.sh failed"
+    exit 1
+fi
+#endif
+
 PYTHON="$PREFIX/bin/python"
 MSGS=$PREFIX/.messages.txt
 touch $MSGS
@@ -233,6 +241,14 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
 }
 
 __INSTALL_COMMANDS__
+
+#if has_post_install
+bash "$PREFIX/tmp/post_install.sh"
+if (( $? )); then
+    echo "ERROR: executing post_install.sh failed"
+    exit 1
+fi
+#endif
 
 cat $MSGS
 rm -rf $PREFIX/tmp $MSGS

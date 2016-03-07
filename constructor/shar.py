@@ -50,6 +50,8 @@ def get_header(tarball, info):
     has_license = bool('license_file' in info)
     ppd = ns_platform(info['_platform'])
     ppd['has_license'] = has_license
+    for key in 'pre_install', 'post_install':
+        ppd['has_%s' % key] = bool(key in info)
 
     install_lines = ['install_dist %s' % d for d in dists]
     install_lines.extend(add_condarc(info))
@@ -93,6 +95,9 @@ def create(info):
         t.add(join(info['_download_dir'], fn), 'tmp/' + fn)
     t.add(join(conda.install.__file__.rstrip('co')), 'tmp/install.py')
     t.add(join(THIS_DIR, 'post.py'), 'tmp/post.py')
+    for key in 'pre_install', 'post_install':
+        if key in info:
+            t.add(info[key], 'tmp/%s.sh' % key)
     t.close()
 
     header = get_header(tarball, info)
