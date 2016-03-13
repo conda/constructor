@@ -1,6 +1,7 @@
 2016-XX-XX   1.1.0:
 -------------------
   * add support for pre and post install scripts on Unix
+  * fix issues related to non x86 platforms
 
 
 2016-03-02   1.0.0:
