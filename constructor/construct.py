@@ -120,17 +120,20 @@ The default is `blue`.
 
 
 def ns_platform(platform):
+    p = platform
     return dict(
-        linux = platform.startswith('linux-'),
-        linux32 = bool(platform == 'linux-32'),
-        linux64 = bool(platform == 'linux-64'),
-        armv7l = bool(platform == 'linux-armv7l'),
-        ppc64le = bool(platform == 'linux-ppc64le'),
-        osx = platform.startswith('osx-'),
-        unix = platform.startswith(('linux-', 'osx-')),
-        win = platform.startswith('win-'),
-        win32 = bool(platform == 'win-32'),
-        win64 = bool(platform == 'win-64'),
+        linux = p.startswith('linux-'),
+        linux32 = bool(p == 'linux-32' or p == 'linux-armv7l'),
+        linux64 = bool(p == 'linux-64' or p == 'linux-ppc64le'),
+        armv7l = bool(p == 'linux-armv7l'),
+        ppc64le = bool(p == 'linux-ppc64le'),
+        x86 = p.endswith(('-32', '-64')),
+        x86_64 = p.endswith('-64'),
+        osx = p.startswith('osx-'),
+        unix = p.startswith(('linux-', 'osx-')),
+        win = p.startswith('win-'),
+        win32 = bool(p == 'win-32'),
+        win64 = bool(p == 'win-64'),
     )
 
 

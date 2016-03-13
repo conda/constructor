@@ -59,7 +59,7 @@ done
 
 saved_cmdline="$*"
 
-#if linux32
+#if x86 and not x86_64
 if [[ `uname -m` == 'x86_64' ]]; then
     echo -n "WARNING:
     Your system is x86_64, but you are trying to install a x86 (32-bit)
@@ -79,7 +79,7 @@ if [[ `uname -m` == 'x86_64' ]]; then
 fi
 #endif
 
-#if linux64
+#if x86_64
 if [[ `uname -m` != 'x86_64' ]]; then
     echo -n "WARNING:
     Your operating system appears not to be 64-bit, but you are trying to
