@@ -62,11 +62,11 @@ saved_cmdline="$*"
 #if x86 and not x86_64
 if [[ `uname -m` == 'x86_64' ]]; then
     echo -n "WARNING:
-    Your system is x86_64, but you are trying to install a x86 (32-bit)
+    Your system is x86_64, but you are trying to install an x86 (32-bit)
     version of __NAME__.  Unless you have the necessary 32-bit libraries
     installed, __NAME__ will not work.
     We STRONGLY recommend installing the x86_64 version of __NAME__ on
-    a x86_64 system.
+    an x86_64 system.
     Are sure you want to continue the installation? [yes|no]
 [no] >>> "
     read ans
