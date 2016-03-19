@@ -141,7 +141,7 @@ $PREFIX
 
   - Press ENTER to confirm the location
   - Press CTRL-C to abort the installation
-  - Or specify an different location below
+  - Or specify a different location below
 
 [$PREFIX] >>> "
     read user_prefix
