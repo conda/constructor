@@ -10,7 +10,7 @@ import os
 import sys
 import shutil
 import tempfile
-from os.path import abspath, dirname, isfile, join, expandvars
+from os.path import abspath, dirname, isfile, join
 from subprocess import check_call
 
 from constructor.construct import ns_platform
@@ -89,10 +89,10 @@ def make_nsi(info, dir_path):
         'OUTFILE': info['_outpath'],
         'LICENSEFILE': abspath(info.get('license_file',
                                join(NSIS_DIR, 'placeholder_license.txt'))),
-        'DEFAULT_PREFIX': expandvars(info.get(
+        'DEFAULT_PREFIX': info.get(
             'default_prefix',
             join('%LOCALAPPDATA%', 'Continuum', name.lower())
-        )),
+        ),
     }
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
                     ('WELCOMEIMAGE', 'welcome.bmp'),
