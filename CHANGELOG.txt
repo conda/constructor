@@ -1,7 +1,8 @@
-2016-XX-XX   1.1.0:
+2016-03-24   1.1.0:
 -------------------
   * add support for pre and post install scripts on Unix
   * fix issues related to non x86 platforms
+  * add default_prefix support for Windows, see #7 and #14
 
 
 2016-03-02   1.0.0:
