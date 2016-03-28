@@ -1,3 +1,4 @@
+# This module is only used inside the Unix installers (not on Windows)
 import sys
 from os.path import join
 
