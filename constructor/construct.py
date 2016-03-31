@@ -159,10 +159,17 @@ def parse(path, platform):
     except IOError:
         sys.exit("Error: could not open '%s' for reading" % path)
     res = yaml.load(select_lines(data, ns_platform(platform)))
+
     try:
         res['version'] = str(res['version'])
     except KeyError:
         pass
+
+    for key, unused_required, types, unused_descr in KEYS:
+        if types is list or (isinstance(types, tuple) and list in types):
+            if res.get(key) is None:
+                res[key] = []
+
     return res
 
 

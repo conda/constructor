@@ -1,3 +1,6 @@
+  * ensure empty lists are handled correctly with selectors
+
+
 2016-03-24   1.1.0:
 -------------------
   * add support for pre and post install scripts on Unix
