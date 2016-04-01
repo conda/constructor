@@ -80,8 +80,9 @@ process.
 
 `keep_pkgs`:
 ----------------
-By default, no conda packages are preserved after install in the `pkgs`
-directory.  Using this option changes the default behavior.
+By default, no conda packages are preserved after running the created
+installer in the `pkgs` directory.  Using this option changes the default
+behavior.
 
 
 `pre_install`:
