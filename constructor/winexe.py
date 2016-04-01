@@ -70,6 +70,10 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs):
             continue
         yield 'Delete "$INSTDIR\\pkgs\\%s"' % fn
 
+    if not keep_pkgs:
+        yield ''
+        yield 'RMDir "$INSTDIR\pkgs"'
+
 
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
@@ -108,10 +112,8 @@ def make_nsi(info, dir_path):
     data = preprocess(data, ns_platform(info['_platform']))
     data = fill_template(data, replace)
 
-    cmds = list(pkg_commands(download_dir, dists, py_version,
-                             bool(info.get('keep_pkgs'))))
-    if not info.get('keep_pkgs'):
-        cmds.extend(['', 'RMDir /r "$INSTDIR\pkgs"'])
+    cmds = pkg_commands(download_dir, dists, py_version,
+                        bool(info.get('keep_pkgs')))
     # these are unescaped (and unquoted)
     for key, value in [('@NAME@', name),
                        ('@NSIS_DIR@', NSIS_DIR),
