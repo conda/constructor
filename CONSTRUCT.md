@@ -78,6 +78,22 @@ Path to the license file being displayed by the installer during the install
 process.
 
 
+`keep_pkgs`:
+----------------
+By default, no conda packages are preserved after install in the `pkgs`
+directory.  Using this option changes the default behavior.
+
+
+`pre_install`:
+----------------
+Path to a pre install (bash - Unix only) script.
+
+
+`post_install`:
+----------------
+Path to a post install (bash - Unix only) script.
+
+
 `welcome_image`:
 ----------------
 Path to an image (in any common image format `.png`, `.jpg`, `.tif`, etc.)
