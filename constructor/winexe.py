@@ -108,8 +108,8 @@ def make_nsi(info, dir_path):
     data = preprocess(data, ns_platform(info['_platform']))
     data = fill_template(data, replace)
 
-    cmds = pkg_commands(download_dir, dists, py_version,
-                        bool(info.get('keep_pkgs')))
+    cmds = list(pkg_commands(download_dir, dists, py_version,
+                             bool(info.get('keep_pkgs'))))
     if not info.get('keep_pkgs'):
         cmds.extend(['', 'RMDir /r "$INSTDIR\pkgs"'])
     # these are unescaped (and unquoted)
