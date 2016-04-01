@@ -205,7 +205,7 @@ if (( $? )); then
 fi
 
 #if has_pre_install
-bash "$PREFIX/tmp/pre_install.sh"
+bash "$PREFIX/pkgs/pre_install.sh"
 if (( $? )); then
     echo "ERROR: executing pre_install.sh failed"
     exit 1
@@ -224,7 +224,7 @@ install_dist()
     # and creates the conda metadata).  Note that this is all done without
     # conda.
     echo "installing: $1 ..."
-    PKG=$PREFIX/tmp/$1.tar.bz2
+    PKG=$PREFIX/pkgs/$1.tar.bz2
     tar xjf $PKG -C $PREFIX --no-same-owner || exit 1
     if [[ $1 == '__DIST0__' ]]; then
         $PYTHON -E -V
@@ -235,7 +235,7 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
             exit 1
         fi
     fi
-    $PYTHON -E -s $PREFIX/tmp/post.py $1 || exit 1
+    $PYTHON -E -s $PREFIX/pkgs/post.py $1 || exit 1
     rm -r $PREFIX/info
     rm $PKG
 }
@@ -243,7 +243,7 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
 __INSTALL_COMMANDS__
 
 #if has_post_install
-bash "$PREFIX/tmp/post_install.sh"
+bash "$PREFIX/pkgs/post_install.sh"
 if (( $? )); then
     echo "ERROR: executing post_install.sh failed"
     exit 1
@@ -251,7 +251,7 @@ fi
 #endif
 
 cat $MSGS
-rm -rf $PREFIX/tmp $MSGS
+rm -rf $PREFIX/pkgs $MSGS
 
 echo "installation finished."
 

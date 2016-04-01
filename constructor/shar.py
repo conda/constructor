@@ -92,12 +92,12 @@ def create(info):
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
     for fn in info['_dists']:
-        t.add(join(info['_download_dir'], fn), 'tmp/' + fn)
-    t.add(join(conda.install.__file__.rstrip('co')), 'tmp/install.py')
-    t.add(join(THIS_DIR, 'post.py'), 'tmp/post.py')
+        t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
+    t.add(join(conda.install.__file__.rstrip('co')), 'pkgs/install.py')
+    t.add(join(THIS_DIR, 'post.py'), 'pkgs/post.py')
     for key in 'pre_install', 'post_install':
         if key in info:
-            t.add(info[key], 'tmp/%s.sh' % key)
+            t.add(info[key], 'pkgs/%s.sh' % key)
     t.close()
 
     header = get_header(tarball, info)
