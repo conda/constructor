@@ -67,6 +67,7 @@ def get_header(tarball, info):
                                    '$HOME/%s' % name.lower()),
         'MD5': md5_file(tarball),
         'INSTALL_COMMANDS': '\n'.join(install_lines),
+        'pycache': '__pycache__',
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
