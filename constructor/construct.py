@@ -165,10 +165,9 @@ def parse(path, platform):
     except KeyError:
         pass
 
-    for key, unused_required, types, unused_descr in KEYS:
-        if types is list or (isinstance(types, tuple) and list in types):
-            if res.get(key) is None:
-                res[key] = []
+    for key in list(res):
+        if res[key] is None:
+            del res[key]
 
     return res
 
