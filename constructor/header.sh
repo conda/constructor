@@ -218,8 +218,8 @@ touch $MSGS
 
 install_dist()
 {
-    # This function installs a conda package into prefix, but without creating
-    # the 'pkgs' directory.  It untars the package and calls a simple script
+    # This function installs a conda package into prefix, but without linking
+    # the conda packages.  It untars the package and calls a simple script
     # which does the post extract steps (update prefix files, run 'post-link',
     # and creates the conda metadata).  Note that this is all done without
     # conda.
