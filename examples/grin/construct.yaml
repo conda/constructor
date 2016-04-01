@@ -25,6 +25,8 @@ packages:
 
 #install_in_dependency_order: True
 
+keep_pkgs: True
+
 pre_install: hello.sh
 post_install: goodbye.sh
 

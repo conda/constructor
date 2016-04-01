@@ -49,6 +49,7 @@ def get_header(tarball, info):
 
     has_license = bool('license_file' in info)
     ppd = ns_platform(info['_platform'])
+    ppd['keep_pkgs'] = bool(info.get('keep_pkgs'))
     ppd['has_license'] = has_license
     for key in 'pre_install', 'post_install':
         ppd['has_%s' % key] = bool(key in info)

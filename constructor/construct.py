@@ -86,6 +86,11 @@ Path to the license file being displayed by the installer during the install
 process.
 '''),
 
+    ('keep_pkgs',              False, bool, '''
+By default, no conda packages are preserved after install in the `pkgs`
+directory.  Using this option changes the default behavior.
+'''),
+
     ('pre_install',            False, str, '''
 Path to a pre install (bash - Unix only) script.
 '''),
