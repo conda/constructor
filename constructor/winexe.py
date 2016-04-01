@@ -108,13 +108,15 @@ def make_nsi(info, dir_path):
     data = preprocess(data, ns_platform(info['_platform']))
     data = fill_template(data, replace)
 
+    cmds = pkg_commands(download_dir, dists, py_version,
+                        bool(info.get('keep_pkgs')))
+    if not info.get('keep_pkgs'):
+        cmds.extend(['', 'RMDir /r "$INSTDIR\pkgs"'])
     # these are unescaped (and unquoted)
-    cmds = '\n    '.join(pkg_commands(download_dir, dists, py_version,
-                                      bool(info.get('keep_pkgs'))))
     for key, value in [('@NAME@', name),
                        ('@NSIS_DIR@', NSIS_DIR),
                        ('@BITS@', str(arch)),
-                       ('@PKG_COMMANDS@', cmds)]:
+                       ('@PKG_COMMANDS@', '\n    '.join(cmds))]:
         data = data.replace(key, value)
 
     nsi_path = join(dir_path, 'main.nsi')
