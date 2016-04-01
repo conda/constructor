@@ -45,7 +45,7 @@ def find_vs_runtimes(dists, py_version):
             if name_dist(dist) in (vs_runtime, 'msvc_runtime')]
 
 
-def pkg_commands(download_dir, dists, py_version):
+def pkg_commands(download_dir, dists, py_version, keep_pkgs):
     vs_dists = find_vs_runtimes(dists, py_version)
     print("MSVC runtimes found: %s" % vs_dists)
     if len(vs_dists) != 1:
@@ -66,6 +66,9 @@ def pkg_commands(download_dir, dists, py_version):
             assert name_dist(fn) == 'python'
         yield ('ExecWait \'"$INSTDIR\pythonw.exe" '
                '"$INSTDIR\\Lib\\_nsis.py" postpkg\'')
+        if keep_pkgs:
+            continue
+        yield 'Delete "$INSTDIR\\pkgs\\%s"' % fn
 
 
 def make_nsi(info, dir_path):
@@ -106,7 +109,8 @@ def make_nsi(info, dir_path):
     data = fill_template(data, replace)
 
     # these are unescaped (and unquoted)
-    cmds = '\n    '.join(pkg_commands(download_dir, dists, py_version))
+    cmds = '\n    '.join(pkg_commands(download_dir, dists, py_version,
+                                      bool(info.get('keep_pkgs'))))
     for key, value in [('@NAME@', name),
                        ('@NSIS_DIR@', NSIS_DIR),
                        ('@BITS@', str(arch)),
