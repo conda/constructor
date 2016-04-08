@@ -34,3 +34,10 @@ Also, the directory may contain some additional optional files (such as a
 license file, and image files for the Windows installer).
 An example is located
 in <a href="./examples/maxiconda">examples/maxiconda</a>.
+
+
+Notes:
+------
+
+  * Constructor does not work with `noarch` packages, all conda packages
+    must be available for the platform you are building the installer for.
