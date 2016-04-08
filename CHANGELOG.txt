@@ -1,4 +1,4 @@
-2016-04-XX   1.2.0:
+2016-04-07   1.2.0:
 -------------------
   * ensure empty lists are handled correctly with selectors
   * add keep_pkgs option to construct.yaml
