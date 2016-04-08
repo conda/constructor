@@ -1,3 +1,8 @@
+2016-XX-XX   1.2.1:
+-------------------
+  *
+
+
 2016-04-07   1.2.0:
 -------------------
   * ensure empty lists are handled correctly with selectors
