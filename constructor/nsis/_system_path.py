@@ -29,6 +29,13 @@ SendMessageTimeout.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM,
 DEFAULT_PATH_VAR='ANACONDA_PATH'
 
 
+def to_unicode(string, codec=sys.getdefaultencoding()):
+    if not codec:
+        codec="utf-8"
+    if hasattr(string, "decode"):
+        string = string.decode(codec)
+    return string
+
 def broadcast_environment_settings_change():
     """Broadcasts to the system indicating that master environment variables have changed.
 
@@ -101,7 +108,7 @@ def remove_from_system_path(paths, allusers=True, path_env_var=DEFAULT_PATH_VAR)
     any_change = False
     results = []
 
-    pathnames = [os.path.normpath(p).lower().decode("utf-8") for p in paths]
+    pathnames = [to_unicode(os.path.normpath(p).lower()) for p in paths]
     for v in reg_value.split(os.pathsep):
         vexp = reg.ExpandEnvironmentStrings(v)
         # requested path in a normalized way
