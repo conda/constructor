@@ -85,22 +85,29 @@ def mk_menus(remove=False):
 
 allusers = (not exists(join(sys.prefix, '.nonadmin')))
 
+paths = [
+          join(sys.prefix, 'Library\\bin'),
+          sys.prefix,
+          join(sys.prefix, 'Scripts'),
+        ]
+
 def add_to_path():
-    from _system_path import (add_to_system_path, remove_from_system_path,
-                              broadcast_environment_settings_change)
+    from _system_path import add_to_system_path, remove_from_system_path, \
+                              broadcast_environment_settings_change
+
     # if previous Anaconda installs left remnants, remove those
-    remove_from_system_path(sys.prefix, allusers)
-    remove_from_system_path(join(sys.prefix, 'Scripts'), allusers)
+    remove_from_system_path(paths, allusers)
+
     # add Anaconda to the path
-    add_to_system_path([sys.prefix, join(sys.prefix, 'Scripts')], allusers)
+    add_to_system_path(paths, allusers)
     broadcast_environment_settings_change()
 
 
 def remove_from_path():
-    from _system_path import (remove_from_system_path,
-                              broadcast_environment_settings_change)
-    remove_from_system_path(sys.prefix, allusers)
-    remove_from_system_path(join(sys.prefix, 'Scripts'), allusers)
+    from _system_path import remove_from_system_path, \
+                              broadcast_environment_settings_change
+
+    remove_from_system_path(paths, allusers)
     broadcast_environment_settings_change()
 
 
