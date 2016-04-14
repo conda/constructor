@@ -74,7 +74,10 @@ reasons.  Using this option, the packages are installed in their dependency
 order (unless the explicit list in `packages` is used).
 '''),
 
-    ('conda_default_channels', False, list, 'XXX'),
+    ('conda_default_channels', False, list, '''
+You can list conda channels here which will be the default conda channels
+of the created installer (if it includes conda).
+'''),
 
     ('installer_filename',     False, str, '''
 The filename of the installer being created.  A reasonable default filename
