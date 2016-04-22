@@ -1,6 +1,6 @@
 2016-XX-XX   1.2.1:
 -------------------
-  *
+  * skip machine type check in batch mode (Unix)
 
 
 2016-04-07   1.2.0:
