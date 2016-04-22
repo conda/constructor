@@ -57,6 +57,13 @@ Installs __NAME__ __VERSION__
     esac
 done
 
+# verify the size of the installer
+wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null
+if (( $? )); then
+    echo "ERROR: size of $THIS_FILE should be @SIZE_BYTES@ bytes" >&2
+    exit 1
+fi
+
 #if x86 and not x86_64
 if [[ `uname -m` == 'x86_64' ]]; then
     echo -n "WARNING:
@@ -93,13 +100,6 @@ if [[ `uname -m` != 'x86_64' ]]; then
     fi
 fi
 #endif
-
-# verify the size of the installer
-wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null
-if (( $? )); then
-    echo "ERROR: size of $THIS_FILE should be @SIZE_BYTES@ bytes" >&2
-    exit 1
-fi
 
 if [[ $BATCH == 0 ]] # interactive mode
 then
