@@ -57,8 +57,6 @@ Installs __NAME__ __VERSION__
     esac
 done
 
-saved_cmdline="$*"
-
 #if x86 and not x86_64
 if [[ `uname -m` == 'x86_64' ]]; then
     echo -n "WARNING:
