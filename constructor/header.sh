@@ -64,9 +64,11 @@ if (( $? )); then
     exit 1
 fi
 
+if [[ $BATCH == 0 ]] # interactive mode
+then
 #if x86 and not x86_64
-if [[ `uname -m` == 'x86_64' ]]; then
-    echo -n "WARNING:
+    if [[ `uname -m` == 'x86_64' ]]; then
+        echo -n "WARNING:
     Your system is x86_64, but you are trying to install an x86 (32-bit)
     version of __NAME__.  Unless you have the necessary 32-bit libraries
     installed, __NAME__ will not work.
@@ -74,35 +76,33 @@ if [[ `uname -m` == 'x86_64' ]]; then
     an x86_64 system.
     Are sure you want to continue the installation? [yes|no]
 [no] >>> "
-    read ans
-    if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
-                ($ans != "y") && ($ans != "Y") ]]
-    then
-        echo "Aborting installation"
-        exit 2
+        read ans
+        if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
+              ($ans != "y") && ($ans != "Y") ]]
+        then
+            echo "Aborting installation"
+            exit 2
+        fi
     fi
-fi
 #endif
 
 #if x86_64
-if [[ `uname -m` != 'x86_64' ]]; then
-    echo -n "WARNING:
+    if [[ `uname -m` != 'x86_64' ]]; then
+        echo -n "WARNING:
     Your operating system appears not to be 64-bit, but you are trying to
     install a 64-bit version of __NAME__.
     Are sure you want to continue the installation? [yes|no]
 [no] >>> "
-    read ans
-    if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
-                ($ans != "y") && ($ans != "Y") ]]
-    then
-        echo "Aborting installation"
-        exit 2
+        read ans
+        if [[ ($ans != "yes") && ($ans != "Yes") && ($ans != "YES") &&
+              ($ans != "y") && ($ans != "Y") ]]
+        then
+            echo "Aborting installation"
+            exit 2
+        fi
     fi
-fi
 #endif
 
-if [[ $BATCH == 0 ]] # interactive mode
-then
     echo "
 Welcome to __NAME__ __VERSION__"
 #if has_license
