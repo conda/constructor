@@ -5,7 +5,7 @@
 # Helper script which is called from within the nsis install process
 # on Windows.  The fact that we put this file into the standard library
 # directory is merely a convenience.  This way, functionally can easily
-# easily be tested in an installation.
+# be tested in an installation.
 
 import os
 import sys
