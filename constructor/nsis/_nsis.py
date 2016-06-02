@@ -66,7 +66,7 @@ def create_conda_meta():
 def mk_menus(remove=False):
     try:
         import menuinst
-    except ImportError:
+    except (ImportError, OSError):
         return
     menu_dir = join(sys.prefix, 'Menu')
     if os.path.exists(menu_dir):
