@@ -1,0 +1,15 @@
+name: Funnychan
+version: 2.5.5
+
+channels:
+  - http://repo.continuum.io/pkgs/free/
+  - https://conda.anaconda.org/ilan
+
+# specifications
+specs:
+  - python
+  - grin
+  - sample
+
+license_file: eula.txt
+
