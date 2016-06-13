@@ -6,6 +6,8 @@
 
 import re
 import sys
+from conda.install import name_dist, dist2filename
+from conda.config import url2dist
 
 
 def fill_template(data, d):
@@ -16,10 +18,6 @@ def fill_template(data, d):
         return d[key]
 
     return pat.sub(replace, data)
-
-
-def name_dist(dist):
-    return dist.rsplit('-', 2)[0]
 
 
 def read_ascii_only(path):
