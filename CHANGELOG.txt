@@ -1,5 +1,6 @@
 2016-XX-XX   1.2.1:
 -------------------
+  * compatibility with conda 4.1, see #26
   * skip machine type check in batch mode (Unix)
 
 
