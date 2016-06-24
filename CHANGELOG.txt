@@ -1,6 +1,7 @@
-2016-XX-XX   1.2.1:
+2016-06-24   1.2.1:
 -------------------
   * compatibility with conda 4.1, see #26
+  * include urls.txt in the pkgs, #27
   * skip machine type check in batch mode (Unix)
 
 
