@@ -93,7 +93,8 @@ def create(info):
     t = tarfile.open(tarball, 'w')
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
-    t.add(join(info['_download_dir'], 'urls.txt'), 'pkgs/' + 'urls.txt')
+    if info.get('keep_pkgs'):
+        t.add(join(info['_download_dir'], 'urls.txt'), 'pkgs/urls.txt')
     for fn in info['_dists']:
         t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
     t.add(join(conda.install.__file__.rstrip('co')), 'pkgs/install.py')
