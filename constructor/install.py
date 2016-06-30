@@ -30,10 +30,7 @@ import shutil
 import stat
 import subprocess
 import sys
-import tarfile
-import time
-import traceback
-from os.path import (abspath, basename, dirname, isdir, isfile, islink, join)
+from os.path import abspath, basename, dirname, isdir, isfile, islink, join
 
 
 on_win = bool(sys.platform == 'win32')
@@ -69,14 +66,9 @@ def _link(src, dst, linktype=LINK_HARD):
         raise Exception("Did not expect linktype=%r" % linktype)
 
 
-def rm_rf(path, max_retries=5, trash=True):
+def rm_rf(path):
     """
     Completely delete path
-
-    max_retries is the number of times to retry on failure. The default is
-    5. This only applies to deleting a directory.
-
-    If removing path fails and trash is True, files will be moved to the trash directory.
     """
     if islink(path) or isfile(path):
         # Note that we have to check if the destination is a link because
@@ -86,37 +78,10 @@ def rm_rf(path, max_retries=5, trash=True):
             os.unlink(path)
             return
         except (OSError, IOError):
-            log.warn("Cannot remove, permission denied: {0}".format(path))
-            if trash and move_path_to_trash(path):
-                return
-
-    elif isdir(path):
-
-        # On Windows, always move to trash first.
-        if trash and on_win and move_path_to_trash(path, preclean=False):
             return
 
-        for i in range(max_retries):
-            try:
-                shutil.rmtree(path, ignore_errors=False, onerror=warn_failed_remove)
-                return
-            except OSError as e:
-                if trash and move_path_to_trash(path):
-                    return
-                msg = "Unable to delete %s\n%s\n" % (path, e)
-                if on_win:
-                    try:
-                        shutil.rmtree(path, onerror=_remove_readonly)
-                        return
-                    except OSError as e2:
-                        raise
-                        msg += "Retry with onerror failed (%s)\n" % e2
-
-            log.debug(msg + "Retrying after %s seconds..." % i)
-            time.sleep(i)
-
-        # Final time. pass exceptions to caller.
-        shutil.rmtree(path, ignore_errors=False, onerror=warn_failed_remove)
+    elif isdir(path):
+        shutil.rmtree(path)
 
 
 def rm_empty_dir(path):
@@ -248,24 +213,18 @@ def mk_menus(prefix, files, remove=False):
                   and f.lower().endswith('.json')]
     if not menu_files:
         return
-    elif basename(abspath(prefix)).startswith('_'):
-        logging.warn("Environment name starts with underscore '_'.  "
-                     "Skipping menu installation.")
-        return
 
     try:
         import menuinst
     except:
-        logging.warn("Menuinst could not be imported:")
-        logging.warn(traceback.format_exc())
         return
 
     for f in menu_files:
         try:
             menuinst.install(join(prefix, f), remove, prefix)
         except:
-            stdoutlog.error("menuinst Exception:")
-            stdoutlog.error(traceback.format_exc())
+            import traceback
+            sys.stdout.write("menuinst Exception: %s" % traceback.format_exc())
 
 
 def run_script(prefix, dist, action='post-link', env_prefix=None):
@@ -379,25 +338,6 @@ def extracted(pkgs_dir):
                if (isfile(join(pkgs_dir, dn, 'info', 'files')) and
                    isfile(join(pkgs_dir, dn, 'info', 'index.json'))))
 
-def extract(pkgs_dir, dist):
-    """
-    Extract a package, i.e. make a package available for linkage.  We assume
-    that the compressed packages is located in the packages directory.
-    """
-    with Locked(pkgs_dir):
-        path = join(pkgs_dir, dist)
-        t = tarfile.open(path + '.tar.bz2')
-        t.extractall(path=path)
-        t.close()
-        if sys.platform.startswith('linux') and os.getuid() == 0:
-            # When extracting as root, tarfile will by restore ownership
-            # of extracted files.  However, we want root to be the owner
-            # (our implementation of --no-same-owner).
-            for root, dirs, files in os.walk(path):
-                for fn in files:
-                    p = join(root, fn)
-                    os.lchown(p, 0, 0)
-
 def is_extracted(pkgs_dir, dist):
     return (isfile(join(pkgs_dir, dist, 'info', 'files')) and
             isfile(join(pkgs_dir, dist, 'info', 'index.json')))
@@ -449,8 +389,6 @@ def link(pkgs_dir, prefix, dist, linktype=LINK_HARD, index=None):
     the package has been extracted (using extract() above).
     '''
     index = index or {}
-    log.debug('pkgs_dir=%r, prefix=%r, dist=%r, linktype=%r' %
-              (pkgs_dir, prefix, dist, linktype))
 
     source_dir = join(pkgs_dir, dist)
     if not run_script(source_dir, dist, 'pre-link', prefix):
@@ -461,67 +399,61 @@ def link(pkgs_dir, prefix, dist, linktype=LINK_HARD, index=None):
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
     no_link = read_no_link(info_dir)
 
-    with Locked(prefix), Locked(pkgs_dir):
-        for f in files:
-            src = join(source_dir, f)
-            dst = join(prefix, f)
-            dst_dir = dirname(dst)
-            if not isdir(dst_dir):
-                os.makedirs(dst_dir)
-            if os.path.exists(dst):
-                log.warn("file already exists: %r" % dst)
-                rm_rf(dst)
-            lt = linktype
-            if f in has_prefix_files or f in no_link or islink(src):
-                lt = LINK_COPY
-            try:
-                _link(src, dst, lt)
-            except OSError as e:
-                log.error('failed to link (src=%r, dst=%r, type=%r, error=%r)' %
-                          (src, dst, lt, e))
-
-        if name_dist(dist) == '_cache':
-            return
-
-        for f in sorted(has_prefix_files):
-            placeholder, mode = has_prefix_files[f]
-            try:
-                update_prefix(join(prefix, f), prefix, placeholder, mode)
-            except PaddingError:
-                sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
-                         (placeholder, dist))
-
-        mk_menus(prefix, files, remove=False)
-
-        if not run_script(prefix, dist, 'post-link'):
-            sys.exit("Error: post-link failed for: %s" % dist)
-
-        # Make sure the script stays standalone for the installer
+    for f in files:
+        src = join(source_dir, f)
+        dst = join(prefix, f)
+        dst_dir = dirname(dst)
+        if not isdir(dst_dir):
+            os.makedirs(dst_dir)
+        if os.path.exists(dst):
+            rm_rf(dst)
+        lt = linktype
+        if f in has_prefix_files or f in no_link or islink(src):
+            lt = LINK_COPY
         try:
-            from conda.config import remove_binstar_tokens
-        except ImportError:
-            # There won't be any binstar tokens in the installer anyway
-            def remove_binstar_tokens(url):
-                return url
+            _link(src, dst, lt)
+        except OSError:
+            pass
 
-        meta_dict = index.get(dist + '.tar.bz2', {})
-        meta_dict['url'] = read_url(pkgs_dir, dist)
-        if meta_dict['url']:
-            meta_dict['url'] = remove_binstar_tokens(meta_dict['url'])
+    for f in sorted(has_prefix_files):
+        placeholder, mode = has_prefix_files[f]
         try:
-            alt_files_path = join(prefix, 'conda-meta', dist + '.files')
-            meta_dict['files'] = list(yield_lines(alt_files_path))
-            os.unlink(alt_files_path)
-        except IOError:
-            meta_dict['files'] = files
-        meta_dict['link'] = {'source': source_dir,
-                             'type': link_name_map.get(linktype)}
-        if 'channel' in meta_dict:
-            meta_dict['channel'] = remove_binstar_tokens(meta_dict['channel'])
-        if 'icon' in meta_dict:
-            meta_dict['icondata'] = read_icondata(source_dir)
+            update_prefix(join(prefix, f), prefix, placeholder, mode)
+        except PaddingError:
+            sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
+                     (placeholder, dist))
 
-        create_meta(prefix, dist, info_dir, meta_dict)
+    mk_menus(prefix, files, remove=False)
+
+    if not run_script(prefix, dist, 'post-link'):
+        sys.exit("Error: post-link failed for: %s" % dist)
+
+    # Make sure the script stays standalone for the installer
+    try:
+        from conda.config import remove_binstar_tokens
+    except ImportError:
+        # There won't be any binstar tokens in the installer anyway
+        def remove_binstar_tokens(url):
+            return url
+
+    meta_dict = index.get(dist + '.tar.bz2', {})
+    meta_dict['url'] = read_url(pkgs_dir, dist)
+    if meta_dict['url']:
+        meta_dict['url'] = remove_binstar_tokens(meta_dict['url'])
+    try:
+        alt_files_path = join(prefix, 'conda-meta', dist + '.files')
+        meta_dict['files'] = list(yield_lines(alt_files_path))
+        os.unlink(alt_files_path)
+    except IOError:
+        meta_dict['files'] = files
+    meta_dict['link'] = {'source': source_dir,
+                         'type': link_name_map.get(linktype)}
+    if 'channel' in meta_dict:
+        meta_dict['channel'] = remove_binstar_tokens(meta_dict['channel'])
+    if 'icon' in meta_dict:
+        meta_dict['icondata'] = read_icondata(source_dir)
+
+    create_meta(prefix, dist, info_dir, meta_dict)
 
 
 def unlink(prefix, dist):
@@ -529,35 +461,34 @@ def unlink(prefix, dist):
     Remove a package from the specified environment, it is an error if the
     package does not exist in the prefix.
     '''
-    with Locked(prefix):
-        run_script(prefix, dist, 'pre-unlink')
+    run_script(prefix, dist, 'pre-unlink')
 
-        meta_path = join(prefix, 'conda-meta', dist + '.json')
-        with open(meta_path) as fi:
-            meta = json.load(fi)
+    meta_path = join(prefix, 'conda-meta', dist + '.json')
+    with open(meta_path) as fi:
+        meta = json.load(fi)
 
-        mk_menus(prefix, meta['files'], remove=True)
-        dst_dirs1 = set()
+    mk_menus(prefix, meta['files'], remove=True)
+    dst_dirs1 = set()
 
-        for f in meta['files']:
-            dst = join(prefix, f)
-            dst_dirs1.add(dirname(dst))
-            rm_rf(dst)
+    for f in meta['files']:
+        dst = join(prefix, f)
+        dst_dirs1.add(dirname(dst))
+        rm_rf(dst)
 
-        # remove the meta-file last
-        os.unlink(meta_path)
+    # remove the meta-file last
+    os.unlink(meta_path)
 
-        dst_dirs2 = set()
-        for path in dst_dirs1:
-            while len(path) > len(prefix):
-                dst_dirs2.add(path)
-                path = dirname(path)
-        # in case there is nothing left
-        dst_dirs2.add(join(prefix, 'conda-meta'))
-        dst_dirs2.add(prefix)
+    dst_dirs2 = set()
+    for path in dst_dirs1:
+        while len(path) > len(prefix):
+            dst_dirs2.add(path)
+            path = dirname(path)
+    # in case there is nothing left
+    dst_dirs2.add(join(prefix, 'conda-meta'))
+    dst_dirs2.add(prefix)
 
-        for path in sorted(dst_dirs2, key=len, reverse=True):
-            rm_empty_dir(path)
+    for path in sorted(dst_dirs2, key=len, reverse=True):
+        rm_empty_dir(path)
 
 
 def messages(prefix):
@@ -624,8 +555,6 @@ def main():
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
-
-    logging.basicConfig()
 
     prefix = opts.prefix
     pkgs_dir = join(prefix, 'pkgs')
