@@ -1,12 +1,9 @@
-# (c) 2012-2014 Continuum Analytics, Inc. / http://continuum.io
+# (c) 2012-2016 Continuum Analytics, Inc. / http://continuum.io
 # All Rights Reserved
 #
 # conda is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
-''' This module contains:
-  * all low-level code for extracting, linking and unlinking packages
-  * a very simple CLI
-
+'''
 These API functions have argument names referring to:
 
     dist:        canonical package name (e.g. 'numpy-1.6.2-py26_0')
@@ -24,12 +21,9 @@ installer to create the initial environment, therefore it needs to be
 standalone, i.e. not import any other parts of `conda` (only depend on
 the standard library).
 '''
-
 from __future__ import print_function, division, absolute_import
 
-import errno
 import json
-import logging
 import os
 import shlex
 import shutil
@@ -38,75 +32,12 @@ import subprocess
 import sys
 import tarfile
 import time
-import tempfile
 import traceback
 from os.path import (abspath, basename, dirname, isdir, isfile, islink, join)
 
-try:
-    from conda.lock import Locked
-    from conda.config import pkgs_dirs
-except ImportError:
-    # Make sure this still works as a standalone script for the Anaconda
-    # installer.
-    pkgs_dirs = [sys.prefix]
-
-    class Locked(object):
-        def __init__(self, *args, **kwargs):
-            pass
-
-        def __enter__(self):
-            pass
-
-        def __exit__(self, exc_type, exc_value, traceback):
-            pass
 
 on_win = bool(sys.platform == 'win32')
 
-if on_win:
-    import ctypes
-    from ctypes import wintypes
-
-    CreateHardLink = ctypes.windll.kernel32.CreateHardLinkW
-    CreateHardLink.restype = wintypes.BOOL
-    CreateHardLink.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
-                               wintypes.LPVOID]
-    try:
-        CreateSymbolicLink = ctypes.windll.kernel32.CreateSymbolicLinkW
-        CreateSymbolicLink.restype = wintypes.BOOL
-        CreateSymbolicLink.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
-                                       wintypes.DWORD]
-    except AttributeError:
-        CreateSymbolicLink = None
-
-    def win_hard_link(src, dst):
-        "Equivalent to os.link, using the win32 CreateHardLink call."
-        if not CreateHardLink(dst, src, None):
-            raise OSError('win32 hard link failed')
-
-    def win_soft_link(src, dst):
-        "Equivalent to os.symlink, using the win32 CreateSymbolicLink call."
-        if CreateSymbolicLink is None:
-            raise OSError('win32 soft link not supported')
-        if not CreateSymbolicLink(dst, src, isdir(src)):
-            raise OSError('win32 soft link failed')
-
-
-log = logging.getLogger(__name__)
-stdoutlog = logging.getLogger('stdoutlog')
-
-class NullHandler(logging.Handler):
-    """ Copied from Python 2.7 to avoid getting
-        `No handlers could be found for logger "patch"`
-        http://bugs.python.org/issue16539
-    """
-    def handle(self, record):
-        pass
-    def emit(self, record):
-        pass
-    def createLock(self):
-        self.lock = None
-
-log.addHandler(NullHandler())
 
 LINK_HARD = 1
 LINK_SOFT = 2
@@ -137,18 +68,6 @@ def _link(src, dst, linktype=LINK_HARD):
     else:
         raise Exception("Did not expect linktype=%r" % linktype)
 
-
-def _remove_readonly(func, path, excinfo):
-    os.chmod(path, stat.S_IWRITE)
-    func(path)
-
-def warn_failed_remove(function, path, exc_info):
-    if exc_info[1].errno == errno.EACCES:
-        log.warn("Cannot remove, permission denied: {0}".format(path))
-    elif exc_info[1].errno == errno.ENOTEMPTY:
-        log.warn("Cannot remove, not empty: {0}".format(path))
-    else:
-        log.warn("Cannot remove, unknown reason: {0}".format(path))
 
 def rm_rf(path, max_retries=5, trash=True):
     """
@@ -243,8 +162,10 @@ def read_has_prefix(path):
         pass
     return res
 
+
 class PaddingError(Exception):
     pass
+
 
 def binary_replace(data, a, b):
     """
@@ -264,6 +185,7 @@ def binary_replace(data, a, b):
     res = pat.sub(replace, data)
     assert len(res) == len(data)
     return res
+
 
 def update_prefix(path, new_prefix, placeholder=prefix_placeholder,
                   mode='text'):
@@ -445,22 +367,6 @@ def try_hard_link(pkgs_dir, prefix, dist):
         rm_rf(dst)
         rm_empty_dir(prefix)
 
-# ------- package cache ----- fetched
-
-def fetched(pkgs_dir):
-    if not isdir(pkgs_dir):
-        return set()
-    return set(fn[:-8] for fn in os.listdir(pkgs_dir)
-               if fn.endswith('.tar.bz2'))
-
-def is_fetched(pkgs_dir, dist):
-    return isfile(join(pkgs_dir, dist + '.tar.bz2'))
-
-def rm_fetched(pkgs_dir, dist):
-    with Locked(pkgs_dir):
-        path = join(pkgs_dir, dist + '.tar.bz2')
-        rm_rf(path)
-
 # ------- package cache ----- extracted
 
 def extracted(pkgs_dir):
@@ -496,11 +402,6 @@ def is_extracted(pkgs_dir, dist):
     return (isfile(join(pkgs_dir, dist, 'info', 'files')) and
             isfile(join(pkgs_dir, dist, 'info', 'index.json')))
 
-def rm_extracted(pkgs_dir, dist):
-    with Locked(pkgs_dir):
-        path = join(pkgs_dir, dist)
-        rm_rf(path)
-
 # ------- linkage of packages
 
 def linked_data(prefix):
@@ -518,6 +419,7 @@ def linked_data(prefix):
                     pass
     return res
 
+
 def linked(prefix):
     """
     Return the (set of canonical names) of linked packages in prefix.
@@ -527,7 +429,7 @@ def linked(prefix):
         return set()
     return set(fn[:-5] for fn in os.listdir(meta_dir) if fn.endswith('.json'))
 
-# FIXME Functions that begin with `is_` should return True/False
+
 def is_linked(prefix, dist):
     """
     Return the install meta-data for a linked package in a prefix, or None
@@ -540,62 +442,6 @@ def is_linked(prefix, dist):
     except IOError:
         return None
 
-
-def delete_trash(prefix=None):
-    for pkg_dir in pkgs_dirs:
-        trash_dir = join(pkg_dir, '.trash')
-        if not isdir(trash_dir):
-            continue
-        try:
-            log.debug("Trying to delete the trash dir %s" % trash_dir)
-            rm_rf(trash_dir, max_retries=1, trash=False)
-        except OSError as e:
-            log.debug("Could not delete the trash dir %s (%s)" % (trash_dir, e))
-
-def move_to_trash(prefix, f, tempdir=None):
-    """
-    Move a file or folder f from prefix to the trash
-
-    tempdir is a deprecated parameter, and will be ignored.
-
-    This function is deprecated in favor of `move_path_to_trash`.
-    """
-    return move_path_to_trash(join(prefix, f))
-
-def move_path_to_trash(path, preclean=True):
-    """
-    Move a path to the trash
-    """
-    # Try deleting the trash every time we use it.
-    if preclean:
-        delete_trash()
-
-    for pkg_dir in pkgs_dirs:
-        trash_dir = join(pkg_dir, '.trash')
-
-        try:
-            os.makedirs(trash_dir)
-        except OSError as e1:
-            if e1.errno != errno.EEXIST:
-                continue
-
-        trash_file = tempfile.mktemp(dir=trash_dir)
-
-        try:
-            os.rename(path, trash_file)
-        except OSError as e:
-            log.debug("Could not move %s to %s (%s)" % (path, trash_file, e))
-        else:
-            log.debug("Moved to trash: %s" % (path,))
-            if not preclean:
-                rm_rf(trash_file, max_retries=1, trash=False)
-            return True
-
-    return False
-
-# FIXME This should contain the implementation that loads meta, not is_linked()
-def load_meta(prefix, dist):
-    return is_linked(prefix, dist)
 
 def link(pkgs_dir, prefix, dist, linktype=LINK_HARD, index=None):
     '''
@@ -754,9 +600,6 @@ def duplicates_to_remove(linked_dists, keep_dists):
             # otherwise, we take lowest (n-1) (sorted) packages
             res.update(sorted(dists)[:-1])
     return sorted(res)
-
-
-# =========================== end API functions ==========================
 
 
 def main():
