@@ -23,14 +23,12 @@ the standard library).
 '''
 from __future__ import print_function, division, absolute_import
 
-import json
 import os
-import shlex
+import sys
+import json
 import shutil
 import stat
-import subprocess
-import sys
-from os.path import abspath, basename, dirname, isdir, isfile, islink, join
+from os.path import dirname, isdir, isfile, islink, join
 
 
 on_win = bool(sys.platform == 'win32')
@@ -114,6 +112,8 @@ def read_has_prefix(path):
     reads `has_prefix` file and return dict mapping filenames to
     tuples(placeholder, mode)
     """
+    import shlex
+
     res = {}
     try:
         for line in yield_lines(path):
@@ -253,6 +253,8 @@ def run_script(prefix, dist, action='post-link', env_prefix=None):
                 str(dist).rsplit('-', 2)
     if action == 'pre-link':
         env['SOURCE_DIR'] = str(prefix)
+
+    import subprocess
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
