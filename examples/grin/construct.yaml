@@ -5,11 +5,13 @@ version: 3
 # channels to pull packages from
 channels: &id1
   - http://repo.continuum.io/pkgs/free/
+  - https://conda.anaconda.org/ilan
 
 # specifications
 specs:
   - python
   - grin
+  - sample
 
 # exclude these packages (list of names)
 exclude:
