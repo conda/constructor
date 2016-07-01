@@ -293,7 +293,6 @@ def try_hard_link(dist):
     finally:
         rm_rf(dst)
 
-# ------- package cache ----- extracted
 
 def extracted():
     """
@@ -305,11 +304,6 @@ def extracted():
                if (isfile(join(PKGS_DIR, dn, 'info', 'files')) and
                    isfile(join(PKGS_DIR, dn, 'info', 'index.json'))))
 
-def is_extracted(PKGS_DIR, dist):
-    return (isfile(join(PKGS_DIR, dist, 'info', 'files')) and
-            isfile(join(PKGS_DIR, dist, 'info', 'index.json')))
-
-# ------- linkage of packages
 
 def linked():
     """
@@ -319,19 +313,6 @@ def linked():
     if not isdir(meta_dir):
         return set()
     return set(fn[:-5] for fn in os.listdir(meta_dir) if fn.endswith('.json'))
-
-
-def is_linked(dist):
-    """
-    Return the install meta-data for a linked package in a prefix, or None
-    if the package is not linked in the prefix.
-    """
-    meta_path = join(PREFIX, 'conda-meta', dist + '.json')
-    try:
-        with open(meta_path) as fi:
-            return json.load(fi)
-    except IOError:
-        return None
 
 
 def link(dist, linktype=LINK_HARD):
