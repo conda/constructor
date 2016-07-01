@@ -436,15 +436,6 @@ def messages():
         rm_rf(path)
 
 
-def post_extract(dist):
-    """
-    assuming that the package is extracted in prefix itself, this function
-    does everything link() does except the actual linking, i.e.
-    update prefix files, run 'post-link', creates the conda metadata
-    """
-    link(dist, linktype=0)
-
-
 def duplicates_to_remove(linked_dists, keep_dists):
     """
     Returns the (sorted) list of distributions to be removed, such that
@@ -476,6 +467,15 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
+def post_extract(dist):
+    """
+    assuming that the package is extracted in prefix itself, this function
+    does everything link() does except the actual linking, i.e.
+    update prefix files, run 'post-link', creates the conda metadata
+    """
+    link(dist, linktype=0)
+
+
 def main():
     global PREFIX, PKGS_DIR
 
@@ -494,17 +494,28 @@ def main():
                  default=sys.prefix,
                  help="prefix (defaults to %default)")
 
+    p.add_option('--post',
+                 action="store",
+                 help="perform post extract for DIST",
+                 metavar='DIST')
+
     p.add_option('-v', '--verbose',
                  action="store_true")
 
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
+    if opts.file and opts.post:
+        p.error("--file and --post exclude each other")
 
     PREFIX = opts.prefix
     PKGS_DIR = join(PREFIX, 'pkgs')
     if opts.verbose:
         print("PREFIX: %r" % PREFIX)
+
+    if opts.post:
+        post_extract(opts.post)
+        return
 
     if opts.file:
         idists = list(yield_lines(join(PREFIX, opts.file)))
