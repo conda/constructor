@@ -8,9 +8,9 @@ These API functions have argument names referring to:
 
     dist:        canonical package name (e.g. 'numpy-1.6.2-py26_0')
 
-    pkgs_dir:    the "packages directory" (e.g. '/opt/anaconda/pkgs')
+    PKGS_DIR:    the "packages directory" (e.g. '/opt/anaconda/pkgs')
 
-    prefix:      the prefix of a particular environment, which may also
+    PREFIX:      the prefix of a particular environment, which may also
                  be the "default" environment (i.e. sys.prefix)
 
 Also, this module is directly invoked by the (self extracting) tarball
@@ -40,8 +40,8 @@ link_name_map = {
 }
 
 # may be changed in main()
-prefix = sys.prefix
-pkgs_dir = join(prefix, 'pkgs')
+PREFIX = sys.prefix
+PKGS_DIR = join(PREFIX, 'pkgs')
 
 
 def _link(src, dst, linktype=LINK_HARD):
@@ -193,7 +193,7 @@ def create_meta(dist, info_dir, extra_info):
     # add extra info
     meta.update(extra_info)
     # write into <prefix>/conda-meta/<dist>.json
-    meta_dir = join(prefix, 'conda-meta')
+    meta_dir = join(PREFIX, 'conda-meta')
     if not isdir(meta_dir):
         os.makedirs(meta_dir)
     with open(join(meta_dir, dist + '.json'), 'w') as fo:
@@ -220,18 +220,18 @@ def mk_menus(files, remove=False):
 
     for f in menu_files:
         try:
-            menuinst.install(join(prefix, f), remove, prefix)
+            menuinst.install(join(PREFIX, f), remove, PREFIX)
         except:
             import traceback
             sys.stdout.write("menuinst Exception: %s" % traceback.format_exc())
 
 
-def run_script(dist, action='post-link', env_prefix=None):
+def run_script(dist, action='post-link'):
     """
     call the post-link (or pre-unlink) script, and return True on success,
     False on failure
     """
-    path = join(prefix, 'Scripts' if on_win else 'bin', '.%s-%s.%s' % (
+    path = join(PREFIX, 'Scripts' if on_win else 'bin', '.%s-%s.%s' % (
             name_dist(dist),
             action,
             'bat' if on_win else 'sh'))
@@ -246,12 +246,9 @@ def run_script(dist, action='post-link', env_prefix=None):
         shell_path = '/bin/sh' if 'bsd' in sys.platform else '/bin/bash'
         args = [shell_path, path]
     env = os.environ
-    env['ROOT_PREFIX'] = sys.prefix
-    env['PREFIX'] = str(env_prefix or prefix)
+    env['ROOT_PREFIX'] = env['PREFIX'] = str(PREFIX)
     env['PKG_NAME'], env['PKG_VERSION'], env['PKG_BUILDNUM'] = \
                 str(dist).rsplit('-', 2)
-    if action == 'pre-link':
-        env['SOURCE_DIR'] = str(prefix)
 
     import subprocess
     try:
@@ -263,7 +260,7 @@ def run_script(dist, action='post-link', env_prefix=None):
 
 def read_url(dist):
     try:
-        data = open(join(pkgs_dir, 'urls.txt')).read()
+        data = open(join(PKGS_DIR, 'urls.txt')).read()
         urls = data.split()
         for url in urls[::-1]:
             if url.endswith('/%s.tar.bz2' % dist):
@@ -284,8 +281,8 @@ def read_no_link(info_dir):
 
 
 def try_hard_link(dist):
-    src = join(pkgs_dir, dist, 'info', 'index.json')
-    dst = join(prefix, '.tmp-%s' % dist)
+    src = join(PKGS_DIR, dist, 'info', 'index.json')
+    dst = join(PREFIX, '.tmp-%s' % dist)
     assert isfile(src), src
     assert not isfile(dst), dst
     try:
@@ -302,39 +299,23 @@ def extracted():
     """
     return the (set of canonical names) of all extracted packages
     """
-    if not isdir(pkgs_dir):
+    if not isdir(PKGS_DIR):
         return set()
-    return set(dn for dn in os.listdir(pkgs_dir)
-               if (isfile(join(pkgs_dir, dn, 'info', 'files')) and
-                   isfile(join(pkgs_dir, dn, 'info', 'index.json'))))
+    return set(dn for dn in os.listdir(PKGS_DIR)
+               if (isfile(join(PKGS_DIR, dn, 'info', 'files')) and
+                   isfile(join(PKGS_DIR, dn, 'info', 'index.json'))))
 
-def is_extracted(pkgs_dir, dist):
-    return (isfile(join(pkgs_dir, dist, 'info', 'files')) and
-            isfile(join(pkgs_dir, dist, 'info', 'index.json')))
+def is_extracted(PKGS_DIR, dist):
+    return (isfile(join(PKGS_DIR, dist, 'info', 'files')) and
+            isfile(join(PKGS_DIR, dist, 'info', 'index.json')))
 
 # ------- linkage of packages
-
-def linked_data():
-    """
-    Return a dictionary of the linked packages in prefix.
-    """
-    res = {}
-    meta_dir = join(prefix, 'conda-meta')
-    if isdir(meta_dir):
-        for fn in os.listdir(meta_dir):
-            if fn.endswith('.json'):
-                try:
-                    res[fn[:-5]] = json.load(open(join(meta_dir,fn)))
-                except IOError:
-                    pass
-    return res
-
 
 def linked():
     """
     Return the (set of canonical names) of linked packages in prefix.
     """
-    meta_dir = join(prefix, 'conda-meta')
+    meta_dir = join(PREFIX, 'conda-meta')
     if not isdir(meta_dir):
         return set()
     return set(fn[:-5] for fn in os.listdir(meta_dir) if fn.endswith('.json'))
@@ -345,7 +326,7 @@ def is_linked(dist):
     Return the install meta-data for a linked package in a prefix, or None
     if the package is not linked in the prefix.
     """
-    meta_path = join(prefix, 'conda-meta', dist + '.json')
+    meta_path = join(PREFIX, 'conda-meta', dist + '.json')
     try:
         with open(meta_path) as fi:
             return json.load(fi)
@@ -358,50 +339,54 @@ def link(dist, linktype=LINK_HARD):
     Set up a package in a specified (environment) prefix.  We assume that
     the package has been extracted (using extract() above).
     '''
-    source_dir = join(pkgs_dir, dist)
-    if not run_script(source_dir, dist, 'pre-link', prefix):
-        sys.exit('Error: pre-link failed: %s' % dist)
+    if linktype:
+        source_dir = join(PKGS_DIR, dist)
+        info_dir = join(source_dir, 'info')
+        no_link = read_no_link(info_dir)
+    else:
+        info_dir = join(PREFIX, 'info')
 
-    info_dir = join(source_dir, 'info')
     files = list(yield_lines(join(info_dir, 'files')))
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
-    no_link = read_no_link(info_dir)
 
-    for f in files:
-        src = join(source_dir, f)
-        dst = join(prefix, f)
-        dst_dir = dirname(dst)
-        if not isdir(dst_dir):
-            os.makedirs(dst_dir)
-        if os.path.exists(dst):
-            rm_rf(dst)
-        lt = linktype
-        if f in has_prefix_files or f in no_link or islink(src):
-            lt = LINK_COPY
-        try:
-            _link(src, dst, lt)
-        except OSError:
-            pass
+    if linktype:
+        for f in files:
+            src = join(source_dir, f)
+            dst = join(PREFIX, f)
+            dst_dir = dirname(dst)
+            if not isdir(dst_dir):
+                os.makedirs(dst_dir)
+            if os.path.exists(dst):
+                rm_rf(dst)
+            lt = linktype
+            if f in has_prefix_files or f in no_link or islink(src):
+                lt = LINK_COPY
+            try:
+                _link(src, dst, lt)
+            except OSError:
+                pass
 
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
         try:
-            update_prefix(join(prefix, f), prefix, placeholder, mode)
+            update_prefix(join(PREFIX, f), PREFIX, placeholder, mode)
         except PaddingError:
             sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
                      (placeholder, dist))
 
     mk_menus(files, remove=False)
 
-    if not run_script(prefix, dist, 'post-link'):
+    if not run_script(dist, 'post-link'):
         sys.exit("Error: post-link failed for: %s" % dist)
 
     meta_dict = {
-        'url': read_url(dist),
         'files': files,
-        'link': {'source': source_dir,
-                 'type': link_name_map.get(linktype)},
+        'url': read_url(dist),
     }
+    if linktype:
+        meta_dict['link'] = {'source': source_dir,
+                             'type': link_name_map.get(linktype)}
+
     create_meta(dist, info_dir, meta_dict)
 
 
@@ -412,15 +397,15 @@ def unlink(dist):
     '''
     run_script(dist, 'pre-unlink')
 
-    meta_path = join(prefix, 'conda-meta', dist + '.json')
+    meta_path = join(PREFIX, 'conda-meta', dist + '.json')
     with open(meta_path) as fi:
         meta = json.load(fi)
 
-    mk_menus(prefix, meta['files'], remove=True)
+    mk_menus(PREFIX, meta['files'], remove=True)
     dst_dirs1 = set()
 
     for f in meta['files']:
-        dst = join(prefix, f)
+        dst = join(PREFIX, f)
         dst_dirs1.add(dirname(dst))
         rm_rf(dst)
 
@@ -429,19 +414,19 @@ def unlink(dist):
 
     dst_dirs2 = set()
     for path in dst_dirs1:
-        while len(path) > len(prefix):
+        while len(path) > len(PREFIX):
             dst_dirs2.add(path)
             path = dirname(path)
     # in case there is nothing left
-    dst_dirs2.add(join(prefix, 'conda-meta'))
-    dst_dirs2.add(prefix)
+    dst_dirs2.add(join(PREFIX, 'conda-meta'))
+    dst_dirs2.add(PREFIX)
 
     for path in sorted(dst_dirs2, key=len, reverse=True):
         rm_empty_dir(path)
 
 
-def messages(prefix):
-    path = join(prefix, '.messages.txt')
+def messages():
+    path = join(PREFIX, '.messages.txt')
     try:
         with open(path) as fi:
             sys.stdout.write(fi.read())
@@ -449,6 +434,15 @@ def messages(prefix):
         pass
     finally:
         rm_rf(path)
+
+
+def post_extract(dist):
+    """
+    assuming that the package is extracted in prefix itself, this function
+    does everything link() does except the actual linking, i.e.
+    update prefix files, run 'post-link', creates the conda metadata
+    """
+    link(dist, linktype=0)
 
 
 def duplicates_to_remove(linked_dists, keep_dists):
@@ -483,7 +477,7 @@ def duplicates_to_remove(linked_dists, keep_dists):
 
 
 def main():
-    global prefix, pkgs_dir
+    global PREFIX, PKGS_DIR
 
     from optparse import OptionParser
 
@@ -507,13 +501,13 @@ def main():
     if args:
         p.error('no arguments expected')
 
-    prefix = opts.prefix
-    pkgs_dir = join(prefix, 'pkgs')
+    PREFIX = opts.prefix
+    PKGS_DIR = join(PREFIX, 'pkgs')
     if opts.verbose:
-        print("prefix: %r" % prefix)
+        print("PREFIX: %r" % PREFIX)
 
     if opts.file:
-        idists = list(yield_lines(join(prefix, opts.file)))
+        idists = list(yield_lines(join(PREFIX, opts.file)))
     else:
         idists = sorted(extracted())
 
@@ -526,10 +520,10 @@ def main():
             print("linking: %s" % dist)
         link(dist, linktype)
 
-    messages(prefix)
+    messages()
 
-    for dist in duplicates_to_remove(linked(prefix), idists):
-        meta_path = join(prefix, 'conda-meta', dist + '.json')
+    for dist in duplicates_to_remove(linked(), idists):
+        meta_path = join(PREFIX, 'conda-meta', dist + '.json')
         print("WARNING: unlinking: %s" % meta_path)
         try:
             os.rename(meta_path, meta_path + '.bak')
