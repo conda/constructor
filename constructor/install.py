@@ -11,11 +11,9 @@ These API functions have argument names referring to:
     pkgs_dir:    the "packages directory" (e.g. '/opt/anaconda/pkgs')
 
     prefix:      the prefix of a particular environment, which may also
-                 be the "default" environment (i.e. sys.prefix),
-                 but is otherwise something like '/opt/anaconda/envs/foo',
-                 or even any prefix, e.g. '/home/joe/myenv'
+                 be the "default" environment (i.e. sys.prefix)
 
-Also, this module is directly invoked by the (self extracting (sfx)) tarball
+Also, this module is directly invoked by the (self extracting) tarball
 installer to create the initial environment, therefore it needs to be
 standalone, i.e. not import any other parts of `conda` (only depend on
 the standard library).
@@ -42,24 +40,21 @@ link_name_map = {
 }
 
 # may be changed in main()
-prefix = opts.prefix
+prefix = sys.prefix
 pkgs_dir = join(prefix, 'pkgs')
 
 
 def _link(src, dst, linktype=LINK_HARD):
+    if on_win:
+        raise NotImplementedError
+
     if linktype == LINK_HARD:
-        if on_win:
-            win_hard_link(src, dst)
-        else:
-            os.link(src, dst)
+        os.link(src, dst)
     elif linktype == LINK_SOFT:
-        if on_win:
-            win_soft_link(src, dst)
-        else:
-            os.symlink(src, dst)
+        os.symlink(src, dst)
     elif linktype == LINK_COPY:
         # copy relative symlinks as symlinks
-        if not on_win and islink(src) and not os.readlink(src).startswith('/'):
+        if islink(src) and not os.readlink(src).startswith('/'):
             os.symlink(os.readlink(src), dst)
         else:
             shutil.copy2(src, dst)
@@ -145,7 +140,7 @@ def binary_replace(data, a, b):
 
     def replace(match):
         occurances = match.group().count(a)
-        padding = (len(a) - len(b))*occurances
+        padding = (len(a) - len(b)) * occurances
         if padding < 0:
             raise PaddingError(a, b, padding)
         return match.group().replace(a, b) + b'\0' * padding
@@ -177,7 +172,8 @@ def update_prefix(path, new_prefix, placeholder=prefix_placeholder,
     if new_data == data:
         return
     st = os.lstat(path)
-    os.remove(path) # Remove file before rewriting to avoid destroying hard-linked cache.
+    # remove file before rewriting to avoid destroying hard-linked cache.
+    os.remove(path)
     with open(path, 'wb') as fo:
         fo.write(new_data)
     os.chmod(path, stat.S_IMODE(st.st_mode))
@@ -196,7 +192,7 @@ def create_meta(dist, info_dir, extra_info):
         meta = json.load(fi)
     # add extra info
     meta.update(extra_info)
-    # write into <env>/conda-meta/<dist>.json
+    # write into <prefix>/conda-meta/<dist>.json
     meta_dir = join(prefix, 'conda-meta')
     if not isdir(meta_dir):
         os.makedirs(meta_dir)
@@ -272,17 +268,6 @@ def read_url(dist):
         for url in urls[::-1]:
             if url.endswith('/%s.tar.bz2' % dist):
                 return url
-    except IOError:
-        pass
-    return None
-
-
-def read_icondata(source_dir):
-    import base64
-
-    try:
-        data = open(join(source_dir, 'info', 'icon.png'), 'rb').read()
-        return base64.b64encode(data).decode('utf-8')
     except IOError:
         pass
     return None
@@ -368,13 +353,11 @@ def is_linked(dist):
         return None
 
 
-def link(dist, linktype=LINK_HARD, index=None):
+def link(dist, linktype=LINK_HARD):
     '''
     Set up a package in a specified (environment) prefix.  We assume that
     the package has been extracted (using extract() above).
     '''
-    index = index or {}
-
     source_dir = join(pkgs_dir, dist)
     if not run_script(source_dir, dist, 'pre-link', prefix):
         sys.exit('Error: pre-link failed: %s' % dist)
@@ -413,19 +396,12 @@ def link(dist, linktype=LINK_HARD, index=None):
     if not run_script(prefix, dist, 'post-link'):
         sys.exit("Error: post-link failed for: %s" % dist)
 
-    meta_dict = index.get(dist + '.tar.bz2', {})
-    meta_dict['url'] = read_url(dist)
-    try:
-        alt_files_path = join(prefix, 'conda-meta', dist + '.files')
-        meta_dict['files'] = list(yield_lines(alt_files_path))
-        os.unlink(alt_files_path)
-    except IOError:
-        meta_dict['files'] = files
-    meta_dict['link'] = {'source': source_dir,
-                         'type': link_name_map.get(linktype)}
-    if 'icon' in meta_dict:
-        meta_dict['icondata'] = read_icondata(source_dir)
-
+    meta_dict = {
+        'url': read_url(dist),
+        'files': files,
+        'link': {'source': source_dir,
+                 'type': link_name_map.get(linktype)},
+    }
     create_meta(dist, info_dir, meta_dict)
 
 
@@ -548,7 +524,7 @@ def main():
     for dist in idists:
         if opts.verbose:
             print("linking: %s" % dist)
-        link(prefix, dist, linktype)
+        link(dist, linktype)
 
     messages(prefix)
 
