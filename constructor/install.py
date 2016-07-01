@@ -502,7 +502,7 @@ def main():
     else:
         idists = sorted(extracted())
 
-    linktype = (LINK_HARD if try_hard_link() else LINK_COPY)
+    linktype = (LINK_HARD if try_hard_link(idists[0]) else LINK_COPY)
     if opts.verbose:
         print("linktype: %s" % link_name_map[linktype])
 
