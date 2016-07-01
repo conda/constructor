@@ -1,3 +1,9 @@
+2016-07-XX   1.2.2:
+-------------------
+  * improve install logic on Unix, replace post.py by custom install.py,
+    which is independent of conda
+
+
 2016-06-24   1.2.1:
 -------------------
   * compatibility with conda 4.1, see #26

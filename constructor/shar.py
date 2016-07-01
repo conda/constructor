@@ -13,7 +13,6 @@ import tempfile
 from os.path import dirname, getsize, join
 
 from conda.utils import md5_file
-import conda.install
 
 from constructor.utils import (preprocess, read_ascii_only, name_dist,
                                fill_template)
@@ -97,8 +96,7 @@ def create(info):
         t.add(join(info['_download_dir'], 'urls.txt'), 'pkgs/urls.txt')
     for fn in info['_dists']:
         t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
-    t.add(join(conda.install.__file__.rstrip('co')), 'pkgs/install.py')
-    t.add(join(THIS_DIR, 'post.py'), 'pkgs/post.py')
+    t.add(join(THIS_DIR, 'install.py'), 'pkgs/install.py')
     for key in 'pre_install', 'post_install':
         if key in info:
             t.add(info[key], 'pkgs/%s.sh' % key)

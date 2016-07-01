@@ -363,11 +363,10 @@ def link(dist, linktype=LINK_HARD):
     meta_dict = {
         'files': files,
         'url': read_url(dist),
+        'link': ({'source': source_dir,
+                  'type': link_name_map.get(linktype)}
+                 if linktype else None),
     }
-    if linktype:
-        meta_dict['link'] = {'source': source_dir,
-                             'type': link_name_map.get(linktype)}
-
     create_meta(dist, info_dir, meta_dict)
 
 
