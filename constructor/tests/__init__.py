@@ -11,7 +11,7 @@ import sys
 import conda
 
 import constructor
-from constructor.tests import test_parser, test_utils
+from constructor.tests import test_parser, test_utils, test_install
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
 
     test_parser.test_1()
     test_utils.main()
-    print("OK")
+    assert test_install.run().wasSuccessful() == True
 
 
 if __name__ == '__main__':

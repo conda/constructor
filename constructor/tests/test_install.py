@@ -91,5 +91,13 @@ class duplicates_to_remove_TestCase(unittest.TestCase):
         self.assertEqual(duplicates_to_remove(li, [d1, d2]), [])
 
 
+def run():
+    suite = unittest.TestSuite()
+    for cls in TestBinaryReplace, duplicates_to_remove_TestCase:
+        suite.addTest(unittest.makeSuite(cls))
+    runner = unittest.TextTestRunner()
+    return runner.run(suite)
+
+
 if __name__ == '__main__':
-    unittest.main()
+    run()
