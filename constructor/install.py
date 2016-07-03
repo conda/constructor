@@ -272,7 +272,7 @@ def read_urls2(dist):
             m = url_pat.match(line)
             if m is None:
                 continue
-            if m.group('fn') ==  '/%s.tar.bz2' % dist:
+            if m.group('fn') ==  '%s.tar.bz2' % dist:
                 return m.group('url') + m.group('fn'), m.group('md5')
     except IOError:
         pass
