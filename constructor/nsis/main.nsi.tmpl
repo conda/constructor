@@ -453,7 +453,6 @@ FunctionEnd
 Section "Install"
 
     SetOutPath "$INSTDIR\Lib"
-    File __INSTALL_PY__
     File "@NSIS_DIR@\_nsis.py"
     File "@NSIS_DIR@\_system_path.py"
 
@@ -463,7 +462,8 @@ Section "Install"
                   "$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR;$0").r0'
 
     SetOutPath "$INSTDIR\pkgs"
-    File __URLSFILE__
+    File __INSTALL_PY__
+    File __URLS_FILE__
 
     @PKG_COMMANDS@
 

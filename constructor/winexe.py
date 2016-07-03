@@ -65,7 +65,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs):
         if n == 1:
             assert fn.startswith('python-')
         yield ('ExecWait \'"$INSTDIR\pythonw.exe" '
-               '"$INSTDIR\\Lib\\_install.py" --post\'')
+               '"$INSTDIR\\pkgs\\.install.py" --post\'')
         if keep_pkgs:
             continue
         yield 'Delete "$INSTDIR\\pkgs\\%s"' % fn
@@ -104,8 +104,8 @@ def make_nsi(info, dir_path):
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
                     ('WELCOMEIMAGE', 'welcome.bmp'),
                     ('ICONFILE', 'icon.ico'),
-                    ('INSTALL_PY', '_install.py'),
-                    ('URLSFILE', 'urls')]:
+                    ('INSTALL_PY', '.install.py'),
+                    ('URLS_FILE', 'urls')]:
         replace[key] = join(dir_path, fn)
     for key in replace:
         replace[key] = str_esc(replace[key])
@@ -152,7 +152,7 @@ def create(info):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     shutil.copy(join(THIS_DIR, 'install.py'),
-                join(tmp_dir, '_install.py'))
+                join(tmp_dir, '.install.py'))
     shutil.copy(join(info['_download_dir'], 'urls.txt'),
                 join(tmp_dir, 'urls'))
     write_images(info, tmp_dir)
