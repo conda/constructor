@@ -6,7 +6,6 @@
 
 import re
 import sys
-from conda.install import name_dist, dist2filename
 from conda.config import url_channel
 
 

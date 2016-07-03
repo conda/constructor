@@ -428,12 +428,15 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
-def post_extract(dist):
+def post_extract():
     """
     assuming that the package is extracted in prefix itself, this function
     does everything link() does except the actual linking, i.e.
     update prefix files, run 'post-link', creates the conda metadata
     """
+    with open(join(PREFIX, 'info', 'index.json')) as fi:
+        meta = json.load(fi)
+    dist = '%(name)s-%(version)s-%(build)s' % meta
     link(dist, linktype=0)
 
 
@@ -456,9 +459,8 @@ def main():
                  help="prefix (defaults to %default)")
 
     p.add_option('--post',
-                 action="store",
-                 help="perform post extract for DIST",
-                 metavar='DIST')
+                 action="store_true",
+                 help="perform post extract")
 
     p.add_option('-v', '--verbose',
                  action="store_true")
@@ -475,7 +477,7 @@ def main():
         print("PREFIX: %r" % PREFIX)
 
     if opts.post:
-        post_extract(opts.post)
+        post_extract()
         return
 
     if on_win:
