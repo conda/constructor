@@ -239,9 +239,9 @@ url_pat = re.compile(r'''
 $                                 # EOL
 ''', re.VERBOSE)
 
-def read_urls2(dist):
+def read_urls(dist):
     try:
-        data = open(join(PKGS_DIR, 'urls2.txt')).read()
+        data = open(join(PKGS_DIR, 'urls')).read()
         for line in data.split()[::-1]:
             m = url_pat.match(line)
             if m is None:
@@ -347,7 +347,7 @@ def link(dist, linktype=LINK_HARD):
                   'type': link_name_map.get(linktype)}
                  if linktype else None),
     }
-    meta['url'], meta['md5'] = read_urls2(dist)
+    meta['url'], meta['md5'] = read_urls(dist)
 
     create_meta(dist, info_dir, meta)
 
