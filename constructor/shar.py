@@ -93,7 +93,7 @@ def create(info):
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
     if info.get('keep_pkgs'):
-        t.add(join(info['_download_dir'], 'urls.txt'), 'pkgs/urls2.txt')
+        t.add(join(info['_download_dir'], 'urls.txt'), 'pkgs/urls')
     for fn in info['_dists']:
         t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
     t.add(join(THIS_DIR, 'install.py'), 'pkgs/.install.py')

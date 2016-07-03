@@ -55,17 +55,16 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs):
         yield ''
         yield '# --> %s <--' % fn
         yield 'File %s' % str_esc(join(download_dir, fn))
-        yield ('untgz::extract "-d" "$INSTDIR" '
-               '"-zbz2" "$INSTDIR\\pkgs\\%s"' % fn)
+        yield r'untgz::extract -d "$INSTDIR" -zbz2 "$INSTDIR\pkgs\%s"' % fn
         if n == 0:
             # only extract MSVC runtimes first, so that Python can be used
             # by _nsis postpkg
             assert 'runtime' in name_dist(fn)
             continue
         if n == 1:
-            assert name_dist(fn) == 'python'
+            assert fn.startswith('python-')
         yield ('ExecWait \'"$INSTDIR\pythonw.exe" '
-               '"$INSTDIR\\Lib\\_nsis.py" postpkg\'')
+               '"$INSTDIR\\Lib\\_install.py" --post\'')
         if keep_pkgs:
             continue
         yield 'Delete "$INSTDIR\\pkgs\\%s"' % fn
@@ -103,7 +102,9 @@ def make_nsi(info, dir_path):
     }
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
                     ('WELCOMEIMAGE', 'welcome.bmp'),
-                    ('ICONFILE', 'icon.ico')]:
+                    ('ICONFILE', 'icon.ico'),
+                    ('INSTALLPY', '_install.py'),
+                    ('URLSFILE', 'urls')]:
         replace[key] = join(dir_path, fn)
     for key in replace:
         replace[key] = str_esc(replace[key])
@@ -149,6 +150,10 @@ Error: no file %s
 def create(info):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
+    shutil.copy(join(THIS_DIR, 'install.py'),
+                join(tmp_dir, '_install.py'))
+    shutil.copy(join(info['_download_dir'], 'urls.txt'),
+                join(tmp_dir, 'urls'))
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
     args = [MAKENSIS_EXE, '/V2', nsi]

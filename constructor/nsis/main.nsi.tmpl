@@ -453,15 +453,17 @@ FunctionEnd
 Section "Install"
 
     SetOutPath "$INSTDIR\Lib"
+    File __INSTALL_PY__
     File "@NSIS_DIR@\_nsis.py"
     File "@NSIS_DIR@\_system_path.py"
-
-    SetOutPath "$INSTDIR\pkgs"
 
     ReadEnvStr $0 PATH
     # set PATH for the installer process, so that MSVC runtimes get found OK
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                   "$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR;$0").r0'
+
+    SetOutPath "$INSTDIR\pkgs"
+    File __URLSFILE__
 
     @PKG_COMMANDS@
 

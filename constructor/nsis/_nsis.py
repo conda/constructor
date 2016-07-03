@@ -9,9 +9,8 @@
 
 import os
 import sys
-import json
 import traceback
-from os.path import isdir, join, exists
+from os.path import join, exists
 
 # Install an exception hook which pops up a message box.
 # Ideally, exceptions will get returned to NSIS and logged there,
@@ -40,27 +39,6 @@ else:
         pass
     out = write
     err = write
-
-def create_conda_meta():
-    meta_dir = join(sys.prefix, 'conda-meta')
-    info_dir = join(sys.prefix, 'info')
-
-    with open(join(info_dir, 'index.json')) as fi:
-        meta = json.load(fi)
-
-    meta['files'] = []
-    for line in open(join(info_dir, 'files')):
-        line = line.strip()
-        if not line or line.startswith('#'):
-            continue
-        meta['files'].append(line)
-
-    if not isdir(meta_dir):
-        os.mkdir(meta_dir)
-
-    fn = '%(name)s-%(version)s-%(build)s.json' % meta
-    with open(join(meta_dir, fn), 'w') as fo:
-        json.dump(meta, fo, indent=2, sort_keys=True)
 
 
 def mk_menus(remove=False):
@@ -106,9 +84,7 @@ def remove_from_path():
 
 def main():
     cmd = sys.argv[1].strip()
-    if cmd == 'postpkg':
-        create_conda_meta()
-    elif cmd == 'mkmenus':
+    if cmd == 'mkmenus':
         mk_menus(remove=False)
     elif cmd == 'rmmenus':
         mk_menus(remove=True)
