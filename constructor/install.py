@@ -352,41 +352,7 @@ def link(dist, linktype=LINK_HARD):
     create_meta(dist, info_dir, meta)
 
 
-def unlink(dist):
-    '''
-    Remove a package from the specified environment, it is an error if the
-    package does not exist in the prefix.
-    '''
-    run_script(dist, 'pre-unlink')
-
-    meta_path = join(PREFIX, 'conda-meta', dist + '.json')
-    with open(meta_path) as fi:
-        meta = json.load(fi)
-
-    dst_dirs1 = set()
-
-    for f in meta['files']:
-        dst = join(PREFIX, f)
-        dst_dirs1.add(dirname(dst))
-        rm_rf(dst)
-
-    # remove the meta-file last
-    os.unlink(meta_path)
-
-    dst_dirs2 = set()
-    for path in dst_dirs1:
-        while len(path) > len(PREFIX):
-            dst_dirs2.add(path)
-            path = dirname(path)
-    # in case there is nothing left
-    dst_dirs2.add(join(PREFIX, 'conda-meta'))
-    dst_dirs2.add(PREFIX)
-
-    for path in sorted(dst_dirs2, key=len, reverse=True):
-        rm_empty_dir(path)
-
-
-def messages():
+def show_messages():
     path = join(PREFIX, '.messages.txt')
     try:
         with open(path) as fi:
@@ -437,7 +403,7 @@ def post_extract():
     with open(join(PREFIX, 'info', 'index.json')) as fi:
         meta = json.load(fi)
     dist = '%(name)s-%(version)s-%(build)s' % meta
-    link(dist, linktype=0)
+    link(dist, linktype=None)
 
 
 def main():
@@ -497,7 +463,7 @@ def main():
             print("linking: %s" % dist)
         link(dist, linktype)
 
-    messages()
+    show_messages()
 
     for dist in duplicates_to_remove(linked(), idists):
         meta_path = join(PREFIX, 'conda-meta', dist + '.json')
