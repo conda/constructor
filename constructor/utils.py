@@ -6,7 +6,6 @@
 
 import re
 import sys
-from conda.config import url_channel
 
 
 def fill_template(data, d):
@@ -27,12 +26,6 @@ def read_ascii_only(path):
             sys.exit("Error: unexpected non-ASCII character '%s' in: %s" %
                      (c, path))
     return data
-
-
-def url2dist(url):
-    fn = url.rsplit('/', 1)[-1]
-    _, schannel = url_channel(url)
-    return fn if schannel == 'defaults' else schannel + '::' + fn
 
 
 if_pat = re.compile(r'^#if ([ \S]+)$\n'

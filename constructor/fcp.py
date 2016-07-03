@@ -15,18 +15,26 @@ from collections import defaultdict
 from os.path import isdir, isfile, join
 
 from conda.compat import iteritems
+from conda.config import url_channel
 from conda.utils import md5_file
 from conda.api import get_index
 from conda.fetch import fetch_pkg
 from conda.plan import add_defaults_to_specs
 from conda.resolve import Resolve
+from conda.install import dist2filename
 
-from .utils import name_dist, dist2filename, url2dist
+from constructor.install import name_dist
 
 dists = []
 urls = []
 md5s = {}
 r = None
+
+
+def url2dist(url):
+    fn = url.rsplit('/', 1)[-1]
+    _, schannel = url_channel(url)
+    return fn if schannel == 'defaults' else schannel + '::' + fn
 
 
 def resolve(info):
@@ -37,7 +45,7 @@ def resolve(info):
     res = r.solve(specs)
 
     if 'install_in_dependency_order' in info:
-        sort_info = {name_dist(d): d[:-8] for d in res}
+        sort_info = {name_dist(d): d for d in res}
         dists.extend(d + '.tar.bz2' for d in r.graph_sort(sort_info))
     else:
         dists.extend(res)
@@ -100,8 +108,8 @@ def handle_packages(info):
             if fkey not in r.index:
                 sys.exit("Error: no package '%s' in %s" % (fn, url))
         else:
-            group = [fkey for fkey, info in iteritems(r.index)
-                     if info['fn'] == fn]
+            group = [fkey for fkey, info2 in iteritems(r.index)
+                     if info2['fn'] == fn]
             if not group:
                 sys.exit("Error: did not find '%s' in any channels" % fn)
             fkey = sorted(group, key=r.version_key, reverse=True)[0]
