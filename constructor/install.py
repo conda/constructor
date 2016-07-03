@@ -200,32 +200,6 @@ def create_meta(dist, info_dir, extra_info):
         json.dump(meta, fo, indent=2, sort_keys=True)
 
 
-def mk_menus(files, remove=False):
-    """
-    Create cross-platform menu items (e.g. Windows Start Menu)
-
-    Passes all menu config files %PREFIX%/Menu/*.json to ``menuinst.install``.
-    ``remove=True`` will remove the menu items.
-    """
-    menu_files = [f for f in files
-                  if f.lower().startswith('menu/')
-                  and f.lower().endswith('.json')]
-    if not menu_files:
-        return
-
-    try:
-        import menuinst
-    except:
-        return
-
-    for f in menu_files:
-        try:
-            menuinst.install(join(PREFIX, f), remove, PREFIX)
-        except:
-            import traceback
-            sys.stdout.write("menuinst Exception: %s" % traceback.format_exc())
-
-
 def run_script(dist, action='post-link'):
     """
     call the post-link (or pre-unlink) script, and return True on success,
@@ -364,8 +338,6 @@ def link(dist, linktype=LINK_HARD):
             sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
                      (placeholder, dist))
 
-    mk_menus(files, remove=False)
-
     if not run_script(dist, 'post-link'):
         sys.exit("Error: post-link failed for: %s" % dist)
 
@@ -391,7 +363,6 @@ def unlink(dist):
     with open(meta_path) as fi:
         meta = json.load(fi)
 
-    mk_menus(PREFIX, meta['files'], remove=True)
     dst_dirs1 = set()
 
     for f in meta['files']:
@@ -506,6 +477,9 @@ def main():
     if opts.post:
         post_extract(opts.post)
         return
+
+    if on_win:
+        raise NotImplementedError
 
     if opts.file:
         idists = list(yield_lines(join(PREFIX, opts.file)))
