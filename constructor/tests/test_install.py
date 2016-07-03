@@ -2,7 +2,7 @@ import unittest
 
 
 from constructor.install import (PaddingError, binary_replace,
-                                 duplicates_to_remove)
+                                 duplicates_to_remove, url_pat)
 
 
 
@@ -91,9 +91,33 @@ class duplicates_to_remove_TestCase(unittest.TestCase):
         self.assertEqual(duplicates_to_remove(li, [d1, d2]), [])
 
 
+class URLPatter_TestCase(unittest.TestCase):
+
+    def test_1(self):
+        line = 'https://repo.io/osx-64/pip-7.1-0.tar.bz2'
+        m = url_pat.match(line)
+        self.assertEqual(m.group('url'), 'https://repo.io/osx-64/')
+        self.assertEqual(m.group('fn'), 'pip-7.1-0.tar.bz2')
+        self.assertEqual(m.group('md5'), None)
+
+    def test_md5(self):
+        line = ('https://repo.io/osx-64/pip-7.1-0.tar.bz2'
+                '#2e61152595f223038c811cd479d0cea1')
+        m = url_pat.match(line)
+        self.assertEqual(m.group('url'), 'https://repo.io/osx-64/')
+        self.assertEqual(m.group('fn'), 'pip-7.1-0.tar.bz2')
+        self.assertEqual(m.group('md5'),
+                         '2e61152595f223038c811cd479d0cea1')
+
+    def test_invalid(self):
+        m = url_pat.match('pip-7.1-0.tar.bz2')
+        self.assertEqual(m, None)
+
+
 def run():
     suite = unittest.TestSuite()
-    for cls in TestBinaryReplace, duplicates_to_remove_TestCase:
+    for cls in (TestBinaryReplace, duplicates_to_remove_TestCase,
+                URLPatter_TestCase):
         suite.addTest(unittest.makeSuite(cls))
     runner = unittest.TextTestRunner()
     return runner.run(suite)

@@ -21,6 +21,7 @@ the standard library).
 from __future__ import print_function, division, absolute_import
 
 import os
+import re
 import sys
 import json
 import shutil
@@ -136,14 +137,13 @@ def binary_replace(data, a, b):
     replaced with `b` and the remaining string is padded with null characters.
     All input arguments are expected to be bytes objects.
     """
-    import re
-
     def replace(match):
         occurances = match.group().count(a)
         padding = (len(a) - len(b)) * occurances
         if padding < 0:
             raise PaddingError(a, b, padding)
         return match.group().replace(a, b) + b'\0' * padding
+
     pat = re.compile(re.escape(a) + b'([^\0]*?)\0')
     res = pat.sub(replace, data)
     assert len(res) == len(data)
@@ -258,16 +258,25 @@ def run_script(dist, action='post-link'):
     return True
 
 
-def read_url(dist):
+url_pat = re.compile(r'''
+(?P<url>\S+/)                     # URL
+(?P<fn>[^\s#/]+)                  # filename
+([#](?P<md5>[0-9a-f]{32}))?       # optional MD5
+$                                 # EOL
+''', re.VERBOSE)
+
+def read_urls2(dist):
     try:
-        data = open(join(PKGS_DIR, 'urls.txt')).read()
-        urls = data.split()
-        for url in urls[::-1]:
-            if url.endswith('/%s.tar.bz2' % dist):
-                return url
+        data = open(join(PKGS_DIR, 'urls2.txt')).read()
+        for line in data.split()[::-1]:
+            m = url_pat.match(line)
+            if m is None:
+                continue
+            if m.group('fn') ==  '/%s.tar.bz2' % dist:
+                return m.group('url') + m.group('fn'), m.group('md5')
     except IOError:
         pass
-    return None
+    return None, None
 
 
 def read_no_link(info_dir):
@@ -360,14 +369,15 @@ def link(dist, linktype=LINK_HARD):
     if not run_script(dist, 'post-link'):
         sys.exit("Error: post-link failed for: %s" % dist)
 
-    meta_dict = {
+    meta = {
         'files': files,
-        'url': read_url(dist),
         'link': ({'source': source_dir,
                   'type': link_name_map.get(linktype)}
                  if linktype else None),
     }
-    create_meta(dist, info_dir, meta_dict)
+    meta['url'], meta['md5'] = read_urls2(dist)
+
+    create_meta(dist, info_dir, meta)
 
 
 def unlink(dist):
