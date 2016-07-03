@@ -14,7 +14,8 @@ from os.path import abspath, dirname, isfile, join
 from subprocess import check_call
 
 from constructor.construct import ns_platform
-from constructor.utils import preprocess, name_dist, fill_template
+from constructor.install import name_dist
+from constructor.utils import preprocess, fill_template
 from constructor.imaging import write_images
 
 
@@ -59,7 +60,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs):
         if n == 0:
             # only extract MSVC runtimes first, so that Python can be used
             # by _nsis postpkg
-            assert 'runtime' in name_dist(fn)
+            assert 'runtime' in fn
             continue
         if n == 1:
             assert fn.startswith('python-')
@@ -103,7 +104,7 @@ def make_nsi(info, dir_path):
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
                     ('WELCOMEIMAGE', 'welcome.bmp'),
                     ('ICONFILE', 'icon.ico'),
-                    ('INSTALLPY', '_install.py'),
+                    ('INSTALL_PY', '_install.py'),
                     ('URLSFILE', 'urls')]:
         replace[key] = join(dir_path, fn)
     for key in replace:
