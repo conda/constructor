@@ -21,9 +21,8 @@ from conda.api import get_index
 from conda.fetch import fetch_pkg
 from conda.plan import add_defaults_to_specs
 from conda.resolve import Resolve
-from conda.install import dist2filename
+from conda.install import name_dist, dist2filename
 
-from constructor.install import name_dist
 
 dists = []
 urls = []
@@ -148,6 +147,7 @@ def fetch(info):
     if not isdir(download_dir):
         os.makedirs(download_dir)
 
+    print('download dir: %s' % download_dir)
     for fkey in dists:
         fn = dist2filename(fkey)
         path = join(download_dir, fn)

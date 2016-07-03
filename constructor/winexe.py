@@ -153,8 +153,9 @@ def create(info):
     tmp_dir = tempfile.mkdtemp()
     shutil.copy(join(THIS_DIR, 'install.py'),
                 join(tmp_dir, '.install.py'))
-    shutil.copy(join(info['_download_dir'], 'urls.txt'),
-                join(tmp_dir, 'urls'))
+    urls_path = join(info['_download_dir'], 'urls.txt')
+    if isfile(urls_path):
+        shutil.copy(urls_path, join(tmp_dir, 'urls'))
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
     args = [MAKENSIS_EXE, '/V2', nsi]
