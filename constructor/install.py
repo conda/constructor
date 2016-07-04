@@ -40,7 +40,7 @@ link_name_map = {
     LINK_COPY: 'copy',
 }
 
-# may be changed in main()
+# these may be changed in main()
 PREFIX = sys.prefix
 PKGS_DIR = join(PREFIX, 'pkgs')
 
@@ -79,17 +79,6 @@ def rm_rf(path):
 
     elif isdir(path):
         shutil.rmtree(path)
-
-
-def rm_empty_dir(path):
-    """
-    Remove the directory `path` if it is a directory and empty.
-    If the directory does not exist or is not empty, do nothing.
-    """
-    try:
-        os.rmdir(path)
-    except OSError: # directory might not exist or not be empty
-        pass
 
 
 def yield_lines(path):
