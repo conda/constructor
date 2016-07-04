@@ -221,8 +221,6 @@ def run_script(dist, action='post-link'):
         args = [shell_path, path]
     env = os.environ
     env['ROOT_PREFIX'] = env['PREFIX'] = str(PREFIX)
-    env['PKG_NAME'], env['PKG_VERSION'], env['PKG_BUILDNUM'] = \
-                str(dist).rsplit('-', 2)
 
     import subprocess
     try:
