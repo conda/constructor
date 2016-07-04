@@ -41,7 +41,7 @@ link_name_map = {
 # these may be changed in main()
 PREFIX = sys.prefix
 PKGS_DIR = join(PREFIX, 'pkgs')
-IDISTS = None
+IDISTS = {}
 
 
 def _link(src, dst, linktype=LINK_HARD):
@@ -322,10 +322,11 @@ def link(dist, linktype=LINK_HARD):
                   'type': link_name_map.get(linktype)}
                  if linktype else None),
     }
-    if IDISTS is None:
-        meta['url'], meta['md5'] = read_urls(dist)
-    else:
-        meta['url'], meta['md5'] = IDISTS[dist]
+    try:
+        url_md5 = IDISTS[dist]
+    except KeyError:
+        url_md5 = read_urls(dist)
+    meta['url'], meta['md5'] = url_md5
 
     create_meta(dist, info_dir, meta)
 
@@ -365,7 +366,7 @@ def link_idists(verbose=False):
     """
     link all distributions listed in the global IDISTS
     """
-    if IDISTS is None:
+    if not IDISTS:
         sys.exit("Error: invalid mode, maybe --post is missing?")
 
     if on_win:
