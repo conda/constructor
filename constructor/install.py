@@ -26,7 +26,7 @@ import sys
 import json
 import shutil
 import stat
-from os.path import dirname, isdir, isfile, islink, join
+from os.path import dirname, exists, isdir, isfile, islink, join
 
 
 on_win = bool(sys.platform == 'win32')
@@ -318,7 +318,7 @@ def link(dist, linktype=LINK_HARD):
             dst_dir = dirname(dst)
             if not isdir(dst_dir):
                 os.makedirs(dst_dir)
-            if os.path.exists(dst):
+            if exists(dst):
                 rm_rf(dst)
             lt = linktype
             if f in has_prefix_files or f in no_link or islink(src):
