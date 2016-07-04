@@ -330,17 +330,6 @@ def link(dist, linktype=LINK_HARD):
     create_meta(dist, info_dir, meta)
 
 
-def show_messages():
-    path = join(PREFIX, '.messages.txt')
-    try:
-        with open(path) as fi:
-            sys.stdout.write(fi.read())
-    except IOError:
-        pass
-    finally:
-        rm_rf(path)
-
-
 def duplicates_to_remove(linked_dists, keep_dists):
     """
     Returns the (sorted) list of distributions to be removed, such that
@@ -372,6 +361,35 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
+def link_idists(verbose=False):
+    """
+    link all distributions listed in the global IDISTS
+    """
+    if IDISTS is None:
+        sys.exit("Error: invalid mode, maybe --post is missing?")
+
+    if on_win:
+        raise NotImplementedError
+
+    idists = sorted(IDISTS)
+    linktype = (LINK_HARD if try_hard_link(idists[0]) else LINK_COPY)
+    if verbose:
+        print("linktype: %s" % link_name_map[linktype])
+
+    for dist in idists:
+        if verbose:
+            print("linking: %s" % dist)
+        link(dist, linktype)
+
+    for dist in duplicates_to_remove(linked(), idists):
+        meta_path = join(PREFIX, 'conda-meta', dist + '.json')
+        print("WARNING: unlinking: %s" % meta_path)
+        try:
+            os.rename(meta_path, meta_path + '.bak')
+        except OSError:
+            rm_rf(meta_path)
+
+
 def post_extract():
     """
     assuming that the package is extracted in prefix itself, this function
@@ -398,7 +416,7 @@ def main():
 
     p.add_option('--post',
                  action="store_true",
-                 help="perform post extract")
+                 help="perform post extract (on a single package)")
 
     p.add_option('-v', '--verbose',
                  action="store_true")
@@ -416,31 +434,7 @@ def main():
         post_extract()
         return
 
-    if on_win:
-        raise NotImplementedError
-
-    if IDISTS is None:
-        sys.exit("Error: invalid install mode")
-
-    idists = sorted(IDISTS)
-    linktype = (LINK_HARD if try_hard_link(idists[0]) else LINK_COPY)
-    if opts.verbose:
-        print("linktype: %s" % link_name_map[linktype])
-
-    for dist in idists:
-        if opts.verbose:
-            print("linking: %s" % dist)
-        link(dist, linktype)
-
-    show_messages()
-
-    for dist in duplicates_to_remove(linked(), idists):
-        meta_path = join(PREFIX, 'conda-meta', dist + '.json')
-        print("WARNING: unlinking: %s" % meta_path)
-        try:
-            os.rename(meta_path, meta_path + '.bak')
-        except OSError:
-            rm_rf(meta_path)
+    link_idists(opts.verbose)
 
 
 if __name__ == '__main__':
