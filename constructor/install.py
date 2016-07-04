@@ -18,8 +18,6 @@ installer to create the initial environment, therefore it needs to be
 standalone, i.e. not import any other parts of `conda` (only depend on
 the standard library).
 '''
-from __future__ import print_function, division, absolute_import
-
 import os
 import re
 import sys
@@ -43,6 +41,7 @@ link_name_map = {
 # these may be changed in main()
 PREFIX = sys.prefix
 PKGS_DIR = join(PREFIX, 'pkgs')
+IDISTS = None
 
 
 def _link(src, dst, linktype=LINK_HARD):
@@ -264,17 +263,6 @@ def try_hard_link(dist):
         rm_rf(dst)
 
 
-def extracted():
-    """
-    return the (set of canonical names) of all extracted packages
-    """
-    if not isdir(PKGS_DIR):
-        return set()
-    return set(dn for dn in os.listdir(PKGS_DIR)
-               if (isfile(join(PKGS_DIR, dn, 'info', 'files')) and
-                   isfile(join(PKGS_DIR, dn, 'info', 'index.json'))))
-
-
 def linked():
     """
     Return the (set of canonical names) of linked packages in prefix.
@@ -334,7 +322,10 @@ def link(dist, linktype=LINK_HARD):
                   'type': link_name_map.get(linktype)}
                  if linktype else None),
     }
-    meta['url'], meta['md5'] = read_urls(dist)
+    if IDISTS is None:
+        meta['url'], meta['md5'] = read_urls(dist)
+    else:
+        meta['url'], meta['md5'] = IDISTS[dist]
 
     create_meta(dist, info_dir, meta)
 
@@ -400,12 +391,6 @@ def main():
 
     p = OptionParser(description="conda link tool used by installer")
 
-    p.add_option('--file',
-                 action="store",
-                 help="path of a file containing distributions to link, "
-                      "by default all packages extracted in the cache are "
-                      "linked")
-
     p.add_option('--prefix',
                  action="store",
                  default=sys.prefix,
@@ -421,8 +406,6 @@ def main():
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
-    if opts.file and opts.post:
-        p.error("--file and --post exclude each other")
 
     PREFIX = opts.prefix
     PKGS_DIR = join(PREFIX, 'pkgs')
@@ -436,11 +419,10 @@ def main():
     if on_win:
         raise NotImplementedError
 
-    if opts.file:
-        idists = list(yield_lines(join(PREFIX, opts.file)))
-    else:
-        idists = sorted(extracted())
+    if IDISTS is None:
+        sys.exit("Error: invalid install mode")
 
+    idists = sorted(IDISTS)
     linktype = (LINK_HARD if try_hard_link(idists[0]) else LINK_COPY)
     if opts.verbose:
         print("linktype: %s" % link_name_map[linktype])
