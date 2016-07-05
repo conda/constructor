@@ -14,37 +14,32 @@ import sys
 from collections import defaultdict
 from os.path import isdir, isfile, join
 
-from conda.compat import iteritems
-from conda.config import url_channel
-from conda.utils import md5_file
-from conda.api import get_index
-from conda.fetch import fetch_pkg
-from conda.plan import add_defaults_to_specs
-from conda.resolve import Resolve
-from conda.install import name_dist, dist2filename
+from libconda.compat import iteritems
+from libconda.utils import md5_file
+from libconda.fetch import fetch_index, fetch_pkg
+from libconda.plan import add_defaults_to_specs
+from libconda.resolve import Resolve
+
+from constructor.install import name_dist
 
 
 dists = []
-urls = []
+index = {}
+urls = {}
 md5s = {}
-r = None
-
-
-def url2dist(url):
-    fn = url.rsplit('/', 1)[-1]
-    _, schannel = url_channel(url)
-    return fn if schannel == 'defaults' else schannel + '::' + fn
 
 
 def resolve(info):
-    if not r:
+    if not index:
         sys.exit("Error: index is empty, maybe 'channels' are missing?")
     specs = info['specs']
+    r = Resolve(index)
     add_defaults_to_specs(r, [], specs)
-    res = r.solve(specs)
+    res = list(r.solve(specs))
+    sys.stdout.write('\n')
 
     if 'install_in_dependency_order' in info:
-        sort_info = {name_dist(d): d for d in res}
+        sort_info = {name_dist(d): d[:-8] for d in res}
         dists.extend(d + '.tar.bz2' for d in r.graph_sort(sort_info))
     else:
         dists.extend(res)
@@ -102,18 +97,15 @@ def handle_packages(info):
     for url, fn, md5 in parse_packages(info['packages']):
         if fn.count('-') < 2:
             sys.exit("Error: Not a valid conda package filename: '%s'" % fn)
+        dists.append(fn)
+        md5s[fn] = md5
         if url:
-            fkey = url2dist(url + fn) + '.tar.bz2'
-            if fkey not in r.index:
-                sys.exit("Error: no package '%s' in %s" % (fn, url))
+            urls[fn] = url
         else:
-            group = [fkey for fkey, info2 in iteritems(r.index)
-                     if info2['fn'] == fn]
-            if not group:
+            try:
+                urls[fn] = index[fn]['channel']
+            except KeyError:
                 sys.exit("Error: did not find '%s' in any channels" % fn)
-            fkey = sorted(group, key=r.version_key, reverse=True)[0]
-        dists.append(fkey)
-        md5s[fkey] = md5
 
 
 def move_python_first():
@@ -147,17 +139,24 @@ def fetch(info):
     if not isdir(download_dir):
         os.makedirs(download_dir)
 
-    print('download dir: %s' % download_dir)
-    for fkey in dists:
-        fn = dist2filename(fkey)
+    for fn in dists:
         path = join(download_dir, fn)
-        md5 = md5s.get(fkey)
-        pkginfo = r.index[fkey]
-        md5_src = pkginfo.get('md5')
-        if md5 and md5 != md5_src:
+        url = urls.get(fn)
+        md5 = md5s.get(fn)
+        if url:
+            url_index = fetch_index((url,))
+            try:
+                pkginfo = url_index[fn]
+            except KeyError:
+                sys.exit("Error: no package '%s' in %s" % (fn, url))
+        else:
+            pkginfo = index[fn]
+
+        if md5 and md5 != pkginfo['md5']:
             sys.exit("Error: MD5 sum for '%s' does not match in remote "
-                     "repodata %s" % (fn, pkginfo['channel']))
-        if isfile(path) and md5_file(path) == md5_src:
+                     "repodata %s" % (fn, url))
+
+        if isfile(path) and md5_file(path) == pkginfo['md5']:
             continue
         print('fetching: %s' % fn)
         fetch_pkg(pkginfo, download_dir)
@@ -165,16 +164,10 @@ def fetch(info):
 
 def main(info, verbose=True):
     if 'channels' in info:
-        urls.extend(info['channels'])
-    if 'packages' in info:
-        for url, _, _ in parse_packages(info['packages']):
-            if url and url not in urls:
-                urls.append(url)
-
-    if urls:
-        global r
-        index = get_index(urls, prepend=False, platform=info['_platform'])
-        r = Resolve(index)
+        global index
+        index = fetch_index(
+                  tuple('%s/%s/' % (url.rstrip('/'), info['_platform'])
+                        for url in info['channels']))
 
     if 'specs' in info:
         resolve(info)
@@ -191,4 +184,4 @@ def main(info, verbose=True):
     check_dists()
     fetch(info)
 
-    info['_dists'] = list(map(dist2filename, dists))
+    info['_dists'] = list(dists)

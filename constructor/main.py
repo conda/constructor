@@ -10,9 +10,9 @@ import os
 import sys
 from os.path import abspath, expanduser, isdir, join
 
-from conda.config import subdir as cc_platform
-from conda.install import yield_lines
+from libconda.config import subdir as cc_platform
 
+from constructor.install import yield_lines
 import constructor.fcp as fcp
 import constructor.construct as construct
 
