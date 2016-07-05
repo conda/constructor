@@ -89,6 +89,7 @@ class duplicates_to_remove_TestCase(unittest.TestCase):
         self.assertEqual(duplicates_to_remove([d1], [d1]), [])
         self.assertEqual(duplicates_to_remove([d1], []), [])
         d2 = 'a-1.4-0'
+        self.assertEqual(duplicates_to_remove([d1], [d2]), [])
         li = set([d1, d2])
         self.assertEqual(duplicates_to_remove(li, [d2]), [d1])
         self.assertEqual(duplicates_to_remove(li, [d1]), [d2])
