@@ -50,6 +50,11 @@ class TestBinaryReplace(unittest.TestCase):
 
 class duplicates_to_remove_TestCase(unittest.TestCase):
 
+    def test_0(self):
+        linked = ['conda-3.18.8-py27_0', 'python-2.7.11-0', 'zlib-1.2.8-0']
+        keep = linked
+        self.assertEqual(duplicates_to_remove(linked, keep), [])
+
     def test_1(self):
         linked = ['conda-3.18.8-py27_0', 'conda-3.19.0',
                   'python-2.7.10-2', 'python-2.7.11-0',
