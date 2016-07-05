@@ -219,7 +219,7 @@ def run_script(dist, action='post-link'):
 
 
 url_pat = re.compile(r'''
-(?P<url>\S+/)                     # URL
+(?P<baseurl>\S+/)                 # base URL
 (?P<fn>[^\s#/]+)                  # filename
 ([#](?P<md5>[0-9a-f]{32}))?       # optional MD5
 $                                 # EOL
@@ -232,11 +232,12 @@ def read_urls(dist):
             m = url_pat.match(line)
             if m is None:
                 continue
-            if m.group('fn') ==  '%s.tar.bz2' % dist:
-                return m.group('url') + m.group('fn'), m.group('md5')
+            if m.group('fn') == '%s.tar.bz2' % dist:
+                return {'url': m.group('baseurl') + m.group('fn'),
+                        'md5': m.group('md5')}
     except IOError:
         pass
-    return None, None
+    return {}
 
 
 def read_no_link(info_dir):
@@ -322,12 +323,11 @@ def link(dist, linktype=LINK_HARD):
                   'type': link_name_map.get(linktype)}
                  if linktype else None),
     }
-    try:
-        url_md5 = IDISTS[dist]
+    try:    # add URL and MD5
+        meta.update(IDISTS[dist])
     except KeyError:
-        url_md5 = read_urls(dist)
-    meta['url'], meta['md5'] = url_md5
-
+        meta.update(read_urls(dist))
+    #meta['installed_by'] = ...
     create_meta(dist, info_dir, meta)
 
 

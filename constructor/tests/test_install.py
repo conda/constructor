@@ -96,7 +96,7 @@ class URLPatter_TestCase(unittest.TestCase):
     def test_1(self):
         line = 'https://repo.io/osx-64/pip-7.1-0.tar.bz2'
         m = url_pat.match(line)
-        self.assertEqual(m.group('url'), 'https://repo.io/osx-64/')
+        self.assertEqual(m.group('baseurl'), 'https://repo.io/osx-64/')
         self.assertEqual(m.group('fn'), 'pip-7.1-0.tar.bz2')
         self.assertEqual(m.group('md5'), None)
 
@@ -104,7 +104,7 @@ class URLPatter_TestCase(unittest.TestCase):
         line = ('https://repo.io/osx-64/pip-7.1-0.tar.bz2'
                 '#2e61152595f223038c811cd479d0cea1')
         m = url_pat.match(line)
-        self.assertEqual(m.group('url'), 'https://repo.io/osx-64/')
+        self.assertEqual(m.group('baseurl'), 'https://repo.io/osx-64/')
         self.assertEqual(m.group('fn'), 'pip-7.1-0.tar.bz2')
         self.assertEqual(m.group('md5'),
                          '2e61152595f223038c811cd479d0cea1')
