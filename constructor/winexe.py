@@ -15,7 +15,7 @@ from subprocess import check_call
 
 from constructor.construct import ns_platform
 from constructor.install import name_dist
-from constructor.utils import preprocess, fill_template
+from constructor.utils import make_VIProductVersion, preprocess, fill_template
 from constructor.imaging import write_images
 
 

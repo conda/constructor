@@ -18,6 +18,20 @@ def fill_template(data, d):
     return pat.sub(replace, data)
 
 
+def make_VIProductVersion(version):
+    """
+    always create a version of the form X.X.X.X
+    """
+    pat = re.compile('\d+$')
+    res = []
+    for part in version.split('.'):
+        if pat.match(part):
+            res.append(part)
+    while len(res) < 4:
+        res.append('0')
+    return '.'.join(res[:4])
+
+
 def read_ascii_only(path):
     with open(path) as fi:
         data = fi.read()
