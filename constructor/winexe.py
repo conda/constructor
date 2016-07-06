@@ -88,6 +88,7 @@ def make_nsi(info, dir_path):
     replace = {
         'NAME': name,
         'VERSION': info['version'],
+        'VIPV': make_VIProductVersion(info['version']),
         'COMPANY': info.get('company', 'Unknown, Inc.'),
         'ARCH': '%d-bit' % arch,
         'PY_VER': py_version[:3],
