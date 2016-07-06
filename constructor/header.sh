@@ -254,7 +254,6 @@ cat $MSGS
 rm -f $MSGS
 #if keep_pkgs
 rm -f $PREFIX/pkgs/*.py $PREFIX/pkgs/*.sh
-rm -rf $PREFIX/pkgs/__pycache__
 #else
 rm -rf $PREFIX/pkgs
 #endif

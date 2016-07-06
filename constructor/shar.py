@@ -10,7 +10,7 @@ import os
 import shutil
 import tarfile
 import tempfile
-from os.path import dirname, getsize, isfile, join
+from os.path import dirname, getsize, join
 
 from libconda.utils import md5_file
 
@@ -92,10 +92,7 @@ def create(info):
     t = tarfile.open(tarball, 'w')
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
-    if info.get('keep_pkgs'):
-        urls_path = join(info['_download_dir'], 'urls.txt')
-        if isfile(urls_path):
-            t.add(urls_path, 'pkgs/urls')
+    t.add(join(info['_download_dir'], 'fetched'), 'pkgs/urls')
     for fn in info['_dists']:
         t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
     t.add(join(THIS_DIR, 'install.py'), 'pkgs/.install.py')
