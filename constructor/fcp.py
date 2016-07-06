@@ -154,6 +154,7 @@ def fetch(info):
                 pkginfo = index[fn]
 
             pkginfo['fn'] = fn
+            assert pkginfo['channel'].endswith('/')
             fo.write('%(channel)s%(fn)s#%(md5)s\n' % pkginfo)
 
             if md5 and md5 != pkginfo['md5']:
