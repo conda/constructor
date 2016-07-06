@@ -11,7 +11,7 @@ channels: &id1
 specs:
   - python
   - grin
-  - sample
+  - sample                            [osx]
 
 # exclude these packages (list of names)
 exclude:
