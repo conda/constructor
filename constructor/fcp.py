@@ -139,7 +139,7 @@ def fetch(info):
     if not isdir(download_dir):
         os.makedirs(download_dir)
 
-    with open(join(info['_download_dir'], 'fetched'), 'w') as fo:
+    with open(join(info['_download_dir'], 'dists.txt'), 'w') as fo:
         for fn in dists:
             path = join(download_dir, fn)
             url = urls.get(fn)

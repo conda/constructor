@@ -92,7 +92,7 @@ def create(info):
     t = tarfile.open(tarball, 'w')
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
-    t.add(join(info['_download_dir'], 'fetched'), 'pkgs/urls')
+    t.add(join(info['_download_dir'], 'dists.txt'), 'pkgs/urls')
     for fn in info['_dists']:
         t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
     t.add(join(THIS_DIR, 'install.py'), 'pkgs/.install.py')
