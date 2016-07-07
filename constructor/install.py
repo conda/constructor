@@ -138,8 +138,7 @@ def binary_replace(data, a, b):
     return res
 
 
-def update_prefix(path, new_prefix, placeholder=prefix_placeholder,
-                  mode='text'):
+def update_prefix(path, new_prefix, placeholder, mode):
     if on_win and (placeholder != prefix_placeholder) and ('/' in placeholder):
         # original prefix uses unix-style path separators
         # replace with unix-style path separators
