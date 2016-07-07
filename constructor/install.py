@@ -159,8 +159,6 @@ def update_prefix(path, new_prefix, placeholder, mode):
     if new_data == data:
         return
     st = os.lstat(path)
-    # remove file before rewriting to avoid destroying hard-linked cache.
-    os.remove(path)
     with open(path, 'wb') as fo:
         fo.write(new_data)
     os.chmod(path, stat.S_IMODE(st.st_mode))
