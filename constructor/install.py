@@ -159,6 +159,12 @@ def update_prefix(path, new_prefix, placeholder, mode):
     if new_data == data:
         return
     st = os.lstat(path)
+
+    if on_win:
+        import time
+        # on Windows, wait 1ms to avoid race condition
+        time.sleep(0.001)
+
     with open(path, 'wb') as fo:
         fo.write(new_data)
     os.chmod(path, stat.S_IMODE(st.st_mode))
