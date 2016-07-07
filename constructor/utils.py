@@ -6,6 +6,7 @@
 
 import re
 import sys
+import hashlib
 
 
 def fill_template(data, d):
@@ -16,6 +17,17 @@ def fill_template(data, d):
         return d[key]
 
     return pat.sub(replace, data)
+
+
+def md5_file(path):
+    h = hashlib.new('md5')
+    with open(path, 'rb') as fi:
+        while True:
+            chunk = fi.read(262144)
+            if not chunk:
+                break
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def make_VIProductVersion(version):

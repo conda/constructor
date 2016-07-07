@@ -12,11 +12,10 @@ import tarfile
 import tempfile
 from os.path import dirname, getsize, join
 
-from libconda.utils import md5_file
-
 from constructor.install import name_dist
-from constructor.utils import preprocess, read_ascii_only, fill_template
 from constructor.construct import ns_platform
+from constructor.utils import (preprocess, read_ascii_only, fill_template,
+                               md5_file)
 
 
 THIS_DIR = dirname(__file__)
