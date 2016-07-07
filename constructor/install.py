@@ -139,9 +139,9 @@ def binary_replace(data, a, b):
 
 
 def update_prefix(path, new_prefix, placeholder, mode):
-    if on_win and (placeholder != prefix_placeholder) and ('/' in placeholder):
-        # original prefix uses unix-style path separators
-        # replace with unix-style path separators
+    if on_win:
+        # force all prefix replacements to forward slashes to simplify need
+        # to escape backslashes - replace with unix-style path separators
         new_prefix = new_prefix.replace('\\', '/')
 
     path = os.path.realpath(path)
