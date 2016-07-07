@@ -77,6 +77,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
         if key in info:
             # ensure strings in those lists are stripped
             info[key] = [line.strip() for line in info[key]]
+            # ensure there are no empty strings
+            if any((not s) for s in info[key]):
+                sys.exit("Error: found empty element in '%s:'" % key)
 
     fcp.main(info, verbose=verbose)
 
