@@ -14,7 +14,6 @@ import sys
 from collections import defaultdict
 from os.path import isdir, isfile, join
 
-from libconda.compat import iteritems
 from libconda.fetch import fetch_index, fetch_pkg
 from libconda.resolve import Resolve, NoPackagesFound
 
@@ -56,7 +55,7 @@ def check_duplicates():
     for fn in dists:
         map_name[name_dist(fn)].append(fn)
 
-    for name, files in iteritems(map_name):
+    for name, files in map_name.items():
         if len(files) > 1:
             sys.exit("Error: '%s' listed multiple times: %s" %
                      (name, ', '.join(files)))
