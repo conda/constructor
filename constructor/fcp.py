@@ -17,8 +17,7 @@ from os.path import isdir, isfile, join
 from libconda.compat import iteritems
 from libconda.utils import md5_file
 from libconda.fetch import fetch_index, fetch_pkg
-from libconda.plan import add_defaults_to_specs
-from libconda.resolve import Resolve
+from libconda.resolve import Resolve, NoPackagesFound
 
 from constructor.install import name_dist
 
@@ -29,13 +28,20 @@ urls = {}
 md5s = {}
 
 
-def resolve(info):
+def resolve(info, verbose=False):
     if not index:
         sys.exit("Error: index is empty, maybe 'channels' are missing?")
     specs = info['specs']
     r = Resolve(index)
-    add_defaults_to_specs(r, [], specs)
-    res = list(r.solve(specs))
+    if not any(s.split()[0] == 'python' for s in specs):
+        specs.append('python')
+    if verbose:
+        print("specs: %r" % specs)
+
+    try:
+        res = list(r.solve(specs))
+    except NoPackagesFound as e:
+        sys.exit("Error: %s" % e)
     sys.stdout.write('\n')
 
     if 'install_in_dependency_order' in info:
@@ -175,7 +181,7 @@ def main(info, verbose=True):
                         for url in info['channels']))
 
     if 'specs' in info:
-        resolve(info)
+        resolve(info, verbose)
     exclude_packages(info)
     if 'packages' in info:
         handle_packages(info)
