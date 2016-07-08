@@ -7,9 +7,6 @@
 import re
 import sys
 from os.path import abspath, join
-
-if 'develop' in sys.argv:
-    import setuptools
 from distutils.core import setup
 
 
