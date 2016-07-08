@@ -1,5 +1,7 @@
 2016-07-XX   1.3.0:
 -------------------
+  * add ability to run `post-link` scripts (inside conda packages) on Windows
+  * add ability to run post install `.bat` scripts on Windows
   * improve install logic on Unix, replace post.py by custom install.py,
     which is independent of conda
   * remove dependency on conda, we now use libconda, which also means that

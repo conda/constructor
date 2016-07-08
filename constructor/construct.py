@@ -100,7 +100,7 @@ Path to a pre install (bash - Unix only) script.
 '''),
 
     ('post_install',           False, str, '''
-Path to a post install (bash - Unix only) script.
+Path to a post install (bash for Unix - .bat for Windows) script.
 '''),
 
     ('default_prefix',         False, str, 'XXX'),

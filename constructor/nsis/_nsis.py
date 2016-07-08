@@ -10,7 +10,7 @@
 import os
 import sys
 import traceback
-from os.path import join, exists
+from os.path import isfile, join, exists
 
 # Install an exception hook which pops up a message box.
 # Ideally, exceptions will get returned to NSIS and logged there,
@@ -61,6 +61,27 @@ def mk_menus(remove=False):
                     out("Processed %s successfully.\n" % shortcut)
 
 
+def run_post_install():
+    """
+    call the post install script, if the file exists
+    """
+    path = join(sys.prefix, 'pkgs', 'post_install.bat')
+    if not isfile(path):
+        return
+    env = os.environ
+    env['PREFIX'] = str(sys.prefix)
+    try:
+        args = [env['COMSPEC'], '/c', path]
+    except KeyError:
+        err("Error: COMSPEC undefined\n")
+        return
+    import subprocess
+    try:
+        subprocess.check_call(args, env=env)
+    except subprocess.CalledProcessError:
+        err("Error: runnon %s failed\n" % path)
+
+
 allusers = (not exists(join(sys.prefix, '.nonadmin')))
 
 def add_to_path():
@@ -86,6 +107,8 @@ def main():
     cmd = sys.argv[1].strip()
     if cmd == 'mkmenus':
         mk_menus(remove=False)
+    elif cmd == 'post_install':
+        run_post_install()
     elif cmd == 'rmmenus':
         mk_menus(remove=True)
     elif cmd == 'addpath':

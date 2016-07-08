@@ -106,7 +106,8 @@ def make_nsi(info, dir_path):
                     ('WELCOMEIMAGE', 'welcome.bmp'),
                     ('ICONFILE', 'icon.ico'),
                     ('INSTALL_PY', '.install.py'),
-                    ('URLS_FILE', 'urls')]:
+                    ('URLS_FILE', 'urls'),
+                    ('POST_INSTALL', 'post_install.bat')]:
         replace[key] = join(dir_path, fn)
     for key in replace:
         replace[key] = str_esc(replace[key])
@@ -152,10 +153,19 @@ Error: no file %s
 def create(info):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
+
     shutil.copy(join(THIS_DIR, 'install.py'),
                 join(tmp_dir, '.install.py'))
     shutil.copy(join(info['_download_dir'], 'dists.txt'),
                 join(tmp_dir, 'urls'))
+
+    post_dst = join(tmp_dir, 'post_install.bat')
+    try:
+        shutil.copy(info['post_install'], post_dst)
+    except KeyError:
+        with open(post_dst, 'w') as fo:
+            fo.write("\n")
+
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
     args = [MAKENSIS_EXE, '/V2', nsi]
