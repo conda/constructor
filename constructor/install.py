@@ -72,10 +72,8 @@ def rm_rf(path):
         # islink('/path/to/dead-link') is True.
         try:
             os.unlink(path)
-            return
         except (OSError, IOError):
-            return
-
+            pass
     elif isdir(path):
         shutil.rmtree(path)
 
