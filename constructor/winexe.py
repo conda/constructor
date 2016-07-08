@@ -159,12 +159,15 @@ def create(info):
     shutil.copy(join(info['_download_dir'], 'dists.txt'),
                 join(tmp_dir, 'urls'))
 
+    if 'pre_install' in info:
+        sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
+
     post_dst = join(tmp_dir, 'post_install.bat')
     try:
         shutil.copy(info['post_install'], post_dst)
     except KeyError:
         with open(post_dst, 'w') as fo:
-            fo.write("\n")
+            fo.write(":: this is an empty post install .bat script\n")
 
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
