@@ -220,6 +220,7 @@ def run_script(dist, action='post-link'):
             'bat' if on_win else 'sh'))
     if not isfile(path):
         return True
+
     if on_win:
         try:
             args = [os.environ['COMSPEC'], '/c', path]
@@ -228,6 +229,7 @@ def run_script(dist, action='post-link'):
     else:
         shell_path = '/bin/sh' if 'bsd' in sys.platform else '/bin/bash'
         args = [shell_path, path]
+
     env = os.environ
     env['ROOT_PREFIX'] = env['PREFIX'] = str(PREFIX)
 
