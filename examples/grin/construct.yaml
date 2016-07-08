@@ -29,8 +29,9 @@ packages:
 
 keep_pkgs: True
 
-pre_install: hello.sh
-post_install: goodbye.sh
+pre_install: hello.sh                 [unix]
+post_install: goodbye.sh              [unix]
+post_install: test-post.bat           [win]
 
 # The conda default channels which are used when running a conda which
 # was installed be the constructor created (requires conda in the
