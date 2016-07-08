@@ -1,4 +1,4 @@
-2016-07-XX   1.3.0:
+2016-07-08   1.3.0:
 -------------------
   * add ability to run `post-link` scripts (inside conda packages) on Windows
   * add ability to run post install `.bat` scripts on Windows
