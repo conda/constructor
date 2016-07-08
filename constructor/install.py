@@ -115,6 +115,30 @@ def read_has_prefix(path):
     return res
 
 
+def exp_backoff_fn(fn, *args):
+    """
+    for retrying file operations that fail on Windows due to virus scanners
+    """
+    if not on_win:
+        return fn(*args)
+
+    import time
+    import errno
+    max_tries = 6  # max total time = 6.4 sec
+    for n in range(max_tries):
+        try:
+            result = fn(*args)
+        except (OSError, IOError) as e:
+            if e.errno in (errno.EPERM, errno.EACCES):
+                if n == max_tries-1:
+                    raise
+                time.sleep(0.1 * (2 ** n))
+            else:
+                raise
+        else:
+            return result
+
+
 class PaddingError(Exception):
     pass
 
@@ -159,13 +183,7 @@ def update_prefix(path, new_prefix, placeholder, mode):
     if new_data == data:
         return
     st = os.lstat(path)
-
-    if on_win:
-        import time
-        # on Windows, wait 1ms to avoid race condition
-        time.sleep(0.001)
-
-    with open(path, 'wb') as fo:
+    with exp_backoff_fn(open, path, 'wb') as fo:
         fo.write(new_data)
     os.chmod(path, stat.S_IMODE(st.st_mode))
 
