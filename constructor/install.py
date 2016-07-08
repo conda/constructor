@@ -130,7 +130,7 @@ def exp_backoff_fn(fn, *args):
             result = fn(*args)
         except (OSError, IOError) as e:
             if e.errno in (errno.EPERM, errno.EACCES):
-                if n == max_tries-1:
+                if n == max_tries - 1:
                     raise
                 time.sleep(0.1 * (2 ** n))
             else:
