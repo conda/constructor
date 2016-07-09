@@ -167,7 +167,6 @@ if [[ ($FORCE == 0) && (-e $PREFIX) ]]; then
     echo "ERROR: File or directory already exists: $PREFIX" >&2
     exit 1
 fi
-export FORCE
 
 mkdir -p $PREFIX
 if (( $? )); then

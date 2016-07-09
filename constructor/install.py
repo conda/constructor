@@ -322,19 +322,14 @@ def link(dist, linktype=LINK_HARD):
                 if FORCE:
                     rm_rf(dst)
                 else:
-                    raise Exception("file exists: %r" % dst)
+                    raise Exception("dst exists: %r" % dst)
             lt = linktype
             if f in has_prefix_files or f in no_link or islink(src):
                 lt = LINK_COPY
             try:
                 _link(src, dst, lt)
-            except OSError as e:
-                if FORCE:
-                    pass
-                else:
-                    raise Exception(
-                        "Could not %s from src='%s' to dst='%s': %r" %
-                        (link_name_map[lt], src, dst, e))
+            except OSError:
+                pass
 
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
@@ -434,7 +429,7 @@ def post_extract():
 
 
 def main():
-    global PREFIX, PKGS_DIR
+    global PREFIX, PKGS_DIR, FORCE
 
     from optparse import OptionParser
 
@@ -464,6 +459,11 @@ def main():
     if opts.post:
         post_extract()
         return
+
+    try:
+        FORCE = bool(int(os.getenv('FORCE', 0)))
+    except ValueError:
+        FORCE = False
 
     if FORCE:
         print("using -f (force) option")
