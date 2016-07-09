@@ -252,9 +252,7 @@ fi
 
 cat $MSGS
 rm -f $MSGS
-#if keep_pkgs
-rm -f $PREFIX/pkgs/*.py $PREFIX/pkgs/*.sh
-#else
+#if not keep_pkgs
 rm -rf $PREFIX/pkgs
 #endif
 

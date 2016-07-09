@@ -17,6 +17,7 @@ from constructor.construct import ns_platform
 from constructor.install import name_dist
 from constructor.utils import make_VIProductVersion, preprocess, fill_template
 from constructor.imaging import write_images
+import constructor.preconda as preconda
 
 
 THIS_DIR = dirname(__file__)
@@ -107,6 +108,7 @@ def make_nsi(info, dir_path):
                     ('ICONFILE', 'icon.ico'),
                     ('INSTALL_PY', '.install.py'),
                     ('URLS_FILE', 'urls'),
+                    ('URLS_TXT_FILE', 'urls.txt'),
                     ('POST_INSTALL', 'post_install.bat')]:
         replace[key] = join(dir_path, fn)
     for key in replace:
@@ -153,12 +155,7 @@ Error: no file %s
 def create(info):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
-
-    shutil.copy(join(THIS_DIR, 'install.py'),
-                join(tmp_dir, '.install.py'))
-    shutil.copy(join(info['_download_dir'], 'dists.txt'),
-                join(tmp_dir, 'urls'))
-
+    preconda.write_files(info, tmp_dir)
     if 'pre_install' in info:
         sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
 
