@@ -41,6 +41,7 @@ link_name_map = {
 # these may be changed in main()
 PREFIX = sys.prefix
 PKGS_DIR = join(PREFIX, 'pkgs')
+FORCE = int(os.getenv('FORCE', 0))
 IDISTS = {}
 
 
@@ -318,11 +319,20 @@ def link(dist, linktype=LINK_HARD):
             if not isdir(dst_dir):
                 os.makedirs(dst_dir)
             if exists(dst):
-                raise Exception("file exists: %r" % dst)
+                if FORCE:
+                    rm_rf(dst)
+                else:
+                    raise Exception("file exists: %r" % dst)
             lt = linktype
             if f in has_prefix_files or f in no_link or islink(src):
                 lt = LINK_COPY
-            _link(src, dst, lt)
+            try:
+                _link(src, dst, lt)
+            except OSError as e:
+                if not FORCE:
+                    raise Exception(
+                        "Could not %s from src='%s' to dst='%s': %r" %
+                        (link_name_map[lt], src, dst, e))
 
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
@@ -452,6 +462,9 @@ def main():
     if opts.post:
         post_extract()
         return
+
+    if FORCE:
+        print("using -f (force) option")
 
     link_idists(opts.verbose)
 
