@@ -41,7 +41,7 @@ link_name_map = {
 # these may be changed in main()
 PREFIX = sys.prefix
 PKGS_DIR = join(PREFIX, 'pkgs')
-FORCE = int(os.getenv('FORCE', 0))
+FORCE = False
 IDISTS = {}
 
 
@@ -65,18 +65,18 @@ def _link(src, dst, linktype=LINK_HARD):
 
 def rm_rf(path):
     """
-    Completely delete path
+    try to delete path, but never fail
     """
-    if islink(path) or isfile(path):
-        # Note that we have to check if the destination is a link because
-        # exists('/path/to/dead-link') will return False, although
-        # islink('/path/to/dead-link') is True.
-        try:
+    try:
+        if islink(path) or isfile(path):
+            # Note that we have to check if the destination is a link because
+            # exists('/path/to/dead-link') will return False, although
+            # islink('/path/to/dead-link') is True.
             os.unlink(path)
-        except (OSError, IOError):
-            pass
-    elif isdir(path):
-        shutil.rmtree(path)
+        elif isdir(path):
+            shutil.rmtree(path)
+    except (OSError, IOError):
+        pass
 
 
 def yield_lines(path):
@@ -329,7 +329,9 @@ def link(dist, linktype=LINK_HARD):
             try:
                 _link(src, dst, lt)
             except OSError as e:
-                if not FORCE:
+                if FORCE:
+                    pass
+                else:
                     raise Exception(
                         "Could not %s from src='%s' to dst='%s': %r" %
                         (link_name_map[lt], src, dst, e))
