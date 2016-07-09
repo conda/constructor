@@ -16,6 +16,7 @@ from constructor.install import name_dist
 from constructor.construct import ns_platform
 from constructor.utils import (preprocess, read_ascii_only, fill_template,
                                md5_file)
+import constructor.preconda as preconda
 
 
 THIS_DIR = dirname(__file__)
@@ -87,14 +88,15 @@ def get_header(tarball, info):
 
 def create(info):
     tmp_dir = tempfile.mkdtemp()
+    preconda.write_files(info, tmp_dir)
     tarball = join(tmp_dir, 'tmp.tar')
     t = tarfile.open(tarball, 'w')
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
-    t.add(join(info['_download_dir'], 'dists.txt'), 'pkgs/urls')
+    for fn in preconda.files:
+        t.add(join(tmp_dir, fn), 'pkgs/' + fn)
     for fn in info['_dists']:
         t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
-    t.add(join(THIS_DIR, 'install.py'), 'pkgs/.install.py')
     for key in 'pre_install', 'post_install':
         if key in info:
             t.add(info[key], 'pkgs/%s.sh' % key)

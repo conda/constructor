@@ -144,32 +144,31 @@ def fetch(info):
     if not isdir(download_dir):
         os.makedirs(download_dir)
 
-    with open(join(info['_download_dir'], 'dists.txt'), 'w') as fo:
-        for fn in dists:
-            path = join(download_dir, fn)
-            url = urls.get(fn)
-            md5 = md5s.get(fn)
-            if url:
-                url_index = fetch_index((url,))
-                try:
-                    pkginfo = url_index[fn]
-                except KeyError:
-                    sys.exit("Error: no package '%s' in %s" % (fn, url))
-            else:
-                pkginfo = index[fn]
+    info['_urls'] = []
+    for fn in dists:
+        path = join(download_dir, fn)
+        url = urls.get(fn)
+        md5 = md5s.get(fn)
+        if url:
+            url_index = fetch_index((url,))
+            try:
+                pkginfo = url_index[fn]
+            except KeyError:
+                sys.exit("Error: no package '%s' in %s" % (fn, url))
+        else:
+            pkginfo = index[fn]
 
-            pkginfo['fn'] = fn
-            assert pkginfo['channel'].endswith('/')
-            fo.write('%(channel)s%(fn)s#%(md5)s\n' % pkginfo)
+        assert pkginfo['channel'].endswith('/')
+        info['_urls'].append((pkginfo['channel'] + fn, pkginfo['md5']))
 
-            if md5 and md5 != pkginfo['md5']:
-                sys.exit("Error: MD5 sum for '%s' does not match in remote "
-                         "repodata %s" % (fn, url))
+        if md5 and md5 != pkginfo['md5']:
+            sys.exit("Error: MD5 sum for '%s' does not match in remote "
+                     "repodata %s" % (fn, url))
 
-            if isfile(path) and md5_file(path) == pkginfo['md5']:
-                continue
-            print('fetching: %s' % fn)
-            fetch_pkg(pkginfo, download_dir)
+        if isfile(path) and md5_file(path) == pkginfo['md5']:
+            continue
+        print('fetching: %s' % fn)
+        fetch_pkg(pkginfo, download_dir)
 
 
 def main(info, verbose=True):
