@@ -25,7 +25,6 @@ def create_install(info, dst_dir):
 
 
 def write_files(info, dst_dir):
-    print(repr(info))
     with open(join(dst_dir, 'urls'), 'w') as fo:
         for url, md5 in info['_urls']:
             fo.write('%s#%s\n' % (url, md5))
