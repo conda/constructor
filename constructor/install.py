@@ -318,14 +318,11 @@ def link(dist, linktype=LINK_HARD):
             if not isdir(dst_dir):
                 os.makedirs(dst_dir)
             if exists(dst):
-                rm_rf(dst)
+                raise Exception("file exists: %r" % dst)
             lt = linktype
             if f in has_prefix_files or f in no_link or islink(src):
                 lt = LINK_COPY
-            try:
-                _link(src, dst, lt)
-            except OSError:
-                pass
+            _link(src, dst, lt)
 
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
