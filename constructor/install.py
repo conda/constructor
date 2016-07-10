@@ -387,33 +387,8 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
-def link_idists(verbose=False):
-    """
-    link all distributions listed in the global IDISTS
-    """
-    if not IDISTS:
-        sys.exit("Error: invalid mode, maybe --post is missing?")
-
-    if on_win:
-        raise NotImplementedError
-
-    idists = sorted(IDISTS)
-    linktype = (LINK_HARD if try_hard_link(idists[0]) else LINK_COPY)
-    if verbose:
-        print("linktype: %s" % link_name_map[linktype])
-
-    for dist in idists:
-        if verbose:
-            print("linking: %s" % dist)
-        link(dist, linktype)
-
-    for dist in duplicates_to_remove(linked(), idists):
-        meta_path = join(PREFIX, 'conda-meta', dist + '.json')
-        print("WARNING: unlinking: %s" % meta_path)
-        try:
-            os.rename(meta_path, meta_path + '.bak')
-        except OSError:
-            rm_rf(meta_path)
+def link_idists():
+    sys.exit("Error: not implemented yet")
 
 
 def post_extract():
@@ -444,17 +419,12 @@ def main():
                  action="store_true",
                  help="perform post extract (on a single package)")
 
-    p.add_option('-v', '--verbose',
-                 action="store_true")
-
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
 
     PREFIX = opts.prefix
     PKGS_DIR = join(PREFIX, 'pkgs')
-    if opts.verbose:
-        print("PREFIX: %r" % PREFIX)
 
     if opts.post:
         post_extract()
@@ -468,7 +438,7 @@ def main():
     if FORCE:
         print("using -f (force) option")
 
-    link_idists(opts.verbose)
+    link_idists()
 
 
 if __name__ == '__main__':
