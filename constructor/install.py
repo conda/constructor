@@ -275,20 +275,6 @@ def read_no_link(info_dir):
     return res
 
 
-def try_hard_link(prefix, dist):
-    src = join(PKGS_DIR, dist, 'info', 'index.json')
-    dst = join(prefix, '.tmp-%s' % dist)
-    assert isfile(src), src
-    assert not isfile(dst), dst
-    try:
-        _link(src, dst, LINK_HARD)
-        return True
-    except OSError:
-        return False
-    finally:
-        rm_rf(dst)
-
-
 def linked(prefix):
     """
     Return the (set of canonical names) of linked packages in prefix.
