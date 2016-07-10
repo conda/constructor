@@ -4,14 +4,17 @@
 # conda is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 '''
-These API functions have argument names referring to:
+We use the following conventions in this module:
 
-    dist:        canonical package name (e.g. 'numpy-1.6.2-py26_0')
+    dist:        canonical package name, e.g. 'numpy-1.6.2-py26_0'
 
-    PKGS_DIR:    the "packages directory" (e.g. '/opt/anaconda/pkgs')
+    ROOT_PREFIX: the prefix to the root environment, e.g. /opt/anaconda
 
-    PREFIX:      the prefix of a particular environment, which may also
-                 be the "default" environment (i.e. sys.prefix)
+    PKGS_DIR:    the "package cache directory", e.g. '/opt/anaconda/pkgs'
+                 this is always equal to ROOT_PREFIX/pkgs
+
+    prefix:      the prefix of a particular environment, which may also
+                 be the root environment
 
 Also, this module is directly invoked by the (self extracting) tarball
 installer to create the initial environment, therefore it needs to be
@@ -39,8 +42,8 @@ link_name_map = {
 }
 
 # these may be changed in main()
-PREFIX = sys.prefix
-PKGS_DIR = join(PREFIX, 'pkgs')
+ROOT_PREFIX = sys.prefix
+PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
 FORCE = False
 IDISTS = {}
 
@@ -191,7 +194,7 @@ def name_dist(dist):
     return dist.rsplit('-', 2)[0]
 
 
-def create_meta(dist, info_dir, extra_info):
+def create_meta(prefix, dist, info_dir, extra_info):
     """
     Create the conda metadata, in a given prefix, for a given package.
     """
@@ -201,19 +204,19 @@ def create_meta(dist, info_dir, extra_info):
     # add extra info
     meta.update(extra_info)
     # write into <prefix>/conda-meta/<dist>.json
-    meta_dir = join(PREFIX, 'conda-meta')
+    meta_dir = join(prefix, 'conda-meta')
     if not isdir(meta_dir):
         os.makedirs(meta_dir)
     with open(join(meta_dir, dist + '.json'), 'w') as fo:
         json.dump(meta, fo, indent=2, sort_keys=True)
 
 
-def run_script(dist, action='post-link'):
+def run_script(prefix, dist, action='post-link'):
     """
     call the post-link (or pre-unlink) script, and return True on success,
     False on failure
     """
-    path = join(PREFIX, 'Scripts' if on_win else 'bin', '.%s-%s.%s' % (
+    path = join(prefix, 'Scripts' if on_win else 'bin', '.%s-%s.%s' % (
             name_dist(dist),
             action,
             'bat' if on_win else 'sh'))
@@ -230,7 +233,7 @@ def run_script(dist, action='post-link'):
         args = [shell_path, path]
 
     env = os.environ
-    env['ROOT_PREFIX'] = env['PREFIX'] = str(PREFIX)
+    env['PREFIX'] = prefix
 
     import subprocess
     try:
@@ -272,9 +275,9 @@ def read_no_link(info_dir):
     return res
 
 
-def try_hard_link(dist):
+def try_hard_link(prefix, dist):
     src = join(PKGS_DIR, dist, 'info', 'index.json')
-    dst = join(PREFIX, '.tmp-%s' % dist)
+    dst = join(prefix, '.tmp-%s' % dist)
     assert isfile(src), src
     assert not isfile(dst), dst
     try:
@@ -286,27 +289,30 @@ def try_hard_link(dist):
         rm_rf(dst)
 
 
-def linked():
+def linked(prefix):
     """
     Return the (set of canonical names) of linked packages in prefix.
     """
-    meta_dir = join(PREFIX, 'conda-meta')
+    meta_dir = join(prefix, 'conda-meta')
     if not isdir(meta_dir):
         return set()
     return set(fn[:-5] for fn in os.listdir(meta_dir) if fn.endswith('.json'))
 
 
-def link(dist, linktype=LINK_HARD):
+def link(prefix, dist, linktype=LINK_HARD):
     '''
-    Set up a package in a specified (environment) prefix.  We assume that
-    the package has been extracted (using extract() above).
+    Link a package in a specified prefix.  We assume that the packacge has
+    been extra_info in either
+      - <PKGS_DIR>/dist
+      - <ROOT_PREFIX>/ (when the linktype is None)
     '''
     if linktype:
         source_dir = join(PKGS_DIR, dist)
         info_dir = join(source_dir, 'info')
         no_link = read_no_link(info_dir)
     else:
-        info_dir = join(PREFIX, 'info')
+        assert prefix == ROOT_PREFIX
+        info_dir = join(ROOT_PREFIX, 'info')
 
     files = list(yield_lines(join(info_dir, 'files')))
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
@@ -314,7 +320,7 @@ def link(dist, linktype=LINK_HARD):
     if linktype:
         for f in files:
             src = join(source_dir, f)
-            dst = join(PREFIX, f)
+            dst = join(prefix, f)
             dst_dir = dirname(dst)
             if not isdir(dst_dir):
                 os.makedirs(dst_dir)
@@ -334,12 +340,12 @@ def link(dist, linktype=LINK_HARD):
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
         try:
-            update_prefix(join(PREFIX, f), PREFIX, placeholder, mode)
+            update_prefix(join(prefix, f), prefix, placeholder, mode)
         except PaddingError:
             sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
                      (placeholder, dist))
 
-    if not run_script(dist, 'post-link'):
+    if not run_script(prefix, dist, 'post-link'):
         sys.exit("Error: post-link failed for: %s" % dist)
 
     meta = {
@@ -353,7 +359,7 @@ def link(dist, linktype=LINK_HARD):
     except KeyError:
         meta.update(read_urls(dist))
     #meta['installed_by'] = ...
-    create_meta(dist, info_dir, meta)
+    create_meta(prefix, dist, info_dir, meta)
 
 
 def duplicates_to_remove(linked_dists, keep_dists):
@@ -393,18 +399,18 @@ def link_idists():
 
 def post_extract():
     """
-    assuming that the package is extracted in prefix itself, this function
+    assuming that the package is extracted in <ROOT_PREFIX>/, this function
     does everything link() does except the actual linking, i.e.
     update prefix files, run 'post-link', creates the conda metadata
     """
-    with open(join(PREFIX, 'info', 'index.json')) as fi:
+    with open(join(ROOT_PREFIX, 'info', 'index.json')) as fi:
         meta = json.load(fi)
     dist = '%(name)s-%(version)s-%(build)s' % meta
-    link(dist, linktype=None)
+    link(ROOT_PREFIX, dist, linktype=None)
 
 
 def main():
-    global PREFIX, PKGS_DIR, FORCE
+    global ROOT_PREFIX, PKGS_DIR, FORCE
 
     from optparse import OptionParser
 
@@ -413,7 +419,7 @@ def main():
     p.add_option('--prefix',
                  action="store",
                  default=sys.prefix,
-                 help="prefix (defaults to %default)")
+                 help="root prefix (defaults to %default)")
 
     p.add_option('--post',
                  action="store_true",
@@ -423,8 +429,8 @@ def main():
     if args:
         p.error('no arguments expected')
 
-    PREFIX = opts.prefix
-    PKGS_DIR = join(PREFIX, 'pkgs')
+    ROOT_PREFIX = opts.prefix
+    PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
 
     if opts.post:
         post_extract()
