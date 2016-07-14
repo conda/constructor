@@ -79,7 +79,7 @@ def run_post_install():
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
-        err("Error: runnon %s failed\n" % path)
+        err("Error: running %s failed\n" % path)
 
 
 allusers = (not exists(join(sys.prefix, '.nonadmin')))
