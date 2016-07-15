@@ -33,11 +33,9 @@ from os.path import dirname, exists, isdir, isfile, islink, join
 on_win = bool(sys.platform == 'win32')
 
 LINK_HARD = 1
-LINK_SOFT = 2
 LINK_COPY = 3
 link_name_map = {
     LINK_HARD: 'hard-link',
-    LINK_SOFT: 'soft-link',
     LINK_COPY: 'copy',
 }
 
@@ -54,8 +52,6 @@ def _link(src, dst, linktype=LINK_HARD):
 
     if linktype == LINK_HARD:
         os.link(src, dst)
-    elif linktype == LINK_SOFT:
-        os.symlink(src, dst)
     elif linktype == LINK_COPY:
         # copy relative symlinks as symlinks
         if islink(src) and not os.readlink(src).startswith('/'):
