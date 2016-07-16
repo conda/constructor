@@ -27,7 +27,7 @@ import sys
 import json
 import shutil
 import stat
-from os.path import dirname, exists, isdir, isfile, islink, join
+from os.path import abspath, dirname, exists, isdir, isfile, islink, join
 
 
 on_win = bool(sys.platform == 'win32')
@@ -406,11 +406,11 @@ def main():
 
     from optparse import OptionParser
 
-    p = OptionParser(description="conda link tool used by installer")
+    p = OptionParser(description="conda link tool used by installers")
 
     p.add_option('--root-prefix',
                  action="store",
-                 default=sys.prefix,
+                 default=abspath(join(__file__, '..', '..')),
                  help="root prefix (defaults to %default)")
 
     p.add_option('--post',
@@ -442,4 +442,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if IDISTS:
+        main()
+    else: # common usecase
+        post_extract()

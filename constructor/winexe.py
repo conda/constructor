@@ -65,15 +65,15 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs):
             continue
         if n == 1:
             assert fn.startswith('python-')
-        yield ('ExecWait \'"$INSTDIR\pythonw.exe" '
-               '"$INSTDIR\\pkgs\\.install.py" --post root\'')
+        cmd = r'"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
+        yield "ExecWait '%s'" % cmd
         if keep_pkgs:
             continue
-        yield 'Delete "$INSTDIR\\pkgs\\%s"' % fn
+        yield r'Delete "$INSTDIR\pkgs\%s"' % fn
 
     if not keep_pkgs:
         yield ''
-        yield 'RMDir "$INSTDIR\pkgs"'
+        yield r'RMDir "$INSTDIR\pkgs"'
 
 
 def make_nsi(info, dir_path):
