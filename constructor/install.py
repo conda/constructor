@@ -293,8 +293,7 @@ def link(prefix, dist, linktype=LINK_HARD):
         info_dir = join(source_dir, 'info')
         no_link = read_no_link(info_dir)
     else:
-        assert prefix == ROOT_PREFIX
-        info_dir = join(ROOT_PREFIX, 'info')
+        info_dir = join(prefix, 'info')
 
     files = list(yield_lines(join(info_dir, 'files')))
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
@@ -379,17 +378,26 @@ def link_idists():
     sys.exit("Error: not implemented yet")
 
 
-def post_extract():
+def prefix_env(env_name):
+    if env_name == 'root':
+        return ROOT_PREFIX
+    else:
+        return join(ROOT_PREFIX, 'envs', env_name)
+
+
+def post_extract(env_name='root'):
     """
-    assuming that the package is extracted in <ROOT_PREFIX>/, this function
-    does everything link() does except the actual linking, i.e.
-    update prefix files, run 'post-link', creates the conda metadata
+    assuming that the package is extracted in the environment `env_name`,
+    this function does everything link() does except the actual linking,
+    i.e. update prefix files, run 'post-link', creates the conda metadata,
+    and removed the info/ directory afterwards.
     """
-    info_dir = join(ROOT_PREFIX, 'info')
+    prefix = prefix_env(env_name)
+    info_dir = join(prefix, 'info')
     with open(join(info_dir, 'index.json')) as fi:
         meta = json.load(fi)
     dist = '%(name)s-%(version)s-%(build)s' % meta
-    link(ROOT_PREFIX, dist, linktype=None)
+    link(prefix, dist, linktype=None)
     shutil.rmtree(info_dir)
 
 
@@ -400,24 +408,26 @@ def main():
 
     p = OptionParser(description="conda link tool used by installer")
 
-    p.add_option('--prefix',
+    p.add_option('--root-prefix',
                  action="store",
                  default=sys.prefix,
                  help="root prefix (defaults to %default)")
 
     p.add_option('--post',
-                 action="store_true",
-                 help="perform post extract (on a single package)")
+                 action="store",
+                 help="perform post extract (on a single package), "
+                      "in environment NAME",
+                 metavar='NAME')
 
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
 
-    ROOT_PREFIX = opts.prefix
+    ROOT_PREFIX = opts.root_prefix
     PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
 
     if opts.post:
-        post_extract()
+        post_extract(opts.post)
         return
 
     try:

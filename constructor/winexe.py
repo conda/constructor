@@ -66,7 +66,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs):
         if n == 1:
             assert fn.startswith('python-')
         yield ('ExecWait \'"$INSTDIR\pythonw.exe" '
-               '"$INSTDIR\\pkgs\\.install.py" --post\'')
+               '"$INSTDIR\\pkgs\\.install.py" --post root\'')
         if keep_pkgs:
             continue
         yield 'Delete "$INSTDIR\\pkgs\\%s"' % fn

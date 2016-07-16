@@ -233,7 +233,7 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
             exit 1
         fi
     fi
-    $PYTHON -E -s $PREFIX/pkgs/.install.py --post || exit 1
+    $PYTHON -E -s $PREFIX/pkgs/.install.py --post root || exit 1
 #if not keep_pkgs
     rm $PKG
 #endif
