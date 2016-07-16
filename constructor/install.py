@@ -385,10 +385,12 @@ def post_extract():
     does everything link() does except the actual linking, i.e.
     update prefix files, run 'post-link', creates the conda metadata
     """
-    with open(join(ROOT_PREFIX, 'info', 'index.json')) as fi:
+    info_dir = join(ROOT_PREFIX, 'info')
+    with open(join(info_dir, 'index.json')) as fi:
         meta = json.load(fi)
     dist = '%(name)s-%(version)s-%(build)s' % meta
     link(ROOT_PREFIX, dist, linktype=None)
+    shutil.rmtree(info_dir)
 
 
 def main():
