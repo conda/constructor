@@ -30,7 +30,7 @@ def write_files(info, dst_dir):
             fo.write('%s#%s\n' % (url, md5))
 
     with open(join(dst_dir, 'urls.txt'), 'w') as fo:
-        for url, md5 in info['_urls']:
+        for url, unused_md5 in info['_urls']:
             fo.write('%s\n' % url)
 
     create_install(info, dst_dir)
