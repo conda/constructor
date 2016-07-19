@@ -33,9 +33,11 @@ from os.path import abspath, dirname, exists, isdir, isfile, islink, join
 on_win = bool(sys.platform == 'win32')
 
 LINK_HARD = 1
+LINK_SOFT = 2  # never used during the install process
 LINK_COPY = 3
 link_name_map = {
     LINK_HARD: 'hard-link',
+    LINK_SOFT: 'soft-link',
     LINK_COPY: 'copy',
 }
 
@@ -375,7 +377,7 @@ def duplicates_to_remove(linked_dists, keep_dists):
 
 
 def link_idists():
-    sys.exit("Error: not implemented yet")
+    raise NotImplementedError
 
 
 def prefix_env(env_name):
