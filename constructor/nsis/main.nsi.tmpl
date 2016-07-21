@@ -468,6 +468,19 @@ Function .onInit
     ${IfThen} $0 == "SYSTEM" ${|} StrCpy $InstMode ${ALL_USERS} ${|}
     call InstModeChanged
 
+
+    ; /D was not used, add default based on install type
+    ${If} $InstDir == ""
+        ${If} $InstMode == ${ALL_USERS}
+            strcpy $INSTDIR ${INSTDIR_ALLUSERS}
+        ${Else}
+            strcpy $INSTDIR $INSTDIR_JUSTME
+        ${EndIf}
+        MessageBox MB_OK "Defaulted /D as $INSTDIR"
+    ${EndIf}
+
+
+
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from contruct.yaml.
