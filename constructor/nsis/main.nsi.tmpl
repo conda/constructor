@@ -460,14 +460,15 @@ Function .onInit
         Abort
     ${EndIf}
 
-    StrCpy $InstMode ${JUST_ME}
-    ${IfThen} ${UAC_IsAdmin} ${|} StrCpy $InstMode ${ALL_USERS} ${|}
-    # If running as 'SYSTEM' then JustMe is not appropriate; note that
-    # we should advise against this. SCCM has an option to run as user
-    System::Call "advapi32::GetUserName(t .r0, *i ${NSIS_MAX_STRLEN} r1) i.r2"
-    ${IfThen} $0 == "SYSTEM" ${|} StrCpy $InstMode ${ALL_USERS} ${|}
+    ${If} $InstMode == ""
+        StrCpy $InstMode ${JUST_ME}
+        ${IfThen} ${UAC_IsAdmin} ${|} StrCpy $InstMode ${ALL_USERS} ${|}
+        # If running as 'SYSTEM' then JustMe is not appropriate; note that
+        # we should advise against this. SCCM has an option to run as user
+        System::Call "advapi32::GetUserName(t .r0, *i ${NSIS_MAX_STRLEN} r1) i.r2"
+        ${IfThen} $0 == "SYSTEM" ${|} StrCpy $InstMode ${ALL_USERS} ${|}
+    ${EndIf}
     call InstModeChanged
-
 
     ; /D was not used, add default based on install type
     ${If} $InstDir == ""
@@ -476,10 +477,7 @@ Function .onInit
         ${Else}
             strcpy $INSTDIR $INSTDIR_JUSTME
         ${EndIf}
-        MessageBox MB_OK "Defaulted /D as $INSTDIR"
     ${EndIf}
-
-
 
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
