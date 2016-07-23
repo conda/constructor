@@ -470,6 +470,15 @@ Function .onInit
     ${EndIf}
     call InstModeChanged
 
+    ${If} ${Silent}
+        ${If} $InstMode == ${ALL_USERS}
+            ${IfNot} ${UAC_IsAdmin}
+                MessageBox MB_ICONSTOP "Installation for all users requires an elevated prompt."
+                Abort
+            ${EndIF}
+        ${EndIF}
+    ${EndIF}
+
     ; /D was not used, add default based on install type
     ${If} $InstDir == ""
         ${If} $InstMode == ${ALL_USERS}
