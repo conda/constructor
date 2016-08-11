@@ -64,7 +64,7 @@ def check_duplicates():
 def exclude_packages(info):
     check_duplicates()
     for name in info.get('exclude', []):
-        for bad_char in '- =<>*':
+        for bad_char in ' =<>*':
             if bad_char in name:
                 sys.exit("Error: did not expect '%s' in package name: %s" %
                          name)
