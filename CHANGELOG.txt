@@ -1,4 +1,4 @@
-2016-08-XX   1.3.2:
+2016-08-11   1.3.2:
 -------------------
   * bug: allow '-' in package name, when using 'exlcude' key
 
