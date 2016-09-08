@@ -25,8 +25,9 @@ THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX=__DEFAULT_PREFIX__
 BATCH=0
 FORCE=0
+RUN_SCRIPTS=1
 
-while getopts "bfhp:" x; do
+while getopts "bfhp:s" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
@@ -38,6 +39,7 @@ Installs __NAME__ __VERSION__
     -f           no error if install prefix already exists
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
+    -s           install without running pre-link or post-link scripts
 "
             exit 2
             ;;
@@ -49,6 +51,9 @@ Installs __NAME__ __VERSION__
             ;;
         p)
             PREFIX="$OPTARG"
+            ;;
+        s)
+            RUN_SCRIPTS=0
             ;;
         ?)
             echo "Error: did not recognize option, please try -h"
@@ -203,10 +208,14 @@ if (( $? )); then
 fi
 
 #if has_pre_install
-bash "$PREFIX/pkgs/pre_install.sh"
-if (( $? )); then
-    echo "ERROR: executing pre_install.sh failed"
-    exit 1
+if [[ $RUN_SCRIPTS == 1 ]]; then
+    bash "$PREFIX/pkgs/pre_install.sh"
+    if (( $? )); then
+        echo "ERROR: executing pre_install.sh failed"
+        exit 1
+    fi
+else
+    echo "WARNING: skipping pre_install.sh by user request"
 fi
 #endif
 
@@ -233,7 +242,7 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
             exit 1
         fi
     fi
-    $PYTHON -E -s $PREFIX/pkgs/.install.py || exit 1
+    $PYTHON -E -s $PREFIX/pkgs/.install.py --post root --run-scripts $RUN_SCRIPTS || exit 1
 #if not keep_pkgs
     rm $PKG
 #endif
@@ -242,10 +251,14 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
 __INSTALL_COMMANDS__
 
 #if has_post_install
-bash "$PREFIX/pkgs/post_install.sh"
-if (( $? )); then
-    echo "ERROR: executing post_install.sh failed"
-    exit 1
+if [[ $RUN_SCRIPTS == 1 ]]; then
+    bash "$PREFIX/pkgs/post_install.sh"
+    if (( $? )); then
+        echo "ERROR: executing post_install.sh failed"
+        exit 1
+    fi
+else
+    echo "WARNING: skipping post_install.sh by user request"
 fi
 #endif
 

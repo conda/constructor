@@ -45,6 +45,7 @@ link_name_map = {
 ROOT_PREFIX = sys.prefix
 PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
 FORCE = False
+RUN_SCRIPTS = True
 IDISTS = {}
 
 
@@ -219,6 +220,9 @@ def run_script(prefix, dist, action='post-link'):
             action,
             'bat' if on_win else 'sh'))
     if not isfile(path):
+        return True
+    elif not RUN_SCRIPTS:
+        print("WARNING: skipping %s script by user request" % action)
         return True
 
     if on_win:
@@ -404,7 +408,7 @@ def post_extract(env_name='root'):
 
 
 def main():
-    global ROOT_PREFIX, PKGS_DIR, FORCE
+    global ROOT_PREFIX, PKGS_DIR, FORCE, RUN_SCRIPTS
 
     from optparse import OptionParser
 
@@ -421,12 +425,18 @@ def main():
                       "in environment NAME",
                  metavar='NAME')
 
+    p.add_option('--run-scripts',
+                 action="store",
+                 default="1",
+                 help="run pre-link/post-link scripts")
+
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
 
     ROOT_PREFIX = opts.root_prefix
     PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
+    RUN_SCRIPTS = opts.run_scripts == "1"
 
     if opts.post:
         post_extract(opts.post)
@@ -444,7 +454,4 @@ def main():
 
 
 if __name__ == '__main__':
-    if IDISTS:
-        main()
-    else: # common usecase
-        post_extract()
+    main()
