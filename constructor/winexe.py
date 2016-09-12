@@ -149,7 +149,7 @@ Error: no file %s
 """ % MAKENSIS_EXE)
     untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'untgz.dll')
     if not isfile(untgz_dll):
-         sys.exit("Error: no file %s")
+         sys.exit("Error: no file %s" % untgz_dll)
 
 
 def create(info):
