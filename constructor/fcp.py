@@ -177,7 +177,7 @@ def main(info, verbose=True):
         index = fetch_index(
                   tuple('%s/%s/' % (url.rstrip('/'), platform)
                         for url in info['channels']
-                            for platform in (info['_platform'], 'noarch')))
+                        for platform in (info['_platform'], 'noarch')))
 
     if 'specs' in info:
         resolve(info, verbose)
