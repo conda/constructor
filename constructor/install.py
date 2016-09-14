@@ -28,6 +28,7 @@ import json
 import shutil
 import stat
 from os.path import abspath, dirname, exists, isdir, isfile, islink, join
+from optparse import OptionParser
 
 
 on_win = bool(sys.platform == 'win32')
@@ -44,6 +45,7 @@ link_name_map = {
 # these may be changed in main()
 ROOT_PREFIX = sys.prefix
 PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
+SKIP_SCRIPTS = False
 FORCE = False
 IDISTS = {}
 
@@ -219,6 +221,9 @@ def run_script(prefix, dist, action='post-link'):
             action,
             'bat' if on_win else 'sh'))
     if not isfile(path):
+        return True
+    if SKIP_SCRIPTS:
+        print("WARNING: skipping %s script by user request" % action)
         return True
 
     if on_win:
@@ -406,8 +411,6 @@ def post_extract(env_name='root'):
 def main():
     global ROOT_PREFIX, PKGS_DIR, FORCE
 
-    from optparse import OptionParser
-
     p = OptionParser(description="conda link tool used by installers")
 
     p.add_option('--root-prefix',
@@ -443,8 +446,27 @@ def main():
     link_idists()
 
 
+def main2():
+    global SKIP_SCRIPTS
+
+    p = OptionParser(description="conda post extract tool used by installers")
+
+    p.add_option('--skip-scripts',
+                 action="store_true",
+                 help="skip running pre/post-link scripts")
+
+    opts, args = p.parse_args()
+    if args:
+        p.error('no arguments expected')
+
+    if opts.skip_scripts:
+        SKIP_SCRIPTS = True
+
+    post_extract()
+
+
 if __name__ == '__main__':
     if IDISTS:
         main()
     else: # common usecase
-        post_extract()
+        main2()

@@ -208,10 +208,16 @@ if (( $? )); then
 fi
 
 #if has_pre_install
-bash "$PREFIX/pkgs/pre_install.sh"
-if (( $? )); then
-    echo "ERROR: executing pre_install.sh failed"
-    exit 1
+if [[ $SKIP_SCRIPTS == 1 ]]; then
+    export INST_OPT='--skip-scripts'
+    echo "WARNING: skipping pre_install.sh by user request"
+else
+    export INST_OPT=''
+    bash "$PREFIX/pkgs/pre_install.sh"
+    if (( $? )); then
+        echo "ERROR: executing pre_install.sh failed"
+        exit 1
+    fi
 fi
 #endif
 
@@ -238,7 +244,7 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
             exit 1
         fi
     fi
-    $PYTHON -E -s $PREFIX/pkgs/.install.py || exit 1
+    $PYTHON -E -s $PREFIX/pkgs/.install.py $INST_OPT || exit 1
 #if not keep_pkgs
     rm $PKG
 #endif
@@ -247,10 +253,14 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
 __INSTALL_COMMANDS__
 
 #if has_post_install
-bash "$PREFIX/pkgs/post_install.sh"
-if (( $? )); then
-    echo "ERROR: executing post_install.sh failed"
-    exit 1
+if [[ $SKIP_SCRIPTS == 1 ]]; then
+    echo "WARNING: skipping post_install.sh by user request"
+else
+    bash "$PREFIX/pkgs/post_install.sh"
+    if (( $? )); then
+        echo "ERROR: executing post_install.sh failed"
+        exit 1
+    fi
 fi
 #endif
 
