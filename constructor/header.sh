@@ -25,8 +25,9 @@ THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX=__DEFAULT_PREFIX__
 BATCH=0
 FORCE=0
+SKIP_SCRIPTS=0
 
-while getopts "bfhp:" x; do
+while getopts "bfhp:s" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
@@ -38,6 +39,7 @@ Installs __NAME__ __VERSION__
     -f           no error if install prefix already exists
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
+    -s           skip running pre/post-link/install scripts
 "
             exit 2
             ;;
@@ -49,6 +51,9 @@ Installs __NAME__ __VERSION__
             ;;
         p)
             PREFIX="$OPTARG"
+            ;;
+        s)
+            SKIP_SCRIPTS=1
             ;;
         ?)
             echo "Error: did not recognize option, please try -h"
