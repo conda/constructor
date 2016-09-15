@@ -11,7 +11,7 @@ import sys
 import shutil
 import tempfile
 from os.path import abspath, dirname, isfile, join
-from subprocess import check_call
+from subprocess import check_call, check_output
 
 from constructor.construct import ns_platform
 from constructor.install import name_dist
@@ -147,7 +147,12 @@ Error: no file %s
     please make sure nsis is installed:
     > conda install -n root nsis
 """ % MAKENSIS_EXE)
-    untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'untgz.dll')
+    out = check_output([MAKENSIS_EXE, '/VERSION'])
+    out = out.decode('utf-8').strip()
+    if 'v3.' in out:
+        untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'x86-ansi', 'untgz.dll')
+    else:
+        untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'untgz.dll')
     if not isfile(untgz_dll):
          sys.exit("Error: no file %s" % untgz_dll)
 
