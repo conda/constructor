@@ -141,6 +141,7 @@ def make_nsi(info, dir_path):
 
 
 def verify_nsis_install():
+    print("Checking for '%s'" % MAKENSIS_EXE)
     if not isfile(MAKENSIS_EXE):
         sys.exit("""
 Error: no file %s
