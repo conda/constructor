@@ -149,6 +149,7 @@ Error: no file %s
 """ % MAKENSIS_EXE)
     out = check_output([MAKENSIS_EXE, '/VERSION'])
     out = out.decode('utf-8').strip()
+    print("NSIS version: %s" % out)
     if 'v3.' in out:
         untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'x86-ansi', 'untgz.dll')
     else:
