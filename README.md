@@ -38,5 +38,6 @@ in <a href="./examples/maxiconda">examples/maxiconda</a>.
 Notes:
 ------
 
-  * Constructor does not work with `noarch` packages, all conda packages
-    must be available for the platform you are building the installer for.
+  * Constructor does not work with `noarch`-Python packages, all conda
+    packages must be available for the platform you are building the
+    installer for.
