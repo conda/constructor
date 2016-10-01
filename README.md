@@ -10,11 +10,10 @@ proprietary and known as `cas-installer`.
 Installation:
 -------------
 
-It is important that the `constructor` package is installed into the `root`
-conda environment (not to be confused with root user).
-The following command ensures that this happens:
+As of version 1.3.0, `constructor` may be installed into any conda
+environment using:
 
-    $ conda install -n root constructor
+    $ conda install constructor
 
 Once installed, the constructor command will be available:
 
