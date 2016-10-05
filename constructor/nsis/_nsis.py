@@ -47,18 +47,20 @@ def mk_menus(remove=False):
     except (ImportError, OSError):
         return
     menu_dir = join(sys.prefix, 'Menu')
-    if os.path.exists(menu_dir):
-        for fn in os.listdir(menu_dir):
-            if fn.endswith('.json'):
-                shortcut = join(menu_dir, fn)
-                try:
-                    menuinst.install(shortcut, remove)
-                except Exception as e:
-                    out("Failed to process %s...\n" % shortcut)
-                    err("Error: %s\n" % str(e))
-                    err("Traceback:\n%s\n" % traceback.format_exc(20))
-                else:
-                    out("Processed %s successfully.\n" % shortcut)
+    if not os.path.isdir(menu_dir):
+        return
+    for fn in os.listdir(menu_dir):
+        if not fn.endswith('.json'):
+            continue
+        shortcut = join(menu_dir, fn)
+        try:
+            menuinst.install(shortcut, remove)
+        except Exception as e:
+            out("Failed to process %s...\n" % shortcut)
+            err("Error: %s\n" % str(e))
+            err("Traceback:\n%s\n" % traceback.format_exc(20))
+        else:
+            out("Processed %s successfully.\n" % shortcut)
 
 
 def run_post_install():
