@@ -73,7 +73,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
 
-    for key in 'channels', 'specs', 'exclude', 'packages':
+    for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
         if key in info:
             # ensure strings in those lists are stripped
             info[key] = [line.strip() for line in info[key]]

@@ -1,3 +1,8 @@
+2016-10-XX   1.4.0:
+-------------------
+  * add menu_packages key in construct.yaml
+
+
 2016-09-15   1.3.4:
 -------------------
   * add -s option to shell installer to run without executing user-defined

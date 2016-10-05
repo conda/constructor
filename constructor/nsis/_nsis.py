@@ -49,8 +49,11 @@ def mk_menus(remove=False):
     menu_dir = join(sys.prefix, 'Menu')
     if not os.path.isdir(menu_dir):
         return
+    pkg_names = [s.strip() for s in sys.argv[2:]]
     for fn in os.listdir(menu_dir):
         if not fn.endswith('.json'):
+            continue
+        if pkg_names and fn[:-5] not in pkg_names:
             continue
         shortcut = join(menu_dir, fn)
         try:

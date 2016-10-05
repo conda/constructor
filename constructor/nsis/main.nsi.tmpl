@@ -476,7 +476,7 @@ Section "Install"
     ${EndIf}
 
     DetailPrint "Creating @NAME@ menus..."
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkmenus'
+    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkmenus @MENU_PKGS@'
     push 'Failed to create menus'
     call AbortRetryExecWait
 

@@ -189,6 +189,11 @@ def main(info, verbose=True):
         dists.sort()
     move_python_first()
 
+    all_names = set(name_dist(fn) for fn in dists)
+    for name in info.get('menu_packages', []):
+        if name not in all_names:
+            sys.exit("Error: no such package (in menu_packages): %s" % name)
+
     if verbose:
         show(info)
     check_dists()

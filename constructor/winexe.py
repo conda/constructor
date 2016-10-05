@@ -121,10 +121,13 @@ def make_nsi(info, dir_path):
     cmds = pkg_commands(download_dir, dists, py_version,
                         bool(info.get('keep_pkgs')))
     # these are unescaped (and unquoted)
-    for key, value in [('@NAME@', name),
-                       ('@NSIS_DIR@', NSIS_DIR),
-                       ('@BITS@', str(arch)),
-                       ('@PKG_COMMANDS@', '\n    '.join(cmds))]:
+    for key, value in [
+        ('@NAME@', name),
+        ('@NSIS_DIR@', NSIS_DIR),
+        ('@BITS@', str(arch)),
+        ('@PKG_COMMANDS@', '\n    '.join(cmds)),
+        ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
+        ]:
         data = data.replace(key, value)
 
     nsi_path = join(dir_path, 'main.nsi')

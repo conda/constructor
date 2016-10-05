@@ -67,6 +67,12 @@ Optionally, the MD5 hash sum of the package, may be added after an immediate
 `#` character, e.g. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 '''),
 
+    ('menu_packages',           False, list, '''
+Packages for menu items will be installed (if the conda package contains the
+necessary metadata).  Menu items are currently only supported on Windows.
+By default, all menu items will be installed.
+'''),
+
     ('install_in_dependency_order', False, bool, '''
 By default the conda packages included in the created installer are installed
 in alphabetical order, Python is always installed first for technical
