@@ -69,8 +69,8 @@ Optionally, the MD5 hash sum of the package, may be added after an immediate
 
     ('menu_packages',           False, list, '''
 Packages for menu items will be installed (if the conda package contains the
-necessary metadata).  Menu items are currently only supported on Windows.
-By default, all menu items will be installed.
+necessary metadata in "Menu/<package name>.json").  Menu items are currently
+only supported on Windows.  By default, all menu items will be installed.
 '''),
 
     ('install_in_dependency_order', False, bool, '''
