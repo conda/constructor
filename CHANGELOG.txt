@@ -1,4 +1,4 @@
-2016-10-XX   1.4.0:
+2016-10-06   1.4.0:
 -------------------
   * add menu_packages key in construct.yaml
 
