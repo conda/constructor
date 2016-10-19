@@ -214,6 +214,11 @@ def verify(info):
     if not name_pat.match(name) or name.endswith(('.', '-')):
         sys.exit("Error: invalid name '%s'" % name)
 
+    version_pat = re.compile(r'[\w\.]+$')
+    version = info['version']
+    if not version_pat.match(version):
+        sys.exit("Error: invalid version '%s'" % version)
+
 
 def generate_doc():
     path = abspath('%s/../../CONSTRUCT.md' % __file__)
