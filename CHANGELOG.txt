@@ -1,3 +1,8 @@
+2016-10-XX   1.4.1:
+-------------------
+  * add check for valid name
+
+
 2016-10-06   1.4.0:
 -------------------
   * add menu_packages key in construct.yaml
