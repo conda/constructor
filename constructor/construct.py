@@ -209,15 +209,11 @@ def verify(info):
             sys.exit("Error: Required key '%s' not found in construct.yaml" %
                      key)
 
-    name_pat = re.compile(r'[\w][\w\-\.]*$')
-    name = info['name']
-    if not name_pat.match(name) or name.endswith(('.', '-')):
-        sys.exit("Error: invalid name '%s'" % name)
-
-    version_pat = re.compile(r'[\w\.]+$')
-    version = info['version']
-    if not version_pat.match(version):
-        sys.exit("Error: invalid version '%s'" % version)
+    pat = re.compile(r'[\w][\w\-\.]*$')
+    for key in 'name', 'version':
+        value = info[key]
+        if not pat.match(value) or value.endswith(('.', '-')):
+            sys.exit("Error: invalid %s '%s'" % (key, value))
 
 
 def generate_doc():
