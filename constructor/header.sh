@@ -26,8 +26,9 @@ PREFIX=__DEFAULT_PREFIX__
 BATCH=0
 FORCE=0
 SKIP_SCRIPTS=0
+UPDATE=0
 
-while getopts "bfhp:s" x; do
+while getopts "bfhp:su" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
@@ -40,6 +41,7 @@ Installs __NAME__ __VERSION__
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
     -s           skip running pre/post-link/install scripts
+    -u           update an existing installation
 "
             exit 2
             ;;
@@ -54,6 +56,9 @@ Installs __NAME__ __VERSION__
             ;;
         s)
             SKIP_SCRIPTS=1
+            ;;
+        u)
+            UPDATE=1
             ;;
         ?)
             echo "Error: did not recognize option, please try -h"
@@ -167,6 +172,15 @@ case "$PREFIX" in
         exit 1
         ;;
 esac
+
+if [[ $UPDATE == 1 ]]; then
+    if [[ -e $PREFIX ]]; then
+        rm -r $PREFIX
+    else
+        echo "ERROR: Prefix does not exist (nothing to update): $PREFIX" >&2
+        exit 1
+    fi
+fi
 
 if [[ ($FORCE == 0) && (-e $PREFIX) ]]; then
     echo "ERROR: File or directory already exists: $PREFIX" >&2
