@@ -381,6 +381,19 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
+def remove_duplicates():
+    idists = []
+    for line in open(join(PKGS_DIR, 'urls')):
+        m = url_pat.match(line)
+        if m:
+            fn = m.group('fn')
+            idists.append(fn[:-8])
+    for dist in duplicates_to_remove(linked(ROOT_PREFIX), idists):
+        print("unlinking: %s" % dist)
+        meta_path = join(ROOT_PREFIX, 'conda-meta', dist + '.json')
+        rm_rf(meta_path)
+
+
 def link_idists():
     raise NotImplementedError
 
@@ -455,12 +468,20 @@ def main2():
                  action="store_true",
                  help="skip running pre/post-link scripts")
 
+    p.add_option('--rm-dup',
+                 action="store_true",
+                 help="remove duplicates")
+
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
 
     if opts.skip_scripts:
         SKIP_SCRIPTS = True
+
+    if opts.rm_dup:
+        remove_duplicates()
+        return
 
     post_extract()
 

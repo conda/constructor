@@ -26,7 +26,6 @@ PREFIX=__DEFAULT_PREFIX__
 BATCH=0
 FORCE=0
 SKIP_SCRIPTS=0
-UPDATE=0
 
 while getopts "bfhp:su" x; do
     case "$x" in
@@ -58,7 +57,7 @@ Installs __NAME__ __VERSION__
             SKIP_SCRIPTS=1
             ;;
         u)
-            UPDATE=1
+            FORCE=1
             ;;
         ?)
             echo "Error: did not recognize option, please try -h"
@@ -173,15 +172,6 @@ case "$PREFIX" in
         ;;
 esac
 
-if [[ $UPDATE == 1 ]]; then
-    if [[ -e $PREFIX ]]; then
-        rm -r $PREFIX
-    else
-        echo "ERROR: Prefix does not exist (nothing to update): $PREFIX" >&2
-        exit 1
-    fi
-fi
-
 if [[ ($FORCE == 0) && (-e $PREFIX) ]]; then
     echo "ERROR: File or directory already exists: $PREFIX" >&2
     exit 1
@@ -265,6 +255,10 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
 }
 
 __INSTALL_COMMANDS__
+
+if [[ $FORCE == 1 ]]; then
+    $PYTHON -E -s $PREFIX/pkgs/.install.py --rm-dup || exit 1
+fi
 
 #if has_post_install
 if [[ $SKIP_SCRIPTS == 1 ]]; then
