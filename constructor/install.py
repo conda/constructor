@@ -32,6 +32,10 @@ from optparse import OptionParser
 
 
 on_win = bool(sys.platform == 'win32')
+try:
+    FORCE = bool(int(os.getenv('FORCE', 0)))
+except ValueError:
+    FORCE = False
 
 LINK_HARD = 1
 LINK_SOFT = 2  # never used during the install process
@@ -46,7 +50,6 @@ link_name_map = {
 ROOT_PREFIX = sys.prefix
 PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
 SKIP_SCRIPTS = False
-FORCE = False
 IDISTS = {}
 
 
@@ -417,12 +420,14 @@ def post_extract(env_name='root'):
     with open(join(info_dir, 'index.json')) as fi:
         meta = json.load(fi)
     dist = '%(name)s-%(version)s-%(build)s' % meta
+    if FORCE:
+        run_script(prefix, dist, 'pre-unlink')
     link(prefix, dist, linktype=None)
     shutil.rmtree(info_dir)
 
 
 def main():
-    global ROOT_PREFIX, PKGS_DIR, FORCE
+    global ROOT_PREFIX, PKGS_DIR
 
     p = OptionParser(description="conda link tool used by installers")
 
@@ -447,11 +452,6 @@ def main():
     if opts.post:
         post_extract(opts.post)
         return
-
-    try:
-        FORCE = bool(int(os.getenv('FORCE', 0)))
-    except ValueError:
-        FORCE = False
 
     if FORCE:
         print("using -f (force) option")

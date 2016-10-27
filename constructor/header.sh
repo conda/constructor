@@ -228,6 +228,7 @@ fi
 PYTHON="$PREFIX/bin/python"
 MSGS=$PREFIX/.messages.txt
 touch $MSGS
+export FORCE
 
 install_dist()
 {
