@@ -391,9 +391,21 @@ def remove_duplicates():
         if m:
             fn = m.group('fn')
             idists.append(fn[:-8])
+
+    keep_files = set()
+    for dist in idists:
+        with open(join(ROOT_PREFIX, 'conda-meta', dist + '.json')) as fi:
+            meta = json.load(fi)
+        keep_files.update(meta['files'])
+
     for dist in duplicates_to_remove(linked(ROOT_PREFIX), idists):
         print("unlinking: %s" % dist)
         meta_path = join(ROOT_PREFIX, 'conda-meta', dist + '.json')
+        with open(meta_path) as fi:
+            meta = json.load(fi)
+        for f in meta['files']:
+            if f not in keep_files:
+                rm_rf(join(ROOT_PREFIX, f))
         rm_rf(meta_path)
 
 
