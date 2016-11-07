@@ -27,7 +27,7 @@ BATCH=0
 FORCE=0
 SKIP_SCRIPTS=0
 
-while getopts "bfhp:s" x; do
+while getopts "bfhp:su" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
@@ -40,6 +40,7 @@ Installs __NAME__ __VERSION__
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
     -s           skip running pre/post-link/install scripts
+    -u           update an existing installation
 "
             exit 2
             ;;
@@ -54,6 +55,9 @@ Installs __NAME__ __VERSION__
             ;;
         s)
             SKIP_SCRIPTS=1
+            ;;
+        u)
+            FORCE=1
             ;;
         ?)
             echo "Error: did not recognize option, please try -h"
@@ -169,7 +173,8 @@ case "$PREFIX" in
 esac
 
 if [[ ($FORCE == 0) && (-e $PREFIX) ]]; then
-    echo "ERROR: File or directory already exists: $PREFIX" >&2
+    echo "ERROR: File or directory already exists: $PREFIX
+If you want to update an existing installation, use the -u option." >&2
     exit 1
 fi
 
@@ -224,6 +229,7 @@ fi
 PYTHON="$PREFIX/bin/python"
 MSGS=$PREFIX/.messages.txt
 touch $MSGS
+export FORCE
 
 install_dist()
 {
@@ -251,6 +257,10 @@ cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
 }
 
 __INSTALL_COMMANDS__
+
+if [[ $FORCE == 1 ]]; then
+    $PYTHON -E -s $PREFIX/pkgs/.install.py --rm-dup || exit 1
+fi
 
 #if has_post_install
 if [[ $SKIP_SCRIPTS == 1 ]]; then

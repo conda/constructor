@@ -32,6 +32,10 @@ from optparse import OptionParser
 
 
 on_win = bool(sys.platform == 'win32')
+try:
+    FORCE = bool(int(os.getenv('FORCE', 0)))
+except ValueError:
+    FORCE = False
 
 LINK_HARD = 1
 LINK_SOFT = 2  # never used during the install process
@@ -46,7 +50,6 @@ link_name_map = {
 ROOT_PREFIX = sys.prefix
 PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
 SKIP_SCRIPTS = False
-FORCE = False
 IDISTS = {}
 
 
@@ -381,6 +384,31 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
+def remove_duplicates():
+    idists = []
+    for line in open(join(PKGS_DIR, 'urls')):
+        m = url_pat.match(line)
+        if m:
+            fn = m.group('fn')
+            idists.append(fn[:-8])
+
+    keep_files = set()
+    for dist in idists:
+        with open(join(ROOT_PREFIX, 'conda-meta', dist + '.json')) as fi:
+            meta = json.load(fi)
+        keep_files.update(meta['files'])
+
+    for dist in duplicates_to_remove(linked(ROOT_PREFIX), idists):
+        print("unlinking: %s" % dist)
+        meta_path = join(ROOT_PREFIX, 'conda-meta', dist + '.json')
+        with open(meta_path) as fi:
+            meta = json.load(fi)
+        for f in meta['files']:
+            if f not in keep_files:
+                rm_rf(join(ROOT_PREFIX, f))
+        rm_rf(meta_path)
+
+
 def link_idists():
     raise NotImplementedError
 
@@ -404,12 +432,14 @@ def post_extract(env_name='root'):
     with open(join(info_dir, 'index.json')) as fi:
         meta = json.load(fi)
     dist = '%(name)s-%(version)s-%(build)s' % meta
+    if FORCE:
+        run_script(prefix, dist, 'pre-unlink')
     link(prefix, dist, linktype=None)
     shutil.rmtree(info_dir)
 
 
 def main():
-    global ROOT_PREFIX, PKGS_DIR, FORCE
+    global ROOT_PREFIX, PKGS_DIR
 
     p = OptionParser(description="conda link tool used by installers")
 
@@ -435,11 +465,6 @@ def main():
         post_extract(opts.post)
         return
 
-    try:
-        FORCE = bool(int(os.getenv('FORCE', 0)))
-    except ValueError:
-        FORCE = False
-
     if FORCE:
         print("using -f (force) option")
 
@@ -455,12 +480,20 @@ def main2():
                  action="store_true",
                  help="skip running pre/post-link scripts")
 
+    p.add_option('--rm-dup',
+                 action="store_true",
+                 help="remove duplicates")
+
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
 
     if opts.skip_scripts:
         SKIP_SCRIPTS = True
+
+    if opts.rm_dup:
+        remove_duplicates()
+        return
 
     post_extract()
 
