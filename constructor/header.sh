@@ -174,7 +174,7 @@ esac
 
 if [[ ($FORCE == 0) && (-e $PREFIX) ]]; then
     echo "ERROR: File or directory already exists: $PREFIX
-If you want to update and existing installation, use the -u option." >&2
+If you want to update an existing installation, use the -u option." >&2
     exit 1
 fi
 
