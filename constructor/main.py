@@ -85,7 +85,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
 
     info['_outpath'] = join(output_dir, get_output_filename(info))
     create(info)
-    print("Succussfully created '%(_outpath)s'." % info)
+    print("Successfully created '%(_outpath)s'." % info)
 
 
 def main():
