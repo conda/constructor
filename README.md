@@ -38,6 +38,13 @@ in <a href="./examples/maxiconda">examples/maxiconda</a>.
 Notes:
 ------
 
-  * Constructor does not work with `noarch`-Python packages, all conda
+  * Constructor does not work with `noarch`-Python packages. All conda
     packages must be available for the platform you are building the
     installer for.
+
+  * For Windows builds, add the Continuum channels `/free` and `/msys2` 
+    to the file `constructor.yaml`. This provides packages such as 
+    `m2w64-toolchain` which is a dependency of `theano`. It is best to 
+    add `/msys2` as `http://repo.continuum.io/pkgs/msys2`. `/msys2` 
+    can also be added as `https://conda.anaconda.org/msys2` if no 
+    firewall is set to block this URL.
