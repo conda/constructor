@@ -41,3 +41,11 @@ Notes:
   * Constructor does not work with `noarch`-Python packages, all conda
     packages must be available for the platform you are building the
     installer for.
+  * An installer created by constructor does not need to include `conda`
+    itself.  If you require the ability to use `conda` after installation,
+    add `conda` to the package list.
+  * An installer created by constructor is not the same as Miniconda.  All
+    packages you want to include in the installer need to be listed
+    explicitly.
+    In particular, on Windows this means that if you want the "Anaconda
+    Prompt", you will have to list `console_shortcut`, as well as `menuinst`.
