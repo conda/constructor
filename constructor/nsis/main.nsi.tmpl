@@ -537,6 +537,29 @@ Function un.onInit
     ${EndIf}
 FunctionEnd
 
+# http://nsis.sourceforge.net/Check_for_spaces_in_a_directory_path
+Function CheckForSpaces
+    Exch $R0
+    Push $R1
+    Push $R2
+    Push $R3
+    StrCpy $R1 -1
+    StrCpy $R3 $R0
+    StrCpy $R0 0
+    loop:
+        StrCpy $R2 $R3 1 $R1
+        IntOp $R1 $R1 - 1
+        StrCmp $R2 "" done
+        StrCmp $R2 " " 0 loop
+        IntOp $R0 $R0 + 1
+    Goto loop
+    done:
+    Pop $R3
+    Pop $R2
+    Pop $R1
+    Exch $R0
+FunctionEnd
+
 Function OnDirectoryLeave
     ${If} ${FileExists} "$INSTDIR"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
@@ -544,6 +567,49 @@ Function OnDirectoryLeave
              please choose a different location."
         Abort
     ${EndIf}
+    # Call the CheckForSpaces function.
+    Push $INSTDIR # Input string (install path).
+    Call CheckForSpaces
+    Pop $R0 # The function returns the number of spaces found in the input string.
+
+    # Check if any spaces exist in $INSTDIR.
+    StrCmp $R0 0 NoSpaces
+
+        # Plural if more than 1 space in $INSTDIR.
+        StrCmp $R0 1 0 +3
+          StrCpy $R1 ""
+        Goto +2
+          StrCpy $R1 "s"
+
+        # Show message box then take the user back to the Directory page.
+        MessageBox MB_OK|MB_ICONEXCLAMATION "Error: The Installaton directory \
+        has $R0 space$R1.$\nThis can cause problems with several Conda packages.  \
+        Please consider removing the space$R1."
+    NoSpaces:
+
+    StrCpy $R0 "${PY_VER}" 1 0
+    ${If} $R0 = 2
+        ; test if path contains unicode characters
+        UnicodePathTest::UnicodePathTest $INSTDIR
+        Pop $R1
+
+        StrCmp $R1 "ascii"  ascii_path
+            messagebox mb_ok|MB_ICONEXCLAMATION 'Due to incompatibility with several \
+            Python libraries, path cannot contain non-ascii characters (special characters \
+            or diacritics) on Python 2.  Please choose a different install path, or use the \
+            ${DISTRO} 3 installer instead.'
+            abort
+
+        ascii_path:
+    ${EndIf}
+FunctionEnd
+
+Function .onVerifyInstDir
+    StrLen $0 $Desktop
+    StrCpy $0 $INSTDIR $0
+    StrCmp $0 $Desktop 0 PathGood
+    Abort
+    PathGood:
 FunctionEnd
 
 Function AbortRetryExecWait
