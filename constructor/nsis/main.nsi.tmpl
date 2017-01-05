@@ -589,26 +589,29 @@ Function OnDirectoryLeave
           StrCpy $R1 "s"
 
         # Show message box then take the user back to the Directory page.
-        MessageBox MB_OK|MB_ICONEXCLAMATION "Error: The Installaton directory \
+        MessageBox MB_OK|MB_ICONINFORMATION "The Installaton directory \
         has $R0 space$R1.$\nThis can cause problems with several Conda packages.  \
         Please consider removing the space$R1."
     NoSpaces:
 
-    StrCpy $R0 "${PY_VER}" 1 0
-    ${If} $R0 = 2
-        ; test if path contains unicode characters
-        UnicodePathTest::UnicodePathTest $INSTDIR
-        Pop $R1
+      ; test if path contains unicode characters
+      UnicodePathTest::UnicodePathTest $INSTDIR
+      Pop $R1
 
-        StrCmp $R1 "ascii"  ascii_path
-            messagebox mb_ok|MB_ICONEXCLAMATION 'Due to incompatibility with several \
-            Python libraries, path cannot contain non-ascii characters (special characters \
-            or diacritics) on Python 2.  Please choose a different install path, or use the \
-            ${DISTRO} 3 installer instead.'
-            abort
+      StrCmp $R1 "ascii"  ascii_path
+          StrCpy $R0 "${PY_VER}" 1 0
+          ${If} $R0 = 2
+              messagebox mb_ok|MB_ICONEXCLAMATION 'Error: Due to incompatibility with several \
+                  Python libraries, path cannot contain non-ascii characters (special characters \
+                  or diacritics) on Python 2.  Please choose a different install path.'
+                  abort
+          ${Else}
+              messagebox mb_ok|MB_ICONINFORMATION 'Due to incompatibility with several \
+                  Python libraries, install path containing non-ascii characters (special characters \
+                  or diacritics) is not advisable.  Please choose a different install path.'
+          ${EndIf}
 
-        ascii_path:
-    ${EndIf}
+      ascii_path:
 FunctionEnd
 
 Function .onVerifyInstDir
