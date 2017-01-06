@@ -17,8 +17,7 @@ import constructor.fcp as fcp
 import constructor.construct as construct
 
 
-DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE',
-                              join(expanduser('~'), '.conda', 'constructor'))
+DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 
 
 def get_output_filename(info):
@@ -40,6 +39,7 @@ def get_output_filename(info):
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR):
     print('platform: %s' % platform)
+    cache_dir = abspath(expanduser(cache_dir))
     try:
         osname, unused_arch = platform.split('-')
     except ValueError:

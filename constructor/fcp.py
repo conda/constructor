@@ -125,7 +125,7 @@ def show(info):
     print("""
 name: %(name)s
 version: %(version)s
-cache location: %(_download_dir)s
+cache download location: %(_download_dir)s
 platform: %(_platform)s""" % info)
     print("number of package: %d" % len(dists))
     for fn in dists:
