@@ -17,7 +17,8 @@ import constructor.fcp as fcp
 import constructor.construct as construct
 
 
-CACHE_DIR = join(expanduser('~'), '.conda', 'constructor')
+DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE',
+                              join(expanduser('~'), '.conda', 'constructor'))
 
 
 def get_output_filename(info):
@@ -36,7 +37,8 @@ def get_output_filename(info):
                             ext)
 
 
-def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
+def main_build(dir_path, output_dir='.', platform=cc_platform,
+               verbose=True, cache_dir=DEFAULT_CACHE_DIR):
     print('platform: %s' % platform)
     try:
         osname, unused_arch = platform.split('-')
@@ -59,7 +61,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
     info = construct.parse(construct_path, platform)
     construct.verify(info)
     info['_platform'] = platform
-    info['_download_dir'] = join(CACHE_DIR, platform)
+    info['_download_dir'] = join(cache_dir, platform)
     if verbose:
         print('conda packages download: %s' % info['_download_dir'])
 
@@ -106,6 +108,14 @@ def main():
                       'to, defaults to CWD (%default)',
                  metavar='PATH')
 
+    p.add_option('--cache-dir',
+                 action="store",
+                 default=DEFAULT_CACHE_DIR,
+                 help='cache directory, used for downloading conda packages, '
+                      'may be changed by CONSTRUCTOR_CACHE, '
+                      "defaults to '%default'",
+                 metavar='PATH')
+
     p.add_option('--platform',
                  action="store",
                  default=cc_platform,
@@ -147,7 +157,7 @@ def main():
         p.error("no such directory: %s" % dir_path)
 
     main_build(dir_path, output_dir=opts.output_dir, platform=opts.platform,
-               verbose=opts.verbose)
+               verbose=opts.verbose, cache_dir=opts.cache_dir)
 
 
 if __name__ == '__main__':
