@@ -17,6 +17,8 @@ import constructor.fcp as fcp
 import constructor.construct as construct
 
 
+CACHE_DIR = join(expanduser('~'), '.conda', 'constructor')
+
 
 def get_output_filename(info):
     try:
@@ -57,8 +59,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform, verbose=True):
     info = construct.parse(construct_path, platform)
     construct.verify(info)
     info['_platform'] = platform
-    info['_download_dir'] = join(expanduser('~'), '.conda', 'constructor',
-                                 platform)
+    info['_download_dir'] = join(CACHE_DIR, platform)
     if verbose:
         print('conda packages download: %s' % info['_download_dir'])
 
