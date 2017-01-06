@@ -1,5 +1,7 @@
-2016-XX-XX   1.5.1:
+2017-01-XX   1.5.1:
 -------------------
+  * add --cache-dir option, which defaults to CONSTRUCTOR_CACHE when set,
+    or ~/.conda/constructor otherwise
   * fix typo
 
 
