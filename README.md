@@ -38,9 +38,9 @@ in <a href="./examples/maxiconda">examples/maxiconda</a>.
 Notes:
 ------
 
-  * Constructor does not work with `noarch`-Python packages, all conda
-    packages must be available for the platform you are building the
-    installer for.
+  * Constructor does not work with `noarch`-Python packages.
+    All conda packages must be available for the platform you are
+    building the installer for.
   * An installer created by constructor does not need to include `conda`
     itself.  If you require the ability to use `conda` after installation,
     add `conda` to the package list.
@@ -49,3 +49,7 @@ Notes:
     explicitly.
     In particular, on Windows this means that if you want the "Anaconda
     Prompt", you will have to list `console_shortcut`, as well as `menuinst`.
+  * For Windows builds, add the Continuum channels `/free` and `/msys2`
+    to the file `constructor.yaml`. This provides packages such as
+    `m2w64-toolchain` which is a dependency of `theano`. It is best to
+    add `/msys2` as `http://repo.continuum.io/pkgs/msys2`.
