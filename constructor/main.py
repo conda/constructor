@@ -8,7 +8,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import sys
-from os.path import abspath, expanduser, isdir, join
+from os.path import abspath, basename, expanduser, isdir, join
 
 from libconda.config import subdir as cc_platform
 
@@ -88,6 +88,11 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     info['_outpath'] = join(output_dir, get_output_filename(info))
     create(info)
+    if 0:
+        with open(join(output_dir, 'pkg-list.txt'), 'w') as fo:
+            fo.write('# installer: %s\n' % basename(info['_outpath']))
+            for dist in info['_dists']:
+                fo.write('%s\n' % dist)
     print("Successfully created '%(_outpath)s'." % info)
 
 
