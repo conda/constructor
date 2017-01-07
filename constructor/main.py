@@ -105,7 +105,7 @@ def main():
                  action="store",
                  default=os.getcwd(),
                  help='path to directory in which output installer is written '
-                      'to, defaults to CWD (%default)',
+                      "to, defaults to CWD ('%default')",
                  metavar='PATH')
 
     p.add_option('--cache-dir',
