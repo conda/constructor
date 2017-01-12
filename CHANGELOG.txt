@@ -1,6 +1,7 @@
 2017-01-12   1.5.2:
 -------------------
   * unlink files prior to writing with a new prefix, #58
+  * fix test against NSIS 3.01
 
 
 2017-01-06   1.5.1:
