@@ -188,6 +188,7 @@ def update_prefix(path, new_prefix, placeholder, mode):
     if new_data == data:
         return
     st = os.lstat(path)
+    os.unlink(path)     # unlink in case the file is memory mapped
     with exp_backoff_fn(open, path, 'wb') as fo:
         fo.write(new_data)
     os.chmod(path, stat.S_IMODE(st.st_mode))
