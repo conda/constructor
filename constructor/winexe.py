@@ -154,12 +154,13 @@ Error: no file %s
     out = check_output([MAKENSIS_EXE, '/VERSION'])
     out = out.decode('utf-8').strip()
     print("NSIS version: %s" % out)
-    if 'v3.' in out:
-        untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'x86-ansi', 'untgz.dll')
+    for dn in 'x86-unicode', 'x86-ansi', '.':
+        untgz_dll = abspath(join(sys.prefix, 'NSIS',
+                                 'Plugins', dn, 'untgz.dll'))
+        if isfile(untgz_dll):
+            break
     else:
-        untgz_dll = join(sys.prefix, 'NSIS', 'Plugins', 'untgz.dll')
-    if not isfile(untgz_dll):
-         sys.exit("Error: no file %s" % untgz_dll)
+        sys.exit("Error: no file untgz.dll")
 
 
 def create(info):
