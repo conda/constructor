@@ -149,7 +149,7 @@ def verify_nsis_install():
         sys.exit("""
 Error: no file %s
     please make sure nsis is installed:
-    > conda install -n root nsis
+    > conda install nsis
 """ % MAKENSIS_EXE)
     out = check_output([MAKENSIS_EXE, '/VERSION'])
     out = out.decode('utf-8').strip()
