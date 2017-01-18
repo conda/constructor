@@ -1,6 +1,6 @@
-2017-XX-XX   1.5.3:
+2017-01-XX   1.5.3:
 -------------------
-  *
+  * update Visual Studio version map to with with Python 3.6 on Windows
 
 
 2017-01-12   1.5.2:

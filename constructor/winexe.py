@@ -39,9 +39,12 @@ def read_nsi_tmpl():
 
 
 def find_vs_runtimes(dists, py_version):
-    vs_map = {'2.7': 'vs2008_runtime',
-              '3.4': 'vs2010_runtime',
-              '3.5': 'vs2015_runtime'}
+    vs_map = {
+        '2.7': 'vs2008_runtime',
+        '3.4': 'vs2010_runtime',
+        '3.5': 'vs2015_runtime',
+        '3.6': 'vs2015_runtime',
+    }
     vs_runtime = vs_map.get(py_version[:3])
     return [dist for dist in dists
             if name_dist(dist) in (vs_runtime, 'msvc_runtime')]
