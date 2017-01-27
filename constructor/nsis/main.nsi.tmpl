@@ -609,18 +609,10 @@ Function OnDirectoryLeave
       Pop $R1
 
       StrCmp $R1 "ascii"  ascii_path
-          StrCpy $R0 "${PY_VER}" 1 0
-          ${If} $R0 = 2
-              messagebox mb_ok|MB_ICONEXCLAMATION 'Error: Due to incompatibility with several \
-                  Python libraries, path cannot contain non-ascii characters (special characters \
-                  or diacritics) on Python 2.  Please choose a different install path.'
-                  abort
-          ${Else}
-              messagebox mb_ok|MB_ICONINFORMATION 'Due to incompatibility with several \
-                  Python libraries, install path containing non-ascii characters (special characters \
-                  or diacritics) is not advisable.  Please choose a different install path.'
-          ${EndIf}
-
+          messagebox mb_ok|MB_ICONEXCLAMATION 'Error: Due to incompatibility with several \
+              Python libraries, path cannot contain non-ascii characters (special characters \
+              or diacritics).  Please choose a different install path.'
+              abort
       ascii_path:
 FunctionEnd
 
