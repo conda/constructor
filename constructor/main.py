@@ -121,6 +121,10 @@ def main():
                       "defaults to '%default'",
                  metavar='PATH')
 
+    p.add_option('--clean',
+                 action="store_true",
+                 help='clean out the cache directory and exit')
+
     p.add_option('--platform',
                  action="store",
                  default=cc_platform,
@@ -143,6 +147,14 @@ def main():
     if opts.version:
         from constructor import __version__
         print('constructor version:', __version__)
+        return
+
+    if opts.clean:
+        import shutil
+        cache_dir = abspath(expanduser(opts.cache_dir))
+        print("cleaning cache: '%s'" % cache_dir)
+        if isdir(cache_dir):
+            shutil.rmtree(cache_dir)
         return
 
     if opts.test:
