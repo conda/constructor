@@ -1,7 +1,9 @@
 # Installer template file for creating a Windows installer using NSIS.
 
 # Dependencies:
-#   NSIS 2.46      http://nsis.sourceforge.net/Download
+#   NSIS 3.01      conda install nsis  (includes extra unicode plugins)
+
+Unicode "true"
 
 !include "WinMessages.nsh"
 !include "WordFunc.nsh"
