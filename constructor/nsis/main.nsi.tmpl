@@ -229,10 +229,9 @@ FunctionEnd
 Function InstModeChanged
     # When using the installer with /S (silent mode), the /D option sets $INSTDIR,
     # and it is therefore important not to overwrite $INSTDIR here.
+    Push $0
     ${IfNot} ${Silent}
-        Push $0
         ${If} $InstMode = ${JUST_ME}
-            SetShellVarContext Current
             # If we're on Vista+, the installation directory will
             # have a nice, no-space name like:
             #   C:\Users\Trent\AppData\Local\Continuum\Anaconda.
@@ -240,11 +239,15 @@ Function InstModeChanged
             # with a space. We're allowing spaces now.
             StrCpy $INSTDIR $INSTDIR_JUSTME
         ${Else}
-            SetShellVarContext All
             StrCpy $INSTDIR ${INSTDIR_ALLUSERS}
         ${EndIf}
-        Pop $0
     ${EndIf}
+    ${If} $InstMode = ${JUST_ME}
+        SetShellVarContext Current
+    ${Else}
+        SetShellVarContext All
+    ${EndIf}
+    Pop $0
 FunctionEnd
 
 !macro SetInstMode mode
