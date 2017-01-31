@@ -1,4 +1,4 @@
-2017-01-XX   1.5.3:
+2017-01-31   1.5.3:
 -------------------
   * update Visual Studio version map to with with Python 3.6 on Windows
   * add unicode line, update version comment, #61
