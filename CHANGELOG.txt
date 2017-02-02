@@ -1,3 +1,8 @@
+2017-XX-XX   1.5.4:
+-------------------
+  * skip binary prefix replacement on Windows, #62
+
+
 2017-01-31   1.5.3:
 -------------------
   * update Visual Studio version map to with with Python 3.6 on Windows
