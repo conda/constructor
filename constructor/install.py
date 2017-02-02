@@ -180,7 +180,10 @@ def update_prefix(path, new_prefix, placeholder, mode):
         new_data = data.replace(placeholder.encode('utf-8'),
                                 new_prefix.encode('utf-8'))
     elif mode == 'binary':
-        if on_win:  # anaconda-verify will not allow binary placeholder
+        if on_win:
+            # anaconda-verify will not allow binary placeholder on Windows.
+            # However, since some packages might be created wrong (and a
+            # binary placeholder would break the package, we just skip here.
             return
         new_data = binary_replace(data, placeholder.encode('utf-8'),
                                   new_prefix.encode('utf-8'))
