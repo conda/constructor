@@ -1,7 +1,7 @@
 2017-02-XX   1.5.4:
 -------------------
   * skip binary prefix replacement on Windows, #62
-  * add writing empty conda-meta/history
+  * add writing empty conda-meta/history upon installation
 
 
 2017-01-31   1.5.3:
