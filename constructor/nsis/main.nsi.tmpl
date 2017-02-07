@@ -623,6 +623,7 @@ Function OnDirectoryLeave
       Pop $R1
 
       StrCmp $R1 "ascii"  ascii_path
+      StrCmp $R1 "ascii_cp_acp" ascii_path
           messagebox mb_ok|MB_ICONEXCLAMATION 'Error: Due to incompatibility with several \
               Python libraries, path cannot contain non-ascii characters (special characters \
               or diacritics).  Please choose a different install path.'
