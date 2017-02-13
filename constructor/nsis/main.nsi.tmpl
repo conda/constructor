@@ -546,10 +546,31 @@ Function CheckForSpaces
     Exch $R0
 FunctionEnd
 
+
+# http://stackoverflow.com/a/29569614/1170370
+!macro _IsNonEmptyDirectory _a _b _t _f
+!insertmacro _LOGICLIB_TEMP
+!insertmacro _IncreaseCounter
+Push $0
+FindFirst $0 $_LOGICLIB_TEMP "${_b}\*"
+_IsNonEmptyDirectory_loop${LOGICLIB_COUNTER}:
+    StrCmp "" $_LOGICLIB_TEMP _IsNonEmptyDirectory_done${LOGICLIB_COUNTER}
+    StrCmp "." $_LOGICLIB_TEMP +2
+    StrCmp ".." $_LOGICLIB_TEMP 0 _IsNonEmptyDirectory_done${LOGICLIB_COUNTER}
+    FindNext $0 $_LOGICLIB_TEMP
+    Goto _IsNonEmptyDirectory_loop${LOGICLIB_COUNTER}
+_IsNonEmptyDirectory_done${LOGICLIB_COUNTER}:
+FindClose $0
+Pop $0
+!insertmacro _!= "" $_LOGICLIB_TEMP `${_t}` `${_f}`
+!macroend
+!define IsNonEmptyDirectory `"" IsNonEmptyDirectory`
+
+
 Function OnDirectoryLeave
-    ${If} ${FileExists} "$INSTDIR"
+    ${If} ${IsNonEmptyDirectory} "$InstDir"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "Directory '$INSTDIR' already exists,$\n\
+            "Directory '$INSTDIR' is not empty,$\n\
              please choose a different location."
         Abort
     ${EndIf}
