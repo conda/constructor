@@ -10,6 +10,7 @@
 #if osx
 unset DYLD_LIBRARY_PATH
 #else
+export OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 unset LD_LIBRARY_PATH
 #endif
 
