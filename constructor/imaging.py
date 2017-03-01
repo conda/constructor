@@ -29,20 +29,33 @@ def new_background(size, color, bs=20, boxes=50):
     return im
 
 
+def add_text(im, xy, text, min_lines, line_height, font, color):
+    x, y = xy
+    d = ImageDraw.Draw(im)
+    lines = text.splitlines()
+    text_height = len(lines) * line_height
+    min_text_height = min_lines * line_height
+    y = int(y * (im.height - text_height) / (im.height - min_text_height))
+    for line in text.splitlines():
+        d.text((x, y), line, fill=color, font=font)
+        y += line_height
+    return d
+
+
 def mk_welcome_image(info):
     font = ImageFont.truetype(ttf_path, 20)
     im = new_background(welcome_size, info['_color'])
-    d = ImageDraw.Draw(im)
-    d.text((20, 100), info['name'], fill=white, font=font)
-    d.text((20, 130), info['version'], fill=white, font=font)
+    text = '\n'.join([info['welcome_image_text'], info['version']])
+    add_text(im, (20, 100), text, 2, 30, font, white)
     return im
 
 
 def mk_header_image(info):
     font = ImageFont.truetype(ttf_path, 20)
     im = Image.new('RGB', header_size, color=white)
-    d = ImageDraw.Draw(im)
-    d.text((20, 15), info['name'], fill=info['_color'], font=font)
+    text = info['header_image_text']
+    color = info['_color']
+    add_text(im, (20, 15), text, 1, 20, font, color)
     return im
 
 

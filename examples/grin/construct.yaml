@@ -51,3 +51,12 @@ license_file: eula.txt
 
 # default install prefix
 #default_prefix: /opt/example
+
+# If `welcome_image` or `header_image` are not provided, their texts
+# default to `name`, which may be overridden by the following keys
+#welcome_image_text: |-
+#                    multi-line
+#                    welcome-text
+#header_image_text:  |-
+#                    multi-line
+#                    header-text
