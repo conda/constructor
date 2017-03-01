@@ -467,7 +467,7 @@ def main():
     if args:
         p.error('no arguments expected')
 
-    ROOT_PREFIX = opts.root_prefix
+    ROOT_PREFIX = opts.root_prefix.replace('//', '/')
     PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
 
     if opts.post:
