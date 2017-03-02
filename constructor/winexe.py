@@ -118,7 +118,10 @@ def make_nsi(info, dir_path):
         replace[key] = str_esc(replace[key])
 
     data = read_nsi_tmpl()
-    data = preprocess(data, ns_platform(info['_platform']))
+    ppd = ns_platform(info['_platform'])
+    ppd['add_to_path_default'] = info.get('add_to_path_default', None)
+    ppd['register_python_default'] = info.get('register_python_default', None)
+    data = preprocess(data, ppd)
     data = fill_template(data, replace)
 
     cmds = pkg_commands(download_dir, dists, py_version,
