@@ -1,6 +1,8 @@
 2017-02-XX   1.5.5:
 -------------------
-  *
+  * proved access to LD_LIBRARY_PATH in Linux install scripts by stroring it
+    as OLD_LD_LIBRARY_PATH
+  * replace '//' by '/' for install.py --root-prefix option
 
 
 2017-02-16   1.5.4:
