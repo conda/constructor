@@ -49,7 +49,7 @@ def mk_menus(remove=False):
     menu_dir = join(sys.prefix, 'Menu')
     if not os.path.isdir(menu_dir):
         return
-    pkg_names = [s.strip() for s in sys.argv[2:]]
+    pkg_names = [s.strip() for s in sys.argv[1:]]
     for fn in os.listdir(menu_dir):
         if not fn.endswith('.json'):
             continue
