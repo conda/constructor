@@ -1,4 +1,4 @@
-2017-02-XX   1.5.5:
+2017-03-XX   1.5.5:
 -------------------
   * proved access to LD_LIBRARY_PATH in Linux install scripts by stroring it
     as OLD_LD_LIBRARY_PATH
