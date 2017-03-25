@@ -45,6 +45,7 @@ link_name_map = {
     LINK_SOFT: 'soft-link',
     LINK_COPY: 'copy',
 }
+SPECIAL_ASCII = '$!&\%^|{}[]<>~`"\':;?@*#'
 
 # these may be changed in main()
 ROOT_PREFIX = sys.prefix
@@ -507,8 +508,17 @@ def main2():
     post_extract()
 
 
+def warn_on_special_chrs():
+    if on_win:
+        return
+    for c in SPECIAL_ASCII:
+        if c in ROOT_PREFIX:
+            print("WARNING: found '%s' in install prefix." % c)
+
+
 if __name__ == '__main__':
     if IDISTS:
         main()
+        warn_on_special_chrs()
     else: # common usecase
         main2()
