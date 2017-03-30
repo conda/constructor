@@ -173,7 +173,18 @@ def fetch(info):
 
 
 def main(info, verbose=True):
+
     if 'channels' in info:
+        channels = info['channels']
+        for channel in channels:
+            if channel == 'local':
+                try:
+                    from conda_build.config import croot
+                    local_url = 'file://' + croot
+                    channels[channels.index('local')] = local_url
+                except ImportError:
+                    sys.exit('Error: using the local channel requires conda-build.')
+
         global index
         index = fetch_index(
                   tuple('%s/%s/' % (url.rstrip('/'), platform)
