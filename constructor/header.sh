@@ -67,6 +67,12 @@ Installs __NAME__ __VERSION__
     esac
 done
 
+bzip2 --help &>/dev/null
+if (( $? )); then
+    echo "WARNING:
+    bzip2 does not appear to be installed this may cause problems below." >&2
+fi
+
 # verify the size of the installer
 wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null
 if (( $? )); then

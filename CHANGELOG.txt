@@ -1,9 +1,10 @@
-2017-03-XX   1.5.5:
+2017-03-30   1.5.5:
 -------------------
-  * proved access to LD_LIBRARY_PATH in Linux install scripts by stroring it
+  * proved access to LD_LIBRARY_PATH in Linux install scripts by storing it
     as OLD_LD_LIBRARY_PATH
   * replace '//' by '/' for install.py --root-prefix option
   * turn error about wrong menu_packages into warning
+  * add warning to shell installers when bzip2 is not executable
 
 
 2017-02-16   1.5.4:
