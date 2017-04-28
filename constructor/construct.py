@@ -10,6 +10,8 @@ from os.path import abspath
 
 import yaml
 
+from constructor import exceptions
+
 
 PREABLE = '''\n
 Keys in `construct.yaml` file:
@@ -167,13 +169,43 @@ def select_lines(data, namespace):
     return '\n'.join(lines) + '\n'
 
 
+# adapted from conda-build
+def render_jinja(data):
+    try:
+        import jinja2
+    except ImportError as ex:
+        raise exceptions.UnableToParseMissingJinja2(original=ex)
+    env = jinja2.Environment()
+    try:
+        template = env.from_string(data)
+        rendered = template.render()
+    except jinja2.TemplateError as ex:
+        raise exceptions.UnableToParse(original=ex)
+    return rendered
+
+
+# adapted from conda-build
+def yamlize(data):
+    try:
+        return yaml.load(data)
+    except yaml.error.YAMLError as e:
+        if '{{' not in data:
+            raise exceptions.UnableToParse(original=e)
+        data = render_jinja(data)
+        return yaml.load(data)
+
+
 def parse(path, platform):
     try:
         with open(path) as fi:
             data = fi.read()
     except IOError:
         sys.exit("Error: could not open '%s' for reading" % path)
-    res = yaml.load(select_lines(data, ns_platform(platform)))
+    data = select_lines(data, ns_platform(platform))
+    try:
+        res = yamlize(data)
+    except exceptions.YamlParsingError as e:
+        sys.exit(e.error_msg())
 
     try:
         res['version'] = str(res['version'])
