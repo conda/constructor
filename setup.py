@@ -29,6 +29,10 @@ setup(
     entry_points={
         "console_scripts": ["constructor = constructor.main:main"],
     },
+    install_requires=[
+        "libconda",
+        "pyyaml",
+    ],
 )
 
 
