@@ -7,6 +7,7 @@
 import re
 import sys
 from os.path import abspath, dirname, join
+
 from setuptools import setup
 
 
@@ -17,15 +18,15 @@ data = open(join(SETUP_PY_DIR, "constructor", "__init__.py")).read()
 version = re.search(r"^__version__\s*=\s*(['\"])(\S*)\1", data, re.M).group(2)
 
 setup(
-    name = "constructor",
-    version = version,
-    author = "Ilan Schnell",
-    author_email = "ilan@continuum.io",
-    url = "https://github.com/conda/constructor",
-    license = "BSD",
-    description = "create installer from conda packages",
-    long_description = open(join(SETUP_PY_DIR, 'README.md')).read(),
-    packages = ['constructor', 'constructor.tests'],
+    name="constructor",
+    version=version,
+    author="Ilan Schnell",
+    author_email="ilan@continuum.io",
+    url="https://github.com/conda/constructor",
+    license="BSD",
+    description="create installer from conda packages",
+    long_description=open(join(SETUP_PY_DIR, "README.md")).read(),
+    packages=["constructor", "constructor.tests"],
     entry_points={
         "console_scripts": ["constructor = constructor.main:main"],
     },
@@ -36,17 +37,17 @@ setup(
 )
 
 
-if 'install' in sys.argv:
+if "install" in sys.argv:
     import shutil
 
-    if sys.platform == 'win32':
-        sp_dir = join(sys.prefix, 'Lib', 'site-packages')
-        for dn in 'nsis', 'ttf':
-            shutil.copytree(abspath(join('constructor', dn)),
-                            join(sp_dir, 'constructor', dn))
+    if sys.platform == "win32":
+        sp_dir = join(sys.prefix, "Lib", "site-packages")
+        for dn in "nsis", "ttf":
+            shutil.copytree(abspath(join("constructor", dn)),
+                            join(sp_dir, "constructor", dn))
 
     else:
-        sp_dir = join(sys.prefix, 'lib/python%d.%d/site-packages' %
-                                               sys.version_info[:2])
-        shutil.copy(abspath('constructor/header.sh'),
-                    join(sp_dir, 'constructor'))
+        sp_dir = join(sys.prefix,
+                      "lib/python%d.%d/site-packages" % sys.version_info[:2])
+        shutil.copy(abspath("constructor/header.sh"),
+                    join(sp_dir, "constructor"))
