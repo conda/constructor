@@ -7,7 +7,7 @@
 import re
 import sys
 from os.path import abspath, dirname, join
-from distutils.core import setup
+from setuptools import setup
 
 
 SETUP_PY_DIR = dirname(abspath(__file__))
@@ -26,7 +26,9 @@ setup(
     description = "create installer from conda packages",
     long_description = open(join(SETUP_PY_DIR, 'README.md')).read(),
     packages = ['constructor', 'constructor.tests'],
-    scripts = ['bin/constructor'],
+    entry_points={
+        "console_scripts": ["constructor = constructor.main:main"],
+    },
 )
 
 
