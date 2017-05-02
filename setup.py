@@ -6,14 +6,15 @@
 
 import re
 import sys
-from os.path import abspath, join
+from os.path import abspath, dirname, join
 from distutils.core import setup
 
 
+SETUP_PY_DIR = dirname(abspath(__file__))
+
 # read version from constructor/__init__.py
-pat = re.compile(r'__version__\s*=\s*(\S+)', re.M)
-data = open(join('constructor', '__init__.py')).read()
-version = eval(pat.search(data).group(1))
+data = open(join(SETUP_PY_DIR, "constructor", "__init__.py")).read()
+version = re.search(r"^__version__\s*=\s*(['\"])(\S*)\1", data, re.M).group(2)
 
 setup(
     name = "constructor",
@@ -23,7 +24,7 @@ setup(
     url = "https://github.com/conda/constructor",
     license = "BSD",
     description = "create installer from conda packages",
-    long_description = open('README.md').read(),
+    long_description = open(join(SETUP_PY_DIR, 'README.md')).read(),
     packages = ['constructor', 'constructor.tests'],
     scripts = ['bin/constructor'],
 )
