@@ -97,6 +97,8 @@ setup(
     install_requires=[
         "libconda",
         "pyyaml",
+        "pillow >=3.1 ; platform_system=='Windows'",
+        # non-python dependency: "nsis >=3.01 ; platform_system=='Windows'",
     ],
     package_data=get_package_data(None),
     cmdclass=cmdclass,
