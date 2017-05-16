@@ -37,11 +37,13 @@ if sys.stdout and sys.stdout.write:
     out = sys.stdout.write
     err = sys.stderr.write
 else:
-    def write(x):
-        pass
-    out = write
-    err = write
-
+    import ctypes
+    OutputDebugString = ctypes.windll.kernel32.OutputDebugStringW
+    OutputDebugString.argtypes = [ctypes.c_wchar_p]
+    def out(x):
+        OutputDebugString('_nsis.py: ' + x)
+    def err(x):
+        OutputDebugString('_nsis.py: Error: ' + x)
 
 def mk_menus(remove=False, prefix=None):
     try:
@@ -146,6 +148,7 @@ def run_post_install():
 
 
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
+out('allusers is %s\n' % allusers)
 
 def add_to_path():
     from _system_path import (add_to_system_path, remove_from_system_path,

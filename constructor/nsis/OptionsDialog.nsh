@@ -71,10 +71,10 @@ Function mui_AnaCustomOptions_Show
     ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
 
     ${NSD_CreateLabel} 20u 27u 240u 40u \
-        "Instead of selecting this we recommend you open Anaconda software \
-      $\nvia the Windows Start Menu under $\"Anaconda (${ARCH})$\". Otherwise, \
-      $\nAnaconda software gets found in preference to previously installed \
-      $\nsoftware and software installed later may break Anaconda."
+        "Not recommended. Instead, open Anaconda with the Windows Start$\n\
+         menu and select $\"Anaconda (${ARCH})$\". This $\"add to PATH$\" option makes$\n\
+         Anaconda get found before previously installed software, but may$\n\
+         cause problems requiring you to uninstall and reinstall Anaconda."
     Pop $Ana_AddToPath_Label
 
     ${If} $InstMode = ${JUST_ME}
