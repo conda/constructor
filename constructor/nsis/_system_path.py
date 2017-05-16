@@ -145,6 +145,17 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
             # this comment used to say, mirror what happens on *nix.
             reg_type = reg_value[1]
             final_value = new_paths + os.pathsep + reg_value[0]
+        # Replace coincident ';' with a single ';'
+        final_value = re.sub(r'([\;])+', r'\1', final_value)
+        # Remove trailing ';'
+        final_value = re.sub(r'\;$', '', final_value)
+        # Remove any '"', they are not needed and break conda.
+        final_value = final_value.replace('"', '')
+        # Warn about directories that do not exist.
+        directories = final_value.split(';')
+        for directory in directories:
+            if not '%' in directory and not os.path.exists(directory):
+                out("WARNING: Old PATH entry '%s' does not exist\n" % (directory))
         reg.SetValueEx(key, path_env_var, 0, reg_type, final_value)
 
     finally:
