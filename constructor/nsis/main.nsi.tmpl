@@ -622,13 +622,17 @@ Function OnDirectoryLeave
       UnicodePathTest::UnicodePathTest $INSTDIR
       Pop $R1
 
-      StrCmp $R1 "ascii"  ascii_path
-      StrCmp $R1 "ascii_cp_acp" ascii_path
-          messagebox mb_ok|MB_ICONEXCLAMATION 'Error: Due to incompatibility with several \
-              Python libraries, path cannot contain non-ascii characters (special characters \
-              or diacritics).  Please choose a different install path.'
-              abort
-      ascii_path:
+      StrCmp $R1 "ascii" valid_path
+      StrCmp $R1 "ascii_cp_acp" valid_path
+
+      StrCmp ${PY_VER} "2.7" 0 valid_path
+
+          messagebox mb_ok|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
+              Python 2 libraries, 'Destination Folder' cannot contain non-ascii characters \
+              (special characters or diacritics).  Please choose another location."
+          abort
+
+      valid_path:
 FunctionEnd
 
 Function .onVerifyInstDir
