@@ -140,18 +140,11 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
             reg_type = reg.REG_EXPAND_SZ
             final_value = new_paths
         else:
+            # Put to the front of PATH irrespective of allusers. The old
+            # behaviour was asking for trouble and did not, contrary to what
+            # this comment used to say, mirror what happens on *nix.
             reg_type = reg_value[1]
-            # If we're an admin install, put us at the end of PATH.  If we're
-            # a user install, throw caution to the wind and put us at the
-            # start.  (This ensures we're picked up as the default python out
-            # of the box, regardless of whether or not the user has other
-            # pythons lying around on their PATH, which would complicate
-            # things.  It's also the same behavior used on *NIX.)
-            if allusers:
-                final_value = reg_value[0] + os.pathsep + new_paths
-            else:
-                final_value = new_paths + os.pathsep + reg_value[0]
-
+            final_value = new_paths + os.pathsep + reg_value[0]
         reg.SetValueEx(key, path_env_var, 0, reg_type, final_value)
 
     finally:
