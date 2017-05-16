@@ -603,10 +603,20 @@ Function OnDirectoryLeave
           StrCpy $R1 "s"
 
         # Show message box then take the user back to the Directory page.
-        MessageBox MB_OK|MB_ICONINFORMATION "The Installaton directory \
-        has $R0 space$R1.$\nThis can cause problems with several Conda packages.  \
-        Please consider removing the space$R1."
+        MessageBox MB_OK|MB_ICONINFORMATION \
+            "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
+             This can cause problems with several Conda packages.$\n \
+             Please consider removing the space$R1."
+
     NoSpaces:
+
+    UnicodePathTest::SpecialCharPathTest $INSTDIR
+    Pop $R1
+    StrCmp $R1 "nothingspecial" nothing_special_path
+        messagebox mb_ok|MB_ICONEXCLAMATION \
+            "Error: 'Destination Folder' contains the following invalid character$R1"
+        abort
+    nothing_special_path:
 
       ; test if path contains unicode characters
       UnicodePathTest::UnicodePathTest $INSTDIR
