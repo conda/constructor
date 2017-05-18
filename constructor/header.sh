@@ -25,9 +25,23 @@ else
     if [ "$(uname)" = "Darwin" ]; then
         RUNNING_SHELL=/bin/bash
     else
-        RUNNING_SHELL=$(ps -p $$ -oargs=)
+        if [ -d /proc ] && [ -r /proc ] && [ -d /proc/$$ ] && [ -r /proc/$$ ] && [ -L /proc/$$/exe ] && [ -r /proc/$$/exe ]; then
+            RUNNING_SHELL=$(readlink /proc/$$/exe)
+        fi
+        if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
+            RUNNING_SHELL=$(ps -p $$ -o args= | sed 's|^-||')
+            case "$RUNNING_SHELL" in
+                */*)
+                    ;;
+                default)
+                    RUNNING_SHELL=$(which "$RUNNING_SHELL")
+                    ;;
+            esac
+        fi
     fi
 fi
+
+# Some final fallback locations
 if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
     if [ -f /bin/bash ]; then
         RUNNING_SHELL=/bin/bash
@@ -36,6 +50,11 @@ if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
             RUNNING_SHELL=/bin/sh
         fi
     fi
+fi
+
+if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
+    echo 'Unable to determine your shell. Please set the SHELL env. var and re-run' >&2
+    return 1
 fi
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
@@ -51,7 +70,7 @@ usage: $0 [options]
 Installs __NAME__ __VERSION__
 
 -b           run install in batch mode (without manual intervention),
-     it is expected the license terms are agreed upon
+             it is expected the license terms are agreed upon
 -f           no error if install prefix already exists
 -h           print this help message and exit
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
