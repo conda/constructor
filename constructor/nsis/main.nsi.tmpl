@@ -611,10 +611,11 @@ Function OnDirectoryLeave
       StrCmp $R1 "ascii" valid_path
       StrCmp $R1 "ascii_cp_acp" valid_path
 
-      StrCmp ${PY_VER} "2.7" 0 valid_path
+      # MKL is not Unicode capable, mkl_rt.dll calls LoadLibraryA() to load mkl_intel_thread.dll
+      # StrCmp ${PY_VER} "2.7" 0 valid_path
 
           messagebox mb_ok|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
-              Python 2 libraries, 'Destination Folder' cannot contain non-ascii characters \
+              Python libraries, 'Destination Folder' cannot contain non-ascii characters \
               (special characters or diacritics).  Please choose another location."
           abort
 
