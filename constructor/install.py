@@ -202,7 +202,10 @@ def update_prefix(path, new_prefix, placeholder, mode):
 
 
 def name_dist(dist):
-    return dist.rsplit('-', 2)[0]
+    if hasattr(dist, 'name'):
+        return dist.name
+    else:
+        return dist.rsplit('-', 2)[0]
 
 
 def create_meta(prefix, dist, info_dir, extra_info):

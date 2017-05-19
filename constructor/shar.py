@@ -15,7 +15,7 @@ from os.path import dirname, getsize, join
 from constructor.install import name_dist
 from constructor.construct import ns_platform
 from constructor.utils import (preprocess, read_ascii_only, fill_template,
-                               md5_file)
+                               md5_file, filename_dist)
 import constructor.preconda as preconda
 
 
@@ -42,7 +42,7 @@ def add_condarc(info):
 
 def get_header(tarball, info):
     name = info['name']
-    dists = [fn[:-8] for fn in info['_dists']]
+    dists = [filename_dist(dist)[:-8] for dist in info['_dists']]
     dist0 = dists[0]
     assert name_dist(dist0) == 'python'
 
@@ -93,9 +93,11 @@ def create(info):
     t = tarfile.open(tarball, 'w')
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
-    for fn in preconda.files:
+    for dist in preconda.files:
+        fn = filename_dist(dist)
         t.add(join(tmp_dir, fn), 'pkgs/' + fn)
-    for fn in info['_dists']:
+    for dist in info['_dists']:
+        fn = filename_dist(dist)
         t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
     for key in 'pre_install', 'post_install':
         if key in info:
