@@ -57,7 +57,7 @@ def get_output_filename(info):
 
 
 def main_build(dir_path, output_dir='.', platform=cc_platform,
-               verbose=True, cache_dir=DEFAULT_CACHE_DIR):
+               verbose=True, cache_dir=DEFAULT_CACHE_DIR, dry_run=False):
     print('platform: %s' % platform)
     cache_dir = abspath(expanduser(cache_dir))
     try:
@@ -107,7 +107,10 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
 
-    fcp.main(info, verbose=verbose)
+    fcp.main(info, verbose=verbose, dry_run=dry_run)
+    if dry_run:
+        print("Dry run, no installer created.")
+        return
 
     info['_outpath'] = join(output_dir, get_output_filename(info))
     create(info)
@@ -158,6 +161,11 @@ def main():
                  help="perform some self tests and exit",
                  action="store_true")
 
+    p.add_option('--dry-run',
+                 help="solve package specs but do not create installer",
+                 default=False,
+                 action="store_true")
+
     p.add_option('-v', '--verbose',
                  action="store_true")
 
@@ -197,7 +205,8 @@ def main():
         p.error("no such directory: %s" % dir_path)
 
     main_build(dir_path, output_dir=opts.output_dir, platform=opts.platform,
-               verbose=opts.verbose, cache_dir=opts.cache_dir)
+               verbose=opts.verbose, cache_dir=opts.cache_dir,
+               dry_run=opts.dry_run)
 
 
 if __name__ == '__main__':
