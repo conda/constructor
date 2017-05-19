@@ -14,10 +14,14 @@ import sys
 from collections import defaultdict
 from os.path import isdir, isfile, join
 
-from libconda.fetch import fetch_index, fetch_pkg
-from libconda.resolve import Resolve, NoPackagesFound
+try:
+    from urllib.parse import urljoin
+except ImportError:  # python 2
+    from urlparse import urljoin
 
-from constructor.utils import md5_file
+from libconda.fetch import fetch_pkg
+
+from constructor.utils import md5_file, filename_dist
 from constructor.install import name_dist
 
 
@@ -27,7 +31,11 @@ urls = {}
 md5s = {}
 
 
-def resolve(info, verbose=False):
+def resolve(info, verbose=False, use_conda=False):
+    if use_conda:
+        from conda.exports import Resolve, NoPackagesFound
+    else:
+        from libconda.resolve import Resolve, NoPackagesFound
     if not index:
         sys.exit("Error: index is empty, maybe 'channels' are missing?")
     specs = info['specs']
@@ -140,27 +148,31 @@ def check_dists():
     assert name_dist(dists[0]) == 'python'
 
 
-def fetch(info):
+def fetch(info, use_conda):
+    if use_conda:
+        from conda.exports import fetch_index
+    else:
+        from libconda.fetch import fetch_index
     download_dir = info['_download_dir']
     if not isdir(download_dir):
         os.makedirs(download_dir)
 
     info['_urls'] = []
-    for fn in dists:
+    for dist in dists:
+        fn = filename_dist(dist)
         path = join(download_dir, fn)
-        url = urls.get(fn)
-        md5 = md5s.get(fn)
+        url = urls.get(dist)
+        md5 = md5s.get(dist)
         if url:
             url_index = fetch_index((url,))
             try:
-                pkginfo = url_index[fn]
+                pkginfo = url_index[dist]
             except KeyError:
-                sys.exit("Error: no package '%s' in %s" % (fn, url))
+                sys.exit("Error: no package '%s' in %s" % (dist, url))
         else:
-            pkginfo = index[fn]
+            pkginfo = index[dist]
 
-        assert pkginfo['channel'].endswith('/')
-        info['_urls'].append((pkginfo['channel'] + fn, pkginfo['md5']))
+        info['_urls'].append((urljoin(pkginfo['channel'], fn), pkginfo['md5']))
 
         if md5 and md5 != pkginfo['md5']:
             sys.exit("Error: MD5 sum for '%s' does not match in remote "
@@ -172,16 +184,22 @@ def fetch(info):
         fetch_pkg(pkginfo, download_dir)
 
 
-def main(info, verbose=True, dry_run=False):
+def main(info, verbose=True, dry_run=False, use_conda=False):
     if 'channels' in info:
         global index
-        index = fetch_index(
+        if use_conda:
+            from conda.models.channel import prioritize_channels
+            from conda.exports import fetch_index
+            index = fetch_index(prioritize_channels(info['channels']))
+        else:
+            from libconda.fetch import fetch_index
+            index = fetch_index(
                   tuple('%s/%s/' % (url.rstrip('/'), platform)
                         for url in info['channels']
                         for platform in (info['_platform'], 'noarch')))
 
     if 'specs' in info:
-        resolve(info, verbose)
+        resolve(info, verbose, use_conda)
     exclude_packages(info)
     if 'packages' in info:
         handle_packages(info)
@@ -200,6 +218,6 @@ def main(info, verbose=True, dry_run=False):
     check_dists()
     if dry_run:
         return
-    fetch(info)
+    fetch(info, use_conda)
 
     info['_dists'] = list(dists)
