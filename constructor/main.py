@@ -57,7 +57,8 @@ def get_output_filename(info):
 
 
 def main_build(dir_path, output_dir='.', platform=cc_platform,
-               verbose=True, cache_dir=DEFAULT_CACHE_DIR, dry_run=False):
+               verbose=True, cache_dir=DEFAULT_CACHE_DIR,
+               dry_run=False, use_conda=False):
     print('platform: %s' % platform)
     cache_dir = abspath(expanduser(cache_dir))
     try:
@@ -111,7 +112,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
 
-    fcp.main(info, verbose=verbose, dry_run=dry_run)
+    fcp.main(info, verbose=verbose, dry_run=dry_run, use_conda=use_conda)
     if dry_run:
         print("Dry run, no installer created.")
         return
@@ -170,6 +171,11 @@ def main():
                  default=False,
                  action="store_true")
 
+    p.add_option('--use-conda',
+                 help="Use conda to solve package specs rather than libconda",
+                 default=False,
+                 action="store_true")
+
     p.add_option('-v', '--verbose',
                  action="store_true")
 
@@ -210,7 +216,7 @@ def main():
 
     main_build(dir_path, output_dir=opts.output_dir, platform=opts.platform,
                verbose=opts.verbose, cache_dir=opts.cache_dir,
-               dry_run=opts.dry_run)
+               dry_run=opts.dry_run, use_conda=opts.use_conda)
 
 
 if __name__ == '__main__':

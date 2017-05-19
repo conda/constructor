@@ -9,6 +9,14 @@ import sys
 import hashlib
 
 
+def filename_dist(dist):
+    """ Return the filename of a distribution. """
+    if hasattr(dist, 'to_filename'):
+        return dist.to_filename()
+    else:
+        return dist
+
+
 def fill_template(data, d):
     pat = re.compile(r'__(\w+)__')
 
