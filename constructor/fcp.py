@@ -172,7 +172,7 @@ def fetch(info):
         fetch_pkg(pkginfo, download_dir)
 
 
-def main(info, verbose=True):
+def main(info, verbose=True, dry_run=False):
     if 'channels' in info:
         global index
         index = fetch_index(
@@ -198,6 +198,8 @@ def main(info, verbose=True):
     if verbose:
         show(info)
     check_dists()
+    if dry_run:
+        return
     fetch(info)
 
     info['_dists'] = list(dists)
