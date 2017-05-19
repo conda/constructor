@@ -608,11 +608,13 @@ Function OnDirectoryLeave
       UnicodePathTest::UnicodePathTest $INSTDIR
       Pop $R1
 
+      # Python 3 can be installed in a CP_ACP path until MKL is Unicode capable.
+      # (mkl_rt.dll calls LoadLibraryA() to load mkl_intel_thread.dll)
+      # Python 2 can only be installed to an ASCII path.
       StrCmp $R1 "ascii" valid_path
+      StrCmp ${PY_VER} "2.7" not_cp_acp_capable
       StrCmp $R1 "ascii_cp_acp" valid_path
-
-      # MKL is not Unicode capable, mkl_rt.dll calls LoadLibraryA() to load mkl_intel_thread.dll
-      # StrCmp ${PY_VER} "2.7" 0 valid_path
+      not_cp_acp_capable:
 
           messagebox mb_ok|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
               Python libraries, 'Destination Folder' cannot contain non-ascii characters \
