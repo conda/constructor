@@ -14,12 +14,6 @@ import sys
 from collections import defaultdict
 from os.path import isdir, isfile, join
 
-try:
-    from urllib.parse import urljoin
-except ImportError:  # python 2
-    from urlparse import urljoin
-
-
 from constructor.utils import md5_file, filename_dist
 from constructor.install import name_dist
 
