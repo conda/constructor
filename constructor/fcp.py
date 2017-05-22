@@ -149,10 +149,9 @@ def check_dists():
 
 
 def fetch(info, use_conda):
-    if use_conda:
-        from conda.exports import fetch_index
-    else:
-        from libconda.fetch import fetch_index
+    # always use the libconda fetch_index function here since no
+    # channel priority is needed
+    from libconda.fetch import fetch_index
     download_dir = info['_download_dir']
     if not isdir(download_dir):
         os.makedirs(download_dir)
