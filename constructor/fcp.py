@@ -172,7 +172,10 @@ def fetch(info, use_conda):
         else:
             pkginfo = index[dist]
 
-        info['_urls'].append((urljoin(pkginfo['channel'], fn), pkginfo['md5']))
+        if not pkginfo['channel'].endswith('/'):
+            pkginfo['channel'] += '/'
+        assert pkginfo['channel'].endswith('/')
+        info['_urls'].append((pkginfo['channel'] + fn, pkginfo['md5']))
 
         if md5 and md5 != pkginfo['md5']:
             sys.exit("Error: MD5 sum for '%s' does not match in remote "
