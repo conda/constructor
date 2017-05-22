@@ -19,7 +19,6 @@ try:
 except ImportError:  # python 2
     from urlparse import urljoin
 
-from libconda.fetch import fetch_pkg
 
 from constructor.utils import md5_file, filename_dist
 from constructor.install import name_dist
@@ -183,7 +182,13 @@ def fetch(info, use_conda):
         if isfile(path) and md5_file(path) == pkginfo['md5']:
             continue
         print('fetching: %s' % fn)
-        fetch_pkg(pkginfo, download_dir)
+        if use_conda:
+            from conda.exports import download as fetch_pkg
+            pkg_url = pkginfo['channel'] + fn
+            fetch_pkg(pkg_url, path)
+        else:
+            from libconda.fetch import fetch_pkg
+            fetch_pkg(pkginfo, download_dir)
 
 
 def main(info, verbose=True, dry_run=False, use_conda=False):
