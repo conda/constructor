@@ -189,7 +189,7 @@ def yamlize(data):
     try:
         return yaml.load(data)
     except yaml.error.YAMLError as e:
-        if '{{' not in data:
+        if ('{{' not in data) and ('{%' not in data):
             raise exceptions.UnableToParse(original=e)
         data = render_jinja(data)
         return yaml.load(data)
