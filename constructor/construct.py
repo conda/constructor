@@ -170,27 +170,16 @@ def select_lines(data, namespace):
 
 
 # adapted from conda-build
-def render_jinja(data):
-    try:
-        import jinja2
-    except ImportError as ex:
-        raise exceptions.UnableToParseMissingJinja2(original=ex)
-    env = jinja2.Environment()
-    try:
-        template = env.from_string(data)
-        rendered = template.render()
-    except jinja2.TemplateError as ex:
-        raise exceptions.UnableToParse(original=ex)
-    return rendered
-
-
-# adapted from conda-build
 def yamlize(data):
     try:
         return yaml.load(data)
     except yaml.error.YAMLError as e:
         if ('{{' not in data) and ('{%' not in data):
             raise exceptions.UnableToParse(original=e)
+        try:
+            from constructor.jinja import render_jinja
+        except ImportError as ex:
+            raise exceptions.UnableToParseMissingJinja2(original=ex)
         data = render_jinja(data)
         return yaml.load(data)
 
