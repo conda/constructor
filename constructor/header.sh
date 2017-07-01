@@ -6,6 +6,7 @@
 # BYTES: @SIZE_BYTES@
 # LINES: @LINES@
 # MD5:   __MD5__
+
 #if osx
 unset DYLD_LIBRARY_PATH
 #else
@@ -78,51 +79,81 @@ Installs __NAME__ __VERSION__
 -u           update an existing installation
 "
 
-OPTS=$(getopt bfhp:su "$*" 2>/dev/null)
-if [ ! $? ]; then
-    echo "$USAGE"
-    exit 2
+if which getopt > /dev/null 2>&1; then
+    OPTS=$(getopt bfhp:su "$*" 2>/dev/null)
+    if [ ! $? ]; then
+        echo "$USAGE"
+        exit 2
+    fi
+
+    eval set -- "$OPTS"
+
+    while true; do
+        case "$1" in
+            -h)
+                echo "$USAGE"
+                exit 2
+                ;;
+            -b)
+                BATCH=1
+                shift
+                ;;
+            -f)
+                FORCE=1
+                shift
+                ;;
+           -p)
+                PREFIX="$2"
+                shift
+                shift
+                ;;
+            -s)
+                SKIP_SCRIPTS=1
+                shift
+                ;;
+            -u)
+                FORCE=1
+                shift
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                echo "Error: did not recognize option '$1', please try -h"
+                exit 1
+                ;;
+        esac
+    done
+else
+    while getopts "bfhp:su" x; do
+        case "$x" in
+            h)
+                echo "$USAGE"
+                exit 2
+            ;;
+            b)
+                BATCH=1
+                ;;
+            f)
+                FORCE=1
+                ;;
+            p)
+                PREFIX="$OPTARG"
+                ;;
+            s)
+                SKIP_SCRIPTS=1
+                ;;
+            u)
+                FORCE=1
+                ;;
+            ?)
+                echo "Error: did not recognize option, please try -h"
+                exit 1
+                ;;
+        esac
+    done
 fi
-
-eval set -- "$OPTS"
-
-while true; do
-    case "$1" in
-        -h)
-            echo "$USAGE"
-            exit 2
-            ;;
-        -b)
-            BATCH=1
-            shift
-            ;;
-        -f)
-            FORCE=1
-            shift
-            ;;
-        -p)
-            PREFIX="$2"
-            shift
-            shift
-            ;;
-        -s)
-            SKIP_SCRIPTS=1
-            shift
-            ;;
-        -u)
-            FORCE=1
-            shift
-            ;;
-        --)
-            shift
-            break
-            ;;
-        *)
-            echo "Error: did not recognize option '$1', please try -h"
-            exit 1
-            ;;
-    esac
-done
 
 if ! bzip2 --help 1>/dev/null 2>/dev/null; then
     echo "WARNING:
