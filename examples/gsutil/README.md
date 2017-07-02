@@ -1,7 +1,13 @@
-Based system CentOS 7.
+# Installation instruction for build gsutil 4.27 environment
 
-Install miniconda:
+Based system CentOS 7:
+```bash
+cat /etc/redhat-release 
+CentOS Linux release 7.2.1511 (Core) 
 ```
+
+Install `miniconda`:
+```bash
 DIR=/srv/miniconda
 yum install -y wget bzip2 git patch vim
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -9,19 +15,19 @@ bash Miniconda3-latest-Linux-x86_64.sh-b -p $DIR
 export PATH=$DIR/bin:$PATH
 ```
 
-Install constructor and conda-build:
-```
+Install `constructor` and `conda-build`:
+```bash
 conda install constructor
 conda install conda-build
 ```
 
-Create gsutil skeleton:
-```
+Create `gsutil` skeleton:
+```bash
 conda skeleton pypi gsutil
 ```
 
-Build dependencies for gsutil:
-```
+Build dependencies for `gsutil`:
+```bash
 conda skeleton pypi argcomplete --version 1.8.2; conda build argcomplete
 conda skeleton pypi crcmod --version 1.7; conda build crcmod
 conda skeleton pypi httplib2 --version 0.9.1; conda build httplib2
@@ -30,8 +36,8 @@ conda skeleton pypi socksipy-branch; conda build socksipy-branch
 conda skeleton pypi rsa --version 3.1.4 ; conda build rsa
 ```
 
-Build oauth2client with small fixes:
-```
+Build `oauth2client` with small fixes:
+```bash
 conda skeleton pypi oauth2client --version 2.2.0
 vim oauth2client/meta.yaml
 ...
@@ -45,16 +51,16 @@ conda build oauth2client
 ```
 
 Build more dependencies:
-```
+```bash
 conda skeleton pypi gcs-oauth2-boto-plugin --version 1.14 ; conda build gcs-oauth2-boto-plugin
 conda skeleton pypi unittest2 --version 0.5.1 ; conda build unittest2
 conda skeleton pypi google-apitools --version 0.5.3 ; conda build google-apitools
 ```
 
-Build gsutil:
-```
+Build `gsutil`:
+```bash
 vim gsutil/meta.yaml
-  #comment this lines:
+  #comment these lines:
   #commands:
     #- gsutil --help
 
@@ -65,14 +71,14 @@ conda build gsutil
 ```
 
 Convert packages for Mac OS X and Windows:
-```
+```bash
 cd /srv/dna_tools/miniconda-latest/conda-bld/
 ls $DIR/conda-bld/linux-64/* | grep -v "repodata" | xargs -i conda convert -f --platform osx-64 {}
 ls $DIR/conda-bld/linux-64/* | grep -v "repodata" | xargs -i conda convert -f --platform win-64 {}
 ```
 
-Install anaconda client, login to your account and upload files to Anaconda Cloud:
-```
+Install `anaconda-client`, login to your account and upload files to Anaconda Cloud:
+```bash
 conda install anaconda-client
 anaconda login
 ls $DIR/conda-bld/linux-64/* -rt1 | grep -v "repodata" | xargs -i anaconda upload {}
@@ -80,8 +86,8 @@ ls $DIR/conda-bld/osx-64/* -rt1 | grep -v "repodata" | xargs -i anaconda upload 
 ls $DIR/conda-bld/win-64/* -rt1 | grep -v "repodata" | xargs -i anaconda upload {}
 ```
 
-Create construct.yaml:
-```
+Create `construct.yaml`:
+```bash
 vim construct.yaml 
 name: gsutil
 version: 1.0.0
@@ -101,7 +107,7 @@ specs:
 ```
 
 Build installer for Linux and Mac OS X:
-```
+```bash
 constructor .
 ...
 Successfully created '/gsutil-1.0.0-Linux-x86_64.sh'.
@@ -122,5 +128,4 @@ Tested on:
 * Ubuntu 12.04, 16.04
 * Debian 7, 8
 * Windows 10
-* Mac OS X (not tested, if you have Mac you test it)
-
+* Mac OS X (not tested, if you have Mac you can test it)
