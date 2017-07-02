@@ -1,0 +1,65 @@
+package:
+  name: gsutil
+  version: "4.27"
+
+source:
+  fn: gsutil-4.27.tar.gz
+  url: https://pypi.python.org/packages/ac/89/8a62ca41a3f8f4e6f5e65434d4d3f85fdacbac611ce8a9418ed9702103cd/gsutil-4.27.tar.gz
+  md5: 32361a85c6e449c911969626af826285
+
+build:
+  entry_points:
+    - gsutil = gslib.__main__:main
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - argcomplete >=1.8.2
+    - boto ==2.47.0
+    - crcmod >=1.7
+    - gcs-oauth2-boto-plugin >=1.14
+    - google-apitools ==0.5.3
+    - httplib2 >=0.8
+    - mock ==2.0.0
+    - oauth2client ==2.2.0
+    - pyopenssl >=0.13
+    - python-gflags >=2.0
+    - retry_decorator >=1.0.0
+    - six >=1.9.0
+    - socksipy-branch ==1.01
+
+  run:
+    - python
+    - argcomplete >=1.8.2
+    - boto ==2.47.0
+    - crcmod >=1.7
+    - gcs-oauth2-boto-plugin >=1.14
+    - google-apitools ==0.5.3
+    - httplib2 >=0.8
+    - mock ==2.0.0
+    - oauth2client ==2.2.0
+    - pyopenssl >=0.13
+    - python-gflags >=2.0
+    - retry_decorator >=1.0.0
+    - six >=1.9.0
+    - socksipy-branch ==1.01
+
+test:
+  imports:
+    - gslib
+    - gslib.addlhelp
+    - gslib.commands
+    - gslib.tests
+    - gslib.tests.testcase
+    - gslib.third_party
+    - gslib.third_party.pubsub_apitools
+    - gslib.third_party.storage_apitools
+    - test
+
+about:
+  home: https://cloud.google.com/storage/docs/gsutil
+  license: Apache Software License
+  summary: 'A command line tool for interacting with cloud storage services.'
+  license_family: APACHE
+
