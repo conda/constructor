@@ -16,6 +16,7 @@ from subprocess import Popen, PIPE, check_call, check_output
 from constructor.construct import ns_platform
 from constructor.install import name_dist
 from constructor.utils import make_VIProductVersion, preprocess, fill_template
+from constructor.utils import filename_dist
 from constructor.imaging import write_images
 import constructor.preconda as preconda
 
@@ -39,24 +40,24 @@ def read_nsi_tmpl():
 
 
 def find_vs_runtimes(dists, py_version):
-    vs_map = {
-        '2.7': 'vs2008_runtime',
-        '3.4': 'vs2010_runtime',
-        '3.5': 'vs2015_runtime',
-        '3.6': 'vs2015_runtime',
-    }
-    vs_runtime = vs_map.get(py_version[:3])
-    return [dist for dist in dists
-            if name_dist(dist) in (vs_runtime, 'msvc_runtime')]
+    valid_runtimes = (
+        'vs2008_runtime',
+        'vs2010_runtime',
+        'vs2013_runtime',
+        'vs2015_runtime',
+        'msvc_runtime',
+    )
+    return [dist for dist in dists if name_dist(dist) in valid_runtimes]
 
 
 def pkg_commands(download_dir, dists, py_version, keep_pkgs):
     vs_dists = find_vs_runtimes(dists, py_version)
-    print("MSVC runtimes found: %s" % vs_dists)
+    print("MSVC runtimes found: %s" % ([filename_dist(d) for d in vs_dists]))
     if len(vs_dists) != 1:
         sys.exit("Error: number of MSVC runtimes found: %d" % len(vs_dists))
 
-    for n, fn in enumerate(vs_dists + dists):
+    for n, dist in enumerate(vs_dists + dists):
+        fn = filename_dist(dist)
         yield ''
         yield '# --> %s <--' % fn
         yield 'File %s' % str_esc(join(download_dir, fn))
@@ -84,7 +85,7 @@ def make_nsi(info, dir_path):
     name = info['name']
     download_dir = info['_download_dir']
     dists = info['_dists']
-    py_name, py_version, unused_build = dists[0].rsplit('-', 2)
+    py_name, py_version, unused_build = filename_dist(dists[0]).rsplit('-', 2)
     assert py_name == 'python'
     arch = int(info['_platform'].split('-')[1])
 
