@@ -191,7 +191,10 @@ def main(info, verbose=True, dry_run=False, use_conda=False):
         if use_conda:
             from conda.models.channel import prioritize_channels
             from conda.exports import fetch_index
-            index = fetch_index(prioritize_channels(info['channels']))
+            channels = tuple('%s/%s/' % (url.rstrip('/'), platform)
+                for url in info['channels']
+                for platform in (info['_platform'], 'noarch'))
+            index = fetch_index(prioritize_channels(channels))
         else:
             from libconda.fetch import fetch_index
             index = fetch_index(
