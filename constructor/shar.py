@@ -30,13 +30,19 @@ def read_header_template():
 
 
 def add_condarc(info):
-    channels = info.get('conda_default_channels')
-    if channels:
+    default_channels = info.get('conda_default_channels')
+    channels = info.get('channels')
+    if default_channels or channels:
         yield '# ----- add condarc'
         yield 'cat <<EOF >$PREFIX/.condarc'
-        yield 'default_channels:'
-        for url in channels:
-            yield '  - %s' % url
+       	if default_channels:
+            yield 'default_channels:'
+            for url in default_channels:
+                yield '  - %s' % url
+        if channels:
+            yield 'channels:'
+            for url in channels:
+                yield '  - %s' % url
         yield 'EOF'
 
 
