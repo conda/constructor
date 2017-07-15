@@ -166,7 +166,7 @@ Error: no file %s
         sys.exit("Error: no file untgz.dll")
 
 
-def create(info):
+def create(info, verbose=False):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     preconda.write_files(info, tmp_dir)
@@ -182,7 +182,11 @@ def create(info):
 
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
-    args = [MAKENSIS_EXE, '/V2', nsi]
+    if verbose:
+        verbosity = '/V4'
+    else:
+        verbosity = '/V2'
+    args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
     check_call(args)
     shutil.rmtree(tmp_dir)
