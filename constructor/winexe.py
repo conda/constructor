@@ -11,7 +11,7 @@ import sys
 import shutil
 import tempfile
 from os.path import abspath, dirname, isfile, join
-from subprocess import check_call, check_output
+from subprocess import Popen, PIPE, check_call, check_output
 
 from constructor.construct import ns_platform
 from constructor.install import name_dist
@@ -188,7 +188,17 @@ def create(info, verbose=False):
         verbosity = '/V2'
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
-    check_call(args)
+    if verbose:
+        sub = Popen(args, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = sub.communicate()
+        for msg, info in zip((stdout, stderr), ('stdout', 'stderr')):
+            # on Python3 we're getting bytes
+            if hasattr(msg, 'decode'):
+                msg = msg.decode()
+            print('makensis {}:'.format(info))
+            print(msg)
+    else:
+        check_call(args)
     shutil.rmtree(tmp_dir)
 
 
