@@ -85,6 +85,12 @@ You can list conda channels here which will be the default conda channels
 of the created installer (if it includes conda).
 '''),
 
+    ('pip',                    False, (list, str), '''
+A list of pip packages to be included.  Each line is in the format of
+that in requirements.txt.  These will be downloaded by pip, included
+and installed as part of the install process.
+'''),
+
     ('installer_filename',     False, str, '''
 The filename of the installer being created.  A reasonable default filename
 will determined by the `name`, `version`, platform and installer type.

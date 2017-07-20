@@ -6,11 +6,12 @@
 
 from __future__ import print_function, division, absolute_import
 
+import glob
 import os
 import shutil
 import tarfile
 import tempfile
-from os.path import dirname, getsize, join
+from os.path import dirname, getsize, join, basename
 
 from constructor.install import name_dist
 from constructor.construct import ns_platform
@@ -100,6 +101,9 @@ def create(info):
     for key in 'pre_install', 'post_install':
         if key in info:
             t.add(info[key], 'pkgs/%s.sh' % key)
+    for fn in glob.glob(join(info['_pip_download_dir'], "*.*")):
+        t.add(fn, 'pip/' + basename(fn))
+
     t.close()
 
     header = get_header(tarball, info)
