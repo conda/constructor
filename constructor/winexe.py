@@ -21,7 +21,7 @@ import constructor.preconda as preconda
 
 
 THIS_DIR = dirname(__file__)
-NSIS_DIR = join(THIS_DIR, 'nsis')
+NSIS_DIR = abspath(join(THIS_DIR, 'nsis'))
 MAKENSIS_EXE = join(sys.prefix, 'NSIS', 'makensis.exe')
 
 
@@ -98,7 +98,7 @@ def make_nsi(info, dir_path):
         'PY_VER': py_version[:3],
         'PYVERSION': py_version,
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
-        'OUTFILE': info['_outpath'],
+        'OUTFILE': abspath(info['_outpath']),
         'LICENSEFILE': abspath(info.get('license_file',
                                join(NSIS_DIR, 'placeholder_license.txt'))),
         'DEFAULT_PREFIX': info.get(
@@ -130,6 +130,7 @@ def make_nsi(info, dir_path):
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(cmds)),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
+        ('@PIP_DOWNLOAD_DIR@', info['_pip_download_dir']),
         ]:
         data = data.replace(key, value)
 

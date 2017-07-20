@@ -287,6 +287,19 @@ rm -f $MSGS
 rm -rf $PREFIX/pkgs
 #endif
 
+PIP="$PREFIX/bin/pip"
+if [ -f $PIP ]; then
+    REQUIREMENTS=$PREFIX/pip/requirements.txt
+    if [ -f $REQUIREMENTS ]; then
+        echo "installing pip packages..."
+        $PYTHON  -E -s $PIP install --disable-pip-version-check \
+            --no-index --find-links $PREFIX/pip -r $REQUIREMENTS
+    fi
+fi
+#if not keep_pkgs
+rm -rf $PREFIX/pip
+#endif
+
 echo "installation finished."
 
 if [[ $BATCH == 0 ]] # interactive mode

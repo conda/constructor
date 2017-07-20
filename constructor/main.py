@@ -14,6 +14,7 @@ from libconda.config import subdir as cc_platform
 
 from constructor.install import yield_lines
 import constructor.fcp as fcp
+import constructor.fpip as fpip
 import constructor.construct as construct
 
 
@@ -85,6 +86,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 sys.exit("Error: found empty element in '%s:'" % key)
 
     fcp.main(info, verbose=verbose)
+
+    info['_pip_download_dir'] = join(cache_dir, 'pip')
+    fpip.main(info, verbose=verbose)
 
     info['_outpath'] = join(output_dir, get_output_filename(info))
     create(info)
