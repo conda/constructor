@@ -130,6 +130,7 @@ def make_nsi(info, dir_path):
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(cmds)),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
+        ('@PIP_DOWNLOAD_DIR@', info['_pip_download_dir']),
         ]:
         data = data.replace(key, value)
 

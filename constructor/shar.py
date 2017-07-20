@@ -6,7 +6,6 @@
 
 from __future__ import print_function, division, absolute_import
 
-import glob
 import os
 import shutil
 import tarfile
@@ -101,8 +100,8 @@ def create(info):
     for key in 'pre_install', 'post_install':
         if key in info:
             t.add(info[key], 'pkgs/%s.sh' % key)
-    for fn in glob.glob(join(info['_pip_download_dir'], "*.*")):
-        t.add(fn, 'pip/' + basename(fn))
+    for fn in os.listdir(info['_pip_download_dir']):
+        t.add(join(info['_pip_download_dir'], fn), 'pip/' + fn)
 
     t.close()
 

@@ -474,8 +474,8 @@ Section "Install"
 
     @PKG_COMMANDS@
     
-    SetOutPath "$INSTDIR"
-    File /nonfatal "pip\*.*"
+    SetOutPath "$INSTDIR\pip"
+    File /nonfatal /r "@PIP_DOWNLOAD_DIR@\*.*"
         
 
     ${If} $InstMode = ${JUST_ME}
@@ -500,11 +500,13 @@ Section "Install"
         call AbortRetryExecWait
     ${EndIf}
 
-    ${If} ${FileExists} "$INSTDIR\pip\requirements.txt" ${AndIf} \
-        ${FileExists} "$INSTDIR\Scripts\pip.exe"
-        ExecWait '"$INSTDIR\Scripts\pip.exe install --disable-pip-version-check \
-                   --no-index --find-links $INSTDIR\pip\
-                   -r $INSTDIR\pip\requirements.txt"'
+    ${If} ${FileExists} "$INSTDIR\pip\requirements.txt"
+    ${AndIf} ${FileExists} "$INSTDIR\Scripts\pip-script.py"
+        DetailPrint "Installing pip requirements..."
+        ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Scripts\pip-script.py" \
+                   install --disable-pip-version-check --no-index \
+                   --find-links "$INSTDIR\pip" \
+                   -r "$INSTDIR\pip\requirements.txt"'
     ${EndIf}
 
     # Create registry entries saying this is the system Python

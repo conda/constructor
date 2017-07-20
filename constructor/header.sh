@@ -292,7 +292,8 @@ if [ -f $PIP ]; then
     REQUIREMENTS=$PREFIX/pip/requirements.txt
     if [ -f $REQUIREMENTS ]; then
         echo "installing pip packages..."
-        $PIP install --disable-pip-version-check --no-index --find-links $PREFIX/pip -r $REQUIREMENTS
+        $PYTHON  -E -s $PIP install --disable-pip-version-check \
+            --no-index --find-links $PREFIX/pip -r $REQUIREMENTS
     fi
 fi
 #if not keep_pkgs

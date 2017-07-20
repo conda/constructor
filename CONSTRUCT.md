@@ -57,6 +57,12 @@ e.g.`https://repo.continuum.io/pkgs/free/osx-64/openssl-1.0.1k-1.tar.bz2`.
 Optionally, the MD5 hash sum of the package, may be added after an immediate
 `#` character, e.g. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 
+`pip`:
+----------------
+A list of pip packages to be included.  Each line is in the format of
+that in requirements.txt.  These will be downloaded by pip, included
+and installed as part of the install process.  Note, the `pip` package should
+be added in the `specs` section or this won't work.
 
 `menu_packages`:
 ----------------
