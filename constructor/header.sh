@@ -14,7 +14,7 @@ export OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 unset LD_LIBRARY_PATH
 #endif
 
-if ! echo "$0" | grep '\.sh$' >/dev/null; then
+if ! echo "$0" | grep '\.sh$' > /dev/null; then
     printf 'Please run using "bash" or "sh", but not "." or "source"\\n' >&2
     return 1
 fi
@@ -164,7 +164,7 @@ else
     done
 fi
 
-if ! bzip2 --help 1>/dev/null 2>/dev/null; then
+if ! bzip2 --help >/dev/null 2>&1; then
     printf "WARNING: bzip2 does not appear to be installed this may cause problems below\\n" >&2
 fi
 
@@ -431,7 +431,7 @@ fi # !BATCH
 if [ "$TEST" = "1" ]; then
     printf "INFO: Running package tests in a subshell\\n"
     if ! (. "$PREFIX"/bin/activate
-          which conda-build || conda install -y conda-build
+          which conda-build > /dev/null 2>&1 || conda install -y conda-build
 #if keep_pkgs
           conda-build -t -k "$PREFIX"/pkgs/*.tar.bz2
 #endif
