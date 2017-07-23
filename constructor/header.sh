@@ -15,7 +15,7 @@ unset LD_LIBRARY_PATH
 #endif
 
 if ! echo "$0" | grep '\.sh$' >/dev/null; then
-    echo 'Please run using "bash" or "sh", but not "." or "source"' >&2
+    printf 'Please run using "bash" or "sh", but not "." or "source"\\n' >&2
     return 1
 fi
 
@@ -54,8 +54,8 @@ if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
 fi
 
 if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
-    echo 'Unable to determine your shell. Please set the SHELL env. var and re-run' >&2
-    return 1
+    printf 'Unable to determine your shell. Please set the SHELL env. var and re-run\\n' >&2
+    exit 1
 fi
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
@@ -65,6 +65,7 @@ PREFIX=__DEFAULT_PREFIX__
 BATCH=0
 FORCE=0
 SKIP_SCRIPTS=0
+TEST=0
 USAGE="
 usage: $0 [options]
 
@@ -77,12 +78,13 @@ Installs __NAME__ __VERSION__
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
 -s           skip running pre/post-link/install scripts
 -u           update an existing installation
+-t           run package tests after installation (may install conda-build)
 "
 
 if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bfhp:su "$*" 2>/dev/null)
+    OPTS=$(getopt bfhp:sut "$*" 2>/dev/null)
     if [ ! $? ]; then
-        echo "$USAGE"
+        printf "%s\\n" "$USAGE"
         exit 2
     fi
 
@@ -91,7 +93,7 @@ if which getopt > /dev/null 2>&1; then
     while true; do
         case "$1" in
             -h)
-                echo "$USAGE"
+                printf "%s\\n" "$USAGE"
                 exit 2
                 ;;
             -b)
@@ -102,7 +104,7 @@ if which getopt > /dev/null 2>&1; then
                 FORCE=1
                 shift
                 ;;
-           -p)
+            -p)
                 PREFIX="$2"
                 shift
                 shift
@@ -115,21 +117,25 @@ if which getopt > /dev/null 2>&1; then
                 FORCE=1
                 shift
                 ;;
+            -t)
+                TEST=1
+                shift
+                ;;
             --)
                 shift
                 break
                 ;;
             *)
-                echo "Error: did not recognize option '$1', please try -h"
+                printf "ERROR: did not recognize option '%s', please try -h\\n" "$1"
                 exit 1
                 ;;
         esac
     done
 else
-    while getopts "bfhp:su" x; do
+    while getopts "bfhp:sut" x; do
         case "$x" in
             h)
-                echo "$USAGE"
+                printf "%s\\n" "$USAGE"
                 exit 2
             ;;
             b)
@@ -147,8 +153,11 @@ else
             u)
                 FORCE=1
                 ;;
+            t)
+                TEST=1
+                ;;
             ?)
-                echo "Error: did not recognize option, please try -h"
+                printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
                 exit 1
                 ;;
         esac
@@ -156,13 +165,12 @@ else
 fi
 
 if ! bzip2 --help 1>/dev/null 2>/dev/null; then
-    echo "WARNING:
-    bzip2 does not appear to be installed this may cause problems below." >&2
+    printf "WARNING: bzip2 does not appear to be installed this may cause problems below\\n" >&2
 fi
 
 # verify the size of the installer
 if ! wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null; then
-    echo "ERROR: size of $THIS_FILE should be @SIZE_BYTES@ bytes" >&2
+    printf "ERROR: size of %s should be @SIZE_BYTES@ bytes\\n" "$THIS_FILE" >&2
     exit 1
 fi
 
@@ -170,19 +178,19 @@ if [ "$BATCH" = "0" ] # interactive mode
 then
 #if x86 and not x86_64
     if [ "$(uname -m)" = "x86_64" ]; then
-        echo -n "WARNING:
-    Your system is x86_64, but you are trying to install an x86 (32-bit)
-    version of __NAME__.  Unless you have the necessary 32-bit libraries
-    installed, __NAME__ will not work.
-    We STRONGLY recommend installing the x86_64 version of __NAME__ on
-    an x86_64 system.
-    Are sure you want to continue the installation? [yes|no]
-[no] >>> "
-        read ans
+        printf "WARNING:\\n"
+        printf "    Your system is x86_64, but you are trying to install an x86 (32-bit)\\n"
+        printf "    version of __NAME__.  Unless you have the necessary 32-bit libraries\\n"
+        printf "    installed, __NAME__ will not work.\\n"
+        printf "    We STRONGLY recommend installing the x86_64 version of __NAME__ on\\n"
+        printf "    an x86_64 system.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
         if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
            [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
         then
-            echo "Aborting installation"
+            printf "Aborting installation\\n"
             exit 2
         fi
     fi
@@ -190,65 +198,65 @@ then
 
 #if x86_64
     if [ "$(uname -m)" != "x86_64" ]; then
-        echo -n "WARNING:
-    Your operating system appears not to be 64-bit, but you are trying to
-    install a 64-bit version of __NAME__.
-    Are sure you want to continue the installation? [yes|no]
-[no] >>> "
-        read ans
+        printf "WARNING:\\n"
+        printf "    Your operating system appears not to be 64-bit, but you are trying to\\n"
+        printf "    install a 64-bit version of __NAME__.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
         if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
            [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
         then
-            echo "Aborting installation"
+            printf "Aborting installation\\n"
             exit 2
         fi
     fi
 #endif
 
-    echo "
-Welcome to __NAME__ __VERSION__"
+    printf "\\n"
+    printf "Welcome to __NAME__ __VERSION__\\n"
 #if has_license
-    echo -n "
-In order to continue the installation process, please review the license
-agreement.
-Please, press ENTER to continue
->>> "
-    read dummy
+    printf "\\n"
+    printf "In order to continue the installation process, please review the license\\n"
+    printf "agreement.\\n"
+    printf "Please, press ENTER to continue\\n"
+    printf ">>> "
+    read -r dummy
     more <<EOF
 __LICENSE__
 EOF
-    echo -n "
-Do you approve the license terms? [yes|no]
-[no] >>> "
-    read ans
+    printf "\\n"
+    printf "Do you approve the license terms? [yes|no]\\n"
+    printf "[no] >>> "
+    read -r ans
     while [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
           [ "$ans" != "no" ]  && [ "$ans" != "No" ]  && [ "$ans" != "NO" ]
     do
-        echo -n "Please answer 'yes' or 'no':
->>> "
-        read ans
+        printf "Please answer 'yes' or 'no':'\\n"
+        printf ">>> "
+        read -r ans
     done
     if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ]
     then
-        echo "The license agreement wasn't approved, aborting installation."
+        printf "The license agreement wasn't approved, aborting installation.\\n"
         exit 2
     fi
 #endif
 
-    echo -n "
-__NAME__ will now be installed into this location:
-$PREFIX
-
-  - Press ENTER to confirm the location
-  - Press CTRL-C to abort the installation
-  - Or specify a different location below
-
-[$PREFIX] >>> "
-    read user_prefix
+    printf "\\n"
+    printf "__NAME__ will now be installed into this location:\\n"
+    printf "%s\\n" "$PREFIX"
+    printf "\\n"
+    printf "  - Press ENTER to confirm the location\\n"
+    printf "  - Press CTRL-C to abort the installation\\n"
+    printf "  - Or specify a different location below\\n"
+    printf "\\n"
+    printf "[%s] >>> " "$PREFIX"
+    read -r user_prefix
     if [ "$user_prefix" != "" ]; then
         case "$user_prefix" in
             *\ * )
-                echo "ERROR: Cannot install into directories with spaces" >&2
+                printf "ERROR: Cannot install into directories with spaces\\n" >&2
                 exit 1
                 ;;
             *)
@@ -260,27 +268,27 @@ fi # !BATCH
 
 case "$PREFIX" in
     *\ * )
-        echo "ERROR: Cannot install into directories with spaces" >&2
+        printf "ERROR: Cannot install into directories with spaces\\n" >&2
         exit 1
         ;;
 esac
 
 if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
-    echo "ERROR: File or directory already exists: '$PREFIX'
-If you want to update an existing installation, use the -u option." >&2
+    printf "ERROR: File or directory already exists: '%s'\\n" "$PREFIX" >&2
+    printf "If you want to update an existing installation, use the -u option.\\n" >&2
     exit 1
 fi
 
 
 if ! mkdir -p "$PREFIX"; then
-    echo "ERROR: Could not create directory: $PREFIX" >&2
+    printf "ERROR: Could not create directory: '%s'\\n" "$PREFIX" >&2
     exit 1
 fi
 
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 
-echo "PREFIX=$PREFIX"
+printf "PREFIX=%s\\n" "$PREFIX"
 
 # verify the MD5 sum of the tarball appended to this header
 #if osx
@@ -290,29 +298,29 @@ MD5=$(tail -n +@LINES@ "$THIS_PATH" | md5sum -)
 #endif
 
 if ! echo "$MD5" | grep __MD5__ >/dev/null; then
-    echo "WARNING: md5sum mismatch of tar archive
-expected: __MD5__
-     got: $MD5" >&2
+    printf "WARNING: md5sum mismatch of tar archive\\n" >&2
+    printf "expected: __MD5__\\n" >&2
+    printf "     got: %s\\n" "$MD5" >&2
 fi
 
 # extract the tarball appended to this header, this creates the *.tar.bz2 files
 # for all the packages which get installed below
-cd $PREFIX
+cd "$PREFIX"
 
 
 if ! tail -n +@LINES@ "$THIS_PATH" | tar xf -; then
-    echo "ERROR: could not extract tar starting at line @LINES@" >&2
+    printf "ERROR: could not extract tar starting at line @LINES@\\n" >&2
     exit 1
 fi
 
 #if has_pre_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     export INST_OPT='--skip-scripts'
-    echo "WARNING: skipping pre_install.sh by user request"
+    printf "WARNING: skipping pre_install.sh by user request\\n" >&2
 else
     export INST_OPT=''
     if ! $RUNNING_SHELL "$PREFIX/pkgs/pre_install.sh"; then
-        echo "ERROR: executing pre_install.sh failed"
+        printf "ERROR: executing pre_install.sh failed\\n" >&2
         exit 1
     fi
 fi
@@ -330,14 +338,14 @@ install_dist()
     # which does the post extract steps (update prefix files, run 'post-link',
     # and creates the conda metadata).  Note that this is all done without
     # conda.
-    echo "installing: $1 ..."
+    printf "installing: %s ...\\n" "$1"
     PKG="$PREFIX"/pkgs/$1.tar.bz2
     bunzip2 -c "$PKG" | tar -xf - -C "$PREFIX" --no-same-owner || exit 1
     if [ "$1" = "__DIST0__" ]; then
         if ! "$PYTHON" -E -V; then
-            echo "ERROR:
-cannot execute native __PLAT__ binary, output from 'uname -a' is:" >&2
-            uname -a
+            printf "ERROR:\\n" >&2
+            printf "cannot execute native __PLAT__ binary, output from 'uname -a' is:\\n" >&2
+            uname -a >&2
             exit 1
         fi
     fi
@@ -355,10 +363,10 @@ fi
 
 #if has_post_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
-    echo "WARNING: skipping post_install.sh by user request"
+    printf "WARNING: skipping post_install.sh by user request\\n" >&2
 else
     if ! $RUNNING_SHELL "$PREFIX/pkgs/post_install.sh"; then
-        echo "ERROR: executing post_install.sh failed"
+        printf "ERROR: executing post_install.sh failed\\n" >&2
         exit 1
     fi
 fi
@@ -370,10 +378,10 @@ rm -f "$MSGS"
 rm -rf "$PREFIX"/pkgs
 #endif
 
-echo "installation finished."
+printf "installation finished.\\n"
 
-if [ "$BATCH" = "0" ] # interactive mode
-then
+if [ "$BATCH" = "0" ]; then
+    # Interactive mode.
 #if osx
     BASH_RC="$HOME"/.bash_profile
     DEFAULT=yes
@@ -382,43 +390,60 @@ then
     DEFAULT=no
 #endif
 
-    echo -n "Do you wish the installer to prepend the __NAME__ install location
-to PATH in your $BASH_RC ? [yes|no]
-[$DEFAULT] >>> "
-    read ans
+    printf "Do you wish the installer to prepend the __NAME__ install location\\n"
+    printf "to PATH in your %s ? [yes|no]\\n" "$BASH_RC"
+    printf "[%s] >>> " "$DEFAULT"
+    read -r ans
     if [ "$ans" = "" ]; then
         ans=$DEFAULT
     fi
     if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
        [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
     then
-        echo "
-You may wish to edit your .bashrc or prepend the __NAME__ install location:
-
-$ export PATH=$PREFIX/bin:\$PATH
-"
-    else
+        printf "\\n"
+        printf "You may wish to edit your .bashrc to prepend the __NAME__ install location to PATH:\\n"
+        printf "\\n"
+        printf "export PATH=%s/bin:\$PATH\\n" "$PREFIX"
+        printf "\\n"
+    elses
         if [ -f "$BASH_RC" ]; then
-            echo "
-Prepending PATH=$PREFIX/bin to PATH in $BASH_RC
-A backup will be made to: ${BASH_RC}-__name__.bak
-"
+            printf "\\n"
+            printf "Appending source %s/bin/activate to %s\\n" "$PREFIX" "$BASH_RC"
+            printf "A backup will be made to: %s-__name__.bak\\n" "$BASH_RC"
+            printf "\\n"
             cp "$BASH_RC" "${BASH_RC}"-__name__.bak
         else
-            echo "
-Prepending PATH=$PREFIX/bin to PATH in
-newly created $BASH_RC"
+            printf "\\n"
+            printf "Appending source %s/bin/activate in\\n" "$PREFIX"
+            printf "newly created %s\\n" "$BASH_RC"
         fi
-        echo "
-For this change to become active, you have to open a new terminal.
-"
-        echo "
-# added by __NAME__ installer
-export PATH=\"$PREFIX/bin:\$PATH\"" >>"$BASH_RC"
+        printf "\\n"
+        printf "For this change to become active, you have to open a new terminal.\\n"
+        printf "\\n"
+        printf "\\n" >> "$BASH_RC"
+        printf "# added by __NAME__ installer\\n"            >> "$BASH_RC"
+        printf "export PATH=\"%s/bin:\$PATH\"\\n" "$PREFIX"  >> "$BASH_RC"
     fi
 
-    echo "Thank you for installing __NAME__!"
+    printf "Thank you for installing __NAME__!\\n"
 fi # !BATCH
+
+if [ "$TEST" = "1" ]; then
+    printf "INFO: Running package tests in a subshell\\n"
+    if ! (. "$PREFIX"/bin/activate
+          which conda-build || conda install -y conda-build
+#if keep_pkgs
+          conda-build -t -k "$PREFIX"/pkgs/*.tar.bz2
+#endif
+#if not keep_pkgs
+          conda-build -t -k "$PREFIX"/pkgs/*
+#endif
+         ); then
+             NFAILS=$?
+             printf "ERROR: %s test(s) failed\\n" "$NFAILS" >&2
+             exit $NFAILS
+    fi
+fi
 
 exit 0
 @@END_HEADER@@
