@@ -436,18 +436,36 @@ fi # !BATCH
 
 if [ "$TEST" = "1" ]; then
     printf "INFO: Running package tests in a subshell\\n"
-    if ! (. "$PREFIX"/bin/activate
-          which conda-build > /dev/null 2>&1 || conda install -y conda-build
+    (. "$PREFIX"/bin/activate
+     which conda-build > /dev/null 2>&1 || conda install -y conda-build
 #if keep_pkgs
-          conda-build -t -k "$PREFIX"/pkgs/*.tar.bz2
+     if [ ! -d "$PREFIX"/conda-bld/__PLAT__ ]; then
+         mkdir -p "$PREFIX"/conda-bld/__PLAT__
+     fi
+     cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX"/conda-bld/__PLAT__/
+     conda index "$PREFIX"/conda-bld/__PLAT__/
+     conda-build --override-channels --channel local --test --keep-going "$PREFIX"/conda-bld/__PLAT__/*.tar.bz2
 #endif
 #if not keep_pkgs
-          conda-build -t -k "$PREFIX"/pkgs/*
+#          conda-build -t -k "$PREFIX"/pkgs/*
+     printf "ERROR: Testing not possible without keep_pkgs\\n"
+     exit 1
 #endif
-         ); then
-             NFAILS=$?
-             printf "ERROR: %s test(s) failed\\n" "$NFAILS" >&2
-             exit $NFAILS
+    )
+    NFAILS=$?
+    if [ "$NFAILS" != "0" ]; then
+        if [ "$NFAILS" = "1" ]; then
+            printf "ERROR: 1 test failed\\n" >&2
+            printf "To re-run the tests for the above failed package, please enter:\\n"
+            printf ". %s/bin/activate\\n" "$PREFIX"
+            printf "conda-build --override-channels --channel local --test <full-path-to-failed.tar.bz2>\\n"
+        else
+            printf "ERROR: %s test failed\\n" $NFAILS >&2
+            printf "To re-run the tests for the above failed packages, please enter:\\n"
+            printf ". %s/bin/activate\\n" "$PREFIX"
+            printf "conda-build --override-channels --channel local --test <full-path-to-failed.tar.bz2>\\n"
+        fi
+        exit $NFAILS
     fi
 fi
 
