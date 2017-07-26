@@ -411,7 +411,7 @@ if [ "$BATCH" = "0" ]; then
         printf "\\n"
         printf "export PATH=%s/bin:\$PATH\\n" "$PREFIX"
         printf "\\n"
-    elses
+    else
         if [ -f "$BASH_RC" ]; then
             printf "\\n"
             printf "Appending source %s/bin/activate to %s\\n" "$PREFIX" "$BASH_RC"
