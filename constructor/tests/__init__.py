@@ -4,39 +4,39 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
-import os
+from os.path import dirname
 import sys
 
-import libconda
-
-import constructor
-from constructor.tests import test_parser, test_utils, test_install
+from . import test_install, test_parser, test_utils
+from .. import __file__ as CONSTRUCTOR_LOCATION, __version__ as CONSTRUCTOR_VERSION
+from ..conda_interface import CONDA_INTERFACE_VERSION, conda_interface_type
 
 
 def main():
     print("sys.prefix: %s" % sys.prefix)
     print("sys.version: %s ..." % (sys.version[:40],))
-    print('constructor version:', constructor.__version__)
-    print('libconda version:', libconda.__version__)
-    print('location:', constructor.__file__)
+    print('constructor version:', CONSTRUCTOR_VERSION)
+    print('conda interface type:', conda_interface_type)
+    print('conda interface version:', CONDA_INTERFACE_VERSION)
+    print('location:', dirname(CONSTRUCTOR_LOCATION))
 
     if sys.platform == 'win32':
         import PIL
-        import constructor.winexe as winexe
-        from constructor.tests.test_imaging import test_write_images
+        from .. import winexe
+        from .test_imaging import test_write_images
 
         print('pillow version: %s' % PIL.PILLOW_VERSION)
         winexe.verify_nsis_install()
         winexe.read_nsi_tmpl()
         test_write_images()
     else: # Unix
-        import constructor.shar as shar
+        from .. import shar
         shar.read_header_template()
 
     if sys.platform == 'darwin':
-        from constructor.osxpkg import OSX_DIR
+        from .osxpkg import OSX_DIR
         assert len(os.listdir(OSX_DIR)) == 6
 
     test_parser.test_1()
