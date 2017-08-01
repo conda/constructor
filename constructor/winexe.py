@@ -4,22 +4,20 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
 import os
-import sys
-import shutil
-import tempfile
 from os.path import abspath, dirname, isfile, join
+import shutil
 from subprocess import Popen, PIPE, check_call, check_output
+import sys
+import tempfile
 
-from constructor.construct import ns_platform
-from constructor.install import name_dist
-from constructor.utils import make_VIProductVersion, preprocess, fill_template
-from constructor.utils import filename_dist
-from constructor.imaging import write_images
-import constructor.preconda as preconda
-
+from .construct import ns_platform
+from .imaging import write_images
+from .install import name_dist
+from .preconda import write_files as preconda_write_files
+from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess
 
 THIS_DIR = dirname(__file__)
 NSIS_DIR = join(THIS_DIR, 'nsis')
@@ -173,7 +171,7 @@ Error: no file %s
 def create(info, verbose=False):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
-    preconda.write_files(info, tmp_dir)
+    preconda_write_files(info, tmp_dir)
     if 'pre_install' in info:
         sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
 
