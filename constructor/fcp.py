@@ -6,17 +6,17 @@
 """
 fcp (fetch conda packages) module
 """
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
-import re
-import os
-import sys
 from collections import defaultdict
+import os
 from os.path import isdir, isfile, join
+import re
+import sys
 
-from constructor.utils import md5_file, filename_dist
-from constructor.install import name_dist
-
+from .conda_interface import NoPackagesFound, Resolve, fetch_index, fetch_pkg
+from .install import name_dist
+from .utils import filename_dist, md5_file
 
 dists = []
 index = {}
@@ -24,11 +24,7 @@ urls = {}
 md5s = {}
 
 
-def resolve(info, verbose=False, use_conda=False):
-    if use_conda:
-        from conda.exports import Resolve, NoPackagesFound
-    else:
-        from libconda.resolve import Resolve, NoPackagesFound
+def resolve(info, verbose=False):
     if not index:
         sys.exit("Error: index is empty, maybe 'channels' are missing?")
     specs = info['specs']
@@ -141,10 +137,9 @@ def check_dists():
     assert name_dist(dists[0]) == 'python'
 
 
-def fetch(info, use_conda):
+def fetch(info):
     # always use the libconda fetch_index function here since no
     # channel priority is needed
-    from libconda.fetch import fetch_index
     download_dir = info['_download_dir']
     if not isdir(download_dir):
         os.makedirs(download_dir)
@@ -164,6 +159,13 @@ def fetch(info, use_conda):
         else:
             pkginfo = index[dist]
 
+        # convert pkginfo to flat dict
+        try:
+            pkginfo = pkginfo.dump()
+        except AttributeError:
+            # pkginfo was already a dict
+            pass
+
         if not pkginfo['channel'].endswith('/'):
             pkginfo['channel'] += '/'
         assert pkginfo['channel'].endswith('/')
@@ -176,34 +178,21 @@ def fetch(info, use_conda):
         if isfile(path) and md5_file(path) == pkginfo['md5']:
             continue
         print('fetching: %s' % fn)
-        if use_conda:
-            from conda.exports import download as fetch_pkg
-            pkg_url = pkginfo['channel'] + fn
-            fetch_pkg(pkg_url, path)
-        else:
-            from libconda.fetch import fetch_pkg
-            fetch_pkg(pkginfo, download_dir)
+        fetch_pkg(pkginfo, download_dir)
 
 
-def main(info, verbose=True, dry_run=False, use_conda=False):
+def main(info, verbose=True, dry_run=False):
     if 'channels' in info:
         global index
-        if use_conda:
-            from conda.models.channel import prioritize_channels
-            from conda.exports import fetch_index
-            channels = tuple('%s/%s/' % (url.rstrip('/'), platform)
-                for url in info['channels']
-                for platform in (info['_platform'], 'noarch'))
-            index = fetch_index(prioritize_channels(channels))
-        else:
-            from libconda.fetch import fetch_index
-            index = fetch_index(
-                  tuple('%s/%s/' % (url.rstrip('/'), platform)
-                        for url in info['channels']
-                        for platform in (info['_platform'], 'noarch')))
+
+        _platforms = info['_platform'], 'noarch'
+        _urls = info['channels']
+        subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
+                            for url in _urls for subdir in _platforms)
+        index = fetch_index(subdir_urls)
 
     if 'specs' in info:
-        resolve(info, verbose, use_conda)
+        resolve(info, verbose)
     exclude_packages(info)
     if 'packages' in info:
         handle_packages(info)
@@ -222,6 +211,6 @@ def main(info, verbose=True, dry_run=False, use_conda=False):
     check_dists()
     if dry_run:
         return
-    fetch(info, use_conda)
+    fetch(info)
 
     info['_dists'] = list(dists)

@@ -4,20 +4,18 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
 
 import os
+from os.path import dirname, getsize, join
 import shutil
 import tarfile
 import tempfile
-from os.path import dirname, getsize, join
 
-from constructor.install import name_dist
-from constructor.construct import ns_platform
-from constructor.utils import (preprocess, read_ascii_only, fill_template,
-                               md5_file, filename_dist)
-import constructor.preconda as preconda
-
+from .construct import ns_platform
+from .install import name_dist
+from .preconda import files as preconda_files, write_files as preconda_write_files
+from .utils import filename_dist, fill_template, md5_file, preprocess, read_ascii_only
 
 THIS_DIR = dirname(__file__)
 
@@ -35,7 +33,7 @@ def add_condarc(info):
     if default_channels or channels:
         yield '# ----- add condarc'
         yield 'cat <<EOF >$PREFIX/.condarc'
-       	if default_channels:
+        if default_channels:
             yield 'default_channels:'
             for url in default_channels:
                 yield '  - %s' % url
@@ -94,12 +92,12 @@ def get_header(tarball, info):
 
 def create(info):
     tmp_dir = tempfile.mkdtemp()
-    preconda.write_files(info, tmp_dir)
+    preconda_write_files(info, tmp_dir)
     tarball = join(tmp_dir, 'tmp.tar')
     t = tarfile.open(tarball, 'w')
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
-    for dist in preconda.files:
+    for dist in preconda_files:
         fn = filename_dist(dist)
         t.add(join(tmp_dir, fn), 'pkgs/' + fn)
     for dist in info['_dists']:

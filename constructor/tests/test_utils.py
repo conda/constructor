@@ -1,4 +1,4 @@
-from constructor.utils import make_VIProductVersion, fill_template, preprocess
+from ..utils import make_VIProductVersion, fill_template, preprocess
 
 
 def test_make_VIProductVersion():

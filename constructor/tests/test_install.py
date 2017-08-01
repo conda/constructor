@@ -1,7 +1,7 @@
 import unittest
 
 
-from constructor.install import (
+from ..install import (
     PaddingError, binary_replace, name_dist, url_pat,
     link_idists, duplicates_to_remove,
 )

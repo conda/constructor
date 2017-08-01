@@ -1,4 +1,4 @@
-from constructor.fcp import parse_packages
+from ..fcp import parse_packages
 
 
 PKGS_TXT = '''
