@@ -37,9 +37,12 @@ if 'install' in sys.argv:
         for dn in 'nsis', 'ttf':
             shutil.copytree(abspath(join('constructor', dn)),
                             join(sp_dir, 'constructor', dn))
-
     else:
         sp_dir = join(sys.prefix, 'lib/python%d.%d/site-packages' %
-                                               sys.version_info[:2])
-        shutil.copy(abspath('constructor/header.sh'),
-                    join(sp_dir, 'constructor'))
+                                  sys.version_info[:2])
+        if sys.platform == 'darwin':
+            shutil.copytree(abspath(join('constructor', 'osx')),
+                            join(sp_dir, 'constructor', 'osx'))
+        else:
+            shutil.copy(abspath('constructor/header.sh'),
+                        join(sp_dir, 'constructor'))
