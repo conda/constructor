@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -e "$2/anaconda" ]]; then
+if [[ -e "$2/__NAME__" ]]; then
     # The OS X installer provides no way to send a message to the user if this
     # script fails. So we use AppleScript to do it.
 
