@@ -90,6 +90,11 @@ The filename of the installer being created.  A reasonable default filename
 will determined by the `name`, `version`, platform and installer type.
 '''),
 
+    ('installer_type',     False, str, '''
+The type of the installer being created.  Possible values are "sh", "pkg",
+and "exe".  By default, the type is "sh" on Unix, and "exe" on Windows.
+'''),
+
     ('license_file',           False, str, '''
 Path to the license file being displayed by the installer during the install
 process.
