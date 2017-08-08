@@ -1,7 +1,7 @@
 import os
-import sys
 import shutil
-from os.path import dirname, exists, expanduser, join
+import tarfile
+from os.path import dirname, exists, join
 from subprocess import check_call
 import xml.etree.ElementTree as ET
 
@@ -10,16 +10,15 @@ from constructor.install import rm_rf, name_dist
 
 
 OSX_DIR = join(dirname(__file__), "osx")
-CONDA_DIR = expanduser('~/.conda')
-PACKAGE_ROOT = join(CONDA_DIR, "package_root")
-PACKAGES_DIR = join(CONDA_DIR, "built_pkgs")
+CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = None
 
 
-def write_readme(path):
+
+def write_readme(path, info):
     shutil.copy(join(OSX_DIR, 'readme_header.rtf'), path)
 
     with open(path, 'a') as f:
-        for dist in sorted(DISTS):
+        for dist in sorted(info['_dists']):
             if dist.startswith('_'):
                 continue
             f.write("{\\listtext\t\n\\f1 \\uc0\\u8259 \n\\f0 \t}%s %s\\\n" %
@@ -27,7 +26,7 @@ def write_readme(path):
         f.write('}')
 
 
-def modify_xml(xml_path):
+def modify_xml(xml_path, info):
     # See
     # http://developer.apple.com/library/mac/#documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW20 for all the options you can put here.
 
@@ -35,14 +34,15 @@ def modify_xml(xml_path):
     root = tree.getroot()
 
     title = ET.Element('title')
-    title.text = NAME
+    title.text = info['name']
     root.append(title)
 
-    license = ET.Element('license', file=LICENSE_PATH)
+    license = ET.Element('license', file=info.get('license_file',
+                                                  'No license'))
     root.append(license)
 
     background = ET.Element('background',
-                            file=join(FILES_DIR, 'MacInstaller.png'),
+                            file=join(OSX_DIR, 'MacInstaller.png'),
                             scaling='proportional', alignment='center')
     root.append(background)
 
@@ -51,7 +51,7 @@ def modify_xml(xml_path):
     root.append(conclusion)
 
     readme_path = join(PACKAGES_DIR, "readme.rtf")
-    write_readme(readme_path)
+    write_readme(readme_path, info)
     readme = ET.Element('readme', file=readme_path,
                         attrib={'mime-type': 'richtext/rtf'})
     root.append(readme)
@@ -62,7 +62,7 @@ def modify_xml(xml_path):
 
     [default_choice] = [i for i in root.findall('choice')
                         if i.get('id') == 'default']
-    default_choice.set('title', NAME)
+    default_choice.set('title', info['name'])
 
     [path_choice] = [i for i in root.findall('choice')
                      if 'pathupdate' in i.get('id')]
@@ -85,13 +85,12 @@ def modify_xml(xml_path):
     tree.write(xml_path)
 
 
-def move_script(src, dst):
+def move_script(src, dst, info):
     with open(src) as fi:
         data = fi.read()
 
-    data = data.replace('__NAME__', NAME)
-    data = data.replace('__VERSION__', VERSION)
-    data = data.replace('__PYTHON_DIST__', PYTHON_DIST)
+    data = data.replace('__NAME__', info['name'])
+    data = data.replace('__VERSION__', info['version'])
 
     with open(dst, 'w') as fo:
         fo.write(data)
@@ -121,20 +120,25 @@ def pkgbuild(name, scripts=None):
     check_call(args)
 
 
-def pkgbuild_script(name, src, dst='postinstall'):
-    scripts_dir = join(AROOT, "scripts")
+def pkgbuild_script(name, info, src, dst='postinstall'):
+    scripts_dir = join(CACHE_DIR, "scripts")
     fresh_dir(scripts_dir)
-    move_script(join(OSX_DIR, src),
+    move_script(join(OSX_DIR, src, info),
                 join(scripts_dir, dst))
     fresh_dir(PACKAGE_ROOT)  # --root <empty dir>
     pkgbuild(name, scripts_dir)
 
 
-def make_package():
+def create(info):
+    global CACHE_DIR
+
+    CACHE_DIR = info['_download_dir']
+    PACKAGE_ROOT = join(CACHE_DIR, "package_root")
+    PACKAGES_DIR = join(CACHE_DIR, "built_pkgs")
+
     # See http://stackoverflow.com/a/11487658/161801 for how all this works.
 
-    anaconda_dir = join(PACKAGE_ROOT, "anaconda")
-    pkgs_dir = join(anaconda_dir, "pkgs")
+    prefix = join(PACKAGE_ROOT, info['name'].lower())
 
     fresh_dir(PACKAGES_DIR)
 
@@ -142,30 +146,31 @@ def make_package():
     preconda.write_files(anaconda_dir)
     pkgbuild('preconda')
 
-    for dist in DISTS:
+    for fn in info['_dists']:
         fresh_dir(PACKAGE_ROOT)
-        os.makedirs(pkgs_dir)
-        tar_xf(join(TARS_DIR, dist + '.tar.bz2'), join(pkgs_dir, dist))
-        pkgbuild(name_dist(dist))
+        t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
+        t.extractall(prefix)
+        t.close()
+        pkgbuild(name_dist(fn))
 
     # Create special preinstall and postinstall packages to check if Anaconda
     # is already installed, build Anaconda, and to update the shell profile.
 
     # First the script to build Anaconda (move everything to the prefix and
     # run conda install)
-    pkgbuild_script('postextract', 'post_extract.sh')
+    pkgbuild_script('postextract', info, 'post_extract.sh')
 
     # Next, the script to edit bashrc with the PATH.  This is separate so it
     # can be disabled.
-    pkgbuild_script('pathupdate', 'update_path.sh')
+    pkgbuild_script('pathupdate', info, 'update_path.sh')
 
     # Next, the script to be run before everything, which checks if Anaconda
     # is already installed.
-    pkgbuild_script('apreinstall', 'preinstall.sh', 'preinstall')
+    pkgbuild_script('apreinstall', info, 'preinstall.sh', 'preinstall')
 
     # Now build the final package
     names = ['apreinstall', 'preconda']
-    names.extend(name_dist(dist) for dist in DISTS)
+    names.extend(name_dist(dist) for dist in info['_dists'])
     names.extend(['postextract', 'pathupdate'])
 
     xml_path = join(PACKAGES_DIR, 'distribution.xml')
@@ -175,17 +180,12 @@ def make_package():
     args.append(xml_path)
     check_call(args)
 
-    modify_xml(xml_path)
+    modify_xml(xml_path, info)
 
     check_call([
         "productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
-        "--identifier", NAME,
-        "%s.pkg" % FNROOT,
+        "--identifier", info['name'],
+        "%s.pkg" % info['_outpath'],
     ])
-
-
-if __name__ == '__main__':
-    fetch_all()
-    make_package()
