@@ -23,7 +23,7 @@ DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 def set_installer_type(info):
     osname, unused_arch = info['_platform'].split('-')
 
-    if not info['installer_filename']:
+    if not info.get('installer_type'):
         os_map = {'linux': 'sh', 'osx': 'sh', 'win': 'exe'}
         info['installer_type'] = os_map[osname]
 
