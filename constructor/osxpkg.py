@@ -189,5 +189,5 @@ def create(info):
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info['name'],
-        "%s.pkg" % info['_outpath'],
+        info['_outpath'],
     ])
