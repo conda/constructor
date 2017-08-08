@@ -40,7 +40,7 @@ conda_default_channels: *id1
 
 # type of the installer being created.  Possible values are "sh", "pkg",
 # and "exe".  By default, the type is "sh" on Unix, and "exe" on Windows.
-#installer_type: pkg
+installer_type: pkg                   [osx]
 
 # installer filename (a reasonable default filename will determined by
 # the `name`, (optional) `version`, OS and installer type)

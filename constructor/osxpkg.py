@@ -6,6 +6,7 @@ from subprocess import check_call
 import xml.etree.ElementTree as ET
 
 from constructor.install import rm_rf, name_dist
+import constructor.preconda as preconda
 
 
 
@@ -123,27 +124,28 @@ def pkgbuild(name, scripts=None):
 def pkgbuild_script(name, info, src, dst='postinstall'):
     scripts_dir = join(CACHE_DIR, "scripts")
     fresh_dir(scripts_dir)
-    move_script(join(OSX_DIR, src, info),
-                join(scripts_dir, dst))
+    move_script(join(OSX_DIR, src),
+                join(scripts_dir, dst),
+                info)
     fresh_dir(PACKAGE_ROOT)  # --root <empty dir>
     pkgbuild(name, scripts_dir)
 
 
 def create(info):
-    global CACHE_DIR
+    global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR
 
     CACHE_DIR = info['_download_dir']
     PACKAGE_ROOT = join(CACHE_DIR, "package_root")
     PACKAGES_DIR = join(CACHE_DIR, "built_pkgs")
 
     # See http://stackoverflow.com/a/11487658/161801 for how all this works.
-
     prefix = join(PACKAGE_ROOT, info['name'].lower())
 
     fresh_dir(PACKAGES_DIR)
-
     fresh_dir(PACKAGE_ROOT)
-    preconda.write_files(anaconda_dir)
+    pkgs_dir = join(prefix, 'pkgs')
+    os.makedirs(pkgs_dir)
+    preconda.write_files(info, pkgs_dir)
     pkgbuild('preconda')
 
     for fn in info['_dists']:
