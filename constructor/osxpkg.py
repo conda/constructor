@@ -121,14 +121,13 @@ def pkgbuild(name, scripts=None):
     check_call(args)
 
 
-def pkgbuild_script(name, info, src, dst='postinstall', clean_root=True):
+def pkgbuild_script(name, info, src, dst='postinstall'):
     scripts_dir = join(CACHE_DIR, "scripts")
     fresh_dir(scripts_dir)
     move_script(join(OSX_DIR, src),
                 join(scripts_dir, dst),
                 info)
-    if clean_root:
-        fresh_dir(PACKAGE_ROOT)  # --root <empty dir>
+    fresh_dir(PACKAGE_ROOT)  # --root <empty dir>
     pkgbuild(name, scripts_dir)
 
 
@@ -154,7 +153,9 @@ def create(info):
         t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
         t.extractall(prefix)
         t.close()
-        pkgbuild_script(name_dist(fn), info, 'post_link.sh', clean_root=False)
+        os.rename(join(prefix, 'info'),
+                  join(prefix, 'info-%s' % name_dist(fn)))
+        pkgbuild(name_dist(fn))
 
     # Create special preinstall and postinstall packages to check if Anaconda
     # is already installed, build Anaconda, and to update the shell profile.

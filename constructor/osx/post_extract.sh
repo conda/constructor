@@ -15,14 +15,16 @@ export PREFIX
 
 echo "PREFIX=$PREFIX"
 
-mkdir "$PREFIX/envs"
-
 PYTHON="$PREFIX/bin/python"
 "$PYTHON" -E -V
 if (( $? )); then
     echo "ERROR running Python"
     exit 1
 fi
+
+# run post-link, and create the conda metadata
+unset FORCE
+"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" --pkg >/tmp/const.out 2>&1
 
 # This is unneeded for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.

@@ -448,6 +448,18 @@ def post_extract(env_name='root'):
     shutil.rmtree(info_dir)
 
 
+def post_extract_pkg():
+    for fn in os.listdir(ROOT_PREFIX):
+        if not fn.startswith('info-'):
+            continue
+        info_dir = join(ROOT_PREFIX, fn)
+        with open(join(info_dir, 'index.json')) as fi:
+            meta = json.load(fi)
+        dist = '%(name)s-%(version)s-%(build)s' % meta
+        link(ROOT_PREFIX, dist, linktype=None)
+        shutil.rmtree(info_dir)
+
+
 def main():
     global ROOT_PREFIX, PKGS_DIR
 
@@ -494,6 +506,10 @@ def main2():
                  action="store_true",
                  help="remove duplicates")
 
+    p.add_option('--pkg',
+                 action="store_true",
+                 help="OSX .pkg usecase")
+
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
@@ -503,6 +519,11 @@ def main2():
 
     if opts.rm_dup:
         remove_duplicates()
+        return
+
+    if opts.pkg:
+        assert sys.platform == 'darwin'
+        post_extract_pkg()
         return
 
     post_extract()
