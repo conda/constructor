@@ -155,8 +155,7 @@ def create(info):
         t.close()
         os.rename(join(prefix, 'info'), join(prefix, 'info-tmp'))
         os.mkdir(join(prefix, 'info'))
-        os.rename(join(prefix, 'info-tmp'),
-                  join(prefix, 'info', name_dist(fn)))
+        os.rename(join(prefix, 'info-tmp'), join(prefix, 'info', fn))
         pkgbuild(name_dist(fn))
 
     # Create special preinstall and postinstall packages to check if Anaconda

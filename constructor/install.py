@@ -449,7 +449,7 @@ def post_extract(env_name='root'):
 
 
 def post_extract_pkg():
-    for fn in os.listdir(join(ROOT_PREFIX, 'info')):
+    for fn in sorted(os.listdir(join(ROOT_PREFIX, 'info'))):
         info_dir = join(ROOT_PREFIX, 'info', fn)
         with open(join(info_dir, 'index.json')) as fi:
             meta = json.load(fi)
