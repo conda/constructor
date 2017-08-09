@@ -301,7 +301,7 @@ def linked(prefix):
     return set(fn[:-5] for fn in os.listdir(meta_dir) if fn.endswith('.json'))
 
 
-def link(prefix, dist, linktype=LINK_HARD):
+def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
     '''
     Link a package in a specified prefix.  We assume that the packacge has
     been extra_info in either
@@ -313,7 +313,7 @@ def link(prefix, dist, linktype=LINK_HARD):
         info_dir = join(source_dir, 'info')
         no_link = read_no_link(info_dir)
     else:
-        info_dir = join(prefix, 'info')
+        info_dir = info_dir or join(prefix, 'info')
 
     files = list(yield_lines(join(info_dir, 'files')))
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
@@ -449,15 +449,12 @@ def post_extract(env_name='root'):
 
 
 def post_extract_pkg():
-    for fn in os.listdir(ROOT_PREFIX):
-        if not fn.startswith('info-'):
-            continue
-        info_dir = join(ROOT_PREFIX, fn)
+    for fn in os.listdir(join(ROOT_PREFIX, 'info')):
+        info_dir = join(ROOT_PREFIX, 'info', fn)
         with open(join(info_dir, 'index.json')) as fi:
             meta = json.load(fi)
         dist = '%(name)s-%(version)s-%(build)s' % meta
-        link(ROOT_PREFIX, dist, linktype=None)
-        shutil.rmtree(info_dir)
+        link(ROOT_PREFIX, dist, linktype=None, info_dir=info_dir)
 
 
 def main():

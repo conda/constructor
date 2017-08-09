@@ -24,7 +24,9 @@ fi
 
 # run post-link, and create the conda metadata
 unset FORCE
-"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" --pkg >/tmp/const.out 2>&1
+"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" --pkg || exit 1
+
+rm -rf "$PREFIX/info"
 
 # This is unneeded for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.

@@ -153,8 +153,10 @@ def create(info):
         t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
         t.extractall(prefix)
         t.close()
-        os.rename(join(prefix, 'info'),
-                  join(prefix, 'info-%s' % name_dist(fn)))
+        os.rename(join(prefix, 'info'), join(prefix, 'info-tmp'))
+        os.mkdir(join(prefix, 'info'))
+        os.rename(join(prefix, 'info-tmp'),
+                  join(prefix, 'info', name_dist(fn)))
         pkgbuild(name_dist(fn))
 
     # Create special preinstall and postinstall packages to check if Anaconda
