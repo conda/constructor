@@ -24,14 +24,6 @@ if (( $? )); then
     exit 1
 fi
 
-echo "creating default environment..."
-# Since the package installer cannot install into an existing location, it
-# is best to unset FORCE completely.  The link process would fail if existing
-# link targets exist, but we always ensure that we have non-overlapping
-# conda packages in the installer.
-unset FORCE
-"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" --root-prefix="$PREFIX" || exit 1
-
 # This is unneeded for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
 chown -R $USER "$PREFIX"
