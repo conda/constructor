@@ -6,6 +6,7 @@
 
 from __future__ import print_function, division, absolute_import
 
+import os
 import sys
 
 import libconda
@@ -30,9 +31,13 @@ def main():
         winexe.verify_nsis_install()
         winexe.read_nsi_tmpl()
         test_write_images()
-    else:
+    else: # Unix
         import constructor.shar as shar
         shar.read_header_template()
+
+    if sys.platform == 'darwin':
+        from constructor.osxpkg import OSX_DIR
+        assert len(os.listdir(OSX_DIR)) == 6
 
     test_parser.test_1()
     test_utils.main()
