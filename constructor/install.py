@@ -394,14 +394,16 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
-def remove_duplicates():
-    idists = []
+def yield_idists():
     for line in open(join(PKGS_DIR, 'urls')):
         m = url_pat.match(line)
         if m:
             fn = m.group('fn')
-            idists.append(fn[:-8])
+            yield fn[:-8]
 
+
+def remove_duplicates():
+    idists = list(yield_idists)
     keep_files = set()
     for dist in idists:
         with open(join(ROOT_PREFIX, 'conda-meta', dist + '.json')) as fi:
@@ -449,8 +451,8 @@ def post_extract(env_name='root'):
 
 
 def post_extract_pkg():
-    for fn in sorted(os.listdir(join(ROOT_PREFIX, 'info'))):
-        info_dir = join(ROOT_PREFIX, 'info', fn)
+    for dist in yield_idists():
+        info_dir = join(ROOT_PREFIX, 'info', dist)
         with open(join(info_dir, 'index.json')) as fi:
             meta = json.load(fi)
         dist = '%(name)s-%(version)s-%(build)s' % meta
