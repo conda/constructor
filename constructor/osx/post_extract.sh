@@ -24,7 +24,7 @@ fi
 
 # run post-link, and create the conda metadata
 unset FORCE
-"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" --pkg || exit 1
+"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" --multi || exit 1
 
 rm -rf "$PREFIX/info"
 

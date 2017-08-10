@@ -450,7 +450,7 @@ def post_extract(env_name='root'):
     shutil.rmtree(info_dir)
 
 
-def post_extract_pkg():
+def multi_post_extract():
     for dist in yield_idists():
         info_dir = join(ROOT_PREFIX, 'info', dist)
         with open(join(info_dir, 'index.json')) as fi:
@@ -505,9 +505,9 @@ def main2():
                  action="store_true",
                  help="remove duplicates")
 
-    p.add_option('--pkg',
+    p.add_option('--multi',
                  action="store_true",
-                 help="OSX .pkg usecase")
+                 help="multi post extract usecase")
 
     opts, args = p.parse_args()
     if args:
@@ -520,9 +520,8 @@ def main2():
         remove_duplicates()
         return
 
-    if opts.pkg:
-        assert sys.platform == 'darwin'
-        post_extract_pkg()
+    if opts.multi:
+        multi_post_extract()
         return
 
     post_extract()
