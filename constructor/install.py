@@ -451,6 +451,13 @@ def post_extract(env_name='root'):
 
 
 def multi_post_extract():
+    # This function is called when using the --multi option, when building
+    # .pkg packages on OSX.  I tried avoiding this extra option by running
+    # the post extract step on each individual package (like it is done for
+    # the .sh and .exe installers), by adding a postinstall script to each
+    # conda .pkg file, but this did not work as expected.  Running all the
+    # post extracts at end is also faster and could be considered for the
+    # other installer types as well.
     for dist in yield_idists():
         info_dir = join(ROOT_PREFIX, 'info', dist)
         with open(join(info_dir, 'index.json')) as fi:
