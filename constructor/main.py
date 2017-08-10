@@ -20,6 +20,26 @@ import constructor.construct as construct
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 
 
+def set_installer_type(info):
+    osname, unused_arch = info['_platform'].split('-')
+
+    if not info.get('installer_type'):
+        os_map = {'linux': 'sh', 'osx': 'sh', 'win': 'exe'}
+        info['installer_type'] = os_map[osname]
+
+    allowed_types = 'sh', 'pkg', 'exe'
+    itype = info['installer_type']
+    if itype not in allowed_types:
+        sys.exit("Error: invalid installer type '%s',\n"
+                 "allowed types are: %s" % (itype, allowed_types))
+
+    if ((osname == 'linux' and itype != 'sh') or
+        (osname == 'osx' and itype not in ('sh', 'pkg')) or
+        (osname == 'win' and itype != 'exe')):
+        sys.exit("Error: cannot create '.%s' installer for %s" % (itype,
+                                                                  osname))
+
+
 def get_output_filename(info):
     try:
         return info['installer_filename']
@@ -29,7 +49,7 @@ def get_output_filename(info):
     osname, arch = info['_platform'].split('-')
     os_map = {'linux': 'Linux', 'osx': 'MacOSX', 'win': 'Windows'}
     arch_name_map = {'64': 'x86_64', '32': 'x86'}
-    ext = 'exe' if osname == 'win' else 'sh'
+    ext = info['installer_type']
     return '%s-%s-%s.%s' % ('%(name)s-%(version)s' % info,
                             os_map.get(osname, osname),
                             arch_name_map.get(arch, arch),
@@ -45,23 +65,26 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     except ValueError:
         sys.exit("Error: invalid platform string '%s'" % platform)
 
-    if osname in ('linux', 'osx'):
-        if sys.platform == 'win32':
-            sys.exit("Error: Cannot create .sh installer on Windows platform.")
-        from constructor.shar import create
-    elif osname == 'win':
-        if sys.platform != 'win32':
-            sys.exit("Error: Cannot create Windows .exe installer on "
-                     "non-Windows platform.")
-        from constructor.winexe import create
-    else:
-        sys.exit("Error: invalid OS name '%s'" % osname)
-
     construct_path = join(dir_path, 'construct.yaml')
     info = construct.parse(construct_path, platform)
     construct.verify(info)
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
+    set_installer_type(info)
+
+    if info['installer_type'] == 'sh':
+        if sys.platform == 'win32':
+            sys.exit("Error: Cannot create .sh installer on Windows.")
+        from constructor.shar import create
+    elif info['installer_type'] == 'pkg':
+        if sys.platform != 'darwin':
+            sys.exit("Error: Can only create .pkg installer on OSX.")
+        from constructor.osxpkg import create
+    elif info['installer_type'] == 'exe':
+        if sys.platform != 'win32':
+            sys.exit("Error: Can only create .pkg installer on Windows.")
+        from constructor.winexe import create
+
     if verbose:
         print('conda packages download: %s' % info['_download_dir'])
 

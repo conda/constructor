@@ -301,7 +301,7 @@ def linked(prefix):
     return set(fn[:-5] for fn in os.listdir(meta_dir) if fn.endswith('.json'))
 
 
-def link(prefix, dist, linktype=LINK_HARD):
+def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
     '''
     Link a package in a specified prefix.  We assume that the packacge has
     been extra_info in either
@@ -313,7 +313,7 @@ def link(prefix, dist, linktype=LINK_HARD):
         info_dir = join(source_dir, 'info')
         no_link = read_no_link(info_dir)
     else:
-        info_dir = join(prefix, 'info')
+        info_dir = info_dir or join(prefix, 'info')
 
     files = list(yield_lines(join(info_dir, 'files')))
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
@@ -394,14 +394,16 @@ def duplicates_to_remove(linked_dists, keep_dists):
     return sorted(res)
 
 
-def remove_duplicates():
-    idists = []
+def yield_idists():
     for line in open(join(PKGS_DIR, 'urls')):
         m = url_pat.match(line)
         if m:
             fn = m.group('fn')
-            idists.append(fn[:-8])
+            yield fn[:-8]
 
+
+def remove_duplicates():
+    idists = list(yield_idists)
     keep_files = set()
     for dist in idists:
         with open(join(ROOT_PREFIX, 'conda-meta', dist + '.json')) as fi:
@@ -446,6 +448,22 @@ def post_extract(env_name='root'):
         run_script(prefix, dist, 'pre-unlink')
     link(prefix, dist, linktype=None)
     shutil.rmtree(info_dir)
+
+
+def multi_post_extract():
+    # This function is called when using the --multi option, when building
+    # .pkg packages on OSX.  I tried avoiding this extra option by running
+    # the post extract step on each individual package (like it is done for
+    # the .sh and .exe installers), by adding a postinstall script to each
+    # conda .pkg file, but this did not work as expected.  Running all the
+    # post extracts at end is also faster and could be considered for the
+    # other installer types as well.
+    for dist in yield_idists():
+        info_dir = join(ROOT_PREFIX, 'info', dist)
+        with open(join(info_dir, 'index.json')) as fi:
+            meta = json.load(fi)
+        dist = '%(name)s-%(version)s-%(build)s' % meta
+        link(ROOT_PREFIX, dist, linktype=None, info_dir=info_dir)
 
 
 def main():
@@ -494,6 +512,10 @@ def main2():
                  action="store_true",
                  help="remove duplicates")
 
+    p.add_option('--multi',
+                 action="store_true",
+                 help="multi post extract usecase")
+
     opts, args = p.parse_args()
     if args:
         p.error('no arguments expected')
@@ -503,6 +525,10 @@ def main2():
 
     if opts.rm_dup:
         remove_duplicates()
+        return
+
+    if opts.multi:
+        multi_post_extract()
         return
 
     post_extract()
