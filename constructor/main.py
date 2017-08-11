@@ -65,8 +65,8 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         sys.exit("Error: invalid platform string '%s'" % platform)
 
     construct_path = join(dir_path, 'construct.yaml')
-    info = construct.parse(construct_path, platform)
-    construct.verify(info)
+    info = construct_parse(construct_path, platform)
+    construct_verify(info)
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
     set_installer_type(info)
