@@ -159,6 +159,13 @@ def fetch(info):
         else:
             pkginfo = index[dist]
 
+        # convert pkginfo to flat dict
+        try:
+            pkginfo = pkginfo.dump()
+        except AttributeError:
+            # pkginfo was already a dict
+            pass
+
         if not pkginfo['channel'].endswith('/'):
             pkginfo['channel'] += '/'
         assert pkginfo['channel'].endswith('/')
