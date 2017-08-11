@@ -30,7 +30,8 @@ if conda_interface_type == 'conda':
         return _fetch_index(prioritize_channels(channel_urls))
 
     def fetch_pkg(pkginfo, download_dir):
-        pkg_url = "%s/%s/%s" % (pkginfo['channel'].rstrip('/'), pkginfo['subdir'], pkginfo['fn'])
+        pkg_url = pkginfo['url']
+        assert pkg_url
         download(pkg_url, join(download_dir, pkginfo['fn']))
 
 else:
