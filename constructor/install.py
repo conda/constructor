@@ -428,6 +428,23 @@ def link_idists():
     raise NotImplementedError
 
 
+def link_dist(dist):
+    src = join(PKGS_DIR, 'urls')
+    dst = join(ROOT_PREFIX, '.hard-link')
+    assert isfile(src), src
+    assert not isfile(dst), dst
+    try:
+        _link(src, dst, LINK_HARD)
+        linktype = LINK_HARD
+    except OSError:
+        linktype = LINK_COPY
+    finally:
+        rm_rf(dst)
+
+    prefix = prefix_env('root')
+    link(prefix, dist, linktype)
+
+
 def prefix_env(env_name):
     if env_name == 'root':
         return ROOT_PREFIX
@@ -503,7 +520,7 @@ def main():
 
 
 def main2():
-    global SKIP_SCRIPTS
+    global SKIP_SCRIPTS, ROOT_PREFIX, PKGS_DIR
 
     p = OptionParser(description="conda post extract tool used by installers")
 
@@ -519,7 +536,20 @@ def main2():
                  action="store_true",
                  help="multi post extract usecase")
 
+    p.add_option('--link-dist',
+                 action="store",
+                 default=None,
+                 help="link dist")
+
+    p.add_option('--root-prefix',
+                 action="store",
+                 default=abspath(join(__file__, '..', '..')),
+                 help="root prefix (defaults to %default)")
+
     opts, args = p.parse_args()
+    ROOT_PREFIX = opts.root_prefix.replace('//', '/')
+    PKGS_DIR = join(ROOT_PREFIX, 'pkgs')
+
     if args:
         p.error('no arguments expected')
 
@@ -532,6 +562,10 @@ def main2():
 
     if opts.multi:
         multi_post_extract()
+        return
+
+    if opts.link_dist:
+        link_dist(opts.link_dist)
         return
 
     post_extract()

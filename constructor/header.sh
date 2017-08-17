@@ -339,8 +339,17 @@ install_dist()
     # and creates the conda metadata).  Note that this is all done without
     # conda.
     printf "installing: %s ...\\n" "$1"
-    PKG="$PREFIX"/pkgs/$1.tar.bz2
+    PKG_PATH="$PREFIX"/pkgs/$1
+    PKG="$PKG_PATH".tar.bz2
+    mkdir $PKG_PATH || exit 1
+#if use_hardlinks
+    bunzip2 -c "$PKG" | tar -xf - -C "$PKG_PATH" --no-same-owner || exit 1
+    "$PREFIX/pkgs/__DIST0__/bin/python" -E -s \
+        "$PREFIX"/pkgs/.install.py $INST_OPT --root-prefix="$PREFIX" --link-dist="$1" || exit 1
+#else
     bunzip2 -c "$PKG" | tar -xf - -C "$PREFIX" --no-same-owner || exit 1
+    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py $INST_OPT || exit 1
+#endif
     if [ "$1" = "__DIST0__" ]; then
         if ! "$PYTHON" -E -V; then
             printf "ERROR:\\n" >&2
@@ -349,7 +358,6 @@ install_dist()
             exit 1
         fi
     fi
-    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py $INST_OPT || exit 1
 #if not keep_pkgs
     rm "$PKG"
 #endif
