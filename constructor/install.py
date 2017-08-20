@@ -406,7 +406,7 @@ def yield_idists():
 
 
 def remove_duplicates():
-    idists = list(yield_idists)
+    idists = list(yield_idists())
     keep_files = set()
     for dist in idists:
         with open(join(ROOT_PREFIX, 'conda-meta', dist + '.json')) as fi:
