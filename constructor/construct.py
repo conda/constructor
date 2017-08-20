@@ -8,7 +8,10 @@ import re
 import sys
 from os.path import abspath
 
-import yaml
+try:
+    import yaml
+except:
+    import ruamel_yaml as yaml
 
 
 PREABLE = '''\n
