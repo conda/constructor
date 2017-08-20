@@ -106,6 +106,13 @@ installer in the `pkgs` directory.  Using this option changes the default
 behavior.
 '''),
 
+    ('use_hardlinks',          False, bool, '''
+By default, conda packages are extracted into the root environment and then
+patched. Enabling this option will result into extraction of the packages into
+the `pkgs` directory and the files in the root environment will be hardlinks to
+the files kept in the `pkgs` directory and then patched accordingly.
+'''),
+
     ('pre_install',            False, str, '''
 Path to a pre install (bash - Unix only) script.
 '''),
