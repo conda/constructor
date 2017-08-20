@@ -9,7 +9,10 @@ from os.path import abspath, dirname
 import re
 import sys
 
-import yaml
+try:
+    import yaml
+except:
+    import ruamel_yaml as yaml
 
 from constructor.exceptions import (
     UnableToParse, UnableToParseMissingJinja2, YamlParsingError,
