@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import dirname, getsize, join
+from os.path import dirname, getsize, join, isdir
 import shutil
 import tarfile
 import tempfile
@@ -108,6 +108,10 @@ def create(info):
     for key in 'pre_install', 'post_install':
         if key in info:
             t.add(info[key], 'pkgs/%s.sh' % key)
+    cache_dir = join(tmp_dir, 'cache')
+    if isdir(cache_dir): 
+	t.add(cache_dir, 'pkgs/cache')
+
     t.close()
 
     header = get_header(tarball, info)
