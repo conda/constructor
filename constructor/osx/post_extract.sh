@@ -9,7 +9,7 @@ unset DYLD_LIBRARY_PATH
 
 # $2 is the install location, which is ~ by default, but which the user can
 # change.
-PREFIX="$2/__NAME__"
+PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 
