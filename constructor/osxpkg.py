@@ -91,6 +91,8 @@ def move_script(src, dst, info):
     with open(src) as fi:
         data = fi.read()
 
+    # This is necessary for when installing on case-sensitive macOS filesystems.
+    data = data.replace('__NAME_LOWER__', info['name'].lower())
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__VERSION__', info['version'])
 
