@@ -3,6 +3,7 @@ import shutil
 import tarfile
 from os.path import dirname, exists, join
 from subprocess import check_call
+from sys import version_info
 import xml.etree.ElementTree as ET
 
 from constructor.install import rm_rf, name_dist
@@ -148,7 +149,11 @@ def create(info):
     preconda.write_files(info, pkgs_dir)
     pkgbuild('preconda')
 
-    for fn in info['_dists']:
+    for dist in info['_dists']:
+        if isinstance(dist, str if version_info[0] >= 3 else basestring):
+           fn = dist
+        else:
+            fn = dist.fn
         fresh_dir(PACKAGE_ROOT)
         t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
         t.extractall(prefix)
