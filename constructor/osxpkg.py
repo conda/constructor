@@ -16,10 +16,19 @@ CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = None
 
 
 
-def write_readme(path, info):
-    shutil.copy(join(OSX_DIR, 'readme_header.rtf'), path)
+def write_readme(dst, info):
 
-    with open(path, 'a') as f:
+    src = join(OSX_DIR, 'readme_header.rtf')
+    with open(src) as fi:
+        data = fi.read()
+
+    # This is necessary for when installing on case-sensitive macOS filesystems.
+    data = data.replace('__NAME_LOWER__', info['name'].lower())
+    data = data.replace('__NAME__', info['name'])
+    data = data.replace('__VERSION__', info['version'])
+
+    with open(dst, 'w') as f:
+        f.write(data)
         for dist in sorted(info['_dists']):
             if dist.startswith('_'):
                 continue
