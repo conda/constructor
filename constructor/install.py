@@ -111,10 +111,11 @@ def read_has_prefix(path):
     try:
         for line in yield_lines(path):
             try:
-                placeholder, mode, f = [x.strip('"\'') for x in
-                                        shlex.split(line, posix=False)]
+                parts = [x.strip('"\'') for x in shlex.split(line, posix=False)]
+                # assumption: placeholder and mode will never have a space
+                placeholder, mode, f = parts[0], parts[1], ' '.join(parts[2:])
                 res[f] = (placeholder, mode)
-            except ValueError:
+            except (ValueError, IndexError):
                 res[line] = (prefix_placeholder, 'text')
     except IOError:
         pass
@@ -319,6 +320,7 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
         info_dir = info_dir or join(prefix, 'info')
 
     files = list(yield_lines(join(info_dir, 'files')))
+    # TODO: Use paths.json, if available or fall back to this method
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
 
     if linktype:
