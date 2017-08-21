@@ -80,11 +80,11 @@ def modify_xml(xml_path, info):
     path_choice.set('visible', 'true')
     path_choice.set('title', "Modify PATH")
     path_description = """
-    Whether to modify the bash profile file to append anaconda to the PATH
-    variable.  If you do not do this, you will need to add ~/anaconda/bin
-    to your PATH manually to run the commands, or run all anaconda commands
+    Whether to modify the bash profile file to append %s to the PATH
+    variable.  If you do not do this, you will need to add ~/%s/bin
+    to your PATH manually to run the commands, or run all %s commands
     explicitly from that path.
-    """
+    """ % (info['name'], info['name'].lower(), info['name'])
     path_choice.set('description', ' '.join(path_description.split()))
 
     domains = ET.Element('domains',
