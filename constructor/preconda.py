@@ -20,7 +20,8 @@ def write_index_cache(info, dst_dir):
         os.makedirs(cache_dir)
 
     _platforms = info['_platform'], 'noarch'
-    _urls = set(info['channels'] + info['conda_default_channels'])
+    _urls = set(info.get('channels', []) +
+                info.get('conda_default_channels', []))
     subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
 		    for url in _urls for subdir in _platforms)
 
