@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import dirname, getsize, join, isdir
+from os.path import basename, dirname, getsize, isdir, join
 import shutil
 import tarfile
 import tempfile
@@ -94,25 +94,30 @@ def get_header(tarball, info):
 def create(info):
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
-    tarball = join(tmp_dir, 'tmp.tar')
-    t = tarfile.open(tarball, 'w')
-    if 'license_file' in info:
-        t.add(info['license_file'], 'LICENSE.txt')
+
+    preconda_tarball = join(tmp_dir, 'preconda.tar.bz2')
+    p_t = tarfile.open(preconda_tarball, 'w:bz2')
     for dist in preconda_files:
         fn = filename_dist(dist)
-        t.add(join(tmp_dir, fn), 'pkgs/' + fn)
-    for dist in info['_dists']:
-        fn = filename_dist(dist)
-        t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
+        p_t.add(join(tmp_dir, fn), 'pkgs/' + fn)
     for key in 'pre_install', 'post_install':
         if key in info:
-            t.add(info[key], 'pkgs/%s.sh' % key)
+            p_t.add(info[key], 'pkgs/%s.sh' % key)
     cache_dir = join(tmp_dir, 'cache')
     if isdir(cache_dir):
         for cf in os.listdir(cache_dir):
             if cf.endswith(".json"):
-                t.add(join(cache_dir, cf), 'pkgs/cache/' + cf)
+                p_t.add(join(cache_dir, cf), 'pkgs/cache/' + cf)
+    p_t.close()
 
+    tarball = join(tmp_dir, 'tmp.tar')
+    t = tarfile.open(tarball, 'w')
+    t.add(preconda_tarball, basename(preconda_tarball))
+    if 'license_file' in info:
+        t.add(info['license_file'], 'LICENSE.txt')
+    for dist in info['_dists']:
+        fn = filename_dist(dist)
+        t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
     t.close()
 
     header = get_header(tarball, info)

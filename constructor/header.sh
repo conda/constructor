@@ -313,6 +313,10 @@ if ! tail -n +@LINES@ "$THIS_PATH" | tar xf -; then
     exit 1
 fi
 
+PRECONDA="$PREFIX/preconda.tar.bz2"
+bunzip2 -c $PRECONDA | tar -xf - --no-same-owner || exit 1
+rm -f $PRECONDA
+
 #if has_pre_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     export INST_OPT='--skip-scripts'
