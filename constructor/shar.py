@@ -109,7 +109,7 @@ def create(info):
         if key in info:
             t.add(info[key], 'pkgs/%s.sh' % key)
     cache_dir = join(tmp_dir, 'cache')
-    if isdir(cache_dir): 
+    if isdir(cache_dir):
         t.add(cache_dir, 'pkgs/cache')
 
     t.close()
