@@ -144,6 +144,8 @@ def create(info):
     # See http://stackoverflow.com/a/11487658/161801 for how all this works.
     prefix = join(PACKAGE_ROOT, info['name'].lower())
 
+    # TODO :: 1. Respect info['use_hardlinks'] here. See ibuild/osx.py.
+    # TODO :: 2. Respect info['keep_pkgs'] here. See nothing, it was never done in ibuild.
     fresh_dir(PACKAGES_DIR)
     fresh_dir(PACKAGE_ROOT)
     pkgs_dir = join(prefix, 'pkgs')
@@ -200,3 +202,5 @@ def create(info):
         "--identifier", info['name'],
         info['_outpath'],
     ])
+
+    # TODO :: Add signing here see ibuild/osx.py.
