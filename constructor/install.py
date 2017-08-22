@@ -426,11 +426,7 @@ def remove_duplicates():
         rm_rf(meta_path)
 
 
-def link_idists():
-    raise NotImplementedError
-
-
-def link_dist(dist):
+def determine_link_type_capability():
     src = join(PKGS_DIR, 'urls')
     dst = join(ROOT_PREFIX, '.hard-link')
     assert isfile(src), src
@@ -442,9 +438,36 @@ def link_dist(dist):
         linktype = LINK_COPY
     finally:
         rm_rf(dst)
+    return linktype
 
+
+def link_dist(dist, linktype=None):
+    if not linktype:
+        linktype = determine_link_type_capability()
     prefix = prefix_env('root')
     link(prefix, dist, linktype)
+
+
+def link_idists():
+    linktype = determine_link_type_capability()
+    for env_name in sorted(C_ENVS):
+        dists = C_ENVS[env_name]
+        assert isinstance(dists, list)
+        if len(dists) == 0:
+            continue
+
+        prefix = prefix_env(env_name)
+        for dist in dists:
+            assert dist in IDISTS
+            link_dist(dist, linktype)
+
+        for dist in duplicates_to_remove(linked(prefix), dists):
+            meta_path = join(prefix, 'conda-meta', dist + '.json')
+            print("WARNING: unlinking: %s" % meta_path)
+            try:
+                os.rename(meta_path, meta_path + '.bak')
+            except OSError:
+                rm_rf(meta_path)
 
 
 def prefix_env(env_name):

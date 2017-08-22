@@ -15,7 +15,16 @@ export PREFIX
 
 echo "PREFIX=$PREFIX"
 
-PYTHON="$PREFIX/bin/python"
+if [ -f "$PREFIX/pkgs/__PYTHON_DIST__/bin/python" ]; then
+    # Using hardlinks.
+    PYTHON="$PREFIX/pkgs/__PYTHON_DIST__/bin/python"
+    INSTARG=""
+else
+    # Not using hardlinks.
+    PYTHON="$PREFIX/bin/python"
+    INSTARG="--multi"
+fi
+
 "$PYTHON" -E -V
 if (( $? )); then
     echo "ERROR running Python"
@@ -24,9 +33,12 @@ fi
 
 # run post-link, and create the conda metadata
 unset FORCE
-"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" --multi || exit 1
+"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" $INSTARG || exit 1
+if [ ! -f "$PREFIX/pkgs/__PYTHON_DIST__/bin/python" ]; then
+    rm -rf "$PREFIX/info" || true
+fi
 
-rm -rf "$PREFIX/info"
+__WRITE_CONDARC__
 
 # This is unneeded for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
