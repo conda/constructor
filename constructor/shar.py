@@ -15,7 +15,7 @@ import tempfile
 from .construct import ns_platform
 from .install import name_dist
 from .preconda import files as preconda_files, write_files as preconda_write_files
-from .utils import filename_dist, fill_template, md5_file, preprocess, read_ascii_only
+from .utils import add_condarc, filename_dist, fill_template, md5_file, preprocess, read_ascii_only
 
 THIS_DIR = dirname(__file__)
 
@@ -25,23 +25,6 @@ def read_header_template():
     print('Reading: %s' % path)
     with open(path) as fi:
         return fi.read()
-
-
-def add_condarc(info):
-    default_channels = info.get('conda_default_channels')
-    channels = info.get('channels')
-    if default_channels or channels:
-        yield '# ----- add condarc'
-        yield 'cat <<EOF >$PREFIX/.condarc'
-        if default_channels:
-            yield 'default_channels:'
-            for url in default_channels:
-                yield '  - %s' % url
-        if channels:
-            yield 'channels:'
-            for url in channels:
-                yield '  - %s' % url
-        yield 'EOF'
 
 
 def get_header(tarball, info):

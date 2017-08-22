@@ -3,11 +3,12 @@ import shutil
 import tarfile
 from os.path import dirname, exists, join
 from subprocess import check_call
-from sys import version_info
+from sys import argv, version_info
 import xml.etree.ElementTree as ET
 
 from constructor.install import rm_rf, name_dist
 import constructor.preconda as preconda
+from constructor.utils import add_condarc
 
 
 
@@ -87,10 +88,18 @@ def modify_xml(xml_path, info):
     """ % (info['name'], info['name'].lower(), info['name'])
     path_choice.set('description', ' '.join(path_description.split()))
 
+    # TODO :: Check that varying these based on 'use_hardlinks' is the
+    #         right thing to do.
+    if info['use_hardlinks']:
+        enable_anywhere='false'
+        enable_localSystem='true'
+    else:
+        enable_anywhere='true'
+        enable_localSystem='false'
     domains = ET.Element('domains',
-                         enable_anywhere='true',
+                         enable_anywhere=enable_anywhere,
                          enable_currentUserHome='true',
-                         enable_localSystem='false')
+                         enable_localSystem=enable_localSystem)
     root.append(domains)
 
     tree.write(xml_path)
@@ -104,6 +113,13 @@ def move_script(src, dst, info):
     data = data.replace('__NAME_LOWER__', info['name'].lower())
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__VERSION__', info['version'])
+    data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
+
+    if isinstance(info['_dists'][0], str if version_info[0] >= 3 else basestring):
+        dirname = info['_dists'][0][:-8]
+    else:
+        dirname = info['_dists'][0].dist_name
+    data = data.replace('__PYTHON_DIST__', dirname)
 
     with open(dst, 'w') as fo:
         fo.write(data)
@@ -153,8 +169,6 @@ def create(info):
     # See http://stackoverflow.com/a/11487658/161801 for how all this works.
     prefix = join(PACKAGE_ROOT, info['name'].lower())
 
-    # TODO :: 1. Respect info['use_hardlinks'] here. See ibuild/osx.py.
-    # TODO :: 2. Respect info['keep_pkgs'] here. See nothing, it was never done in ibuild.
     fresh_dir(PACKAGES_DIR)
     fresh_dir(PACKAGE_ROOT)
     pkgs_dir = join(prefix, 'pkgs')
@@ -165,16 +179,26 @@ def create(info):
     for dist in info['_dists']:
         if isinstance(dist, str if version_info[0] >= 3 else basestring):
            fn = dist
+           dname = dist[:-8]
+           ndist(fn)
         else:
             fn = dist.fn
+            dname = dist.dist_name
+            ndist = dist.name
         fresh_dir(PACKAGE_ROOT)
-        t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
-        t.extractall(prefix)
-        t.close()
-        os.rename(join(prefix, 'info'), join(prefix, 'info-tmp'))
-        os.mkdir(join(prefix, 'info'))
-        os.rename(join(prefix, 'info-tmp'), join(prefix, 'info', fn[:-8]))
-        pkgbuild(name_dist(fn))
+        if info['use_hardlinks']:
+            t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
+            os.makedirs(join(pkgs_dir, dname))
+            t.extractall(join(pkgs_dir, dname))
+            t.close()
+        else:
+            t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
+            t.extractall(prefix)
+            t.close()
+            os.rename(join(prefix, 'info'), join(prefix, 'info-tmp'))
+            os.mkdir(join(prefix, 'info'))
+            os.rename(join(prefix, 'info-tmp'), join(prefix, 'info', fn[:-8]))
+        pkgbuild(ndist)
 
     # Create special preinstall and postinstall packages to check if Anaconda
     # is already installed, build Anaconda, and to update the shell profile.
@@ -209,7 +233,20 @@ def create(info):
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info['name'],
-        info['_outpath'],
+        "tmp.pkg",
     ])
 
-    # TODO :: Add signing here see ibuild/osx.py.
+    # TODO :: Finish signing code.
+    # if len(argv) > 1 and argv[1] == 'nosign':
+    if True:
+        os.rename('tmp.pkg', info['_outpath'])
+    else:
+        check_call([
+            'productsign', '--sign',
+            'Developer ID Installer: CONTINUUM ANALYTICS INC',
+            "tmp.pkg",
+            info['_outpath'],
+        ])
+        os.unlink("tmp.pkg")
+
+    print("done")

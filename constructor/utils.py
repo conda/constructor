@@ -76,3 +76,23 @@ def preprocess(data, namespace):
             return match.group(4) or ''
 
     return if_pat.sub(if_repl, data)
+
+
+def add_condarc(info):
+    if info['write_condarc']:
+        default_channels = info.get('conda_default_channels')
+        channels = info.get('channels')
+        if default_channels or channels:
+            yield '# ----- add condarc'
+            yield 'cat <<EOF >$PREFIX/.condarc'
+            if default_channels:
+                yield 'default_channels:'
+                for url in default_channels:
+                    yield '  - %s' % url
+            if channels:
+                yield 'channels:'
+                for url in channels:
+                    yield '  - %s' % url
+        yield 'EOF'
+    else:
+        yield ''

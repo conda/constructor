@@ -121,6 +121,12 @@ the `pkgs` directory and the files in the root environment will be hardlinks to
 the files kept in the `pkgs` directory and then patched accordingly.
 '''),
 
+    ('write_condarc',          False, bool, '''
+If set, a .condarc file is written to the root of the enviornment if there are
+any channels or conda_default_channels set.
+'''),
+
+
     ('pre_install',            False, str, '''
 Path to a pre install (bash - Unix only) script.
 '''),

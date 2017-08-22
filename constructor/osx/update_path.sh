@@ -4,7 +4,7 @@
 
 # $2 is the install location, which is ~ by default, but which the user can
 # change.
-PREFIX=$(echo "$2/anaconda" | sed -e 's,//,/,g')
+PREFIX=$(echo "$2/__NAME_LOWER__" | sed -e 's,//,/,g')
 
 # Logic borrowed from the official Python Mac OS X installer
 if [ -e "${HOME}/.bash_profile" ]; then
@@ -17,7 +17,7 @@ else
     BASH_RC="${HOME}/.bash_profile"
 fi
 
-cp -fp $BASH_RC ${BASH_RC}-anaconda.bak
+cp -fp $BASH_RC ${BASH_RC}-__NAME_LOWER__.bak
 
 echo "
 Prepending PATH=$PREFIX/bin to PATH in $BASH_RC
