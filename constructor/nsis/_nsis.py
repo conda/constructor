@@ -10,7 +10,7 @@
 import os
 import sys
 import traceback
-from os.path import isfile, join, exists
+from os.path import isdir, isfile, join, exists
 
 # Install an exception hook which pops up a message box.
 # Ideally, exceptions will get returned to NSIS and logged there,
@@ -41,12 +41,14 @@ else:
     err = write
 
 
-def mk_menus(remove=False):
+def mk_menus(remove=False, prefix=None):
     try:
         import menuinst
     except (ImportError, OSError):
         return
-    menu_dir = join(sys.prefix, 'Menu')
+    if prefix is None:
+        prefix = sys.prefix
+    menu_dir = join(prefix, 'Menu')
     if not os.path.isdir(menu_dir):
         return
     pkg_names = [s.strip() for s in sys.argv[2:]]
@@ -57,13 +59,67 @@ def mk_menus(remove=False):
             continue
         shortcut = join(menu_dir, fn)
         try:
-            menuinst.install(shortcut, remove)
+            menuinst.install(shortcut, remove, prefix=prefix)
         except Exception as e:
             out("Failed to process %s...\n" % shortcut)
             err("Error: %s\n" % str(e))
             err("Traceback:\n%s\n" % traceback.format_exc(20))
         else:
             out("Processed %s successfully.\n" % shortcut)
+
+
+def get_conda_envs_from_python_api():
+    try:
+        from conda.cli.python_api import run_command, Commands
+    except (ImportError, OSError):
+        return
+    from json import loads
+    c_stdout, c_stderr, return_code = run_command(Commands.INFO, "--json")
+    json_conda_info = loads(c_stdout)
+    return json_conda_info["envs"]
+
+
+def get_conda_envs_from_libconda():
+    # alternative implementation using libconda
+    # adapted from conda.misc.list_prefixes
+    try:
+        from libconda.config import envs_dirs
+    except (ImportError, OSError):
+        return
+    # Lists all the prefixes that conda knows about.
+    for envs_dir in envs_dirs:
+        if not isdir(envs_dir):
+            continue
+        for dn in sorted(os.listdir(envs_dir)):
+            if dn.startswith('.'):
+                continue
+            prefix = join(envs_dir, dn)
+            if isdir(prefix):
+                prefix = join(envs_dir, dn)
+                yield prefix
+
+
+get_conda_envs = get_conda_envs_from_python_api
+
+
+def rm_menus():
+    mk_menus(remove=True)
+    try:
+        import menuinst
+        menuinst
+    except (ImportError, OSError):
+        return
+    try:
+        envs = get_conda_envs()
+        envs = list(envs)  # make sure `envs` is iterable
+    except Exception as e:
+        out("Failed to get conda environments list\n")
+        err("Error: %s\n" % str(e))
+        err("Traceback:\n%s\n" % traceback.format_exc(20))
+        return
+    for env in envs:
+        env = str(env)  # force `str` so that `os.path.join` doesn't fail
+        mk_menus(remove=True, prefix=env)
 
 
 def run_post_install():
@@ -115,7 +171,7 @@ def main():
     elif cmd == 'post_install':
         run_post_install()
     elif cmd == 'rmmenus':
-        mk_menus(remove=True)
+        rm_menus()
     elif cmd == 'addpath':
         add_to_path()
     elif cmd == 'rmpath':
