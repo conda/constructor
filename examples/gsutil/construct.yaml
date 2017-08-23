@@ -1,0 +1,15 @@
+name: gsutil
+version: 1.0.0
+
+channels:
+  - http://repo.continuum.io/pkgs/free/
+  - https://conda.anaconda.org/conda-forge
+  - https://conda.anaconda.org/idna
+specs:
+  - python 2.7*
+  - pycrypto 2.6.1
+  - cached-property 1.3.0
+  - raven 6.0.0
+  - pyinstaller 3.2.1
+  - google-api-python-client 1.6.2
+  - gsutil 4.27
