@@ -1,0 +1,20 @@
+name: JetsonConda
+version: 0.1
+
+channels:
+  - https://conda.anaconda.org/aarch64_gbox
+
+specs:
+  - python 3.6*
+  - conda  [aarch64]
+  - numpy  [aarch64]
+  - scipy  [aarch64]
+  - pandas [aarch64]
+  - notebook [aarch64]
+  - matplotlib [aarch64]
+  - freetype [aarch64]
+
+#license_file: EULA.txt
+
+# Welcome image for Windows installer
+welcome_image: bird.png                  [win]
