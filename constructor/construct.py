@@ -4,11 +4,16 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
+from functools import partial
+from os.path import abspath, dirname
 import re
 import sys
-from os.path import abspath
 
 import yaml
+
+from constructor.exceptions import (
+    UnableToParse, UnableToParseMissingJinja2, YamlParsingError,
+)
 
 
 PREABLE = '''\n
@@ -173,13 +178,34 @@ def select_lines(data, namespace):
     return '\n'.join(lines) + '\n'
 
 
+# adapted from conda-build
+def yamlize(data, directory, content_filter):
+    data = content_filter(data)
+    try:
+        return yaml.load(data)
+    except yaml.error.YAMLError as e:
+        if ('{{' not in data) and ('{%' not in data):
+            raise UnableToParse(original=e)
+        try:
+            from constructor.jinja import render_jinja
+        except ImportError as ex:
+            raise UnableToParseMissingJinja2(original=ex)
+        data = render_jinja(data, directory, content_filter)
+        return yaml.load(data)
+
+
 def parse(path, platform):
     try:
         with open(path) as fi:
             data = fi.read()
     except IOError:
         sys.exit("Error: could not open '%s' for reading" % path)
-    res = yaml.load(select_lines(data, ns_platform(platform)))
+    directory = dirname(path)
+    content_filter = partial(select_lines, namespace=ns_platform(platform))
+    try:
+        res = yamlize(data, directory, content_filter)
+    except YamlParsingError as e:
+        sys.exit(e.error_msg())
 
     try:
         res['version'] = str(res['version'])
