@@ -298,6 +298,12 @@ then
     BASH_RC=$HOME/.bashrc
     DEFAULT=no
 #endif
+#if add_to_path_default is True
+    DEFAULT=yes
+#endif
+#if add_to_path_default is False
+    DEFAULT=no
+#endif
 
     echo -n "Do you wish the installer to prepend the __NAME__ install location
 to PATH in your $BASH_RC ? [yes|no]
