@@ -91,11 +91,11 @@ def modify_xml(xml_path, info):
     # TODO :: Check that varying these based on 'use_hardlinks' is the
     #         right thing to do.
     if info['use_hardlinks']:
-        enable_anywhere='false'
-        enable_localSystem='true'
+        enable_anywhere = 'true'
+        enable_localSystem = 'false'
     else:
-        enable_anywhere='true'
-        enable_localSystem='false'
+        enable_anywhere = 'false'
+        enable_localSystem = 'true'
     domains = ET.Element('domains',
                          enable_anywhere=enable_anywhere,
                          enable_currentUserHome='true',
