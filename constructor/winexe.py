@@ -11,7 +11,7 @@ import sys
 import shutil
 import tempfile
 from os.path import abspath, dirname, isfile, join
-from subprocess import check_call, check_output
+from subprocess import Popen, PIPE, check_call, check_output
 
 from constructor.construct import ns_platform
 from constructor.install import name_dist
@@ -166,7 +166,7 @@ Error: no file %s
         sys.exit("Error: no file untgz.dll")
 
 
-def create(info):
+def create(info, verbose=False):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     preconda.write_files(info, tmp_dir)
@@ -182,9 +182,23 @@ def create(info):
 
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
-    args = [MAKENSIS_EXE, '/V2', nsi]
+    if verbose:
+        verbosity = '/V4'
+    else:
+        verbosity = '/V2'
+    args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
-    check_call(args)
+    if verbose:
+        sub = Popen(args, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = sub.communicate()
+        for msg, info in zip((stdout, stderr), ('stdout', 'stderr')):
+            # on Python3 we're getting bytes
+            if hasattr(msg, 'decode'):
+                msg = msg.decode()
+            print('makensis {}:'.format(info))
+            print(msg)
+    else:
+        check_call(args)
     shutil.rmtree(tmp_dir)
 
 

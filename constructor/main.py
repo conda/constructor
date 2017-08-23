@@ -110,7 +110,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     fcp.main(info, verbose=verbose)
 
     info['_outpath'] = join(output_dir, get_output_filename(info))
-    create(info)
+    create(info, verbose=verbose)
     if 0:
         with open(join(output_dir, 'pkg-list.txt'), 'w') as fo:
             fo.write('# installer: %s\n' % basename(info['_outpath']))
