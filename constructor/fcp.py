@@ -13,6 +13,7 @@ import os
 from os.path import isdir, isfile, join
 import re
 import sys
+import tarfile
 
 from .conda_interface import NoPackagesFound, Resolve, fetch_index, fetch_pkg
 from .install import name_dist
@@ -181,6 +182,50 @@ def fetch(info):
         fetch_pkg(pkginfo, download_dir)
 
 
+def check_duplicates_files(info):
+    print('Checking for duplicate files ...')
+
+    map_members_scase = defaultdict(set)
+    map_members_icase = {}
+
+    for dist in info['_dists']:
+        fn = filename_dist(dist)
+        t = tarfile.open(join(info['_download_dir'], fn))
+        for member in t.getnames():
+            if not member.split('/')[0] in ['info', 'recipe']:
+                map_members_scase[member].add(fn)
+                key = member.lower()
+                if key not in map_members_icase:
+                    map_members_icase[key] = {'files':set(), 'fns':set()}
+                map_members_icase[key]['files'].add(member)
+                map_members_icase[key]['fns'].add(fn)
+        t.close()
+
+    for member in map_members_scase:
+        fns = map_members_scase[member]
+        msg_str = "File '%s' found in multiple packages: %s" % (
+                  member, ', '.join(fns))
+        if len(fns) > 1:
+            if info.get('ignore_duplicate_files'):
+                print('Warning: {}'.format(msg_str))
+            else:
+                sys.exit('Error: {}'.format(msg_str))
+
+    for member in map_members_icase:
+        # Some filesystems are not case sensitive by default (e.g HFS)
+        # Throw warning on linux and error out on macOS/windows
+        fns = map_members_icase[member]['fns']
+        files = list(map_members_icase[member]['files'])
+        msg_str = "Files %s found in the package(s): %s" % (
+                   str(files)[1:-1], ', '.join(fns))
+        if len(files) > 1:
+            if (info.get('ignore_duplicate_files') or
+                info['_platform'].startswith('linux')):
+                print('Warning: {}'.format(msg_str))
+            else:
+                sys.exit('Error: {}'.format(msg_str))
+
+
 def main(info, verbose=True, dry_run=False):
     if 'channels' in info:
         global index
@@ -214,3 +259,5 @@ def main(info, verbose=True, dry_run=False):
     fetch(info)
 
     info['_dists'] = list(dists)
+
+    check_duplicates_files(info)
