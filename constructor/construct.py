@@ -76,6 +76,11 @@ necessary metadata in "Menu/<package name>.json").  Menu items are currently
 only supported on Windows.  By default, all menu items will be installed.
 '''),
 
+    ('ignore_duplicate_files',  False, bool, '''
+By default, constructor will error out when adding packages with duplicate
+files in them. Enable this option to warn instead and continue.
+'''),
+
     ('install_in_dependency_order', False, bool, '''
 By default the conda packages included in the created installer are installed
 in alphabetical order, Python is always installed first for technical
