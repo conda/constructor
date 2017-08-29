@@ -236,17 +236,16 @@ def create(info):
         "tmp.pkg",
     ])
 
-    # TODO :: Finish signing code.
-    # if len(argv) > 1 and argv[1] == 'nosign':
-    if True:
-        os.rename('tmp.pkg', info['_outpath'])
-    else:
+    identity_name = info.get('signing_identity_name')
+    if identity_name:
         check_call([
             'productsign', '--sign',
-            'Developer ID Installer: CONTINUUM ANALYTICS INC',
+            identity_name,
             "tmp.pkg",
             info['_outpath'],
         ])
         os.unlink("tmp.pkg")
+    else:
+        os.rename('tmp.pkg', info['_outpath'])
 
     print("done")
