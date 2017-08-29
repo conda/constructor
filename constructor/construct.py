@@ -142,6 +142,16 @@ used on Windows.  Possible values are `red`, `green`, `blue`, `yellow`.
 The default is `blue`.
 '''),
 
+    ('welcome_image_text',     False, str, '''
+If `welcome_image` is not provided, use this text when generating the image
+(Windows only). Defaults to `name`.
+'''),
+
+    ('header_image_text',      False, str, '''
+If `header_image` is not provided, use this text when generating the image
+(Windows only). Defaults to `name`.
+'''),
+
     ('add_to_path_default',    False, bool, '''
 Default choice for whether to add the installation to the PATH environment
 variable. The user is still able to change this during interactive
