@@ -119,6 +119,13 @@ installer in the `pkgs` directory.  Using this option changes the default
 behavior.
 '''),
 
+    ('signing_identity_name',  False, str, '''
+By default, the MacOS pkg installer isn't signed. If an identity name is specified
+using this option, it will be used to sign the installer. Note that you will need
+to have a certificate and corresponding private key together called an 'identity'
+in one of your accessible keychains.
+'''),
+
     ('use_hardlinks',          False, bool, '''
 By default, conda packages are extracted into the root environment and then
 patched. Enabling this option will result into extraction of the packages into
