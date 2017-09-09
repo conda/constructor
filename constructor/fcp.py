@@ -42,8 +42,8 @@ def resolve(info, verbose=False):
     sys.stdout.write('\n')
 
     if 'install_in_dependency_order' in info:
-        sort_info = {name_dist(d): d[:-8] for d in res}
-        dists.extend(d + '.tar.bz2' for d in r.graph_sort(sort_info))
+        sort_info = {name_dist(d): d for d in res}
+        dists.extend(d for d in r.dependency_sort(sort_info))
     else:
         dists.extend(res)
 
