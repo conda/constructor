@@ -392,6 +392,15 @@ rm -rf "$PREFIX"/pkgs
 
 printf "installation finished.\\n"
 
+if [ "$PYTHONPATH" != "" ]; then
+    printf "WARNING:\\n"
+    printf "    You currently have a PYTHONPATH environment variable set. This may cause\\n"
+    printf "    unexpected behavior when running the Python interpreter in __NAME__.\\n"
+    printf "    For best results, please verify that your PYTHONPATH only points to\\n"
+    printf "    directories of packages that are compatible with the Python interpreter\\n"
+    printf "    in __NAME__: $PREFIX"
+fi
+
 if [ "$BATCH" = "0" ]; then
     # Interactive mode.
 #if osx
