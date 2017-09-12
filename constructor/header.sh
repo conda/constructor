@@ -398,7 +398,7 @@ if [ "$PYTHONPATH" != "" ]; then
     printf "    unexpected behavior when running the Python interpreter in __NAME__.\\n"
     printf "    For best results, please verify that your PYTHONPATH only points to\\n"
     printf "    directories of packages that are compatible with the Python interpreter\\n"
-    printf "    in __NAME__: $PREFIX"
+    printf "    in __NAME__: $PREFIX\\n"
 fi
 
 if [ "$BATCH" = "0" ]; then
