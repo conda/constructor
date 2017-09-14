@@ -55,14 +55,20 @@ IDISTS = {}
 
 
 def _link(src, dst, linktype=LINK_HARD):
-    if on_win:
-        raise NotImplementedError
-
     if linktype == LINK_HARD:
-        os.link(src, dst)
+        if on_win:
+            from ctypes import windll, wintypes
+            CreateHardLink = windll.kernel32.CreateHardLinkW
+            CreateHardLink.restype = wintypes.BOOL
+            CreateHardLink.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR,
+                                       wintypes.LPVOID]
+            if not CreateHardLink(dst, src, None):
+                raise OSError('win32 hard link failed')
+        else:
+            os.link(src, dst)
     elif linktype == LINK_COPY:
         # copy relative symlinks as symlinks
-        if islink(src) and not os.readlink(src).startswith('/'):
+        if islink(src) and not os.readlink(src).startswith(os.path.sep):
             os.symlink(os.readlink(src), dst)
         else:
             shutil.copy2(src, dst)
