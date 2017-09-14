@@ -111,7 +111,8 @@ def make_nsi(info, dir_path):
                     ('INSTALL_PY', '.install.py'),
                     ('URLS_FILE', 'urls'),
                     ('URLS_TXT_FILE', 'urls.txt'),
-                    ('POST_INSTALL', 'post_install.bat')]:
+                    ('POST_INSTALL', 'post_install.bat'),
+                    ('INDEX_CACHE', 'cache')]:
         replace[key] = join(dir_path, fn)
     for key in replace:
         replace[key] = str_esc(replace[key])
