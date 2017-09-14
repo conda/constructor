@@ -48,34 +48,56 @@ def find_vs_runtimes(dists, py_version):
     return [dist for dist in dists if name_dist(dist) in valid_runtimes]
 
 
-def pkg_commands(download_dir, dists, py_version, keep_pkgs):
+def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
     vs_dists = find_vs_runtimes(dists, py_version)
     print("MSVC runtimes found: %s" % ([filename_dist(d) for d in vs_dists]))
     if len(vs_dists) != 1:
         sys.exit("Error: number of MSVC runtimes found: %d" % len(vs_dists))
+
+    # Extract MSVC runtimes and python to a temporary directory and delete it
+    # later. This way we do not rely on PATH env var; and python, required for
+    # invoking '.install.py', can pick up the required DLLs from it's vicinity
+    yield r'RMDir /r "$TEMP\python_and_runtime"'
+    yield r'CreateDirectory "$TEMP\python_and_runtime"'
 
     for n, dist in enumerate(vs_dists + dists):
         fn = filename_dist(dist)
         yield ''
         yield '# --> %s <--' % fn
         yield 'File %s' % str_esc(join(download_dir, fn))
-        yield r'untgz::extract -d "$INSTDIR" -zbz2 "$INSTDIR\pkgs\%s"' % fn
         if n == 0:
-            # only extract MSVC runtimes first, so that Python can be used
-            # by _nsis postpkg
             assert 'runtime' in fn
-            continue
-        if n == 1:
+        elif n == 1:
             assert fn.startswith('python-')
-        cmd = r'"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
-        yield "ExecWait '%s'" % cmd
+        else:
+            continue
+        yield r'untgz::extract -d "$TEMP\python_and_runtime" -zbz2 "$INSTDIR\pkgs\%s"' % fn
+
+    for n, dist in enumerate(vs_dists + dists):
+        fn = filename_dist(dist)
+        yield ''
+        yield '# --> %s <--' % fn
+        if n > 1:
+            yield 'File %s' % str_esc(join(download_dir, fn))
+        if use_hardlinks:
+            yield r'untgz::extract -d "$INSTDIR\pkgs\%s" -zbz2 "$INSTDIR\pkgs\%s"' % (fn[:-8], fn)
+        else:
+            yield r'untgz::extract -d "$INSTDIR" -zbz2 "$INSTDIR\pkgs\%s"' % fn
+            cmd = r'"$TEMP\python_and_runtime\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py" --post root'
+            yield "ExecWait '%s'" % cmd
         if keep_pkgs:
             continue
         yield r'Delete "$INSTDIR\pkgs\%s"' % fn
 
+    if use_hardlinks:
+        cmd = r'"$TEMP\python_and_runtime\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
+        yield "ExecWait '%s'" % cmd
+
     if not keep_pkgs:
         yield ''
         yield r'RMDir "$INSTDIR\pkgs"'
+
+    yield r'RMDir /r "$TEMP\python_and_runtime"'
 
 
 def make_nsi(info, dir_path):
@@ -125,7 +147,9 @@ def make_nsi(info, dir_path):
     data = fill_template(data, replace)
 
     cmds = pkg_commands(download_dir, dists, py_version,
-                        bool(info.get('keep_pkgs')))
+                        bool(info.get('keep_pkgs')),
+                        bool(info.get('use_hardlinks')))
+
     # these are unescaped (and unquoted)
     for key, value in [
         ('@NAME@', name),
