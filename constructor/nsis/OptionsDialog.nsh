@@ -20,7 +20,7 @@ Var Ana_RegisterSystemPython_Label
 Function mui_AnaCustomOptions_InitDefaults
     # Initialize defaults
     ${If} $Ana_AddToPath_State == ""
-        StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+        StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
         # Default whether to register as system python as:
         #   Enabled - if no system python is registered, OR
         #             a system python which does not exist is registered.
@@ -71,10 +71,10 @@ Function mui_AnaCustomOptions_Show
     ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
 
     ${NSD_CreateLabel} 20u 27u 240u 40u \
-        "This ensures that PATH is set correctly when using Python, IPython, \
-         $\nconda, and any other program in the Anaconda distribution. \
-         $\nIf unchecked, then you must use the Anaconda Command Prompt \
-         $\n(located in the Start Menu under $\"Anaconda (${ARCH})$\")."
+        "Instead of selecting this we recommend you open Anaconda software \
+      $\nvia the Windows Start Menu under $\"Anaconda (${ARCH})$\". Otherwise, \
+      $\nAnaconda software gets found in preference to previously installed \
+      $\nsoftware and software installed later may break Anaconda."
     Pop $Ana_AddToPath_Label
 
     ${If} $InstMode = ${JUST_ME}
@@ -105,9 +105,9 @@ Function AddToPath_OnClick
     ShowWindow $Ana_AddToPath_Label ${SW_HIDE}
     ${NSD_GetState} $0 $Ana_AddToPath_State
     ${If} $Ana_AddToPath_State == ${BST_UNCHECKED}
-        SetCtlColors $Ana_AddToPath_Label ff0000 transparent
-    ${Else}
         SetCtlColors $Ana_AddToPath_Label 000000 transparent
+    ${Else}
+        SetCtlColors $Ana_AddToPath_Label ff0000 transparent
     ${EndIf}
     ShowWindow $Ana_AddToPath_Label ${SW_SHOW}
 
