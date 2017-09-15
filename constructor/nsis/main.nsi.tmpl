@@ -42,6 +42,13 @@ var /global INSTDIR_JUSTME
     !define BCM_SETSHIELD 0x0000160C
 !endif
 
+var /global ARGV
+var /global ARGV_Help
+var /global ARGV_InstallationType
+var /global ARGV_AddToPath
+var /global ARGV_RegisterPython
+var /global ARGV_NoRegistry
+
 var /global IsDomainUser
 
 var /global InstModePage_RadioButton_JustMe
@@ -150,6 +157,72 @@ FunctionEnd
     # UAC worked, we're the outer installer, so we can quit.
     Quit
 !macroend
+
+
+!macro ParseCommandLineArgs
+    ClearErrors
+    ${GetParameters} $ARGV
+    ${GetOptions} $ARGV "/?" $ARGV_Help
+    ${IfNot} ${Errors}
+        MessageBox MB_OK|MB_ICONEXCLAMATION \
+            "Usage: $EXEFILE [options]$\n\
+             Options:$\n$\n\
+                /InstallationType=AllUsers [default: JustMe]$\n$\n\
+                /AddToPath=[0|1] [default: 1]$\n$\n\
+                /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
+                /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
+            Examples:$\n\
+                Install for all users, but don't add to PATH env var:$\n\
+                    $EXEFILE /InstallationType=AllUsers /AddToPath=0$\n$\n\
+                Install for just me, but register as system Python:$\n\
+                    $EXEFILE /RegisterPython=1$\n$\n\
+                Install for just me, with no registry modification (for CI):$\n\
+                    $EXEFILE /NoRegistry=1$\n"
+                    Abort
+     ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/InstallationType=" $ARGV_InstallationType
+    ${IfNot} ${Errors}
+        ${If} $ARGV_InstallationType == "AllUsers"
+            StrCpy $InstMode ${ALL_USERS}
+        ${Else}
+            StrCpy $InstMode ${JUST_ME}
+        ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
+    ${IfNot} ${Errors}
+        ${If} $ARGV_RegisterPython = "1"
+            StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
+        ${ElseIf} $ARGV_RegisterPython = "0"
+            StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
+    ${IfNot} ${Errors}
+        ${If} $ARGV_AddToPath = "1"
+            StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+        ${ElseIf} $ARGV_AddToPath = "0"
+            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/NoRegistry=" $ARGV_NoRegistry
+    ${If} ${Errors}
+        StrCpy $ARGV_NoRegistry "0"
+    ${EndIf}
+
+!macroend
+
+Function OnInit_Release
+    !insertmacro ParseCommandLineArgs
+
+FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
     Exch $0
@@ -286,6 +359,8 @@ Function .onInit
 
     InitPluginsDir
 
+    !insertmacro ParseCommandLineArgs
+
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
     SetRegView @BITS@
@@ -394,6 +469,8 @@ Function .onInit
 
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
+
+    Call OnInit_Release
 
     Pop $R2
     Pop $R1
