@@ -56,9 +56,14 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
 
     # Extract MSVC runtimes and python to a temporary directory and delete it
     # later. This way we do not rely on PATH env var; and python, required for
-    # invoking '.install.py', can pick up the required DLLs from it's vicinity
-    yield r'RMDir /r "$TEMP\python_and_runtime"'
-    yield r'CreateDirectory "$TEMP\python_and_runtime"'
+    # invoking '.install.py', can pick up the required DLLs from it's vicinity.
+    # NSIS doesn't provide direct functionality to create a temporary directory,
+    # So we get the name of a temporary file, delete it and then create a
+    # temporary directory by the same name.
+    yield r'Var /Global ANACONDA_TMP_LOC'
+    yield r'GetTempFileName $ANACONDA_TMP_LOC'
+    yield r'Delete $ANACONDA_TMP_LOC'
+    yield r'CreateDirectory "$ANACONDA_TMP_LOC"'
 
     for n, dist in enumerate(vs_dists + dists):
         fn = filename_dist(dist)
@@ -71,7 +76,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
             assert fn.startswith('python-')
         else:
             continue
-        yield r'untgz::extract -d "$TEMP\python_and_runtime" -zbz2 "$INSTDIR\pkgs\%s"' % fn
+        yield r'untgz::extract -d "$ANACONDA_TMP_LOC" -zbz2 "$INSTDIR\pkgs\%s"' % fn
 
     for n, dist in enumerate(vs_dists + dists):
         fn = filename_dist(dist)
@@ -83,21 +88,25 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
             yield r'untgz::extract -d "$INSTDIR\pkgs\%s" -zbz2 "$INSTDIR\pkgs\%s"' % (fn[:-8], fn)
         else:
             yield r'untgz::extract -d "$INSTDIR" -zbz2 "$INSTDIR\pkgs\%s"' % fn
-            cmd = r'"$TEMP\python_and_runtime\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py" --post root'
+            cmd = r'"$ANACONDA_TMP_LOC\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py" --post root'
             yield "ExecWait '%s'" % cmd
         if keep_pkgs:
             continue
         yield r'Delete "$INSTDIR\pkgs\%s"' % fn
 
     if use_hardlinks:
-        cmd = r'"$TEMP\python_and_runtime\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
+        cmd = r'"$ANACONDA_TMP_LOC\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
         yield "ExecWait '%s'" % cmd
 
     if not keep_pkgs:
         yield ''
         yield r'RMDir "$INSTDIR\pkgs"'
 
-    yield r'RMDir /r "$TEMP\python_and_runtime"'
+    yield r'DetailPrint "Removing temporary files..."'
+    # Turn off detail printing for the delete instruction
+    yield r'SetDetailsPrint none'
+    yield r'RMDir /r /REBOOTOK "$ANACONDA_TMP_LOC"'
+    yield r'SetDetailsPrint both'
 
 
 def make_nsi(info, dir_path):
