@@ -168,14 +168,14 @@ FunctionEnd
             "Usage: $EXEFILE [options]$\n\
              Options:$\n$\n\
                 /InstallationType=AllUsers [default: JustMe]$\n$\n\
-                /AddToPath=[0|1] [default: 1]$\n$\n\
+                /AddToPath=[0|1] [default: 0]$\n$\n\
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
             Examples:$\n\
                 Install for all users, but don't add to PATH env var:$\n\
-                    $EXEFILE /InstallationType=AllUsers /AddToPath=0$\n$\n\
-                Install for just me, but register as system Python:$\n\
-                    $EXEFILE /RegisterPython=1$\n$\n\
+                    $EXEFILE /InstallationType=AllUsers$\n$\n\
+                Install for just me, add to PATH and register as system Python:$\n\
+                    $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
                 Install for just me, with no registry modification (for CI):$\n\
                     $EXEFILE /NoRegistry=1$\n"
                     Abort
