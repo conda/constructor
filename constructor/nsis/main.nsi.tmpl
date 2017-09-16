@@ -31,7 +31,7 @@ Unicode "true"
 !define DEFAULT_PREFIX __DEFAULT_PREFIX__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})"
-!define UNINSTREG "Software\Microsoft\Windows\CurrentVersion\
+!define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
                    \Uninstall\${UNINSTALL_NAME}"
 
 var /global INSTDIR_JUSTME
@@ -569,7 +569,7 @@ Section "Install"
     call AbortRetryExecWait
 
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath'
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
         push 'Failed to add @NAME@ to the system PATH'
         call AbortRetryExecWait
     ${EndIf}

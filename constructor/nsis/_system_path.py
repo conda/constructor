@@ -5,16 +5,30 @@
 # Helper script for adding and removing entries in the
 # Windows system path from the NSIS installer.
 
-__all__ = ['remove_from_system_path', 'add_to_system_path', 'broadcast_environment_settings_change']
+__all__ = ['remove_from_system_path', 'add_to_system_path', 'broadcast_environment_settings_change', 'get_previous_install_locations']
 
 import sys
 import os, ctypes
+import re
 from os import path
 from ctypes import wintypes
 if sys.version_info[0] >= 3:
     import winreg as reg
 else:
     import _winreg as reg
+
+# If pythonw is being run, there may be no write function
+if sys.stdout and sys.stdout.write:
+    out = sys.stdout.write
+    err = sys.stderr.write
+else:
+    import ctypes
+    OutputDebugString = ctypes.windll.kernel32.OutputDebugStringW
+    OutputDebugString.argtypes = [ctypes.c_wchar_p]
+    def out(x):
+        OutputDebugString('_nsis.py: ' + x)
+    def err(x):
+        OutputDebugString('_nsis.py: Error: ' + x)
 
 HWND_BROADCAST = 0xffff
 WM_SETTINGCHANGE = 0x001A
@@ -29,6 +43,7 @@ def sz_expand(value, value_type):
         return reg.ExpandEnvironmentStrings(value)
     else:
         return value
+
 
 def remove_from_system_path(pathname, allusers=True, path_env_var='PATH'):
     """Removes all entries from the path which match the value in 'pathname'
@@ -80,6 +95,7 @@ def remove_from_system_path(pathname, allusers=True, path_env_var='PATH'):
             # user), continue on to try the next root/keyname pair
             reg.CloseKey(key)
 
+
 def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
     """Adds the requested paths to the system PATH variable.
 
@@ -96,11 +112,6 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
     new_paths = None
     for p in paths:
         p = path.abspath(p)
-        if not path.isdir(p):
-            raise RuntimeError(
-                'Directory "%s" does not exist, '
-                'cannot add it to the path' % p
-            )
         if new_paths:
             new_paths = new_paths + os.pathsep + p
         else:
@@ -146,6 +157,52 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
     finally:
         reg.CloseKey(key)
 
+
+def _reg_query_sub_keys(handle, key, keylist = []):
+    reghandle = reg.OpenKey(handle, key, 0, reg.KEY_READ)
+    try:
+        i = 0
+        while True:
+           subkey = reg.EnumKey(reghandle, i)
+           i += 1
+           _reg_query_sub_keys(handle, key + subkey + "\\", keylist)
+    except WindowsError as ex:
+           if ex.winerror == 259:
+               keylist.append(key)
+    finally:
+        reg.CloseKey(reghandle)
+
+
+def get_previous_install_prefixes(pyversion, arch, allusers=True):
+    """Returns a list of prefixes for all old installations of this arch so that
+       they can be removed from PATH if present. Note, it would be preferable to
+       uninstall them properly instead.
+    """
+    if allusers:
+        # All Users
+        key, subkey = (reg.HKEY_LOCAL_MACHINE, r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\')
+    else:
+        # Just Me
+        key, subkey = (reg.HKEY_CURRENT_USER, r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\')
+
+    keylist = []
+    # We ignore pyversion and instead look for any *conda installations.
+    regex = re.compile('Python \S+ \(\S+conda[0-9]+ \S+ '+arch+'\)')
+    _reg_query_sub_keys(key, subkey, keylist)
+    results = []
+    for uninstsubkey in keylist:
+        final_part = os.path.basename(uninstsubkey.rstrip('\\'))
+        if regex.match(final_part):
+            try:
+                with reg.OpenKeyEx(key, uninstsubkey, 0,
+                                 reg.KEY_QUERY_VALUE) as keyhandle:
+                    reg_value = reg.QueryValueEx(keyhandle, 'UninstallString')
+                    results.append(os.path.dirname(re.sub(r'^"|"$', '', reg_value[0])))
+            except:
+                pass
+    return results
+
+
 def broadcast_environment_settings_change():
     """Broadcasts to the system indicating that master environment variables have changed.
 
@@ -154,5 +211,3 @@ def broadcast_environment_settings_change():
     """
     SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, u'Environment',
                 SMTO_ABORTIFHUNG, 5000, ctypes.pointer(wintypes.DWORD()))
-
-
