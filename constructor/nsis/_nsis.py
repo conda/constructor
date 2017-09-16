@@ -150,6 +150,13 @@ def run_post_install():
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
 out('allusers is %s\n' % allusers)
 
+def remove_from_path():
+    from _system_path import (remove_from_system_path,
+                              broadcast_environment_settings_change)
+    remove_from_system_path(ROOT_PREFIX, allusers)
+    remove_from_system_path(join(ROOT_PREFIX, 'Scripts'), allusers)
+    broadcast_environment_settings_change()
+
 def add_to_path():
     from _system_path import (add_to_system_path, remove_from_system_path,
                               broadcast_environment_settings_change)
@@ -159,15 +166,6 @@ def add_to_path():
     # add Anaconda to the path
     add_to_system_path([ROOT_PREFIX, join(ROOT_PREFIX, 'Scripts')], allusers)
     broadcast_environment_settings_change()
-
-
-def remove_from_path():
-    from _system_path import (remove_from_system_path,
-                              broadcast_environment_settings_change)
-    remove_from_system_path(ROOT_PREFIX, allusers)
-    remove_from_system_path(join(ROOT_PREFIX, 'Scripts'), allusers)
-    broadcast_environment_settings_change()
-
 
 def main():
     cmd = sys.argv[1].strip()
