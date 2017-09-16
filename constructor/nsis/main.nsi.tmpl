@@ -304,24 +304,24 @@ FunctionEnd
 
 Function InstModeChanged
     # When using the installer with /S (silent mode), the /D option sets $INSTDIR,
-    # and it is therefore important not to overwrite $INSTDIR here.
+    # and it is therefore important not to overwrite $INSTDIR here, but it is also
+    # important that we do call SetShellVarContext with the appropriate value.
     Push $0
-    ${IfNot} ${Silent}
-        ${If} $InstMode = ${JUST_ME}
-            # If we're on Vista+, the installation directory will
-            # have a nice, no-space name like:
-            #   C:\Users\Trent\AppData\Local\Continuum\Anaconda.
-            # On 2003/XP, it will be in C:\Documents and Settings,
-            # with a space. We're allowing spaces now.
-            StrCpy $INSTDIR $INSTDIR_JUSTME
-        ${Else}
-            StrCpy $INSTDIR ${INSTDIR_ALLUSERS}
-        ${EndIf}
-    ${EndIf}
     ${If} $InstMode = ${JUST_ME}
         SetShellVarContext Current
+        # If we're on Vista+, the installation directory will
+        # have a nice, no-space name like:
+        #   C:\Users\Trent\AppData\Local\Continuum\Anaconda.
+        # On 2003/XP, it will be in C:\Documents and Settings,
+        # with a space. We're allowing spaces now.
+        ${IfNot} ${Silent}
+            StrCpy $INSTDIR $INSTDIR_JUSTME
+        ${EndIf}
     ${Else}
         SetShellVarContext All
+        ${IfNot} ${Silent}
+            StrCpy $INSTDIR ${INSTDIR_ALLUSERS}
+        ${Endif}
     ${EndIf}
     Pop $0
 FunctionEnd
