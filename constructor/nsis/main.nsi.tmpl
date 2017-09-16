@@ -35,7 +35,8 @@ Unicode "true"
                    \Uninstall\${UNINSTALL_NAME}"
 
 var /global INSTDIR_JUSTME
-!define INSTDIR_ALLUSERS    "C:\${NAME}"
+
+!define INSTDIR_ALLUSERS "$%ALLUSERSPROFILE%\${NAME}"
 
 # UAC shield overlay
 !ifndef BCM_SETSHIELD
