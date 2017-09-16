@@ -12,6 +12,8 @@ import sys
 import traceback
 from os.path import isdir, isfile, join, exists
 
+ROOT_PREFIX = sys.prefix
+
 # Install an exception hook which pops up a message box.
 # Ideally, exceptions will get returned to NSIS and logged there,
 # etc, but this is a stopgap solution for now.
@@ -126,11 +128,11 @@ def run_post_install():
     """
     call the post install script, if the file exists
     """
-    path = join(sys.prefix, 'pkgs', 'post_install.bat')
+    path = join(ROOT_PREFIX, 'pkgs', 'post_install.bat')
     if not isfile(path):
         return
     env = os.environ
-    env['PREFIX'] = str(sys.prefix)
+    env['PREFIX'] = str(ROOT_PREFIX)
     try:
         args = [env['COMSPEC'], '/c', path]
     except KeyError:
@@ -143,24 +145,24 @@ def run_post_install():
         err("Error: running %s failed\n" % path)
 
 
-allusers = (not exists(join(sys.prefix, '.nonadmin')))
+allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
 
 def add_to_path():
     from _system_path import (add_to_system_path, remove_from_system_path,
                               broadcast_environment_settings_change)
     # if previous Anaconda installs left remnants, remove those
-    remove_from_system_path(sys.prefix, allusers)
-    remove_from_system_path(join(sys.prefix, 'Scripts'), allusers)
+    remove_from_system_path(ROOT_PREFIX, allusers)
+    remove_from_system_path(join(ROOT_PREFIX, 'Scripts'), allusers)
     # add Anaconda to the path
-    add_to_system_path([sys.prefix, join(sys.prefix, 'Scripts')], allusers)
+    add_to_system_path([ROOT_PREFIX, join(ROOT_PREFIX, 'Scripts')], allusers)
     broadcast_environment_settings_change()
 
 
 def remove_from_path():
     from _system_path import (remove_from_system_path,
                               broadcast_environment_settings_change)
-    remove_from_system_path(sys.prefix, allusers)
-    remove_from_system_path(join(sys.prefix, 'Scripts'), allusers)
+    remove_from_system_path(ROOT_PREFIX, allusers)
+    remove_from_system_path(join(ROOT_PREFIX, 'Scripts'), allusers)
     broadcast_environment_settings_change()
 
 
