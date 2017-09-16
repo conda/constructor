@@ -728,19 +728,21 @@ Section "Install"
             "" "$INSTDIR\Lib;$INSTDIR\DLLs"
     ${EndIf}
 
-    # Registry uninstall info
-    WriteRegStr SHCTX "${UNINSTREG}" "DisplayName" "${UNINSTALL_NAME}"
-    WriteRegStr SHCTX "${UNINSTREG}" "DisplayVersion" "${VERSION}"
-    WriteRegStr SHCTX "${UNINSTREG}" "Publisher" "${COMPANY}"
-    WriteRegStr SHCTX "${UNINSTREG}" "UninstallString" \
-        "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
-    WriteRegStr SHCTX "${UNINSTREG}" "QuietUninstallString" \
-        "$\"$INSTDIR\Uninstall-Anaconda.exe$\" /S"
-    WriteRegStr SHCTX "${UNINSTREG}" "DisplayIcon" \
-        "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
+    ${If} $ARGV_NoRegistry == "0"
+        # Registry uninstall info
+        WriteRegStr SHCTX "${UNINSTREG}" "DisplayName" "${UNINSTALL_NAME}"
+        WriteRegStr SHCTX "${UNINSTREG}" "DisplayVersion" "${VERSION}"
+        WriteRegStr SHCTX "${UNINSTREG}" "Publisher" "${COMPANY}"
+        WriteRegStr SHCTX "${UNINSTREG}" "UninstallString" \
+            "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
+        WriteRegStr SHCTX "${UNINSTREG}" "QuietUninstallString" \
+            "$\"$INSTDIR\Uninstall-Anaconda.exe$\" /S"
+        WriteRegStr SHCTX "${UNINSTREG}" "DisplayIcon" \
+            "$\"$INSTDIR\Uninstall-Anaconda.exe$\""
 
-    WriteRegDWORD SHCTX "${UNINSTREG}" "NoModify" 1
-    WriteRegDWORD SHCTX "${UNINSTREG}" "NoRepair" 1
+        WriteRegDWORD SHCTX "${UNINSTREG}" "NoModify" 1
+        WriteRegDWORD SHCTX "${UNINSTREG}" "NoRepair" 1
+    ${EndIf}
 
     WriteUninstaller "$INSTDIR\Uninstall-Anaconda.exe"
 SectionEnd
