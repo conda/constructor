@@ -150,22 +150,46 @@ def run_post_install():
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
 out('allusers is %s\n' % allusers)
 
-def remove_from_path():
+# This must be the same as conda's binpath_from_arg() in conda/cli/activate.py
+PATH_SUFFIXES = ('',
+                 os.path.join('Library', 'mingw-w64', 'bin'),
+                 os.path.join('Library', 'usr', 'bin'),
+                 os.path.join('Library', 'bin'),
+                 'Scripts')
+
+
+def remove_from_path(root_prefix=None):
     from _system_path import (remove_from_system_path,
                               broadcast_environment_settings_change)
-    remove_from_system_path(ROOT_PREFIX, allusers)
-    remove_from_system_path(join(ROOT_PREFIX, 'Scripts'), allusers)
+
+    if root_prefix is None:
+        root_prefix = ROOT_PREFIX
+    for path in [os.path.normpath(os.path.join(root_prefix, path_suffix))
+                 for path_suffix in PATH_SUFFIXES]:
+        remove_from_system_path(path, allusers)
     broadcast_environment_settings_change()
 
-def add_to_path():
-    from _system_path import (add_to_system_path, remove_from_system_path,
+
+def add_to_path(pyversion, arch):
+    from _system_path import (add_to_system_path,
+                              get_previous_install_prefixes,
                               broadcast_environment_settings_change)
-    # if previous Anaconda installs left remnants, remove those
-    remove_from_system_path(ROOT_PREFIX, allusers)
-    remove_from_system_path(join(ROOT_PREFIX, 'Scripts'), allusers)
+
+    # If a previous Anaconda install attempt to this location left remnants,
+    # remove those.
+    remove_from_path(ROOT_PREFIX)
+
+    # If a previously registered Anaconda install left remnants, remove those.
+    old_prefixes = get_previous_install_prefixes(pyversion, arch, allusers)
+    for prefix in old_prefixes:
+        out('Removing old installation at %s from PATH (if any entries get found)\n' % (prefix))
+        remove_from_path(prefix)
+
     # add Anaconda to the path
-    add_to_system_path([ROOT_PREFIX, join(ROOT_PREFIX, 'Scripts')], allusers)
+    add_to_system_path([os.path.normpath(os.path.join(ROOT_PREFIX, path_suffix))
+                        for path_suffix in PATH_SUFFIXES], allusers)
     broadcast_environment_settings_change()
+
 
 def main():
     cmd = sys.argv[1].strip()
@@ -176,7 +200,19 @@ def main():
     elif cmd == 'rmmenus':
         rm_menus()
     elif cmd == 'addpath':
-        add_to_path()
+        # These checks are probably overkill, but could be useful
+        # if I forget to update something that uses this code.
+        if len(sys.argv) > 2:
+            pyver = sys.argv[2]
+        else:
+            pyver = '%s.%s.%s' % (sys.version_info.major,
+                                  sys.version_info.minor,
+                                  sys.version_info.micro)
+        if len(sys.argv) > 3:
+            arch = sys.argv[2]
+        else:
+            arch = '32-bit' if tuple.__itemsize__==4 else '64-bit'
+        add_to_path(pyver, arch)
     elif cmd == 'rmpath':
         remove_from_path()
     else:
