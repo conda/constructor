@@ -226,7 +226,7 @@ then
 __LICENSE__
 EOF
     printf "\\n"
-    printf "Do you approve the license terms? [yes|no]\\n"
+    printf "Do you accept the license terms? [yes|no]\\n"
     printf "[no] >>> "
     read -r ans
     while [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
