@@ -16,6 +16,7 @@ from os.path import isdir, isfile, join
 
 from libconda.fetch import fetch_index, fetch_pkg
 from libconda.resolve import Resolve, NoPackagesFound
+from libconda.compat import iteritems
 
 from constructor.utils import md5_file
 from constructor.install import name_dist
@@ -179,6 +180,10 @@ def main(info, verbose=True):
                   tuple('%s/%s/' % (url.rstrip('/'), platform)
                         for url in info['channels']
                         for platform in (info['_platform'], 'noarch')))
+        # drop all noarch: python packages because constructor is not noarch:
+        # python compatible
+        index = {pkg_name: pkg_info for pkg_name, pkg_info in iteritems(index)
+                 if pkg_info.get('noarch') != 'python'}
 
     if 'specs' in info:
         resolve(info, verbose)
