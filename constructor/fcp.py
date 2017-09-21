@@ -240,6 +240,10 @@ def main(info, verbose=True, dry_run=False):
         subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
                             for url in _urls for subdir in _platforms)
         index = fetch_index(subdir_urls)
+        # drop all noarch: python packages because constructor is not noarch:
+        # python compatible
+        index = {pkg_name: pkg_info for pkg_name, pkg_info in iteritems(index)
+                 if pkg_info.get('noarch') != 'python'}
 
     if 'specs' in info:
         resolve(info, verbose)
