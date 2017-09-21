@@ -241,7 +241,8 @@ def main(info, verbose=True, dry_run=False):
                             for url in _urls for subdir in _platforms)
         index = fetch_index(subdir_urls)
         # drop all noarch: python packages because constructor is not noarch:
-        # python compatible
+        # python compatible. Track that progress here
+        # https://github.com/conda/constructor/issues/86
         index = {pkg_name: pkg_info for pkg_name, pkg_info in iteritems(index)
                  if pkg_info.get('noarch') != 'python'}
 
