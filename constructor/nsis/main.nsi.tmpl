@@ -687,6 +687,8 @@ Section "Install"
 
     @PKG_COMMANDS@
 
+    @WRITE_CONDARC@
+
     ${If} $InstMode = ${JUST_ME}
         SetOutPath "$INSTDIR"
         FileOpen $0 ".nonadmin" w
