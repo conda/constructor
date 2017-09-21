@@ -23,6 +23,7 @@ SETUP_PY_DIR = dirname(abspath(__file__))
 def get_package_data(platform):
     platform_package_data = {
         "win32": ["nsis/*", "ttf/*"],
+        "darwin": ["header.sh", "osx/*"],
         "unix": ["header.sh"],
     }
     if platform is None:
