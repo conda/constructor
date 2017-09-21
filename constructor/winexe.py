@@ -17,7 +17,7 @@ from .construct import ns_platform
 from .imaging import write_images
 from .install import name_dist
 from .preconda import write_files as preconda_write_files
-from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess
+from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess, add_condarc
 
 THIS_DIR = dirname(__file__)
 NSIS_DIR = join(THIS_DIR, 'nsis')
@@ -162,6 +162,7 @@ def make_nsi(info, dir_path):
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(cmds)),
+        ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ]:
         data = data.replace(key, value)
