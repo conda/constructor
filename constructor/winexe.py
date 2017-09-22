@@ -12,6 +12,7 @@ import shutil
 from subprocess import Popen, PIPE, check_call, check_output
 import sys
 import tempfile
+import warnings
 
 from .construct import ns_platform
 from .imaging import write_images
@@ -52,7 +53,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
     vs_dists = find_vs_runtimes(dists, py_version)
     print("MSVC runtimes found: %s" % ([filename_dist(d) for d in vs_dists]))
     if len(vs_dists) != 1:
-        sys.exit("Error: number of MSVC runtimes found: %d" % len(vs_dists))
+        warnings.warn("Number of MSVC runtimes found: %d" % len(vs_dists))
 
     # Extract MSVC runtimes and python to a temporary directory and delete it
     # later. This way we do not rely on PATH env var; and python, required for
@@ -65,24 +66,20 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
     yield r'Delete $ANACONDA_TMP_LOC'
     yield r'CreateDirectory "$ANACONDA_TMP_LOC"'
 
-    for n, dist in enumerate(vs_dists + dists):
+    assert filename_dist(dists[0]).startswith('python-')
+
+    for n, dist in enumerate(vs_dists + dists[:1]):
         fn = filename_dist(dist)
         yield ''
         yield '# --> %s <--' % fn
         yield 'File %s' % str_esc(join(download_dir, fn))
-        if n == 0:
-            assert 'runtime' in fn
-        elif n == 1:
-            assert fn.startswith('python-')
-        else:
-            continue
         yield r'untgz::extract -d "$ANACONDA_TMP_LOC" -zbz2 "$INSTDIR\pkgs\%s"' % fn
 
     for n, dist in enumerate(vs_dists + dists):
         fn = filename_dist(dist)
         yield ''
         yield '# --> %s <--' % fn
-        if n > 1:
+        if n > len(vs_dists):
             yield 'File %s' % str_esc(join(download_dir, fn))
         if use_hardlinks:
             yield r'untgz::extract -d "$INSTDIR\pkgs\%s" -zbz2 "$INSTDIR\pkgs\%s"' % (fn[:-8], fn)
