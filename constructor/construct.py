@@ -138,6 +138,9 @@ If set, a .condarc file is written to the root of the enviornment if there are
 any channels or conda_default_channels set.
 '''),
 
+    ('company',                False, str, '''
+Name of the company/entity who is responsible for the installer.
+'''),
 
     ('pre_install',            False, str, '''
 Path to a pre install (bash - Unix only) script.
