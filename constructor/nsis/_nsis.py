@@ -180,7 +180,10 @@ def add_to_path(pyversion, arch):
     remove_from_path(ROOT_PREFIX)
 
     # If a previously registered Anaconda install left remnants, remove those.
-    old_prefixes = get_previous_install_prefixes(pyversion, arch, allusers)
+    try:
+        old_prefixes = get_previous_install_prefixes(pyversion, arch, allusers)
+    except IOError:
+        old_prefixes = []
     for prefix in old_prefixes:
         out('Removing old installation at %s from PATH (if any entries get found)\n' % (prefix))
         remove_from_path(prefix)
