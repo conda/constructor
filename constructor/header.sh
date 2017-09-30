@@ -222,7 +222,11 @@ then
     printf "Please, press ENTER to continue\\n"
     printf ">>> "
     read -r dummy
-    more <<EOF
+    pager="cat"
+    if command -v "more" > /dev/null 2>&1; then
+      pager="more"
+    fi
+    "$pager" <<EOF
 __LICENSE__
 EOF
     printf "\\n"
