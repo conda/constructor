@@ -349,7 +349,7 @@ install_dist()
     printf "installing: %s ...\\n" "$1"
     PKG_PATH="$PREFIX"/pkgs/$1
     PKG="$PKG_PATH".tar.bz2
-    mkdir $PKG_PATH || exit 1
+    mkdir -p $PKG_PATH || exit 1
 #if use_hardlinks
     bunzip2 -c "$PKG" | tar -xf - -C "$PKG_PATH" --no-same-owner || exit 1
     "$PREFIX/pkgs/__DIST0__/bin/python" -E -s \
