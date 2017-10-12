@@ -69,6 +69,10 @@ def mk_menus(remove=False):
         else:
             out("Processed %s successfully.\n" % shortcut)
 
+def mk_dirs():
+    envs_dir = join(ROOT_PREFIX, 'envs')
+    if not exists(envs_dir):
+        os.mkdir(envs_dir)
 
 def run_post_install():
     """
@@ -146,6 +150,8 @@ def main():
         run_post_install()
     elif cmd == 'rmmenus':
         mk_menus(remove=True)
+    elif cmd == 'mkdirs':
+        mk_dirs()
     elif cmd == 'addpath':
         # These checks are probably overkill, but could be useful
         # if I forget to update something that uses this code.
