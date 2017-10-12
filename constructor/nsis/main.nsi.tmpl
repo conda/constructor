@@ -687,6 +687,10 @@ Section "Install"
     push 'Failed to create menus'
     call AbortRetryExecWait
 
+    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
+    push 'Failed to initialize Anaconda directories'
+    call AbortRetryExecWait
+
     DetailPrint "Running post install..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
     push 'Failed to run post install script'
