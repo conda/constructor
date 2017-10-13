@@ -373,6 +373,8 @@ install_dist()
 
 __INSTALL_COMMANDS__
 
+mkdir -p $PREFIX/envs
+
 if [ "$FORCE" = "1" ]; then
     "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py --rm-dup || exit 1
 fi
