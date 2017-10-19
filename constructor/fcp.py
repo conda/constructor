@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 import os
-from os.path import isdir, isfile, join
+from os.path import isdir, isfile, join, getsize
 import re
 import sys
 import tarfile
@@ -181,6 +181,20 @@ def fetch(info):
         print('fetching: %s' % fn)
         fetch_pkg(pkginfo, download_dir)
 
+# nsis and pkg installers automatically compute the tarballs size
+# so this might not really be needed for them
+def update_approx_tarballs_size(info, size):
+    if '_approx_tarballs_size' not in info:
+        # Keep a min, 50MB buffer size
+        info['_approx_tarballs_size'] = 52428800
+    info['_approx_tarballs_size'] += size
+
+# for computing the size of the contents of all the tarballs in bytes
+def update_approx_pkgs_size(info, size):
+    if '_approx_pkgs_size' not in info:
+        # Keep a min, 50MB buffer size
+        info['_approx_pkgs_size'] = 52428800
+    info['_approx_pkgs_size'] += size
 
 def check_duplicates_files(info):
     print('Checking for duplicate files ...')
@@ -190,14 +204,18 @@ def check_duplicates_files(info):
 
     for dist in info['_dists']:
         fn = filename_dist(dist)
-        t = tarfile.open(join(info['_download_dir'], fn))
-        for member in t.getnames():
-            if not member.split('/')[0] in ['info', 'recipe']:
-                map_members_scase[member].add(fn)
-                key = member.lower()
+        fn_path = join(info['_download_dir'], fn)
+        t = tarfile.open(fn_path)
+        update_approx_tarballs_size(info, os.path.getsize(fn_path))
+        for member in t.getmembers():
+            update_approx_pkgs_size(info, member.size)
+            mname = member.name
+            if not mname.split('/')[0] in ['info', 'recipe']:
+                map_members_scase[mname].add(fn)
+                key = mname.lower()
                 if key not in map_members_icase:
                     map_members_icase[key] = {'files':set(), 'fns':set()}
-                map_members_icase[key]['files'].add(member)
+                map_members_icase[key]['files'].add(mname)
                 map_members_icase[key]['fns'].add(fn)
         t.close()
 
