@@ -81,7 +81,10 @@ def get_final_url(info, url):
         src = entry['src']
         dst = entry['dest']
         if url.startswith(src):
-            return url.replace(src, dst)
+            new_url = url.replace(src, dst)
+            print("WARNING: You need to make the package {} available "
+                  "at {}".format(url.rsplit('/', 1)[1], new_url))
+            return new_url
     return url
 
 def write_files(info, dst_dir):
