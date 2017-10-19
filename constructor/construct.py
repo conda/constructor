@@ -55,6 +55,19 @@ key below, but also when using the `packages` key ,unless the full URL is
 given in the `packages` list (see below).
 '''),
 
+    ('channels_remap',         False, list, '''
+List of (src, dest) channels, from which, channels from 'src' are also
+considered while running solver, but are replaced by corresponding values from
+dest when writing urls{,.txt}. Example use:
+channels_remap:
+  -
+      src: file:///tmp/a3/conda-bld
+      dest: https://repo.continuum.io/pkgs/main
+  -
+      src: file:///tmp/r/conda-bld
+      dest: https://repo.continuum.io/pkgs/r
+'''),
+
     ('specs',                  False, (list, str), '''
 List of package specifications, e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
 This list of specifications if given to the conda resolver (as if you were
