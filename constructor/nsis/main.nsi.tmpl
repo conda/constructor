@@ -603,11 +603,10 @@ Function OnDirectoryLeave
           StrCpy $R1 "s"
 
         # Show message box then take the user back to the Directory page.
-        MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "Error: 'Destination Folder' contains $R0 space$R1.$\n \
-             This can cause problems with several Conda packages, and is thus disabled.$\n \
-             Please install to a path without the space$R1."
-        abort
+        MessageBox MB_OK|MB_ICONINFORMATION \
+            "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
+             This can cause problems with several Conda packages.$\n \
+             Please consider removing the space$R1."
 
     NoSpaces:
 
