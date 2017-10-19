@@ -62,7 +62,8 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
     # So we get the name of a temporary file, delete it and then create a
     # temporary directory by the same name.
     yield r'Var /Global ANACONDA_TMP_LOC'
-    yield r'GetTempFileName $ANACONDA_TMP_LOC'
+    yield r"""System::Call 'Kernel32::GetTempFileName(t "$INSTDIR", t "t", i 0, t.r0) i.r1'"""
+    yield r'StrCpy $ANACONDA_TMP_LOC $0'
     yield r'Delete $ANACONDA_TMP_LOC'
     yield r'CreateDirectory "$ANACONDA_TMP_LOC"'
 
