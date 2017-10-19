@@ -11,6 +11,7 @@ from os.path import abspath, dirname, isfile, join
 import shutil
 from subprocess import check_call, check_output
 import sys
+import math
 import tempfile
 import warnings
 
@@ -154,6 +155,9 @@ def make_nsi(info, dir_path):
                         bool(info.get('keep_pkgs')),
                         bool(info.get('use_hardlinks')))
 
+    # division by 10^3 instead of 2^10 is deliberate here. gives us more room
+    approx_pkgs_size_kb = math.ceil(info.get('_approx_pkgs_size', 0) / 1000)
+
     # these are unescaped (and unquoted)
     for key, value in [
         ('@NAME@', name),
@@ -162,6 +166,7 @@ def make_nsi(info, dir_path):
         ('@PKG_COMMANDS@', '\n    '.join(cmds)),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
+        ('@SIZE@', str(approx_pkgs_size_kb)),
         ]:
         data = data.replace(key, value)
 
