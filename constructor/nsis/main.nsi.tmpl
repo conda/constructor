@@ -690,6 +690,8 @@ Section "Install"
 
     @WRITE_CONDARC@
 
+    AddSize @SIZE@
+
     ${If} $InstMode = ${JUST_ME}
         SetOutPath "$INSTDIR"
         FileOpen $0 ".nonadmin" w
