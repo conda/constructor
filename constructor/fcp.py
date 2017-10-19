@@ -250,6 +250,7 @@ def main(info, verbose=True, dry_run=False):
 
         _platforms = info['_platform'], 'noarch'
         _urls = info['channels']
+        _urls = _urls + [x['src'] for x in info.get('channels_remap', [])]
         subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
                             for url in _urls for subdir in _platforms)
         index = fetch_index(subdir_urls)

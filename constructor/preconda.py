@@ -62,7 +62,7 @@ def create_install(info, dst_dir):
             for url, md5 in info['_urls']:
                 if url.rsplit('/', 1)[1] == fn:
                     break
-            IDISTS[dist_name] = {'url': url,
+            IDISTS[dist_name] = {'url': get_final_url(info, url),
                             'md5': md5}
             CENVS['root'].append(dist_name)
         replacements.append(('IDISTS = {}',
@@ -75,15 +75,23 @@ def create_install(info, dst_dir):
     with open(join(dst_dir, '.install.py'), 'w') as fo:
         fo.write(data)
 
+def get_final_url(info, url):
+    mapping = info.get('channels_remap', [])
+    for entry in mapping:
+        src = entry['src']
+        dst = entry['dest']
+        if url.startswith(src):
+            return url.replace(src, dst)
+    return url
 
 def write_files(info, dst_dir):
     with open(join(dst_dir, 'urls'), 'w') as fo:
         for url, md5 in info['_urls']:
-            fo.write('%s#%s\n' % (url, md5))
+            fo.write('%s#%s\n' % (get_final_url(info, url), md5))
 
     with open(join(dst_dir, 'urls.txt'), 'w') as fo:
         for url, unused_md5 in info['_urls']:
-            fo.write('%s\n' % url)
+            fo.write('%s\n' % get_final_url(info, url))
 
     create_install(info, dst_dir)
 
