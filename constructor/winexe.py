@@ -50,7 +50,7 @@ def find_vs_runtimes(dists, py_version):
     return [dist for dist in dists if name_dist(dist) in valid_runtimes]
 
 
-def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
+def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks):
     vs_dists = find_vs_runtimes(dists, py_version)
     print("MSVC runtimes found: %s" % ([filename_dist(d) for d in vs_dists]))
     if len(vs_dists) != 1:
@@ -83,7 +83,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
         yield '# --> %s <--' % fn
         if n > len(vs_dists):
             yield 'File %s' % str_esc(join(download_dir, fn))
-        if use_hardlinks:
+        if attempt_hardlinks:
             yield r'untgz::extract -d "$INSTDIR\pkgs\%s" -zbz2 "$INSTDIR\pkgs\%s"' % (fn[:-8], fn)
         else:
             yield r'untgz::extract -d "$INSTDIR" -zbz2 "$INSTDIR\pkgs\%s"' % fn
@@ -93,7 +93,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, use_hardlinks):
             continue
         yield r'Delete "$INSTDIR\pkgs\%s"' % fn
 
-    if use_hardlinks:
+    if attempt_hardlinks:
         cmd = r'"$ANACONDA_TMP_LOC\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
         yield "ExecWait '%s'" % cmd
 
@@ -156,7 +156,7 @@ def make_nsi(info, dir_path):
 
     cmds = pkg_commands(download_dir, dists, py_version,
                         bool(info.get('keep_pkgs')),
-                        bool(info.get('use_hardlinks')))
+                        bool(info.get('attempt_hardlinks')))
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
     approx_pkgs_size_kb = math.ceil(info.get('_approx_pkgs_size', 0) / 1000)
