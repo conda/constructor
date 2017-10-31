@@ -75,7 +75,7 @@ def get_header(tarball, info):
     return data
 
 
-def create(info):
+def create(info, verbose=False):
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
 
