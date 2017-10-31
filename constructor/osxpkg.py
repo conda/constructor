@@ -159,7 +159,7 @@ def pkgbuild_script(name, info, src, dst='postinstall'):
     pkgbuild(name, scripts_dir)
 
 
-def create(info):
+def create(info, verbose=False):
     global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR
 
     CACHE_DIR = info['_download_dir']
