@@ -139,7 +139,7 @@ to have a certificate and corresponding private key together called an 'identity
 in one of your accessible keychains.
 '''),
 
-    ('use_hardlinks',          False, bool, '''
+    ('attempt_hardlinks',          False, bool, '''
 By default, conda packages are extracted into the root environment and then
 patched. Enabling this option will result into extraction of the packages into
 the `pkgs` directory and the files in the root environment will be hardlinks to
