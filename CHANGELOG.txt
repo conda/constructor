@@ -1,3 +1,63 @@
+2017-11-01   2.0.0:
+-------------------
+  * COMMON:
+    - Add support for channel remapping
+    - Make sure $PREFIX/envs is created by the installers
+    - Fallback to cat if more is not available
+    - Allow company name to be specified in construct.yaml
+    - Add feature to check file duplicates across dists
+    - Switch requirements to conda, ruamel_yaml
+    - Add write_condarc option
+    - Don't assume that channel keys will always be available
+    - Parameterize installer name at various locations
+    - Add support for pre-populating repodata cache
+    - Introduce 'attempt_hardlinks' option
+    - Copy pkgs to conda-bld (local) channel and test from there
+    - Also add channels to .condarc
+    - Remove urljoin import
+    - Fix bug when downloading packages
+    - Prefer conda via conda_interface instead of libconda
+    - Add dry run option
+    - Switch to setuptools
+    - Remove eval from setup.py, use absolute paths
+    - Add customization for welcome and header image texts
+    - Add support and examples for aarch64
+    - Add basic jinja2 support
+
+  * NSIS:
+    - Compute an approx. size for installation
+    - Allow more than one vsXXXX runtime, but warn
+    - Fix registry key handling
+    - disallow installation when any files present in destination folder
+    - Fix 'all users/just me' installation handling
+    - Parameterize installation location for all users
+    - Improve spaces/non-ascii/unicode character handling in nsis installer
+    - Extract python and DLLs to %PREFIX%/%randomdir and ./.install from there
+    - Fix several aspects of PATH env var management
+    - Fix wording in Windows installer
+    - Change AddToPath to not be the default
+    - Add support for command line installation for Windows
+    - Use ctypes for creating hard links on win
+    - NSIS: Copy index cache directory
+    - Fix issue when using conda to solve on windows
+    - Add ability to make nsis verbose
+    - Remove menus of all conda envs during uninstall
+    - Add ability to provide defaults for custom options
+
+  * PKG:
+    - Add support for signing the pkg installer
+    - Flip enable_{anywhere,localSystem}
+
+  * SHELL:
+    - Warn user if PYTHONPATH env var is set
+    - Handle spaces in path to be patched
+    - Compress non tarball files into preconda.tar.bz2
+    - Standardise header.sh redirects
+    - Add -t option to test the installer
+    - Use getopt if available, fallback to getopts
+    - Add more tests for RUNNING_SHELL
+    - Remove bashisms from header.sh, using only POSIX, split tar and bunzip2
+
 2017-08-XX   1.7.0:
 -------------------
   * add support for creating .pkg installers on OSX, #98
