@@ -36,7 +36,7 @@ def main():
         shar.read_header_template()
 
     if sys.platform == 'darwin':
-        from .osxpkg import OSX_DIR
+        from ..osxpkg import OSX_DIR
         assert len(os.listdir(OSX_DIR)) == 6
 
     test_parser.test_1()
