@@ -129,9 +129,6 @@ class Misc_TestCase(unittest.TestCase):
         self.assertEqual(name_dist('conda-build-1.21.6-py35_0'),
                          'conda-build')
 
-    def test_link_idists(self):
-        self.assertRaises(NotImplementedError, link_idists)
-
 
 def run():
     suite = unittest.TestSuite()
