@@ -159,7 +159,8 @@ def make_nsi(info, dir_path):
                         bool(info.get('attempt_hardlinks')))
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
-    approx_pkgs_size_kb = math.ceil(info.get('_approx_pkgs_size', 0) / 1000)
+    approx_pkgs_size_kb = int(
+        math.ceil(info.get('_approx_pkgs_size', 0) / 1000))
 
     # these are unescaped (and unquoted)
     for key, value in [
