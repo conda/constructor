@@ -15,7 +15,7 @@ try:
 except:
     import ruamel_json as json
 
-files = 'urls', 'urls.txt', '.install.py'
+files = 'system.info', 'urls', 'urls.txt', '.install.py'
 
 def write_index_cache(info, dst_dir):
     global files
@@ -87,7 +87,21 @@ def get_final_url(info, url):
             return new_url
     return url
 
+
+def system_info():
+    import constructor, conda, sys
+    return {'constructor': constructor.__version__,
+            'conda': conda.__version__,
+            'platform': sys.platform,
+            'python': sys.version,
+            'python_version': tuple(sys.version_info)}
+
+
 def write_files(info, dst_dir):
+    print('Write Files')
+    with open(join(dst_dir, 'system.info'), 'w') as fo:
+        json.dump(system_info(), fo)
+
     with open(join(dst_dir, 'urls'), 'w') as fo:
         for url, md5 in info['_urls']:
             fo.write('%s#%s\n' % (get_final_url(info, url), md5))
