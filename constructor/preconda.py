@@ -98,7 +98,6 @@ def system_info():
 
 
 def write_files(info, dst_dir):
-    print('Write Files')
     with open(join(dst_dir, 'system.info'), 'w') as fo:
         json.dump(system_info(), fo)
 
