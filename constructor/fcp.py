@@ -209,6 +209,8 @@ def check_duplicates_files(info):
         update_approx_tarballs_size(info, os.path.getsize(fn_path))
         for member in t.getmembers():
             update_approx_pkgs_size(info, member.size)
+            if member.type == tarfile.DIRTYPE:
+                continue
             mname = member.name
             if not mname.split('/')[0] in ['info', 'recipe']:
                 map_members_scase[mname].add(fn)
