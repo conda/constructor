@@ -89,16 +89,31 @@ def get_final_url(info, url):
 
 
 def system_info():
-    import constructor, conda, sys
-    return {'constructor': constructor.__version__,
-            'conda': conda.__version__,
-            'platform': sys.platform,
-            'python': sys.version,
-            'python_version': tuple(sys.version_info)}
+    import constructor, conda, sys, platform
+    out = {'constructor': constructor.__version__,
+           'conda': conda.__version__,
+           'platform': sys.platform,
+           'python': sys.version,
+           'python_version': tuple(sys.version_info),
+           'machine': platform.machine(),
+           'platform_full': platform.version()}
+    if sys.platform == 'darwin':
+        out['extra'] = platform.mac_ver()
+    elif sys.platform.startswith('linux'):
+        out['extra'] = platform.dist()
+    elif sys.platform.startswith('win'):
+        out['extra'] = platform.win32_ver()
+        prefix = os.environ.get('CONDA_PREFIX', conda.config.default_prefix)
+        prefix_records = conda.exports.linked_data(prefix).values()
+        nsis_prefix_rec = next(
+            (rec for rec in prefix_records if rec.name == 'nsis'), None)
+        if nsis_prefix_rec:
+            out['nsis'] = nsis_prefix_rec.version
+    return out
 
 
 def write_files(info, dst_dir):
-    with open(join(dst_dir, 'system.info'), 'w') as fo:
+    with open(join(dst_dir, '.constructor-build.info'), 'w') as fo:
         json.dump(system_info(), fo)
 
     with open(join(dst_dir, 'urls'), 'w') as fo:
