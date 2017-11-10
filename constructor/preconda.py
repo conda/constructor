@@ -89,7 +89,8 @@ def get_final_url(info, url):
 
 
 def system_info():
-    import constructor, conda, sys, platform
+    import constructor, sys, platform
+    import conda.exports, conda.config
     out = {'constructor': constructor.__version__,
            'conda': conda.__version__,
            'platform': sys.platform,
