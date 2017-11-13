@@ -6,9 +6,11 @@
 
 import os
 from os.path import basename, dirname, join, isdir
+import platform
+import sys
 
-# This should ideally be from conda.exports
-from conda.core.repodata import fetch_repodata
+from . import __version__ as CONSTRUCTOR_VERSION
+from .conda_interface import CONDA_INTERFACE_VERSION, default_prefix, linked_data, write_repodata
 
 try:
     import json
@@ -31,9 +33,7 @@ def write_index_cache(info, dst_dir):
             if not url.startswith('file://') for subdir in _platforms)
 
     for url in subdir_urls:
-        # print('Adding repodata for %s ...'%url)
-        fetch_repodata(url, None, 0, cache_dir=cache_dir,
-                       use_cache=False, session=None)
+        write_repodata(cache_dir, url)
 
     for cache_file in os.listdir(cache_dir):
         if cache_file.endswith(".json"):
@@ -89,10 +89,8 @@ def get_final_url(info, url):
 
 
 def system_info():
-    import constructor, sys, platform
-    import conda.exports, conda.config
-    out = {'constructor': constructor.__version__,
-           'conda': conda.__version__,
+    out = {'constructor': CONSTRUCTOR_VERSION,
+           'conda': CONDA_INTERFACE_VERSION,
            'platform': sys.platform,
            'python': sys.version,
            'python_version': tuple(sys.version_info),
@@ -104,8 +102,8 @@ def system_info():
         out['extra'] = platform.dist()
     elif sys.platform.startswith('win'):
         out['extra'] = platform.win32_ver()
-        prefix = os.environ.get('CONDA_PREFIX', conda.config.default_prefix)
-        prefix_records = conda.exports.linked_data(prefix).values()
+        prefix = default_prefix
+        prefix_records = linked_data(prefix).values()
         nsis_prefix_rec = next(
             (rec for rec in prefix_records if rec.name == 'nsis'), None)
         if nsis_prefix_rec:
