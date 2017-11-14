@@ -1,0 +1,71 @@
+# https://travis-ci.org/conda/constructor
+
+language: python
+sudo: false
+
+branches:
+  only:
+    - master
+
+matrix:
+  include:
+    # Linux
+    - os: linux
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=false
+    - os: linux
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=2.7 CONDA_CANARY=false
+    - os: linux
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
+    # OSX
+    - os: osx
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=false
+  allow_failures:
+    - os: linux
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
+
+cache:
+  directories:
+    - $HOME/condacache/pkgs
+    - $HOME/.cache/pip
+
+install:
+  # Install latest miniconda
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      MINICONDA_OS=Linux ;
+    else
+      MINICONDA_OS=MacOSX ;
+    fi ;
+    MINICONDA_PYVERSION=${TRAVIS_PYTHON_VERSION:0:1} ;
+    wget https://repo.continuum.io/miniconda/Miniconda$MINICONDA_PYVERSION-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p "$HOME"/miniconda
+  - source "$HOME"/miniconda/bin/activate root
+  - conda config --set always_yes yes 
+  - conda update -n root conda -q --no-pin
+  - conda config --add pkgs_dirs ~/condacache/pkgs
+  # Install run dependencies
+  - conda install -n root pillow>=3.1 ruamel_yaml
+  # Install test dependencies
+  - conda install codecov pytest pytest-cov -c conda-forge
+  # Install this package
+  - python setup.py develop
+  # Install conda canary before running tests, ensure conda is updated
+  - if [ "${CONDA_CANARY}" = "true" ]; then
+      conda update -n root conda -c conda-canary --no-pin;
+    else
+      conda update -n root conda --no-pin;
+    fi
+  - source "$HOME"/miniconda/bin/activate root
+  - conda info
+  - conda list
+
+script:
+  - pytest --cov=constructor constructor
+  - python scripts/run_examples.py
+
+after_success:
+  - codecov
