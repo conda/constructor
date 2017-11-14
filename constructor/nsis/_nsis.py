@@ -156,10 +156,10 @@ out('allusers is %s\n' % allusers)
 
 # This must be the same as conda's binpath_from_arg() in conda/cli/activate.py
 PATH_SUFFIXES = ('',
-                 os.path.join('Library', 'mingw-w64', 'bin'),
-                 os.path.join('Library', 'usr', 'bin'),
                  os.path.join('Library', 'bin'),
-                 'Scripts')
+                 'Scripts'
+                 os.path.join('Library', 'mingw-w64', 'bin'),
+                 os.path.join('Library', 'usr', 'bin'), )
 
 
 def remove_from_path(root_prefix=None):
