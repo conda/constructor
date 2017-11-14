@@ -1,5 +1,13 @@
-(conda) constructor
-===================
+# (conda) constructor
+
+
+## Build status
+
+[![Build Status](https://travis-ci.org/conda/constructor.svg?branch=master)](https://travis-ci.org/conda/constructor)
+[![Build status](https://ci.appveyor.com/api/projects/status/cxf565h1rh3v0kaq?svg=true)](https://ci.appveyor.com/project/ContinuumAnalyticsFOSS/constructor)
+[![codecov](https://codecov.io/gh/conda/constructor/branch/master/graph/badge.svg)](https://codecov.io/gh/conda/constructor)
+
+## Description:
 
 constructor is a tool which allows constructing an installer for
 a collection of conda packages.  Basically, it creates an Anaconda-like
@@ -7,8 +15,7 @@ installer consisting of conda packages.   This tool was previously
 proprietary and known as `cas-installer`.
 
 
-Installation:
--------------
+## Installation:
 
 As of version 1.3.0, `constructor` may be installed into any conda
 environment using:
@@ -20,8 +27,7 @@ Once installed, the constructor command will be available:
     $ constructor -h
 
 
-Usage:
-------
+## Usage:
 
 The `constructor` command takes an installer specification directory as its
 argument.  This directory needs to contain a file `construct.yaml`,
@@ -35,8 +41,7 @@ An example is located
 in <a href="./examples/maxiconda">examples/maxiconda</a>.
 
 
-Notes:
-------
+## Notes:
 
   * Constructor does not work with `noarch`-Python packages.
     All conda packages must be available for the platform you are
