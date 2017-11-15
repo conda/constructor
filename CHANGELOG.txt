@@ -1,3 +1,13 @@
+2017-11-16   2.0.1:
+-------------------
+  * COMMON:
+    - Add CI testing for Travis and Appveyor
+    - Write basic system info to $PREFIX\pkgs\.constructor-build.info
+    - Ignore folders in tarballs while checking for duplicates
+    - Ensure approx_pkgs_size_kb is an integer
+    - Fix broken tests
+
+
 2017-11-01   2.0.0:
 -------------------
   * COMMON:
@@ -57,6 +67,7 @@
     - Use getopt if available, fallback to getopts
     - Add more tests for RUNNING_SHELL
     - Remove bashisms from header.sh, using only POSIX, split tar and bunzip2
+
 
 2017-08-XX   1.7.0:
 -------------------
