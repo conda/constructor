@@ -15,7 +15,7 @@ try:
 except:
     import ruamel_json as json
 
-files = 'system.info', 'urls', 'urls.txt', '.install.py'
+files = '.constructor-build.info', 'urls', 'urls.txt', '.install.py'
 
 def write_index_cache(info, dst_dir):
     global files
