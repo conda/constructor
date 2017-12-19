@@ -232,11 +232,11 @@ def create(info, verbose=False):
     if verbose:
         sub = Popen(args, stdout=PIPE, stderr=PIPE)
         stdout, stderr = sub.communicate()
-        for msg, info in zip((stdout, stderr), ('stdout', 'stderr')):
+        for msg, information in zip((stdout, stderr), ('stdout', 'stderr')):
             # on Python3 we're getting bytes
             if hasattr(msg, 'decode'):
                 msg = msg.decode()
-            print('makensis {}:'.format(info))
+            print('makensis {}:'.format(information))
             print(msg)
     else:
         check_call(args)
