@@ -66,7 +66,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks):
     yield r"""System::Call 'Kernel32::GetTempFileName(t "$INSTDIR", t "t", i 0, t.r0) i.r1'"""
     yield r'StrCpy $ANACONDA_TMP_LOC $0'
     yield r'Delete $ANACONDA_TMP_LOC'
-    yield r'CreateDirectory "$ANACONDA_TMP_LOC"'
+    yield r'CreateDirectory "$ANACONDA_TMP_LOC.dir"'
 
     assert filename_dist(dists[0]).startswith('python-')
 
@@ -75,7 +75,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks):
         yield ''
         yield '# --> %s <--' % fn
         yield 'File %s' % str_esc(join(download_dir, fn))
-        yield r'untgz::extract -d "$ANACONDA_TMP_LOC" -zbz2 "$INSTDIR\pkgs\%s"' % fn
+        yield r'untgz::extract -d "$ANACONDA_TMP_LOC.dir" -zbz2 "$INSTDIR\pkgs\%s"' % fn
 
     for n, dist in enumerate(vs_dists + dists):
         fn = filename_dist(dist)
@@ -87,14 +87,14 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks):
             yield r'untgz::extract -d "$INSTDIR\pkgs\%s" -zbz2 "$INSTDIR\pkgs\%s"' % (fn[:-8], fn)
         else:
             yield r'untgz::extract -d "$INSTDIR" -zbz2 "$INSTDIR\pkgs\%s"' % fn
-            cmd = r'"$ANACONDA_TMP_LOC\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py" --post root'
+            cmd = r'"$ANACONDA_TMP_LOC.dir\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py" --post root'
             yield "ExecWait '%s'" % cmd
         if keep_pkgs:
             continue
         yield r'Delete "$INSTDIR\pkgs\%s"' % fn
 
     if attempt_hardlinks:
-        cmd = r'"$ANACONDA_TMP_LOC\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
+        cmd = r'"$ANACONDA_TMP_LOC.dir\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
         yield "ExecWait '%s'" % cmd
 
     if not keep_pkgs:
@@ -104,7 +104,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks):
     yield r'DetailPrint "Removing temporary files..."'
     # Turn off detail printing for the delete instruction
     yield r'SetDetailsPrint none'
-    yield r'RMDir /r /REBOOTOK "$ANACONDA_TMP_LOC"'
+    yield r'RMDir /r /REBOOTOK "$ANACONDA_TMP_LOC.dir"'
     yield r'SetDetailsPrint both'
 
 
