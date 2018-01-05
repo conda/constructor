@@ -17,7 +17,9 @@ else
     BASH_RC="${HOME}/.bash_profile"
 fi
 
-cp -fp $BASH_RC ${BASH_RC}-__NAME_LOWER__.bak
+BASH_RC_BAK="${BASH_RC}-__NAME_LOWER__.bak"
+
+cp -fp $BASH_RC ${BASH_RC_BAK}
 
 echo "
 Prepending PATH=$PREFIX/bin to PATH in $BASH_RC
@@ -28,4 +30,5 @@ echo "
 # added by __NAME__ __VERSION__ installer
 export PATH=\"$PREFIX/bin:\$PATH\"" >>$BASH_RC
 
+chown "$USER" "$BASH_RC" "$BASH_RC_BAK"
 exit 0
