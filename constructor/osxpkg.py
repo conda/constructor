@@ -90,7 +90,7 @@ def modify_xml(xml_path, info):
 
     # TODO :: Check that varying these based on 'attempt_hardlinks' is the
     #         right thing to do.
-    if info['attempt_hardlinks']:
+    if bool(info.get('attempt_hardlinks')):
         enable_anywhere = 'true'
         enable_localSystem = 'false'
     else:
@@ -186,7 +186,7 @@ def create(info, verbose=False):
             dname = dist.dist_name
             ndist = dist.name
         fresh_dir(PACKAGE_ROOT)
-        if info['attempt_hardlinks']:
+        if bool(info.get('attempt_hardlinks')):
             t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
             os.makedirs(join(pkgs_dir, dname))
             t.extractall(join(pkgs_dir, dname))
