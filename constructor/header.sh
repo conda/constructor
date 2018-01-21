@@ -213,6 +213,57 @@ then
     fi
 #endif
 
+#if ppc64le
+    if [ "$(uname -m)" != "ppc64le" ]; then
+        printf "WARNING:\\n"
+        printf "    Your machine hardware does not appear to be Power8 (little endian), \\n"
+        printf "    but you are trying to install a ppc64le version of __NAME__.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
+           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+#endif
+
+#if osx
+    if [ "$(uname)" != "Darwin" ]; then
+        printf "WARNING:\\n"
+        printf "    Your operating system does not appear to be macOS, \\n"
+        printf "    but you are trying to install a macOS version of __NAME__.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
+           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+#endif
+
+#if linux
+    if [ "$(uname)" != "Linux" ]; then
+        printf "WARNING:\\n"
+        printf "    Your operating system does not appear to be Linux, \\n"
+        printf "    but you are trying to install a Linux version of __NAME__.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
+           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+#endif
+
     printf "\\n"
     printf "Welcome to __NAME__ __VERSION__\\n"
 #if has_license
