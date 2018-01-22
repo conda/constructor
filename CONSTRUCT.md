@@ -35,6 +35,20 @@ key below, but also when using the `packages` key ,unless the full URL is
 given in the `packages` list (see below).
 
 
+`channels_remap`:
+----------------
+List of (src, dest) channels, from which, channels from 'src' are also
+considered while running solver, but are replaced by corresponding values from
+dest when writing urls{,.txt}. Example use:
+channels_remap:
+  -
+      src: file:///tmp/a3/conda-bld
+      dest: https://repo.continuum.io/pkgs/main
+  -
+      src: file:///tmp/r/conda-bld
+      dest: https://repo.continuum.io/pkgs/r
+
+
 `specs`:
 ----------------
 List of package specifications, e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
@@ -65,6 +79,12 @@ necessary metadata in "Menu/<package name>.json").  Menu items are currently
 only supported on Windows.  By default, all menu items will be installed.
 
 
+`ignore_duplicate_files`:
+----------------
+By default, constructor will error out when adding packages with duplicate
+files in them. Enable this option to warn instead and continue.
+
+
 `install_in_dependency_order`:
 ----------------
 By default the conda packages included in the created installer are installed
@@ -85,6 +105,12 @@ The filename of the installer being created.  A reasonable default filename
 will determined by the `name`, `version`, platform and installer type.
 
 
+`installer_type`:
+----------------
+The type of the installer being created.  Possible values are "sh", "pkg",
+and "exe".  By default, the type is "sh" on Unix, and "exe" on Windows.
+
+
 `license_file`:
 ----------------
 Path to the license file being displayed by the installer during the install
@@ -96,6 +122,33 @@ process.
 By default, no conda packages are preserved after running the created
 installer in the `pkgs` directory.  Using this option changes the default
 behavior.
+
+
+`signing_identity_name`:
+----------------
+By default, the MacOS pkg installer isn't signed. If an identity name is specified
+using this option, it will be used to sign the installer. Note that you will need
+to have a certificate and corresponding private key together called an 'identity'
+in one of your accessible keychains.
+
+
+`attempt_hardlinks`:
+----------------
+By default, conda packages are extracted into the root environment and then
+patched. Enabling this option will result into extraction of the packages into
+the `pkgs` directory and the files in the root environment will be hardlinks to
+the files kept in the `pkgs` directory and then patched accordingly.
+
+
+`write_condarc`:
+----------------
+If set, a .condarc file is written to the root of the enviornment if there are
+any channels or conda_default_channels set.
+
+
+`company`:
+----------------
+Name of the company/entity who is responsible for the installer.
 
 
 `pre_install`:
