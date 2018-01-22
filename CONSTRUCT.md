@@ -213,3 +213,21 @@ Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
 interactive installation. (Windows only)
 
+
+List of available selectors:
+==============================
+```
+osx
+x86
+x86_64
+aarch64
+win64
+ppc64le
+win32
+unix
+armv7l
+linux64
+linux
+linux32
+win
+```
