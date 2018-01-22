@@ -87,26 +87,6 @@ def get_conda_envs_from_python_api():
     return json_conda_info["envs"]
 
 
-def get_conda_envs_from_libconda():
-    # alternative implementation using libconda
-    # adapted from conda.misc.list_prefixes
-    try:
-        from libconda.config import envs_dirs
-    except (ImportError, OSError):
-        return
-    # Lists all the prefixes that conda knows about.
-    for envs_dir in envs_dirs:
-        if not isdir(envs_dir):
-            continue
-        for dn in sorted(os.listdir(envs_dir)):
-            if dn.startswith('.'):
-                continue
-            prefix = join(envs_dir, dn)
-            if isdir(prefix):
-                prefix = join(envs_dir, dn)
-                yield prefix
-
-
 get_conda_envs = get_conda_envs_from_python_api
 
 

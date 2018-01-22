@@ -9,12 +9,8 @@ try:
     from conda import __version__ as CONDA_INTERFACE_VERSION
     conda_interface_type = 'conda'
 except ImportError:
-    try:
-        from libconda import __version__ as CONDA_INTERFACE_VERSION
-        conda_interface_type = 'libconda'
-    except ImportError:
-        raise RuntimeError("Either conda or libconda must be installed for python interpreter\n"
-                           "with sys.prefix: %s" % sys.prefix)
+    raise RuntimeError("Conda must be installed for python interpreter\n"
+            "with sys.prefix: %s" % sys.prefix)
 
 if conda_interface_type == 'conda':
     CONDA_MAJOR_MINOR = tuple(int(x) for x in CONDA_INTERFACE_VERSION.split('.')[:2])
@@ -54,19 +50,6 @@ if conda_interface_type == 'conda':
                 fh.write(raw_repodata_str)
         else:
             raise NotImplementedError("unsupported version of conda: %s" % CONDA_INTERFACE_VERSION)
-
-
-
-else:
-    from libconda.config import subdir as cc_platform, default_prefix
-    from libconda.fetch import fetch_index, fetch_pkg
-    from libconda.resolve import Resolve, NoPackagesFound
-
-    linked_data = {}
-
-    def write_repodata(cache_dir, url):
-        # not implemented, pending resolution of #139
-        return
 
 
 cc_platform = cc_platform

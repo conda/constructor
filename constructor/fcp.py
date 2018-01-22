@@ -139,8 +139,6 @@ def check_dists():
 
 
 def fetch(info):
-    # always use the libconda fetch_index function here since no
-    # channel priority is needed
     download_dir = info['_download_dir']
     if not isdir(download_dir):
         os.makedirs(download_dir)
