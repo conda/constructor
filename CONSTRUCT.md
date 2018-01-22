@@ -37,9 +37,10 @@ given in the `packages` list (see below).
 
 `channels_remap`:
 ----------------
-List of (src, dest) channels, from which, channels from 'src' are also
+List of `(src, dest)` channels, from which, channels from `src` are also
 considered while running solver, but are replaced by corresponding values from
-dest when writing urls{,.txt}. Example use:
+dest when writing `urls{,.txt}`. Example use:
+```
 channels_remap:
   -
       src: file:///tmp/a3/conda-bld
@@ -47,6 +48,7 @@ channels_remap:
   -
       src: file:///tmp/r/conda-bld
       dest: https://repo.continuum.io/pkgs/r
+```
 
 
 `specs`:
