@@ -19,7 +19,7 @@ from constructor.exceptions import (
 )
 
 
-PREABLE = '''\n
+PREAMBLE = '''\n
 Keys in `construct.yaml` file:
 ==============================
 
@@ -318,7 +318,7 @@ def generate_doc():
     path = abspath('%s/../../CONSTRUCT.md' % __file__)
     print('generating: %s' % path)
     with open(path, 'w') as fo:
-        fo.write(PREABLE)
+        fo.write(PREAMBLE)
         for key, required, unused_types, descr in KEYS:
             descr = descr.strip()
             if descr == 'XXX':
