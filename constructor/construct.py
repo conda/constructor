@@ -333,6 +333,13 @@ def generate_doc():
 """ % (key,
        ' required' if required else '',
        descr))
+        fo.write("""
+List of platform selectors:
+==============================
+```
+%s
+```
+""" % ('\n'.join(ns_platform('').keys())))
 
 
 if __name__ == '__main__':
