@@ -144,8 +144,8 @@ the files kept in the `pkgs` directory and then patched accordingly.
 
 `write_condarc`:
 ----------------
-If set, a .condarc file is written to the root of the enviornment if there are
-any channels or conda_default_channels set.
+If set, a .condarc file is written to the root of the environment if there are
+any channels or conda_default_channels set. The default is `False`.
 
 
 `company`:
