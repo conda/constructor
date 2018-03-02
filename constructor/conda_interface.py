@@ -35,7 +35,13 @@ if conda_interface_type == 'conda':
         _download(pkg_url, join(download_dir, pkginfo['fn']))
 
     def write_repodata(cache_dir, url):
-        if CONDA_MAJOR_MINOR >= (4, 4):
+        if CONDA_MAJOR_MINOR >= (4, 5):
+            from conda.core.subdir_data import fetch_repodata_remote_request
+            raw_repodata_str = fetch_repodata_remote_request(url, None, None)
+            repodata_filename = _cache_fn_url(url)
+            with open(join(cache_dir, repodata_filename), 'w') as fh:
+                fh.write(raw_repodata_str)
+        elif CONDA_MAJOR_MINOR >= (4, 4):
             from conda.core.repodata import fetch_repodata_remote_request
             raw_repodata_str = fetch_repodata_remote_request(url, None, None)
             repodata_filename = _cache_fn_url(url)
