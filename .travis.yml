@@ -12,21 +12,21 @@ matrix:
     # Linux
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=false
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=false CONDA_AUTO_UPDATE_CONDA=False
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=2.7 CONDA_CANARY=false
+      env: TRAVIS_PYTHON_VERSION=2.7 CONDA_CANARY=false CONDA_AUTO_UPDATE_CONDA=False
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true CONDA_AUTO_UPDATE_CONDA=False
     # OSX
     - os: osx
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=false
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=false CONDA_AUTO_UPDATE_CONDA=False
   allow_failures:
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true CONDA_AUTO_UPDATE_CONDA=False
 
 cache:
   directories:
