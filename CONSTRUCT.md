@@ -1,7 +1,5 @@
 
-
-Keys in `construct.yaml` file:
-==============================
+# Keys in `construct.yaml` file:
 
 This document describes each of they keys in the `construct.yaml` file,
 which is the main configuration file of a constructor configuration
@@ -15,32 +13,45 @@ Also note, that any line in `construct.yaml` may contain a selector at the
 end, in order to allow customization for selected platforms.
 
 
-`name`: required
-----------------
+
+## `name`
+
+required: True
+
+argument type(s): ``str``, 
+
 Name of the installer.  May also contain uppercase letter.  The installer
 name is independent of the names of any of the conda packages the installer
 is composed of.
 
+## `version`
 
-`version`: required
-----------------
+required: True
+
+argument type(s): ``str``, 
+
 Version of the installer.  Just like the installer name, this version
 is independent of any conda package versions contained in the installer.
 
+## `channels`
 
-`channels`:
-----------------
+required: False
+
+argument type(s): ``list``, 
+
 The conda channels from which packages are retrieved, when using the `specs`
 key below, but also when using the `packages` key ,unless the full URL is
 given in the `packages` list (see below).
 
+## `channels_remap`
 
-`channels_remap`:
-----------------
-List of `(src, dest)` channels, from which, channels from `src` are also
+required: False
+
+argument type(s): ``list``, 
+
+List of (src, dest) channels, from which, channels from 'src' are also
 considered while running solver, but are replaced by corresponding values from
-dest when writing `urls{,.txt}`. Example use:
-```
+dest when writing urls{,.txt}. Example use:
 channels_remap:
   -
       src: file:///tmp/a3/conda-bld
@@ -48,186 +59,264 @@ channels_remap:
   -
       src: file:///tmp/r/conda-bld
       dest: https://repo.continuum.io/pkgs/r
-```
 
+## `specs`
 
-`specs`:
-----------------
+required: False
+
+argument type(s): ``list``, ``str``, 
+
 List of package specifications, e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
 This list of specifications if given to the conda resolver (as if you were
 to create a new environment with those specs.
 
+## `exclude`
 
-`exclude`:
-----------------
+required: False
+
+argument type(s): ``list``, 
+
 List of package names to be excluded, after the '`specs` have been resolved.
 For example, you can say that `readline` should be excluded, even though it
 is contained as a result of resolving the specs for `python 2.7`.
 
+## `packages`
 
-`packages`:
-----------------
+required: False
+
+argument type(s): ``list``, ``str``, 
+
 A list of explicit conda packages to be included, e.g. `yaml-0.1.6-0.tar.bz2`.
 The packages may also be specified by their entire URL,
 e.g.`https://repo.continuum.io/pkgs/free/osx-64/openssl-1.0.1k-1.tar.bz2`.
 Optionally, the MD5 hash sum of the package, may be added after an immediate
 `#` character, e.g. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 
+## `menu_packages`
 
-`menu_packages`:
-----------------
+required: False
+
+argument type(s): ``list``, 
+
 Packages for menu items will be installed (if the conda package contains the
 necessary metadata in "Menu/<package name>.json").  Menu items are currently
 only supported on Windows.  By default, all menu items will be installed.
 
+## `ignore_duplicate_files`
 
-`ignore_duplicate_files`:
-----------------
+required: False
+
+argument type(s): ``bool``, 
+
 By default, constructor will error out when adding packages with duplicate
 files in them. Enable this option to warn instead and continue.
 
+## `install_in_dependency_order`
 
-`install_in_dependency_order`:
-----------------
+required: False
+
+argument type(s): ``bool``, 
+
 By default the conda packages included in the created installer are installed
 in alphabetical order, Python is always installed first for technical
 reasons.  Using this option, the packages are installed in their dependency
 order (unless the explicit list in `packages` is used).
 
+## `conda_default_channels`
 
-`conda_default_channels`:
-----------------
+required: False
+
+argument type(s): ``list``, 
+
 You can list conda channels here which will be the default conda channels
 of the created installer (if it includes conda).
 
+## `installer_filename`
 
-`installer_filename`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 The filename of the installer being created.  A reasonable default filename
 will determined by the `name`, `version`, platform and installer type.
 
+## `installer_type`
 
-`installer_type`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 The type of the installer being created.  Possible values are "sh", "pkg",
 and "exe".  By default, the type is "sh" on Unix, and "exe" on Windows.
 
+## `license_file`
 
-`license_file`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 Path to the license file being displayed by the installer during the install
 process.
 
+## `keep_pkgs`
 
-`keep_pkgs`:
-----------------
+required: False
+
+argument type(s): ``bool``, 
+
 By default, no conda packages are preserved after running the created
 installer in the `pkgs` directory.  Using this option changes the default
 behavior.
 
+## `signing_identity_name`
 
-`signing_identity_name`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
 using this option, it will be used to sign the installer. Note that you will need
 to have a certificate and corresponding private key together called an 'identity'
 in one of your accessible keychains.
 
+## `attempt_hardlinks`
 
-`attempt_hardlinks`:
-----------------
+required: False
+
+argument type(s): ``bool``, 
+
 By default, conda packages are extracted into the root environment and then
 patched. Enabling this option will result into extraction of the packages into
 the `pkgs` directory and the files in the root environment will be hardlinks to
 the files kept in the `pkgs` directory and then patched accordingly.
 
+## `write_condarc`
 
-`write_condarc`:
-----------------
+required: False
+
+argument type(s): ``bool``, 
+
 If set, a .condarc file is written to the root of the enviornment if there are
 any channels or conda_default_channels set.
 
+## `company`
 
-`company`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 Name of the company/entity who is responsible for the installer.
 
+## `pre_install`
 
-`pre_install`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 Path to a pre install (bash - Unix only) script.
 
+## `post_install`
 
-`post_install`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 Path to a post install (bash for Unix - .bat for Windows) script.
 
+## `default_prefix`
 
-`welcome_image`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+XXX
+## `welcome_image`
+
+required: False
+
+argument type(s): ``str``, 
+
 Path to an image (in any common image format `.png`, `.jpg`, `.tif`, etc.)
 which is used as the welcome image for the Windows installer.
 The image is re-sized to 164 x 314 pixels.
 By default, an image is automatically generated.
 
+## `header_image`
 
-`header_image`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 Like `welcome_image` for Windows, re-sized to 150 x 57 pixels.
 
+## `icon_image`
 
-`icon_image`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 Like `welcome_image` for Windows, re-sized to 256 x 256 pixels.
 
+## `default_image_color`
 
-`default_image_color`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 The color of the default images (when not providing explicit image files)
 used on Windows.  Possible values are `red`, `green`, `blue`, `yellow`.
 The default is `blue`.
 
+## `welcome_image_text`
 
-`welcome_image_text`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 If `welcome_image` is not provided, use this text when generating the image
 (Windows only). Defaults to `name`.
 
+## `header_image_text`
 
-`header_image_text`:
-----------------
+required: False
+
+argument type(s): ``str``, 
+
 If `header_image` is not provided, use this text when generating the image
 (Windows only). Defaults to `name`.
 
+## `add_to_path_default`
 
-`add_to_path_default`:
-----------------
+required: False
+
+argument type(s): ``bool``, 
+
 Default choice for whether to add the installation to the PATH environment
 variable. The user is still able to change this during interactive
 installation.
 
+## `register_python_default`
 
-`register_python_default`:
-----------------
+required: False
+
+argument type(s): ``bool``, 
+
 Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
 interactive installation. (Windows only)
 
 
-List of available selectors:
-==============================
-```
-osx
-x86
-x86_64
-aarch64
-win64
-ppc64le
-win32
-unix
-armv7l
-linux64
-linux
-linux32
-win
-```
+## List of available selectors:
+
+- ``linux``
+- ``linux32``
+- ``linux64``
+- ``armv7l``
+- ``aarch64``
+- ``ppc64le``
+- ``x86``
+- ``x86_64``
+- ``osx``
+- ``unix``
+- ``win``
+- ``win32``
+- ``win64``
