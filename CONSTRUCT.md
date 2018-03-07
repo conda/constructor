@@ -49,9 +49,10 @@ required: False
 
 argument type(s): ``list``, 
 
-List of (src, dest) channels, from which, channels from 'src' are also
+List of `(src, dest)` channels, from which, channels from `src` are also
 considered while running solver, but are replaced by corresponding values from
-dest when writing urls{,.txt}. Example use:
+dest when writing `urls{,.txt}`. Example use:
+```
 channels_remap:
   -
       src: file:///tmp/a3/conda-bld
@@ -59,6 +60,7 @@ channels_remap:
   -
       src: file:///tmp/r/conda-bld
       dest: https://repo.continuum.io/pkgs/r
+```
 
 ## `specs`
 
@@ -223,12 +225,6 @@ argument type(s): ``str``,
 
 Path to a post install (bash for Unix - .bat for Windows) script.
 
-## `default_prefix`
-
-required: False
-
-argument type(s): ``str``, 
-XXX
 ## `welcome_image`
 
 required: False

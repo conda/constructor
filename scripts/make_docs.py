@@ -1,7 +1,12 @@
-from constructor import construct
 import jinja2
 import sys
 from os.path import join, dirname
+
+REPO_ROOT = dirname(dirname(__file__))
+
+sys.path.insert(0, REPO_ROOT)
+
+from constructor import construct
 
 
 valid_platforms = construct.ns_platform(sys.platform)
@@ -46,11 +51,15 @@ for key_info in construct.KEYS:
         key_types = (key_info[2],)
     key_types = [k.__name__ for k in key_types]
 
+    if key_info[3] == 'XXX':
+        print("Not including %s because the skip sentinel ('XXX') is set" % key_info[0])
+        continue
+
     key_info_list.append((key_info[0], key_info[1], key_types, key_info[3]))
 
 output = jinja2.Template(template).render(
     platforms=valid_platforms,
     keys=key_info_list)
 
-with open(join(dirname(dirname(__file__)), 'CONSTRUCT.md'), 'w') as f:
+with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:
     f.write(output)
