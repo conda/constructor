@@ -58,3 +58,14 @@ in <a href="./examples/maxiconda">examples/maxiconda</a>.
     to the file `constructor.yaml`. This provides packages such as
     `m2w64-toolchain` which is a dependency of `theano`. It is best to
     add `/msys2` as `http://repo.continuum.io/pkgs/msys2`.
+
+
+## Devel
+
+To build or update ``README.md`` at the root of the repo you'll need jinja2 installed
+
+```
+conda install jinja2
+```
+
+and then run ``make doc``. Or invoke the script directly with ``python scripts/make_docs.py``.
