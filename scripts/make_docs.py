@@ -11,9 +11,6 @@ from constructor import construct
 
 valid_platforms = construct.ns_platform(sys.platform)
 
-header = """
-"""
-
 template = """
 # Keys in `construct.yaml` file:
 
