@@ -1,6 +1,6 @@
 
 doc:
-	python constructor/construct.py
+	python scripts/make_docs.py
 
 test:
 	constructor --test
