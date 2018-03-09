@@ -739,7 +739,7 @@ Section "Install"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
     File __POST_INSTALL__
-    File /r __INDEX_CACHE__
+    File /nonfatal /r __INDEX_CACHE__
 
     @PKG_COMMANDS@
 
