@@ -19,23 +19,6 @@ from constructor.exceptions import (
 )
 
 
-PREAMBLE = '''\n
-Keys in `construct.yaml` file:
-==============================
-
-This document describes each of they keys in the `construct.yaml` file,
-which is the main configuration file of a constructor configuration
-directory.
-
-All keys are optional, except otherwise noted.  Also, the keys `specs`
-and `packages` take either a list of items, or a path to a file,
-which contains one item per line (excluding lines starting with `#`).
-
-Also note, that any line in `construct.yaml` may contain a selector at the
-end, in order to allow customization for selected platforms.
-
-'''
-
 # list of tuples (key name, required, type, description)
 KEYS = [
     ('name',                   True,  str, '''
@@ -317,29 +300,8 @@ def verify(info):
 
 
 def generate_doc():
-    path = abspath('%s/../../CONSTRUCT.md' % __file__)
-    print('generating: %s' % path)
-    with open(path, 'w') as fo:
-        fo.write(PREAMBLE)
-        for key, required, unused_types, descr in KEYS:
-            descr = descr.strip()
-            if descr == 'XXX':
-                continue
-            fo.write("""
-`%s`:%s
-----------------
-%s
-
-""" % (key,
-       ' required' if required else '',
-       descr))
-        fo.write("""
-List of platform selectors:
-==============================
-```
-%s
-```
-""" % ('\n'.join(ns_platform('').keys())))
+    print('generate_doc() is deprecated. Use scripts/make_docs.py instead')
+    sys.exit(1)
 
 
 if __name__ == '__main__':
