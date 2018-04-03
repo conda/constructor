@@ -17,8 +17,7 @@ proprietary and known as `cas-installer`.
 
 ## Installation:
 
-As of version 1.3.0, `constructor` may be installed into any conda
-environment using:
+`constructor` can be installed into the base environment using:
 
     $ conda install constructor
 
