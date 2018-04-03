@@ -35,8 +35,8 @@ argument type(s): {% for arg_type in key_info[2] %}``{{arg_type}}``, {% endfor %
 {{key_info[3]}}{% endfor %}
 
 ## List of available selectors:
-{% for platform in platforms.keys() %}
-- ``{{platform}}``{% endfor %}
+{% for key, val in platforms|dictsort %}
+- ``{{key}}``{% endfor %}
 
 """
 
