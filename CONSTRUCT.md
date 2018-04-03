@@ -303,16 +303,16 @@ interactive installation. (Windows only)
 
 ## List of available selectors:
 
+- ``aarch64``
+- ``armv7l``
 - ``linux``
 - ``linux32``
 - ``linux64``
-- ``armv7l``
-- ``aarch64``
-- ``ppc64le``
-- ``x86``
-- ``x86_64``
 - ``osx``
+- ``ppc64le``
 - ``unix``
 - ``win``
 - ``win32``
 - ``win64``
+- ``x86``
+- ``x86_64``
