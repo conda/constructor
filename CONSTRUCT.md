@@ -56,10 +56,10 @@ dest when writing `urls{,.txt}`. Example use:
 channels_remap:
   -
       src: file:///tmp/a3/conda-bld
-      dest: https://repo.continuum.io/pkgs/main
+      dest: https://repo.anaconda.com/pkgs/main
   -
       src: file:///tmp/r/conda-bld
-      dest: https://repo.continuum.io/pkgs/r
+      dest: https://repo.anaconda.com/pkgs/r
 ```
 
 ## `specs`
@@ -90,7 +90,7 @@ argument type(s): ``list``, ``str``,
 
 A list of explicit conda packages to be included, e.g. `yaml-0.1.6-0.tar.bz2`.
 The packages may also be specified by their entire URL,
-e.g.`https://repo.continuum.io/pkgs/free/osx-64/openssl-1.0.1k-1.tar.bz2`.
+e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openpyxl-2.4.10-py36_0.tar.bz2`.
 Optionally, the MD5 hash sum of the package, may be added after an immediate
 `#` character, e.g. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 
@@ -198,8 +198,8 @@ required: False
 
 argument type(s): ``bool``, 
 
-If set, a .condarc file is written to the root of the enviornment if there are
-any channels or conda_default_channels set.
+By default, no .condarc file is written. If set, a .condarc file is written to
+the base environment if there are any channels or conda_default_channels is set.
 
 ## `company`
 

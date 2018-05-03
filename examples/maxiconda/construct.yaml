@@ -4,7 +4,7 @@ version: 2.5.5
 install_in_dependency_order: True
 
 channels:
-  - http://repo.continuum.io/pkgs/free/
+  - http://repo.anaconda.com/pkgs/main/
 
 specs:
   - python 3.5*

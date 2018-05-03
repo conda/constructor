@@ -2,7 +2,7 @@ name: Funnychan
 version: 2.5.5
 
 channels:
-  - http://repo.continuum.io/pkgs/free/
+  - http://repo.anaconda.com/pkgs/main/
   - https://conda.anaconda.org/ilan
 
 # specifications
