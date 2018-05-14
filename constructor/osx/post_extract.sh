@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2017 Continuum Analytics, Inc.
+# Copyright (c) 2017 Anaconda, Inc.
 # All rights reserved.
 
 unset DYLD_LIBRARY_PATH

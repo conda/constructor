@@ -1,4 +1,4 @@
-# (c) Continuum Analytics, Inc. / http://continuum.io
+# (c) Anaconda, Inc. / http://continuum.io
 # All Rights Reserved
 # This file is under the BSD license
 

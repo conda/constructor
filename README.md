@@ -53,7 +53,7 @@ in <a href="./examples/maxiconda">examples/maxiconda</a>.
     explicitly.
     In particular, on Windows this means that if you want the "Anaconda
     Prompt", you will have to list `console_shortcut`, as well as `menuinst`.
-  * For Windows builds, add the Continuum channel `/msys2`
+  * For Windows builds, add the Anaconda channel `/msys2`
     to the file `constructor.yaml`. This provides packages such as
     `m2w64-toolchain` which is a dependency of `theano`. It is best to
     add `/msys2` as `http://repo.anaconda.com/pkgs/msys2`.
