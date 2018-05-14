@@ -233,7 +233,7 @@ def select_lines(data, namespace):
 def yamlize(data, directory, content_filter):
     data = content_filter(data)
     try:
-        return yaml.load(data)
+        return yaml.safe_load(data)
     except yaml.error.YAMLError as e:
         if ('{{' not in data) and ('{%' not in data):
             raise UnableToParse(original=e)
