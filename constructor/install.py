@@ -228,8 +228,8 @@ def create_meta(prefix, dist, info_dir, extra_info):
     meta_dir = join(prefix, 'conda-meta')
     if not isdir(meta_dir):
         os.makedirs(meta_dir)
-        with open(join(meta_dir, 'history'), 'w') as fo:
-            fo.write('')
+    #     with open(join(meta_dir, 'history'), 'w') as fo:
+    #         fo.write('')
     with open(join(meta_dir, dist + '.json'), 'w') as fo:
         json.dump(meta, fo, indent=2, sort_keys=True)
 

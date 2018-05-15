@@ -23,6 +23,7 @@ if conda_interface_type == 'conda':
     from conda.exports import default_prefix
     from conda.exports import linked_data
     from conda.exports import download as _download
+    from conda.exports import MatchSpec
 
     from conda.models.channel import prioritize_channels
 
@@ -63,3 +64,4 @@ fetch_index, fetch_pkg = fetch_index, fetch_pkg
 Resolve, NoPackagesFound = Resolve, NoPackagesFound
 default_prefix = default_prefix
 linked_data = linked_data
+MatchSpec = MatchSpec

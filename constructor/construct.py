@@ -59,6 +59,12 @@ This list of specifications if given to the conda resolver (as if you were
 to create a new environment with those specs.
 '''),
 
+    ('user_requested_specs',                  False, (list, str), '''
+List of package specifications to be recorded as "user-requested" for the 
+initial environment in conda's history file. If not given, user-requested
+specs will fall back to 'specs'. 
+'''),
+
     ('exclude',                False, list, '''
 List of package names to be excluded, after the '`specs` have been resolved.
 For example, you can say that `readline` should be excluded, even though it
