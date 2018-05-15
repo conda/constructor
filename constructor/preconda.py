@@ -5,12 +5,14 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import os
-from os.path import basename, dirname, join, isdir
+from os.path import basename, dirname, join, isdir, split as path_split
 import platform
 import sys
+import time
 
 from . import __version__ as CONSTRUCTOR_VERSION
-from .conda_interface import CONDA_INTERFACE_VERSION, default_prefix, linked_data, write_repodata
+from .conda_interface import (CONDA_INTERFACE_VERSION, MatchSpec, default_prefix, linked_data,
+                              write_repodata)
 
 try:
     import json
@@ -20,7 +22,6 @@ except:
 files = '.constructor-build.info', 'urls', 'urls.txt', '.install.py'
 
 def write_index_cache(info, dst_dir):
-    global files
     cache_dir = join(dst_dir, 'cache')
 
     if not isdir(cache_dir):
@@ -36,9 +37,7 @@ def write_index_cache(info, dst_dir):
         write_repodata(cache_dir, url)
 
     for cache_file in os.listdir(cache_dir):
-        if cache_file.endswith(".json"):
-            files += join(cache_dir, cache_file),
-        else:
+        if not cache_file.endswith(".json"):
             os.unlink(join(cache_dir, cache_file))
 
 def create_install(info, dst_dir):
@@ -127,5 +126,29 @@ def write_files(info, dst_dir):
 
     write_index_cache(info, dst_dir)
 
+    write_conda_meta(info, dst_dir)
+
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
+
+
+def write_conda_meta(info, dst_dir):
+    user_requested_specs = info.get('user_requested_specs', info['specs'])
+    cmd = path_split(sys.argv[0])[-1]
+    if len(sys.argv) > 1:
+        cmd = "%s %s" % (cmd, " ".join(sys.argv[1:]))
+
+    builder = [
+        "==> %s <==" % time.strftime('%Y-%m-%d %H:%M:%S'),
+        "# cmd: %s" % cmd,
+    ]
+    builder.extend("+%s" % dist.full_name for dist in info['_dists'])
+    if user_requested_specs:
+        update_specs = [str(MatchSpec(s)) for s in user_requested_specs]
+        builder.append("# update specs: %s" % update_specs)
+    builder.append("\n")
+
+    if not isdir(join(dst_dir, 'conda-meta')):
+        os.makedirs(join(dst_dir, 'conda-meta'))
+    with open(join(dst_dir, 'conda-meta', 'history'), 'w') as fh:
+        fh.write("\n".join(builder))

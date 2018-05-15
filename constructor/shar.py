@@ -92,6 +92,7 @@ def create(info, verbose=False):
         for cf in os.listdir(cache_dir):
             if cf.endswith(".json"):
                 p_t.add(join(cache_dir, cf), 'pkgs/cache/' + cf)
+    p_t.add(join(tmp_dir, 'conda-meta', 'history'), 'conda-meta/history')
     p_t.close()
 
     tarball = join(tmp_dir, 'tmp.tar')
