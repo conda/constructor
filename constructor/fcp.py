@@ -96,21 +96,6 @@ def parse_packages(lines):
         yield m.group('url'), fn, m.group('md5')
 
 
-def handle_packages(info):
-    for url, fn, md5 in parse_packages(info['packages']):
-        if fn.count('-') < 2:
-            sys.exit("Error: Not a valid conda package filename: '%s'" % fn)
-        dists.append(fn)
-        md5s[fn] = md5
-        if url:
-            urls[fn] = url
-        else:
-            try:
-                urls[fn] = index[fn]['channel']
-            except KeyError:
-                sys.exit("Error: did not find '%s' in any channels" % fn)
-
-
 def move_python_first():
     for dist in list(dists):
         if name_dist(dist) == 'python':
@@ -258,8 +243,6 @@ def main(info, verbose=True, dry_run=False):
     if 'specs' in info:
         resolve(info, verbose)
     exclude_packages(info)
-    if 'packages' in info:
-        handle_packages(info)
 
     if not info.get('install_in_dependency_order'):
         dists.sort()
