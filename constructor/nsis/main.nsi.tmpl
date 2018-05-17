@@ -560,6 +560,45 @@ Function CheckForSpaces
     Exch $R0
 FunctionEnd
 
+# http://nsis.sourceforge.net/StrCSpn,_StrCSpnReverse:_Scan_strings_for_characters
+Function StrCSpn
+ Exch $R0 ; string to check
+ Exch
+ Exch $R1 ; string of chars
+ Push $R2 ; current char
+ Push $R3 ; current char
+ Push $R4 ; char loop
+ Push $R5 ; char loop
+
+  StrCpy $R4 -1
+
+  NextChar:
+  StrCpy $R2 $R1 1 $R4
+  IntOp $R4 $R4 - 1
+   StrCmp $R2 "" StrOK
+
+   StrCpy $R5 -1
+
+   NextCharCheck:
+   StrCpy $R3 $R0 1 $R5
+   IntOp $R5 $R5 - 1
+    StrCmp $R3 "" NextChar
+    StrCmp $R3 $R2 0 NextCharCheck
+     StrCpy $R0 $R2
+     Goto Done
+
+ StrOK:
+ StrCpy $R0 ""
+
+ Done:
+
+ Pop $R5
+ Pop $R4
+ Pop $R3
+ Pop $R2
+ Pop $R1
+ Exch $R0
+FunctionEnd
 
 # http://stackoverflow.com/a/29569614/1170370
 !macro _IsNonEmptyDirectory _a _b _t _f
@@ -609,6 +648,18 @@ Function OnDirectoryLeave
              Please consider removing the space$R1."
 
     NoSpaces:
+
+    # List of characters not allowed anywhere in $INSTDIR
+    Push "^%!"
+    Push $INSTDIR
+    Call StrCSpn
+    Pop $R0
+
+    StrCmp $R0 "" NoInvalidCharaceters
+        MessageBox MB_OK|MB_ICONEXCLAMATION \
+            "Error: 'Destination Folder' contains the following invalid character: $R0"
+        abort
+    NoInvalidCharaceters:
 
     UnicodePathTest::SpecialCharPathTest $INSTDIR
     Pop $R1
