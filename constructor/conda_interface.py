@@ -26,6 +26,7 @@ if conda_interface_type == 'conda':
     from conda.exports import MatchSpec
 
     from conda.models.channel import prioritize_channels
+    from conda.models.dist import Dist
 
     def fetch_index(channel_urls):
         return _fetch_index(prioritize_channels(channel_urls))
@@ -65,3 +66,4 @@ Resolve, NoPackagesFound = Resolve, NoPackagesFound
 default_prefix = default_prefix
 linked_data = linked_data
 MatchSpec = MatchSpec
+Dist = Dist
