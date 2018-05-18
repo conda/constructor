@@ -15,7 +15,8 @@ import re
 import sys
 import tarfile
 
-from .conda_interface import NoPackagesFound, Resolve, fetch_index, fetch_pkg
+from .conda_interface import (NoPackagesFound, Resolve, fetch_index, fetch_pkg,
+                              MatchSpec)
 from .install import name_dist
 from .utils import filename_dist, md5_file
 
@@ -30,7 +31,7 @@ def resolve(info, verbose=False):
         sys.exit("Error: index is empty, maybe 'channels' are missing?")
     specs = info['specs']
     r = Resolve(index)
-    if not any(s.split()[0] == 'python' for s in specs):
+    if not any(MatchSpec(s).name == 'python' for s in specs):
         specs.append('python')
     if verbose:
         print("specs: %r" % specs)
