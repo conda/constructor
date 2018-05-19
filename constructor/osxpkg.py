@@ -133,6 +133,42 @@ def fresh_dir(dir_path):
 
 
 def pkgbuild(name, scripts=None):
+    # Some packages like qt might have .app folders like qdbusviewer.app. The
+    # installer by default makes this .app relocatable, so that if it is
+    # already installed, it will upgrade it with the new one instead of just
+    # installing the new one in the chosen installation directory. An example
+    # log entry for this:
+
+    # PackageKit:
+    # /path_new/bin/qdbusviewer.app relocated to /path_old/bin/qdbusviewer.app
+
+    # This can cause trouble, expesically if any of the files inside that
+    # folder require prefix patching and the installer will fail, since it
+    # won't find the file. A general practice was to rename <name>.app to
+    # <name>app so that the installer would ignore analyzing it, but that was a
+    # hack as it also required a post-link script to rename them back on
+    # installation. To avoid such nastiness, we mark all components in the
+    # plist file of the parent pkg file, (in this case, qt.pkg) as non-relocatable.
+
+    # xref(s):
+    #  - https://apple.stackexchange.com/a/219144/243863
+    #  - https://stackoverflow.com/a/26202210/1005215
+    #  - https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/pkgbuild.1.html
+    #  - https://github.com/conda-forge/python.app-feedstock/blob/master/recipe/post-link.sh
+
+    components_plist = '{}/{}.plist'.format(PACKAGE_ROOT, name)
+
+    check_call([
+        'pkgbuild',
+        '--root', PACKAGE_ROOT,
+        '--analyze', components_plist])
+
+    check_call([
+        'plutil',
+        '-replace', 'BundleIsRelocatable',
+        '-bool', 'false',
+        components_plist])
+
     args = [
         "pkgbuild",
         "--root", PACKAGE_ROOT,
@@ -142,6 +178,7 @@ def pkgbuild(name, scripts=None):
             "--scripts", scripts,
         ])
     args.extend([
+        "--component-plist", components_plist,
         "--identifier", "io.continuum.pkg.%s" % name,
         "--ownership", "preserve",
         "%s/%s.pkg" % (PACKAGES_DIR, name),
