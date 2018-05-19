@@ -174,6 +174,11 @@ def create(info, verbose=False):
     pkgs_dir = join(prefix, 'pkgs')
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
+
+    # TODO: Refactor code such that the argument to preconda.write_files is
+    # /path/to/base/env, so that such workarounds are not required.
+    shutil.move(join(pkgs_dir, 'conda-meta'), prefix)
+
     pkgbuild('preconda')
 
     for dist in info['_dists']:
