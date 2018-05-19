@@ -729,6 +729,9 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                   "$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR;$0").r0'
 
+    SetOutPath "$INSTDIR\conda-meta"
+    File __CONDA_HISTORY__
+
     SetOutPath "$INSTDIR\pkgs"
     File __INSTALL_PY__
     File __URLS_FILE__

@@ -142,6 +142,7 @@ def make_nsi(info, dir_path):
                     ('URLS_FILE', 'urls'),
                     ('URLS_TXT_FILE', 'urls.txt'),
                     ('POST_INSTALL', 'post_install.bat'),
+                    ('CONDA_HISTORY', join('conda-meta', 'history')),
                     ('INDEX_CACHE', 'cache')]:
         replace[key] = join(dir_path, fn)
     for key in replace:
