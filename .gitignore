@@ -1,4 +1,5 @@
 *~
+*.swp
 *.pyc
 *.egg-info
 .cache/
