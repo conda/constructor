@@ -70,7 +70,19 @@ argument type(s): ``list``, ``str``,
 
 List of package specifications, e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
 This list of specifications if given to the conda resolver (as if you were
-to create a new environment with those specs.
+to create a new environment with those specs). The packages may also be
+specified by their entire URL,
+e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
+
+## `user_requested_specs`
+
+required: False
+
+argument type(s): ``list``, ``str``, 
+
+List of package specifications to be recorded as "user-requested" for the 
+initial environment in conda's history file. If not given, user-requested
+specs will fall back to 'specs'. 
 
 ## `exclude`
 
@@ -81,18 +93,6 @@ argument type(s): ``list``,
 List of package names to be excluded, after the '`specs` have been resolved.
 For example, you can say that `readline` should be excluded, even though it
 is contained as a result of resolving the specs for `python 2.7`.
-
-## `packages`
-
-required: False
-
-argument type(s): ``list``, ``str``, 
-
-A list of explicit conda packages to be included, e.g. `yaml-0.1.6-0.tar.bz2`.
-The packages may also be specified by their entire URL,
-e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openpyxl-2.4.10-py36_0.tar.bz2`.
-Optionally, the MD5 hash sum of the package, may be added after an immediate
-`#` character, e.g. `readline-6.2-2.tar.bz2#0801e644bd0c1cd7f0923b56c52eb7f7`.
 
 ## `menu_packages`
 
