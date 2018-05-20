@@ -86,7 +86,7 @@ setup(
     name="constructor",
     version=version,
     author="Ilan Schnell",
-    author_email="ilan@continuum.io",
+    author_email="ilan@anaconda.com",
     url="https://github.com/conda/constructor",
     license="BSD",
     description="create installer from conda packages",
