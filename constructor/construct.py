@@ -56,8 +56,8 @@ channels_remap:
     ('specs',                  False, (list, str), '''
 List of package specifications, e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
 This list of specifications if given to the conda resolver (as if you were
-to create a new environment with those specs. The packages may also be 
-specified by their entire URL, 
+to create a new environment with those specs). The packages may also be
+specified by their entire URL,
 e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
 '''),
 
