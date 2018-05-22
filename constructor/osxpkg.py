@@ -156,7 +156,7 @@ def pkgbuild(name, scripts=None):
     #  - https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/pkgbuild.1.html
     #  - https://github.com/conda-forge/python.app-feedstock/blob/master/recipe/post-link.sh
 
-    components_plist = '{}/{}.plist'.format(PACKAGE_ROOT, name)
+    components_plist = '{}/{}.plist'.format(PACKAGES_DIR, name)
 
     check_call([
         'pkgbuild',
@@ -184,6 +184,8 @@ def pkgbuild(name, scripts=None):
         "%s/%s.pkg" % (PACKAGES_DIR, name),
     ])
     check_call(args)
+
+    os.remove(components_plist)
 
 
 def pkgbuild_script(name, info, src, dst='postinstall'):
