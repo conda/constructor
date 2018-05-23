@@ -85,8 +85,8 @@ version = re.search(r"^__version__\s*=\s*(['\"])(\S*)\1", data, re.M).group(2)
 setup(
     name="constructor",
     version=version,
-    author="Ilan Schnell",
-    author_email="ilan@anaconda.com",
+    author="Anaconda, Inc.",
+    author_email="conda@anaconda.com",
     url="https://github.com/conda/constructor",
     license="BSD",
     description="create installer from conda packages",
