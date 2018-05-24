@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import tarfile
 from os.path import dirname, exists, join
@@ -130,6 +131,24 @@ def fresh_dir(dir_path):
     rm_rf(dir_path)
     assert not exists(dir_path)
     os.mkdir(dir_path)
+
+def update_distribution_size(pkg):
+    expanded_pkg = "{}_expanded".format(pkg)
+    flattened_pkg = "{}_flattened".format(pkg)
+
+    check_call(['pkgutil', '--expand', pkg, expanded_pkg])
+
+    with open(join(expanded_pkg, 'Distribution'), 'r+') as d:
+        contents = d.read()
+        d.seek(0)
+        d.write(re.sub(r'installKBytes="(\d+)"',
+                lambda x: 'installKBytes="{}"'.format(int(x.group(1))*2),
+                contents))
+
+    check_call(['pkgutil', '--flatten', expanded_pkg, flattened_pkg])
+
+    shutil.move(flattened_pkg, pkg)
+    shutil.rmtree(expanded_pkg)
 
 
 def pkgbuild(name, scripts=None):
@@ -279,6 +298,31 @@ def create(info, verbose=False):
         "--identifier", info['name'],
         "tmp.pkg",
     ])
+
+    # The pkg installer computes size as an addition of 'installKBytes' for all
+    # pkg components that it holds, which is automatically computed by the
+    # 'productbuild' command and cannot be overriden in the distribution.xml
+    # file. Also, on installation using the pkg installer, one does not get
+    # tarballs in the package cache. Now there are two scenarios:
+
+    # 1. attempt_hardlinks is false. In this case there is no package cache at
+    # all. All .pkg components are extracted directly to the base env and
+    # patched. So the size reported by the installer is correct.
+
+    # 2. attempt_hardlinks is true. In this case there is a package cache with
+    # the extracted contents of the .pkg components, which is then attempted to
+    # be hardlinked to the base env and then patched. However, if the creation
+    # of hard links fails, then a copy is made. Even if an attempt of making
+    # the hard links succeeds, right click->get-info on macOS doesn't account
+    # for the duplicate inodes and ends up computing them twice, even though
+    # `du -sh` gives the right answer. The idea here is to just play safe and
+    # report the size taken to be what it can take up, 'at most'.
+
+    # xref(s):
+    #  - https://discussions.apple.com/thread/1271532
+    #  - https://apple.stackexchange.com/a/216082/243863
+    if bool(info.get('attempt_hardlinks')):
+      update_distribution_size("tmp.pkg")
 
     identity_name = info.get('signing_identity_name')
     if identity_name:
