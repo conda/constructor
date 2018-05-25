@@ -4,7 +4,7 @@ version: X
 install_in_dependency_order: True
 
 channels:
-  - http://repo.continuum.io/pkgs/main/
+  - http://repo.anaconda.com/pkgs/main/
 
 specs:
   - python
