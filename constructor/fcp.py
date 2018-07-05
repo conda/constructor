@@ -243,8 +243,15 @@ def main(info, verbose=True, dry_run=False):
         # drop all noarch: python packages because constructor is not noarch:
         # python compatible. Track that progress here
         # https://github.com/conda/constructor/issues/86
-        index = {pkg_name: pkg_info for pkg_name, pkg_info in iteritems(index)
-                 if pkg_info.get('noarch') != 'python'}
+        def is_noarch_python(pkg_info):
+            noarch_info = pkg_info.get('noarch')
+            if noarch_info is None:
+                return False
+            else:
+                return noarch_info.value == 'python'
+
+        index = {pkg_name: pkg_info for pkg_name, pkg_info in index.items()
+                 if not is_noarch_python(pkg_info)}
 
     if 'specs' in info:
         resolve(info, verbose)
