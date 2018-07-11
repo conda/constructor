@@ -66,6 +66,7 @@ BATCH=0
 FORCE=0
 SKIP_SCRIPTS=0
 TEST=0
+REINSTALL=0
 USAGE="
 usage: $0 [options]
 
@@ -332,6 +333,8 @@ if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
     printf "ERROR: File or directory already exists: '%s'\\n" "$PREFIX" >&2
     printf "If you want to update an existing installation, use the -u option.\\n" >&2
     exit 1
+elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
+    REINSTALL=1
 fi
 
 
@@ -397,7 +400,11 @@ install_dist()
     # which does the post extract steps (update prefix files, run 'post-link',
     # and creates the conda metadata).  Note that this is all done without
     # conda.
-    printf "installing: %s ...\\n" "$1"
+    if [ "$REINSTALL" = "1" ]; then
+      printf "reinstalling: %s ...\\n" "$1"
+    else
+      printf "installing: %s ...\\n" "$1"
+    fi
     PKG_PATH="$PREFIX"/pkgs/$1
     PKG="$PKG_PATH".tar.bz2
     mkdir -p $PKG_PATH || exit 1
