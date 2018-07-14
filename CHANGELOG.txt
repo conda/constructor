@@ -1,3 +1,12 @@
+2018-07-14   2.1.1:
+-------------------
+  * NSIS:
+    - Don't fail when index cache is empty (local channels)
+
+  * SHELL:
+    - Fix wording for force/update on an existing installation
+
+
 2018-06-06   2.1.0:
 -------------------
   * COMMON:
@@ -20,6 +29,7 @@
   * COMMON:
     - Fix incompatibility with conda 4.5.x
     - Decouple doc generation from source code, templatize it
+
 
 2018-02-01   2.0.2:
 -------------------
