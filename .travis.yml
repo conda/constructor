@@ -41,10 +41,10 @@ install:
       MINICONDA_OS=MacOSX ;
     fi ;
     MINICONDA_PYVERSION=${TRAVIS_PYTHON_VERSION:0:1} ;
-    wget https://repo.continuum.io/miniconda/Miniconda$MINICONDA_PYVERSION-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
+    wget https://repo.anaconda.com/miniconda/Miniconda$MINICONDA_PYVERSION-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p "$HOME"/miniconda
   - source "$HOME"/miniconda/bin/activate root
-  - conda config --set always_yes yes 
+  - conda config --set always_yes yes
   - conda update -n root conda -q --no-pin
   - conda config --add pkgs_dirs ~/condacache/pkgs
   # Install run dependencies
