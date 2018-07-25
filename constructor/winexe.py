@@ -172,6 +172,9 @@ def make_nsi(info, dir_path):
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
+        ('@UNINSTALL_NAME@', info.get('uninstall_name',
+            'Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})'
+        )),
         ]:
         data = data.replace(key, value)
 

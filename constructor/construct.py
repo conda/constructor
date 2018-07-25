@@ -140,6 +140,11 @@ the base environment if there are any channels or conda_default_channels is set.
 Name of the company/entity who is responsible for the installer.
 '''),
 
+    ('uninstall_name',         False, str, '''
+Application name in the Windows "Programs and Features" control panel.
+Defaults to `Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})`.
+'''),
+
     ('pre_install',            False, str, '''
 Path to a pre install (bash - Unix only) script.
 '''),
