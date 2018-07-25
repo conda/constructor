@@ -209,6 +209,15 @@ argument type(s): ``str``,
 
 Name of the company/entity who is responsible for the installer.
 
+## `uninstall_name`
+
+required: False
+
+argument type(s): ``str``, 
+
+Application name in the Windows "Programs and Features" control panel.
+Defaults to `Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})`.
+
 ## `pre_install`
 
 required: False
