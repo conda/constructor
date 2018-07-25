@@ -53,7 +53,7 @@ Function mui_AnaCustomOptions_Show
 
     !insertmacro MUI_HEADER_TEXT \
         "Advanced Installation Options" \
-        "Customize how Anaconda integrates with Windows"
+        "Customize how ${NAME} integrates with Windows"
 
     ${NSD_CreateGroupBox} 0u 0u 100% 120u "Advanced Options"
     Pop $0
@@ -64,17 +64,17 @@ Function mui_AnaCustomOptions_Show
         StrCpy $1 "the system"
     ${EndIf}
     ${NSD_CreateCheckbox} 20u 15u 240u 10u \
-        "Add Anaconda to $1 &PATH environment variable"
+        "Add ${NAME} to $1 &PATH environment variable"
     Pop $mui_AnaCustomOptions.AddToPath
 
     ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
     ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
 
     ${NSD_CreateLabel} 20u 27u 240u 40u \
-        "Not recommended. Instead, open Anaconda with the Windows Start$\n\
+        "Not recommended. Instead, open ${NAME} with the Windows Start$\n\
          menu and select $\"Anaconda (${ARCH})$\". This $\"add to PATH$\" option makes$\n\
-         Anaconda get found before previously installed software, but may$\n\
-         cause problems requiring you to uninstall and reinstall Anaconda."
+         ${NAME} get found before previously installed software, but may$\n\
+         cause problems requiring you to uninstall and reinstall ${NAME}."
     Pop $Ana_AddToPath_Label
 
     ${If} $InstMode = ${JUST_ME}
@@ -83,7 +83,7 @@ Function mui_AnaCustomOptions_Show
         StrCpy $1 "the system"
     ${EndIf}
     ${NSD_CreateCheckbox} 20u 70u 240u 10u \
-        "&Register Anaconda as $1 Python ${PY_VER}"
+        "&Register ${NAME} as $1 Python ${PY_VER}"
     Pop $mui_AnaCustomOptions.RegisterSystemPython
     ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython \
                     $Ana_RegisterSystemPython_State
@@ -93,7 +93,7 @@ Function mui_AnaCustomOptions_Show
     ${NSD_CreateLabel} 20u 82u 240u 30u \
         "This will allow other programs, such as Python Tools for Visual Studio \
          $\nPyCharm, Wing IDE, PyDev, and MSI binary packages, to automatically \
-         $\ndetect Anaconda as the primary Python ${PY_VER} on the system."
+         $\ndetect ${NAME} as the primary Python ${PY_VER} on the system."
     Pop $Ana_RegisterSystemPython_Label
 
     nsDialogs::Show
@@ -137,7 +137,7 @@ Function RegisterSystemPython_OnClick
             MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION|MB_DEFBUTTON2 \
                 "A version of Python ${PY_VER} (${ARCH}) is already at$\n\
                 $2$\n\
-                We recommend that if you want Anaconda registered as your $\n\
+                We recommend that if you want ${NAME} registered as your $\n\
                 system Python, you unregister this Python first. If you really$\n\
                 know this is what you want, click OK, otherwise$\n\
                 click cancel to continue.$\n$\n\
