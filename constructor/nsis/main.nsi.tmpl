@@ -687,6 +687,19 @@ Function OnDirectoryLeave
           abort
 
       valid_path:
+
+    Push $R1
+    ${IsWritable} $INSTDIR $R1
+    IntCmp $R1 0 pathgood
+    Pop $R1
+    MessageBox mb_ok|MB_ICONEXCLAMATION \
+        "Error: Path $INSTDIR is not writable. Please check permissions or \
+         try respawning the installer with elevated privileges."
+    Abort
+
+    pathgood:
+    Pop $R1
+
 FunctionEnd
 
 Function .onVerifyInstDir
