@@ -142,7 +142,7 @@ Name of the company/entity who is responsible for the installer.
 
     ('uninstall_name',         False, str, '''
 Application name in the Windows "Programs and Features" control panel.
-Defaults to `Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})`.
+Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 '''),
 
     ('pre_install',            False, str, '''
