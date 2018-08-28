@@ -216,7 +216,7 @@ required: False
 argument type(s): ``str``, 
 
 Application name in the Windows "Programs and Features" control panel.
-Defaults to `Python ${PYVERSION} (${NAME} ${VERSION} ${ARCH})`.
+Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 
 ## `pre_install`
 
