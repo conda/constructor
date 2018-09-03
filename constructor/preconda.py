@@ -12,7 +12,7 @@ import time
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
-    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, linked_data, write_repodata,
+    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata,
 )
 
 try:
@@ -103,7 +103,7 @@ def system_info():
     elif sys.platform.startswith('win'):
         out['extra'] = platform.win32_ver()
         prefix = default_prefix
-        prefix_records = linked_data(prefix).values()
+        prefix_records = list(PrefixData(prefix).iter_records())
         nsis_prefix_rec = next(
             (rec for rec in prefix_records if rec.name == 'nsis'), None)
         if nsis_prefix_rec:
