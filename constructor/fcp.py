@@ -14,12 +14,12 @@ import sys
 
 from .conda_interface import (
     PackageCacheData, ProgressiveFetchExtract, Solver, concatv, conda_context, env_vars, get,
-    groupby, pluck, read_paths_json, conda_reset_context,
+    groupby, read_paths_json, conda_reset_context,
 )
 
 
 def warn_menu_packages_missing(precs, menu_packages):
-    all_names = set(pluck("name", precs))
+    all_names = set(prec.name for prec in precs)
     for name in menu_packages:
         if name not in all_names:
             print("WARNING: no such package (in menu_packages): %s" % name)
@@ -94,7 +94,7 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
         paths_data = read_paths_json(extracted_package_dir).paths
         for path_data in paths_data:
             short_path = path_data.path
-            size = path_data.size_in_bites or getsize(join(extracted_package_dir, short_path))
+            size = path_data.size_in_bytes or getsize(join(extracted_package_dir, short_path))
             total_extracted_pkgs_size += size
 
             map_members_scase[short_path].add(fn)
@@ -158,8 +158,9 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         precs = sorted(precs, key="name")
 
     # move python first
-    python_prec = get("python", precs)
-    precs.insert(0, precs.pop(python_prec))
+    python_prec = next(prec for prec in precs if prec.name == "python")
+    precs.remove(python_prec)
+    precs.insert(0, python_prec)
 
     warn_menu_packages_missing(precs, menu_packages)
     check_duplicates(precs)
@@ -178,7 +179,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         pc_recs, platform, ignore_duplicate_files
     )
 
-    dists = list(pluck("fn", precs))
+    dists = list(prec.fn for prec in precs)
 
     return _urls, dists, approx_tarballs_size, approx_pkgs_size
 

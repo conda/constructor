@@ -16,7 +16,7 @@ if conda_interface_type == 'conda':
     CONDA_MAJOR_MINOR = tuple(int(x) for x in CONDA_INTERFACE_VERSION.split('.')[:2])
 
     from conda._vendor.toolz.itertoolz import (
-        concatv as _concatv, get as _get, groupby as _groupby, pluck as _pluck,
+        concatv as _concatv, get as _get, groupby as _groupby,
     )
     from conda.base.context import (
         context as _conda_context, reset_context as _conda_reset_context,
@@ -35,7 +35,7 @@ if conda_interface_type == 'conda':
     # used by fcp.py
     PackageCacheData, ProgressiveFetchExtract = _PackageCacheData, _ProgressiveFetchExtract
     Solver, read_paths_json = _Solver, _read_paths_json
-    concatv, get, groupby, pluck = _concatv, _get, _groupby, _pluck
+    concatv, get, groupby = _concatv, _get, _groupby
     conda_context, env_vars, conda_reset_context = _conda_context, _env_vars, _conda_reset_context
 
     # used by preconda.py
