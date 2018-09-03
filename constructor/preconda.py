@@ -11,8 +11,9 @@ import sys
 import time
 
 from . import __version__ as CONSTRUCTOR_VERSION
-from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
-                              linked_data, write_repodata)
+from .conda_interface import (
+    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, linked_data, write_repodata,
+)
 
 try:
     import json
