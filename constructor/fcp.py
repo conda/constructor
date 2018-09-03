@@ -9,208 +9,106 @@ fcp (fetch conda packages) module
 from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
-import os
-from os.path import isdir, isfile, join, getsize
-import re
+from os.path import getsize, join
 import sys
-import tarfile
 
-from .conda_interface import (NoPackagesFound, Resolve, fetch_index, fetch_pkg,
-                              MatchSpec)
-from .install import name_dist
-from .utils import filename_dist, md5_file
-
-dists = []
-index = {}
-urls = {}
-md5s = {}
+from .conda_interface import (
+    PackageCacheData, ProgressiveFetchExtract, Solver, concatv, conda_context, env_vars, get,
+    groupby, pluck, read_paths_json, reset_context,
+)
 
 
-def resolve(info, verbose=False):
-    if not index:
-        sys.exit("Error: index is empty, maybe 'channels' are missing?")
-    specs = info['specs']
-    r = Resolve(index)
-    if not any(MatchSpec(s).name == 'python' for s in specs):
-        specs.append('python')
-    if verbose:
-        print("specs: %r" % specs)
-
-    try:
-        res = list(r.solve(specs))
-    except NoPackagesFound as e:
-        sys.exit("Error: %s" % e)
-    sys.stdout.write('\n')
-
-    if 'install_in_dependency_order' in info:
-        sort_info = {name_dist(d): d for d in res}
-        dists.extend(d for d in r.dependency_sort(sort_info))
-    else:
-        dists.extend(res)
+def warn_menu_packages_missing(precs, menu_packages):
+    all_names = set(pluck("name", precs))
+    for name in menu_packages:
+        if name not in all_names:
+            print("WARNING: no such package (in menu_packages): %s" % name)
 
 
-def check_duplicates():
-    map_name = defaultdict(list) # map package name to list of filenames
-    for fn in dists:
-        map_name[name_dist(fn)].append(fn)
-
-    for name, files in map_name.items():
-        if len(files) > 1:
+def check_duplicates(precs):
+    groups = groupby(lambda x: x.name, precs)
+    for precs in groups.values():
+        if len(precs) > 1:
             sys.exit("Error: '%s' listed multiple times: %s" %
-                     (name, ', '.join(files)))
+                     (precs[0].name, ', '.join(prec.fn for prec in precs)))
 
 
-def exclude_packages(info):
-    check_duplicates()
-    for name in info.get('exclude', []):
+def exclude_packages(precs, exclude=()):
+    for name in exclude:
         for bad_char in ' =<>*':
             if bad_char in name:
-                sys.exit("Error: did not expect '%s' in package name: %s" %
-                         name)
-        # find the package with name, and remove it
-        for dist in list(dists):
-            if name_dist(dist) == name:
-                dists.remove(dist)
-                break
-        else:
+                sys.exit("Error: did not expect '%s' in package name: %s" % (bad_char, name))
+
+    groups = groupby(lambda x: x.name in exclude, precs)
+    excluded_precs = groups.get(True, [])
+    accepted_precs = groups.get(False, [])
+    for name in exclude:
+        if not any(prec.name == name for prec in excluded_precs):
             sys.exit("Error: no package named '%s' to remove" % name)
+    return accepted_precs
 
 
-url_pat = re.compile(r'''
-(?P<url>\S+/)?                    # optional URL
-(?P<fn>[^\s#/]+)                  # filename
-([#](?P<md5>[0-9a-f]{32}))?       # optional MD5
-$                                 # EOL
-''', re.VERBOSE)
-def parse_packages(lines):
-    for line in lines:
-        line = line.strip()
-        if not line or line.startswith(('#', '@')):
-            continue
-        m = url_pat.match(line)
-        if m is None:
-            sys.exit("Error: Could not parse: %s" % line)
-        fn = m.group('fn')
-        fn = fn.replace('=', '-')
-        if not fn.endswith('.tar.bz2'):
-            fn += '.tar.bz2'
-        yield m.group('url'), fn, m.group('md5')
-
-
-def move_python_first():
-    for dist in list(dists):
-        if name_dist(dist) == 'python':
-            dists.remove(dist)
-            dists.insert(0, dist)
-            return
-
-
-def show(info):
+def _show(name, version, platform, download_dir, precs):
     print("""
 name: %(name)s
 version: %(version)s
-cache download location: %(_download_dir)s
-platform: %(_platform)s""" % info)
-    print("number of package: %d" % len(dists))
-    for fn in dists:
-        print('    %s' % fn)
+cache download location: %(download_dir)s
+platform: %(platform)s""" % dict(
+        name=name,
+        version=version,
+        platform=platform,
+        download_dir=download_dir,
+    ))
+    print("number of package: %d" % len(precs))
+    for prec in precs:
+        print('    %s' % prec.fn)
     print()
 
 
-def check_dists():
-    if len(dists) == 0:
-        sys.exit('Error: no packages specified')
-    check_duplicates()
-    assert name_dist(dists[0]) == 'python'
+
+def _fetch(download_dir, precs):
+    assert conda_context.pkgs_dirs[0] == download_dir
+    pc = PackageCacheData(download_dir)
+    assert pc.is_writable
+    pfe = ProgressiveFetchExtract(precs)
+    pfe.execute()
+    return tuple(pc.iter_records())
 
 
-def fetch(info):
-    download_dir = info['_download_dir']
-    if not isdir(download_dir):
-        os.makedirs(download_dir)
-
-    info['_urls'] = []
-    for dist in dists:
-        fn = filename_dist(dist)
-        path = join(download_dir, fn)
-        url = urls.get(dist)
-        md5 = md5s.get(dist)
-        if url:
-            url_index = fetch_index((url,))
-            try:
-                pkginfo = url_index[dist]
-            except KeyError:
-                sys.exit("Error: no package '%s' in %s" % (dist, url))
-        else:
-            pkginfo = index[dist]
-
-        # convert pkginfo to flat dict
-        try:
-            pkginfo = pkginfo.dump()
-        except AttributeError:
-            # pkginfo was already a dict
-            pass
-
-        if not pkginfo['channel'].endswith('/'):
-            pkginfo['channel'] += '/'
-        assert pkginfo['channel'].endswith('/')
-        info['_urls'].append((pkginfo['channel'] + fn, pkginfo['md5']))
-
-        if md5 and md5 != pkginfo['md5']:
-            sys.exit("Error: MD5 sum for '%s' does not match in remote "
-                     "repodata %s" % (fn, url))
-
-        if isfile(path) and md5_file(path) == pkginfo['md5']:
-            continue
-        print('fetching: %s' % fn)
-        fetch_pkg(pkginfo, download_dir)
-
-# nsis and pkg installers automatically compute the tarballs size
-# so this might not really be needed for them
-def update_approx_tarballs_size(info, size):
-    if '_approx_tarballs_size' not in info:
-        # Keep a min, 50MB buffer size
-        info['_approx_tarballs_size'] = 52428800
-    info['_approx_tarballs_size'] += size
-
-# for computing the size of the contents of all the tarballs in bytes
-def update_approx_pkgs_size(info, size):
-    if '_approx_pkgs_size' not in info:
-        # Keep a min, 50MB buffer size
-        info['_approx_pkgs_size'] = 52428800
-    info['_approx_pkgs_size'] += size
-
-def check_duplicates_files(info):
+def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
     print('Checking for duplicate files ...')
 
     map_members_scase = defaultdict(set)
-    map_members_icase = {}
+    map_members_icase = defaultdict(lambda: {'files': set(), 'fns': set()})
 
-    for dist in info['_dists']:
-        fn = filename_dist(dist)
-        fn_path = join(info['_download_dir'], fn)
-        t = tarfile.open(fn_path)
-        update_approx_tarballs_size(info, os.path.getsize(fn_path))
-        for member in t.getmembers():
-            update_approx_pkgs_size(info, member.size)
-            if member.type == tarfile.DIRTYPE:
-                continue
-            mname = member.name
-            if not mname.split('/')[0] in ['info', 'recipe']:
-                map_members_scase[mname].add(fn)
-                key = mname.lower()
-                if key not in map_members_icase:
-                    map_members_icase[key] = {'files':set(), 'fns':set()}
-                map_members_icase[key]['files'].add(mname)
-                map_members_icase[key]['fns'].add(fn)
-        t.close()
+    # Keep a min, 50MB buffer size
+    total_tarball_size = 52428800
+    total_extracted_pkgs_size = 52428800
+
+    for pc_rec in pc_recs:
+        fn = pc_rec.fn
+        extracted_package_dir = pc_rec.extracted_package_dir
+
+        total_tarball_size += int(pc_rec.get("size", 0))
+
+        paths_data = read_paths_json(extracted_package_dir).paths
+        for path_data in paths_data:
+            short_path = path_data.path
+            size = path_data.size_in_bites or getsize(join(extracted_package_dir, short_path))
+            total_extracted_pkgs_size += size
+
+            map_members_scase[short_path].add(fn)
+
+            short_path_lower = short_path.lower()
+            map_members_icase[short_path_lower]['files'].add(short_path)
+            map_members_icase[short_path_lower]['fns'].add(fn)
 
     for member in map_members_scase:
         fns = map_members_scase[member]
         msg_str = "File '%s' found in multiple packages: %s" % (
                   member, ', '.join(fns))
         if len(fns) > 1:
-            if info.get('ignore_duplicate_files'):
+            if ignore_duplicate_files:
                 print('Warning: {}'.format(msg_str))
             else:
                 sys.exit('Error: {}'.format(msg_str))
@@ -223,44 +121,94 @@ def check_duplicates_files(info):
         msg_str = "Files %s found in the package(s): %s" % (
                    str(files)[1:-1], ', '.join(fns))
         if len(files) > 1:
-            if (info.get('ignore_duplicate_files') or
-                info['_platform'].startswith('linux')):
+            if ignore_duplicate_files or platform.startswith('linux'):
                 print('Warning: {}'.format(msg_str))
             else:
                 sys.exit('Error: {}'.format(msg_str))
 
+    return total_tarball_size, total_extracted_pkgs_size
 
-def main(info, verbose=True, dry_run=False):
-    if 'channels' in info:
-        global index
 
-        _platforms = info['_platform'], 'noarch'
-        _urls = info['channels']
-        _urls = _urls + [x['src'] for x in info.get('channels_remap', [])]
-        subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
-                            for url in _urls for subdir in _platforms)
-        index = fetch_index(subdir_urls)
+def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
+          exclude=(), menu_packages=(), install_in_dependency_order=True,
+          ignore_duplicate_files=False, verbose=True, dry_run=False):
 
-    if 'specs' in info:
-        resolve(info, verbose)
-    exclude_packages(info)
+    # Add python to specs, since all installers need a python interpreter. In the future we'll
+    # probably want to add conda too.
+    specs = list(concatv(specs, ("python",)))
+    if verbose:
+        print("specs: %r" % specs)
 
-    if not info.get('install_in_dependency_order'):
-        dists.sort()
-    move_python_first()
+    # Append channels_remap srcs to channel_urls
+    channel_urls = tuple(concatv(
+        channel_urls,
+        (x['src'] for x in channels_remap),
+    ))
 
-    all_names = set(name_dist(fn) for fn in dists)
-    for name in info.get('menu_packages', []):
-        if name not in all_names:
-            print("WARNING: no such package (in menu_packages): %s" % name)
+    solver = Solver(
+        # The Solver class doesn't do well with `None` as a prefix right now
+        prefix="/constructor/no-environment",
+        channels=channel_urls,
+        subdirs=(platform, "noarch"),
+        specs_to_add=specs,
+    )
+    precs = list(solver.solve_final_state())
+
+    if not install_in_dependency_order:
+        precs = sorted(precs, key="name")
+
+    # move python first
+    python_prec = get("python", precs)
+    precs.insert(0, precs.pop(python_prec))
+
+    warn_menu_packages_missing(precs, menu_packages)
+    check_duplicates(precs)
+    precs = exclude_packages(precs, exclude)
 
     if verbose:
-        show(info)
-    check_dists()
+        _show(name, version, platform, download_dir, precs)
+
     if dry_run:
         return
-    fetch(info)
 
-    info['_dists'] = list(dists)
+    pc_recs = _fetch(download_dir, precs)
+    _urls = [(pc_rec.url, pc_rec.md5) for pc_rec in pc_recs]
 
-    check_duplicates_files(info)
+    approx_tarballs_size, approx_pkgs_size = check_duplicates_files(
+        pc_recs, platform, ignore_duplicate_files
+    )
+
+    dists = list(pluck("fn", precs))
+
+    return _urls, dists, approx_tarballs_size, approx_pkgs_size
+
+
+def main(info, verbose=True, dry_run=False):
+    name = info["name"]
+    version = info["version"]
+    download_dir = info["_download_dir"]
+    platform = info["_platform"]
+    channel_urls = info.get("channels", ())
+    channels_remap = info.get('channels_remap', ())
+    specs = info["specs"]
+    exclude = info.get("exclude", ())
+    menu_packages = info.get("menu_packages", ())
+    install_in_dependency_order = info.get("install_in_dependency_order", True)
+    ignore_duplicate_files = info.get("ignore_duplicate_files", False)
+
+    if not channel_urls:
+        sys.exit("Error: 'channels' is required")
+
+    with env_vars({
+        "CONDA_PKGS_DIRS": download_dir,
+    }, reset_context):
+        _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
+            name, version, download_dir, platform, channel_urls, channels_remap, specs,
+              exclude, menu_packages, install_in_dependency_order,
+              ignore_duplicate_files, verbose, dry_run
+        )
+
+    info["_urls"] = _urls
+    info["_dists"] = dists
+    info["_approx_tarballs_size"] = approx_tarballs_size
+    info["_approx_pkgs_size"] = approx_pkgs_size

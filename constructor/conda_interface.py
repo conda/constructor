@@ -15,11 +15,27 @@ except ImportError:
 if conda_interface_type == 'conda':
     CONDA_MAJOR_MINOR = tuple(int(x) for x in CONDA_INTERFACE_VERSION.split('.')[:2])
 
+    from conda._vendor.toolz.itertoolz import concatv, get, groupby, pluck
+    from conda.base.context import context as conda_context, reset_context
+    from conda.common.io import env_vars
+    from conda.core.package_cache_data import PackageCacheData, ProgressiveFetchExtract
+    from conda.core.solve import Solver
+    from conda.gateways.disk.read import read_paths_json
+
+
+
+
+
+
+
+
+
+
     from conda.base.context import context
     cc_platform = context.subdir
 
     from conda.exports import fetch_index as _fetch_index, cache_fn_url as _cache_fn_url
-    from conda.exports import Resolve, NoPackagesFound
+    # from conda.exports import Resolve, NoPackagesFound
     from conda.exports import default_prefix
     from conda.exports import linked_data
     from conda.exports import download as _download
@@ -28,13 +44,13 @@ if conda_interface_type == 'conda':
     from conda.models.channel import prioritize_channels
     from conda.models.dist import Dist
 
-    def fetch_index(channel_urls):
-        return _fetch_index(prioritize_channels(channel_urls))
-
-    def fetch_pkg(pkginfo, download_dir):
-        pkg_url = pkginfo['url']
-        assert pkg_url
-        _download(pkg_url, join(download_dir, pkginfo['fn']))
+    # def fetch_index(channel_urls):
+    #     return _fetch_index(prioritize_channels(channel_urls))
+    #
+    # def fetch_pkg(pkginfo, download_dir):
+    #     pkg_url = pkginfo['url']
+    #     assert pkg_url
+    #     _download(pkg_url, join(download_dir, pkginfo['fn']))
 
     def write_repodata(cache_dir, url):
         if CONDA_MAJOR_MINOR >= (4, 5):
@@ -61,9 +77,13 @@ if conda_interface_type == 'conda':
 
 
 cc_platform = cc_platform
-fetch_index, fetch_pkg = fetch_index, fetch_pkg
-Resolve, NoPackagesFound = Resolve, NoPackagesFound
+# fetch_index, fetch_pkg = fetch_index, fetch_pkg
+# Resolve, NoPackagesFound = Resolve, NoPackagesFound
 default_prefix = default_prefix
 linked_data = linked_data
-MatchSpec = MatchSpec
+# MatchSpec = MatchSpec
 Dist = Dist
+
+
+
+
