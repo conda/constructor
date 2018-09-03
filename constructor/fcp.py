@@ -14,7 +14,7 @@ import sys
 
 from .conda_interface import (
     PackageCacheData, ProgressiveFetchExtract, Solver, concatv, conda_context, env_vars, get,
-    groupby, pluck, read_paths_json, reset_context,
+    groupby, pluck, read_paths_json, conda_reset_context,
 )
 
 
@@ -201,7 +201,7 @@ def main(info, verbose=True, dry_run=False):
 
     with env_vars({
         "CONDA_PKGS_DIRS": download_dir,
-    }, reset_context):
+    }, conda_reset_context):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
               exclude, menu_packages, install_in_dependency_order,
