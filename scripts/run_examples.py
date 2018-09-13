@@ -34,7 +34,7 @@ def run_examples():
         if PY3:
             stderr = stderr.decode().strip()
 
-        if stderr:
+        if p.returncode != 0:
             errored += 1
             print(stderr)
 
