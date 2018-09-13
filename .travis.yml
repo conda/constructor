@@ -50,7 +50,7 @@ install:
   # Install run dependencies
   - conda install -n root pillow>=3.1 ruamel_yaml
   # Install test dependencies
-  - conda install codecov pytest pytest-cov -c conda-forge
+  - conda install conda-forge::codecov pytest pytest-cov
   # Install this package
   - python setup.py develop
   # Install conda canary before running tests, ensure conda is updated
