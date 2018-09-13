@@ -173,6 +173,11 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         return
 
     pc_recs = _fetch(download_dir, precs)
+    # Constructor cache directory can have multiple packages from different
+    # installer creations. Filter out those which the solver picked.
+    precs_fns = [x.fn for x in precs]
+    pc_recs = [x for x in pc_recs if x.fn in precs_fns]
+
     _urls = [(pc_rec.url, pc_rec.md5) for pc_rec in pc_recs]
 
     approx_tarballs_size, approx_pkgs_size = check_duplicates_files(
