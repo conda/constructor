@@ -7,6 +7,10 @@ branches:
   only:
     - master
 
+env:
+  global:
+    - CONSTRUCTOR_CACHE=/tmp/constructor_travis_ci
+
 matrix:
   include:
     # Linux
