@@ -81,6 +81,12 @@ def create(info, verbose=False):
 
     preconda_tarball = join(tmp_dir, 'preconda.tar.bz2')
     p_t = tarfile.open(preconda_tarball, 'w:bz2')
+    for dist in info['_dists']:
+        fn = filename_dist(dist)[:-8]
+        record_file = join(fn, 'info', 'repodata_record.json')
+        record_file_src = join(info['_download_dir'], record_file)
+        record_file_dest = join('pkgs', record_file)
+        p_t.add(record_file_src, record_file_dest)
     for dist in preconda_files:
         fn = filename_dist(dist)
         p_t.add(join(tmp_dir, fn), 'pkgs/' + fn)
