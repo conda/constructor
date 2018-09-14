@@ -280,7 +280,7 @@ argument type(s): ``str``,
 If `header_image` is not provided, use this text when generating the image
 (Windows only). Defaults to `name`.
 
-## `add_to_path_default`
+## `initialize_by_default`
 
 required: False
 
