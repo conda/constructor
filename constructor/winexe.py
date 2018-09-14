@@ -150,7 +150,7 @@ def make_nsi(info, dir_path):
 
     data = read_nsi_tmpl()
     ppd = ns_platform(info['_platform'])
-    ppd['add_to_path_default'] = info.get('add_to_path_default', None)
+    ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     ppd['register_python_default'] = info.get('register_python_default', None)
     data = preprocess(data, ppd)
     data = fill_template(data, replace)

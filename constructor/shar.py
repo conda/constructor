@@ -40,7 +40,7 @@ def get_header(tarball, info):
     ppd['has_license'] = has_license
     for key in 'pre_install', 'post_install':
         ppd['has_%s' % key] = bool(key in info)
-    ppd['add_to_path_default'] = info.get('add_to_path_default', None)
+    ppd['initialize_by_default'] = info.get('initialize_by_default', None)
 
     install_lines = ['install_dist %s' % d for d in dists]
     install_lines.extend(add_condarc(info))

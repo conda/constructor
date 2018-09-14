@@ -491,11 +491,11 @@ Function .onInit
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from contruct.yaml.
-    # If add_to_path_default (register_python_default) is None, do nothing.
-#if add_to_path_default is True
+    # If initialize_by_default (register_python_default) is None, do nothing.
+#if initialize_by_default is True
     StrCpy $Ana_AddToPath_State ${BST_CHECKED}
 #endif
-#if add_to_path_default is False
+#if initialize_by_default is False
     StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
 #endif
 #if register_python_default is True
