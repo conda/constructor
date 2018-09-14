@@ -8,13 +8,15 @@ from __future__ import absolute_import, division, print_function
 
 import os
 from os.path import basename, dirname, getsize, isdir, join
+import json
 import shutil
 import tarfile
 import tempfile
 
 from .construct import ns_platform
 from .install import name_dist
-from .preconda import files as preconda_files, write_files as preconda_write_files
+from .preconda import files as preconda_files, write_files as \
+    preconda_write_files, get_final_url as preconda_get_final_url
 from .utils import add_condarc, filename_dist, fill_template, md5_file, preprocess, read_ascii_only
 
 THIS_DIR = dirname(__file__)
@@ -85,6 +87,12 @@ def create(info, verbose=False):
         fn = filename_dist(dist)[:-8]
         record_file = join(fn, 'info', 'repodata_record.json')
         record_file_src = join(info['_download_dir'], record_file)
+        with open(record_file_src, 'r') as rf:
+          rr_json = json.load(rf)
+        rr_json['url'] = preconda_get_final_url(info, rr_json['url'])
+        rr_json['channel'] = preconda_get_final_url(info, rr_json['channel'])
+        with open(record_file_src, 'w') as rf:
+          json.dump(rr_json, rf, indent=2, sort_keys=True)
         record_file_dest = join('pkgs', record_file)
         p_t.add(record_file_src, record_file_dest)
     for dist in preconda_files:
