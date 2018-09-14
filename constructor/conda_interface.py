@@ -23,7 +23,7 @@ if conda_interface_type == 'conda':
     )
     from conda.common.io import env_vars as _env_vars
     from conda.core.package_cache_data import (
-        PackageCacheData as _PackageCacheData, ProgressiveFetchExtract as _ProgressiveFetchExtract,
+        PackageCacheData as _PackageCacheData,
     )
     from conda.core.prefix_data import PrefixData as _PrefixData
     from conda.core.solve import Solver as _Solver
@@ -31,12 +31,18 @@ if conda_interface_type == 'conda':
     from conda.gateways.disk.read import read_paths_json as _read_paths_json
     from conda.models.dist import Dist as _Dist
     from conda.exports import MatchSpec as _MatchSpec
+    from conda.exports import download as _download
+    try:
+        from conda.models.records import PackageCacheRecord as _PackageCacheRecord
+    except ImportError:
+        from conda.models.package_cache_record import PackageCacheRecord as _PackageCacheRecord
 
     # used by fcp.py
-    PackageCacheData, ProgressiveFetchExtract = _PackageCacheData, _ProgressiveFetchExtract
+    PackageCacheData = _PackageCacheData
     Solver, read_paths_json = _Solver, _read_paths_json
     concatv, get, groupby = _concatv, _get, _groupby
     conda_context, env_vars, conda_reset_context = _conda_context, _env_vars, _conda_reset_context
+    download, PackageCacheRecord = _download, _PackageCacheRecord
 
     # used by preconda.py
     Dist, MatchSpec, PrefixData, default_prefix = _Dist, _MatchSpec, _PrefixData, _default_prefix
