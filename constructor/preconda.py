@@ -82,8 +82,9 @@ def get_final_url(info, url):
         dst = entry['dest']
         if url.startswith(src):
             new_url = url.replace(src, dst)
-            print("WARNING: You need to make the package {} available "
-                  "at {}".format(url.rsplit('/', 1)[1], new_url))
+            if url.endswith(".tar.bz2"):
+              print("WARNING: You need to make the package {} available "
+                    "at {}".format(url.rsplit('/', 1)[1], new_url))
             return new_url
     return url
 
