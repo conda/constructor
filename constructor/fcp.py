@@ -9,13 +9,13 @@ fcp (fetch conda packages) module
 from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
-from os.path import getsize, join
+import json
+from os.path import getsize, isdir, isfile, join
 import sys
 
-from .conda_interface import (
-    PackageCacheData, ProgressiveFetchExtract, Solver, concatv, conda_context, env_vars, get,
-    groupby, read_paths_json, conda_reset_context,
-)
+from constructor.utils import md5_file
+from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, concatv, conda_context,
+                              conda_reset_context, download, env_vars, groupby, read_paths_json)
 
 
 def warn_menu_packages_missing(precs, menu_packages):
@@ -65,13 +65,36 @@ platform: %(platform)s""" % dict(
     print()
 
 
-
 def _fetch(download_dir, precs):
     assert conda_context.pkgs_dirs[0] == download_dir
     pc = PackageCacheData(download_dir)
     assert pc.is_writable
-    pfe = ProgressiveFetchExtract(precs)
-    pfe.execute()
+
+    for prec in precs:
+        package_tarball_full_path = join(download_dir, prec.fn)
+        extracted_package_dir = package_tarball_full_path[:-8]
+
+        if not (isfile(package_tarball_full_path)
+                and md5_file(package_tarball_full_path) == prec.md5):
+            print('fetching: %s' % prec.fn)
+            download(prec.url, join(download_dir, prec.fn))
+
+        if not isdir(extracted_package_dir):
+            from conda.gateways.disk.create import extract_tarball
+            extract_tarball(package_tarball_full_path, extracted_package_dir)
+
+        repodata_record_path = join(extracted_package_dir, 'info', 'repodata_record.json')
+
+        with open(repodata_record_path, "w") as fh:
+            json.dump(prec.dump(), fh, indent=2, sort_keys=True, separators=(',', ': '))
+
+        package_cache_record = PackageCacheRecord.from_objects(
+            prec,
+            package_tarball_full_path=package_tarball_full_path,
+            extracted_package_dir=extracted_package_dir,
+        )
+        pc.insert(package_cache_record)
+
     return tuple(pc.iter_records())
 
 
