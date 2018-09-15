@@ -224,7 +224,7 @@ def create(info, verbose=False):
         if isinstance(dist, str if version_info[0] >= 3 else basestring):
            fn = dist
            dname = dist[:-8]
-           ndist(fn)
+           ndist = name_dist(fn)
         else:
             fn = dist.fn
             dname = dist.dist_name
