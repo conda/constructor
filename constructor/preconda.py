@@ -57,7 +57,9 @@ def create_install(info, dst_dir):
                 dist_name = _dist.dist_name
             else:
                 dist_name = _dist
-                fn='%s.tar.bz2' % dist_name
+                if _dist.endswith(".tar.bz2"):
+                  dist_name = _dist[:-8]
+                fn = '%s.tar.bz2' % dist_name
             # Find the URL for this fn.
             for url, md5 in info['_urls']:
                 if url.rsplit('/', 1)[1] == fn:
