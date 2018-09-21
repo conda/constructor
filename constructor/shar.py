@@ -15,8 +15,7 @@ import tempfile
 
 from .construct import ns_platform
 from .install import name_dist
-from .preconda import files as preconda_files, write_files as \
-    preconda_write_files, get_final_url as preconda_get_final_url
+from .preconda import files as preconda_files, write_files as preconda_write_files
 from .utils import add_condarc, filename_dist, fill_template, md5_file, preprocess, read_ascii_only
 
 THIS_DIR = dirname(__file__)
@@ -83,18 +82,6 @@ def create(info, verbose=False):
 
     preconda_tarball = join(tmp_dir, 'preconda.tar.bz2')
     p_t = tarfile.open(preconda_tarball, 'w:bz2')
-    for dist in info['_dists']:
-        fn = filename_dist(dist)[:-8]
-        record_file = join(fn, 'info', 'repodata_record.json')
-        record_file_src = join(info['_download_dir'], record_file)
-        with open(record_file_src, 'r') as rf:
-          rr_json = json.load(rf)
-        rr_json['url'] = preconda_get_final_url(info, rr_json['url'])
-        rr_json['channel'] = preconda_get_final_url(info, rr_json['channel'])
-        with open(record_file_src, 'w') as rf:
-          json.dump(rr_json, rf, indent=2, sort_keys=True)
-        record_file_dest = join('pkgs', record_file)
-        p_t.add(record_file_src, record_file_dest)
     for dist in preconda_files:
         fn = filename_dist(dist)
         p_t.add(join(tmp_dir, fn), 'pkgs/' + fn)
@@ -107,6 +94,12 @@ def create(info, verbose=False):
             if cf.endswith(".json"):
                 p_t.add(join(cache_dir, cf), 'pkgs/cache/' + cf)
     p_t.add(join(tmp_dir, 'conda-meta', 'history'), 'conda-meta/history')
+    for dist in info['_dists']:
+        _dist = filename_dist(dist)[:-8]
+        record_file = join(_dist, 'info', 'repodata_record.json')
+        record_file_src = join(tmp_dir, record_file)
+        record_file_dest = join('pkgs', record_file)
+        p_t.add(record_file_src, record_file_dest)
     p_t.close()
 
     tarball = join(tmp_dir, 'tmp.tar')

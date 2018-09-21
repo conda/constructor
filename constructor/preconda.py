@@ -10,6 +10,8 @@ import platform
 import sys
 import time
 
+from .utils import filename_dist
+
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
     CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata,
@@ -134,6 +136,8 @@ def write_files(info, dst_dir):
 
     write_conda_meta(info, dst_dir, final_urls_md5s)
 
+    write_repodata_record(info, dst_dir)
+
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
 
@@ -160,3 +164,23 @@ def write_conda_meta(info, dst_dir, final_urls_md5s):
         os.makedirs(join(dst_dir, 'conda-meta'))
     with open(join(dst_dir, 'conda-meta', 'history'), 'w') as fh:
         fh.write("\n".join(builder))
+
+def write_repodata_record(info, dst_dir):
+    for dist in info['_dists']:
+        _dist = filename_dist(dist)[:-8]
+        record_file = join(_dist, 'info', 'repodata_record.json')
+        record_file_src = join(info['_download_dir'], record_file)
+
+        with open(record_file_src, 'r') as rf:
+          rr_json = json.load(rf)
+
+        rr_json['url'] = get_final_url(info, rr_json['url'])
+        rr_json['channel'] = get_final_url(info, rr_json['channel'])
+
+        if not isdir(join(dst_dir, _dist, 'info')):
+          os.makedirs(join(dst_dir, _dist, 'info'))
+
+        record_file_dest = join(dst_dir, record_file)
+
+        with open(record_file_dest, 'w') as rf:
+          json.dump(rr_json, rf, indent=2, sort_keys=True)
