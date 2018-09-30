@@ -1,3 +1,20 @@
+2018-09-30   2.2.0:
+-------------------
+  * COMMON:
+    - Refactor constructor internals to use conda 4.5.x APIs
+    - Create and add <pkg>/info/repodata_record.json for each $pkg to preconda
+    - Use 'conda init' equivalent for modifying bashrc/bash_profile
+    - Rename parameter `add_to_path_default` to `initialize_by_default`
+
+  * NSIS:
+    - Replace hardcoded 'Anaconda' with ${NAME}
+    - Disallow ',' character in the installation path
+    - Check if $INSTDIR is writable before proceeding to install
+
+  * PKG:
+    - Fix wording in installer README
+
+
 2018-07-14   2.1.1:
 -------------------
   * NSIS:
