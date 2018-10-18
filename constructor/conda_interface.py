@@ -32,6 +32,7 @@ if conda_interface_type == 'conda':
     from conda.models.dist import Dist as _Dist
     from conda.exports import MatchSpec as _MatchSpec
     from conda.exports import download as _download
+    from conda.resolve import Resolve as _Resolve
     try:
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:
@@ -43,6 +44,7 @@ if conda_interface_type == 'conda':
     concatv, get, groupby = _concatv, _get, _groupby
     conda_context, env_vars, conda_reset_context = _conda_context, _env_vars, _conda_reset_context
     download, PackageCacheRecord = _download, _PackageCacheRecord
+    Resolve = _Resolve
 
     # used by preconda.py
     Dist, MatchSpec, PrefixData, default_prefix = _Dist, _MatchSpec, _PrefixData, _default_prefix

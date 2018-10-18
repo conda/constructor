@@ -8,14 +8,50 @@ fcp (fetch conda packages) module
 """
 from __future__ import absolute_import, division, print_function
 
-from collections import defaultdict
+import sys
 import json
 from os.path import getsize, isdir, isfile, join
-import sys
+from collections import defaultdict
 
-from constructor.utils import md5_file
-from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, concatv, conda_context,
-                              conda_reset_context, download, env_vars, groupby, read_paths_json)
+from .utils import md5_file
+from .conda_interface import (PackageCacheData,
+                              PackageCacheRecord,
+                              Resolve,
+                              Solver,
+                              concatv,
+                              conda_context,
+                              conda_reset_context,
+                              download,
+                              env_vars,
+                              groupby,
+                              read_paths_json)
+
+
+class ArchSolver(Solver):
+    
+    """Overload _prepare method of Solver to remove packages built using
+    'noarch: python'.
+    """
+
+    def _prepare(self, prepared_specs):
+
+        super(ArchSolver, self)._prepare(prepared_specs)
+
+        def is_noarch_python(pkg_info):
+            noarch_info = pkg_info.get('noarch')
+            if noarch_info is None:
+                return False
+            else:
+                return noarch_info.value == 'python'
+
+        new_index = {pkg_name: pkg_info for
+                             pkg_name, pkg_info in self._index.items()
+                                         if not is_noarch_python(pkg_info)}
+        
+        self._index = new_index
+        self._r = Resolve(new_index, channels=self.channels)
+
+        return self._index, self._r
 
 
 def warn_menu_packages_missing(precs, menu_packages):
@@ -171,7 +207,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         (x['src'] for x in channels_remap),
     ))
 
-    solver = Solver(
+    solver = ArchSolver(
         # The Solver class doesn't do well with `None` as a prefix right now
         prefix="/constructor/no-environment",
         channels=channel_urls,
