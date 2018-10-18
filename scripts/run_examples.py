@@ -12,13 +12,14 @@ REPO_DIR = os.path.dirname(HERE)
 EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
 PY3 = sys.version_info[0] == 3
 WHITELIST = ['grin', 'jetsonconda', 'maxiconda', 'newchan']
-
+BLACKLIST = ['noarch']
 
 def run_examples():
     """Run examples bundled with the repository."""
     example_paths = []
     errored = 0
     whitelist = [os.path.join(EXAMPLES_DIR, p) for p in WHITELIST]
+    blacklist = [os.path.join(EXAMPLES_DIR, p) for p in BLACKLIST]
     for fname in os.listdir(EXAMPLES_DIR):
         fpath = os.path.join(EXAMPLES_DIR, fname)
         if os.path.isdir(fpath) and fpath not in whitelist:
@@ -34,9 +35,12 @@ def run_examples():
         if PY3:
             stderr = stderr.decode().strip()
 
-        if p.returncode != 0:
+        if p.returncode != 0 and example_path not in blacklist:
             errored += 1
             print(stderr)
+        elif p.returncode == 0 and example_path in blacklist:
+            errored += 1
+            print("This example has run, but should have failed!")
 
     if errored:
         print('\n\nSome examples failed!\n\n')

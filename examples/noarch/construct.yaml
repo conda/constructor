@@ -1,0 +1,16 @@
+name: monotonic
+version: 1.5
+
+channels:
+  - https://conda.anaconda.org/conda-forge
+
+# These specs should deliberately fail
+
+specs:
+  - python 2.7*
+  - monotonic 1.5*
+
+#license_file: EULA.txt
+
+# Welcome image for Windows installer
+welcome_image: bird.png                  [win]
