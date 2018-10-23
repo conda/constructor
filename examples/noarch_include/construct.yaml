@@ -1,0 +1,19 @@
+name: monotonic
+version: 1.5
+
+channels:
+  - https://conda.anaconda.org/conda-forge
+
+# monotonic 1.5 is built using "noarch: python" on conda-forge
+
+specs:
+  - python 2.7*
+  - monotonic 1.5*
+
+# Include "noarch: python packages"
+exclude_noarch_packages: False
+
+#license_file: EULA.txt
+
+# Welcome image for Windows installer
+welcome_image: bird.png                  [win]
