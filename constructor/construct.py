@@ -73,6 +73,14 @@ For example, you can say that `readline` should be excluded, even though it
 is contained as a result of resolving the specs for `python 2.7`.
 '''),
 
+    ('exclude_noarch_packages', False, bool, '''
+By default, conda packages built using the "noarch: python" keyword are
+currently excluded from constructor, while a solution is sought to allow them
+to be used. This option can be set to "False" should the user wish to
+include the noarch packages anyway, although this will generate a non-working
+installer.
+'''),
+
     ('menu_packages',           False, list, '''
 Packages for menu items will be installed (if the conda package contains the
 necessary metadata in "Menu/<package name>.json").  Menu items are currently

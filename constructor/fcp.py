@@ -27,32 +27,6 @@ from .conda_interface import (PackageCacheData,
                               read_paths_json)
 
 
-class ArchSolver(Solver):
-    
-    """Overload _prepare method of Solver to remove packages built using
-    'noarch: python'.
-    """
-
-    def _prepare(self, prepared_specs):
-
-        super(ArchSolver, self)._prepare(prepared_specs)
-
-        def is_noarch_python(pkg_info):
-            noarch_info = pkg_info.get('noarch')
-            if noarch_info is None:
-                return False
-            else:
-                return noarch_info.value == 'python'
-
-        new_index = {pkg_name: pkg_info for
-                             pkg_name, pkg_info in self._index.items()
-                                         if not is_noarch_python(pkg_info)}
-        
-        self._index = new_index
-        self._r = Resolve(new_index, channels=self.channels)
-
-        return self._index, self._r
-
 
 def warn_menu_packages_missing(precs, menu_packages):
     all_names = set(prec.name for prec in precs)
@@ -191,12 +165,52 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
-          exclude=(), menu_packages=(), install_in_dependency_order=True,
-          ignore_duplicate_files=False, verbose=True, dry_run=False):
+def _prepare_decorator(method):
 
-    # Add python to specs, since all installers need a python interpreter. In the future we'll
-    # probably want to add conda too.
+    """Decorate _prepare method of Solver to remove packages built using
+    'noarch: python'.
+    """
+
+    def decorate_prepare(self, prepared_specs):
+
+        method(self, prepared_specs)
+
+        def is_noarch_python(pkg_info):
+            noarch_info = pkg_info.get('noarch')
+            if noarch_info is None:
+                return False
+            else:
+                return noarch_info.value == 'python'
+    
+        new_index = {pkg_name: pkg_info for
+                             pkg_name, pkg_info in self._index.items()
+                                         if not is_noarch_python(pkg_info)}
+        
+        self._index = new_index
+        self._r = Resolve(new_index, channels=self.channels)
+
+        return self._index, self._r
+
+    return decorate_prepare
+
+
+def _main(name,
+          version,
+          download_dir,
+          platform,
+          channel_urls=(),
+          channels_remap=(),
+          specs=(),
+          exclude=(),
+          exclude_noarch=True,
+          menu_packages=(),
+          install_in_dependency_order=True,
+          ignore_duplicate_files=False,
+          verbose=True,
+          dry_run=False):
+
+    # Add python to specs, since all installers need a python interpreter. In 
+    # the future we'll probably want to add conda too.
     specs = list(concatv(specs, ("python",)))
     if verbose:
         print("specs: %r" % specs)
@@ -206,8 +220,12 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         channel_urls,
         (x['src'] for x in channels_remap),
     ))
+    
+    # Exclude all "noarch: python" packages
+    if exclude_noarch:
+        Solver._prepare = _prepare_decorator(Solver._prepare)
 
-    solver = ArchSolver(
+    solver = Solver(
         # The Solver class doesn't do well with `None` as a prefix right now
         prefix="/constructor/no-environment",
         channels=channel_urls,
@@ -260,6 +278,7 @@ def main(info, verbose=True, dry_run=False):
     channels_remap = info.get('channels_remap', ())
     specs = info["specs"]
     exclude = info.get("exclude", ())
+    exclude_noarch = info.get("exclude_noarch_packages", True)
     menu_packages = info.get("menu_packages", ())
     install_in_dependency_order = info.get("install_in_dependency_order", True)
     ignore_duplicate_files = info.get("ignore_duplicate_files", False)
@@ -267,14 +286,26 @@ def main(info, verbose=True, dry_run=False):
     if not channel_urls:
         sys.exit("Error: 'channels' is required")
 
-    with env_vars({
-        "CONDA_PKGS_DIRS": download_dir,
-    }, conda_reset_context):
-        _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
-            name, version, download_dir, platform, channel_urls, channels_remap, specs,
-              exclude, menu_packages, install_in_dependency_order,
-              ignore_duplicate_files, verbose, dry_run
-        )
+    with env_vars({"CONDA_PKGS_DIRS": download_dir},
+                  conda_reset_context):
+
+        (_urls,
+         dists,
+         approx_tarballs_size,
+         approx_pkgs_size) = _main(name,
+                                   version,
+                                   download_dir,
+                                   platform,
+                                   channel_urls,
+                                   channels_remap,
+                                   specs,
+                                   exclude,
+                                   exclude_noarch,
+                                   menu_packages,
+                                   install_in_dependency_order,
+                                   ignore_duplicate_files,
+                                   verbose,
+                                   dry_run)
 
     info["_urls"] = _urls
     info["_dists"] = dists
