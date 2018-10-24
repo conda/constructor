@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 import json
+import types
 from os.path import getsize, isdir, isfile, join
 from collections import defaultdict
 
@@ -165,15 +166,15 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _prepare_decorator(method):
+def _exclude_noarch(solver):
 
-    """Decorate _prepare method of Solver to remove packages built using
-    'noarch: python'.
+    """Decorate _prepare method of Solver instance to remove packages built
+    using 'noarch: python'.
     """
 
-    def decorate_prepare(self, prepared_specs):
+    def _prepare_exclude_noarch(self, prepared_specs):
 
-        method(self, prepared_specs)
+        solver._prepare_base(prepared_specs)
 
         def is_noarch_python(pkg_info):
             noarch_info = pkg_info.get('noarch')
@@ -181,17 +182,20 @@ def _prepare_decorator(method):
                 return False
             else:
                 return noarch_info.value == 'python'
-    
+
         new_index = {pkg_name: pkg_info for
                              pkg_name, pkg_info in self._index.items()
                                          if not is_noarch_python(pkg_info)}
-        
+
         self._index = new_index
         self._r = Resolve(new_index, channels=self.channels)
 
         return self._index, self._r
 
-    return decorate_prepare
+    solver._prepare_base = solver._prepare
+    solver._prepare = types.MethodType(_prepare_exclude_noarch, solver)
+
+    return
 
 
 def _main(name,
@@ -220,10 +224,6 @@ def _main(name,
         channel_urls,
         (x['src'] for x in channels_remap),
     ))
-    
-    # Exclude all "noarch: python" packages
-    if exclude_noarch:
-        Solver._prepare = _prepare_decorator(Solver._prepare)
 
     solver = Solver(
         # The Solver class doesn't do well with `None` as a prefix right now
@@ -232,6 +232,10 @@ def _main(name,
         subdirs=(platform, "noarch"),
         specs_to_add=specs,
     )
+
+    # Exclude all "noarch: python" packages
+    if exclude_noarch: _exclude_noarch(solver)
+
     precs = list(solver.solve_final_state())
 
     if not install_in_dependency_order:
