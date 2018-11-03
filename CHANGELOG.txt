@@ -1,3 +1,15 @@
+2019-11-04   2.3.0:
+-------------------
+  * COMMON:
+    - Drop redundant code in install.py
+    - Fix bug in size computation for pkgs built with older conda build
+
+  * NSIS:
+    - Allow configuring the uninstaller name
+
+  * SHELL:
+    - Add new line to bash config before modifying it
+
 2018-09-30   2.2.0:
 -------------------
   * COMMON:
