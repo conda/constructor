@@ -512,6 +512,7 @@ if [ "$BATCH" = "0" ]; then
             printf "Initializing __NAME__ in newly created %s\\n" "$BASH_RC"
         fi
         cat <<EOF >> "$BASH_RC"
+
 # added by __NAME__ __VERSION__ installer
 # >>> conda init >>>
 # !! Contents within this block are managed by 'conda init' !!
