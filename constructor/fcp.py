@@ -118,7 +118,8 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
         for path_data in paths_data:
             short_path = path_data.path
             try:
-                size = path_data.size_in_bytes
+                size = (path_data.size_in_bytes or
+                        getsize(join(extracted_package_dir, short_path)))
             except AttributeError:
                 size = getsize(join(extracted_package_dir, short_path))
             total_extracted_pkgs_size += size
