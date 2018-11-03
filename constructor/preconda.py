@@ -15,6 +15,7 @@ from .utils import filename_dist
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
     CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata,
+    all_channel_urls
 )
 
 try:
@@ -33,10 +34,8 @@ def write_index_cache(info, dst_dir):
     _platforms = info['_platform'], 'noarch'
     _urls = set(info.get('channels', []) +
                 info.get('conda_default_channels', []))
-    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir) for url in _urls
-            if not url.startswith('file://') for subdir in _platforms)
 
-    for url in subdir_urls:
+    for url in all_channel_urls(_urls):
         write_repodata(cache_dir, url)
 
     for cache_file in os.listdir(cache_dir):
