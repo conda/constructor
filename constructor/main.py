@@ -115,7 +115,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         print("Dry run, no installer created.")
         return
 
-    info['_outpath'] = join(output_dir, get_output_filename(info))
+    info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
 
     # info has keys
     # 'name', 'version', 'channels', 'exclude',
