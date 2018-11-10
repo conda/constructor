@@ -835,6 +835,7 @@ Section "Uninstall"
     # Remove menu items, path entries
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmmenus'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
+    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmreg'
 
     DeleteRegKey SHCTX "${UNINSTREG}"
     # If Anaconda was registered as the official Python for this version,
