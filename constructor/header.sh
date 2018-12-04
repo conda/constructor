@@ -511,20 +511,21 @@ if [ "$BATCH" = "0" ]; then
             printf "\\n"
             printf "Initializing __NAME__ in newly created %s\\n" "$BASH_RC"
         fi
+        PROFILE_PREFIX="${PREFIX/$HOME/'~'}"
         cat <<EOF >> "$BASH_RC"
 
 # added by __NAME__ __VERSION__ installer
 # >>> conda init >>>
 # !! Contents within this block are managed by 'conda init' !!
-__conda_setup="\$(CONDA_REPORT_ERRORS=false '$PREFIX/bin/conda' shell.bash hook 2> /dev/null)"
+__conda_setup="\$(CONDA_REPORT_ERRORS=false '$PROFILE_PREFIX/bin/conda' shell.bash hook 2> /dev/null)"
 if [ \$? -eq 0 ]; then
     \\eval "\$__conda_setup"
 else
-    if [ -f "$PREFIX/etc/profile.d/conda.sh" ]; then
-        . "$PREFIX/etc/profile.d/conda.sh"
+    if [ -f "$PROFILE_PREFIX/etc/profile.d/conda.sh" ]; then
+        . "$PROFILE_PREFIX/etc/profile.d/conda.sh"
         CONDA_CHANGEPS1=false conda activate base
     else
-        \\export PATH="$PREFIX/bin:\$PATH"
+        \\export PATH="$PROFILE_PREFIX/bin:\$PATH"
     fi
 fi
 unset __conda_setup
