@@ -1,0 +1,41 @@
+package:
+  name: constructor
+  version: {{ GIT_DESCRIBE_TAG }}.{{ GIT_BUILD_STR }}
+
+source:
+  git_url: ../
+
+build:
+  number: 0
+  entry_points:
+    - constructor = constructor.main:main
+
+requirements:
+  build:
+    - git
+  host:
+    - python
+    - setuptools
+    - pyinstaller
+    - conda-package-handling
+    - conda-prefix-replacement
+  run:
+    - python
+    - conda
+
+test:
+  requires:
+    - pytest
+    - pytest-cov
+  commands:
+    - type -P constructor  # [unix]
+    - where constructor  # [win]
+    - constructor -h
+  imports:
+    - conda_build
+  source_files:
+    - tests
+
+about:
+  home: https://github.com/conda/constructor
+  license: BSD 3-clause

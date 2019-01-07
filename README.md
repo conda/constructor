@@ -69,3 +69,17 @@ conda install jinja2
 ```
 
 and then run ``make doc``. Or invoke the script directly with ``python scripts/make_docs.py``.
+
+
+
+## Theory of operation
+
+* create an env locally by pretending to be on whatever arch
+* accumulate any post-link scripts.  Order them by install order.
+* bundle up 
+
+At install time:
+
+* extract all files on the destination system
+* fixup any hard-coded path entries
+* run post-link scripts

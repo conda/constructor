@@ -74,7 +74,6 @@ if bdist_wheel:
             self.universal = True
             super(BDistWheel, self).finalize_options()
 
-
     cmdclass["bdist_wheel"] = BDistWheel
 
 

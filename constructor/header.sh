@@ -371,88 +371,13 @@ if ! tail -n +@LINES@ "$THIS_PATH" | tar xf -; then
     exit 1
 fi
 
-PRECONDA="$PREFIX/preconda.tar.bz2"
-bunzip2 -c $PRECONDA | tar -xf - --no-same-owner || exit 1
-rm -f $PRECONDA
-
-#if has_pre_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     export INST_OPT='--skip-scripts'
-    printf "WARNING: skipping pre_install.sh by user request\\n" >&2
-else
-    export INST_OPT=''
-    if ! $RUNNING_SHELL "$PREFIX/pkgs/pre_install.sh"; then
-        printf "ERROR: executing pre_install.sh failed\\n" >&2
-        exit 1
-    fi
-fi
-#endif
-
-PYTHON="$PREFIX/bin/python"
-MSGS="$PREFIX/.messages.txt"
-touch "$MSGS"
-export FORCE
-
-install_dist()
-{
-    # This function installs a conda package into prefix, but without linking
-    # the conda packages.  It untars the package and calls a simple script
-    # which does the post extract steps (update prefix files, run 'post-link',
-    # and creates the conda metadata).  Note that this is all done without
-    # conda.
-    if [ "$REINSTALL" = "1" ]; then
-      printf "reinstalling: %s ...\\n" "$1"
-    else
-      printf "installing: %s ...\\n" "$1"
-    fi
-    PKG_PATH="$PREFIX"/pkgs/$1
-    PKG="$PKG_PATH".tar.bz2
-    mkdir -p $PKG_PATH || exit 1
-#if attempt_hardlinks
-    bunzip2 -c "$PKG" | tar -xf - -C "$PKG_PATH" --no-same-owner || exit 1
-    "$PREFIX/pkgs/__DIST0__/bin/python" -E -s \
-        "$PREFIX"/pkgs/.install.py $INST_OPT --root-prefix="$PREFIX" --link-dist="$1" || exit 1
-#else
-    bunzip2 -c "$PKG" | tar -xf - -C "$PREFIX" --no-same-owner || exit 1
-    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py $INST_OPT || exit 1
-#endif
-    if [ "$1" = "__DIST0__" ]; then
-        if ! "$PYTHON" -E -V; then
-            printf "ERROR:\\n" >&2
-            printf "cannot execute native __PLAT__ binary, output from 'uname -a' is:\\n" >&2
-            uname -a >&2
-            exit 1
-        fi
-    fi
-#if not keep_pkgs
-    rm "$PKG"
-#endif
-}
-
-__INSTALL_COMMANDS__
-
-mkdir -p $PREFIX/envs
-
-if [ "$FORCE" = "1" ]; then
-    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py --rm-dup || exit 1
 fi
 
-#if has_post_install
-if [ "$SKIP_SCRIPTS" = "1" ]; then
-    printf "WARNING: skipping post_install.sh by user request\\n" >&2
-else
-    if ! $RUNNING_SHELL "$PREFIX/pkgs/post_install.sh"; then
-        printf "ERROR: executing post_install.sh failed\\n" >&2
-        exit 1
-    fi
-fi
-#endif
-
-cat "$MSGS"
-rm -f "$MSGS"
-#if not keep_pkgs
-rm -rf "$PREFIX"/pkgs
-#endif
+./constructor_install $INST_OPT .
+rm constructor_install
+rm installer.conda
 
 printf "installation finished.\\n"
 
@@ -538,40 +463,40 @@ EOF
     printf "Thank you for installing __NAME__!\\n"
 fi # !BATCH
 
-if [ "$TEST" = "1" ]; then
-    printf "INFO: Running package tests in a subshell\\n"
-    (. "$PREFIX"/bin/activate
-     which conda-build > /dev/null 2>&1 || conda install -y conda-build
-#if keep_pkgs
-     if [ ! -d "$PREFIX"/conda-bld/__PLAT__ ]; then
-         mkdir -p "$PREFIX"/conda-bld/__PLAT__
-     fi
-     cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX"/conda-bld/__PLAT__/
-     conda index "$PREFIX"/conda-bld/__PLAT__/
-     conda-build --override-channels --channel local --test --keep-going "$PREFIX"/conda-bld/__PLAT__/*.tar.bz2
-#endif
-#if not keep_pkgs
-#          conda-build -t -k "$PREFIX"/pkgs/*
-     printf "ERROR: Testing not possible without keep_pkgs\\n"
-     exit 1
-#endif
-    )
-    NFAILS=$?
-    if [ "$NFAILS" != "0" ]; then
-        if [ "$NFAILS" = "1" ]; then
-            printf "ERROR: 1 test failed\\n" >&2
-            printf "To re-run the tests for the above failed package, please enter:\\n"
-            printf ". %s/bin/activate\\n" "$PREFIX"
-            printf "conda-build --override-channels --channel local --test <full-path-to-failed.tar.bz2>\\n"
-        else
-            printf "ERROR: %s test failed\\n" $NFAILS >&2
-            printf "To re-run the tests for the above failed packages, please enter:\\n"
-            printf ". %s/bin/activate\\n" "$PREFIX"
-            printf "conda-build --override-channels --channel local --test <full-path-to-failed.tar.bz2>\\n"
-        fi
-        exit $NFAILS
-    fi
-fi
+# if [ "$TEST" = "1" ]; then
+#     printf "INFO: Running package tests in a subshell\\n"
+#     (. "$PREFIX"/bin/activate
+#      which conda-build > /dev/null 2>&1 || conda install -y conda-build
+# #if keep_pkgs
+#      if [ ! -d "$PREFIX"/conda-bld/__PLAT__ ]; then
+#          mkdir -p "$PREFIX"/conda-bld/__PLAT__
+#      fi
+#      cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX"/conda-bld/__PLAT__/
+#      conda index "$PREFIX"/conda-bld/__PLAT__/
+#      conda-build --override-channels --channel local --test --keep-going "$PREFIX"/conda-bld/__PLAT__/*.tar.bz2
+# #endif
+# #if not keep_pkgs
+# #          conda-build -t -k "$PREFIX"/pkgs/*
+#      printf "ERROR: Testing not possible without keep_pkgs\\n"
+#      exit 1
+# #endif
+#     )
+#     NFAILS=$?
+#     if [ "$NFAILS" != "0" ]; then
+#         if [ "$NFAILS" = "1" ]; then
+#             printf "ERROR: 1 test failed\\n" >&2
+#             printf "To re-run the tests for the above failed package, please enter:\\n"
+#             printf ". %s/bin/activate\\n" "$PREFIX"
+#             printf "conda-build --override-channels --channel local --test <full-path-to-failed.tar.bz2>\\n"
+#         else
+#             printf "ERROR: %s test failed\\n" $NFAILS >&2
+#             printf "To re-run the tests for the above failed packages, please enter:\\n"
+#             printf ". %s/bin/activate\\n" "$PREFIX"
+#             printf "conda-build --override-channels --channel local --test <full-path-to-failed.tar.bz2>\\n"
+#         fi
+#         exit $NFAILS
+#     fi
+# fi
 
 exit 0
 @@END_HEADER@@

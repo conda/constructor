@@ -83,10 +83,10 @@ def add_color_info(info):
 
 def write_images(info, dir_path):
     for tp, size, f, ext in [
-        ('welcome', welcome_size, mk_welcome_image, '.bmp'),
-        ('header',  header_size,  mk_header_image,  '.bmp'),
-        ('icon',    icon_size,    mk_icon_image,    '.ico'),
-        ]:
+            ('welcome', welcome_size, mk_welcome_image, '.bmp'),
+            ('header', header_size, mk_header_image, '.bmp'),
+            ('icon', icon_size, mk_icon_image, '.ico'),
+            ]:
         key = tp + '_image'
         if key in info:
             im = Image.open(info[key])

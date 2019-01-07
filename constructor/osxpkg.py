@@ -3,18 +3,16 @@ import shutil
 import tarfile
 from os.path import dirname, exists, join
 from subprocess import check_call
-from sys import argv, version_info
 import xml.etree.ElementTree as ET
+
+from six import string_types
 
 from constructor.install import rm_rf, name_dist
 import constructor.preconda as preconda
 from constructor.utils import add_condarc
 
-
-
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = None
-
 
 
 def write_readme(dst, info):
@@ -40,7 +38,7 @@ def write_readme(dst, info):
 
 def modify_xml(xml_path, info):
     # See
-    # http://developer.apple.com/library/mac/#documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW20 for all the options you can put here.
+    # http://developer.apple.com/library/mac/#documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW20 for all the options you can put here.  # NOQA
 
     tree = ET.parse(xml_path)
     root = tree.getroot()
@@ -115,7 +113,7 @@ def move_script(src, dst, info):
     data = data.replace('__VERSION__', info['version'])
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
 
-    if isinstance(info['_dists'][0], str if version_info[0] >= 3 else basestring):
+    if isinstance(info['_dists'][0], string_types):
         dirname = info['_dists'][0][:-8]
     else:
         dirname = info['_dists'][0].dist_name
@@ -221,10 +219,10 @@ def create(info, verbose=False):
     pkgbuild('preconda')
 
     for dist in info['_dists']:
-        if isinstance(dist, str if version_info[0] >= 3 else basestring):
-           fn = dist
-           dname = dist[:-8]
-           ndist = name_dist(fn)
+        if isinstance(dist, string_types):
+            fn = dist
+            dname = dist[:-8]
+            ndist = name_dist(fn)
         else:
             fn = dist.fn
             dname = dist.dist_name

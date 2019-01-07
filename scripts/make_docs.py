@@ -6,7 +6,8 @@ REPO_ROOT = dirname(dirname(__file__))
 
 sys.path.insert(0, REPO_ROOT)
 
-from constructor import construct
+# Do this import after manipulating sys.path so we can avoid installation to build docs
+from constructor import construct  # NOQA
 
 
 valid_platforms = construct.ns_platform(sys.platform)

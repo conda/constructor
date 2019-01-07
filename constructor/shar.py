@@ -7,16 +7,14 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import basename, dirname, getsize, isdir, join
-import json
-import shutil
+from os.path import basename, dirname, getsize, join
+import sys
 import tarfile
 import tempfile
 
 from .construct import ns_platform
-from .install import name_dist
-from .preconda import files as preconda_files, write_files as preconda_write_files
-from .utils import add_condarc, filename_dist, fill_template, md5_file, preprocess, read_ascii_only
+from .preconda import write_files as preconda_write_files
+from .utils import add_condarc, fill_template, md5_file, preprocess, read_ascii_only
 
 THIS_DIR = dirname(__file__)
 
@@ -30,28 +28,21 @@ def read_header_template():
 
 def get_header(tarball, info):
     name = info['name']
-    dists = [filename_dist(dist)[:-8] for dist in info['_dists']]
-    dist0 = dists[0]
-    assert name_dist(dist0) == 'python'
-
     has_license = bool('license_file' in info)
     ppd = ns_platform(info['_platform'])
-    ppd['keep_pkgs'] = bool(info.get('keep_pkgs'))
     ppd['attempt_hardlinks'] = bool(info.get('attempt_hardlinks'))
     ppd['has_license'] = has_license
     for key in 'pre_install', 'post_install':
         ppd['has_%s' % key] = bool(key in info)
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
 
-    install_lines = ['install_dist %s' % d for d in dists]
-    install_lines.extend(add_condarc(info))
+    install_lines = add_condarc(info)
     # Needs to happen first -- can be templated
     replace = {
         'NAME': name,
         'name': name.lower(),
         'VERSION': info['version'],
         'PLAT': info['_platform'],
-        'DIST0': dist0,
         'DEFAULT_PREFIX': info.get('default_prefix',
                                    '$HOME/%s' % name.lower()),
         'MD5': md5_file(tarball),
@@ -77,52 +68,29 @@ def get_header(tarball, info):
 
 
 def create(info, verbose=False):
-    tmp_dir = tempfile.mkdtemp()
-    preconda_write_files(info, tmp_dir)
+    print("Wrapping archive with shell script")
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        preconda_write_files(info, tmp_dir)
+        preconda_archive = os.path.join(os.path.dirname(info['_outpath']), 'installer.conda')
+        tarball = join(tmp_dir, 'tmp.tar')
+        t = tarfile.open(tarball, 'w')
+        install_binary = os.path.join(sys.prefix, 'bin', 'constructor_install')
+        t.add(install_binary, basename(install_binary))
+        t.add(preconda_archive, basename(preconda_archive))
+        if 'license_file' in info:
+            t.add(info['license_file'], 'LICENSE.txt')
+        t.close()
 
-    preconda_tarball = join(tmp_dir, 'preconda.tar.bz2')
-    p_t = tarfile.open(preconda_tarball, 'w:bz2')
-    for dist in preconda_files:
-        fn = filename_dist(dist)
-        p_t.add(join(tmp_dir, fn), 'pkgs/' + fn)
-    for key in 'pre_install', 'post_install':
-        if key in info:
-            p_t.add(info[key], 'pkgs/%s.sh' % key)
-    cache_dir = join(tmp_dir, 'cache')
-    if isdir(cache_dir):
-        for cf in os.listdir(cache_dir):
-            if cf.endswith(".json"):
-                p_t.add(join(cache_dir, cf), 'pkgs/cache/' + cf)
-    p_t.add(join(tmp_dir, 'conda-meta', 'history'), 'conda-meta/history')
-    for dist in info['_dists']:
-        _dist = filename_dist(dist)[:-8]
-        record_file = join(_dist, 'info', 'repodata_record.json')
-        record_file_src = join(tmp_dir, record_file)
-        record_file_dest = join('pkgs', record_file)
-        p_t.add(record_file_src, record_file_dest)
-    p_t.close()
+        header = get_header(tarball, info)
+        shar_path = info['_outpath']
+        with open(shar_path, 'wb') as fo:
+            fo.write(header.encode('utf-8'))
+            with open(tarball, 'rb') as fi:
+                while True:
+                    chunk = fi.read(262144)
+                    if not chunk:
+                        break
+                    fo.write(chunk)
 
-    tarball = join(tmp_dir, 'tmp.tar')
-    t = tarfile.open(tarball, 'w')
-    t.add(preconda_tarball, basename(preconda_tarball))
-    if 'license_file' in info:
-        t.add(info['license_file'], 'LICENSE.txt')
-    for dist in info['_dists']:
-        fn = filename_dist(dist)
-        t.add(join(info['_download_dir'], fn), 'pkgs/' + fn)
-    t.close()
-
-    header = get_header(tarball, info)
-    shar_path = info['_outpath']
-    with open(shar_path, 'wb') as fo:
-        fo.write(header.encode('utf-8'))
-        with open(tarball, 'rb') as fi:
-            while True:
-                chunk = fi.read(262144)
-                if not chunk:
-                    break
-                fo.write(chunk)
-
-    os.unlink(tarball)
-    os.chmod(shar_path, 0o755)
-    shutil.rmtree(tmp_dir)
+        os.unlink(tarball)
+        os.chmod(shar_path, 0o755)

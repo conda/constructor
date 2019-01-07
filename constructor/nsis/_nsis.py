@@ -11,7 +11,7 @@ import os
 import re
 import sys
 import traceback
-from os.path import isdir, isfile, join, exists
+from os.path import isfile, join, exists
 
 try:
     import winreg
@@ -25,9 +25,11 @@ ROOT_PREFIX = sys.prefix
 # etc, but this is a stopgap solution for now.
 old_excepthook = sys.excepthook
 
+
 def gui_excepthook(exctype, value, tb):
     try:
-        import ctypes, traceback
+        import ctypes
+        import traceback
         MB_ICONERROR = 0x00000010
         title = u'Installation Error'
         msg = u''.join(traceback.format_exception(exctype, value, tb))
@@ -36,6 +38,8 @@ def gui_excepthook(exctype, value, tb):
         # Also call the old exception hook to let it do
         # its thing too.
         old_excepthook(exctype, value, tb)
+
+
 sys.excepthook = gui_excepthook
 
 # If pythonw is being run, there may be no write function
@@ -46,8 +50,10 @@ else:
     import ctypes
     OutputDebugString = ctypes.windll.kernel32.OutputDebugStringW
     OutputDebugString.argtypes = [ctypes.c_wchar_p]
+
     def out(x):
         OutputDebugString('_nsis.py: ' + x)
+
     def err(x):
         OutputDebugString('_nsis.py: Error: ' + x)
 
@@ -108,10 +114,12 @@ def mk_menus(remove=False, prefix=None):
         else:
             out("Processed %s successfully.\n" % shortcut)
 
+
 def mk_dirs():
     envs_dir = join(ROOT_PREFIX, 'envs')
     if not exists(envs_dir):
         os.mkdir(envs_dir)
+
 
 def get_conda_envs_from_python_api():
     try:
@@ -253,7 +261,7 @@ def main():
         if len(sys.argv) > 3:
             arch = sys.argv[2]
         else:
-            arch = '32-bit' if tuple.__itemsize__==4 else '64-bit'
+            arch = '32-bit' if tuple.__itemsize__ == 4 else '64-bit'
         add_to_path(pyver, arch)
     elif cmd == 'rmpath':
         remove_from_path()
