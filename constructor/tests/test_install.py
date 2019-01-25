@@ -1,11 +1,12 @@
 import unittest
-
+import os
+import shutil
+import json
 
 from ..install import (
     PaddingError, binary_replace, name_dist, url_pat,
-    link_idists, duplicates_to_remove,
+    link_idists, duplicates_to_remove, create_meta
 )
-
 
 
 class TestBinaryReplace(unittest.TestCase):
@@ -128,6 +129,42 @@ class Misc_TestCase(unittest.TestCase):
         self.assertEqual(name_dist('pip-7.1-py27_0'), 'pip')
         self.assertEqual(name_dist('conda-build-1.21.6-py35_0'),
                          'conda-build')
+
+
+class Metadata_TestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.repodata_record = {
+            "build": "py35_0",
+            "build_number": 0,
+            "depends": [
+                "some_package",
+                "fun_package",
+                "not_fun_package >=3.5,<3.6.0a0",
+                "wombo"
+            ]
+        }
+        self.test_prefix = "/tmp/test/prefix"
+        self.test_info_dir = "/tmp/test/info"
+        self.dist = "test_dist"
+        os.makedirs(self.test_prefix)
+        os.makedirs(os.path.join(self.test_prefix, "conda-meta"))
+        os.makedirs(self.test_info_dir)
+        with open(os.path.join(self.test_info_dir, "repodata_record.json"), 'w') as fo:
+            json.dump(self.repodata_record, fo, indent=2)
+
+    def tearDown(self):
+        shutil.rmtree(self.test_prefix)
+        shutil.rmtree(self.test_info_dir)
+
+    def test_metadata(self):
+        create_meta(self.test_prefix, self.dist, self.test_info_dir, {})
+
+        with open(os.path.join(self.test_prefix, "conda-meta", self.dist + '.json')) as fi:
+            metadata = json.load(fi)
+
+        self.assertEqual(metadata, self.repodata_record)
+
 
 
 def run():

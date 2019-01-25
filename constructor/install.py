@@ -219,8 +219,8 @@ def create_meta(prefix, dist, info_dir, extra_info):
     """
     Create the conda metadata, in a given prefix, for a given package.
     """
-    # read info/index.json first
-    with open(join(info_dir, 'index.json')) as fi:
+    # read info/repodata_record.json first
+    with open(join(info_dir, 'repodata_record.json')) as fi:
         meta = json.load(fi)
     # add extra info
     meta.update(extra_info)
