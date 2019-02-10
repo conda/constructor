@@ -254,6 +254,17 @@ def create(info, verbose=False):
     # can be disabled.
     pkgbuild_script('pathupdate', info, 'update_path.sh')
 
+    post_packages = ['postextract', 'pathupdate']
+
+    # Next, the users post_install script, if specified
+    if info.get('post_install', None) is not None:
+        scripts_dir = join(CACHE_DIR, "scripts")
+        fresh_dir(scripts_dir)
+        move_script(info['post_install'], join(scripts_dir, 'postinstall'), info)
+        fresh_dir(PACKAGE_ROOT)
+        pkgbuild('user_postinstall', scripts_dir)
+        post_packages.append('user_postinstall')
+
     # Next, the script to be run before everything, which checks if Anaconda
     # is already installed.
     pkgbuild_script('apreinstall', info, 'preinstall.sh', 'preinstall')
@@ -261,7 +272,7 @@ def create(info, verbose=False):
     # Now build the final package
     names = ['apreinstall', 'preconda']
     names.extend(name_dist(dist) for dist in info['_dists'])
-    names.extend(['postextract', 'pathupdate'])
+    names.extend(post_packages)
 
     xml_path = join(PACKAGES_DIR, 'distribution.xml')
     args = ["productbuild", "--synthesize"]
