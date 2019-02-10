@@ -1,0 +1,19 @@
+name: osxpkgtest
+version: 1
+
+channels:
+    - http://repo.anaconda.com/pkgs/main/
+
+attempt_hardlinks: True
+
+specs:
+    - python
+    - conda
+    - openssl
+    - asn1crypto
+    - readline
+    - setuptools
+    - numpy
+
+post_install: post_install.sh   [unix]
+installer_type: pkg  [osx]
