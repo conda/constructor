@@ -47,23 +47,25 @@ install:
     MINICONDA_PYVERSION=${TRAVIS_PYTHON_VERSION:0:1} ;
     wget https://repo.anaconda.com/miniconda/Miniconda$MINICONDA_PYVERSION-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p "$HOME"/miniconda
-  - source "$HOME"/miniconda/bin/activate root
+  - source "$HOME"/miniconda/etc/profile.d/conda.sh
+  - conda activate base
   - conda config --set always_yes yes
-  - conda update -n root conda -q --no-pin
+  - conda update -n base conda -q --no-pin
   - conda config --add pkgs_dirs ~/condacache/pkgs
   # Install run dependencies
-  - conda install -n root pillow>=3.1 ruamel_yaml
+  - conda install -n base pillow>=3.1 ruamel_yaml
   # Install test dependencies
   - conda install conda-forge::codecov pytest pytest-cov
   # Install this package
   - python setup.py develop
   # Install conda canary before running tests, ensure conda is updated
-  - if [ "${CONDA_CANARY}" = "true" ]; then
-      conda update -n root conda -c conda-canary --no-pin;
+  - source "$HOME"/miniconda/etc/profile.d/conda.sh ;
+    if [ "${CONDA_CANARY}" = "true" ]; then
+      conda update -n base conda -c conda-canary --no-pin;
     else
-      conda update -n root conda --no-pin;
+      conda update -n base conda --no-pin;
     fi
-  - source "$HOME"/miniconda/bin/activate root
+  - conda activate base
   - conda info
   - conda list
 

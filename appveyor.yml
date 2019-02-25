@@ -42,7 +42,7 @@ install:
   - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
   - "conda config --set always_yes yes"
   - "conda update -n root conda -q --no-pin"
-  - "%CONDA_ROOT%\\Scripts\\activate root"
+  - "%CONDA_ROOT%\\Scripts\\activate base"
   - "conda config --add pkgs_dirs C:\\condacache\\pkgs"
   # Install run dependencies
   - "conda install -n root nsis pillow>=3.1 ruamel_yaml"
