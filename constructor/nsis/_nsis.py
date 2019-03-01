@@ -12,6 +12,7 @@ import re
 import sys
 import traceback
 from os.path import isdir, isfile, join, exists
+from subprocess import check_output, STDOUT, CalledProcessError
 
 try:
     import winreg
@@ -229,6 +230,19 @@ def rm_regkeys():
             pass
 
 
+def win_del(dirname):
+    try:
+        out = check_output('DEL /F/Q/S *.* > NUL', shell=True, stderr=STDOUT, cwd=dirname)
+    except CalledProcessError as e:
+            # error code 5 indicates a permission error.  We ignore those, but raise for anything else
+            if e.returncode != 5:
+                print("Removing folder {} the fast way failed. Output was: {}".format(dirname, output))
+                raise
+            else:
+                print("removing dir contents the fast way failed. Output was: {}".format(output))
+    else:
+        print("Unexpected error removing dirname {}. Uninstall was probably not successful".format(dirname))
+
 def main():
     cmd = sys.argv[1].strip()
     if cmd == 'mkmenus':
@@ -257,6 +271,9 @@ def main():
         add_to_path(pyver, arch)
     elif cmd == 'rmpath':
         remove_from_path()
+    elif cmd == 'del':
+        assert len(sys.argv) == 3
+        win_del(sys.argv[2].strip())
     else:
         sys.exit("ERROR: did not expect %r" % cmd)
 

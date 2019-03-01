@@ -836,6 +836,9 @@ Section "Uninstall"
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmmenus'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmreg'
+    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" del "$INSTDIR"'
+
+    RMDir /r /REBOOTOK "$INSTDIR"
 
     DeleteRegKey SHCTX "${UNINSTREG}"
     # If Anaconda was registered as the official Python for this version,
@@ -844,8 +847,5 @@ Section "Uninstall"
     ${If} $0 == "$INSTDIR"
         DeleteRegKey SHCTX "Software\Python\PythonCore\${PY_VER}"
     ${EndIf}
-
-    # Trivial removal of whole directory for now
-    RMDir /r /REBOOTOK "$INSTDIR"
 
 SectionEnd
