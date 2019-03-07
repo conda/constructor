@@ -41,18 +41,19 @@ install:
   - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
   - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
   - "conda config --set always_yes yes"
-  - "conda update -n root conda -q --no-pin"
-  - "%CONDA_ROOT%\\Scripts\\activate root"
+  - "conda update conda -q --no-pin"
+  - "%CONDA_ROOT%\\Scripts\\activate"
   - "conda config --add pkgs_dirs C:\\condacache\\pkgs"
   # Install run dependencies
-  - "conda install -n root nsis pillow>=3.1 ruamel_yaml"
+  - "conda install nsis pillow>=3.1 ruamel_yaml"
   # Install test dependencies
-  - "conda install -n root pytest pytest-cov"
+  - "conda install pytest pytest-cov"
   # Install this package
   - "python setup.py develop"
   # Install conda canary before running tests, ensure conda is updated
-  - if "%CONDA_CANARY%" == "true" conda update -n root conda -c conda-canary --no-pin
-  - if "%CONDA_CANARY%" == "false" conda update -n root conda --no-pin
+  - conda init
+  - if "%CONDA_CANARY%" == "true" conda update conda -c conda-canary --no-pin
+  - if "%CONDA_CANARY%" == "false" conda update conda --no-pin
   - "%CONDA_ROOT%\\Scripts\\activate root"
   - "conda info"
   - "conda list"
