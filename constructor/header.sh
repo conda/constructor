@@ -482,7 +482,7 @@ if [ "$BATCH" = "0" ]; then
 #endif
 
     printf "Do you wish the installer to initialize __NAME__\\n"
-    printf "in your %s ? [yes|no]\\n" "$BASH_RC"
+    printf "by running conda init? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
     read -r ans
     if [ "$ans" = "" ]; then
@@ -492,48 +492,26 @@ if [ "$BATCH" = "0" ]; then
        [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
     then
         printf "\\n"
-        printf "You may wish to edit your $BASH_RC to setup __NAME__:\\n"
+        printf "You've chosen to not have conda modify your shell scripts at all.\\n"
+        printf "To activate conda's base environment in your current shell session:\\n"
         printf "\\n"
-        if [ -f "$PREFIX/etc/profile.d/conda.sh" ]; then
-            printf "source $PREFIX/etc/profile.d/conda.sh\\n"
-        else
-            printf "export PATH=\"$PREFIX/bin:\$PATH\"\\n"
-        fi
+        printf ". $PREFIX/bin/activate\\n"
+        printf "\\n"
+        printf "To install conda's shell functions for easier access, first activate, then:\\n"
+        printf "\\n"
+        printf "conda init --all\\n"
         printf "\\n"
     else
-        if [ -f "$BASH_RC" ]; then
-            printf "\\n"
-            printf "Initializing __NAME__ in %s\\n" "$BASH_RC"
-            printf "A backup will be made to: %s-__name__.bak\\n" "$BASH_RC"
-            printf "\\n"
-            cp "$BASH_RC" "${BASH_RC}"-__name__.bak
-        else
-            printf "\\n"
-            printf "Initializing __NAME__ in newly created %s\\n" "$BASH_RC"
-        fi
-        cat <<EOF >> "$BASH_RC"
-
-# added by __NAME__ __VERSION__ installer
-# >>> conda init >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="\$(CONDA_REPORT_ERRORS=false '$PREFIX/bin/conda' shell.bash hook 2> /dev/null)"
-if [ \$? -eq 0 ]; then
-    \\eval "\$__conda_setup"
-else
-    if [ -f "$PREFIX/etc/profile.d/conda.sh" ]; then
-        . "$PREFIX/etc/profile.d/conda.sh"
-        CONDA_CHANGEPS1=false conda activate base
-    else
-        \\export PATH="$PREFIX/bin:\$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda init <<<
-EOF
+        $PREFIX/condabin/conda init --all
         printf "\\n"
         printf "For this change to become active, you have to open a new terminal.\\n"
         printf "\\n"
     fi
+    printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
+    printf "   set the auto_activate_base parameter to false: \\n"
+    printf "\\n"
+    printf "conda config --set auto_activate_base false\\n"
+    printf "\\n"
 
     printf "Thank you for installing __NAME__!\\n"
 fi # !BATCH
