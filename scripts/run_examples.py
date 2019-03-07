@@ -6,22 +6,27 @@
 import os
 import subprocess
 import sys
+import platform
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 REPO_DIR = os.path.dirname(HERE)
 EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
 PY3 = sys.version_info[0] == 3
 WHITELIST = ['grin', 'jetsonconda', 'maxiconda', 'newchan']
-
+BLACKLIST = []
 
 def run_examples():
     """Run examples bundled with the repository."""
     example_paths = []
     errored = 0
+
+    if platform.system() != 'Darwin':
+        BLACKLIST.append(os.path.join(EXAMPLES_DIR, "osxpkg"))
+
     whitelist = [os.path.join(EXAMPLES_DIR, p) for p in WHITELIST]
     for fname in os.listdir(EXAMPLES_DIR):
         fpath = os.path.join(EXAMPLES_DIR, fname)
-        if os.path.isdir(fpath) and fpath not in whitelist:
+        if os.path.isdir(fpath) and fpath not in whitelist and fpath not in BLACKLIST:
             example_paths.append(fpath)
 
     for i, example_path in enumerate(sorted(example_paths)):
