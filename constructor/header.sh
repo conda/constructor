@@ -492,17 +492,17 @@ if [ "$BATCH" = "0" ]; then
        [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
     then
         printf "\\n"
-        printf "You've chosen to not have conda modify your shell scripts at all.\\n"
+        printf "You have chosen to not have conda modify your shell scripts at all.\\n"
         printf "To activate conda's base environment in your current shell session:\\n"
         printf "\\n"
         printf "eval \"\$($PREFIX/bin/conda shell.YOUR_SHELL_NAME hook)\" \\n"
         printf "\\n"
         printf "To install conda's shell functions for easier access, first activate, then:\\n"
         printf "\\n"
-        printf "conda init --all\\n"
+        printf "conda init\\n"
         printf "\\n"
     else
-        $PREFIX/bin/conda init --all
+        $PREFIX/bin/conda init
         printf "\\n"
         printf "For this change to become active, you might need to open a new terminal.\\n"
         printf "\\n"
