@@ -503,9 +503,6 @@ if [ "$BATCH" = "0" ]; then
         printf "\\n"
     else
         $PREFIX/bin/conda init
-        printf "\\n"
-        printf "For this change to become active, you might need to open a new terminal.\\n"
-        printf "\\n"
     fi
     printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
     printf "   set the auto_activate_base parameter to false: \\n"
