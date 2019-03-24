@@ -157,11 +157,13 @@ def run_post_install():
         return
     env = os.environ
     env['PREFIX'] = str(ROOT_PREFIX)
-    try:
-        args = [env['COMSPEC'], '/c', path]
-    except KeyError:
-        err("Error: COMSPEC undefined\n")
-        return
+    cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
+    if not os.path.isfile(cmd_exe):
+        cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
+    if not os.path.isfile(cmd_exe):
+        err("Error: running %s failed.  cmd.exe could not be found.  "
+            "Looked in SystemRoot and windir env vars.\n" % path)
+    args = [cmd_exe, '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
@@ -231,15 +233,28 @@ def rm_regkeys():
 
 
 def win_del(dirname):
+    # first, remove all files
     try:
         out = check_output('DEL /F/Q/S *.* > NUL', shell=True, stderr=STDOUT, cwd=dirname)
     except CalledProcessError as e:
             # error code 5 indicates a permission error.  We ignore those, but raise for anything else
             if e.returncode != 5:
-                print("Removing folder {} the fast way failed. Output was: {}".format(dirname, output))
+                print("Removing folder {} the fast way failed. Output was: {}".format(dirname, out))
                 raise
             else:
-                print("removing dir contents the fast way failed. Output was: {}".format(output))
+                print("removing dir contents the fast way failed. Output was: {}".format(out))
+    else:
+        print("Unexpected error removing dirname {}. Uninstall was probably not successful".format(dirname))
+    # next, remove folder hierarchy
+    try:
+        out = check_output('RD /S /Q "{}" > NUL'.format(dirname), shell=True, stderr=STDOUT)
+    except CalledProcessError as e:
+            # error code 5 indicates a permission error.  We ignore those, but raise for anything else
+            if e.returncode != 5:
+                print("Removing folder {} the fast way failed. Output was: {}".format(dirname, out))
+                raise
+            else:
+                print("removing dir folders the fast way failed. Output was: {}".format(out))
     else:
         print("Unexpected error removing dirname {}. Uninstall was probably not successful".format(dirname))
 
