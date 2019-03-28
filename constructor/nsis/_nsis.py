@@ -14,6 +14,8 @@ import traceback
 from os.path import isdir, isfile, join, exists
 from subprocess import check_output, STDOUT, CalledProcessError
 
+from ..utils import ensure_comspec_set
+
 try:
     import winreg
 except ImportError:
@@ -233,6 +235,8 @@ def rm_regkeys():
 
 
 def win_del(dirname):
+    # check_output uses comspec as the default shell when setting the parameter `shell=True`
+    ensure_comspec_set()
     # first, remove all files
     try:
         out = check_output('DEL /F/Q/S *.* > NUL', shell=True, stderr=STDOUT, cwd=dirname)
@@ -257,6 +261,7 @@ def win_del(dirname):
                 print("removing dir folders the fast way failed. Output was: {}".format(out))
     else:
         print("Unexpected error removing dirname {}. Uninstall was probably not successful".format(dirname))
+
 
 def main():
     cmd = sys.argv[1].strip()
