@@ -113,15 +113,3 @@ def add_condarc(info):
                 yield 'EOF'
     else:
         yield ''
-
-
-def ensure_comspec_set():
-    if basename(environ.get("COMSPEC", "")).lower() != "cmd.exe":
-        cmd_exe = join(environ.get('SystemRoot'), 'System32', 'cmd.exe')
-        if not isfile(cmd_exe):
-            cmd_exe = join(environ.get('windir'), 'System32', 'cmd.exe')
-        if not isfile(cmd_exe):
-            print("cmd.exe could not be found. "
-                     "Looked in SystemRoot and windir env vars.\n")
-        else:
-            environ['COMSPEC'] = cmd_exe

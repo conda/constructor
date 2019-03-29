@@ -11,10 +11,9 @@ import os
 import re
 import sys
 import traceback
-from os.path import isdir, isfile, join, exists
+from os.path import isfile, join, exists, basename
+from os import environ
 from subprocess import check_output, STDOUT, CalledProcessError
-
-from ..utils import ensure_comspec_set
 
 try:
     import winreg
@@ -27,6 +26,21 @@ ROOT_PREFIX = sys.prefix
 # Ideally, exceptions will get returned to NSIS and logged there,
 # etc, but this is a stopgap solution for now.
 old_excepthook = sys.excepthook
+
+
+# this sucks.  It is copied from _nsis.py because it can't be a relative import.
+# _nsis.py must be standalone.
+def ensure_comspec_set():
+    if basename(environ.get("COMSPEC", "")).lower() != "cmd.exe":
+        cmd_exe = join(environ.get('SystemRoot'), 'System32', 'cmd.exe')
+        if not isfile(cmd_exe):
+            cmd_exe = join(environ.get('windir'), 'System32', 'cmd.exe')
+        if not isfile(cmd_exe):
+            print("cmd.exe could not be found. "
+                     "Looked in SystemRoot and windir env vars.\n")
+        else:
+            environ['COMSPEC'] = cmd_exe
+
 
 def gui_excepthook(exctype, value, tb):
     try:
