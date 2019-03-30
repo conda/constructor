@@ -251,6 +251,7 @@ def rm_regkeys():
 def win_del(dirname):
     # check_output uses comspec as the default shell when setting the parameter `shell=True`
     ensure_comspec_set()
+    out = "unknown error (exception not caught)"
     # first, remove all files
     try:
         out = check_output('DEL /F/Q/S *.* > NUL', shell=True, stderr=STDOUT, cwd=dirname)
