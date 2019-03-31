@@ -255,7 +255,7 @@ def run_script(prefix, dist, action='post-link'):
             print("Error: running %s failed.  cmd.exe could not be found.  "
                 "Looked in SystemRoot and windir env vars.\n" % path)
             return False
-        args = [cmd_exe, '/c', path]
+        args = [cmd_exe, '/d', '/c', path]
     else:
         shell_path = '/bin/sh' if 'bsd' in sys.platform else '/bin/bash'
         args = [shell_path, path]

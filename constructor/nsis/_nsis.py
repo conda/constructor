@@ -179,7 +179,7 @@ def run_post_install():
     if not os.path.isfile(cmd_exe):
         err("Error: running %s failed.  cmd.exe could not be found.  "
             "Looked in SystemRoot and windir env vars.\n" % path)
-    args = [cmd_exe, '/c', path]
+    args = [cmd_exe, '/d', '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
