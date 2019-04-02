@@ -19,7 +19,7 @@ if conda_interface_type == 'conda':
         concatv as _concatv, get as _get, groupby as _groupby,
     )
     from conda.base.context import (
-        context as _conda_context, reset_context as _conda_reset_context,
+        context as _conda_context, replace_context_default as _conda_replace_context_default,
     )
     from conda.common.io import env_vars as _env_vars
     from conda.core.package_cache_data import (
@@ -41,7 +41,7 @@ if conda_interface_type == 'conda':
     PackageCacheData = _PackageCacheData
     Solver, read_paths_json = _Solver, _read_paths_json
     concatv, get, groupby = _concatv, _get, _groupby
-    conda_context, env_vars, conda_reset_context = _conda_context, _env_vars, _conda_reset_context
+    conda_context, env_vars, conda_replace_context_default = _conda_context, _env_vars, _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
 
     # used by preconda.py
