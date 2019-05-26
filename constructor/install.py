@@ -27,6 +27,7 @@ import sys
 import json
 import shutil
 import stat
+import string
 from os.path import abspath, dirname, exists, isdir, isfile, islink, join
 from optparse import OptionParser
 
@@ -315,6 +316,12 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
     been extra_info in either
       - <PKGS_DIR>/dist
       - <ROOT_PREFIX>/ (when the linktype is None)
+
+    Preliminary support of noarch:python is introduced. files in
+    <prefix>/site-packages will be moved into
+    <prefix>/lib/pythonX.Y/site-packages and entry_points will be created in
+    <prefix>/bin. This makes most noarch:python packages work but the pyc files
+    are not compiled.
     '''
     if linktype:
         source_dir = join(PKGS_DIR, dist)
@@ -326,11 +333,18 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
     files = list(yield_lines(join(info_dir, 'files')))
     # TODO: Use paths.json, if available or fall back to this method
     has_prefix_files = read_has_prefix(join(info_dir, 'has_prefix'))
+    python_xy = "python%d.%d" % sys.version_info[:2]
 
     if linktype:
-        for f in files:
+        for i, f in enumerate(files):
             src = join(source_dir, f)
-            dst = join(prefix, f)
+            # link site-packages into python-specific path for noarch:python
+            # packages and fix file paths.
+            if f.startswith("site-packages" + os.path.sep):
+                dst = join(prefix, "lib", python_xy, f)
+                files[i] = join("lib", python_xy, f)
+            else:
+                dst = join(prefix, f)
             dst_dir = dirname(dst)
             if not isdir(dst_dir):
                 os.makedirs(dst_dir)
@@ -346,6 +360,26 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
                 _link(src, dst, lt)
             except OSError:
                 pass
+    else:
+        # move site-packages into python-specific path for noarch:python
+        # packages and fix file paths.
+        for i, f in enumerate(files):
+            if not f.startswith("site-packages" + os.path.sep):
+                continue
+            src = join(prefix, f)
+            if not os.path.exists(src):
+                continue
+            dst = join(prefix, "lib", python_xy, f)
+            try:
+                dst_dir = dirname(dst)
+                if not os.path.exists(dst_dir):
+                    os.makedirs(dst_dir)
+                shutil.copyfile(src, dst)
+                os.remove(src)
+            except OSError:
+                pass
+            files[i] = join("lib", python_xy, f)
+        rm_rf(join(prefix, "site-packages"))
 
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
@@ -354,6 +388,38 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
         except PaddingError:
             sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
                      (placeholder, dist))
+
+    # Create entry points for a noarch:python package
+    link_fn = join(info_dir, "link.json")
+    while exists(link_fn):
+        with open(link_fn) as f:
+            link_json = json.load(f)
+        if "noarch" not in link_json:
+            break
+        if link_json["noarch"]["type"] != "python":
+            break
+        if "entry_points" not in link_json["noarch"]:
+            break
+        tpl = string.Template('''#!${python}
+#-*- coding: utf-8 -*-
+
+import sys
+from ${module} import ${func}
+
+if __name__ == "__main__":
+    sys.exit(${func}())
+''')
+        python_interp = join(prefix, "bin", python_xy)
+        for s in link_json["noarch"]["entry_points"]:
+            name, entry = map(lambda x: x.strip(), s.split("="))
+            module, func = entry.split(":")
+            content = tpl.substitute(python=python_interp, module=module,
+                                     func=func)
+            out_f = join(prefix, "bin", name)
+            with open(out_f, "w") as f:
+                f.write(content)
+            os.chmod(out_f, 509) # 509 is the octal rep of 0755/0o755
+        break
 
     if not run_script(prefix, dist, 'post-link'):
         sys.exit("Error: post-link failed for: %s" % dist)
