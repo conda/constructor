@@ -441,6 +441,7 @@ if __name__ == "__main__":
             with open(out_f, "w") as f:
                 f.write(content)
             os.chmod(out_f, 509) # 509 is the octal rep of 0755/0o755
+            files.append(join("bin", name))
         break
 
     if not run_script(prefix, dist, 'post-link'):
