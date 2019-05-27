@@ -340,11 +340,16 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
             src = join(source_dir, f)
             # link site-packages into python-specific path for noarch:python
             # packages and fix file paths.
+            noarch_python = False
             if f.startswith("site-packages" + os.path.sep):
                 dst = join(prefix, "lib", python_xy, f)
-                files[i] = join("lib", python_xy, f)
+                noarch_python = True
+            elif f.startswith("python-scripts" + os.path.sep):
+                dst = join(prefix, "bin", os.path.basename(f))
+                noarch_python = True
             else:
                 dst = join(prefix, f)
+            files[i] = os.path.relpath(dst, prefix)
             dst_dir = dirname(dst)
             if not isdir(dst_dir):
                 os.makedirs(dst_dir)
@@ -354,32 +359,49 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
                 else:
                     raise Exception("dst exists: %r" % dst)
             lt = linktype
-            if f in has_prefix_files or f in no_link or islink(src):
+            if noarch_python:
+                lt = LINK_COPY
+            elif f in has_prefix_files or f in no_link or islink(src):
                 lt = LINK_COPY
             try:
                 _link(src, dst, lt)
             except OSError:
                 pass
+            if noarch_python:
+                try:
+                    update_prefix(dst, prefix, prefix_placeholder, "text")
+                except PaddingError:
+                    sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
+                             (prefix_placeholder, dist))
     else:
         # move site-packages into python-specific path for noarch:python
         # packages and fix file paths.
         for i, f in enumerate(files):
-            if not f.startswith("site-packages" + os.path.sep):
-                continue
             src = join(prefix, f)
             if not os.path.exists(src):
                 continue
-            dst = join(prefix, "lib", python_xy, f)
+            if f.startswith("site-packages" + os.path.sep):
+                dst = join(prefix, "lib", python_xy, f)
+            elif f.startswith("python-scripts" + os.path.sep):
+                dst = join(prefix, "bin", os.path.basename(f))
+            else:
+                continue
+            files[i] = os.path.relpath(dst, prefix)
             try:
                 dst_dir = dirname(dst)
                 if not os.path.exists(dst_dir):
                     os.makedirs(dst_dir)
-                shutil.copyfile(src, dst)
+                shutil.copy2(src, dst)
                 os.remove(src)
             except OSError:
                 pass
-            files[i] = join("lib", python_xy, f)
+            try:
+                update_prefix(dst, prefix, prefix_placeholder, "text")
+            except PaddingError:
+                sys.exit("ERROR: placeholder '%s' too short in: %s\n" %
+                         (prefix_placeholder, dist))
         rm_rf(join(prefix, "site-packages"))
+        rm_rf(join(prefix, "python-scripts"))
 
     for f in sorted(has_prefix_files):
         placeholder, mode = has_prefix_files[f]
@@ -409,7 +431,7 @@ from ${module} import ${func}
 if __name__ == "__main__":
     sys.exit(${func}())
 ''')
-        python_interp = join(prefix, "bin", python_xy)
+        python_interp = join(prefix, "bin", "python")
         for s in link_json["noarch"]["entry_points"]:
             name, entry = map(lambda x: x.strip(), s.split("="))
             module, func = entry.split(":")
