@@ -426,17 +426,19 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
 #-*- coding: utf-8 -*-
 
 import sys
-from ${module} import ${func}
+import ${module}
 
 if __name__ == "__main__":
-    sys.exit(${func}())
+    sys.exit(${obj}())
 ''')
         python_interp = join(prefix, "bin", "python")
         for s in link_json["noarch"]["entry_points"]:
             name, entry = map(lambda x: x.strip(), s.split("="))
-            module, func = entry.split(":")
+            entry_segs = entry.split(":")
+            module = entry_segs[0]
+            obj = ".".join(entry_segs)
             content = tpl.substitute(python=python_interp, module=module,
-                                     func=func)
+                                     obj=obj)
             out_f = join(prefix, "bin", name)
             with open(out_f, "w") as f:
                 f.write(content)
