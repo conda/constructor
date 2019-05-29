@@ -342,7 +342,10 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
             # packages and fix file paths.
             noarch_python = False
             if f.startswith("site-packages" + os.path.sep):
-                dst = join(prefix, "lib", python_xy, f)
+                if on_win:
+                    dst = join(prefix, "Lib", f)
+                else:
+                    dst = join(prefix, "lib", python_xy, f)
                 noarch_python = True
             elif f.startswith("python-scripts" + os.path.sep):
                 dst = join(prefix, "bin", os.path.basename(f))
@@ -381,7 +384,10 @@ def link(prefix, dist, linktype=LINK_HARD, info_dir=None):
             if not os.path.exists(src):
                 continue
             if f.startswith("site-packages" + os.path.sep):
-                dst = join(prefix, "lib", python_xy, f)
+                if on_win:
+                    dst = join(prefix, "Lib", f)
+                else:
+                    dst = join(prefix, "lib", python_xy, f)
             elif f.startswith("python-scripts" + os.path.sep):
                 dst = join(prefix, "bin", os.path.basename(f))
             else:
