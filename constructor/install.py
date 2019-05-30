@@ -446,12 +446,13 @@ if __name__ == "__main__":
             content = tpl.substitute(python=python_interp, module=module,
                                      obj=obj)
             if on_win:
-                name = name + ".py"
-            out_f = join(prefix, "bin", name)
+                out_f = join(prefix, "Scripts", name + ".py")
+            else:
+                out_f = join(prefix, "bin", name)
             with open(out_f, "w") as f:
                 f.write(content)
             os.chmod(out_f, 509) # 509 is the octal rep of 0755/0o755
-            files.append(join("bin", name))
+            files.append(os.path.relpath(out_f, prefix))
         break
 
     if not run_script(prefix, dist, 'post-link'):
