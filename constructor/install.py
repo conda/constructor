@@ -445,6 +445,8 @@ if __name__ == "__main__":
             obj = ".".join(entry_segs)
             content = tpl.substitute(python=python_interp, module=module,
                                      obj=obj)
+            if on_win:
+                name = name + ".py"
             out_f = join(prefix, "bin", name)
             with open(out_f, "w") as f:
                 f.write(content)
