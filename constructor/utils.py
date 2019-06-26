@@ -29,14 +29,15 @@ def fill_template(data, d):
     return pat.sub(replace, data)
 
 
-def md5_file(path):
+def md5_files(paths):
     h = hashlib.new('md5')
-    with open(path, 'rb') as fi:
-        while True:
-            chunk = fi.read(262144)
-            if not chunk:
-                break
-            h.update(chunk)
+    for path in paths:
+        with open(path, 'rb') as fi:
+            while True:
+                chunk = fi.read(262144)
+                if not chunk:
+                    break
+                h.update(chunk)
     return h.hexdigest()
 
 

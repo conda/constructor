@@ -744,15 +744,15 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                  "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$0;$0\system32;$0\system32\Wbem").r0'
 
-    # our newest Python builds have a patch that allows us to control the PATH search stuff much more
-    #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
-
+    # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
     File __CONDA_HISTORY__
 
+    SetOutPath "$INSTDIR"
+    File __CONDA_EXE__
+
     SetOutPath "$INSTDIR\pkgs"
-    File __INSTALL_PY__
+    File __ENV_TXT__
     File __URLS_FILE__
     File __URLS_TXT_FILE__
     File __POST_INSTALL__
@@ -760,6 +760,10 @@ Section "Install"
     File /r __REPODATA_RECORD__
 
     @PKG_COMMANDS@
+
+    # Cleanup
+    Delete "$INSTDIR\conda.exe"
+    Delete "$INSTDIR\pkgs\env.txt"
 
     @WRITE_CONDARC@
 
@@ -770,6 +774,11 @@ Section "Install"
         FileOpen $0 ".nonadmin" w
         FileClose $0
     ${EndIf}
+
+    # Restore shipped conda-meta\history for remapped
+    # channels and retain only the first transaction
+    SetOutPath "$INSTDIR\conda-meta"
+    File __CONDA_HISTORY__
 
     DetailPrint "Creating @NAME@ menus..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkmenus @MENU_PKGS@'

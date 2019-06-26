@@ -7,13 +7,15 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import abspath, basename, expanduser, isdir, join
+from os.path import abspath, basename, expanduser, isdir, isfile, join
 import sys
 
 from .conda_interface import cc_platform
 from .construct import parse as construct_parse, verify as construct_verify
 from .fcp import main as fcp_main
 from .install import yield_lines
+
+from . import __version__
 
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 
@@ -56,8 +58,10 @@ def get_output_filename(info):
 
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
-               dry_run=False):
+               dry_run=False, conda_exe="conda.exe"):
     print('platform: %s' % platform)
+    if not os.path.isfile(conda_exe):
+        sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
     cache_dir = abspath(expanduser(cache_dir))
     try:
         osname, unused_arch = platform.split('-')
@@ -69,6 +73,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     construct_verify(info)
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
+    info['_conda_exe'] = abspath(conda_exe)
     set_installer_type(info)
 
     if info['installer_type'] == 'sh':
@@ -135,90 +140,93 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
 
 def main():
-    from optparse import OptionParser
+    import argparse
 
-    p = OptionParser(
-        usage="usage: %prog [options] DIRECTORY",
+    p = argparse.ArgumentParser(
         description="build an installer from <DIRECTORY>/construct.yaml")
 
-    p.add_option('--debug',
+    p.add_argument('--debug',
                  action="store_true")
 
-    p.add_option('--output-dir',
+    p.add_argument('--output-dir',
                  action="store",
                  default=os.getcwd(),
                  help='path to directory in which output installer is written '
-                      "to, defaults to CWD ('%default')",
+                      "to, defaults to CWD ('{}')".format(os.getcwd()),
                  metavar='PATH')
 
-    p.add_option('--cache-dir',
+    p.add_argument('--cache-dir',
                  action="store",
                  default=DEFAULT_CACHE_DIR,
                  help='cache directory, used for downloading conda packages, '
                       'may be changed by CONSTRUCTOR_CACHE, '
-                      "defaults to '%default'",
+                      "defaults to '{}'".format(DEFAULT_CACHE_DIR),
                  metavar='PATH')
 
-    p.add_option('--clean',
+    p.add_argument('--clean',
                  action="store_true",
                  help='clean out the cache directory and exit')
 
-    p.add_option('--platform',
+    p.add_argument('--platform',
                  action="store",
                  default=cc_platform,
                  help="the platform for which installer is for, "
-                      "defaults to '%default'")
+                      "defaults to '{}'".format(cc_platform))
 
-    p.add_option('--test',
+    p.add_argument('--test',
                  help="perform some self tests and exit",
                  action="store_true")
 
-    p.add_option('--dry-run',
+    p.add_argument('--dry-run',
                  help="solve package specs but do not create installer",
                  default=False,
                  action="store_true")
 
-    p.add_option('-v', '--verbose',
+    p.add_argument('-v', '--verbose',
                  action="store_true")
 
-    p.add_option('-V', '--version',
+    p.add_argument('-V', '--version',
                  help="display the version being used and exit",
-                 action="store_true")
+                 action="version",
+                 version='%(prog)s {version}'.format(version=__version__))
 
-    opts, args = p.parse_args()
+    p.add_argument('--conda-exe',
+                 help="path to conda executable",
+                 action="store",
+                 metavar="CONDA_EXE",
+                 required=True)
 
-    if opts.version:
-        from . import __version__
-        print('constructor version:', __version__)
-        return
+    p.add_argument('dir_path',
+                 help="directory containing construct.yaml",
+                 action="store",
+                 metavar='DIRECTORY')
 
-    if opts.clean:
+    args = p.parse_args()
+
+    if args.clean:
         import shutil
-        cache_dir = abspath(expanduser(opts.cache_dir))
+        cache_dir = abspath(expanduser(args.cache_dir))
         print("cleaning cache: '%s'" % cache_dir)
         if isdir(cache_dir):
             shutil.rmtree(cache_dir)
         return
 
-    if opts.test:
+    if args.test:
         from .tests import main as tests_main
         tests_main()
         return
 
-    if opts.debug:
+    if args.debug:
         import logging
         logging.basicConfig(level=logging.DEBUG)
 
-    if len(args) != 1:
-        p.error("exactly one argument expected")
-
-    dir_path = args[0]
+    dir_path = args.dir_path
     if not isdir(dir_path):
         p.error("no such directory: %s" % dir_path)
 
-    main_build(dir_path, output_dir=opts.output_dir, platform=opts.platform,
-               verbose=opts.verbose, cache_dir=opts.cache_dir,
-               dry_run=opts.dry_run)
+    main_build(dir_path, output_dir=args.output_dir, platform=args.platform,
+               verbose=args.verbose, cache_dir=args.cache_dir,
+               dry_run=args.dry_run, conda_exe=args.conda_exe)
 
 
 if __name__ == '__main__':

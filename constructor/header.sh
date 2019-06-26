@@ -165,10 +165,6 @@ else
     done
 fi
 
-if ! bzip2 --help >/dev/null 2>&1; then
-    printf "WARNING: bzip2 does not appear to be installed this may cause problems below\\n" >&2
-fi
-
 # verify the size of the installer
 if ! wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null; then
     printf "ERROR: size of %s should be @SIZE_BYTES@ bytes\\n" "$THIS_FILE" >&2
@@ -365,15 +361,24 @@ fi
 # for all the packages which get installed below
 cd "$PREFIX"
 
+CONDA_EXEC="$PREFIX/conda.exe"
+if ! tail -c +@NON_PAYLOAD_SIZE@ "$THIS_PATH" | head -c @FIRST_PAYLOAD_SIZE@ > "$CONDA_EXEC"; then
+    printf "ERROR: could not clip conda.exe starting at offset @NON_PAYLOAD_SIZE@\\n" >&2
+    exit 1
+fi
+chmod +x "$CONDA_EXEC"
 
-if ! tail -n +@LINES@ "$THIS_PATH" | tar xf -; then
-    printf "ERROR: could not extract tar starting at line @LINES@\\n" >&2
+printf "Unpacking payload ...\n"
+if ! tail -c +@NON_PAYLOAD_SIZE@ "$THIS_PATH" | tail -c +@FIRST_PAYLOAD_SIZE@ | tail -c +2 | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"; then
+    printf "ERROR: could not extract tar starting at offset @NON_PAYLOAD_SIZE@+@FIRST_PAYLOAD_SIZE@+2\\n" >&2
     exit 1
 fi
 
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
+
 PRECONDA="$PREFIX/preconda.tar.bz2"
-bunzip2 -c $PRECONDA | tar -xf - --no-same-owner || exit 1
-rm -f $PRECONDA
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$PRECONDA" || exit 1
+rm -f "$PRECONDA"
 
 #if has_pre_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
@@ -393,49 +398,28 @@ MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
 
-install_dist()
-{
-    # This function installs a conda package into prefix, but without linking
-    # the conda packages.  It untars the package and calls a simple script
-    # which does the post extract steps (update prefix files, run 'post-link',
-    # and creates the conda metadata).  Note that this is all done without
-    # conda.
-    if [ "$REINSTALL" = "1" ]; then
-      printf "reinstalling: %s ...\\n" "$1"
-    else
-      printf "installing: %s ...\\n" "$1"
-    fi
-    PKG_PATH="$PREFIX"/pkgs/$1
-    PKG="$PKG_PATH".tar.bz2
-    mkdir -p $PKG_PATH || exit 1
-#if attempt_hardlinks
-    bunzip2 -c "$PKG" | tar -xf - -C "$PKG_PATH" --no-same-owner || exit 1
-    "$PREFIX/pkgs/__DIST0__/bin/python" -E -s \
-        "$PREFIX"/pkgs/.install.py $INST_OPT --root-prefix="$PREFIX" --link-dist="$1" || exit 1
-#else
-    bunzip2 -c "$PKG" | tar -xf - -C "$PREFIX" --no-same-owner || exit 1
-    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py $INST_OPT || exit 1
-#endif
-    if [ "$1" = "__DIST0__" ]; then
-        if ! "$PYTHON" -E -V; then
-            printf "ERROR:\\n" >&2
-            printf "cannot execute native __PLAT__ binary, output from 'uname -a' is:\\n" >&2
-            uname -a >&2
-            exit 1
-        fi
-    fi
+CONDA_SAFETY_CHECKS=disabled \
+CONDA_EXTRA_SAFETY_CHECKS=no \
+CONDA_ROLLBACK_ENABLED=no \
+CONDA_CHANNELS=@CHANNELS@ \
+CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+
 #if not keep_pkgs
-    rm "$PKG"
+    rm -fr $PREFIX/pkgs/*.tar.bz2
+    rm -fr $PREFIX/pkgs/*.conda
 #endif
-}
 
 __INSTALL_COMMANDS__
 
-mkdir -p $PREFIX/envs
+POSTCONDA="$PREFIX/postconda.tar.bz2"
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
+rm -f "$POSTCONDA"
 
-if [ "$FORCE" = "1" ]; then
-    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py --rm-dup || exit 1
-fi
+rm -f $PREFIX/conda.exe
+rm -f $PREFIX/pkgs/env.txt
+
+mkdir -p $PREFIX/envs
 
 #if has_post_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
@@ -522,6 +506,7 @@ if [ "$TEST" = "1" ]; then
          mkdir -p "$PREFIX"/conda-bld/__PLAT__
      fi
      cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX"/conda-bld/__PLAT__/
+     cp -f "$PREFIX"/pkgs/*.conda "$PREFIX"/conda-bld/__PLAT__/
      conda index "$PREFIX"/conda-bld/__PLAT__/
      conda-build --override-channels --channel local --test --keep-going "$PREFIX"/conda-bld/__PLAT__/*.tar.bz2
 #endif
