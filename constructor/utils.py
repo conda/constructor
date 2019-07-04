@@ -114,3 +114,24 @@ def add_condarc(info):
                 yield 'EOF'
     else:
         yield ''
+
+
+def get_final_url(info, url):
+    mapping = info.get('channels_remap', [])
+    for entry in mapping:
+        src = entry['src']
+        dst = entry['dest']
+        if url.startswith(src):
+            new_url = url.replace(src, dst)
+            if url.endswith(".tar.bz2"):
+              print("WARNING: You need to make the package {} available "
+                    "at {}".format(url.rsplit('/', 1)[1], new_url))
+            return new_url
+    return url
+
+
+def get_final_channels(info):
+    mapped_channels = []
+    for channel in info.get('channels', []):
+        mapped_channels.append(get_final_url(info, channel))
+    return mapped_channels

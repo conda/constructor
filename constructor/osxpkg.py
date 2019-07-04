@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 from constructor.install import rm_rf, name_dist
 import constructor.preconda as preconda
-from constructor.utils import add_condarc, filename_dist
+from constructor.utils import add_condarc, filename_dist, get_final_channels
 
 from conda_package_handling.api import extract as cph_e
 
@@ -114,7 +114,7 @@ def move_script(src, dst, info):
     data = data.replace('__NAME_LOWER__', info['name'].lower())
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__VERSION__', info['version'])
-    data = data.replace('__CHANNELS__', ','.join(info['channels']))
+    data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
 
     with open(dst, 'w') as fo:

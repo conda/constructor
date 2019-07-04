@@ -19,7 +19,7 @@ from .construct import ns_platform
 from .imaging import write_images
 from .install import name_dist
 from .preconda import write_files as preconda_write_files
-from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess, add_condarc
+from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess, add_condarc, get_final_channels
 
 THIS_DIR = dirname(__file__)
 NSIS_DIR = join(THIS_DIR, 'nsis')
@@ -134,7 +134,7 @@ def make_nsi(info, dir_path):
     cmds = pkg_commands(download_dir, dists, py_version,
                         bool(info.get('keep_pkgs')),
                         bool(info.get('attempt_hardlinks')),
-                        info.get('channels'))
+                        get_final_channels(info))
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
     approx_pkgs_size_kb = int(

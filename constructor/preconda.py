@@ -10,7 +10,7 @@ import platform
 import sys
 import time
 
-from .utils import filename_dist
+from .utils import filename_dist, get_final_url
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
@@ -43,19 +43,6 @@ def write_index_cache(info, dst_dir):
         if not cache_file.endswith(".json"):
             os.unlink(join(cache_dir, cache_file))
 
-
-def get_final_url(info, url):
-    mapping = info.get('channels_remap', [])
-    for entry in mapping:
-        src = entry['src']
-        dst = entry['dest']
-        if url.startswith(src):
-            new_url = url.replace(src, dst)
-            if url.endswith(".tar.bz2"):
-              print("WARNING: You need to make the package {} available "
-                    "at {}".format(url.rsplit('/', 1)[1], new_url))
-            return new_url
-    return url
 
 
 def system_info():

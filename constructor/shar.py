@@ -16,7 +16,7 @@ import tempfile
 from .construct import ns_platform
 from .install import name_dist
 from .preconda import files as preconda_files, write_files as preconda_write_files
-from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, read_ascii_only
+from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, read_ascii_only, get_final_channels
 
 THIS_DIR = dirname(__file__)
 
@@ -60,7 +60,7 @@ def get_header(conda_exec, tarball, info):
     data = fill_template(data, replace)
     n = data.count('\n')
     data = data.replace('@LINES@', str(n + 1))
-    data = data.replace('@CHANNELS@', ','.join(info['channels']))
+    data = data.replace('@CHANNELS@', ','.join(get_final_channels(info)))
 
     # Make all replacements before this
     data = data.replace('@FIRST_PAYLOAD_SIZE@', str(getsize(conda_exec)))
