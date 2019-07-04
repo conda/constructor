@@ -64,7 +64,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, 
     # Extract all the .conda and .tar.bz2 conda packages
     yield r'SetDetailsPrint TextOnly'
     yield r'DetailPrint "Setting up the package cache ..."'
-    cmd = r'"$INSTDIR\conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
+    cmd = r'"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
     yield "nsExec::ExecToLog '%s'" % cmd
     yield "Pop $0"
     yield r'SetDetailsPrint both'
@@ -72,7 +72,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, 
     # Install all the extracted packages
     yield r'SetDetailsPrint TextOnly'
     yield r'DetailPrint "Setting up the base environment ..."'
-    cmd = r'"$INSTDIR\conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt"'
+    cmd = r'"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt"'
     yield "nsExec::ExecToLog '%s'" % cmd
     yield "Pop $0"
     yield r'SetDetailsPrint both'
@@ -112,7 +112,7 @@ def make_nsi(info, dir_path):
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
                     ('WELCOMEIMAGE', 'welcome.bmp'),
                     ('ICONFILE', 'icon.ico'),
-                    ('CONDA_EXE', 'conda.exe'),
+                    ('CONDA_EXE', '_conda.exe'),
                     ('ENV_TXT', 'env.txt'),
                     ('URLS_FILE', 'urls'),
                     ('URLS_TXT_FILE', 'urls.txt'),
@@ -192,7 +192,7 @@ def create(info, verbose=False):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
-    shutil.copyfile(info['_conda_exe'], join(tmp_dir, 'conda.exe'))
+    shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
     if 'pre_install' in info:
         sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
