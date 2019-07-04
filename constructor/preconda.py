@@ -33,8 +33,8 @@ def write_index_cache(info, dst_dir):
     _platforms = info['_platform'], 'noarch'
     _urls = set(info.get('channels', []) +
                 info.get('conda_default_channels', []))
-    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir) for url in _urls
-            if not url.startswith('file://') for subdir in _platforms)
+    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
+                        for url in _urls for subdir in _platforms)
 
     for url in subdir_urls:
         write_repodata(cache_dir, url)
