@@ -431,7 +431,9 @@ else
 fi
 #endif
 
-cat "$MSGS"
+if [ -f "$MSGS" ]; then
+  cat "$MSGS"
+fi
 rm -f "$MSGS"
 #if not keep_pkgs
 rm -rf "$PREFIX"/pkgs
