@@ -21,7 +21,6 @@ chmod +x "$CONDA_EXEC"
 cp "$PREFIX/conda-meta/history" "$PREFIX/conda-meta/history.bak"
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_ROLLBACK_ENABLED=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1

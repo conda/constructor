@@ -56,8 +56,6 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, 
     # Add env vars to bypass safety checks
     _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     yield "System::Call '%s'" % _env
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROLLBACK_ENABLED", "no").r0'
-    yield "System::Call '%s'" % _env
     _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     yield "System::Call '%s'" % _env
 
