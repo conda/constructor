@@ -99,7 +99,7 @@ class NSISReg:
             return None
 
 
-def mk_menus(remove=False, prefix=None):
+def mk_menus(remove=False, prefix=None, pkg_names=[]):
     try:
         import menuinst
     except (ImportError, OSError):
@@ -109,7 +109,6 @@ def mk_menus(remove=False, prefix=None):
     menu_dir = join(prefix, 'Menu')
     if not os.path.isdir(menu_dir):
         return
-    pkg_names = [s.strip() for s in sys.argv[2:]]
     for fn in os.listdir(menu_dir):
         if not fn.endswith('.json'):
             continue
@@ -281,7 +280,8 @@ def win_del(dirname):
 def main():
     cmd = sys.argv[1].strip()
     if cmd == 'mkmenus':
-        mk_menus(remove=False)
+        pkg_names = [s.strip() for s in sys.argv[2:]]
+        mk_menus(remove=False, pkg_names=pkg_names)
     elif cmd == 'post_install':
         run_post_install()
     elif cmd == 'rmmenus':
