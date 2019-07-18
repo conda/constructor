@@ -187,7 +187,7 @@ def run_post_install():
 
 
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
-out('allusers is %s\n' % allusers)
+# out('allusers is %s\n' % allusers)
 
 # This must be the same as conda's binpath_from_arg() in conda/cli/activate.py
 PATH_SUFFIXES = ('',
