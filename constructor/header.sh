@@ -361,6 +361,9 @@ fi
 # for all the packages which get installed below
 cd "$PREFIX"
 
+# disable sysconfigdata overrides, since we want whatever was frozen to be used
+unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
+
 CONDA_EXEC="$PREFIX/conda.exe"
 if ! tail -c +@NON_PAYLOAD_SIZE@ "$THIS_PATH" | head -c @FIRST_PAYLOAD_SIZE@ > "$CONDA_EXEC"; then
     printf "ERROR: could not clip conda.exe starting at offset @NON_PAYLOAD_SIZE@\\n" >&2
