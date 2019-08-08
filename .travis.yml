@@ -20,24 +20,24 @@ matrix:
       env: TRAVIS_PYTHON_VERSION=2.7 CONDA_VERSION=4.3
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_VERSION=4.5
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.5
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_VERSION=4.6
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.6
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_VERSION=4.7
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.7
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_CANARY=true
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
     # OSX
     - os: osx
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_CANARY=false CONDA_AUTO_UPDATE_CONDA=False
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.7
   allow_failures:
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_CANARY=true CONDA_AUTO_UPDATE_CONDA=False
+      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
 
 cache:
   directories:
@@ -45,30 +45,26 @@ cache:
     - $HOME/.cache/pip
 
 install:
+  - mkdir -p $HOME/condacache/pkgs
   # Install latest miniconda
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      MINICONDA_OS=Linux ;
+      wget https://repo.anaconda.com/pkgs/misc/conda-execs/conda-latest-linux-64.exe -O conda.exe;
     else
-      MINICONDA_OS=MacOSX ;
-    fi ;
-    MINICONDA_PYVERSION=${TRAVIS_PYTHON_VERSION:0:1} ;
-    wget https://repo.anaconda.com/miniconda/Miniconda$MINICONDA_PYVERSION-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
-  - bash miniconda.sh -b -p "$HOME"/miniconda
-  - source "$HOME"/miniconda/bin/activate
-  - conda config --set auto_update_conda False
-  - conda config --set allow_conda_downgrades True
-  - conda config --set always_yes yes
-  - conda config --add pkgs_dirs ~/condacache/pkgs
-  - if [ "${CONDA_CANARY}" = "true" ]; then
-      conda update -q -c conda-canary conda;
-    else
-      conda install -q conda=$CONDA_VERSION;
+      wget https://repo.anaconda.com/pkgs/misc/conda-execs/conda-latest-osx-64.exe -O conda.exe;
     fi
+  - chmod +x conda.exe
+
+  - export CONDA_PKGS_DIRS="~/condacache/pkgs"
+  - export CONDA_ALWAYS_YES="true"
+  - export CONDA_AUTO_UPDATE_CONDA="false"
+
+  - if [ "${CONDA_CANARY}" = "true" ]; then
+      ./conda.exe create -y -q -p ~/miniconda -c conda-canary conda python=$TRAVIS_PYTHON_VERSION;
+    else
+      ./conda.exe create -y -q -p ~/miniconda -c conda-canary conda=$CONDA_VERSION python=$TRAVIS_PYTHON_VERSION;
+    fi
+  - ./conda.exe install -y -p ~/miniconda pillow>=3.1 ruamel_yaml conda-forge::codecov pytest pytest-cov
   - source "$HOME"/miniconda/bin/activate
-  # Install run dependencies
-  - conda install pillow>=3.1 ruamel_yaml
-  # Install test dependencies
-  - conda install conda-forge::codecov pytest pytest-cov
   # Install this package
   - python setup.py develop
   - conda info
