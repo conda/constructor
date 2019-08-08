@@ -1,0 +1,56 @@
+package:
+  name: constructor
+  version: {{ GIT_DESCRIBE_TAG }}.{{ GIT_BUILD_STR }}
+
+source:
+  # git_url is nice in that it won't capture devenv stuff.  However, it only
+  #    captures committed code, so pay attention.
+  - git_url: ../
+  - url: https://repo.anaconda.com/pkgs/misc/conda-execs/conda-latest-{{ SUBDIR }}.exe
+
+build:
+  script:
+    - mkdir $PREFIX/standalone_conda  # [not win]
+    - cp conda-latest-{{ SUBDIR }}.exe $PREFIX/standalone_conda/conda.exe  # [not win]
+    - mkdir %PREFIX%\standalone_conda  # [win]
+    - COPY conda-latest-{{ SUBDIR }}.exe %PREFIX%\standalone_conda\conda.exe  # [win]
+    - pip install --no-deps -vv .
+
+requirements:
+  host:
+    - python
+    - pip
+  run:
+    # this is templated to allow CI to define different conda versions to test against
+    - conda  {{ environ.get("conda", "") }}
+    - pillow
+    - python
+    - ruamel_yaml >=0.11.14,<0.16
+
+test:
+  imports:
+    - constructor
+  commands:
+    - constructor -V
+    - constructor --test .
+
+about:
+  home: https://conda.io
+  license: BSD 3-Clause
+  license_file: LICENSE.txt
+  summary: create installer from conda packages
+  description: |
+    Constructor is a tool for constructing an installer for a collection of
+    conda packages. It creates an Anaconda-like installer consisting of
+    packages.
+  doc_url: https://conda.io/projects/conda/en/latest/
+  dev_url: https://github.com/conda/constructor
+
+extra:
+  recipe-maintainers:
+    - jakirkham
+    - mbargull
+    - kalefranz
+    - msarahan
+    - mingwandroid
+    - nehaljwani
