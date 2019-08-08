@@ -193,13 +193,12 @@ def main():
     p.add_argument('--conda-exe',
                  help="path to conda executable",
                  action="store",
-                 metavar="CONDA_EXE",
-                 required=True)
+                 metavar="CONDA_EXE")
 
     p.add_argument('dir_path',
-                 help="directory containing construct.yaml",
-                 action="store",
-                 metavar='DIRECTORY')
+                   help="directory containing construct.yaml",
+                   action="store",
+                   metavar='DIRECTORY')
 
     args = p.parse_args()
 
@@ -223,6 +222,18 @@ def main():
     dir_path = args.dir_path
     if not isdir(dir_path):
         p.error("no such directory: %s" % dir_path)
+
+    if not args.conda_exe:
+        # try a default name of conda.exe in constructor's installed location
+        conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
+        if os.path.isfile(conda_exe_default_path):
+            args.conda_exe = conda_exe_default_path
+        else:
+            raise ValueError("You must supply a path to self-contained conda executable with the "
+                             "--conda-exe parameter.  You may prefer to download one for your OS "
+                             "and place it in the root of your prefix, named 'conda.exe' to save "
+                             "yourself some typing.  Self-contained conda executables can be "
+                             "downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/")
 
     main_build(dir_path, output_dir=args.output_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
