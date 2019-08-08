@@ -16,13 +16,20 @@ matrix:
     # Linux
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_CANARY=false CONDA_AUTO_UPDATE_CONDA=False
+      # needed for legacy enterprise stuff
+      env: TRAVIS_PYTHON_VERSION=2.7 CONDA_VERSION=4.3
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=2.7 CONDA_CANARY=false CONDA_AUTO_UPDATE_CONDA=False
+      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_VERSION=4.5
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_CANARY=true CONDA_AUTO_UPDATE_CONDA=False
+      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_VERSION=4.6
+    - os: linux
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_VERSION=4.7
+    - os: linux
+      language: generic
+      env: TRAVIS_PYTHON_VERSION=3.7 CONDA_CANARY=true
     # OSX
     - os: osx
       language: generic
@@ -48,23 +55,22 @@ install:
     wget https://repo.anaconda.com/miniconda/Miniconda$MINICONDA_PYVERSION-latest-$MINICONDA_OS-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p "$HOME"/miniconda
   - source "$HOME"/miniconda/bin/activate
+  - conda config --set auto_update_conda False
+  - conda config --set allow_conda_downgrades True
   - conda config --set always_yes yes
-  - conda update conda -q --no-pin
   - conda config --add pkgs_dirs ~/condacache/pkgs
+  - if [ "${CONDA_CANARY}" = "true" ]; then
+      conda update -q -c conda-canary conda;
+    else
+      conda install -q conda=$CONDA_VERSION;
+    fi
+  - source "$HOME"/miniconda/bin/activate
   # Install run dependencies
   - conda install pillow>=3.1 ruamel_yaml
   # Install test dependencies
   - conda install conda-forge::codecov pytest pytest-cov
   # Install this package
   - python setup.py develop
-  - conda init
-  # Install conda canary before running tests, ensure conda is updated
-  - if [ "${CONDA_CANARY}" = "true" ]; then
-      conda update conda -c conda-canary --no-pin;
-    else
-      conda update conda --no-pin;
-    fi
-  - source "$HOME"/miniconda/bin/activate
   - conda info
   - conda list
 
