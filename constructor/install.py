@@ -248,10 +248,14 @@ def run_script(prefix, dist, action='post-link'):
         return True
 
     if on_win:
-        try:
-            args = [os.environ['COMSPEC'], '/c', path]
-        except KeyError:
+        cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
+        if not os.path.isfile(cmd_exe):
+            cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
+        if not os.path.isfile(cmd_exe):
+            print("Error: running %s failed.  cmd.exe could not be found.  "
+                "Looked in SystemRoot and windir env vars.\n" % path)
             return False
+        args = [cmd_exe, '/d', '/c', path]
     else:
         shell_path = '/bin/sh' if 'bsd' in sys.platform else '/bin/bash'
         args = [shell_path, path]

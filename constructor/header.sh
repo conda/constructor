@@ -165,10 +165,6 @@ else
     done
 fi
 
-if ! bzip2 --help >/dev/null 2>&1; then
-    printf "WARNING: bzip2 does not appear to be installed this may cause problems below\\n" >&2
-fi
-
 # verify the size of the installer
 if ! wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null; then
     printf "ERROR: size of %s should be @SIZE_BYTES@ bytes\\n" "$THIS_FILE" >&2
@@ -365,15 +361,27 @@ fi
 # for all the packages which get installed below
 cd "$PREFIX"
 
+# disable sysconfigdata overrides, since we want whatever was frozen to be used
+unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
-if ! tail -n +@LINES@ "$THIS_PATH" | tar xf -; then
-    printf "ERROR: could not extract tar starting at line @LINES@\\n" >&2
+CONDA_EXEC="$PREFIX/conda.exe"
+if ! tail -c +@NON_PAYLOAD_SIZE@ "$THIS_PATH" | head -c @FIRST_PAYLOAD_SIZE@ > "$CONDA_EXEC"; then
+    printf "ERROR: could not clip conda.exe starting at offset @NON_PAYLOAD_SIZE@\\n" >&2
+    exit 1
+fi
+chmod +x "$CONDA_EXEC"
+
+printf "Unpacking payload ...\n"
+if ! tail -c +@NON_PAYLOAD_SIZE@ "$THIS_PATH" | tail -c +@FIRST_PAYLOAD_SIZE@ | tail -c +2 | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"; then
+    printf "ERROR: could not extract tar starting at offset @NON_PAYLOAD_SIZE@+@FIRST_PAYLOAD_SIZE@+2\\n" >&2
     exit 1
 fi
 
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
+
 PRECONDA="$PREFIX/preconda.tar.bz2"
-bunzip2 -c $PRECONDA | tar -xf - --no-same-owner || exit 1
-rm -f $PRECONDA
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$PRECONDA" || exit 1
+rm -f "$PRECONDA"
 
 #if has_pre_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
@@ -393,49 +401,27 @@ MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
 
-install_dist()
-{
-    # This function installs a conda package into prefix, but without linking
-    # the conda packages.  It untars the package and calls a simple script
-    # which does the post extract steps (update prefix files, run 'post-link',
-    # and creates the conda metadata).  Note that this is all done without
-    # conda.
-    if [ "$REINSTALL" = "1" ]; then
-      printf "reinstalling: %s ...\\n" "$1"
-    else
-      printf "installing: %s ...\\n" "$1"
-    fi
-    PKG_PATH="$PREFIX"/pkgs/$1
-    PKG="$PKG_PATH".tar.bz2
-    mkdir -p $PKG_PATH || exit 1
-#if attempt_hardlinks
-    bunzip2 -c "$PKG" | tar -xf - -C "$PKG_PATH" --no-same-owner || exit 1
-    "$PREFIX/pkgs/__DIST0__/bin/python" -E -s \
-        "$PREFIX"/pkgs/.install.py $INST_OPT --root-prefix="$PREFIX" --link-dist="$1" || exit 1
-#else
-    bunzip2 -c "$PKG" | tar -xf - -C "$PREFIX" --no-same-owner || exit 1
-    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py $INST_OPT || exit 1
-#endif
-    if [ "$1" = "__DIST0__" ]; then
-        if ! "$PYTHON" -E -V; then
-            printf "ERROR:\\n" >&2
-            printf "cannot execute native __PLAT__ binary, output from 'uname -a' is:\\n" >&2
-            uname -a >&2
-            exit 1
-        fi
-    fi
+CONDA_SAFETY_CHECKS=disabled \
+CONDA_EXTRA_SAFETY_CHECKS=no \
+CONDA_CHANNELS=@CHANNELS@ \
+CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+
 #if not keep_pkgs
-    rm "$PKG"
+    rm -fr $PREFIX/pkgs/*.tar.bz2
+    rm -fr $PREFIX/pkgs/*.conda
 #endif
-}
 
 __INSTALL_COMMANDS__
 
-mkdir -p $PREFIX/envs
+POSTCONDA="$PREFIX/postconda.tar.bz2"
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
+rm -f "$POSTCONDA"
 
-if [ "$FORCE" = "1" ]; then
-    "$PYTHON" -E -s "$PREFIX"/pkgs/.install.py --rm-dup || exit 1
-fi
+rm -f $PREFIX/conda.exe
+rm -f $PREFIX/pkgs/env.txt
+
+mkdir -p $PREFIX/envs
 
 #if has_post_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
@@ -448,7 +434,9 @@ else
 fi
 #endif
 
-cat "$MSGS"
+if [ -f "$MSGS" ]; then
+  cat "$MSGS"
+fi
 rm -f "$MSGS"
 #if not keep_pkgs
 rm -rf "$PREFIX"/pkgs
@@ -482,7 +470,7 @@ if [ "$BATCH" = "0" ]; then
 #endif
 
     printf "Do you wish the installer to initialize __NAME__\\n"
-    printf "in your %s ? [yes|no]\\n" "$BASH_RC"
+    printf "by running conda init? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
     read -r ans
     if [ "$ans" = "" ]; then
@@ -492,48 +480,23 @@ if [ "$BATCH" = "0" ]; then
        [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
     then
         printf "\\n"
-        printf "You may wish to edit your $BASH_RC to setup __NAME__:\\n"
+        printf "You have chosen to not have conda modify your shell scripts at all.\\n"
+        printf "To activate conda's base environment in your current shell session:\\n"
         printf "\\n"
-        if [ -f "$PREFIX/etc/profile.d/conda.sh" ]; then
-            printf "source $PREFIX/etc/profile.d/conda.sh\\n"
-        else
-            printf "export PATH=\"$PREFIX/bin:\$PATH\"\\n"
-        fi
+        printf "eval \"\$($PREFIX/bin/conda shell.YOUR_SHELL_NAME hook)\" \\n"
+        printf "\\n"
+        printf "To install conda's shell functions for easier access, first activate, then:\\n"
+        printf "\\n"
+        printf "conda init\\n"
         printf "\\n"
     else
-        if [ -f "$BASH_RC" ]; then
-            printf "\\n"
-            printf "Initializing __NAME__ in %s\\n" "$BASH_RC"
-            printf "A backup will be made to: %s-__name__.bak\\n" "$BASH_RC"
-            printf "\\n"
-            cp "$BASH_RC" "${BASH_RC}"-__name__.bak
-        else
-            printf "\\n"
-            printf "Initializing __NAME__ in newly created %s\\n" "$BASH_RC"
-        fi
-        cat <<EOF >> "$BASH_RC"
-
-# added by __NAME__ __VERSION__ installer
-# >>> conda init >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="\$(CONDA_REPORT_ERRORS=false '$PREFIX/bin/conda' shell.bash hook 2> /dev/null)"
-if [ \$? -eq 0 ]; then
-    \\eval "\$__conda_setup"
-else
-    if [ -f "$PREFIX/etc/profile.d/conda.sh" ]; then
-        . "$PREFIX/etc/profile.d/conda.sh"
-        CONDA_CHANGEPS1=false conda activate base
-    else
-        \\export PATH="$PREFIX/bin:\$PATH"
+        $PREFIX/bin/conda init
     fi
-fi
-unset __conda_setup
-# <<< conda init <<<
-EOF
-        printf "\\n"
-        printf "For this change to become active, you have to open a new terminal.\\n"
-        printf "\\n"
-    fi
+    printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
+    printf "   set the auto_activate_base parameter to false: \\n"
+    printf "\\n"
+    printf "conda config --set auto_activate_base false\\n"
+    printf "\\n"
 
     printf "Thank you for installing __NAME__!\\n"
 fi # !BATCH
@@ -547,6 +510,7 @@ if [ "$TEST" = "1" ]; then
          mkdir -p "$PREFIX"/conda-bld/__PLAT__
      fi
      cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX"/conda-bld/__PLAT__/
+     cp -f "$PREFIX"/pkgs/*.conda "$PREFIX"/conda-bld/__PLAT__/
      conda index "$PREFIX"/conda-bld/__PLAT__/
      conda-build --override-channels --channel local --test --keep-going "$PREFIX"/conda-bld/__PLAT__/*.tar.bz2
 #endif

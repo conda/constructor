@@ -5,23 +5,20 @@ branches:
     - master
 
 environment:
-  global:
-    PYTHON: "C:\\conda"
-    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-    PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
-                      # of 32 bit and 64 bit builds are needed, move this
-                      # to the matrix section.
-
   matrix:
-    - PYTHON_VERSION: "3.6"
-      CONDA_CANARY: "false"
-    - PYTHON_VERSION: "2.7"
-      CONDA_CANARY: "false"
+    # these next two cover "current" conda
     - PYTHON_VERSION: "2.7"
       CONDA_CANARY: "true"
+    - PYTHON_VERSION: "3.7"
+      CONDA_CANARY: "true"
+    # older, still-supported releases of conda
+    - PYTHON_VERSION: "3.6"
+      CONDA_VERSION: "4.6"
 
 matrix:
   allow_failures:
+    - PYTHON_VERSION: "3.7"
+      CONDA_CANARY: "true"
     - PYTHON_VERSION: "2.7"
       CONDA_CANARY: "true"
 
@@ -32,35 +29,35 @@ cache:
   - "C:\\condacache\\pkgs"
 
 install:
-  # Astropy ci-helpers. See https://github.com/astropy/ci-helpers
-  - "git clone git://github.com/astropy/ci-helpers.git"
-  - if "%PYTHON_VERSION%" == "3.5" set "BASE_PYTHON_VERSION=35"
-  - if "%PYTHON_VERSION%" == "3.6" set "BASE_PYTHON_VERSION=36"
-  - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
-  # These are already installed on appveyor
-  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
-  - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Scripts;%CONDA_ROOT%\Library\bin;%PATH%"
-  - "conda config --set always_yes yes"
-  - "conda update conda -q --no-pin"
-  - "%CONDA_ROOT%\\Scripts\\activate"
-  - "conda config --add pkgs_dirs C:\\condacache\\pkgs"
+  - appveyor DownloadFile https://repo.anaconda.com/pkgs/misc/conda-execs/conda-latest-win-64.exe -FileName loner_conda.exe
+  - set "CONDA_PKGS_DIRS=C:\condacache\pkgs"
+  - set "CONDA_ALWAYS_YES=true"
+  - set "CONDA_AUTO_UPDATE_CONDA=false"
+  - if "%CONDA_CANARY%" == "" (
+      loner_conda.exe create -q -p C:\test_conda python=%PYTHON_VERSION% conda=%CONDA_VERSION%
+      ) else (
+      loner_conda.exe create -q -p C:\test_conda -c conda-canary conda python=%PYTHON_VERSION%
+      )
   # Install run dependencies
-  - "conda install nsis pillow>=3.1 ruamel_yaml"
+  - loner_conda.exe install -q -p C:\test_conda nsis pillow>=3.1 ruamel_yaml
   # Install test dependencies
-  - "conda install pytest pytest-cov"
+  - loner_conda.exe install -q -p C:\test_conda pytest pytest-cov
+  # so that the tests see the standalone conda that they need
+  - mkdir C:\test_conda\standalone_conda
+  - copy loner_conda.exe C:\test_conda\standalone_conda\conda.exe
+  - call C:\test_conda\Scripts\activate
   # Install this package
-  - "python setup.py develop"
+  - python setup.py develop
   # Install conda canary before running tests, ensure conda is updated
+  - conda info
   - conda init
-  - if "%CONDA_CANARY%" == "true" conda update conda -c conda-canary --no-pin
-  - if "%CONDA_CANARY%" == "false" conda update conda --no-pin
-  - "%CONDA_ROOT%\\Scripts\\activate root"
-  - "conda info"
-  - "conda list"
+  - call C:\test_conda\Scripts\activate
+  - conda list
 
 # Not a .NET project, we build in the install step instead
 build: false
 
 test_script:
-  - "%CMD_IN_ENV% pytest --cov=constructor constructor"
-  - "%CMD_IN_ENV% python scripts\\run_examples.py"
+  - call C:\test_conda\Scripts\activate
+  - pytest --cov=constructor constructor
+  - python scripts\\run_examples.py

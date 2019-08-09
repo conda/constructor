@@ -7,6 +7,8 @@
 import re
 import sys
 import hashlib
+from os import environ
+from os.path import join, isfile, basename
 
 
 def filename_dist(dist):
@@ -27,14 +29,15 @@ def fill_template(data, d):
     return pat.sub(replace, data)
 
 
-def md5_file(path):
+def md5_files(paths):
     h = hashlib.new('md5')
-    with open(path, 'rb') as fi:
-        while True:
-            chunk = fi.read(262144)
-            if not chunk:
-                break
-            h.update(chunk)
+    for path in paths:
+        with open(path, 'rb') as fi:
+            while True:
+                chunk = fi.read(262144)
+                if not chunk:
+                    break
+                h.update(chunk)
     return h.hexdigest()
 
 
@@ -111,3 +114,24 @@ def add_condarc(info):
                 yield 'EOF'
     else:
         yield ''
+
+
+def get_final_url(info, url):
+    mapping = info.get('channels_remap', [])
+    for entry in mapping:
+        src = entry['src']
+        dst = entry['dest']
+        if url.startswith(src):
+            new_url = url.replace(src, dst)
+            if url.endswith(".tar.bz2"):
+              print("WARNING: You need to make the package {} available "
+                    "at {}".format(url.rsplit('/', 1)[1], new_url))
+            return new_url
+    return url
+
+
+def get_final_channels(info):
+    mapped_channels = []
+    for channel in info.get('channels', []):
+        mapped_channels.append(get_final_url(info, channel))
+    return mapped_channels

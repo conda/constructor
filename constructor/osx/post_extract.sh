@@ -15,30 +15,28 @@ export PREFIX
 
 echo "PREFIX=$PREFIX"
 
-if [ -f "$PREFIX/pkgs/__PYTHON_DIST__/bin/python" ]; then
-    # Using hardlinks.
-    PYTHON="$PREFIX/pkgs/__PYTHON_DIST__/bin/python"
-    INSTARG=""
-else
-    # Not using hardlinks.
-    PYTHON="$PREFIX/bin/python"
-    INSTARG="--multi"
-fi
+CONDA_EXEC="$PREFIX/conda.exe"
+chmod +x "$CONDA_EXEC"
 
-"$PYTHON" -E -V
+cp "$PREFIX/conda-meta/history" "$PREFIX/conda-meta/history.bak"
+CONDA_SAFETY_CHECKS=disabled \
+CONDA_EXTRA_SAFETY_CHECKS=no \
+CONDA_CHANNELS=__CHANNELS__ \
+CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+cp "$PREFIX/conda-meta/history.bak" "$PREFIX/conda-meta/history"
+
+# Cleanup!
+rm -f "$CONDA_EXEC"
+rm -f "$PREFIX/pkgs/env.txt"
+
+__WRITE_CONDARC__
+
+"$PREFIX/bin/python" -V
 if (( $? )); then
     echo "ERROR running Python"
     exit 1
 fi
-
-# run post-link, and create the conda metadata
-unset FORCE
-"$PYTHON" -E -s "$PREFIX/pkgs/.install.py" $INSTARG || exit 1
-if [ ! -f "$PREFIX/pkgs/__PYTHON_DIST__/bin/python" ]; then
-    rm -rf "$PREFIX/info" || true
-fi
-
-__WRITE_CONDARC__
 
 # This is unneeded for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.

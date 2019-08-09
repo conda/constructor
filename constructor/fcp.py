@@ -13,9 +13,9 @@ import json
 from os.path import getsize, isdir, isfile, join
 import sys
 
-from constructor.utils import md5_file
+from constructor.utils import md5_files
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, concatv, conda_context,
-                              conda_reset_context, download, env_vars, groupby, read_paths_json)
+                              conda_replace_context_default, download, env_vars, groupby, read_paths_json)
 
 
 def warn_menu_packages_missing(precs, menu_packages):
@@ -72,10 +72,13 @@ def _fetch(download_dir, precs):
 
     for prec in precs:
         package_tarball_full_path = join(download_dir, prec.fn)
-        extracted_package_dir = package_tarball_full_path[:-8]
+        if package_tarball_full_path.endswith(".tar.bz2"):
+            extracted_package_dir = package_tarball_full_path[:-8]
+        elif package_tarball_full_path.endswith(".conda"):
+            extracted_package_dir = package_tarball_full_path[:-6]
 
         if not (isfile(package_tarball_full_path)
-                and md5_file(package_tarball_full_path) == prec.md5):
+                and md5_files([package_tarball_full_path]) == prec.md5):
             print('fetching: %s' % prec.fn)
             download(prec.url, join(download_dir, prec.fn))
 
@@ -234,7 +237,7 @@ def main(info, verbose=True, dry_run=False):
 
     with env_vars({
         "CONDA_PKGS_DIRS": download_dir,
-    }, conda_reset_context):
+    }, conda_replace_context_default):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
               exclude, menu_packages, install_in_dependency_order,

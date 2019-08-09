@@ -19,7 +19,7 @@ from .construct import ns_platform
 from .imaging import write_images
 from .install import name_dist
 from .preconda import write_files as preconda_write_files
-from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess, add_condarc
+from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess, add_condarc, get_final_channels
 
 THIS_DIR = dirname(__file__)
 NSIS_DIR = join(THIS_DIR, 'nsis')
@@ -39,73 +39,45 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def find_vs_runtimes(dists, py_version):
-    valid_runtimes = (
-        'vs2008_runtime',
-        'vs2010_runtime',
-        'vs2013_runtime',
-        'vs2015_runtime',
-        'msvc_runtime',
-    )
-    return [dist for dist in dists if name_dist(dist) in valid_runtimes]
-
-
-def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks):
-    vs_dists = find_vs_runtimes(dists, py_version)
-    print("MSVC runtimes found: %s" % ([filename_dist(d) for d in vs_dists]))
-    if len(vs_dists) != 1:
-        warnings.warn("Number of MSVC runtimes found: %d" % len(vs_dists))
-
-    # Extract MSVC runtimes and python to a temporary directory and delete it
-    # later. This way we do not rely on PATH env var; and python, required for
-    # invoking '.install.py', can pick up the required DLLs from it's vicinity.
-    # NSIS doesn't provide direct functionality to create a temporary directory,
-    # So we get the name of a temporary file, delete it and then create a
-    # temporary directory by the same name.
-    yield r'Var /Global ANACONDA_TMP_LOC'
-    yield r"""System::Call 'Kernel32::GetTempFileName(t "$INSTDIR", t "t", i 0, t.r0) i.r1'"""
-    yield r'StrCpy $ANACONDA_TMP_LOC $0'
-    yield r'Delete $ANACONDA_TMP_LOC'
-    yield r'CreateDirectory "$ANACONDA_TMP_LOC.dir"'
-
-    assert filename_dist(dists[0]).startswith('python-')
-
-    for n, dist in enumerate(vs_dists + dists[:1]):
+def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, channels):
+    for n, dist in enumerate(dists):
         fn = filename_dist(dist)
         yield ''
         yield '# --> %s <--' % fn
         yield 'File %s' % str_esc(join(download_dir, fn))
-        yield r'untgz::extract -d "$ANACONDA_TMP_LOC.dir" -zbz2 "$INSTDIR\pkgs\%s"' % fn
 
-    for n, dist in enumerate(vs_dists + dists):
-        fn = filename_dist(dist)
-        yield ''
-        yield '# --> %s <--' % fn
-        if n > len(vs_dists):
-            yield 'File %s' % str_esc(join(download_dir, fn))
-        if attempt_hardlinks:
-            yield r'untgz::extract -d "$INSTDIR\pkgs\%s" -zbz2 "$INSTDIR\pkgs\%s"' % (fn[:-8], fn)
-        else:
-            yield r'untgz::extract -d "$INSTDIR" -zbz2 "$INSTDIR\pkgs\%s"' % fn
-            cmd = r'"$ANACONDA_TMP_LOC.dir\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py" --post root'
-            yield "ExecWait '%s'" % cmd
-        if keep_pkgs:
-            continue
-        yield r'Delete "$INSTDIR\pkgs\%s"' % fn
+    # Set CONDA_CHANNELS to configured channels and
+    # CONDA_PKGS_DIRS to the local package cache directory
+    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "%s").r0'%(','.join(channels))
+    yield "System::Call '%s'" % _env
+    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs").r0'
+    yield "System::Call '%s'" % _env
 
-    if attempt_hardlinks:
-        cmd = r'"$ANACONDA_TMP_LOC.dir\pythonw.exe" -E -s "$INSTDIR\pkgs\.install.py"'
-        yield "ExecWait '%s'" % cmd
+    # Add env vars to bypass safety checks
+    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
+    yield "System::Call '%s'" % _env
+    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
+    yield "System::Call '%s'" % _env
+
+    # Extract all the .conda and .tar.bz2 conda packages
+    yield r'SetDetailsPrint TextOnly'
+    yield r'DetailPrint "Setting up the package cache ..."'
+    cmd = r'"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
+    yield "nsExec::ExecToLog '%s'" % cmd
+    yield "Pop $0"
+    yield r'SetDetailsPrint both'
+
+    # Install all the extracted packages
+    yield r'SetDetailsPrint TextOnly'
+    yield r'DetailPrint "Setting up the base environment ..."'
+    cmd = r'"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt"'
+    yield "nsExec::ExecToLog '%s'" % cmd
+    yield "Pop $0"
+    yield r'SetDetailsPrint both'
 
     if not keep_pkgs:
         yield ''
         yield r'RMDir "$INSTDIR\pkgs"'
-
-    yield r'DetailPrint "Removing temporary files..."'
-    # Turn off detail printing for the delete instruction
-    yield r'SetDetailsPrint none'
-    yield r'RMDir /r /REBOOTOK "$ANACONDA_TMP_LOC.dir"'
-    yield r'SetDetailsPrint both'
 
 
 def make_nsi(info, dir_path):
@@ -138,7 +110,8 @@ def make_nsi(info, dir_path):
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
                     ('WELCOMEIMAGE', 'welcome.bmp'),
                     ('ICONFILE', 'icon.ico'),
-                    ('INSTALL_PY', '.install.py'),
+                    ('CONDA_EXE', '_conda.exe'),
+                    ('ENV_TXT', 'env.txt'),
                     ('URLS_FILE', 'urls'),
                     ('URLS_TXT_FILE', 'urls.txt'),
                     ('POST_INSTALL', 'post_install.bat'),
@@ -158,7 +131,8 @@ def make_nsi(info, dir_path):
 
     cmds = pkg_commands(download_dir, dists, py_version,
                         bool(info.get('keep_pkgs')),
-                        bool(info.get('attempt_hardlinks')))
+                        bool(info.get('attempt_hardlinks')),
+                        get_final_channels(info))
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
     approx_pkgs_size_kb = int(
@@ -216,6 +190,8 @@ def create(info, verbose=False):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
+    shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
+
     if 'pre_install' in info:
         sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
 

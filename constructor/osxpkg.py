@@ -8,8 +8,9 @@ import xml.etree.ElementTree as ET
 
 from constructor.install import rm_rf, name_dist
 import constructor.preconda as preconda
-from constructor.utils import add_condarc
+from constructor.utils import add_condarc, filename_dist, get_final_channels
 
+from conda_package_handling.api import extract as cph_e
 
 
 OSX_DIR = join(dirname(__file__), "osx")
@@ -113,13 +114,8 @@ def move_script(src, dst, info):
     data = data.replace('__NAME_LOWER__', info['name'].lower())
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__VERSION__', info['version'])
+    data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
-
-    if isinstance(info['_dists'][0], str if version_info[0] >= 3 else basestring):
-        dirname = info['_dists'][0][:-8]
-    else:
-        dirname = info['_dists'][0].dist_name
-    data = data.replace('__PYTHON_DIST__', dirname)
 
     with open(dst, 'w') as fo:
         fo.write(data)
@@ -223,27 +219,23 @@ def create(info, verbose=False):
     for dist in info['_dists']:
         if isinstance(dist, str if version_info[0] >= 3 else basestring):
            fn = dist
-           dname = dist[:-8]
+           if dist.endswith(".tar.bz2"):
+               dname = dist[:-8]
+           elif dist.endswith(".conda"):
+               dname = dist[:-6]
            ndist = name_dist(fn)
         else:
             fn = dist.fn
             dname = dist.dist_name
             ndist = dist.name
         fresh_dir(PACKAGE_ROOT)
-        if bool(info.get('attempt_hardlinks')):
-            t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
-            os.makedirs(join(pkgs_dir, dname))
-            t.extractall(join(pkgs_dir, dname))
-            t.close()
-        else:
-            t = tarfile.open(join(CACHE_DIR, fn), 'r:bz2')
-            t.extractall(prefix)
-            t.close()
-            os.rename(join(prefix, 'info'), join(prefix, 'info-tmp'))
-            os.mkdir(join(prefix, 'info'))
-            os.rename(join(prefix, 'info-tmp'), join(prefix, 'info', fn[:-8]))
+        cph_e(join(CACHE_DIR, fn), join(pkgs_dir, dname))
         pkgbuild(ndist)
 
+    fresh_dir(PACKAGE_ROOT)
+    os.makedirs(prefix)
+    shutil.copyfile(info['_conda_exe'], join(prefix, "conda.exe"))
+    pkgbuild("conda.exe")
     # Create special preinstall and postinstall packages to check if Anaconda
     # is already installed, build Anaconda, and to update the shell profile.
 
@@ -273,6 +265,7 @@ def create(info, verbose=False):
     names = ['apreinstall', 'preconda']
     names.extend(name_dist(dist) for dist in info['_dists'])
     names.extend(post_packages)
+    names.extend(["conda.exe"])
 
     xml_path = join(PACKAGES_DIR, 'distribution.xml')
     args = ["productbuild", "--synthesize"]

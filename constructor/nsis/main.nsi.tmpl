@@ -730,6 +730,27 @@ Function AbortRetryExecWait
     ${LoopWhile} $0 != "0"
 FunctionEnd
 
+Function AbortRetryNSExecWait
+    Pop $1
+    Pop $2
+    ${Do}
+        nsExec::ExecToLog $2
+        pop $0
+        ${If} $0 != "0"
+            MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
+                    $1 /SD IDIGNORE IDABORT abort IDRETRY retry
+            ; IDIGNORE: Continue anyway
+            StrCpy $0 "0"
+            goto retry
+          abort:
+            ; Abort installation
+            Abort
+          retry:
+            ; Retry the ExecWait command
+        ${EndIf}
+    ${LoopWhile} $0 != "0"
+FunctionEnd
+
 # Installer sections
 Section "Install"
 
@@ -742,13 +763,23 @@ Section "Install"
     #    This is also isolating PATH to be just us and Windows core stuff, which hopefully avoids
     #    clashes with other stuff on PATH
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
-                 "$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR;$0;$0\system32;$0\system32\Wbem").r0'
+                 "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$0;$0\system32;$0\system32\Wbem").r0'
 
+    # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
     File __CONDA_HISTORY__
 
+    SetOutPath "$INSTDIR"
+    File __CONDA_EXE__
+
+    ${If} $InstMode = ${JUST_ME}
+        SetOutPath "$INSTDIR"
+        FileOpen $0 ".nonadmin" w
+        FileClose $0
+    ${EndIf}
+
     SetOutPath "$INSTDIR\pkgs"
-    File __INSTALL_PY__
+    File __ENV_TXT__
     File __URLS_FILE__
     File __URLS_TXT_FILE__
     File __POST_INSTALL__
@@ -757,20 +788,22 @@ Section "Install"
 
     @PKG_COMMANDS@
 
+    # Cleanup
+    Delete "$INSTDIR\pkgs\env.txt"
+
     @WRITE_CONDARC@
 
     AddSize @SIZE@
 
-    ${If} $InstMode = ${JUST_ME}
-        SetOutPath "$INSTDIR"
-        FileOpen $0 ".nonadmin" w
-        FileClose $0
-    ${EndIf}
+    # Restore shipped conda-meta\history for remapped
+    # channels and retain only the first transaction
+    SetOutPath "$INSTDIR\conda-meta"
+    File __CONDA_HISTORY__
 
     DetailPrint "Creating @NAME@ menus..."
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkmenus @MENU_PKGS@'
+    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
     push 'Failed to create menus'
-    call AbortRetryExecWait
+    call AbortRetryNSExecWait
 
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize Anaconda directories'
@@ -826,14 +859,21 @@ Section "Install"
 SectionEnd
 
 Section "Uninstall"
+    # Remove menu items, path entries
+
+    DetailPrint "Deleting @NAME@ menus..."
+    nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --rm-menus'
+
     # ensure that MSVC runtime DLLs are on PATH during uninstallation
     ReadEnvStr $0 PATH
     # set PATH for the installer process, so that MSVC runtimes get found OK
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
-                 "$INSTDIR\\Library\\bin;$INSTDIR\\Scripts;$INSTDIR;$0").r0'
+                 "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$0;$0\system32;$0\system32\Wbem").r0'
 
-    # Remove menu items, path entries
-    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmmenus'
+    # our newest Python builds have a patch that allows us to control the PATH search stuff much more
+    #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
+
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmreg'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" del "$INSTDIR"'

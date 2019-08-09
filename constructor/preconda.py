@@ -10,7 +10,7 @@ import platform
 import sys
 import time
 
-from .utils import filename_dist
+from .utils import filename_dist, get_final_url
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
@@ -22,7 +22,7 @@ try:
 except:
     import ruamel_json as json
 
-files = '.constructor-build.info', 'urls', 'urls.txt', '.install.py'
+files = '.constructor-build.info', 'urls', 'urls.txt', 'env.txt'
 
 def write_index_cache(info, dst_dir):
     cache_dir = join(dst_dir, 'cache')
@@ -33,8 +33,8 @@ def write_index_cache(info, dst_dir):
     _platforms = info['_platform'], 'noarch'
     _urls = set(info.get('channels', []) +
                 info.get('conda_default_channels', []))
-    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir) for url in _urls
-            if not url.startswith('file://') for subdir in _platforms)
+    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
+                        for url in _urls for subdir in _platforms)
 
     for url in subdir_urls:
         write_repodata(cache_dir, url)
@@ -43,54 +43,6 @@ def write_index_cache(info, dst_dir):
         if not cache_file.endswith(".json"):
             os.unlink(join(cache_dir, cache_file))
 
-def create_install(info, dst_dir):
-    with open(join(dirname(__file__), 'install.py')) as fi:
-        data = fi.read()
-
-    replacements = [("#meta['installed_by'] = ...",
-                     "meta['installed_by'] = '%s'" % basename(info['_outpath']))]
-    if info['installer_type'] != 'sh':
-        IDISTS = {}
-        CENVS = {'root': []}
-        for _dist in info['_dists']:
-            if hasattr(_dist, 'fn'):
-                dist = _dist.name
-                fn = _dist.fn
-                dist_name = _dist.dist_name
-            else:
-                dist_name = _dist
-                if _dist.endswith(".tar.bz2"):
-                  dist_name = _dist[:-8]
-                fn = '%s.tar.bz2' % dist_name
-            # Find the URL for this fn.
-            for url, md5 in info['_urls']:
-                if url.rsplit('/', 1)[1] == fn:
-                    break
-            IDISTS[dist_name] = {'url': get_final_url(info, url),
-                            'md5': md5}
-            CENVS['root'].append(dist_name)
-        replacements.append(('IDISTS = {}',
-                             'IDISTS = %s\n' % json.dumps(IDISTS, indent=2, sort_keys=True) +
-                             'C_ENVS = %s\n' % json.dumps(CENVS, indent=2, sort_keys=True)))
-    for iplace, icode in replacements:
-        assert data.count(iplace) == 1
-        data = data.replace(iplace, icode)
-
-    with open(join(dst_dir, '.install.py'), 'w') as fo:
-        fo.write(data)
-
-def get_final_url(info, url):
-    mapping = info.get('channels_remap', [])
-    for entry in mapping:
-        src = entry['src']
-        dst = entry['dest']
-        if url.startswith(src):
-            new_url = url.replace(src, dst)
-            if url.endswith(".tar.bz2"):
-              print("WARNING: You need to make the package {} available "
-                    "at {}".format(url.rsplit('/', 1)[1], new_url))
-            return new_url
-    return url
 
 
 def system_info():
@@ -130,13 +82,13 @@ def write_files(info, dst_dir):
         for url, _ in final_urls_md5s:
             fo.write('%s\n' % url)
 
-    create_install(info, dst_dir)
-
     write_index_cache(info, dst_dir)
 
     write_conda_meta(info, dst_dir, final_urls_md5s)
 
     write_repodata_record(info, dst_dir)
+
+    write_env_txt(info, dst_dir)
 
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
@@ -167,7 +119,10 @@ def write_conda_meta(info, dst_dir, final_urls_md5s):
 
 def write_repodata_record(info, dst_dir):
     for dist in info['_dists']:
-        _dist = filename_dist(dist)[:-8]
+        if filename_dist(dist).endswith(".conda"):
+            _dist = filename_dist(dist)[:-6]
+        elif filename_dist(dist).endswith(".tar.bz2"):
+            _dist = filename_dist(dist)[:-8]
         record_file = join(_dist, 'info', 'repodata_record.json')
         record_file_src = join(info['_download_dir'], record_file)
 
@@ -184,3 +139,14 @@ def write_repodata_record(info, dst_dir):
 
         with open(record_file_dest, 'w') as rf:
           json.dump(rr_json, rf, indent=2, sort_keys=True)
+
+def write_env_txt(info, dst_dir):
+    dists_san_extn = []
+    for dist in info['_dists']:
+        if filename_dist(dist).endswith('.conda'):
+            dists_san_extn.append(filename_dist(dist)[:-6])
+        elif filename_dist(dist).endswith('.tar.bz2'):
+            dists_san_extn.append(filename_dist(dist)[:-8])
+    specs = ['='.join(spec.rsplit('-', 2)) for spec in dists_san_extn]
+    with open(join(dst_dir, "env.txt"), "w") as envf:
+        envf.write('\n'.join(specs))
