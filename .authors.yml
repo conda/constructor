@@ -1,0 +1,74 @@
+
+- name: Michael Sarahan
+  email: msarahan@gmail.com
+  github: msarahan
+  alternate_emails:
+  - msarahan@continuum.io
+  aliases:
+  - Mike Sarahan
+  num_commits: 62
+  first_commit: 2015-09-04 21:31:08
+- name: Jonathan J. Helmus
+  email: jjhelmus@gmail.com
+  aliases:
+  - Jonathan Helmus
+  num_commits: 29
+  first_commit: 2014-06-09 17:25:05
+  github: jjhelmus
+- name: Aaron Stevens
+  email: bheklilr2@gmail.com
+- name: Marcel Bargull
+  email: marcel.bargull@udo.edu
+- name: Tobias Megies
+  email: megies@geophysik.uni-muenchen.de
+- name: Thomas Holder
+  email: thomas.holder@schrodinger.com
+- name: Sophia Castellarin
+  email: scastellarin@anaconda.com
+  github: soapy1
+  aliases:
+    - soapy1
+- name: Matthew Newville
+  email: newville@cars.uchicago.edu
+- name: Gonzalo Pena-Castellanos
+  email: goanpeca@gmail.com
+- name: Kale Franz
+  email: kfranz@continuum.io
+  alternate_emails:
+    - kalefranz@users.noreply.github.com
+- name: y2kbugger
+  email: git@y2kbugger.com
+- name: Ilan Schnell
+  email: ilanschnell@gmail.com
+  alternate_emails:
+    - ilan@continuum.io
+- name: jlstevens
+  email: jlstevens@ed.ac.uk
+- name: bkreider
+  email: github-bk@drrr.net
+- name: Nehal J Wani
+  email: nehaljw.kkd1@gmail.com
+- name: Wolfgang Ulmer
+  email: wulmer@web.de
+- name: Martin Durant
+  email: martin.durant@utoronto.ca
+- name: Ray Donnelly
+  email: mingw.android@gmail.com
+- name: Mathew Topper
+  email: damm_horse@yahoo.co.uk
+- name: Ian Henriksen
+  email: insertinterestingnamehere@gmail.com
+- name: Travis E. Oliphant
+  email: travis@continuum.io
+- name: Thomas Robitaille
+  email: thomas.robitaille@gmail.com
+- name: Michael C. Grant
+  email: mcg@cvxr.com
+- name: John Kirkham
+  email: kirkhamj@janelia.hhmi.org
+- name: Thomas Antony
+  email: tantony@purdue.edu
+- name: Eric Dill
+  email: thedizzle@gmail.com
+- name: Trent Nelson
+  email: trent@trent.me
