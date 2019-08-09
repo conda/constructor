@@ -67,6 +67,8 @@ install:
   - source "$HOME"/miniconda/bin/activate
   # Install this package
   - python setup.py develop
+  - mkdir $HOME/miniconda/standalone_conda
+  - cp conda.exe $HOME/miniconda/standalone_conda/conda.exe
   - conda info
   # if 4.3 is added back, this needs to be more complicated
   - [ "$CONDA_VERSION" != "4.5" ] && conda init

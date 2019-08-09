@@ -47,6 +47,9 @@ install:
   - loner_conda.exe install -q -p C:\test_conda nsis pillow>=3.1 ruamel_yaml
   # Install test dependencies
   - loner_conda.exe install -q -p C:\test_conda pytest pytest-cov
+  # so that the tests see the standalone conda that they need
+  - mkdir C:\test_conda\standalone_conda
+  - copy loner_conda.exe C:\test_conda\standalone_conda\conda.exe
   - call C:\test_conda\Scripts\activate
   # Install this package
   - python setup.py develop
