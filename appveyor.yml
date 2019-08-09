@@ -6,25 +6,20 @@ branches:
 
 environment:
   matrix:
-    # not presently supported.  Might have to add for enterprise support.
-    # - PYTHON_VERSION: "3.6"
-    #   CONDA_VERSION: "4.3"
-    # - PYTHON_VERSION: "2.7"
-    #   CONDA_VERSION: "4.3"
     # these next two cover "current" conda
     - PYTHON_VERSION: "2.7"
       CONDA_CANARY: "true"
-    - PYTHON_VERSION: "3.6"
+    - PYTHON_VERSION: "3.7"
       CONDA_CANARY: "true"
     # older, still-supported releases of conda
-    - PYTHON_VERSION: "3.6"
-      CONDA_VERSION: "4.5"
     - PYTHON_VERSION: "3.6"
       CONDA_VERSION: "4.6"
 
 matrix:
   allow_failures:
-    - PYTHON_VERSION: "3.6"
+    - PYTHON_VERSION: "3.7"
+      CONDA_CANARY: "true"
+    - PYTHON_VERSION: "2.7"
       CONDA_CANARY: "true"
 
 platform:
@@ -55,7 +50,7 @@ install:
   - python setup.py develop
   # Install conda canary before running tests, ensure conda is updated
   - conda info
-  - if NOT "%CONDA_VERSION%" == "4.5" conda init
+  - conda init
   - call C:\test_conda\Scripts\activate
   - conda list
 

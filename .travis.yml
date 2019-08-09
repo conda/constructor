@@ -16,20 +16,13 @@ matrix:
     # Linux
     - os: linux
       language: generic
-      # needed for legacy enterprise stuff
-      env: PYTHON_VERSION=2.7 CONDA_VERSION=4.3
-    - os: linux
-      language: generic
-      env: PYTHON_VERSION=3.7 CONDA_VERSION=4.5
-    - os: linux
-      language: generic
       env: PYTHON_VERSION=3.6 CONDA_VERSION=4.6
     - os: linux
       language: generic
-      env: VERSION=3.7 CONDA_VERSION=4.7
+      env: PYTHON_VERSION=2.7 CONDA_CANARY=true
     - os: linux
       language: generic
-      env: PYTHON_VERSION=3.6 CONDA_CANARY=true
+      env: PYTHON_VERSION=3.7 CONDA_CANARY=true
     # OSX
     - os: osx
       language: generic
@@ -37,7 +30,10 @@ matrix:
   allow_failures:
     - os: linux
       language: generic
-      env: PYTHON_VERSION=3.6 CONDA_CANARY=true
+      env: PYTHON_VERSION=3.7 CONDA_CANARY=true
+    - os: linux
+      language: generic
+      env: PYTHON_VERSION=2.7 CONDA_CANARY=true
 
 cache:
   directories:
@@ -67,11 +63,14 @@ install:
   - source "$HOME"/miniconda/bin/activate
   # Install this package
   - python setup.py develop
+
+  # this needs
   - mkdir $HOME/miniconda/standalone_conda
   - cp conda.exe $HOME/miniconda/standalone_conda/conda.exe
+
+  # diagnostics
   - conda info
-  # if 4.3 is added back, this needs to be more complicated
-  - [ "$CONDA_VERSION" != "4.5" ] && conda init
+  - conda init
   - source "$HOME"/miniconda/bin/activate
   - conda list
 
