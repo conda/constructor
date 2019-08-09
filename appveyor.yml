@@ -53,7 +53,8 @@ install:
   # Install conda canary before running tests, ensure conda is updated
   - conda info
   # extract digits after 4. (3,5,6,7)
-  - for /F "tokens=1,2 delims=." %%a in ("%CONDA_VERSION%") do set MINOR_VER=%%a
+  - for /F "tokens=1,2 delims=." %%a in ("%CONDA_VERSION%") do set MINOR_VER=%%b
+  - echo %MINOR_VER%
   - IF %MINOR_VER% GEQ 6 (
       conda init
       call C:\test_conda\Scripts\activate
