@@ -11,14 +11,16 @@ environment:
     #   CONDA_VERSION: "4.3"
     # - PYTHON_VERSION: "2.7"
     #   CONDA_VERSION: "4.3"
+    # these next two cover "current" conda
+    - PYTHON_VERSION: "2.7"
+      CONDA_CANARY: "true"
+    - PYTHON_VERSION: "3.6"
+      CONDA_CANARY: "true"
+    # older, still-supported releases of conda
     - PYTHON_VERSION: "3.6"
       CONDA_VERSION: "4.5"
     - PYTHON_VERSION: "3.6"
       CONDA_VERSION: "4.6"
-    - PYTHON_VERSION: "3.6"
-      CONDA_VERSION: "4.7"
-    - PYTHON_VERSION: "3.6"
-      CONDA_CANARY: "true"
 
 matrix:
   allow_failures:
@@ -51,7 +53,13 @@ install:
   # Install conda canary before running tests, ensure conda is updated
   - conda info
   # extract digits after 4. (3,5,6,7)
-  - IF %CONDA_VERSION:2,2% GEQ 6 (conda init && call C:\test_conda\Scripts\activate)
+  - for /F "tokens=1,2 delims=." %%a in ("%CONDA_VERSION%") do set MINOR_VER=%%a
+  - IF %MINOR_VER% GEQ 6 (
+      conda init
+      call C:\test_conda\Scripts\activate
+      ) else (
+      call C:\test_conda\Scripts\activate
+      )
   - conda list
 
 # Not a .NET project, we build in the install step instead
