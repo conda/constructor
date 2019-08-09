@@ -17,27 +17,27 @@ matrix:
     - os: linux
       language: generic
       # needed for legacy enterprise stuff
-      env: TRAVIS_PYTHON_VERSION=2.7 CONDA_VERSION=4.3
+      env: PYTHON_VERSION=2.7 CONDA_VERSION=4.3
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.5
+      env: PYTHON_VERSION=3.7 CONDA_VERSION=4.5
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.6
+      env: PYTHON_VERSION=3.6 CONDA_VERSION=4.6
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.7
+      env: VERSION=3.7 CONDA_VERSION=4.7
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
+      env: PYTHON_VERSION=3.6 CONDA_CANARY=true
     # OSX
     - os: osx
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_VERSION=4.7
+      env: PYTHON_VERSION=3.6 CONDA_VERSION=4.7
   allow_failures:
     - os: linux
       language: generic
-      env: TRAVIS_PYTHON_VERSION=3.6 CONDA_CANARY=true
+      env: PYTHON_VERSION=3.6 CONDA_CANARY=true
 
 cache:
   directories:
@@ -59,9 +59,9 @@ install:
   - export CONDA_AUTO_UPDATE_CONDA="false"
 
   - if [ "${CONDA_CANARY}" = "true" ]; then
-      ./conda.exe create -y -q -p ~/miniconda -c conda-canary conda python=$TRAVIS_PYTHON_VERSION;
+      ./conda.exe create -y -q -p ~/miniconda -c conda-canary conda python=$PYTHON_VERSION;
     else
-      ./conda.exe create -y -q -p ~/miniconda -c conda-canary conda=$CONDA_VERSION python=$TRAVIS_PYTHON_VERSION;
+      ./conda.exe create -y -q -p ~/miniconda -c conda-canary conda=$CONDA_VERSION python=$PYTHON_VERSION;
     fi
   - ./conda.exe install -y -p ~/miniconda pillow>=3.1 ruamel_yaml conda-forge::codecov pytest pytest-cov
   - source "$HOME"/miniconda/bin/activate

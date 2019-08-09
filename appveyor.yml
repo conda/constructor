@@ -5,13 +5,6 @@ branches:
     - master
 
 environment:
-  global:
-    PYTHON: "C:\\conda"
-    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\ci-helpers\\appveyor\\windows_sdk.cmd"
-    PYTHON_ARCH: "64" # needs to be set for CMD_IN_ENV to succeed. If a mix
-                      # of 32 bit and 64 bit builds are needed, move this
-                      # to the matrix section.
-
   matrix:
     - PYTHON_VERSION: "3.6"
       CONDA_VERSION: "4.3"
@@ -38,31 +31,30 @@ cache:
   - "C:\\condacache\\pkgs"
 
 install:
-  - if "%PYTHON_VERSION:~0,1%" == "3" set "BASE_PYTHON_VERSION=%PYTHON_VERSION:.=%"
-  - if "%PYTHON_ARCH%" == "64" set "ARCH_LABEL=-x64"
-  # These are already installed on appveyor
-  - set "CONDA_ROOT=C:\Miniconda%BASE_PYTHON_VERSION%%ARCH_LABEL%"
-  - set "PATH=%CONDA_ROOT%;%CONDA_ROOT%\Library\bin;%CONDA_ROOT%\Scripts;%PATH%"
-  - "conda config --set always_yes yes"
-  - "conda config --add pkgs_dirs C:\\condacache\\pkgs"
+  - appveyor DownloadFile https://repo.anaconda.com/pkgs/misc/conda-execs/conda-latest-win-64.exe -FileName loner_conda.exe
+  - set "CONDA_PKGS_DIRS=C:\condacache\pkgs"
+  - set "CONDA_ALWAYS_YES=true"
+  - set "CONDA_AUTO_UPDATE_CONDA=false"
   - if "%CONDA_CANARY%" == "" (
-      conda install conda=%CONDA_VERSION% -q") else (
-      conda update -c -q conda-canary conda)
-  - "call %CONDA_ROOT%\\Scripts\\activate"
+      loner_conda.exe create -q -p C:\test_conda python=%PYTHON_VERSION% conda=%CONDA_VERSION%
+      ) else (
+      loner_conda.exe create -q -p C:\test_conda -c conda-canary conda python=%PYTHON_VERSION%
+      )
   # Install run dependencies
-  - "conda install nsis pillow>=3.1 ruamel_yaml"
+  - loner_conda.exe install -q -p C:\test_conda nsis pillow>=3.1 ruamel_yaml
   # Install test dependencies
-  - "conda install pytest pytest-cov"
+  - loner_conda.exe install -q -p C:\test_conda pytest pytest-cov
+  - call C:\test_conda\Scripts\activate
   # Install this package
-  - "python setup.py develop"
+  - python setup.py develop
   # Install conda canary before running tests, ensure conda is updated
-  - "%CONDA_ROOT%\\Scripts\\activate root"
-  - "conda info"
-  - "conda list"
+  - conda info
+  - conda list
 
 # Not a .NET project, we build in the install step instead
 build: false
 
 test_script:
-  - "%CMD_IN_ENV% pytest --cov=constructor constructor"
-  - "%CMD_IN_ENV% python scripts\\run_examples.py"
+  - call C:\test_conda\Scripts\activate
+  - pytest --cov=constructor constructor
+  - python scripts\\run_examples.py
