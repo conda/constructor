@@ -6,10 +6,11 @@ branches:
 
 environment:
   matrix:
-    - PYTHON_VERSION: "3.6"
-      CONDA_VERSION: "4.3"
-    - PYTHON_VERSION: "2.7"
-      CONDA_VERSION: "4.3"
+    # not presently supported.  Might have to add for enterprise support.
+    # - PYTHON_VERSION: "3.6"
+    #   CONDA_VERSION: "4.3"
+    # - PYTHON_VERSION: "2.7"
+    #   CONDA_VERSION: "4.3"
     - PYTHON_VERSION: "3.6"
       CONDA_VERSION: "4.5"
     - PYTHON_VERSION: "3.6"
@@ -50,7 +51,7 @@ install:
   # Install conda canary before running tests, ensure conda is updated
   - conda info
   # extract digits after 4. (3,5,6,7)
-  - IF %CONDA_VERSION:2,2% GEQ 6 conda init && call C:\test_conda\Scripts\activate
+  - IF %CONDA_VERSION:2,2% GEQ 6 (conda init && call C:\test_conda\Scripts\activate)
   - conda list
 
 # Not a .NET project, we build in the install step instead
