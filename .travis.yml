@@ -68,8 +68,8 @@ install:
   # Install this package
   - python setup.py develop
   - conda info
-  - IFS='.' read -r -a vers <<< "$CONDA_VERSION"
-  - [ "${vers[-1]}" -ge "6" ] && conda init
+  # if 4.3 is added back, this needs to be more complicated
+  - [ "$CONDA_VERSION" != "4.5" ] && conda init
   - source "$HOME"/miniconda/bin/activate
   - conda list
 
