@@ -16,6 +16,8 @@ try:
 except ImportError:
     bdist_wheel = None
 
+import versioneer
+
 
 SETUP_PY_DIR = dirname(abspath(__file__))
 
@@ -64,7 +66,8 @@ class PlatformSpecificDistribution(Distribution):
             dist.has_ext_modules = old_has_ext_modules
 
 
-cmdclass = {}
+cmdclass = versioneer.get_cmdclass()
+
 
 if bdist_wheel:
     class BDistWheel(bdist_wheel):
@@ -73,18 +76,13 @@ if bdist_wheel:
             self.plat_name = self.plat_name or get_platform()
             self.universal = True
             super(BDistWheel, self).finalize_options()
-
-
     cmdclass["bdist_wheel"] = BDistWheel
 
 
-# read version from constructor/__init__.py
-data = open(join(SETUP_PY_DIR, "constructor", "__init__.py")).read()
-version = re.search(r"^__version__\s*=\s*(['\"])(\S*)\1", data, re.M).group(2)
-
 setup(
     name="constructor",
-    version=version,
+    version=versioneer.get_version(),
+    cmdclass=cmdclass,
     author="Anaconda, Inc.",
     author_email="conda@anaconda.com",
     url="https://github.com/conda/constructor",
@@ -102,6 +100,5 @@ setup(
         # non-python dependency: "nsis >=3.01 ; platform_system=='Windows'",
     ],
     package_data=get_package_data(None),
-    cmdclass=cmdclass,
     distclass=PlatformSpecificDistribution,
 )
