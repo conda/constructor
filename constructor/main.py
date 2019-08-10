@@ -198,6 +198,8 @@ def main():
     p.add_argument('dir_path',
                    help="directory containing construct.yaml",
                    action="store",
+                   nargs="?",
+                   default=os.getcwd(),
                    metavar='DIRECTORY')
 
     args = p.parse_args()
