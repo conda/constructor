@@ -133,5 +133,10 @@ def get_final_url(info, url):
 def get_final_channels(info):
     mapped_channels = []
     for channel in info.get('channels', []):
-        mapped_channels.append(get_final_url(info, channel))
+        url = get_final_url(info, channel)
+        if url.startswith("file://"):
+            print("WARNING: local channel {} does not have a remap. "
+                  "It will not be included in the installer".format(url))
+            continue
+        mapped_channels.append(url)
     return mapped_channels
