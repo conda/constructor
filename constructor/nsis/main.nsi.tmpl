@@ -876,7 +876,6 @@ Section "Uninstall"
 
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmreg'
-    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" del "$INSTDIR"'
 
     RMDir /r /REBOOTOK "$INSTDIR"
 
