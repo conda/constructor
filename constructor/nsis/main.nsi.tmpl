@@ -874,6 +874,13 @@ Section "Install"
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
 SectionEnd
 
+!macro ExecWaitLibNsisCmd cmd
+    IfSilent +3
+        ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+        Goto +2
+    ExecWait '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+!macroend
+
 Section "Uninstall"
     # Remove menu items, path entries
 
@@ -890,10 +897,10 @@ Section "Uninstall"
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
-    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" pre_uninstall'
-    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
-    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmreg'
-    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" del "$INSTDIR"'
+    !insertmacro ExecWaitLibNsisCmd "pre_uninstall"
+    !insertmacro ExecWaitLibNsisCmd "rmpath"
+    !insertmacro ExecWaitLibNsisCmd "rmreg"
+    !insertmacro ExecWaitLibNsisCmd 'del "$INSTDIR"'
 
     RMDir /r /REBOOTOK "$INSTDIR"
 
