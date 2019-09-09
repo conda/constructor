@@ -8,3 +8,5 @@ COPY menuinst_src\menuinst\win32.py %SP_DIR%\menuinst\win32.py
 pyinstaller -F -n conda.exe conda.exe.py
 MKDIR %PREFIX%\standalone_conda
 MOVE dist\conda.exe %PREFIX%\standalone_conda\conda.exe
+rd /s /q %SP_DIR%\PyInstaller\loader
+
