@@ -6,4 +6,5 @@ COPY menuinst_src\menuinst\win32.py %SP_DIR%\menuinst\win32.py
 
 :: -F is to create a single file
 pyinstaller -F -n conda.exe conda.exe.py
-MOVE dist\conda.exe %PREFIX%\conda-%conda_version%.exe
+MKDIR %PREFIX%\standalone_conda
+MOVE dist\conda.exe %PREFIX%\standalone_conda\conda.exe

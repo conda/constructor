@@ -10,10 +10,6 @@ source:
 
 build:
   script:
-    - mkdir $PREFIX/standalone_conda  # [not win]
-    - cp conda-latest-{{ SUBDIR }}.exe $PREFIX/standalone_conda/conda.exe  # [not win]
-    - mkdir %PREFIX%\standalone_conda  # [win]
-    - COPY conda-latest-{{ SUBDIR }}.exe %PREFIX%\standalone_conda\conda.exe  # [win]
     - pip install --no-deps -vv .
 
 requirements:
@@ -25,6 +21,7 @@ requirements:
     - pillow
     - python
     - ruamel_yaml >=0.11.14,<0.16
+    - conda-standalone
 
 test:
   imports:
