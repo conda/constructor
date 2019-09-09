@@ -1,0 +1,24 @@
+package:
+  name: conda-standalone
+  version: {{ CONDA_VERSION }}
+
+source:
+  - path: ../
+  - git_url: https://github.com/conda/conda
+    git_tag: {{ CONDA_VERSION }}
+    folder: conda_src
+    patches:
+      - conda_patches/0001-Rename-and-replace-entrypoint-stub-exe.patch
+      - conda_patches/0002-Manipulate-PATH-directly-instead-of-_call_ing-conda..patch
+  - git_url: https://github.com/continuumio/menuinst
+    git_tag: 1.4.16
+    folder: menuinst_src
+    patches:
+      - menuinst_patches/0001-Do-not-assume-menuinst-wants-to-operate-on-sys.prefi.patch
+      - menuinst_patches/0002-Allow-menuinst-to-operate-on-non-base-prefix.patch
+
+requirements:
+  host:
+    - python
+    - pyinstaller
+    - conda ={{ environ.get("CONDA_VERSION", 4) }}

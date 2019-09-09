@@ -21,8 +21,7 @@ requirements:
     - python
     - pip
   run:
-    # this is templated to allow CI to define different conda versions to test against
-    - conda
+    - conda >=4.6
     - pillow
     - python
     - ruamel_yaml >=0.11.14,<0.16
