@@ -3,7 +3,6 @@
 # NAME:  __NAME__
 # VER:   __VERSION__
 # PLAT:  __PLAT__
-# BYTES: @SIZE_BYTES@
 # LINES: @LINES@
 # MD5:   __MD5__
 
@@ -163,12 +162,6 @@ else
                 ;;
         esac
     done
-fi
-
-# verify the size of the installer
-if ! wc -c "$THIS_PATH" | grep @SIZE_BYTES@ >/dev/null; then
-    printf "ERROR: size of %s should be @SIZE_BYTES@ bytes\\n" "$THIS_FILE" >&2
-    exit 1
 fi
 
 if [ "$BATCH" = "0" ] # interactive mode
@@ -365,17 +358,14 @@ cd "$PREFIX"
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
 CONDA_EXEC="$PREFIX/conda.exe"
-if ! tail -c +@NON_PAYLOAD_SIZE@ "$THIS_PATH" | head -c @FIRST_PAYLOAD_SIZE@ > "$CONDA_EXEC"; then
-    printf "ERROR: could not clip conda.exe starting at offset @NON_PAYLOAD_SIZE@\\n" >&2
-    exit 1
-fi
+dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@NON_PAYLOAD_SIZE@ count=@FIRST_PAYLOAD_SIZE@ \
+   iflag=skip_bytes,count_bytes status=none
 chmod +x "$CONDA_EXEC"
 
 printf "Unpacking payload ...\n"
-if ! tail -c +@NON_PAYLOAD_SIZE@ "$THIS_PATH" | tail -c +@FIRST_PAYLOAD_SIZE@ | tail -c +2 | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"; then
-    printf "ERROR: could not extract tar starting at offset @NON_PAYLOAD_SIZE@+@FIRST_PAYLOAD_SIZE@+2\\n" >&2
-    exit 1
-fi
+dd if="$THIS_PATH" count=@TARBALL_SIZE_BYTES@ skip=@PAYLOAD_OFFSET_BYTES@ \
+   iflag=skip_bytes,count_bytes status=none | \
+    "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"
 
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
