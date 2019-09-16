@@ -1,3 +1,19 @@
+2019-09-16   3.0.1:
+-------------------
+  * COMMON:
+    - Add dependency on standalone conda executable
+
+2019-08-09   3.0.0:
+-------------------
+  * COMMON:
+    - this utilizes a fundamentally different approach from before.  A standalone
+      conda executable (created with pyinstaller) is used to create environments
+      from packages that are shipped with the installers. This allows full support
+      for everything that is supported by the standalone conda.  It does add some
+      complexity in terms of menu creation and other operations that rely on
+      knowing whether the env in use (the temporary env for the standalone exe) is
+      the base env.  Let's call those prefix-based operations.
+
 2019-11-04   2.3.0:
 -------------------
   * COMMON:
