@@ -357,15 +357,34 @@ cd "$PREFIX"
 # disable sysconfigdata overrides, since we want whatever was frozen to be used
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
+# this is much faster with larger block size, but requires a dd from around 2012
+#   specifically the skip_bytes and count_bytes iflags
+dd iflag=skip_bytes > /dev/null 2>&1
+OLD_DD="$?"
+
 CONDA_EXEC="$PREFIX/conda.exe"
-dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@NON_PAYLOAD_SIZE@ count=@FIRST_PAYLOAD_SIZE@ \
-   iflag=skip_bytes,count_bytes status=none
+if [ "$OLD_DD" = "1" ]; then
+    dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@NON_PAYLOAD_SIZE@ count=@FIRST_PAYLOAD_SIZE@ \
+       status=none bs=1;
+else
+    dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@NON_PAYLOAD_SIZE@ count=@FIRST_PAYLOAD_SIZE@ \
+       iflag=skip_bytes,count_bytes status=none;
+fi
+
 chmod +x "$CONDA_EXEC"
 
 printf "Unpacking payload ...\n"
-dd if="$THIS_PATH" count=@TARBALL_SIZE_BYTES@ skip=@PAYLOAD_OFFSET_BYTES@ \
-   iflag=skip_bytes,count_bytes status=none | \
-    "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"
+# this is much faster with larger block size, but requires a dd from around 2012
+#   specifically the skip_bytes and count_bytes iflags
+if [ "$OLD_DD" = "1" ]; then
+    dd if="$THIS_PATH" count=@TARBALL_SIZE_BYTES@ skip=@PAYLOAD_OFFSET_BYTES@ \
+       status=none bs=1 | \
+        "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
+else
+    dd if="$THIS_PATH" count=@TARBALL_SIZE_BYTES@ skip=@PAYLOAD_OFFSET_BYTES@ \
+       iflag=skip_bytes,count_bytes status=none | \
+        "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
+fi
 
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
