@@ -373,13 +373,13 @@ if [ "$OLD_DD" = "1" ]; then
     # this is similar below with the tarball payload - see shar.py in constructor to see how
     #    these values are computed.
     {
-        dd if="$THIS_PATH" bs=1 skip=@CON_EXE_OFFSET_BYTES@ count=@CON_EXE_START_REMAINDER@ status=none
-        dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@CON_EXE_BLOCK_OFFSET@ count=@CON_EXE_SIZE_BLOCKS@ status=none
-        dd if="$THIS_PATH" bs=1 skip=@CON_EXE_REMAINDER_OFFSET@ count=@CON_EXE_END_REMAINDER@ status=none
+        dd if="$THIS_PATH" bs=1 skip=@CON_EXE_OFFSET_BYTES@ count=@CON_EXE_START_REMAINDER@ 2>/dev/null
+        dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@CON_EXE_BLOCK_OFFSET@ count=@CON_EXE_SIZE_BLOCKS@ 2>/dev/null
+        dd if="$THIS_PATH" bs=1 skip=@CON_EXE_REMAINDER_OFFSET@ count=@CON_EXE_END_REMAINDER@ 2>/dev/null
     } > "$CONDA_EXEC";
 else
     dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@CON_EXE_OFFSET_BYTES@ count=@CON_EXE_SIZE_BYTES@ \
-       iflag=skip_bytes,count_bytes status=none;
+       iflag=skip_bytes,count_bytes 2>/dev/null;
 fi
 
 chmod +x "$CONDA_EXEC"
@@ -389,13 +389,13 @@ printf "Unpacking payload ...\n"
 #   specifically the skip_bytes and count_bytes iflags
 if [ "$OLD_DD" = "1" ]; then
     {
-        dd if="$THIS_PATH" bs=1 skip=@TARBALL_OFFSET_BYTES@ count=@TARBALL_START_REMAINDER@ status=none
-        dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@TARBALL_BLOCK_OFFSET@ count=@TARBALL_SIZE_BLOCKS@ status=none
-        dd if="$THIS_PATH" bs=1 skip=@TARBALL_REMAINDER_OFFSET@ count=@TARBALL_END_REMAINDER@ status=none
+        dd if="$THIS_PATH" bs=1 skip=@TARBALL_OFFSET_BYTES@ count=@TARBALL_START_REMAINDER@ 2>/dev/null
+        dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@TARBALL_BLOCK_OFFSET@ count=@TARBALL_SIZE_BLOCKS@ 2>/dev/null
+        dd if="$THIS_PATH" bs=1 skip=@TARBALL_REMAINDER_OFFSET@ count=@TARBALL_END_REMAINDER@ 2>/dev/null
     } | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
 else
     dd if="$THIS_PATH" skip=@TARBALL_OFFSET_BYTES@ count=@TARBALL_SIZE_BYTES@ \
-       iflag=skip_bytes,count_bytes status=none | \
+       iflag=skip_bytes,count_bytes 2>/dev/null | \
         "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
 fi
 
