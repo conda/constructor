@@ -63,11 +63,17 @@ def get_header(conda_exec, tarball, info):
     data = data.replace('@CHANNELS@', ','.join(get_final_channels(info)))
 
     # Make all replacements before this
+
+    # 1M block size for dd
+    block_size = 1024 * 1024
     # zero padding is to ensure size of header doesn't change depending on
     #    size of packages included.  The actual space you have is the number
     #    of characters in the string here - @NON_PAYLOAD_SIZE@ is 18 chars
-    data = data.replace('@FIRST_PAYLOAD_SIZE@', '%020d' % getsize(conda_exec))
+    data = data.replace('@BLOCK_SIZE@', '%018d' % block_size)
     data = data.replace('@NON_PAYLOAD_SIZE@', '%018d' % len(data))
+    data = data.replace('@FIRST_PAYLOAD_SIZE@', '%020d' % getsize(conda_exec))
+    data = data.replace('@FIRST_PAYLOAD_BLOCKS@', '%022d' % (getsize(conda_exec) // block_size))
+    data = data.replace('@FIRST_PAYLOAD_REMAINDER@', '%025d' % (getsize(conda_exec) % block_size))
     payload_offset = len(data) + getsize(conda_exec)
     n = payload_offset + getsize(tarball)
     # this one is not zero-padded because it is used in a different way, and is compared
@@ -75,6 +81,8 @@ def get_header(conda_exec, tarball, info):
     data = data.replace('@TOTAL_SIZE_BYTES@', str(n))
     data = data.replace('@PAYLOAD_OFFSET_BYTES@', '%022d' % payload_offset)
     data = data.replace('@TARBALL_SIZE_BYTES@', '%020d' % getsize(tarball))
+    data = data.replace('@TARBALL_SIZE_BLOCKS@', '%021d' % (getsize(tarball) // block_size))
+    data = data.replace('@TARBALL_SIZE_REMAINDER@', '%024d' % (getsize(tarball) % block_size))
     assert len(data) + getsize(conda_exec) + getsize(tarball) == n
 
     return data

@@ -364,8 +364,11 @@ OLD_DD="$?"
 
 CONDA_EXEC="$PREFIX/conda.exe"
 if [ "$OLD_DD" = "1" ]; then
-    dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@NON_PAYLOAD_SIZE@ count=@FIRST_PAYLOAD_SIZE@ \
-       status=none bs=1;
+    dd if="$THIS_PATH" bs=4M | (
+        dd bs=@NON_PAYLOAD_SIZE@ count=1 status=none of=/dev/null
+        dd bs=@BLOCK_SIZE@ count=@FIRST_PAYLOAD_BLOCKS@ # status=none
+        dd bs=@FIRST_PAYLOAD_REMAINDER@ count=1 # status=none
+    ) > "$CONDA_EXEC";
 else
     dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@NON_PAYLOAD_SIZE@ count=@FIRST_PAYLOAD_SIZE@ \
        iflag=skip_bytes,count_bytes status=none;
@@ -377,9 +380,11 @@ printf "Unpacking payload ...\n"
 # this is much faster with larger block size, but requires a dd from around 2012
 #   specifically the skip_bytes and count_bytes iflags
 if [ "$OLD_DD" = "1" ]; then
-    dd if="$THIS_PATH" count=@TARBALL_SIZE_BYTES@ skip=@PAYLOAD_OFFSET_BYTES@ \
-       status=none bs=1 | \
-        "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
+    dd if="$THIS_PATH" bs=4M | (
+        dd bs=@PAYLOAD_OFFSET_BYTES@ count=1 status=none of=/dev/null
+        dd bs=@BLOCK_SIZE@ count=@TARBALL_SIZE_BLOCKS@ status=none
+        dd bs=@TARBALL_SIZE_REMAINDER@ count=1 status=none
+    ) | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
 else
     dd if="$THIS_PATH" count=@TARBALL_SIZE_BYTES@ skip=@PAYLOAD_OFFSET_BYTES@ \
        iflag=skip_bytes,count_bytes status=none | \
