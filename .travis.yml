@@ -59,7 +59,7 @@ install:
     else
       ./conda.exe create -y -q -p ~/miniconda -c conda-canary conda=$CONDA_VERSION python=$PYTHON_VERSION;
     fi
-  - ./conda.exe install -y -p ~/miniconda pillow>=3.1 ruamel_yaml psutil conda-forge::codecov pytest pytest-cov
+  - ./conda.exe install -y -p ~/miniconda pillow>=3.1 ruamel_yaml conda-forge::codecov pytest pytest-cov
   - source "$HOME"/miniconda/bin/activate
   # Install this package
   - python setup.py develop

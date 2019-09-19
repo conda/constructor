@@ -39,7 +39,7 @@ install:
       loner_conda.exe create -q -p C:\test_conda -c conda-canary conda python=%PYTHON_VERSION%
       )
   # Install run dependencies
-  - loner_conda.exe install -q -p C:\test_conda nsis pillow>=3.1 ruamel_yaml psutil
+  - loner_conda.exe install -q -p C:\test_conda nsis pillow>=3.1 ruamel_yaml
   # Install test dependencies
   - loner_conda.exe install -q -p C:\test_conda pytest pytest-cov
   # so that the tests see the standalone conda that they need

@@ -97,7 +97,6 @@ setup(
         "conda >=4.6",
         "ruamel_yaml",
         "pillow >=3.1 ; platform_system=='Windows'",
-        "psutil",
         # non-python dependency: "nsis >=3.01 ; platform_system=='Windows'",
     ],
     package_data=get_package_data(None),
