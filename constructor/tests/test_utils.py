@@ -1,4 +1,10 @@
-from ..utils import make_VIProductVersion, fill_template, preprocess
+from ..utils import make_VIProductVersion, fill_template, preprocess, create_writeable_tmpdir
+
+import tempfile
+from os.path import join
+from os import makedirs
+from unittest.mock import patch
+from shutil import rmtree
 
 
 def test_make_VIProductVersion():
@@ -63,11 +69,29 @@ E
 """
     assert preprocess(code, dict(x=1)) == res
 
+def test_create_tmpfile():
+    install_dir = join(tempfile.gettempdir(), "z", "y")
+    tmp_dir = create_writeable_tmpdir(install_dir)
+    assert tempfile.tempdir in tmp_dir
+    assert install_dir not in tmp_dir
+    rmtree(tmp_dir)
+
+
+@patch('constructor.utils.path_executable', return_value=False)
+def test_create_tmpfile_noexec(ex):
+    install_dir = join(tempfile.gettempdir(), "z")
+    makedirs(install_dir)
+    tmp_dir = create_writeable_tmpdir(install_dir)
+    assert install_dir in tmp_dir
+    rmtree(tmp_dir)
+    rmtree(install_dir)
 
 def main():
     test_make_VIProductVersion()
     test_fill_template()
     test_preprocess()
+    test_create_tmpfile()
+    test_create_tmpfile_noexec()
 
 
 if __name__ == '__main__':

@@ -7,9 +7,10 @@
 import re
 import sys
 import hashlib
-from os import environ
-from os.path import join, isfile, basename
-
+import tempfile
+import stat
+import subprocess
+import os
 
 def filename_dist(dist):
     """ Return the filename of a distribution. """
@@ -140,3 +141,26 @@ def get_final_channels(info):
             continue
         mapped_channels.append(url)
     return mapped_channels
+
+
+def path_executable(path):
+    path_exec = True
+    test_file = os.path.join(path, "test.sh")
+    with open(test_file, "w") as f:
+        f.write("echo hello")
+    st = os.stat(test_file)
+    os.chmod(test_file, st.st_mode | stat.S_IEXEC)
+    try:
+        subprocess.call(["/bin/sh", test_file])
+    except:
+        path_exec = False
+    os.remove(test_file)
+    return path_exec
+
+
+def create_writeable_tmpdir(install_dir):
+    writeable_tmp_dir = tempfile.tempdir
+    if not path_executable(writeable_tmp_dir):
+        writeable_tmp_dir = install_dir
+    tmp_dir = tempfile.mkdtemp(dir=writeable_tmp_dir)
+    return tmp_dir

@@ -10,12 +10,11 @@ import os
 from os.path import basename, dirname, getsize, isdir, join
 import shutil
 import tarfile
-import tempfile
-import psutil
 
 from .construct import ns_platform
 from .preconda import files as preconda_files, write_files as preconda_write_files
-from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, read_ascii_only, get_final_channels
+from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, \
+    read_ascii_only, get_final_channels, create_writeable_tmpdir
 
 THIS_DIR = dirname(__file__)
 
@@ -78,13 +77,6 @@ def get_header(conda_exec, tarball, info):
 
     return data
 
-
-def create_writeable_tmpdir(install_dir):
-    writeable_tmp_dir = tempfile.tempdir
-    if any(['noexec' in _.opts for _ in psutil.disk_partitions() if _.mountpoint == writeable_tmp_dir]):
-        writeable_tmp_dir = install_dir
-    tmp_dir = tempfile.mkdtemp(dir=writeable_tmp_dir)
-    return tmp_dir
 
 def create(info, verbose=False):
     tmp_dir = create_writeable_tmpdir(join(info['_outpath'], "tmp"))
