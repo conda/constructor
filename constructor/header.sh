@@ -364,13 +364,21 @@ OLD_DD="$?"
 
 CONDA_EXEC="$PREFIX/conda.exe"
 if [ "$OLD_DD" = "1" ]; then
-    dd if="$THIS_PATH" bs=4M | (
-        dd bs=@NON_PAYLOAD_SIZE@ count=1 status=none of=/dev/null
-        dd bs=@BLOCK_SIZE@ count=@FIRST_PAYLOAD_BLOCKS@ # status=none
-        dd bs=@FIRST_PAYLOAD_REMAINDER@ count=1 # status=none
-    ) > "$CONDA_EXEC";
+    # 3-part dd from https://unix.stackexchange.com/a/121798/34459
+    # {
+    #     dd if="$in_file" bs=1 skip="$start" count="$copy1_size"
+    #     dd if="$in_file" bs="$block_size" skip="$copy2_skip" count="$copy2_blocks"
+    #     dd if="$in_file" bs=1 skip="$copy3_start" count="$copy3_size"
+    # }
+    # this is similar below with the tarball payload - see shar.py in constructor to see how
+    #    these values are computed.
+    {
+        dd if="$THIS_PATH" bs=1 skip=@CON_EXE_OFFSET_BYTES@ count=@CON_EXE_START_REMAINDER@ status=none
+        dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@CON_EXE_BLOCK_OFFSET@ count=@CON_EXE_SIZE_BLOCKS@ status=none
+        dd if="$THIS_PATH" bs=1 skip=@CON_EXE_REMAINDER_OFFSET@ count=@CON_EXE_END_REMAINDER@ status=none
+    } > "$CONDA_EXEC";
 else
-    dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@NON_PAYLOAD_SIZE@ count=@FIRST_PAYLOAD_SIZE@ \
+    dd if="$THIS_PATH" of="$CONDA_EXEC" skip=@CON_EXE_OFFSET_BYTES@ count=@CON_EXE_SIZE_BYTES@ \
        iflag=skip_bytes,count_bytes status=none;
 fi
 
@@ -380,13 +388,13 @@ printf "Unpacking payload ...\n"
 # this is much faster with larger block size, but requires a dd from around 2012
 #   specifically the skip_bytes and count_bytes iflags
 if [ "$OLD_DD" = "1" ]; then
-    dd if="$THIS_PATH" bs=4M | (
-        dd bs=@PAYLOAD_OFFSET_BYTES@ count=1 status=none of=/dev/null
-        dd bs=@BLOCK_SIZE@ count=@TARBALL_SIZE_BLOCKS@ status=none
-        dd bs=@TARBALL_SIZE_REMAINDER@ count=1 status=none
-    ) | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
+    {
+        dd if="$THIS_PATH" bs=1 skip=@TARBALL_OFFSET_BYTES@ count=@TARBALL_START_REMAINDER@ status=none
+        dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@TARBALL_BLOCK_OFFSET@ count=@TARBALL_SIZE_BLOCKS@ status=none
+        dd if="$THIS_PATH" bs=1 skip=@TARBALL_REMAINDER_OFFSET@ count=@TARBALL_END_REMAINDER@ status=none
+    } | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
 else
-    dd if="$THIS_PATH" count=@TARBALL_SIZE_BYTES@ skip=@PAYLOAD_OFFSET_BYTES@ \
+    dd if="$THIS_PATH" skip=@TARBALL_OFFSET_BYTES@ count=@TARBALL_SIZE_BYTES@ \
        iflag=skip_bytes,count_bytes status=none | \
         "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX";
 fi
