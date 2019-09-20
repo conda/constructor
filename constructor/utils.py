@@ -7,9 +7,6 @@
 import re
 import sys
 import hashlib
-from os import environ
-from os.path import join, isfile, basename
-
 
 def filename_dist(dist):
     """ Return the filename of a distribution. """
