@@ -395,7 +395,7 @@ CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=@CHANNELS@ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+"$CONDA_EXEC" install --repodata-fn repodata.json -c $PREFIX/conda-bld --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
 
 #if not keep_pkgs
     rm -fr $PREFIX/pkgs/*.tar.bz2
