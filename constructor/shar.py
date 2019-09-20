@@ -109,7 +109,10 @@ def get_header(conda_exec, tarball, info):
 
 def create(info, verbose=False):
     tmp_dir_base_path = join(dirname(info['_outpath']), "tmp")
-    os.makedirs(tmp_dir_base_path)
+    try:
+        os.makedirs(tmp_dir_base_path)
+    except:
+        pass
     tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base_path)
     preconda_write_files(info, tmp_dir)
 
