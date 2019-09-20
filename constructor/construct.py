@@ -153,6 +153,10 @@ Path to a pre install (bash - Unix only) script.
 Path to a post install (bash for Unix - .bat for Windows) script.
 '''),
 
+    ('pre_uninstall',          False, str, '''
+Path to a pre uninstall (.bat for Windows) script. Only supported on Windows.
+'''),
+
     ('default_prefix',         False, str, 'XXX'),
 
     ('welcome_image',          False, str, '''

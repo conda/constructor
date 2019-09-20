@@ -234,6 +234,14 @@ argument type(s): ``str``,
 
 Path to a post install (bash for Unix - .bat for Windows) script.
 
+## `pre_uninstall`
+
+required: False
+
+argument type(s): ``str``, 
+
+Path to a pre uninstall (.bat for Windows) script. Only supported on Windows.
+
 ## `welcome_image`
 
 required: False
