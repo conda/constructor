@@ -1,4 +1,4 @@
-from ..utils import make_VIProductVersion, fill_template, preprocess
+from ..utils import make_VIProductVersion, fill_template, preprocess, normalize_path
 
 
 def test_make_VIProductVersion():
@@ -64,10 +64,19 @@ E
     assert preprocess(code, dict(x=1)) == res
 
 
+def test_normalize_path():
+    path = "//test//test/test"
+    assert normalize_path(path) == "/test/test/test"
+
+    path = "test///test/test"
+    assert normalize_path(path) == "test/test/test"
+
+
 def main():
     test_make_VIProductVersion()
     test_fill_template()
     test_preprocess()
+    test_normalize_path()
 
 
 if __name__ == '__main__':
