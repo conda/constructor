@@ -369,6 +369,9 @@ CONDA_EXEC="$PREFIX/conda.exe"
 
 chmod +x "$CONDA_EXEC"
 
+export TMP_BACKUP="$TMP"
+export TMP=$PREFIX/install_tmp
+
 printf "Unpacking payload ...\n"
 {
     dd if="$THIS_PATH" bs=1 skip=@TARBALL_OFFSET_BYTES@ count=@TARBALL_START_REMAINDER@ 2>/dev/null
@@ -419,6 +422,9 @@ rm -f "$POSTCONDA"
 
 rm -f $PREFIX/conda.exe
 rm -f $PREFIX/pkgs/env.txt
+
+rm -rf $PREFIX/install_tmp
+export TMP="$TMP_BACKUP"
 
 mkdir -p $PREFIX/envs
 
