@@ -9,10 +9,12 @@ Var mui_AnaCustomOptions
 
 Var mui_AnaCustomOptions.AddToPath
 Var mui_AnaCustomOptions.RegisterSystemPython
+Var mui_AnaCustomOptions.NoScripts
 
 # These are the checkbox states, to be used by the installer
 Var Ana_AddToPath_State
 Var Ana_RegisterSystemPython_State
+Var Ana_NoScripts_State
 
 Var Ana_AddToPath_Label
 Var Ana_RegisterSystemPython_Label
@@ -32,6 +34,9 @@ Function mui_AnaCustomOptions_InitDefaults
         ${Else}
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${EndIf}
+    ${EndIf}
+    ${If} $Ana_NoScripts_State == ""
+        StrCpy $Ana_NoScripts_State ${BST_UNCHECKED}
     ${EndIf}
 FunctionEnd
 
@@ -96,6 +101,13 @@ Function mui_AnaCustomOptions_Show
          $\ndetect ${NAME} as the primary Python ${PY_VER} on the system."
     Pop $Ana_RegisterSystemPython_Label
 
+    ; Make this to display only when necessary
+    ${NSD_CreateCheckbox} 20u 120u 240u 10u \
+        "Do not run the post installion script."
+    Pop $mui_AnaCustomOptions.NoScripts
+    ${NSD_SetState} $mui_AnaCustomOptions.NoScripts $Ana_NoScripts_State
+    ${NSD_OnClick} $mui_AnaCustomOptions.NoScripts NoScripts_OnClick
+
     nsDialogs::Show
 FunctionEnd
 
@@ -153,3 +165,10 @@ KeepSettingLabel:
         ${EndIf}
     ${EndIf}
 FunctionEnd
+
+Function NoScripts_OnClick
+    Pop $0
+    ${NSD_GetState} $0 $Ana_NoScripts_State
+
+FunctionEnd
+

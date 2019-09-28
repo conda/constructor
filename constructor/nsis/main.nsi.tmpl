@@ -49,6 +49,7 @@ var /global ARGV_InstallationType
 var /global ARGV_AddToPath
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
+var /global ARGV_NoScripts
 
 var /global IsDomainUser
 
@@ -172,6 +173,7 @@ FunctionEnd
                 /AddToPath=[0|1] [default: 0]$\n$\n\
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
+                /NoScripts=[0|1] [default: 0]$\n$\n\
             Examples:$\n\
                 Install for all users, but don't add to PATH env var:$\n\
                     $EXEFILE /InstallationType=AllUsers$\n$\n\
@@ -216,6 +218,16 @@ FunctionEnd
     ${GetOptions} $ARGV "/NoRegistry=" $ARGV_NoRegistry
     ${If} ${Errors}
         StrCpy $ARGV_NoRegistry "0"
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/NoScripts=" $ARGV_NoScripts
+    ${IfNot} ${Errors}
+        ${If} $ARGV_NoScripts = "1"
+            StrCpy $Ana_NoScripts_State ${BST_CHECKED}
+        ${ElseIf} $ARGV_NoScripts = "0"
+            StrCpy $Ana_NoScripts_State ${BST_UNCHECKED}
+        ${EndIf}
     ${EndIf}
 
 !macroend
@@ -783,6 +795,7 @@ Section "Install"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
     File __POST_INSTALL__
+    File __PRE_UNINSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
 
@@ -809,10 +822,12 @@ Section "Install"
     push 'Failed to initialize Anaconda directories'
     call AbortRetryExecWait
 
-    DetailPrint "Running post install..."
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
-    push 'Failed to run post install script'
-    call AbortRetryExecWait
+    ${If} $Ana_NoScripts_State = ${BST_UNCHECKED}
+        DetailPrint "Running post install..."
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
+        push 'Failed to run post install script'
+        call AbortRetryExecWait
+    ${EndIf}
 
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
@@ -874,6 +889,7 @@ Section "Uninstall"
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
+    ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" pre_uninstall'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmpath'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" rmreg'
     ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" del "$INSTDIR"'
