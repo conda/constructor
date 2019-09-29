@@ -88,6 +88,7 @@ def make_nsi(info, dir_path):
     py_name, py_version, unused_build = filename_dist(dists[0]).rsplit('-', 2)
     assert py_name == 'python'
     arch = int(info['_platform'].split('-')[1])
+    info['post_install_desc'] = info.get('post_install_desc', "")
 
     # these appear as __<key>__ in the template, and get escaped
     replace = {
@@ -106,6 +107,7 @@ def make_nsi(info, dir_path):
             'default_prefix',
             join('%LOCALAPPDATA%', 'Continuum', name.lower())
         ),
+        'POST_INSTALL_DESC': info['post_install_desc'],
     }
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
                     ('WELCOMEIMAGE', 'welcome.bmp'),

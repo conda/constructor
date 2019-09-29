@@ -153,6 +153,13 @@ Path to a pre install (bash - Unix only) script.
 Path to a post install (bash for Unix - .bat for Windows) script.
 '''),
 
+    ('post_install_desc',      False, str, '''
+Short description of the "post_install" script to be displayed as label of 
+the "Do not run post install script" checkbox in the windows installer.
+If used and not an empty string, the "Do not run post install script"  
+checkbox will be displayed with this label.
+'''),
+
     ('default_prefix',         False, str, 'XXX'),
 
     ('welcome_image',          False, str, '''

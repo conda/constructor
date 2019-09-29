@@ -60,7 +60,7 @@ Function mui_AnaCustomOptions_Show
         "Advanced Installation Options" \
         "Customize how ${NAME} integrates with Windows"
 
-    ${NSD_CreateGroupBox} 0u 0u 100% 120u "Advanced Options"
+    ${NSD_CreateGroupBox} 0u 0u 100% 140u "Advanced Options"
     Pop $0
 
     ${If} $InstMode = ${JUST_ME}
@@ -68,14 +68,14 @@ Function mui_AnaCustomOptions_Show
     ${Else}
         StrCpy $1 "the system"
     ${EndIf}
-    ${NSD_CreateCheckbox} 20u 15u 240u 10u \
+    ${NSD_CreateCheckbox} 20u 13u 250u 10u \
         "Add ${NAME} to $1 &PATH environment variable"
     Pop $mui_AnaCustomOptions.AddToPath
 
     ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
     ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
 
-    ${NSD_CreateLabel} 20u 27u 240u 40u \
+    ${NSD_CreateLabel} 20u 25u 250u 38u \
         "Not recommended. Instead, open ${NAME} with the Windows Start$\n\
          menu and select $\"Anaconda (${ARCH})$\". This $\"add to PATH$\" option makes$\n\
          ${NAME} get found before previously installed software, but may$\n\
@@ -87,7 +87,7 @@ Function mui_AnaCustomOptions_Show
     ${Else}
         StrCpy $1 "the system"
     ${EndIf}
-    ${NSD_CreateCheckbox} 20u 70u 240u 10u \
+    ${NSD_CreateCheckbox} 20u 68u 250u 10u \
         "&Register ${NAME} as $1 Python ${PY_VER}"
     Pop $mui_AnaCustomOptions.RegisterSystemPython
     ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython \
@@ -95,18 +95,21 @@ Function mui_AnaCustomOptions_Show
     ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython \
                    RegisterSystemPython_OnClick
 
-    ${NSD_CreateLabel} 20u 82u 240u 30u \
+    ${NSD_CreateLabel} 20u 80u 250u 30u \
         "This will allow other programs, such as Python Tools for Visual Studio \
          $\nPyCharm, Wing IDE, PyDev, and MSI binary packages, to automatically \
          $\ndetect ${NAME} as the primary Python ${PY_VER} on the system."
     Pop $Ana_RegisterSystemPython_Label
 
-    ; Make this to display only when necessary
-    ${NSD_CreateCheckbox} 20u 120u 240u 10u \
-        "Do not run the post installion script."
-    Pop $mui_AnaCustomOptions.NoScripts
-    ${NSD_SetState} $mui_AnaCustomOptions.NoScripts $Ana_NoScripts_State
-    ${NSD_OnClick} $mui_AnaCustomOptions.NoScripts NoScripts_OnClick
+    ${If} "${POST_INSTALL_DESC}" != ""
+        # Make this to display only when necessary
+        ${NSD_CreateCheckbox} 20u 112u 250u 10u \
+            "${POST_INSTALL_DESC}"
+        Pop $mui_AnaCustomOptions.NoScripts
+        ${NSD_SetState} $mui_AnaCustomOptions.NoScripts $Ana_NoScripts_State
+        ${NSD_OnClick} $mui_AnaCustomOptions.NoScripts NoScripts_OnClick
+
+    ${EndIf}
 
     nsDialogs::Show
 FunctionEnd
