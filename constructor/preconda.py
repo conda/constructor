@@ -24,7 +24,7 @@ except:
 
 files = '.constructor-build.info', 'urls', 'urls.txt', 'env.txt'
 
-def write_index_cache(info, dst_dir):
+def write_index_cache(info, dst_dir, used_packages):
     cache_dir = join(dst_dir, 'cache')
 
     if not isdir(cache_dir):
@@ -37,7 +37,7 @@ def write_index_cache(info, dst_dir):
                         for url in _urls for subdir in _platforms)
 
     for url in subdir_urls:
-        write_repodata(cache_dir, url)
+        write_repodata(cache_dir, url, used_packages)
 
     for cache_file in os.listdir(cache_dir):
         if not cache_file.endswith(".json"):
@@ -82,7 +82,7 @@ def write_files(info, dst_dir):
         for url, _ in final_urls_md5s:
             fo.write('%s\n' % url)
 
-    write_index_cache(info, dst_dir)
+    write_index_cache(info, dst_dir, info['_dists'])
 
     write_conda_meta(info, dst_dir, final_urls_md5s)
 
