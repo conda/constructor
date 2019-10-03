@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import json
 from os.path import join
 import sys
+import json
 
 try:
     from conda import __version__ as CONDA_INTERFACE_VERSION
@@ -52,26 +53,37 @@ if conda_interface_type == 'conda':
 
     from conda.exports import cache_fn_url as _cache_fn_url
 
-    def write_repodata(cache_dir, url):
+    def get_repodata(url):
         if CONDA_MAJOR_MINOR >= (4, 5):
             from conda.core.subdir_data import fetch_repodata_remote_request
             raw_repodata_str = fetch_repodata_remote_request(url, None, None)
-            repodata_filename = _cache_fn_url(url)
-            with open(join(cache_dir, repodata_filename), 'w') as fh:
-                fh.write(raw_repodata_str)
         elif CONDA_MAJOR_MINOR >= (4, 4):
             from conda.core.repodata import fetch_repodata_remote_request
             raw_repodata_str = fetch_repodata_remote_request(url, None, None)
-            repodata_filename = _cache_fn_url(url)
-            with open(join(cache_dir, repodata_filename), 'w') as fh:
-                fh.write(raw_repodata_str)
         elif CONDA_MAJOR_MINOR >= (4, 3):
             from conda.core.repodata import fetch_repodata_remote_request
             repodata_obj = fetch_repodata_remote_request(None, url, None, None)
             raw_repodata_str = json.dumps(repodata_obj)
-            repodata_filename = _cache_fn_url(url)
-            with open(join(cache_dir, repodata_filename), 'w') as fh:
-                fh.write(raw_repodata_str)
         else:
             raise NotImplementedError("unsupported version of conda: %s" % CONDA_INTERFACE_VERSION)
+        full_repodata = json.loads(raw_repodata_str)
+        return full_repodata
+
+    def write_repodata(cache_dir, url, full_repodata, used_packages):
+        used_repodata = {k: full_repodata[k] for k in set(full_repodata.keys()) - set(('packages',
+                                                                                       'packages.conda',
+                                                                                       'removed',))}
+        repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
+        used_repodata['packages'] = {}
+        used_repodata['packages.conda'] = {}
+        used_repodata['removed'] = []
+        # arbitrary old, expired date, so that conda will want to immediately update it
+        # when not being run in offline mode
+        used_repodata['_mod'] = "Mon, 07 Jan 2019 15:22:15 GMT"
+        for package in used_packages:
+            for key in ('packages', 'packages.conda'):
+                if package in full_repodata.get(key, {}):
+                    used_repodata[key][package] = full_repodata[key][package]
+        with open(join(cache_dir, repodata_filename), 'w') as fh:
+            json.dump(used_repodata, fh, indent=2)
 
