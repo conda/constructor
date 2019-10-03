@@ -73,7 +73,7 @@ if conda_interface_type == 'conda':
         used_repodata = {k: full_repodata[k] for k in set(full_repodata.keys()) - set(('packages',
                                                                                        'packages.conda',
                                                                                        'removed',))}
-        repodata_filename = _cache_fn_url(url)
+        repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
         used_repodata['packages'] = {}
         used_repodata['packages.conda'] = {}
         used_repodata['removed'] = []
