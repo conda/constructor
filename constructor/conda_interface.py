@@ -76,10 +76,13 @@ if conda_interface_type == 'conda':
         used_repodata['packages'] = {}
         used_repodata['packages.conda'] = {}
         used_repodata['removed'] = []
+        # arbitrary old, expired date, so that conda will want to immediately update it
+        # when not being run in offline mode
+        used_repodata['_mod'] = "Mon, 07 Jan 2019 15:22:15 GMT"
         for package in used_packages:
             for key in ('packages', 'packages.conda'):
                 if package in full_repodata[key]:
                     used_repodata[key][package] = full_repodata[key][package]
         with open(join(cache_dir, repodata_filename), 'w') as fh:
-            json.dump(used_repodata, fh)
+            json.dump(used_repodata, fh, indent=2)
 
