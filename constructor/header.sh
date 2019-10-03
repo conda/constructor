@@ -403,6 +403,12 @@ MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
 
+# original issue report:
+# https://github.com/ContinuumIO/anaconda-issues/issues/11148
+# First try to fix it (this apparently didn't work; QA reported the issue again)
+# https://github.com/conda/conda/pull/9073
+mkdir -p ~/.conda > /dev/null 2>&1
+
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=@CHANNELS@ \
