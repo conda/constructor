@@ -14,7 +14,7 @@ from .utils import filename_dist, get_final_url
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
-    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata,
+    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata, get_repodata
 )
 
 try:
@@ -35,9 +35,20 @@ def write_index_cache(info, dst_dir, used_packages):
                 info.get('conda_default_channels', []))
     subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
                         for url in _urls for subdir in _platforms)
+    repodatas = {url: get_repodata(url) for url in subdir_urls}
 
-    for url in subdir_urls:
-        write_repodata(cache_dir, url, used_packages)
+    package_urls = dict(info['_urls'])
+    remaps = info.get('channels_remap', [])
+    for remap in remaps:
+        remap_src = remap['src']
+        remap_dest = remap['dest']
+        for _ in repodatas[remap_dest]['packages']:
+            if (remap_src + _) in package_urls:
+                repodatas[remap_dest][_] = repodatas[remap_src]['packages'][_]
+        del repodatas[remap]
+
+    for url, repodata in repodatas.items():
+        write_repodata(cache_dir, url, repodata, used_packages)
 
     for cache_file in os.listdir(cache_dir):
         if not cache_file.endswith(".json"):
