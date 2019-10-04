@@ -42,7 +42,7 @@ def write_index_cache(info, dst_dir, used_packages):
 
     remap_urls = []
     for subdir in _platforms:
-        for url in info.get('channels_remap'):
+        for url in info.get('channels_remap', []):
             remap_urls.append({'src': ('%s/%s/' % (url['src'].rstrip('/'), subdir)),
                                'dest':  ('%s/%s/' % (url['dest'].rstrip('/'), subdir))})
     for remap in remap_urls:
