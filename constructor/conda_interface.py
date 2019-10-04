@@ -6,6 +6,8 @@ from os.path import join
 import sys
 import json
 
+NAV_APPS = ['glueviz', 'jupyterlab', 'notebook', 'orange3', 'qtconsole', 'rstudio', 'spyder', 'vscode']
+
 try:
     from conda import __version__ as CONDA_INTERFACE_VERSION
     conda_interface_type = 'conda'
@@ -74,12 +76,12 @@ if conda_interface_type == 'conda':
                                                                                        'packages.conda',
                                                                                        'removed',))}
         repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
-        used_repodata['packages'] = {}
         used_repodata['packages.conda'] = {}
         used_repodata['removed'] = []
         # arbitrary old, expired date, so that conda will want to immediately update it
         # when not being run in offline mode
         used_repodata['_mod'] = "Mon, 07 Jan 2019 15:22:15 GMT"
+        used_repodata['packages'] = {k: v for k, v in full_repodata['packages'].items() if v['name'] in NAV_APPS}
         for package in used_packages:
             for key in ('packages', 'packages.conda'):
                 if package in full_repodata.get(key, {}):
