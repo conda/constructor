@@ -5,6 +5,7 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 from functools import partial
+from distutils.util import strtobool
 from os.path import abspath, dirname
 import re
 import sys
@@ -274,7 +275,7 @@ def parse(path, platform):
     # since we're using BaseLoader, account for bool keys
     for _ in bool_keys:
         try:
-            res[_] = bool(res[_])
+            res[_] = strtobool(res[_])
         except KeyError:
             pass
     for key in list(res):

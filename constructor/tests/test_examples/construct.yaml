@@ -1,0 +1,13 @@
+name: Miniconda2019.10
+version: 2019.10
+
+install_in_dependency_order: True
+
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+
+keep_pkgs: False
+
+specs:
+  - python
+  - conda
