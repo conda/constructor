@@ -238,7 +238,9 @@ def select_lines(data, namespace):
 def yamlize(data, directory, content_filter):
     data = content_filter(data)
     try:
-        return yaml.safe_load(data)
+        # we need to use BaseLoader here so version isn't interpreted as a float
+        # 2019.10 was being converted to 2019.1
+        return yaml.load(data, Loader=yaml.BaseLoader)
     except yaml.error.YAMLError as e:
         if ('{{' not in data) and ('{%' not in data):
             raise UnableToParse(original=e)
@@ -247,7 +249,7 @@ def yamlize(data, directory, content_filter):
         except ImportError as ex:
             raise UnableToParseMissingJinja2(original=ex)
         data = render_jinja(data, directory, content_filter)
-        return yaml.load(data)
+        return yaml.load(data, Loader=yaml.BaseLoader)
 
 
 def parse(path, platform):
@@ -268,6 +270,13 @@ def parse(path, platform):
     except KeyError:
         pass
 
+    bool_keys = [i[0] for i in KEYS if i[2] == bool]
+    # since we're using BaseLoader, account for bool keys
+    for _ in bool_keys:
+        try:
+            res[_] = bool(res[_])
+        except KeyError:
+            pass
     for key in list(res):
         if res[key] is None:
             del res[key]
