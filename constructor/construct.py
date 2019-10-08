@@ -275,7 +275,7 @@ def parse(path, platform):
     # since we're using BaseLoader, account for bool keys
     for _ in bool_keys:
         try:
-            res[_] = strtobool(res[_])
+            res[_] = bool(strtobool(res[_]))
         except KeyError:
             pass
     for key in list(res):
