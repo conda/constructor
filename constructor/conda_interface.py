@@ -31,6 +31,7 @@ if conda_interface_type == 'conda':
     from conda.core.prefix_data import PrefixData as _PrefixData
     from conda.core.solve import Solver as _Solver
     from conda.exports import default_prefix as _default_prefix
+    from conda.models.channel import all_channel_urls as _all_channel_urls
     from conda.gateways.disk.read import read_paths_json as _read_paths_json
     from conda.models.dist import Dist as _Dist
     from conda.exports import MatchSpec as _MatchSpec
@@ -43,7 +44,7 @@ if conda_interface_type == 'conda':
     # used by fcp.py
     PackageCacheData = _PackageCacheData
     Solver, read_paths_json = _Solver, _read_paths_json
-    concatv, get, groupby = _concatv, _get, _groupby
+    concatv, get, groupby, all_channel_urls = _concatv, _get, _groupby, _all_channel_urls
     conda_context, env_vars, conda_replace_context_default = _conda_context, _env_vars, _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
 

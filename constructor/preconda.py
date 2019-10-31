@@ -14,7 +14,8 @@ from .utils import filename_dist, get_final_url
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
-    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata, get_repodata
+    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata, get_repodata,
+    all_channel_urls
 )
 
 try:
@@ -32,11 +33,10 @@ def write_index_cache(info, dst_dir, used_packages):
         os.makedirs(cache_dir)
 
     _platforms = info['_platform'], 'noarch'
-    _urls = set(info.get('channels', []) +
-                info.get('conda_default_channels', []))
-    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
-                        for url in _urls for subdir in _platforms)
-    repodatas = {url: get_repodata(url) for url in subdir_urls}
+    _urls = all_channel_urls(info.get('channels', []) +
+                             info.get('conda_default_channels', [])
+                             )
+    repodatas = {url: get_repodata(url) for url in _urls}
 
     package_urls = dict(info['_urls'])
 

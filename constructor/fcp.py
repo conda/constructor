@@ -15,7 +15,8 @@ import sys
 
 from constructor.utils import md5_files
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, concatv, conda_context,
-                              conda_replace_context_default, download, env_vars, groupby, read_paths_json)
+                              conda_replace_context_default, download, env_vars, groupby, read_paths_json,
+                              all_channel_urls)
 
 
 def warn_menu_packages_missing(precs, menu_packages):
@@ -224,7 +225,7 @@ def main(info, verbose=True, dry_run=False):
     version = info["version"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
-    channel_urls = info.get("channels", ())
+    channel_urls = all_channel_urls(info.get("channels", ()))
     channels_remap = info.get('channels_remap', ())
     specs = info["specs"]
     exclude = info.get("exclude", ())
