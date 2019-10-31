@@ -8,15 +8,14 @@ from __future__ import absolute_import, division, print_function
 
 import os
 from os.path import basename, dirname, getsize, isdir, join
-import json
 import shutil
 import tarfile
 import tempfile
 
 from .construct import ns_platform
-from .install import name_dist
 from .preconda import files as preconda_files, write_files as preconda_write_files
-from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, read_ascii_only, get_final_channels
+from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, \
+    read_ascii_only, get_final_channels
 
 THIS_DIR = dirname(__file__)
 
@@ -109,7 +108,12 @@ def get_header(conda_exec, tarball, info):
 
 
 def create(info, verbose=False):
-    tmp_dir = tempfile.mkdtemp()
+    tmp_dir_base_path = join(dirname(info['_outpath']), "tmp")
+    try:
+        os.makedirs(tmp_dir_base_path)
+    except:
+        pass
+    tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base_path)
     preconda_write_files(info, tmp_dir)
 
     preconda_tarball = join(tmp_dir, 'preconda.tar.bz2')

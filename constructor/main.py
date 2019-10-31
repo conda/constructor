@@ -14,6 +14,7 @@ from .conda_interface import cc_platform
 from .construct import parse as construct_parse, verify as construct_verify
 from .fcp import main as fcp_main
 from .install import yield_lines
+from .utils import normalize_path
 
 from . import __version__
 
@@ -237,7 +238,8 @@ def main():
                              "yourself some typing.  Self-contained conda executables can be "
                              "downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/")
 
-    main_build(dir_path, output_dir=args.output_dir, platform=args.platform,
+    out_dir = normalize_path(args.output_dir)
+    main_build(dir_path, output_dir=out_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
                dry_run=args.dry_run, conda_exe=args.conda_exe)
 

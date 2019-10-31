@@ -7,9 +7,7 @@
 import re
 import sys
 import hashlib
-from os import environ
-from os.path import join, isfile, basename
-
+from os.path import normpath
 
 def filename_dist(dist):
     """ Return the filename of a distribution. """
@@ -140,3 +138,9 @@ def get_final_channels(info):
             continue
         mapped_channels.append(url)
     return mapped_channels
+
+def normalize_path(path):
+    new_path = normpath(path)
+    return new_path.replace("//", "/")
+
+
