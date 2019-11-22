@@ -450,10 +450,10 @@ Function .onInit
     ${EndIf} # USERDNSDOMAIN != ""
 
     ${If} $IsDomainUser = 0
-        StrCpy $INSTDIR_JUSTME "$Profile\${NAME}"
-    ${ElseIf} $IsDomainUser = 1
         ExpandEnvStrings $0 ${DEFAULT_PREFIX}
         StrCpy $INSTDIR_JUSTME $0
+    ${ElseIf} $IsDomainUser = 1
+        StrCpy $INSTDIR_JUSTME "$Profile\${NAME}"
     ${Else}
         # Should never happen; indicates a logic error above.
         MessageBox MB_OK "Internal error: IsUserDomain not set properly!"
