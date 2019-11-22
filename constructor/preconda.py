@@ -48,15 +48,15 @@ def write_index_cache(info, dst_dir, used_packages):
         if dst is not None:
             src = '%s/%s/' % (src, subdir)
             dst = '%s/%s/' % (dst, subdir)
-        if dst not in repodatas:
-            repodatas[dst] =  {
-                '_url': dst,
-                'info': {'subdir': subdir},
-                'packages': {}
-            }
-        if fn.endswith('.conda'):
-            fn = fn.rsplit('.', 1)[0] + '.tar.bz2'
-        repodatas[dst]['packages'][fn] = repodatas[src]['packages'][fn]
+            if dst not in repodatas:
+                repodatas[dst] =  {
+                    '_url': dst,
+                    'info': {'subdir': subdir},
+                    'packages': {}
+                }
+            if fn.endswith('.conda'):
+                fn = fn.rsplit('.', 1)[0] + '.tar.bz2'
+            repodatas[dst]['packages'][fn] = repodatas[src]['packages'][fn]
     for src in remaps:
         for subdir in _platforms:
             repodatas.pop('%s/%s/' % (src, subdir), None)
