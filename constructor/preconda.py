@@ -32,19 +32,18 @@ def write_index_cache(info, dst_dir, used_packages):
         os.makedirs(cache_dir)
 
     _platforms = info['_platform'], 'noarch'
-    _urls = set(info.get('channels', []) +
+    _remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
+               for url in info.get('channels_remap', [])}
+    _urls = set(url.rstrip('/') for url in list(_remaps) +
+                info.get('channels', []) +
                 info.get('conda_default_channels', []))
-    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
+    subdir_urls = tuple('%s/%s/' % (url, subdir)
                         for url in _urls for subdir in _platforms)
     repodatas = {url: get_repodata(url) for url in subdir_urls}
 
-    package_urls = dict(info['_urls'])
-
-    remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
-              for url in info.get('channels_remap', [])}
-    for url in package_urls:
+    for url, _ in info['_urls']:
         src, subdir, fn = url.rsplit('/', 2)
-        dst = remaps.get(src)
+        dst = _remaps.get(src)
         if dst is not None:
             src = '%s/%s/' % (src, subdir)
             dst = '%s/%s/' % (dst, subdir)
@@ -52,14 +51,15 @@ def write_index_cache(info, dst_dir, used_packages):
                 repodatas[dst] =  {
                     '_url': dst,
                     'info': {'subdir': subdir},
-                    'packages': {}
+                    'packages': {},
+                    'packages.conda': {},
+                    'removed': []
                 }
-            if fn.endswith('.conda'):
-                fn = fn.rsplit('.', 1)[0] + '.tar.bz2'
-            repodatas[dst]['packages'][fn] = repodatas[src]['packages'][fn]
-    for src in remaps:
+            loc = 'packages.conda' if fn.endswith('.conda') else 'packages'
+            repodatas[dst][loc][fn] = repodatas[src][loc][fn]
+    for src in _remaps:
         for subdir in _platforms:
-            repodatas.pop('%s/%s/' % (src, subdir), None)
+            del repodatas['%s/%s/' % (src, subdir)]
 
     for url, repodata in repodatas.items():
         write_repodata(cache_dir, url, repodata, used_packages)
