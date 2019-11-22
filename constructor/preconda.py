@@ -40,23 +40,26 @@ def write_index_cache(info, dst_dir, used_packages):
 
     package_urls = dict(info['_urls'])
 
-    remap_urls = []
-    for subdir in _platforms:
-        for url in info.get('channels_remap', []):
-            src = '%s/%s/' % (url['src'].rstrip('/'), subdir)
-            dest = '%s/%s/' % (url['dest'].rstrip('/'), subdir)
-            remap_urls.append({'src': src, 'dest': dest})
-            if dest not in repodatas:
-                repodatas[dest] =  {
-                    '_url': dest,
-                    'info': {'subdir': subdir},
-                    'packages': {}
-                }
-    for remap in remap_urls:
-        for _ in repodatas[remap['src']]['packages']:
-            if (remap['src'] + _) in package_urls:
-                repodatas[remap['dest']]['packages'][_] = repodatas[remap['src']]['packages'][_]
-        del repodatas[remap['src']]
+    remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
+              for url in info.get('channels_remap', [])}
+    for url in package_urls:
+        src, subdir, fn = url.rsplit('/', 2)
+        dst = remaps.get(src)
+        if dst is not None:
+            src = '%s/%s/' % (src, subdir)
+            dst = '%s/%s/' % (dst, subdir)
+        if dst not in repodatas:
+            repodatas[dst] =  {
+                '_url': dst,
+                'info': {'subdir': subdir},
+                'packages': {}
+            }
+        if fn.endswith('.conda'):
+            fn = fn.rsplit('.', 1)[0] + '.tar.bz2'
+        repodatas[dst]['packages'][fn] = repodatas[src]['packages'][fn]
+    for src in remaps:
+        for subdir in _platforms:
+            repodatas.pop('%s/%s/' % (src, subdir), None)
 
     for url, repodata in repodatas.items():
         write_repodata(cache_dir, url, repodata, used_packages)
