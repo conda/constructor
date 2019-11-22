@@ -43,8 +43,15 @@ def write_index_cache(info, dst_dir, used_packages):
     remap_urls = []
     for subdir in _platforms:
         for url in info.get('channels_remap', []):
-            remap_urls.append({'src': ('%s/%s/' % (url['src'].rstrip('/'), subdir)),
-                               'dest':  ('%s/%s/' % (url['dest'].rstrip('/'), subdir))})
+            src = '%s/%s/' % (url['src'].rstrip('/'), subdir)
+            dest = '%s/%s/' % (url['dest'].rstrip('/'), subdir)
+            remap_urls.append({'src': src, 'dest': dest})
+            if dest not in repodatas:
+                repodatas[dest] =  {
+                    '_url': dest,
+                    'info': {'subdir': subdir},
+                    'packages': {}
+                }
     for remap in remap_urls:
         for _ in repodatas[remap['src']]['packages']:
             if (remap['src'] + _) in package_urls:
