@@ -1,5 +1,7 @@
 from ..utils import make_VIProductVersion, fill_template, preprocess, normalize_path
 
+from os import sep
+
 
 def test_make_VIProductVersion():
     f = make_VIProductVersion
@@ -65,11 +67,11 @@ E
 
 
 def test_normalize_path():
-    path = "//test//test/test"
-    assert normalize_path(path) == "/test/test/test"
+    path = "//test//test/test".replace('/', sep)
+    assert normalize_path(path) == "/test/test/test".replace('/', sep)
 
-    path = "test///test/test"
-    assert normalize_path(path) == "test/test/test"
+    path = "test///test/test".replace('/', sep)
+    assert normalize_path(path) == "test/test/test".replace('/', sep)
 
 
 def main():
