@@ -143,7 +143,10 @@ def get_conda_envs_from_python_api():
 get_conda_envs = get_conda_envs_from_python_api
 
 
-def rm_menus():
+def rm_menus(prefix=None):
+    from conda.base.context import context
+    if prefix is not None:
+        context._root_prefix = prefix
     mk_menus(remove=True)
     try:
         import menuinst
