@@ -232,8 +232,8 @@ def main(info, verbose=True, dry_run=False):
     install_in_dependency_order = info.get("install_in_dependency_order", True)
     ignore_duplicate_files = info.get("ignore_duplicate_files", False)
 
-    if not channel_urls:
-        sys.exit("Error: 'channels' is required")
+    if not channel_urls and not channels_remap:
+        sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
 
     with env_vars({
         "CONDA_PKGS_DIRS": download_dir,

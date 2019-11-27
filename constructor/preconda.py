@@ -32,24 +32,34 @@ def write_index_cache(info, dst_dir, used_packages):
         os.makedirs(cache_dir)
 
     _platforms = info['_platform'], 'noarch'
-    _urls = set(info.get('channels', []) +
+    _remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
+               for url in info.get('channels_remap', [])}
+    _urls = set(url.rstrip('/') for url in list(_remaps) +
+                info.get('channels', []) +
                 info.get('conda_default_channels', []))
-    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
+    subdir_urls = tuple('%s/%s/' % (url, subdir)
                         for url in _urls for subdir in _platforms)
     repodatas = {url: get_repodata(url) for url in subdir_urls}
 
-    package_urls = dict(info['_urls'])
-
-    remap_urls = []
-    for subdir in _platforms:
-        for url in info.get('channels_remap', []):
-            remap_urls.append({'src': ('%s/%s/' % (url['src'].rstrip('/'), subdir)),
-                               'dest':  ('%s/%s/' % (url['dest'].rstrip('/'), subdir))})
-    for remap in remap_urls:
-        for _ in repodatas[remap['src']]['packages']:
-            if (remap['src'] + _) in package_urls:
-                repodatas[remap['dest']]['packages'][_] = repodatas[remap['src']]['packages'][_]
-        del repodatas[remap['src']]
+    for url, _ in info['_urls']:
+        src, subdir, fn = url.rsplit('/', 2)
+        dst = _remaps.get(src)
+        if dst is not None:
+            src = '%s/%s/' % (src, subdir)
+            dst = '%s/%s/' % (dst, subdir)
+            if dst not in repodatas:
+                repodatas[dst] =  {
+                    '_url': dst,
+                    'info': {'subdir': subdir},
+                    'packages': {},
+                    'packages.conda': {},
+                    'removed': []
+                }
+            loc = 'packages.conda' if fn.endswith('.conda') else 'packages'
+            repodatas[dst][loc][fn] = repodatas[src][loc][fn]
+    for src in _remaps:
+        for subdir in _platforms:
+            del repodatas['%s/%s/' % (src, subdir)]
 
     for url, repodata in repodatas.items():
         write_repodata(cache_dir, url, repodata, used_packages)
