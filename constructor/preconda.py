@@ -5,7 +5,7 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import os
-from os.path import basename, dirname, isdir, join, split as path_split
+from os.path import isdir, join, split as path_split
 import platform
 import sys
 import time
@@ -44,8 +44,8 @@ def write_index_cache(info, dst_dir, used_packages):
         src, subdir, fn = url.rsplit('/', 2)
         dst = _remaps.get(src)
         if dst is not None:
-            src = '%s/%s/' % (src, subdir)
-            dst = '%s/%s/' % (dst, subdir)
+            src = '%s/%s' % (src, subdir)
+            dst = '%s/%s' % (dst, subdir)
             if dst not in repodatas:
                 repodatas[dst] =  {
                     '_url': dst,
