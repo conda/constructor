@@ -501,7 +501,12 @@ if [ "$BATCH" = "0" ]; then
         printf "conda init\\n"
         printf "\\n"
     else
-        $PREFIX/bin/conda init
+        if [[ $SHELL = *zsh ]]
+        then
+            $PREFIX/bin/conda init zsh
+        else
+            $PREFIX/bin/conda init
+        fi
     fi
     printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
     printf "   set the auto_activate_base parameter to false: \\n"
