@@ -35,7 +35,7 @@ def get_header(conda_exec, tarball, info):
     ppd['keep_pkgs'] = bool(info.get('keep_pkgs'))
     ppd['attempt_hardlinks'] = bool(info.get('attempt_hardlinks'))
     ppd['has_license'] = has_license
-    for key in 'pre_install', 'post_install':
+    for key in 'pre_install', 'post_install', 'pre_uninstall':
         ppd['has_%s' % key] = bool(key in info)
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     install_lines = list(add_condarc(info))
