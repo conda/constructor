@@ -9,10 +9,15 @@
 
 ## Description:
 
-constructor is a tool which allows constructing an installer for
-a collection of conda packages.  Basically, it creates an Anaconda-like
-installer consisting of conda packages.   This tool was previously
-proprietary and known as `cas-installer`.
+Constructor is a tool which allows constructing an installer
+for a collection of conda packages. It solves needed packages using user-provided
+specifications, and bundles those packages.  It can currently create 3 kinds of
+installers, which are best thought of as delivery vehicles for the bundled packages.
+There are shell installers, MacOS .pkg installers, and Windows .exe installers.  Each
+of these will create an environment on the end user's system that contains the specs
+you provided, along with any necessary dependencies.  These installers are similar
+to the Anaconda and Miniconda installers, and indeed constructor is used to create
+those installers.
 
 
 ## Installation:
@@ -38,25 +43,6 @@ Also, the directory may contain some additional optional files (such as a
 license file, and image files for the Windows installer).
 An example is located
 in <a href="./examples/maxiconda">examples/maxiconda</a>.
-
-
-## Notes:
-
-  * Prior to version 3.0, constructor did not work with `noarch`-Python packages.
-  * An installer created by constructor does not need to include `conda`
-    itself.  If you require the ability to use `conda` after installation,
-    add `conda` to the package list.
-  * An installer created by constructor is not the same as Miniconda.  All
-    packages you want to include in the installer need to be listed
-    explicitly.
-    In particular, on Windows this means that if you want the "Anaconda
-    Prompt", you will have to list `console_shortcut`, as well as `menuinst`.
-  * For Windows builds, add the Anaconda channel `/msys2`
-    to the file `constructor.yaml`. This provides packages such as
-    `m2w64-toolchain` which is a dependency of `theano`. It is best to
-    add `/msys2` as `http://repo.anaconda.com/pkgs/msys2`.
-  * Constructor requires conda >=4.5.0
-  * MacOS .pkg installers are finicky.  One great resource on the topic is https://stackoverflow.com/a/11487658
 
 
 ## Devel
