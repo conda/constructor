@@ -29,6 +29,7 @@ Unicode "true"
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
 !define DEFAULT_PREFIX __DEFAULT_PREFIX__
+!define POST_INSTALL_DESC __POST_INSTALL_DESC__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "@UNINSTALL_NAME@"
 !define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
@@ -49,6 +50,7 @@ var /global ARGV_InstallationType
 var /global ARGV_AddToPath
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
+var /global ARGV_NoScripts
 
 var /global IsDomainUser
 
@@ -172,6 +174,7 @@ FunctionEnd
                 /AddToPath=[0|1] [default: 0]$\n$\n\
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
+                /NoScripts=[0|1] [default: 0]$\n$\n\
             Examples:$\n\
                 Install for all users, but don't add to PATH env var:$\n\
                     $EXEFILE /InstallationType=AllUsers$\n$\n\
@@ -216,6 +219,16 @@ FunctionEnd
     ${GetOptions} $ARGV "/NoRegistry=" $ARGV_NoRegistry
     ${If} ${Errors}
         StrCpy $ARGV_NoRegistry "0"
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/NoScripts=" $ARGV_NoScripts
+    ${IfNot} ${Errors}
+        ${If} $ARGV_NoScripts = "1"
+            StrCpy $Ana_NoScripts_State ${BST_CHECKED}
+        ${ElseIf} $ARGV_NoScripts = "0"
+            StrCpy $Ana_NoScripts_State ${BST_UNCHECKED}
+        ${EndIf}
     ${EndIf}
 
 !macroend
@@ -810,10 +823,12 @@ Section "Install"
     push 'Failed to initialize Anaconda directories'
     call AbortRetryExecWait
 
-    DetailPrint "Running post install..."
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
-    push 'Failed to run post install script'
-    call AbortRetryExecWait
+    ${If} $Ana_NoScripts_State = ${BST_UNCHECKED}
+        DetailPrint "Running post install..."
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
+        push 'Failed to run post install script'
+        call AbortRetryExecWait
+    ${EndIf}
 
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
