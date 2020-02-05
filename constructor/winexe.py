@@ -104,7 +104,7 @@ def make_nsi(info, dir_path):
                                join(NSIS_DIR, 'placeholder_license.txt'))),
         'DEFAULT_PREFIX': info.get(
             'default_prefix',
-            join('%LOCALAPPDATA%', 'Continuum', name.lower())
+            join('%USERPROFILE%', name.lower())
         ),
     }
     for key, fn in [('HEADERIMAGE', 'header.bmp'),
