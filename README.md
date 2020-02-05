@@ -56,6 +56,7 @@ in <a href="./examples/maxiconda">examples/maxiconda</a>.
     `m2w64-toolchain` which is a dependency of `theano`. It is best to
     add `/msys2` as `http://repo.anaconda.com/pkgs/msys2`.
   * Constructor requires conda >=4.5.0
+  * MacOS .pkg installers are finicky.  One great resource on the topic is https://stackoverflow.com/a/11487658
 
 
 ## Devel

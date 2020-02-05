@@ -160,6 +160,10 @@ If used and not an empty string, the "Do not run post install script"
 checkbox will be displayed with this label.
 '''),
 
+    ('pre_uninstall',          False, str, '''
+Path to a pre uninstall (.bat for Windows) script. Only supported on Windows.
+'''),
+
     ('default_prefix',         False, str, 'XXX'),
 
     ('welcome_image',          False, str, '''

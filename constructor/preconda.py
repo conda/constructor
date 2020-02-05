@@ -5,7 +5,7 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import os
-from os.path import basename, dirname, isdir, join, split as path_split
+from os.path import isdir, join, split as path_split
 import platform
 import sys
 import time
@@ -14,7 +14,8 @@ from .utils import filename_dist, get_final_url
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
-    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata,
+    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata, get_repodata,
+    all_channel_urls
 )
 
 try:
@@ -24,25 +25,47 @@ except:
 
 files = '.constructor-build.info', 'urls', 'urls.txt', 'env.txt'
 
-def write_index_cache(info, dst_dir):
+
+def write_index_cache(info, dst_dir, used_packages):
     cache_dir = join(dst_dir, 'cache')
 
     if not isdir(cache_dir):
         os.makedirs(cache_dir)
 
     _platforms = info['_platform'], 'noarch'
-    _urls = set(info.get('channels', []) +
-                info.get('conda_default_channels', []))
-    subdir_urls = tuple('%s/%s/' % (url.rstrip('/'), subdir)
-                        for url in _urls for subdir in _platforms)
+    _remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
+               for url in info.get('channels_remap', [])}
+    _urls = all_channel_urls(url.rstrip('/') for url in list(_remaps) +
+                             info.get('channels', []) +
+                             info.get('conda_default_channels', []))
+    repodatas = {url: get_repodata(url) for url in _urls}
 
-    for url in subdir_urls:
-        write_repodata(cache_dir, url)
+    for url, _ in info['_urls']:
+        src, subdir, fn = url.rsplit('/', 2)
+        dst = _remaps.get(src)
+        if dst is not None:
+            src = '%s/%s' % (src, subdir)
+            dst = '%s/%s' % (dst, subdir)
+            if dst not in repodatas:
+                repodatas[dst] =  {
+                    '_url': dst,
+                    'info': {'subdir': subdir},
+                    'packages': {},
+                    'packages.conda': {},
+                    'removed': []
+                }
+            loc = 'packages.conda' if fn.endswith('.conda') else 'packages'
+            repodatas[dst][loc][fn] = repodatas[src][loc][fn]
+    for src in _remaps:
+        for subdir in _platforms:
+            del repodatas['%s/%s' % (src, subdir)]
+
+    for url, repodata in repodatas.items():
+        write_repodata(cache_dir, url, repodata, used_packages)
 
     for cache_file in os.listdir(cache_dir):
         if not cache_file.endswith(".json"):
             os.unlink(join(cache_dir, cache_file))
-
 
 
 def system_info():
@@ -82,7 +105,7 @@ def write_files(info, dst_dir):
         for url, _ in final_urls_md5s:
             fo.write('%s\n' % url)
 
-    write_index_cache(info, dst_dir)
+    write_index_cache(info, dst_dir, info['_dists'])
 
     write_conda_meta(info, dst_dir, final_urls_md5s)
 
@@ -117,6 +140,7 @@ def write_conda_meta(info, dst_dir, final_urls_md5s):
     with open(join(dst_dir, 'conda-meta', 'history'), 'w') as fh:
         fh.write("\n".join(builder))
 
+
 def write_repodata_record(info, dst_dir):
     for dist in info['_dists']:
         if filename_dist(dist).endswith(".conda"):
@@ -139,6 +163,7 @@ def write_repodata_record(info, dst_dir):
 
         with open(record_file_dest, 'w') as rf:
           json.dump(rr_json, rf, indent=2, sort_keys=True)
+
 
 def write_env_txt(info, dst_dir):
     dists_san_extn = []

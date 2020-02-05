@@ -234,7 +234,6 @@ argument type(s): ``str``,
 
 Path to a post install (bash for Unix - .bat for Windows) script.
 
-
 ## `post_install_desc`
 
 required: False
@@ -245,6 +244,14 @@ Short description of the "post_install" script to be displayed as label of
 the "Do not run post install script" checkbox in the windows installer.
 If used and not an empty string, the "Do not run post install script" 
 checkbox will be displayed with this label.
+
+## `pre_uninstall`
+
+required: False
+
+argument type(s): ``str``, 
+
+Path to a pre uninstall (.bat for Windows) script. Only supported on Windows.
 
 ## `welcome_image`
 

@@ -117,6 +117,7 @@ def make_nsi(info, dir_path):
                     ('URLS_FILE', 'urls'),
                     ('URLS_TXT_FILE', 'urls.txt'),
                     ('POST_INSTALL', 'post_install.bat'),
+                    ('PRE_UNINSTALL', 'pre_uninstall.bat'),
                     ('CONDA_HISTORY', join('conda-meta', 'history')),
                     ('REPODATA_RECORD', 'repodata_record.json'),
                     ('INDEX_CACHE', 'cache')]:
@@ -203,6 +204,13 @@ def create(info, verbose=False):
     except KeyError:
         with open(post_dst, 'w') as fo:
             fo.write(":: this is an empty post install .bat script\n")
+
+    pre_dst = join(tmp_dir, 'pre_uninstall.bat')
+    try:
+        shutil.copy(info['pre_uninstall'], pre_dst)
+    except KeyError:
+        with open(pre_dst, 'w') as fo:
+            fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)

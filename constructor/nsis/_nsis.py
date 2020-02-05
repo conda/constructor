@@ -143,7 +143,10 @@ def get_conda_envs_from_python_api():
 get_conda_envs = get_conda_envs_from_python_api
 
 
-def rm_menus():
+def rm_menus(prefix=None):
+    from conda.base.context import context
+    if prefix is not None:
+        context._root_prefix = prefix
     mk_menus(remove=True)
     try:
         import menuinst
@@ -168,6 +171,29 @@ def run_post_install():
     call the post install script, if the file exists
     """
     path = join(ROOT_PREFIX, 'pkgs', 'post_install.bat')
+    if not isfile(path):
+        return
+    env = os.environ
+    env['PREFIX'] = str(ROOT_PREFIX)
+    cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
+    if not os.path.isfile(cmd_exe):
+        cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
+    if not os.path.isfile(cmd_exe):
+        err("Error: running %s failed.  cmd.exe could not be found.  "
+            "Looked in SystemRoot and windir env vars.\n" % path)
+    args = [cmd_exe, '/d', '/c', path]
+    import subprocess
+    try:
+        subprocess.check_call(args, env=env)
+    except subprocess.CalledProcessError:
+        err("Error: running %s failed\n" % path)
+
+
+def run_pre_uninstall():
+    """
+    call the pre uninstall script, if the file exists
+    """
+    path = join(ROOT_PREFIX, 'pkgs', 'pre_uninstall.bat')
     if not isfile(path):
         return
     env = os.environ
@@ -306,6 +332,8 @@ def main():
         add_to_path(pyver, arch)
     elif cmd == 'rmpath':
         remove_from_path()
+    elif cmd == 'pre_uninstall':
+        run_pre_uninstall()
     elif cmd == 'del':
         assert len(sys.argv) == 3
         win_del(sys.argv[2].strip())
