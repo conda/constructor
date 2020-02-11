@@ -218,7 +218,7 @@ def ns_platform(platform):
         linux32 = bool(p == 'linux-32' or p == 'linux-armv7l'),
         linux64 = bool(p == 'linux-64' or p == 'linux-ppc64le'),
         armv7l = bool(p == 'linux-armv7l'),
-        aarch64 = bool(p == 'aarch64'),
+        aarch64 = bool(p == 'linux-aarch64'),
         ppc64le = bool(p == 'linux-ppc64le'),
         x86 = p.endswith(('-32', '-64')),
         x86_64 = p.endswith('-64'),
