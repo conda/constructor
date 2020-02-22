@@ -215,8 +215,8 @@ def ns_platform(platform):
     p = platform
     return dict(
         linux = p.startswith('linux-'),
-        linux32 = bool(p == 'linux-32' or p == 'linux-armv7l'),
-        linux64 = bool(p == 'linux-64' or p == 'linux-ppc64le'),
+        linux32 = bool(p == 'linux-32'),
+        linux64 = bool(p == 'linux-64'),
         armv7l = bool(p == 'linux-armv7l'),
         aarch64 = bool(p == 'linux-aarch64'),
         ppc64le = bool(p == 'linux-ppc64le'),
