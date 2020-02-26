@@ -62,9 +62,9 @@ e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
-List of package specifications to be recorded as "user-requested" for the 
+List of package specifications to be recorded as "user-requested" for the
 initial environment in conda's history file. If not given, user-requested
-specs will fall back to 'specs'. 
+specs will fall back to 'specs'.
 '''),
 
     ('exclude',                False, list, '''
@@ -154,9 +154,9 @@ Path to a post install (bash for Unix - .bat for Windows) script.
 '''),
 
     ('post_install_desc',      False, str, '''
-Short description of the "post_install" script to be displayed as label of 
+Short description of the "post_install" script to be displayed as label of
 the "Do not run post install script" checkbox in the windows installer.
-If used and not an empty string, the "Do not run post install script"  
+If used and not an empty string, the "Do not run post install script"
 checkbox will be displayed with this label.
 '''),
 
@@ -208,6 +208,15 @@ Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
 interactive installation. (Windows only)
 '''),
+
+    ('osxpkg_image',          False, str, '''
+PNG image used as the background of the MacOS package installer.  Should be ~1200x600
+pixels, and will be scaled. By default, an image is automatically generated.
+'''),
+
+    ('osxpkg_userhome_only',          False, bool, '''
+Whether to allow installing only to the user's home folder -- MacOS only.
+ '''),
 ]
 
 
