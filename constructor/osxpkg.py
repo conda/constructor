@@ -12,14 +12,17 @@ from constructor.utils import add_condarc, filename_dist, get_final_channels
 
 from conda_package_handling.api import extract as cph_e
 
-
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = None
 
+BUILDSCRIPT = '# final build script'
 
+def _check_call(cmdlist):
+    global SCRIPT
+    SCRIPT = '%s\n%s' % (SCRIPT, ' '.join(cmdlist))
+    check_call(cmdlist)
 
 def write_readme(dst, info):
-
     src = join(OSX_DIR, 'readme_header.rtf')
     with open(src) as fi:
         data = fi.read()
@@ -64,9 +67,12 @@ def modify_xml(xml_path, info):
                             attrib={'mime-type': 'richtext/rtf'})
     root.append(conclusion)
 
-    readme_path = join(PACKAGES_DIR, "readme.rtf")
-    write_readme(readme_path, info)
-    readme = ET.Element('readme', file=readme_path,
+    readme_path = info.get('osxpkg_readme', None)
+    if readme_path is None:
+        readme_path = join(PACKAGES_DIR, "readme.rtf")
+        write_readme(readme_path, info)
+
+    readme = ET.Element('readme', file=os.path.abspath(readme_path),
                         attrib={'mime-type': 'richtext/rtf'})
     root.append(readme)
 
@@ -157,12 +163,12 @@ def pkgbuild(name, scripts=None):
 
     components_plist = '{}/{}.plist'.format(PACKAGES_DIR, name)
 
-    check_call([
+    _check_call([
         'pkgbuild',
         '--root', PACKAGE_ROOT,
         '--analyze', components_plist])
 
-    check_call([
+    _check_call([
         'plutil',
         '-replace', 'BundleIsRelocatable',
         '-bool', 'false',
@@ -182,7 +188,7 @@ def pkgbuild(name, scripts=None):
         "--ownership", "preserve",
         "%s/%s.pkg" % (PACKAGES_DIR, name),
     ])
-    check_call(args)
+    _check_call(args)
 
     os.remove(components_plist)
 
@@ -275,11 +281,11 @@ def create(info, verbose=False):
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
-    check_call(args)
+    _check_call(args)
 
     modify_xml(xml_path, info)
 
-    check_call([
+    _check_call([
         "productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
@@ -289,7 +295,7 @@ def create(info, verbose=False):
 
     identity_name = info.get('signing_identity_name')
     if identity_name:
-        check_call([
+        _check_call([
             'productsign', '--sign',
             identity_name,
             "tmp.pkg",
@@ -299,4 +305,6 @@ def create(info, verbose=False):
     else:
         os.rename('tmp.pkg', info['_outpath'])
 
+    with open('buildscript.sh', 'w') as fh:
+        fh.write('%s\n' % SCRIPT)
     print("done")

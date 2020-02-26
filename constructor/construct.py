@@ -213,6 +213,10 @@ interactive installation. (Windows only)
 PNG image used as the background of the MacOS package installer.  Should be ~1200x600
 pixels, and will be scaled. By default, an image is automatically generated.
 '''),
+    ('osxpkg_readme',          False, str, '''
+Path to RTF File to use as Readme for the MacOS package installer.
+By default, an Readme from Anaconda Python listing the Python pacakges will be used.
+'''),
 
     ('osxpkg_userhome_only',          False, bool, '''
 Whether to allow installing only to the user's home folder -- MacOS only.
