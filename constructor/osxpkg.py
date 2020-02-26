@@ -54,7 +54,8 @@ def modify_xml(xml_path, info):
                                                   'No license'))
     root.append(license)
 
-    bkg_image = info.get('oxspkg_image', join(OSX_DIR, 'MacInstaller.png'))
+    bkg_image = info.get('osxpkg_image', join(OSX_DIR, 'MacInstaller.png'))
+
 
     background = ET.Element('background', file=bkg_image,
                             scaling='proportional', alignment='center')
@@ -98,7 +99,7 @@ def modify_xml(xml_path, info):
     else:
         enable_anywhere = 'false'
         enable_localSystem = 'true'
-    if info.get('oxspkg_userhome_only'):
+    if info.get('osxpkg_userhome_only'):
         enable_anywhere = enable_localSystem = 'false'
     domains = ET.Element('domains',
                          enable_anywhere=enable_anywhere,
