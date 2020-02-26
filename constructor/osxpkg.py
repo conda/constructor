@@ -54,8 +54,7 @@ def modify_xml(xml_path, info):
                                                   'No license'))
     root.append(license)
 
-    bkg_image = info.get('osxpkg_image', join(OSX_DIR, 'MacInstaller.png'))
-
+    bkg_image = os.path.abspath(info.get('osxpkg_image', join(OSX_DIR, 'MacInstaller.png')))
 
     background = ET.Element('background', file=bkg_image,
                             scaling='proportional', alignment='center')
