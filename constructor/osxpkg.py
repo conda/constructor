@@ -15,7 +15,7 @@ from conda_package_handling.api import extract as cph_e
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = None
 
-BUILDSCRIPT = '# final build script'
+SCRIPT = '# final build script'
 
 def _check_call(cmdlist):
     global SCRIPT
