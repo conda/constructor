@@ -1,4 +1,5 @@
 from jinja2 import BaseLoader, Environment, FileSystemLoader, TemplateError
+import os
 
 from constructor.exceptions import UnableToParse
 
@@ -26,6 +27,7 @@ class FilteredLoader(BaseLoader):
 def render_jinja(data, directory, content_filter):
     loader = FilteredLoader(FileSystemLoader(directory), content_filter)
     env = Environment(loader=loader)
+    env.globals['os'] = os
     try:
         template = env.from_string(data)
         rendered = template.render()
