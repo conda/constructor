@@ -494,7 +494,7 @@ if [ "$BATCH" = "0" ]; then
         printf "You have chosen to not have conda modify your shell scripts at all.\\n"
         printf "To activate conda's base environment in your current shell session:\\n"
         printf "\\n"
-        printf "eval \"\$($PREFIX/bin/conda shell.YOUR_SHELL_NAME hook)\" \\n"
+        printf "eval \"\$($PREFIX/bin/conda shell.${SHELL##*/} hook)\" \\n"
         printf "\\n"
         printf "To install conda's shell functions for easier access, first activate, then:\\n"
         printf "\\n"
