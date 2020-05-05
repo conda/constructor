@@ -13,8 +13,10 @@ import json
 from os.path import getsize, isdir, isfile, join
 import sys
 
+from packaging.version import parse as parse_version
+
 from constructor.utils import md5_files
-from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, concatv, conda_context,
+from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData, concatv, conda_context,
                               conda_replace_context_default, download, env_vars, groupby, read_paths_json,
                               all_channel_urls)
 
@@ -48,8 +50,20 @@ def exclude_packages(precs, exclude=()):
             sys.exit("Error: no package named '%s' to remove" % name)
     return accepted_precs
 
+def _find_out_of_date_precs(precs, channel_urls, platform):
+    out_of_date_package_records = {}
+    for prec in precs:
+        all_versions = SubdirData.query_all(prec.name, channels=channel_urls, subdirs=[platform])
+        if all_versions:
+            most_recent = max(all_versions, key=lambda package_version: (parse_version(package_version.version), package_version.build_number))
+            prec_version = parse_version(prec.version)
+            latest_version = parse_version(most_recent.version)
+            if prec_version < latest_version or (prec_version == latest_version
+              and prec.build_number < most_recent.build_number):
+                out_of_date_package_records[prec.name] = most_recent
+    return out_of_date_package_records
 
-def _show(name, version, platform, download_dir, precs):
+def _show(name, version, platform, download_dir, precs, more_recent_versions={}):
     print("""
 name: %(name)s
 version: %(version)s
@@ -62,7 +76,11 @@ platform: %(platform)s""" % dict(
     ))
     print("number of package: %d" % len(precs))
     for prec in precs:
-        print('    %s' % prec.fn)
+        more_recent_version = more_recent_versions.get(prec.name, None)
+        if more_recent_version:
+            print('    %s (latest: %s)' % (prec.fn, more_recent_version))
+        else:
+            print('    %s' % prec.fn)
     print()
 
 
@@ -198,10 +216,11 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
     precs = exclude_packages(precs, exclude)
 
     if verbose:
-        _show(name, version, platform, download_dir, precs)
+        more_recent_versions = _find_out_of_date_precs(precs, channel_urls, platform)
+        _show(name, version, platform, download_dir, precs, more_recent_versions)
 
     if dry_run:
-        return
+        return None, None, None, None
 
     pc_recs = _fetch(download_dir, precs)
     # Constructor cache directory can have multiple packages from different

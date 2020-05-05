@@ -21,6 +21,7 @@ if conda_interface_type == 'conda':
     from conda._vendor.toolz.itertoolz import (
         concatv as _concatv, get as _get, groupby as _groupby,
     )
+    from conda.api import SubdirData
     from conda.base.context import (
         context as _conda_context, replace_context_default as _conda_replace_context_default,
     )
