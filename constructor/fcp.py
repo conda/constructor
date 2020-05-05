@@ -13,8 +13,6 @@ import json
 from os.path import getsize, isdir, isfile, join
 import sys
 
-from packaging.version import parse as parse_version
-
 from constructor.utils import md5_files
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData, VersionOrder, concatv, conda_context,
                               conda_replace_context_default, download, env_vars, groupby, read_paths_json,
