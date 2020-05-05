@@ -37,7 +37,7 @@ if conda_interface_type == 'conda':
     from conda.models.dist import Dist as _Dist
     from conda.exports import MatchSpec as _MatchSpec
     from conda.exports import download as _download
-    from conda.models.version import VersionSpec, VersionOrder
+    from conda.models.version import VersionOrder
     try:
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:
