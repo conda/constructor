@@ -25,7 +25,6 @@ requirements:
     - conda-standalone
     - pillow >=3.1     # [win]
     - nsis >=3.01      # [win]
-    - packaging
 
 test:
   imports:
