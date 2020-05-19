@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 import json
-from os.path import getsize, isdir, isfile, join
+from os.path import getsize, isdir, isfile, join, splitext
 import sys
 
 from constructor.utils import md5_files
@@ -176,9 +176,41 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
     return total_tarball_size, total_extracted_pkgs_size
 
 
+def _precs_from_environment(environment):
+    from subprocess import check_output
+
+    # get basic data about the environment's packages
+    json_listing = check_output(["conda", "list", "-n", environment, "--json"])
+    listing = json.loads(json_listing)
+    packages = {p["dist_name"]: p for p in listing}
+    # get the package install order and MD5 sums,
+    # creating a tuple of dist_name, URL, and MD5
+    explicit = check_output(["conda", "list", "-n", environment,
+                             "--explicit", "--json", "--md5"],
+                            universal_newlines=True)
+    ordering = []
+    for line in explicit.splitlines()
+        if not line or line.startswith("#") or line.startswith("@"):
+            continue
+        url, _, md5 = line.rpartition("#")
+        _, _, dist_file = url.rpartition("/")
+        if dist_file.endswith(".tar.bz2"):
+            dist_name = dist_file[:-8]
+        else:
+            dist_name, _ = splitext(dist_file)
+        ordering.append((dist_name, url, md5))
+
+    # now, create PackageCacheRecords
+    precs = []
+    for dist_name, url, md5 in ordering:
+        precs.append(PackageCacheRecord(url=url, md5=md5, **packages[dist_name]))
+    return precs
+
+
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(), install_in_dependency_order=True,
-          ignore_duplicate_files=False, verbose=True, dry_run=False):
+          ignore_duplicate_files=False, environment=None, environment_file=None,
+          verbose=True, dry_run=False):
 
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
@@ -192,14 +224,17 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         (x['src'] for x in channels_remap),
     ))
 
-    solver = Solver(
-        # The Solver class doesn't do well with `None` as a prefix right now
-        prefix="/constructor/no-environment",
-        channels=channel_urls,
-        subdirs=(platform, "noarch"),
-        specs_to_add=specs,
-    )
-    precs = list(solver.solve_final_state())
+    if environment:
+        precs = _precs_from_environment(environment)
+    else:
+        solver = Solver(
+            # The Solver class doesn't do well with `None` as a prefix right now
+            prefix="/constructor/no-environment",
+            channels=channel_urls,
+            subdirs=(platform, "noarch"),
+            specs_to_add=specs,
+        )
+        precs = list(solver.solve_final_state())
 
     if not install_in_dependency_order:
         precs = sorted(precs, key="name")
@@ -249,6 +284,8 @@ def main(info, verbose=True, dry_run=False):
     menu_packages = info.get("menu_packages", ())
     install_in_dependency_order = info.get("install_in_dependency_order", True)
     ignore_duplicate_files = info.get("ignore_duplicate_files", False)
+    environment = info.get("environment", None)
+    environment_file = info.get("environment_file", None)
 
     if not channel_urls and not channels_remap:
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
@@ -259,7 +296,7 @@ def main(info, verbose=True, dry_run=False):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
               exclude, menu_packages, install_in_dependency_order,
-              ignore_duplicate_files, verbose, dry_run
+              ignore_duplicate_files, environment, environment_file, verbose, dry_run
         )
 
     info["_urls"] = _urls
