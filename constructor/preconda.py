@@ -78,7 +78,8 @@ def system_info():
            'platform_full': platform.version()}
     if sys.platform == 'darwin':
         out['extra'] = platform.mac_ver()
-    elif sys.platform.startswith('linux'):
+    elif sys.platform.startswith('linux') and hasattr(platform, 'dist'):
+        # dist() was deprtecated in Python 3.5 and removed in 3.8
         out['extra'] = platform.dist()
     elif sys.platform.startswith('win'):
         out['extra'] = platform.win32_ver()
@@ -118,7 +119,7 @@ def write_files(info, dst_dir):
 
 
 def write_conda_meta(info, dst_dir, final_urls_md5s):
-    user_requested_specs = info.get('user_requested_specs', info['specs'])
+    user_requested_specs = info.get('user_requested_specs', info.get('specs', ()))
     cmd = path_split(sys.argv[0])[-1]
     if len(sys.argv) > 1:
         cmd = "%s %s" % (cmd, " ".join(sys.argv[1:]))

@@ -176,16 +176,16 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _precs_from_environment(environment):
+def _precs_from_environment(environment, download_dir, conda_exe="conda.exe"):
     from subprocess import check_output
 
     # get basic data about the environment's packages
-    json_listing = check_output(["conda", "list", "-n", environment, "--json"])
+    json_listing = check_output([conda_exe, "list", "-n", environment, "--json"])
     listing = json.loads(json_listing)
     packages = {p["dist_name"]: p for p in listing}
     # get the package install order and MD5 sums,
-    # creating a tuple of dist_name, URL, and MD5
-    explicit = check_output(["conda", "list", "-n", environment,
+    # creating a tuple of dist_name, URL, MD5, filename (fn)
+    explicit = check_output([conda_exe, "list", "-n", environment,
                              "--explicit", "--json", "--md5"],
                             universal_newlines=True)
     ordering = []
@@ -193,24 +193,33 @@ def _precs_from_environment(environment):
         if not line or line.startswith("#") or line.startswith("@"):
             continue
         url, _, md5 = line.rpartition("#")
-        _, _, dist_file = url.rpartition("/")
-        if dist_file.endswith(".tar.bz2"):
-            dist_name = dist_file[:-8]
+        _, _, fn = url.rpartition("/")
+        if fn.endswith(".tar.bz2"):
+            dist_name = fn[:-8]
         else:
-            dist_name, _ = splitext(dist_file)
-        ordering.append((dist_name, url, md5))
+            dist_name, _ = splitext(fn)
+        ordering.append((dist_name, url, md5, fn))
 
     # now, create PackageCacheRecords
     precs = []
-    for dist_name, url, md5 in ordering:
-        precs.append(PackageCacheRecord(url=url, md5=md5, **packages[dist_name]))
+    for dist_name, url, md5, fn in ordering:
+        package = packages[dist_name]
+        platform_arch = package.pop("platform")
+        #platform, _, arch = platform_arch.partition("-")
+        package_tarball_full_path = join(download_dir, fn)
+        extracted_package_dir = join(download_dir, dist_name)
+        precs.append(PackageCacheRecord(url=url, md5=md5, fn=fn,
+            package_tarball_full_path=package_tarball_full_path,
+            extracted_package_dir=extracted_package_dir,
+            #platform=platform,
+            **package))
     return precs
 
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(), install_in_dependency_order=True,
           ignore_duplicate_files=False, environment=None, environment_file=None,
-          verbose=True, dry_run=False):
+          verbose=True, dry_run=False, conda_exe="conda.exe"):
 
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
@@ -225,7 +234,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
     ))
 
     if environment:
-        precs = _precs_from_environment(environment)
+        precs = _precs_from_environment(environment, download_dir, conda_exe)
     else:
         solver = Solver(
             # The Solver class doesn't do well with `None` as a prefix right now
@@ -272,7 +281,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
     return _urls, dists, approx_tarballs_size, approx_pkgs_size
 
 
-def main(info, verbose=True, dry_run=False):
+def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
     version = info["version"]
     download_dir = info["_download_dir"]
@@ -296,7 +305,8 @@ def main(info, verbose=True, dry_run=False):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
               exclude, menu_packages, install_in_dependency_order,
-              ignore_duplicate_files, environment, environment_file, verbose, dry_run
+              ignore_duplicate_files, environment, environment_file, verbose,
+              dry_run, conda_exe,
         )
 
     info["_urls"] = _urls

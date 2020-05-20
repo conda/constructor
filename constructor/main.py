@@ -116,7 +116,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
 
-    fcp_main(info, verbose=verbose, dry_run=dry_run)
+    fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
         print("Dry run, no installer created.")
         return
