@@ -189,7 +189,7 @@ def _precs_from_environment(environment):
                              "--explicit", "--json", "--md5"],
                             universal_newlines=True)
     ordering = []
-    for line in explicit.splitlines()
+    for line in explicit.splitlines():
         if not line or line.startswith("#") or line.startswith("@"):
             continue
         url, _, md5 = line.rpartition("#")
@@ -279,7 +279,7 @@ def main(info, verbose=True, dry_run=False):
     platform = info["_platform"]
     channel_urls = all_channel_urls(info.get("channels", ()))
     channels_remap = info.get('channels_remap', ())
-    specs = info["specs"]
+    specs = info.get("specs", ())
     exclude = info.get("exclude", ())
     menu_packages = info.get("menu_packages", ())
     install_in_dependency_order = info.get("install_in_dependency_order", True)
