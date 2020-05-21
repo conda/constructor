@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 import json
+import os
 from os.path import getsize, isdir, isfile, join, splitext
 import sys
 
@@ -84,8 +85,10 @@ platform: %(platform)s""" % dict(
 
 def _fetch(download_dir, precs):
     assert conda_context.pkgs_dirs[0] == download_dir
+    if not isdir(download_dir):
+        os.makedirs(download_dir)
     pc = PackageCacheData(download_dir)
-    assert pc.is_writable
+    assert pc.is_writable, download_dir + " does not exist or is not writable"
 
     for prec in precs:
         package_tarball_full_path = join(download_dir, prec.fn)
@@ -180,12 +183,13 @@ def _precs_from_environment(environment, download_dir, conda_exe="conda.exe"):
     from subprocess import check_output
 
     # get basic data about the environment's packages
-    json_listing = check_output([conda_exe, "list", "-n", environment, "--json"])
+    list_flag = "-p" if isdir(environment) else "-p"
+    json_listing = check_output([conda_exe, "list", list_flag, environment, "--json"])
     listing = json.loads(json_listing)
     packages = {p["dist_name"]: p for p in listing}
     # get the package install order and MD5 sums,
     # creating a tuple of dist_name, URL, MD5, filename (fn)
-    explicit = check_output([conda_exe, "list", "-n", environment,
+    explicit = check_output([conda_exe, "list", list_flag, environment,
                              "--explicit", "--json", "--md5"],
                             universal_newlines=True)
     ordering = []
