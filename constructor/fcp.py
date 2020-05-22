@@ -13,6 +13,7 @@ import json
 import os
 from os.path import getsize, isdir, isfile, join, splitext
 import sys
+import tempfile
 
 from constructor.utils import md5_files
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData, VersionOrder, concatv, conda_context,
@@ -183,7 +184,7 @@ def _precs_from_environment(environment, download_dir, conda_exe="conda.exe"):
     from subprocess import check_output
 
     # get basic data about the environment's packages
-    list_flag = "-p" if isdir(environment) else "-p"
+    list_flag = "--prefix" if isdir(environment) else "--name"
     json_listing = check_output([conda_exe, "list", list_flag, environment, "--json"])
     listing = json.loads(json_listing)
     packages = {p["dist_name"]: p for p in listing}
@@ -209,13 +210,11 @@ def _precs_from_environment(environment, download_dir, conda_exe="conda.exe"):
     for dist_name, url, md5, fn in ordering:
         package = packages[dist_name]
         platform_arch = package.pop("platform")
-        #platform, _, arch = platform_arch.partition("-")
         package_tarball_full_path = join(download_dir, fn)
         extracted_package_dir = join(download_dir, dist_name)
         precs.append(PackageCacheRecord(url=url, md5=md5, fn=fn,
             package_tarball_full_path=package_tarball_full_path,
             extracted_package_dir=extracted_package_dir,
-            #platform=platform,
             **package))
     return precs
 
@@ -237,6 +236,15 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         (x['src'] for x in channels_remap),
     ))
 
+    # make the environment, if needed
+    if environment_file:
+        from subprocess import check_call
+
+        environment = tempfile.mkdtemp()
+        check_call([conda_exe, "env", "create", "--file", environment_file,
+                    "--prefix", environment], universal_newlines=True)
+
+    # obtain the package records
     if environment:
         precs = _precs_from_environment(environment, download_dir, conda_exe)
     else:
@@ -282,6 +290,10 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     dists = list(prec.fn for prec in precs)
 
+    if environment_file:
+        import shutil
+
+        shutil.rmtree(environment)
     return _urls, dists, approx_tarballs_size, approx_pkgs_size
 
 
