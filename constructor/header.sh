@@ -3,7 +3,6 @@
 # NAME:  __NAME__
 # VER:   __VERSION__
 # PLAT:  __PLAT__
-# LINES: @LINES@
 # MD5:   __MD5__
 
 #if osx
@@ -338,10 +337,11 @@ export PREFIX
 printf "PREFIX=%s\\n" "$PREFIX"
 
 # verify the MD5 sum of the tarball appended to this header
+END_LINE=$(grep -a -n -m 1 '^@@END_HEADER@@' "$THIS_FILE" | sed 's/:.*//')
 #if osx
-MD5=$(tail -n +@LINES@ "$THIS_PATH" | md5)
+MD5=$(tail -n +$(( $END_LINE + 1 )) "$THIS_PATH" | md5)
 #else
-MD5=$(tail -n +@LINES@ "$THIS_PATH" | md5sum -)
+MD5=$(tail -n +$(( $END_LINE + 1 )) "$THIS_PATH" | md5sum -)
 #endif
 
 if ! echo "$MD5" | grep __MD5__ >/dev/null; then
@@ -361,10 +361,21 @@ CONDA_EXEC="$PREFIX/conda.exe"
 # 3-part dd from https://unix.stackexchange.com/a/121798/34459
 # this is similar below with the tarball payload - see shar.py in constructor to see how
 #    these values are computed.
+blk_siz=16384
+bin_siz=__FIRST_PAYLOAD_SIZE__
+dd1_beg=$(head -n $END_LINE "$THIS_PATH" | wc -c | sed 's/ //g')
+dd3_end=$(( $dd1_beg + $bin_siz ))
+dd1_end=$(( ( $dd1_beg / $blk_siz + 1 ) * $blk_siz ))
+dd1_cnt=$(( $dd1_end - $dd1_beg ))
+dd2_end=$(( $dd3_end / $blk_siz ))
+dd2_beg=$(( ( $dd1_end - 1 ) / $blk_siz + 1 ))
+dd2_cnt=$(( $dd2_end - $dd2_beg ))
+dd3_beg=$(( $dd2_end * $blk_siz ))
+dd3_cnt=$(( $dd3_end - $dd3_beg ))
 {
-    dd if="$THIS_PATH" bs=1 skip=@CON_EXE_OFFSET_BYTES@ count=@CON_EXE_START_REMAINDER@ 2>/dev/null
-    dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@CON_EXE_BLOCK_OFFSET@ count=@CON_EXE_SIZE_BLOCKS@ 2>/dev/null
-    dd if="$THIS_PATH" bs=1 skip=@CON_EXE_REMAINDER_OFFSET@ count=@CON_EXE_END_REMAINDER@ 2>/dev/null
+    dd if="$THIS_PATH" bs=1 skip=$dd1_beg count=$dd1_cnt 2>/dev/null
+    dd if="$THIS_PATH" bs=$blk_siz skip=$dd2_beg count=$dd2_cnt 2>/dev/null
+    dd if="$THIS_PATH" bs=1 skip=$dd3_beg count=$dd3_cnt 2>/dev/null
 } > "$CONDA_EXEC"
 
 chmod +x "$CONDA_EXEC"
@@ -373,10 +384,20 @@ export TMP_BACKUP="$TMP"
 export TMP=$PREFIX/install_tmp
 
 printf "Unpacking payload ...\n"
+bin_siz=__SECOND_PAYLOAD_SIZE__
+dd1_beg=$dd3_end
+dd3_end=$(( $dd1_beg + $bin_siz ))
+dd1_end=$(( ( $dd1_beg / $blk_siz + 1 ) * $blk_siz ))
+dd1_cnt=$(( $dd1_end - $dd1_beg ))
+dd2_end=$(( $dd3_end / $blk_siz ))
+dd2_beg=$(( ( $dd1_end - 1 ) / $blk_siz + 1 ))
+dd2_cnt=$(( $dd2_end - $dd2_beg ))
+dd3_beg=$(( $dd2_end * $blk_siz ))
+dd3_cnt=$(( $dd3_end - $dd3_beg ))
 {
-    dd if="$THIS_PATH" bs=1 skip=@TARBALL_OFFSET_BYTES@ count=@TARBALL_START_REMAINDER@ 2>/dev/null
-    dd if="$THIS_PATH" bs=@BLOCK_SIZE@ skip=@TARBALL_BLOCK_OFFSET@ count=@TARBALL_SIZE_BLOCKS@ 2>/dev/null
-    dd if="$THIS_PATH" bs=1 skip=@TARBALL_REMAINDER_OFFSET@ count=@TARBALL_END_REMAINDER@ 2>/dev/null
+    dd if="$THIS_PATH" bs=1 skip=$dd1_beg count=$dd1_cnt 2>/dev/null
+    dd if="$THIS_PATH" bs=$blk_siz skip=$dd2_beg count=$dd2_cnt 2>/dev/null
+    dd if="$THIS_PATH" bs=1 skip=$dd3_beg count=$dd3_cnt 2>/dev/null
 } | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"
 
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
@@ -411,7 +432,7 @@ mkdir -p ~/.conda > /dev/null 2>&1
 
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_CHANNELS=@CHANNELS@ \
+CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
 
