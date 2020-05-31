@@ -370,8 +370,7 @@ MD5=$(extract_range $boundary0 $boundary2 | md5sum -)
 if ! echo "$MD5" | grep __MD5__ >/dev/null; then
     printf "WARNING: md5sum mismatch of tar archive\\n" >&2
     printf "expected: __MD5__\\n" >&2
-    printf "     got: %s\\n" "MD5" >&2
-    exit 1
+    printf "     got: %s\\n" "$MD5" >&2
 fi
 
 # extract the tarball appended to this header, this creates the *.tar.bz2 files
