@@ -336,18 +336,42 @@ export PREFIX
 
 printf "PREFIX=%s\\n" "$PREFIX"
 
+# 3-part dd from https://unix.stackexchange.com/a/121798/34459
+# this is similar below with the tarball payload - see shar.py in constructor to see how
+#    these values are computed.
+function extract_range {
+    blk_siz=16384
+    dd1_beg=$1
+    dd3_end=$2
+    dd1_end=$(( ( $dd1_beg / $blk_siz + 1 ) * $blk_siz ))
+    dd1_cnt=$(( $dd1_end - $dd1_beg ))
+    dd2_end=$(( $dd3_end / $blk_siz ))
+    dd2_beg=$(( ( $dd1_end - 1 ) / $blk_siz + 1 ))
+    dd2_cnt=$(( $dd2_end - $dd2_beg ))
+    dd3_beg=$(( $dd2_end * $blk_siz ))
+    dd3_cnt=$(( $dd3_end - $dd3_beg ))
+    dd if="$THIS_PATH" bs=1 skip=$dd1_beg count=$dd1_cnt 2>/dev/null
+    dd if="$THIS_PATH" bs=$blk_siz skip=$dd2_beg count=$dd2_cnt 2>/dev/null
+    dd if="$THIS_PATH" bs=1 skip=$dd3_beg count=$dd3_cnt 2>/dev/null
+}
+
+last_line=$(grep -anm 1 '^@@END_HEADER@@' "$THIS_PATH" | sed 's/:.*//')
+boundary0=$(head -n $last_line "$THIS_PATH" | wc -c | sed 's/ //g')
+boundary1=$(( $boundary0 + __FIRST_PAYLOAD_SIZE__ ))
+boundary2=$(( $boundary1 + __SECOND_PAYLOAD_SIZE__ ))
+
 # verify the MD5 sum of the tarball appended to this header
-END_LINE=$(grep -a -n -m 1 '^@@END_HEADER@@' "$THIS_FILE" | sed 's/:.*//')
 #if osx
-MD5=$(tail -n +$(( $END_LINE + 1 )) "$THIS_PATH" | md5)
+MD5=$(extract_range $boundary0 $boundary2 | md5)
 #else
-MD5=$(tail -n +$(( $END_LINE + 1 )) "$THIS_PATH" | md5sum -)
+MD5=$(extract_range $boundary0 $boundary2 | md5sum -)
 #endif
 
 if ! echo "$MD5" | grep __MD5__ >/dev/null; then
     printf "WARNING: md5sum mismatch of tar archive\\n" >&2
     printf "expected: __MD5__\\n" >&2
-    printf "     got: %s\\n" "$MD5" >&2
+    printf "     got: %s\\n" "MD5" >&2
+    exit 1
 fi
 
 # extract the tarball appended to this header, this creates the *.tar.bz2 files
@@ -358,47 +382,15 @@ cd "$PREFIX"
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
 CONDA_EXEC="$PREFIX/conda.exe"
-# 3-part dd from https://unix.stackexchange.com/a/121798/34459
-# this is similar below with the tarball payload - see shar.py in constructor to see how
-#    these values are computed.
-blk_siz=16384
-bin_siz=__FIRST_PAYLOAD_SIZE__
-dd1_beg=$(head -n $END_LINE "$THIS_PATH" | wc -c | sed 's/ //g')
-dd3_end=$(( $dd1_beg + $bin_siz ))
-dd1_end=$(( ( $dd1_beg / $blk_siz + 1 ) * $blk_siz ))
-dd1_cnt=$(( $dd1_end - $dd1_beg ))
-dd2_end=$(( $dd3_end / $blk_siz ))
-dd2_beg=$(( ( $dd1_end - 1 ) / $blk_siz + 1 ))
-dd2_cnt=$(( $dd2_end - $dd2_beg ))
-dd3_beg=$(( $dd2_end * $blk_siz ))
-dd3_cnt=$(( $dd3_end - $dd3_beg ))
-{
-    dd if="$THIS_PATH" bs=1 skip=$dd1_beg count=$dd1_cnt 2>/dev/null
-    dd if="$THIS_PATH" bs=$blk_siz skip=$dd2_beg count=$dd2_cnt 2>/dev/null
-    dd if="$THIS_PATH" bs=1 skip=$dd3_beg count=$dd3_cnt 2>/dev/null
-} > "$CONDA_EXEC"
-
+extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 
 export TMP_BACKUP="$TMP"
 export TMP=$PREFIX/install_tmp
 
 printf "Unpacking payload ...\n"
-bin_siz=__SECOND_PAYLOAD_SIZE__
-dd1_beg=$dd3_end
-dd3_end=$(( $dd1_beg + $bin_siz ))
-dd1_end=$(( ( $dd1_beg / $blk_siz + 1 ) * $blk_siz ))
-dd1_cnt=$(( $dd1_end - $dd1_beg ))
-dd2_end=$(( $dd3_end / $blk_siz ))
-dd2_beg=$(( ( $dd1_end - 1 ) / $blk_siz + 1 ))
-dd2_cnt=$(( $dd2_end - $dd2_beg ))
-dd3_beg=$(( $dd2_end * $blk_siz ))
-dd3_cnt=$(( $dd3_end - $dd3_beg ))
-{
-    dd if="$THIS_PATH" bs=1 skip=$dd1_beg count=$dd1_cnt 2>/dev/null
-    dd if="$THIS_PATH" bs=$blk_siz skip=$dd2_beg count=$dd2_cnt 2>/dev/null
-    dd if="$THIS_PATH" bs=1 skip=$dd3_beg count=$dd3_cnt 2>/dev/null
-} | "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"
+extract_range $boundary1 $boundary2 | \
+    "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"
 
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
