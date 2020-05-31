@@ -337,9 +337,12 @@ export PREFIX
 printf "PREFIX=%s\\n" "$PREFIX"
 
 # 3-part dd from https://unix.stackexchange.com/a/121798/34459
-# this is similar below with the tarball payload - see shar.py in constructor to see how
-#    these values are computed.
+# Using a larger block size greatly improves performance, but our payloads
+# will not be aligned with block boundaries. The solution is to extract the
+# bulk of the payload with a larger block size, and use a block size of 1
+# only to extract the partial blocks at the beginning and the end.
 function extract_range {
+    # Usage: extract_range first_byte last_byte_plus_1
     blk_siz=16384
     dd1_beg=$1
     dd3_end=$2
@@ -355,9 +358,13 @@ function extract_range {
     dd if="$THIS_PATH" bs=1 skip=$dd3_beg count=$dd3_cnt 2>/dev/null
 }
 
+# the line marking the end of the shell header and the beginning of the payload
 last_line=$(grep -anm 1 '^@@END_HEADER@@' "$THIS_PATH" | sed 's/:.*//')
+# the start of the first payload, in bytes, indexed from zero
 boundary0=$(head -n $last_line "$THIS_PATH" | wc -c | sed 's/ //g')
+# the start of the second payload / the end of the first payload, plus one
 boundary1=$(( $boundary0 + __FIRST_PAYLOAD_SIZE__ ))
+# the end of the second payload, plus one
 boundary2=$(( $boundary1 + __SECOND_PAYLOAD_SIZE__ ))
 
 # verify the MD5 sum of the tarball appended to this header
@@ -373,13 +380,12 @@ if ! echo "$MD5" | grep __MD5__ >/dev/null; then
     printf "     got: %s\\n" "$MD5" >&2
 fi
 
-# extract the tarball appended to this header, this creates the *.tar.bz2 files
-# for all the packages which get installed below
 cd "$PREFIX"
 
 # disable sysconfigdata overrides, since we want whatever was frozen to be used
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
+# the first binary payload: the standalone conda executable
 CONDA_EXEC="$PREFIX/conda.exe"
 extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
@@ -387,6 +393,7 @@ chmod +x "$CONDA_EXEC"
 export TMP_BACKUP="$TMP"
 export TMP=$PREFIX/install_tmp
 
+# the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
 extract_range $boundary1 $boundary2 | \
     "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"
