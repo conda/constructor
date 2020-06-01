@@ -13,7 +13,7 @@ unset LD_LIBRARY_PATH
 #endif
 
 if ! echo "$0" | grep '\.sh$' > /dev/null; then
-    printf 'Please run using "bash" or "sh", but not "." or "source"\\n' >&2
+    printf 'Please run using "bash"/"dash"/"sh"/"zsh", but not "." or "source".\n' >&2
     return 1
 fi
 
@@ -341,7 +341,7 @@ printf "PREFIX=%s\\n" "$PREFIX"
 # will not be aligned with block boundaries. The solution is to extract the
 # bulk of the payload with a larger block size, and use a block size of 1
 # only to extract the partial blocks at the beginning and the end.
-function extract_range {
+extract_range () {
     # Usage: extract_range first_byte last_byte_plus_1
     blk_siz=16384
     dd1_beg=$1
