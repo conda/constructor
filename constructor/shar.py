@@ -48,7 +48,10 @@ def get_header(conda_exec, tarball, info):
         'DEFAULT_PREFIX': info.get('default_prefix',
                                    '$HOME/%s' % name.lower()),
         'MD5': md5_files([conda_exec, tarball]),
+        'FIRST_PAYLOAD_SIZE': str(getsize(conda_exec)),
+        'SECOND_PAYLOAD_SIZE': str(getsize(tarball)),
         'INSTALL_COMMANDS': '\n'.join(install_lines),
+        'CHANNELS': ','.join(get_final_channels(info)),
         'pycache': '__pycache__',
     }
     if has_license:
@@ -57,52 +60,6 @@ def get_header(conda_exec, tarball, info):
     data = read_header_template()
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
-    n = data.count('\n')
-    data = data.replace('@LINES@', str(n + 1))
-    data = data.replace('@CHANNELS@', ','.join(get_final_channels(info)))
-
-    # Make all replacements before this - nothing beyond here is allowed to change the size of the header.
-    #    If the header size changes, the offsets for extracting things will be wrong and nothing will work.
-
-    # block size for dd in bytes
-    block_size = 16 * 1024
-    total_size = len(data) + getsize(conda_exec) + getsize(tarball)
-    # NOTE: strings here need to be the same length for sake of replacement length being same
-    whitespace = 0
-    def replace_and_add_to_whitespace(data, string, value):
-        value = str(value)
-        whitespace = len(string) - len(value)
-        data = data.replace(string, str(value) + (' ' * whitespace))
-        return data
-
-    for thing, string, extra_skip in ((conda_exec, 'CON_EXE', 0), (tarball, 'TARBALL', getsize(conda_exec))):
-        start = len(data) + extra_skip
-        # 3-part dd to handle block size alignment: https://unix.stackexchange.com/a/121798/34459
-        thing_size = getsize(thing)
-        copy1_size = block_size - (start % block_size)
-        # zero padding is to ensure size of header doesn't change depending on
-        #    size of packages included.  The actual space you have is the number
-        #    of characters in the string here - @NON_PAYLOAD_SIZE@ is 18 chars
-        data = replace_and_add_to_whitespace(data, '@%s_OFFSET_BYTES@' % string, str(start))
-        data = replace_and_add_to_whitespace(data, '@%s_SIZE_BYTES@' % string, str(thing_size))
-        data = replace_and_add_to_whitespace(data, '@%s_START_REMAINDER@' % string, str(copy1_size))
-        copy2_start = start + copy1_size
-        copy2_skip = copy2_start // block_size
-        data = replace_and_add_to_whitespace(data, '@%s_BLOCK_OFFSET@' % string, str(copy2_skip))
-        copy2_blocks = (thing_size - copy2_start + start) // block_size
-        data = replace_and_add_to_whitespace(data, '@%s_SIZE_BLOCKS@' % string, str(copy2_blocks))
-        copy3_start= (copy2_skip + copy2_blocks) * block_size
-        data = replace_and_add_to_whitespace(data, '@%s_REMAINDER_OFFSET@' % string, str(copy3_start))
-        copy3_size = thing_size - copy1_size - (copy2_blocks * block_size)
-        data = replace_and_add_to_whitespace(data, '@%s_END_REMAINDER@' % string, str(copy3_size))
-
-    data = replace_and_add_to_whitespace(data, '@BLOCK_SIZE@', str(block_size))
-    # this one is not zero-padded because it is used in a different way, and is compared
-    #    with the actual size at install time (which is not zero padded)
-    data = data.replace('@TOTAL_SIZE_BYTES@', str(n))
-
-    # assert that the total length of the file hasn't changed because of our string replacement
-    assert len(data) + getsize(conda_exec) + getsize(tarball) == total_size, "Mismatch data length.  Before string format: %s; after: %s" % (total_size, len(data) + getsize(conda_exec) + getsize(tarball))
 
     return data
 
