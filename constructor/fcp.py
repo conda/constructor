@@ -10,8 +10,10 @@ from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 import json
-from os.path import getsize, isdir, isfile, join
+import os
+from os.path import getsize, isdir, isfile, join, splitext
 import sys
+import tempfile
 
 from constructor.utils import md5_files
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData, VersionOrder, concatv, conda_context,
@@ -84,8 +86,10 @@ platform: %(platform)s""" % dict(
 
 def _fetch(download_dir, precs):
     assert conda_context.pkgs_dirs[0] == download_dir
+    if not isdir(download_dir):
+        os.makedirs(download_dir)
     pc = PackageCacheData(download_dir)
-    assert pc.is_writable
+    assert pc.is_writable, download_dir + " does not exist or is not writable"
 
     for prec in precs:
         package_tarball_full_path = join(download_dir, prec.fn)
@@ -176,10 +180,49 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
     return total_tarball_size, total_extracted_pkgs_size
 
 
+def _precs_from_environment(environment, download_dir, user_conda):
+    from subprocess import check_output
+
+    # get basic data about the environment's packages
+    list_flag = "--prefix" if isdir(environment) else "--name"
+    json_listing = check_output([user_conda, "list", list_flag, environment, "--json"])
+    listing = json.loads(json_listing)
+    packages = {p["dist_name"]: p for p in listing}
+    # get the package install order and MD5 sums,
+    # creating a tuple of dist_name, URL, MD5, filename (fn)
+    explicit = check_output([user_conda, "list", list_flag, environment,
+                             "--explicit", "--json", "--md5"],
+                            universal_newlines=True)
+    ordering = []
+    for line in explicit.splitlines():
+        if not line or line.startswith("#") or line.startswith("@"):
+            continue
+        url, _, md5 = line.rpartition("#")
+        _, _, fn = url.rpartition("/")
+        if fn.endswith(".tar.bz2"):
+            dist_name = fn[:-8]
+        else:
+            dist_name, _ = splitext(fn)
+        ordering.append((dist_name, url, md5, fn))
+
+    # now, create PackageCacheRecords
+    precs = []
+    for dist_name, url, md5, fn in ordering:
+        package = packages[dist_name]
+        platform_arch = package.pop("platform")
+        package_tarball_full_path = join(download_dir, fn)
+        extracted_package_dir = join(download_dir, dist_name)
+        precs.append(PackageCacheRecord(url=url, md5=md5, fn=fn,
+            package_tarball_full_path=package_tarball_full_path,
+            extracted_package_dir=extracted_package_dir,
+            **package))
+    return precs
+
+
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(), install_in_dependency_order=True,
-          ignore_duplicate_files=False, verbose=True, dry_run=False):
-
+          ignore_duplicate_files=False, environment=None, environment_file=None,
+          verbose=True, dry_run=False, conda_exe="conda.exe"):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     specs = list(concatv(specs, ("python",)))
@@ -192,14 +235,32 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         (x['src'] for x in channels_remap),
     ))
 
-    solver = Solver(
-        # The Solver class doesn't do well with `None` as a prefix right now
-        prefix="/constructor/no-environment",
-        channels=channel_urls,
-        subdirs=(platform, "noarch"),
-        specs_to_add=specs,
-    )
-    precs = list(solver.solve_final_state())
+    # set conda to be the user's conda (what is in the environment)
+    # for purposese of getting & building environements, rather
+    # than the standalone conda (conda_exe). Fallback to the
+    # standalone, if needed
+    user_conda = os.environ.get('CONDA_EXE', '') or conda_exe
+
+    # make the environment, if needed
+    if environment_file:
+        from subprocess import check_call
+
+        environment = tempfile.mkdtemp()
+        check_call([user_conda, "env", "create", "--file", environment_file,
+                    "--prefix", environment], universal_newlines=True)
+
+    # obtain the package records
+    if environment:
+        precs = _precs_from_environment(environment, download_dir, user_conda)
+    else:
+        solver = Solver(
+            # The Solver class doesn't do well with `None` as a prefix right now
+            prefix="/constructor/no-environment",
+            channels=channel_urls,
+            subdirs=(platform, "noarch"),
+            specs_to_add=specs,
+        )
+        precs = list(solver.solve_final_state())
 
     if not install_in_dependency_order:
         precs = sorted(precs, key="name")
@@ -234,21 +295,27 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     dists = list(prec.fn for prec in precs)
 
+    if environment_file:
+        import shutil
+
+        shutil.rmtree(environment)
     return _urls, dists, approx_tarballs_size, approx_pkgs_size
 
 
-def main(info, verbose=True, dry_run=False):
+def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
     version = info["version"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
     channel_urls = all_channel_urls(info.get("channels", ()))
     channels_remap = info.get('channels_remap', ())
-    specs = info["specs"]
+    specs = info.get("specs", ())
     exclude = info.get("exclude", ())
     menu_packages = info.get("menu_packages", ())
     install_in_dependency_order = info.get("install_in_dependency_order", True)
     ignore_duplicate_files = info.get("ignore_duplicate_files", False)
+    environment = info.get("environment", None)
+    environment_file = info.get("environment_file", None)
 
     if not channel_urls and not channels_remap:
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
@@ -259,7 +326,8 @@ def main(info, verbose=True, dry_run=False):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
               exclude, menu_packages, install_in_dependency_order,
-              ignore_duplicate_files, verbose, dry_run
+              ignore_duplicate_files, environment, environment_file, verbose,
+              dry_run, conda_exe,
         )
 
     info["_urls"] = _urls

@@ -62,9 +62,9 @@ e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
-List of package specifications to be recorded as "user-requested" for the 
+List of package specifications to be recorded as "user-requested" for the
 initial environment in conda's history file. If not given, user-requested
-specs will fall back to 'specs'. 
+specs will fall back to 'specs'.
 '''),
 
     ('exclude',                False, list, '''
@@ -89,6 +89,19 @@ By default the conda packages included in the created installer are installed
 in alphabetical order, Python is always installed first for technical
 reasons.  Using this option, the packages are installed in their dependency
 order (unless the explicit list in `packages` is used).
+'''),
+
+    ('environment', False, str, '''
+Name of the environment to construct from. If this option is present and
+non-empty, specs will be ignored.
+'''),
+
+    ('environment_file', False, str, '''
+Path to an environment file to construct from. If this option is present,
+a temporary environment will be created, constructor will build an installer
+from that, and then the temporary environment will be removed. This ensures
+that constructor and conda use the same mechanism to discover and install
+the packages. If this option is present and non-empty, specs will be ignored.
 '''),
 
     ('conda_default_channels', False, list, '''
@@ -154,9 +167,9 @@ Path to a post install (bash for Unix - .bat for Windows) script.
 '''),
 
     ('post_install_desc',      False, str, '''
-Short description of the "post_install" script to be displayed as label of 
+Short description of the "post_install" script to be displayed as label of
 the "Do not run post install script" checkbox in the windows installer.
-If used and not an empty string, the "Do not run post install script"  
+If used and not an empty string, the "Do not run post install script"
 checkbox will be displayed with this label.
 '''),
 
