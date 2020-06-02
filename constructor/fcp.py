@@ -180,17 +180,17 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _precs_from_environment(environment, download_dir, conda_exe="conda.exe"):
+def _precs_from_environment(environment, download_dir, user_conda):
     from subprocess import check_output
 
     # get basic data about the environment's packages
     list_flag = "--prefix" if isdir(environment) else "--name"
-    json_listing = check_output([conda_exe, "list", list_flag, environment, "--json"])
+    json_listing = check_output([user_conda, "list", list_flag, environment, "--json"])
     listing = json.loads(json_listing)
     packages = {p["dist_name"]: p for p in listing}
     # get the package install order and MD5 sums,
     # creating a tuple of dist_name, URL, MD5, filename (fn)
-    explicit = check_output([conda_exe, "list", list_flag, environment,
+    explicit = check_output([user_conda, "list", list_flag, environment,
                              "--explicit", "--json", "--md5"],
                             universal_newlines=True)
     ordering = []
@@ -223,7 +223,6 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
           exclude=(), menu_packages=(), install_in_dependency_order=True,
           ignore_duplicate_files=False, environment=None, environment_file=None,
           verbose=True, dry_run=False, conda_exe="conda.exe"):
-
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     specs = list(concatv(specs, ("python",)))
@@ -236,17 +235,23 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         (x['src'] for x in channels_remap),
     ))
 
+    # set conda to be the user's conda (what is in the environment)
+    # for purposese of getting & building environements, rather
+    # than the standalone conda (conda_exe). Fallback to the
+    # standalone, if needed
+    user_conda = os.environ.get('CONDA_EXE', '') or conda_exe
+
     # make the environment, if needed
     if environment_file:
         from subprocess import check_call
 
         environment = tempfile.mkdtemp()
-        check_call([conda_exe, "env", "create", "--file", environment_file,
+        check_call([user_conda, "env", "create", "--file", environment_file,
                     "--prefix", environment], universal_newlines=True)
 
     # obtain the package records
     if environment:
-        precs = _precs_from_environment(environment, download_dir, conda_exe)
+        precs = _precs_from_environment(environment, download_dir, user_conda)
     else:
         solver = Solver(
             # The Solver class doesn't do well with `None` as a prefix right now
