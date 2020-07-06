@@ -219,6 +219,24 @@ then
     fi
 #endif
 
+#if s390x 
+    if [ "$(uname -m)" != "s390x" ]; then
+        printf "WARNING:\\n"
+        printf "    Your machine hardware does not appear to be s390x (big endian), \\n"
+        printf "    but you are trying to install a s390x version of __NAME__.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
+           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+#endif
+
+
 #if osx
     if [ "$(uname)" != "Darwin" ]; then
         printf "WARNING:\\n"
