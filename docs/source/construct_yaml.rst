@@ -355,6 +355,7 @@ List of available selectors
 ---------------------------
 
 - ``aarch64``
+- ``arm64``
 - ``armv7l``
 - ``linux``
 - ``linux32``
