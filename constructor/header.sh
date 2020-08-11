@@ -36,8 +36,12 @@ usage: $0 [options]
 
 Installs __NAME__ __VERSION__
 
+#if has_license
 -b           run install in batch mode (without manual intervention),
              it is expected the license terms are agreed upon
+#else
+-b           run install in batch mode (without manual intervention)
+#endif
 -f           no error if install prefix already exists
 -h           print this help message and exit
 #if not keep_pkgs
@@ -46,7 +50,9 @@ Installs __NAME__ __VERSION__
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
 -s           skip running pre/post-link/install scripts
 -u           update an existing installation
+#if has_conda
 -t           run package tests after installation (may install conda-build)
+#endif
 "
 
 if which getopt > /dev/null 2>&1; then
@@ -89,10 +95,12 @@ if which getopt > /dev/null 2>&1; then
                 FORCE=1
                 shift
                 ;;
+#if has_conda
             -t)
                 TEST=1
                 shift
                 ;;
+#endif
             --)
                 shift
                 break
@@ -128,9 +136,11 @@ else
             u)
                 FORCE=1
                 ;;
+#if has_conda
             t)
                 TEST=1
                 ;;
+#endif
             ?)
                 printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
                 exit 1
@@ -452,12 +462,6 @@ fi
 
 __INSTALL_COMMANDS__
 
-if [ -f "$PREFIX/bin/conda" ]; then
-    HAS_CONDA_IN_INSTALL=1
-else
-    HAS_CONDA_IN_INSTALL=0
-fi
-
 POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
@@ -468,9 +472,9 @@ rm -f $PREFIX/pkgs/env.txt
 rm -rf $PREFIX/install_tmp
 export TMP="$TMP_BACKUP"
 
-if [ "$HAS_CONDA_IN_INSTALL" = "1" ]; then
-    mkdir -p $PREFIX/envs
-fi
+#if has_conda
+mkdir -p $PREFIX/envs
+#endif
 
 #The templating doesn't support nested if statements
 #if has_post_install
@@ -514,21 +518,22 @@ if [ "$PYTHONPATH" != "" ]; then
     printf "    in __NAME__: $PREFIX\\n"
 fi
 
-if [ "$BATCH" = "0" ] && [ "$HAS_CONDA_IN_INSTALL" = "1" ]; then
+if [ "$BATCH" = "0" ]; then
+#if has_conda
     # Interactive mode.
-#if osx
+  #if osx
     BASH_RC="$HOME"/.bash_profile
     DEFAULT=yes
-#else
+  #else
     BASH_RC="$HOME"/.bashrc
     DEFAULT=no
-#endif
-#if initialize_by_default is True
+  #endif
+  #if initialize_by_default is True
     DEFAULT=yes
-#endif
-#if initialize_by_default is False
+  #endif
+  #if initialize_by_default is False
     DEFAULT=no
-#endif
+  #endif
 
     printf "Do you wish the installer to initialize __NAME__\\n"
     printf "by running conda init? [yes|no]\\n"
@@ -561,10 +566,13 @@ if [ "$BATCH" = "0" ] && [ "$HAS_CONDA_IN_INSTALL" = "1" ]; then
     printf "\\n"
     printf "conda config --set auto_activate_base false\\n"
     printf "\\n"
+#endif
 
     printf "Thank you for installing __NAME__!\\n"
 fi # !BATCH
 
+
+#if has_conda
 if [ "$TEST" = "1" ]; then
     printf "INFO: Running package tests in a subshell\\n"
     (. "$PREFIX"/bin/activate
@@ -596,6 +604,7 @@ if [ "$TEST" = "1" ]; then
         exit $NFAILS
     fi
 fi
+#endif
 
 exit 0
 @@END_HEADER@@
