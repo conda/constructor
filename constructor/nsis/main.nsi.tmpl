@@ -51,6 +51,7 @@ var /global ARGV_AddToPath
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
+var /global ARGV_CheckLongPath
 
 var /global IsDomainUser
 
@@ -175,6 +176,7 @@ FunctionEnd
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
                 /NoScripts=[0|1] [default: 0]$\n$\n\
+                /CheckLongPath=[0|1] [default: 1]$\n$\n\
             Examples:$\n\
                 Install for all users, but don't add to PATH env var:$\n\
                     $EXEFILE /InstallationType=AllUsers$\n$\n\
@@ -229,6 +231,12 @@ FunctionEnd
         ${ElseIf} $ARGV_NoScripts = "0"
             StrCpy $Ana_NoScripts_State ${BST_UNCHECKED}
         ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/CheckLongPath=" $ARGV_CheckLongPath
+    ${If} ${Errors}
+        StrCpy $ARGV_CheckLongPath "1"
     ${EndIf}
 
 !macroend
@@ -640,6 +648,32 @@ Function OnDirectoryLeave
              please choose a different location."
         Abort
     ${EndIf}
+
+    StrLen $InstDirLen "${APP_INSTDIR}"
+    ${If} $InstDirLen > 38
+    ${AndIf} $ARGV_CheckLongPath = "1"
+        ; With windows 10, we can enable support for long path, for earlier
+        ; version, suggest user to use shorter installation path
+        ${If} ${AtLeastWin10}
+        ${AndIfNot} $ARGV_NoRegistry = "1"
+            ; If we have admin right, we enable long path on windows
+            ${If} ${UAC_IsAdmin}
+                WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
+            ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
+            ${Else}
+                MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 38 characters or \
+                                              the installation requires administrator rights to enable long \
+                                              path on Windows."
+                Abort
+            ${EndIf}
+        ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
+        ${Else}
+            MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 38 characters. \
+                                          Please choose another location."
+            Abort
+        ${EndIf}
+    ${EndIf}
+
     # Call the CheckForSpaces function.
     Push $INSTDIR # Input string (install path).
     Call CheckForSpaces

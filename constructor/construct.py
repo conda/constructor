@@ -119,6 +119,12 @@ The type of the installer being created.  Possible values are "sh", "pkg",
 and "exe".  By default, the type is "sh" on Unix, and "exe" on Windows.
 '''),
 
+    ('check_long_path',     True, str, '''
+Check the length of the path where the distribution is installed, raise a
+message to request shorter path (less than 38 character) or enable long path
+on windows > 10 (require admin right).  By default, True. Windows only.
+'''),
+
     ('license_file',           False, str, '''
 Path to the license file being displayed by the installer during the install
 process.
