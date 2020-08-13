@@ -51,7 +51,7 @@ var /global ARGV_AddToPath
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
-var /global ARGV_CheckLongPath
+var /global ARGV_CheckPathLength
 
 var /global IsDomainUser
 
@@ -176,7 +176,7 @@ FunctionEnd
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
                 /NoScripts=[0|1] [default: 0]$\n$\n\
-                /CheckLongPath=[0|1] [default: 1]$\n$\n\
+                /CheckPathLength=[0|1] [default: 1]$\n$\n\
             Examples:$\n\
                 Install for all users, but don't add to PATH env var:$\n\
                     $EXEFILE /InstallationType=AllUsers$\n$\n\
@@ -234,9 +234,9 @@ FunctionEnd
     ${EndIf}
 
     ClearErrors
-    ${GetOptions} $ARGV "/CheckLongPath=" $ARGV_CheckLongPath
+    ${GetOptions} $ARGV "/CheckPathLength=" $ARGV_CheckPathLength
     ${If} ${Errors}
-        StrCpy $ARGV_CheckLongPath "1"
+        StrCpy $ARGV_CheckPathLength "1"
     ${EndIf}
 
 !macroend
@@ -651,7 +651,7 @@ Function OnDirectoryLeave
 
     StrLen $InstDirLen "${APP_INSTDIR}"
     ${If} $InstDirLen > 38
-    ${AndIf} $ARGV_CheckLongPath = "1"
+    ${AndIf} $ARGV_CheckPathLength = "1"
         ; With windows 10, we can enable support for long path, for earlier
         ; version, suggest user to use shorter installation path
         ${If} ${AtLeastWin10}
