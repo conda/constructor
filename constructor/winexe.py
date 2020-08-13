@@ -129,6 +129,7 @@ def make_nsi(info, dir_path):
     ppd = ns_platform(info['_platform'])
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     ppd['register_python_default'] = info.get('register_python_default', None)
+    ppd['check_path_length'] = info.get('check_path_length', None)
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
 

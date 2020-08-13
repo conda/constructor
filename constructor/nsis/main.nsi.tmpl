@@ -54,6 +54,9 @@ var /global ARGV_NoScripts
 var /global ARGV_CheckPathLength
 
 var /global IsDomainUser
+var /global CheckPathLength
+var /global LongPathsEnabled
+var /global InstDirLen
 
 var /global InstModePage_RadioButton_JustMe
 var /global InstModePage_RadioButton_AllUsers
@@ -235,8 +238,12 @@ FunctionEnd
 
     ClearErrors
     ${GetOptions} $ARGV "/CheckPathLength=" $ARGV_CheckPathLength
-    ${If} ${Errors}
-        StrCpy $ARGV_CheckPathLength "1"
+    ${IfNot} ${Errors}
+        ${If} $ARGV_CheckPathLength = "0"
+            StrCpy $CheckPathLength "0"
+        ${ElseIf} $ARGV_CheckPathLength = "1"
+            StrCpy $CheckPathLength "1"
+        ${EndIf}
     ${EndIf}
 
 !macroend
@@ -509,6 +516,11 @@ Function .onInit
         ${EndIf}
     ${EndIf}
 
+    ; Set default value
+    ${If} $CheckPathLength == ""
+        StrCpy $CheckPathLength "1"
+    ${EndIf}
+
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from contruct.yaml.
@@ -524,6 +536,12 @@ Function .onInit
 #endif
 #if register_python_default is False
     StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
+#endif
+#if check_path_length is True
+    StrCpy $CheckPathLength "1"
+#endif
+#if check_path_length is False
+    StrCpy $CheckPathLength "0"
 #endif
 
     Call OnInit_Release
@@ -649,9 +667,12 @@ Function OnDirectoryLeave
         Abort
     ${EndIf}
 
-    StrLen $InstDirLen "${APP_INSTDIR}"
-    ${If} $InstDirLen > 38
-    ${AndIf} $ARGV_CheckPathLength = "1"
+    ReadRegStr $LongPathsEnabled HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled"
+    StrLen $InstDirLen "$InstDir"
+
+    ${If} $CheckPathLength == "1"
+    ${AndIf} $LongPathsEnabled == "0"
+    ${AndIf} $InstDirLen > 38
         ; With windows 10, we can enable support for long path, for earlier
         ; version, suggest user to use shorter installation path
         ${If} ${AtLeastWin10}
