@@ -672,7 +672,7 @@ Function OnDirectoryLeave
 
     ${If} $CheckPathLength == "1"
     ${AndIf} $LongPathsEnabled == "0"
-    ${AndIf} $InstDirLen > 38
+    ${AndIf} $InstDirLen > 46
         ; With windows 10, we can enable support for long path, for earlier
         ; version, suggest user to use shorter installation path
         ${If} ${AtLeastWin10}
