@@ -682,14 +682,14 @@ Function OnDirectoryLeave
                 WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
             ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
             ${Else}
-                MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 38 characters or \
+                MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters or \
                                               the installation requires administrator rights to enable long \
                                               path on Windows."
                 Abort
             ${EndIf}
         ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
         ${Else}
-            MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 38 characters. \
+            MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters. \
                                           Please choose another location."
             Abort
         ${EndIf}
