@@ -39,7 +39,7 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, channels):
+def pkg_commands(download_dir, dists, py_version, attempt_hardlinks, channels):
     for n, dist in enumerate(dists):
         fn = filename_dist(dist)
         yield ''
@@ -50,7 +50,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, 
     # CONDA_PKGS_DIRS to the local package cache directory
     _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "%s").r0'%(','.join(channels))
     yield "System::Call '%s'" % _env
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs").r0'
+    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\\pkgs").r0'
     yield "System::Call '%s'" % _env
 
     # Add env vars to bypass safety checks
@@ -74,10 +74,6 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, 
     yield "nsExec::ExecToLog '%s'" % cmd
     yield "Pop $0"
     yield r'SetDetailsPrint both'
-
-    if not keep_pkgs:
-        yield ''
-        yield r'RMDir "$INSTDIR\pkgs"'
 
 
 def make_nsi(info, dir_path):
@@ -134,7 +130,6 @@ def make_nsi(info, dir_path):
     data = fill_template(data, replace)
 
     cmds = pkg_commands(download_dir, dists, py_version,
-                        bool(info.get('keep_pkgs')),
                         bool(info.get('attempt_hardlinks')),
                         get_final_channels(info))
 
@@ -147,6 +142,7 @@ def make_nsi(info, dir_path):
         ('@NAME@', name),
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
+        ('@KEEP_PKGS@', '1' if info.get('keep_pkgs', False) else '0'),
         ('@PKG_COMMANDS@', '\n    '.join(cmds)),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),

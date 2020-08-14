@@ -29,6 +29,7 @@ cp "$PREFIX/conda-meta/history.bak" "$PREFIX/conda-meta/history"
 # Cleanup!
 rm -f "$CONDA_EXEC"
 rm -f "$PREFIX/pkgs/env.txt"
+__KEEP_PKGS__
 
 __WRITE_CONDARC__
 

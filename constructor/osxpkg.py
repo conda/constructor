@@ -116,6 +116,8 @@ def move_script(src, dst, info):
     data = data.replace('__VERSION__', info['version'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
+    keep_pkgs = '' if info.get('keep_pkgs', False) else 'rm -rf "$PREFIX/pkgs"'
+    data = data.replace('__KEEP_PKGS__', keep_pkgs)
 
     with open(dst, 'w') as fo:
         fo.write(data)
@@ -216,6 +218,7 @@ def create(info, verbose=False):
 
     pkgbuild('preconda')
 
+    keep_pkgs = info.get('keep_pkgs', False)
     for dist in info['_dists']:
         if isinstance(dist, str if version_info[0] >= 3 else basestring):
            fn = dist
@@ -230,6 +233,8 @@ def create(info, verbose=False):
             ndist = dist.name
         fresh_dir(PACKAGE_ROOT)
         cph_e(join(CACHE_DIR, fn), join(pkgs_dir, dname))
+        if keep_pkgs:
+            shutil.copy(join(CACHE_DIR, fn), join(pkgs_dir, fn))
         pkgbuild(ndist)
 
     fresh_dir(PACKAGE_ROOT)

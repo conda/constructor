@@ -62,6 +62,11 @@ THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX=__DEFAULT_PREFIX__
 BATCH=0
 FORCE=0
+#if keep_pkgs
+KEEP_PKGS=1
+#else
+KEEP_PKGS=0
+#endif
 SKIP_SCRIPTS=0
 TEST=0
 REINSTALL=0
@@ -74,6 +79,9 @@ Installs __NAME__ __VERSION__
              it is expected the license terms are agreed upon
 -f           no error if install prefix already exists
 -h           print this help message and exit
+#if not keep_pkgs
+-k           do not clear the package cache after installation
+#endif
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
 -s           skip running pre/post-link/install scripts
 -u           update an existing installation
@@ -81,7 +89,7 @@ Installs __NAME__ __VERSION__
 "
 
 if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bfhp:sut "$*" 2>/dev/null)
+    OPTS=$(getopt bfhkp:sut "$*" 2>/dev/null)
     if [ ! $? ]; then
         printf "%s\\n" "$USAGE"
         exit 2
@@ -101,6 +109,10 @@ if which getopt > /dev/null 2>&1; then
                 ;;
             -f)
                 FORCE=1
+                shift
+                ;;
+            -k)
+                KEEP_PKGS=1
                 shift
                 ;;
             -p)
@@ -131,7 +143,7 @@ if which getopt > /dev/null 2>&1; then
         esac
     done
 else
-    while getopts "bfhp:sut" x; do
+    while getopts "bfhkp:sut" x; do
         case "$x" in
             h)
                 printf "%s\\n" "$USAGE"
@@ -142,6 +154,9 @@ else
                 ;;
             f)
                 FORCE=1
+                ;;
+            k)
+                KEEP_PKGS=1
                 ;;
             p)
                 PREFIX="$OPTARG"
@@ -161,6 +176,13 @@ else
                 ;;
         esac
     done
+fi
+
+# For testing, keep the package cache around longer
+CLEAR_AFTER_TEST=0
+if [ "$TEST" = "1" ] && [ "$KEEP_PKGS" = "0" ]; then
+    CLEAR_AFTER_TEST=1
+    KEEP_PKGS=1
 fi
 
 if [ "$BATCH" = "0" ] # interactive mode
@@ -452,10 +474,10 @@ CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
 
-#if not keep_pkgs
+if [ "$KEEP_PKGS" = "0" ]; then
     rm -fr $PREFIX/pkgs/*.tar.bz2
     rm -fr $PREFIX/pkgs/*.conda
-#endif
+fi
 
 __INSTALL_COMMANDS__
 
@@ -486,9 +508,13 @@ if [ -f "$MSGS" ]; then
   cat "$MSGS"
 fi
 rm -f "$MSGS"
-#if not keep_pkgs
-rm -rf "$PREFIX"/pkgs
-#endif
+if [ "$KEEP_PKGS" = "0" ]; then
+    rm -rf "$PREFIX"/pkgs
+else
+    # Attempt to delete the empty temporary directories in the package cache
+    # These are artifacts of the constructor --extract-conda-pkgs 
+    find $PREFIX/pkgs -type d -empty -exec rmdir {} \; 2>/dev/null || :
+fi
 
 printf "installation finished.\\n"
 
@@ -556,20 +582,16 @@ if [ "$TEST" = "1" ]; then
     printf "INFO: Running package tests in a subshell\\n"
     (. "$PREFIX"/bin/activate
      which conda-build > /dev/null 2>&1 || conda install -y conda-build
-#if keep_pkgs
      if [ ! -d "$PREFIX"/conda-bld/__PLAT__ ]; then
          mkdir -p "$PREFIX"/conda-bld/__PLAT__
      fi
      cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX"/conda-bld/__PLAT__/
      cp -f "$PREFIX"/pkgs/*.conda "$PREFIX"/conda-bld/__PLAT__/
+     if [ "$CLEAR_AFTER_TEST" = "1" ]; then
+         rm -rf "$PREFIX/pkgs"
+     fi
      conda index "$PREFIX"/conda-bld/__PLAT__/
      conda-build --override-channels --channel local --test --keep-going "$PREFIX"/conda-bld/__PLAT__/*.tar.bz2
-#endif
-#if not keep_pkgs
-#          conda-build -t -k "$PREFIX"/pkgs/*
-     printf "ERROR: Testing not possible without keep_pkgs\\n"
-     exit 1
-#endif
     )
     NFAILS=$?
     if [ "$NFAILS" != "0" ]; then
