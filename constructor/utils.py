@@ -84,12 +84,13 @@ def preprocess(data, namespace):
 def add_condarc(info):
     if info.get('write_condarc'):
         default_channels = info.get('conda_default_channels')
+        channel_alias = info.get('conda_channel_alias')
         channels = info.get('channels')
         if sys.platform == 'win32':
-            if default_channels or channels:
+            if default_channels or channels or channel_alias:
                 yield '# ----- add condarc'
                 yield 'Var /Global CONDARC'
-                yield 'FileOpen $CONDARC "$INSTDIR\.condarc" w'
+                yield 'FileOpen $CONDARC "$INSTDIR\\.condarc" w'
                 if default_channels:
                     yield 'FileWrite $CONDARC "default_channels:$\\r$\\n"'
                     for url in default_channels:
@@ -98,9 +99,11 @@ def add_condarc(info):
                     yield 'FileWrite $CONDARC "channels:$\\r$\\n"'
                     for url in channels:
                         yield 'FileWrite $CONDARC "  - %s$\\r$\\n"' % url
+                if channel_alias:
+                    yield 'FileWrite $CONDARC "channel_alias: %s$\\r$\\n"' % channel_alias
                 yield 'FileClose $CONDARC'
         else:
-            if default_channels or channels:
+            if default_channels or channels or channel_alias:
                 yield '# ----- add condarc'
                 yield 'cat <<EOF >$PREFIX/.condarc'
                 if default_channels:
@@ -111,6 +114,8 @@ def add_condarc(info):
                     yield 'channels:'
                     for url in channels:
                         yield '  - %s' % url
+                if channel_alias:
+                    yield 'channel_alias: %s' % channel_alias
                 yield 'EOF'
     else:
         yield ''

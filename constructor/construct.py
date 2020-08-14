@@ -117,6 +117,10 @@ in this list will be included as the value of the `default_channels:`
 option in the environment's `.condarc` file. This will have an impact
 only if `conda` is included in the environmnent.
 '''),
+    ('conda_channel_alias', False, str, '''
+The channel alias that would be assumed for the created installer
+(only useful if it includes conda).
+'''),
 
     ('installer_filename',     False, str, '''
 The filename of the installer being created. If not supplied, a reasonable
