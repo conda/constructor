@@ -244,7 +244,13 @@ Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
 interactive installation. (Windows only)
 '''),
-
+    ('installers', False, dict, '''
+A dictionary of installer specifications, allowing a single construct.yaml
+file to be used to describe multiple installers. If supplied, the keys are
+used to provide the "name" value of each installer. Each dictionary value
+is itself a dictionary that, when merged with the top-level key-value pairs
+in the spec, produces a valid single-installer specification.
+'''),
     ('check_path_length',     False, bool, '''
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter path (less than 46 character)
@@ -329,6 +335,22 @@ def parse(path, platform):
     return res
 
 
+def merge(info, g_info):
+    merged = {}
+    for key in set(g_info) | set(info):
+        g_value = g_info.get(key)
+        value = info.get(key)
+        if value is None:
+            value = g_value
+        elif isinstance(g_value, list) and isinstance(value, list):
+            value = g_value + value
+        elif isinstance(g_value, dict) and isinstance(value, dict):
+            for key2, value2 in g_value.items():
+                value.setdefault(key2, value2)
+        merged[key] = value
+    return merged
+
+
 def verify(info):
     types_key = {} # maps key to types
     required_keys = set()
@@ -336,26 +358,42 @@ def verify(info):
         types_key[key] = types
         if required:
             required_keys.add(key)
+    def verify_single(info, required, g_info):
+        errors = {}
+        pat = re.compile(r'\w(?:[\w\-\.]*\w)?$')
+        for key, elt in info.items():
+            types = types_key.get(key)
+            if types is None:
+                errors[key] = "not a valid key"
+            elif key == 'installers' and g_info is not None:
+                errors[key] = "not valid in child specification"
+            elif not isinstance(elt, types):
+                errors[key] = "incorrect type: %s (expected %s)" % (type(elt), types)
+            elif key in ('name', 'version') and not pat.match(elt):
+                errors[key] = "invalid value: '%s'" % elt
+        if required:
+            for key in required_keys:
+                if key not in info and (g_info is None or key not in g_info):
+                    errors[key] = 'missing'
+        return errors
+    errors = verify_single(info, not info.get('installers'), None)
+    for key, value in info.get('installers', {}).items():
+        value.setdefault('name', key)
+        for k, v in verify_single(value, True, info).items():
+            errors[value['name'] + '/' + k] = v
+    if errors:
+        msg = ['Error%s found in constructor specification:' % ('' if len(errors) == 1 else 's')]
+        msg.extend('  %s: %s' % (k, v) for k, v in errors.items() if not isinstance(k, tuple))
+        sys.exit('\n'.join(msg))
 
-    for key in info:
-        if key not in types_key:
-            sys.exit("Error: unknown key '%s' in construct.yaml" % key)
-        elt = info[key]
-        types = types_key[key]
-        if not isinstance(elt, types):
-            sys.exit("Error: key '%s' points to %s,\n"
-                     "       expected %s" % (key, type(elt), types))
 
-    for key in required_keys:
-        if key not in info:
-            sys.exit("Error: Required key '%s' not found in construct.yaml" %
-                     key)
-
-    pat = re.compile(r'[\w][\w\-\.]*$')
-    for key in 'name', 'version':
-        value = info[key]
-        if not pat.match(value) or value.endswith(('.', '-')):
-            sys.exit("Error: invalid %s '%s'" % (key, value))
+def split(info):
+    if info.get('installers'):
+        for k, v in info['installers'].items():
+            v.setdefault('name', k)
+            yield merge(v, info)
+    else:
+        yield info
 
 
 def generate_doc():
