@@ -245,11 +245,21 @@ system's default Python. The user is still able to change this during
 interactive installation. (Windows only)
 '''),
     ('installers', False, dict, '''
-A dictionary of installer specifications, allowing a single construct.yaml
-file to be used to describe multiple installers. If supplied, the keys are
-used to provide the "name" value of each installer. Each dictionary value
-is itself a dictionary that, when merged with the top-level key-value pairs
-in the spec, produces a valid single-installer specification.
+When supplied, `installers` is a dictionary of dictionaries that allows a single
+`construct.yaml` file to describe multiple installers. In this mode, the top-level
+options provide a set of "parent" specifications which are merged which each
+child dictionary in a simple fashion to yield a complete installer specification.
+The merging approach is as follows:
+- For _string_ options, the "parent" spec provides a simple default. If a
+  child spec includes the same key, its value overrides the parent.
+- For _list_ options, the "parent" and "child" lists are _concatenated_ for the
+  final spec. This allows, for instance, the parent to specify a set of
+  base packages to include in all installers.
+- For _dictionary_ options, the "parent" and "child" dictionaries are combined,
+  with any intersecting keys resolved in favor of the child.
+
+In this mode, the name of each installer is given by the dictionary keys in the
+`installers` option, and the `name` field must not be explicitly supplied.
 '''),
     ('check_path_length',     False, bool, '''
 Check the length of the path where the distribution is installed to ensure nodejs
@@ -354,17 +364,20 @@ def merge(info, g_info):
 def verify(info):
     types_key = {} # maps key to types
     required_keys = set()
+    is_multiple = 'installers' in info
+    pat = re.compile(r'\w(?:[\w\-\.]*\w)?$')
     for key, required, types, unused_descr in KEYS:
         types_key[key] = types
-        if required:
+        if required and not (key == 'name' and is_multiple):
             required_keys.add(key)
     def verify_single(info, required, g_info):
         errors = {}
-        pat = re.compile(r'\w(?:[\w\-\.]*\w)?$')
         for key, elt in info.items():
             types = types_key.get(key)
             if types is None:
                 errors[key] = "not a valid key"
+            elif is_multiple and key == 'name':
+                errors[key] = "must not use the 'name' field in multiple installer mode"
             elif key == 'installers' and g_info is not None:
                 errors[key] = "not valid in child specification"
             elif not isinstance(elt, types):
@@ -378,12 +391,13 @@ def verify(info):
         return errors
     errors = verify_single(info, not info.get('installers'), None)
     for key, value in info.get('installers', {}).items():
-        value.setdefault('name', key)
+        if not pat.match(key):
+            errors[key] = "invalid installer name"
         for k, v in verify_single(value, True, info).items():
-            errors[value['name'] + '/' + k] = v
+            errors[key + '/' + k] = v
     if errors:
         msg = ['Error%s found in constructor specification:' % ('' if len(errors) == 1 else 's')]
-        msg.extend('  %s: %s' % (k, v) for k, v in errors.items() if not isinstance(k, tuple))
+        msg.extend('  %s: %s' % (k, v) for k, v in errors.items())
         sys.exit('\n'.join(msg))
 
 
