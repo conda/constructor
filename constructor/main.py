@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import abspath, basename, expanduser, isdir, join
+from os.path import abspath, relpath, basename, expanduser, exists, isdir, isfile, join
 import sys
 
 from .conda_interface import cc_platform
@@ -107,7 +107,25 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
 
+<<<<<<< HEAD
     info['installer_type'] = itypes[0]
+=======
+    if 'extra_files' in info:
+        new_files = {}
+        extra_files = info['extra_files']
+        is_dict = isinstance(extra_files, dict)
+        for src in extra_files:
+            dst_raw = extra_files[src] if is_dict else src
+            if not exists(src):
+                sys.exit('Invalid extra_files entry (source not found): %s' % src)
+            src = abspath(src)
+            dst = relpath(abspath(dst_raw))
+            if dst.startswith('..'):
+                sys.exit('Invalid extra_files entry (destination outside of root): %s' % dst_raw)
+            new_files[src] = dst
+        info['extra_files'] = new_files
+
+>>>>>>> Support extra_files on shar
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
         print("Dry run, no installer created.")

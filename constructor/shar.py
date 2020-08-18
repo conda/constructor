@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 from os.path import basename, dirname, getsize, isdir, join
 import shutil
 import stat
@@ -113,6 +114,9 @@ def create(info, verbose=False):
         pre_t.add(record_file_src, record_file_dest)
     pre_t.addfile(tarinfo=tarfile.TarInfo("conda-meta/history"))
     post_t.add(join(tmp_dir, 'conda-meta', 'history'), 'conda-meta/history')
+    # These paths have already been validated and normalized in main.py
+    for src, dst in info.get('extra_files', {}).items():
+        post_t.add(src, dst)
     pre_t.close()
     post_t.close()
 

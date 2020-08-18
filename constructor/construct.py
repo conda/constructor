@@ -146,6 +146,16 @@ Path to the license file being displayed by the installer during the install
 process.
 '''),
 
+    ('extra_files',            False, (list, dict), '''
+Additional files to insert into the conda environment. The files will be added
+after the conda packages are installed. If the files are supplied as a simple
+list, the file will be placed into the environment in the same relative position
+as it is found in the constructor directory. If the files are supplied as a
+dictionary, the source path is the key and the destination path is the value.
+In either case, destination paths must be relative and cannot resolve above
+the root of the installed environment.
+'''),
+
     ('keep_pkgs',              False, bool, '''
 If `False` (default), the package cache in the `pkgs` subdirectory is removed
 when the installation process is complete. If `True`, this subdirectory and
