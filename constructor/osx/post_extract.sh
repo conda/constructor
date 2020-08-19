@@ -47,8 +47,6 @@ rm -f "$CONDA_EXEC"
 rm -f "$PREFIX/env.txt"
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
-__WRITE_CONDARC__
-
 "$PREFIX/bin/python" -V
 if (( $? )); then
     echo "ERROR running Python"

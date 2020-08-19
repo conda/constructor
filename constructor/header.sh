@@ -460,8 +460,6 @@ if [ "$KEEP_PKGS" = "0" ]; then
     rm -fr $PREFIX/pkgs/*.conda
 fi
 
-__INSTALL_COMMANDS__
-
 POSTCONDA="$PREFIX/pkgs/postconda.tar"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"

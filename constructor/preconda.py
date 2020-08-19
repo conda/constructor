@@ -6,12 +6,13 @@
 
 import os
 from os.path import isdir, join, split as path_split
+from io import BytesIO
 import platform
 import tarfile
 import sys
 import time
 
-from .utils import filename_dist, get_final_url
+from .utils import filename_dist, get_final_url, yaml
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
@@ -185,8 +186,24 @@ def write_env_txt(info, dst_dir):
 def write_preconda(info, dst_dir):
     postconda_tarball = join(dst_dir, 'postconda.tar')
     post_t = tarfile.open(postconda_tarball, 'w')
+    # corrected conda-meta/history
     post_t.add(join(dst_dir, 'conda-meta'), 'conda-meta')
-    # These paths have already been validated and normalized in main.py
+    # condarc
+    if info.get('write_condarc'):
+        condarc = {}
+        default_channels = info.get('conda_default_channels')
+        if default_channels:
+            condarc['default_channels'] = default_channels
+        channels = info.get('channels')
+        if channels:
+            condarc['channels'] = channels
+        if condarc:
+            condarc = yaml.dump(condarc).encode('utf-8')
+            tarinfo = tarfile.TarInfo('.condarc')
+            tarinfo.size = len(condarc)
+            post_t.addfile(tarinfo=tarinfo, fileobj=BytesIO(condarc))
+    # extra files
+    # these paths have already been validated and normalized in main.py
     for src, dst in info.get('extra_files', {}).items():
         post_t.add(src, dst)
     post_t.close()

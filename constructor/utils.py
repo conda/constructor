@@ -89,6 +89,7 @@ def preprocess(data, namespace):
     return if_pat.sub(if_repl, data)
 
 
+<<<<<<< HEAD
 def add_condarc(info):
     condarc = info.get('condarc')
     if condarc is None:
@@ -122,6 +123,8 @@ def add_condarc(info):
         yield 'EOF'
 
 
+=======
+>>>>>>> Unified approach to win/mac/lin
 def get_final_url(info, url):
     mapping = info.get('channels_remap', [])
     for entry in mapping:

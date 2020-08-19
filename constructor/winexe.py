@@ -120,8 +120,12 @@ def make_nsi(info, dir_path):
         ('@NAME@', name),
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
+<<<<<<< HEAD
         ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
+=======
+        ('@PKG_COMMANDS@', '\n    '.join(cmds)),
+>>>>>>> Unified approach to win/mac/lin
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
         ('@UNINSTALL_NAME@', info.get('uninstall_name',

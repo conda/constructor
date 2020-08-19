@@ -8,7 +8,8 @@ from functools import partial
 from os.path import dirname
 import re
 import sys
-from .utils import yaml
+
+from constructor.utils import yaml
 
 from constructor.exceptions import (UnableToParse, UnableToParseMissingJinja2,
                                     YamlParsingError)

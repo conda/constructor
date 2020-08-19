@@ -887,16 +887,10 @@ Section "Install"
 
     # Cleanup
     SetOutPath "$INSTDIR"
+    Delete "$INSTDIR\pkgs\postconda.tar"
     Delete "$INSTDIR\pkgs\env.txt"
 
-    @WRITE_CONDARC@
-
     AddSize @SIZE@
-
-    # Restore shipped conda-meta\history for remapped
-    # channels and retain only the first transaction
-    SetOutPath "$INSTDIR\conda-meta"
-    File __CONDA_HISTORY__
 
     DetailPrint "Creating @NAME@ menus..."
     push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'

@@ -16,8 +16,8 @@ import tempfile
 
 from .construct import ns_platform
 from .preconda import files as preconda_files, write_files as preconda_write_files
-from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, \
-    read_ascii_only, get_final_channels
+from .utils import filename_dist, fill_template, md5_files, preprocess, \
+    read_ascii_only, get_final_channels, add_condarc
 
 THIS_DIR = dirname(__file__)
 
@@ -64,7 +64,6 @@ def get_header(conda_exec, tarball, info):
         'MD5': md5_files([conda_exec, tarball]),
         'FIRST_PAYLOAD_SIZE': str(getsize(conda_exec)),
         'SECOND_PAYLOAD_SIZE': str(getsize(tarball)),
-        'INSTALL_COMMANDS': '\n'.join(install_lines),
         'CHANNELS': ','.join(get_final_channels(info)),
         'pycache': '__pycache__',
     }
