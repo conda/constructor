@@ -7,6 +7,7 @@
 import os
 from os.path import isdir, join, split as path_split
 import platform
+import tarfile
 import sys
 import time
 
@@ -22,7 +23,7 @@ try:
 except ImportError:
     import ruamel_json as json
 
-files = '.constructor-build.info', 'urls', 'urls.txt', 'env.txt'
+files = '.constructor-build.info', 'urls', 'urls.txt', 'env.txt', 'postconda.tar'
 
 
 def write_index_cache(info, dst_dir, used_packages):
@@ -115,6 +116,8 @@ def write_files(info, dst_dir):
 
     write_env_txt(info, dst_dir)
 
+    write_preconda(info, dst_dir)
+
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
 
@@ -177,3 +180,13 @@ def write_env_txt(info, dst_dir):
     specs = ['='.join(spec.rsplit('-', 2)) for spec in dists_san_extn]
     with open(join(dst_dir, "env.txt"), "w") as envf:
         envf.write('\n'.join(specs))
+
+
+def write_preconda(info, dst_dir):
+    postconda_tarball = join(dst_dir, 'postconda.tar')
+    post_t = tarfile.open(postconda_tarball, 'w')
+    post_t.add(join(dst_dir, 'conda-meta'), 'conda-meta')
+    # These paths have already been validated and normalized in main.py
+    for src, dst in info.get('extra_files', {}).items():
+        post_t.add(src, dst)
+    post_t.close()

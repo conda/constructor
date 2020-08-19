@@ -88,9 +88,7 @@ def create(info, verbose=False):
     preconda_write_files(info, tmp_dir)
 
     preconda_tarball = join(tmp_dir, 'preconda.tar.bz2')
-    postconda_tarball = join(tmp_dir, 'postconda.tar.bz2')
     pre_t = tarfile.open(preconda_tarball, 'w:bz2')
-    post_t = tarfile.open(postconda_tarball, 'w:bz2')
     for dist in preconda_files:
         fn = filename_dist(dist)
         pre_t.add(join(tmp_dir, fn), 'pkgs/' + fn)
@@ -113,17 +111,11 @@ def create(info, verbose=False):
         record_file_dest = join('pkgs', record_file)
         pre_t.add(record_file_src, record_file_dest)
     pre_t.addfile(tarinfo=tarfile.TarInfo("conda-meta/history"))
-    post_t.add(join(tmp_dir, 'conda-meta', 'history'), 'conda-meta/history')
-    # These paths have already been validated and normalized in main.py
-    for src, dst in info.get('extra_files', {}).items():
-        post_t.add(src, dst)
     pre_t.close()
-    post_t.close()
 
     tarball = join(tmp_dir, 'tmp.tar')
     t = tarfile.open(tarball, 'w')
     t.add(preconda_tarball, basename(preconda_tarball))
-    t.add(postconda_tarball, basename(postconda_tarball))
     if 'license_file' in info:
         t.add(info['license_file'], 'LICENSE.txt')
     for dist in info['_dists']:

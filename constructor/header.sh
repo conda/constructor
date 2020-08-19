@@ -462,7 +462,7 @@ fi
 
 __INSTALL_COMMANDS__
 
-POSTCONDA="$PREFIX/postconda.tar.bz2"
+POSTCONDA="$PREFIX/pkgs/postconda.tar"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 

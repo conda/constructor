@@ -38,6 +38,10 @@ fi
 # Move the prepackaged history file into place
 mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
 
+POSTCONDA="$PREFIX/pkgs/postconda.tar"
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
+rm -f "$POSTCONDA"
+
 # Cleanup!
 rm -f "$CONDA_EXEC"
 rm -f "$PREFIX/env.txt"
