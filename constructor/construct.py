@@ -22,26 +22,26 @@ from constructor.exceptions import (
 # list of tuples (key name, required, type, description)
 KEYS = [
     ('name',                   True,  str, '''
-Name of the installer.  May also contain uppercase letter.  The installer
-name is independent of the names of any of the conda packages the installer
-is composed of.
+Name of the installer. Names may be composed of letters, numbers,
+underscores, dashes, and periods, but may not begin or end with a
+dash or period.
 '''),
 
     ('version',                True,  str, '''
-Version of the installer.  Just like the installer name, this version
-is independent of any conda package versions contained in the installer.
+Version of the installer. Versions may be composed of letters, numbers,
+underscores, dashes, and periods, but may not begin or end with a
+dash or period.
 '''),
 
     ('channels',               False, list, '''
-The conda channels from which packages are retrieved, when using the `specs`
-key below, but also when using the `packages` key ,unless the full URL is
-given in the `packages` list (see below).
+The conda channels from which packages are retrieved.
 '''),
 
     ('channels_remap',         False, list, '''
-List of `(src, dest)` channels, from which, channels from `src` are also
-considered while running solver, but are replaced by corresponding values from
-dest when writing `urls{,.txt}`. Example use:
+A list of `src/dest` channel pairs. When retrieving the packages, conda will
+use the `src` channels; but rename those channels to `dst` within the installer.
+This allows an installer to be built against a different set of channels than
+will be present when the installer is actually used. Example use:
 ```
 channels_remap:
   -
@@ -54,29 +54,33 @@ channels_remap:
 '''),
 
     ('specs',                  False, (list, str), '''
-List of package specifications, e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
-This list of specifications if given to the conda resolver (as if you were
-to create a new environment with those specs). The packages may also be
-specified by their entire URL,
-e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
+A list of package specifications; e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
+The specifications are identical in form and purpose to those that would be
+included in a `conda create --file` command. Packages may also be specified
+by an exact URL; e.g.,
+`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
-List of package specifications to be recorded as "user-requested" for the
-initial environment in conda's history file. If not given, user-requested
-specs will fall back to 'specs'.
+A list of package specifications to be recorded as "user-requested" for the
+initial environment in conda's history file. This information is used by newer
+versions of conda to better filter its package choices on subsequent installs;
+for example, if `python=3.6` is included, then conda will always seek versions
+of packages compatible with Python 3.6. If this is option is not provided, it
+will be set equal to the value of `specs`.
 '''),
 
     ('exclude',                False, list, '''
-List of package names to be excluded, after the '`specs` have been resolved.
+A list of package names to be excluded after the `specs` have been resolved.
 For example, you can say that `readline` should be excluded, even though it
 is contained as a result of resolving the specs for `python 2.7`.
 '''),
 
     ('menu_packages',           False, list, '''
-Packages for menu items will be installed (if the conda package contains the
+A list of packages with menu items to be instsalled. The packages must have
 necessary metadata in "Menu/<package name>.json").  Menu items are currently
-only supported on Windows.  By default, all menu items will be installed.
+only supported on Windows. By default, all menu items will be installed;
+supplying this list allows a subset to be selected instead.
 '''),
 
     ('ignore_duplicate_files',  False, bool, '''
@@ -85,38 +89,43 @@ files in them. Enable this option to warn instead and continue.
 '''),
 
     ('install_in_dependency_order', False, bool, '''
-By default the conda packages included in the created installer are installed
-in alphabetical order, Python is always installed first for technical
-reasons.  Using this option, the packages are installed in their dependency
-order (unless the explicit list in `packages` is used).
+By default, the conda packages included in the created installer are installed
+in alphabetical order, with the exception of Python itself, which is installed
+first. Using this option, packages are installed in dependency order.
 '''),
 
     ('environment', False, str, '''
-Name of the environment to construct from. If this option is present and
-non-empty, specs will be ignored.
+Name of the environment to construct from. If this option is present, the
+`specs` argument will be ignored. Using this option allows the user to
+curate the enviromment interactively using standard `conda` commands, and
+run constructor with full confidence that the exact environment will be
+reproduced.
 '''),
 
     ('environment_file', False, str, '''
-Path to an environment file to construct from. If this option is present,
-a temporary environment will be created, constructor will build an installer
-from that, and then the temporary environment will be removed. This ensures
-that constructor and conda use the same mechanism to discover and install
-the packages. If this option is present and non-empty, specs will be ignored.
+Path to an environment file to construct from. If this option is present, the
+`specs` argument will be ignored. Instead, constructor will call conda to
+create a temporary environment, constructor will build and installer from
+that, and the temporary environment will be removed. This ensures that
+constructor is using the precise local conda configuration to discover
+and install the packages.
 '''),
 
     ('conda_default_channels', False, list, '''
-You can list conda channels here which will be the default conda channels
-of the created installer (if it includes conda).
+If this value is provided as well as `write_condarc`, then the channels
+in this list will be included as the value of the `default_channels:`
+option in the environment's `.condarc` file. This will have an impact
+only if `conda` is included in the environmnent.
 '''),
 
     ('installer_filename',     False, str, '''
-The filename of the installer being created.  A reasonable default filename
-will determined by the `name`, `version`, platform and installer type.
+The filename of the installer being created. If not supplied, a reasonable
+default will determined by the `name`, `version`, platform, and installer type.
 '''),
 
     ('installer_type',     False, str, '''
 The type of the installer being created.  Possible values are "sh", "pkg",
-and "exe".  By default, the type is "sh" on Unix, and "exe" on Windows.
+and "exe". The default type is "sh" on Unix, and "exe" on Windows.
 '''),
 
     ('license_file',           False, str, '''
@@ -159,11 +168,13 @@ Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 '''),
 
     ('pre_install',            False, str, '''
-Path to a pre install (bash - Unix only) script.
+Path to a pre install script. This is available for Unix only, and
+must be a Bash script.
 '''),
 
     ('post_install',           False, str, '''
-Path to a post install (bash for Unix - .bat for Windows) script.
+Path to a post install script. This must be a Bash script for Unix
+and a `.bat` file for Windows.
 '''),
 
     ('post_install_desc',      False, str, '''
@@ -174,14 +185,15 @@ checkbox will be displayed with this label.
 '''),
 
     ('pre_uninstall',          False, str, '''
-Path to a pre uninstall (.bat for Windows) script. Only supported on Windows.
+Path to a pre uninstall script. This is only supported for on Windows,
+and must be a `.bat` file.
 '''),
 
     ('default_prefix',         False, str, 'XXX'),
 
     ('welcome_image',          False, str, '''
-Path to an image (in any common image format `.png`, `.jpg`, `.tif`, etc.)
-which is used as the welcome image for the Windows installer.
+Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
+to be used as the welcome image for the Windows installer.
 The image is re-sized to 164 x 314 pixels.
 By default, an image is automatically generated.
 '''),
