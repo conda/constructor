@@ -225,7 +225,7 @@ FunctionEnd
     ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
     ${If} ${Errors}
-        StrCpy $ARGV_KeepPkgCache "0"
+        StrCpy $ARGV_KeepPkgCache "@KEEP_PKGS@"
     ${EndIf}
 
     ClearErrors
@@ -867,10 +867,10 @@ Section "Install"
 
     # Cleanup
     SetOutPath "$INSTDIR"
-    ${If} $ARGV_KeepPkgCache == "1"
-        Delete "$INSTDIR\pkgs\env.txt"
-    ${Else}
-        RMDir /r "$INSTDIR\pkgs"
+    Delete "$INSTDIR\pkgs\env.txt"
+    ${If} $ARGV_KeepPkgCache == "0"
+        DetailPrint "Clearing the package cache..."
+        nsExec::ExecToLog '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
     ${EndIf}
 
     @WRITE_CONDARC@
