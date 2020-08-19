@@ -10,6 +10,10 @@ import hashlib
 from os.path import normpath
 from os import sep
 
+try:
+    import yaml
+except:
+    import ruamel_yaml as yaml
 
 def filename_dist(dist):
     """ Return the filename of a distribution. """
@@ -82,43 +86,36 @@ def preprocess(data, namespace):
 
 
 def add_condarc(info):
-    if info.get('write_condarc'):
+    condarc = info.get('condarc')
+    if condarc is None:
+        # The legacy approach
+        write_condarc = info.get('write_condarc')
         default_channels = info.get('conda_default_channels')
         channel_alias = info.get('conda_channel_alias')
         channels = info.get('channels')
-        if sys.platform == 'win32':
-            if default_channels or channels or channel_alias:
-                yield '# ----- add condarc'
-                yield 'Var /Global CONDARC'
-                yield 'FileOpen $CONDARC "$INSTDIR\\.condarc" w'
-                if default_channels:
-                    yield 'FileWrite $CONDARC "default_channels:$\\r$\\n"'
-                    for url in default_channels:
-                        yield 'FileWrite $CONDARC "  - %s$\\r$\\n"' % url
-                if channels:
-                    yield 'FileWrite $CONDARC "channels:$\\r$\\n"'
-                    for url in channels:
-                        yield 'FileWrite $CONDARC "  - %s$\\r$\\n"' % url
-                if channel_alias:
-                    yield 'FileWrite $CONDARC "channel_alias: %s$\\r$\\n"' % channel_alias
-                yield 'FileClose $CONDARC'
-        else:
-            if default_channels or channels or channel_alias:
-                yield '# ----- add condarc'
-                yield 'cat <<EOF >$PREFIX/.condarc'
-                if default_channels:
-                    yield 'default_channels:'
-                    for url in default_channels:
-                        yield '  - %s' % url
-                if channels:
-                    yield 'channels:'
-                    for url in channels:
-                        yield '  - %s' % url
-                if channel_alias:
-                    yield 'channel_alias: %s' % channel_alias
-                yield 'EOF'
+        if not (write_condarc and (default_channels or channels or channel_alias)):
+            return
+        condarc = {}
+        if default_channels:
+            condarc['default_channels'] = default_channels
+        if channels:
+            condarc['channels'] = channels
+        if channel_alias:
+            condarc['channel_alias'] = channel_alias
+    if isinstance(condarc, dict):
+        condarc = yaml.dump(condarc)
+    yield '# ----- add condarc'
+    if sys.platform == 'win32':
+        yield 'Var /Global CONDARC'
+        yield 'FileOpen $CONDARC "$INSTDIR\\.condarc" w'
+        for line in condarc.splitlines():
+            yield 'FileWrite $CONDARC "%s$\\r$\\n"' % line
+        yield 'FileClose $CONDARC'
     else:
-        yield ''
+        yield 'cat <<EOF >$PREFIX/.condarc'
+        for line in condarc.splitlines():
+            yield line
+        yield 'EOF'
 
 
 def get_final_url(info, url):

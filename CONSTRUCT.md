@@ -199,8 +199,18 @@ the files kept in the `pkgs` directory and then patched accordingly.
 
 _required:_ no<br/>
 _type:_ boolean<br/>
-By default, no .condarc file is written. If set, a .condarc file is written to
+By default, no `.condarc` file is written. If set, a `.condarc` file is written to
 the base environment if there are any channels or conda_default_channels is set.
+
+## `condarc`
+
+_required:_ no<br/>
+_types:_ dictionary, string<br/>
+If set, a `.condarc` file is written to the base environment containing the contents
+of this value. The value can either be a string (likely a multi-line string) or
+a dictionary, which will be converted to a YAML string for writing. _Note:_ if this
+option is used, then all other options related to the construction of a `.condarc`
+file&mdash;`write_condarc`, `conda_default_channels`, etc.&mdash;are ignored.
 
 ## `company`
 
