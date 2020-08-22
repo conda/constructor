@@ -1,21 +1,16 @@
 import os
 import shutil
-import tarfile
-from os.path import dirname, exists, join
+from os.path import isdir, abspath, dirname, exists, join
 from subprocess import check_call
-from sys import argv, version_info
 import xml.etree.ElementTree as ET
 
-from constructor.install import rm_rf, name_dist
+from constructor.install import rm_rf
 import constructor.preconda as preconda
-from constructor.utils import add_condarc, filename_dist, get_final_channels
-
-from conda_package_handling.api import extract as cph_e
+from constructor.utils import add_condarc, get_final_channels
 
 
 OSX_DIR = join(dirname(__file__), "osx")
-CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = None
-
+CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
 
 
 def write_readme(dst, info):
@@ -69,40 +64,71 @@ def modify_xml(xml_path, info):
                         attrib={'mime-type': 'richtext/rtf'})
     root.append(readme)
 
-    [options] = [i for i in root.findall('options')]
-    options.set('customize', 'allow')
-    options.set('customLocation', '/')
+    # See below for an explanation of the consequences of this
+    # customLocation value.
+    for options in root.findall('options'):
+        options.set('customize', 'allow')
+        options.set('customLocation', '/')
 
-    [default_choice] = [i for i in root.findall('choice')
-                        if i.get('id') == 'default']
-    default_choice.set('title', info['name'])
+    # By default, the package builder puts all of our options under
+    # a single master choice. This deletes that master choice and
+    # allows the user to see all options without effort.
+    for choices_outline in root.findall('choices-outline'):
+        [child] = list(choices_outline)
+        choices_outline.extend(list(child))
+        choices_outline.remove(child)
 
-    [path_choice] = [i for i in root.findall('choice')
-                     if 'pathupdate' in i.get('id')]
-    path_choice.set('visible', 'true')
-    path_choice.set('title', "Modify PATH")
-    path_description = """
-    Whether to modify the bash profile file to append %s to the PATH
-    variable.  If you do not do this, you will need to add ~/%s/bin
-    to your PATH manually to run the commands, or run all %s commands
-    explicitly from that path.
-    """ % (info['name'], info['name'].lower(), info['name'])
-    path_choice.set('description', ' '.join(path_description.split()))
+    for path_choice in root.findall('choice'):
+        ident = path_choice.get('id')
+        if ident == 'default':
+            root.remove(path_choice)
+        elif ident.endswith('main'):
+            path_choice.set('visible', 'true')
+            path_choice.set('title', 'Install {}'.format(info['name']))
+            path_choice.set('enabled', 'false')
+        elif ident.endswith('postinstall') and info.get('post_install_desc'):
+            path_choice.set('visible', 'true')
+            path_choice.set('title', "Run the post-install script")
+            path_choice.set('description', ' '.join(info['post_install_desc'].split()))
+        elif ident.endswith('pathupdate'):
+            path_choice.set('visible', 'true')
+            path_choice.set('start_selected', 'true' if info.get('initialize_by_default', True) else 'false')
+            path_choice.set('title', "Add conda initialization to the shell")
+            path_description = """
+            If this box is checked, "conda init" will be executed to ensure that
+            conda is available in your preferred shell upon startup. If unchecked,
+            you must this initialization yourself or activate the environment
+            manually for each shell in which you wish to use it."""
+            path_choice.set('description', ' '.join(path_description.split()))
+        elif ident.endswith('cacheclean'):
+            path_choice.set('visible', 'true')
+            path_choice.set('title', "Clear the package cache")
+            path_choice.set('start_selected', 'false' if info.get('keep_pkgs') else 'true')
+            path_description = """
+            If this box is checked, the package cache will be cleaned after the
+            installer is complete, reclaiming some disk space. If unchecked, the
+            package cache contents will be preserved.
+            """
+            path_choice.set('description', ' '.join(path_description.split()))
 
-    # TODO :: Check that varying these based on 'attempt_hardlinks' is the
-    #         right thing to do.
-    if bool(info.get('attempt_hardlinks')):
-        enable_anywhere = 'true'
-        enable_localSystem = 'false'
-    else:
-        enable_anywhere = 'false'
-        enable_localSystem = 'true'
+    # The "customLocation" option is set above to "/", which
+    # means that the installer defaults to the following locations:
+    # - Install for all users: /<name>
+    # - Install for this user: /Users/<username>/<name>
+    # - Install on a specific disk: /<custom_root>/<name>
+    # On modern Mac systems, installing in root is not allowed. So
+    # we remove this option by not supplying enable_localSystem
+    # below. Alternatively, we could have chosen not to set the
+    # value of customLocation and we would have obtained this:
+    # - Install for all users: /Applications/<name>
+    # - Install for this user: /Users/<username>/Applications/<name>
+    # - Install on a specific disk: /<custom_root>/<name>
+    # We have chosen not to do this so that this installer
+    # produces the same results as a shell install.
     domains = ET.Element('domains',
-                         enable_anywhere=enable_anywhere,
-                         enable_currentUserHome='true',
-                         enable_localSystem=enable_localSystem)
+                         enable_anywhere='true',
+                         enable_currentUserHome='true')
     root.append(domains)
-
     tree.write(xml_path)
 
 
@@ -113,11 +139,8 @@ def move_script(src, dst, info):
     # This is necessary for when installing on case-sensitive macOS filesystems.
     data = data.replace('__NAME_LOWER__', info['name'].lower())
     data = data.replace('__NAME__', info['name'])
-    data = data.replace('__VERSION__', info['version'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
-    keep_pkgs = '' if info.get('keep_pkgs', False) else 'rm -rf "$PREFIX/pkgs"'
-    data = data.replace('__KEEP_PKGS__', keep_pkgs)
 
     with open(dst, 'w') as fo:
         fo.write(data)
@@ -130,175 +153,94 @@ def fresh_dir(dir_path):
     os.mkdir(dir_path)
 
 
-def pkgbuild(name, scripts=None):
-    # Some packages like qt might have .app folders like qdbusviewer.app. The
-    # installer by default makes this .app relocatable, so that if it is
-    # already installed, it will upgrade it with the new one instead of just
-    # installing the new one in the chosen installation directory. An example
-    # log entry for this:
-
-    # PackageKit:
-    # /path_new/bin/qdbusviewer.app relocated to /path_old/bin/qdbusviewer.app
-
-    # This can cause trouble, expesically if any of the files inside that
-    # folder require prefix patching and the installer will fail, since it
-    # won't find the file. A general practice was to rename <name>.app to
-    # <name>app so that the installer would ignore analyzing it, but that was a
-    # hack as it also required a post-link script to rename them back on
-    # installation. To avoid such nastiness, we mark all components in the
-    # plist file of the parent pkg file, (in this case, qt.pkg) as non-relocatable.
-
-    # xref(s):
-    #  - https://apple.stackexchange.com/a/219144/243863
-    #  - https://stackoverflow.com/a/26202210/1005215
-    #  - https://developer.apple.com/legacy/library/documentation/Darwin/Reference/ManPages/man1/pkgbuild.1.html
-    #  - https://github.com/conda-forge/python.app-feedstock/blob/master/recipe/post-link.sh
-
-    components_plist = '{}/{}.plist'.format(PACKAGES_DIR, name)
-
-    check_call([
-        'pkgbuild',
-        '--root', PACKAGE_ROOT,
-        '--analyze', components_plist])
-
-    check_call([
-        'plutil',
-        '-replace', 'BundleIsRelocatable',
-        '-bool', 'false',
-        components_plist])
-
-    args = [
-        "pkgbuild",
-        "--root", PACKAGE_ROOT,
-    ]
-    if scripts:
-        args.extend([
-            "--scripts", scripts,
-        ])
+def pkgbuild(name):
+    args = ["pkgbuild", "--root", PACKAGE_ROOT]
+    if isdir(SCRIPTS_DIR) and os.listdir(SCRIPTS_DIR):
+        args.extend(["--scripts", SCRIPTS_DIR])
     args.extend([
-        "--component-plist", components_plist,
         "--identifier", "io.continuum.pkg.%s" % name,
         "--ownership", "preserve",
         "%s/%s.pkg" % (PACKAGES_DIR, name),
     ])
     check_call(args)
 
-    os.remove(components_plist)
-
 
 def pkgbuild_script(name, info, src, dst='postinstall'):
-    scripts_dir = join(CACHE_DIR, "scripts")
-    fresh_dir(scripts_dir)
-    move_script(join(OSX_DIR, src),
-                join(scripts_dir, dst),
-                info)
-    fresh_dir(PACKAGE_ROOT)  # --root <empty dir>
-    pkgbuild(name, scripts_dir)
+    fresh_dir(SCRIPTS_DIR)
+    fresh_dir(PACKAGE_ROOT)
+    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info)
+    pkgbuild(name)
+    rm_rf(SCRIPTS_DIR)
 
 
 def create(info, verbose=False):
-    global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR
+    global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR, SCRIPTS_DIR
 
     CACHE_DIR = info['_download_dir']
+    SCRIPTS_DIR = join(CACHE_DIR, "scripts")
     PACKAGE_ROOT = join(CACHE_DIR, "package_root")
     PACKAGES_DIR = join(CACHE_DIR, "built_pkgs")
 
-    # See http://stackoverflow.com/a/11487658/161801 for how all this works.
+    fresh_dir(PACKAGES_DIR)
     prefix = join(PACKAGE_ROOT, info['name'].lower())
 
-    fresh_dir(PACKAGES_DIR)
+    # See http://stackoverflow.com/a/11487658/161801 for how all this works.
+
+    # The main package contains the prepopulated package cache, the modified
+    # conda-meta metadata staged into pkgs/conda-meta, and conda.exe
     fresh_dir(PACKAGE_ROOT)
+    fresh_dir(SCRIPTS_DIR)
     pkgs_dir = join(prefix, 'pkgs')
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
-
-    # TODO: Refactor code such that the argument to preconda.write_files is
-    # /path/to/base/env, so that such workarounds are not required.
-    shutil.move(join(pkgs_dir, 'conda-meta'), prefix)
-
-    pkgbuild('preconda')
-
-    keep_pkgs = info.get('keep_pkgs', False)
     for dist in info['_dists']:
-        if isinstance(dist, str if version_info[0] >= 3 else basestring):
-           fn = dist
-           if dist.endswith(".tar.bz2"):
-               dname = dist[:-8]
-           elif dist.endswith(".conda"):
-               dname = dist[:-6]
-           ndist = name_dist(fn)
-        else:
-            fn = dist.fn
-            dname = dist.dist_name
-            ndist = dist.name
-        fresh_dir(PACKAGE_ROOT)
-        cph_e(join(CACHE_DIR, fn), join(pkgs_dir, dname))
-        if keep_pkgs:
-            shutil.copy(join(CACHE_DIR, fn), join(pkgs_dir, fn))
-        pkgbuild(ndist)
-
-    fresh_dir(PACKAGE_ROOT)
-    os.makedirs(prefix)
+        os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
     shutil.copyfile(info['_conda_exe'], join(prefix, "conda.exe"))
-    pkgbuild("conda.exe")
-    # Create special preinstall and postinstall packages to check if Anaconda
-    # is already installed, build Anaconda, and to update the shell profile.
+    # This script checks to see if the install location already exists
+    move_script(join(OSX_DIR, 'preinstall.sh'), join(SCRIPTS_DIR, 'preinstall'), info)
+    # This script performs the full installation
+    move_script(join(OSX_DIR, 'post_extract.sh'), join(SCRIPTS_DIR, 'postinstall'), info)
+    pkgbuild('main')
+    names = ['main']
 
-    # First script
-    pkgbuild_script('postextract', info, 'post_extract.sh')
-
-    # Next, the script to edit bashrc with the PATH.  This is separate so it
-    # can be disabled.
+    # The next three packages contain nothing but scripts to execute a
+    # particular optional task. The Mac installer GUI will allow each of
+    # these scripts to be enabled or disabled by the user in the GUI
+    # The user-supplied post-install script
+    if info.get('post_install'):
+        pkgbuild_script('postinstall', info, abspath(info['post_install']))
+        names.append('postinstall')
+    # The script to run conda init
     pkgbuild_script('pathupdate', info, 'update_path.sh')
+    names.append('pathupdate')
+    # The script to clear the package cache
+    pkgbuild_script('cacheclean', info, 'clean_cache.sh')
+    names.append('cacheclean')
 
-    post_packages = ['postextract', 'pathupdate']
-
-    # Next, the users post_install script, if specified
-    if info.get('post_install', None) is not None:
-        scripts_dir = join(CACHE_DIR, "scripts")
-        fresh_dir(scripts_dir)
-        move_script(info['post_install'], join(scripts_dir, 'postinstall'), info)
-        fresh_dir(PACKAGE_ROOT)
-        pkgbuild('user_postinstall', scripts_dir)
-        post_packages.append('user_postinstall')
-
-    # Next, the script to be run before everything, which checks if Anaconda
-    # is already installed.
-    pkgbuild_script('apreinstall', info, 'preinstall.sh', 'preinstall')
-
-    # Now build the final package
-    names = ['apreinstall', 'preconda']
-    names.extend(name_dist(dist) for dist in info['_dists'])
-    names.extend(post_packages)
-    names.extend(["conda.exe"])
-
+    # The default distribution file needs to be modified, so we create
+    # it to a temporary location, edit it, and supply it to the final call.
     xml_path = join(PACKAGES_DIR, 'distribution.xml')
     args = ["productbuild", "--synthesize"]
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
     check_call(args)
-
     modify_xml(xml_path, info)
 
+    identity_name = info.get('signing_identity_name')
     check_call([
         "productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info['name'],
-        "tmp.pkg",
+        "tmp.pkg" if identity_name else info['_outpath']
     ])
-
-    identity_name = info.get('signing_identity_name')
     if identity_name:
         check_call([
-            'productsign', '--sign',
-            identity_name,
+            'productsign', '--sign', identity_name,
             "tmp.pkg",
             info['_outpath'],
         ])
         os.unlink("tmp.pkg")
-    else:
-        os.rename('tmp.pkg', info['_outpath'])
 
     print("done")
