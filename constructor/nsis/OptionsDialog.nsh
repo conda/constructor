@@ -6,18 +6,21 @@
 ;Page interface settings and variables
 
 Var mui_AnaCustomOptions
-
 Var mui_AnaCustomOptions.AddToPath
 Var mui_AnaCustomOptions.RegisterSystemPython
-Var mui_AnaCustomOptions.NoScripts
+Var mui_AnaCustomOptions.PostInstall
+Var mui_AnaCustomOptions.ClearPkgCache
 
 # These are the checkbox states, to be used by the installer
 Var Ana_AddToPath_State
 Var Ana_RegisterSystemPython_State
-Var Ana_NoScripts_State
+Var Ana_PostInstall_State
+Var Ana_ClearPkgCache_State
 
 Var Ana_AddToPath_Label
 Var Ana_RegisterSystemPython_Label
+Var Ana_ClearPkgCache_Label
+Var Ana_PostInstall_Label
 
 Function mui_AnaCustomOptions_InitDefaults
     # Initialize defaults
@@ -34,9 +37,6 @@ Function mui_AnaCustomOptions_InitDefaults
         ${Else}
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${EndIf}
-    ${EndIf}
-    ${If} $Ana_NoScripts_State == ""
-        StrCpy $Ana_NoScripts_State ${BST_UNCHECKED}
     ${EndIf}
 FunctionEnd
 
@@ -60,26 +60,19 @@ Function mui_AnaCustomOptions_Show
         "Advanced Installation Options" \
         "Customize how ${NAME} integrates with Windows"
 
-    ${NSD_CreateGroupBox} 0u 0u 100% 140u "Advanced Options"
-    Pop $0
-
     ${If} $InstMode = ${JUST_ME}
         StrCpy $1 "my"
     ${Else}
         StrCpy $1 "the system"
     ${EndIf}
-    ${NSD_CreateCheckbox} 20u 13u 250u 10u \
-        "Add ${NAME} to $1 &PATH environment variable"
+    ${NSD_CreateCheckbox} 0 12u 100% 11u "Add ${NAME} to $1 &PATH environment variable"
     Pop $mui_AnaCustomOptions.AddToPath
-
     ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
     ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
-
-    ${NSD_CreateLabel} 20u 25u 250u 38u \
-        "Not recommended. Instead, open ${NAME} with the Windows Start$\n\
-         menu and select $\"Anaconda (${ARCH})$\". This $\"add to PATH$\" option makes$\n\
-         ${NAME} get found before previously installed software, but may$\n\
-         cause problems requiring you to uninstall and reinstall ${NAME}."
+    ${NSD_CreateLabel} 5% 24u 90% 29u \
+        "NOT recommended; adding ${NAME} to the PATH can lead to conflicts with other \
+         applications. Instead, use the Commmand Prompt and Powershell menus added to the \
+         $\"Anaconda${PYVERSION_MAJOR} (${ARCH})$\" folder of the Windows Start Menu."
     Pop $Ana_AddToPath_Label
 
     ${If} $InstMode = ${JUST_ME}
@@ -87,28 +80,30 @@ Function mui_AnaCustomOptions_Show
     ${Else}
         StrCpy $1 "the system"
     ${EndIf}
-    ${NSD_CreateCheckbox} 20u 68u 250u 10u \
-        "&Register ${NAME} as $1 Python ${PY_VER}"
+    ${NSD_CreateCheckbox} 0 53u 100% 11u "&Register ${NAME} as $1 Python ${PY_VER}"
     Pop $mui_AnaCustomOptions.RegisterSystemPython
-    ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython \
-                    $Ana_RegisterSystemPython_State
-    ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython \
-                   RegisterSystemPython_OnClick
-
-    ${NSD_CreateLabel} 20u 80u 250u 30u \
-        "This will allow other programs, such as Python Tools for Visual Studio \
-         $\nPyCharm, Wing IDE, PyDev, and MSI binary packages, to automatically \
-         $\ndetect ${NAME} as the primary Python ${PY_VER} on the system."
+    ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython $Ana_RegisterSystemPython_State
+    ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython RegisterSystemPython_OnClick
+    ${NSD_CreateLabel} 5% 65u 90% 20u \
+        "Recommended. Allows other programs, such as VSCode, PyCharm, etc. to automatically \
+         detect ${NAME} as the primary Python ${PY_VER} on the system."
     Pop $Ana_RegisterSystemPython_Label
 
-    ${If} "${POST_INSTALL_DESC}" != ""
-        # Make this to display only when necessary
-        ${NSD_CreateCheckbox} 20u 112u 250u 10u \
-            "${POST_INSTALL_DESC}"
-        Pop $mui_AnaCustomOptions.NoScripts
-        ${NSD_SetState} $mui_AnaCustomOptions.NoScripts $Ana_NoScripts_State
-        ${NSD_OnClick} $mui_AnaCustomOptions.NoScripts NoScripts_OnClick
+    ${NSD_CreateCheckbox} 0 85u 100% 11u "Clear the package cache upon completion"
+    Pop $mui_AnaCustomOptions.ClearPkgCache
+    ${NSD_SetState} $mui_AnaCustomOptions.ClearPkgCache $Ana_ClearPkgCache_State
+    ${NSD_OnClick} $mui_AnaCustomOptions.ClearPkgCache ClearPkgCache_OnClick
+    ${NSD_CreateLabel} 5% 97u 90% 11u \
+        "Recommended. Recovers some disk space without harming functionality."
+    Pop $Ana_ClearPkgCache_Label
 
+    ${If} "${POST_INSTALL_DESC}" != ""
+    ${NSD_CreateCheckbox} 0 108u 100% 11u "Run the post-install script"
+    Pop $mui_AnaCustomOptions.PostInstall
+    ${NSD_SetState} $mui_AnaCustomOptions.PostInstall $Ana_PostInstall_State
+    ${NSD_OnClick} $mui_AnaCustomOptions.PostInstall PostInstall_OnClick
+    ${NSD_CreateLabel} 5% 120u 90% 20u "Recommended. ${POST_INSTALL_DESC}"
+    Pop $Ana_PostInstall_Label
     ${EndIf}
 
     nsDialogs::Show
@@ -125,7 +120,6 @@ Function AddToPath_OnClick
         SetCtlColors $Ana_AddToPath_Label ff0000 transparent
     ${EndIf}
     ShowWindow $Ana_AddToPath_Label ${SW_SHOW}
-
 FunctionEnd
 
 Function RegisterSystemPython_OnClick
@@ -169,9 +163,28 @@ KeepSettingLabel:
     ${EndIf}
 FunctionEnd
 
-Function NoScripts_OnClick
+Function PostInstall_OnClick
     Pop $0
-    ${NSD_GetState} $0 $Ana_NoScripts_State
 
+    ShowWindow $Ana_PostInstall_Label ${SW_HIDE}
+    ${NSD_GetState} $0 $Ana_PostInstall_State
+    ${If} $Ana_PostInstall_State == ${BST_CHECKED}
+        SetCtlColors $Ana_PostInstall_Label 000000 transparent
+    ${Else}
+        SetCtlColors $Ana_PostInstall_Label ff0000 transparent
+    ${EndIf}
+    ShowWindow $Ana_PostInstall_Label ${SW_SHOW}
 FunctionEnd
 
+Function ClearPkgCache_OnClick
+    Pop $0
+
+    ShowWindow $Ana_ClearPkgCache_Label ${SW_HIDE}
+    ${NSD_GetState} $0 $Ana_ClearPkgCache_State
+    ${If} $Ana_ClearPkgCache_State == ${BST_CHECKED}
+        SetCtlColors $Ana_ClearPkgCache_Label 000000 transparent
+    ${Else}
+        SetCtlColors $Ana_ClearPkgCache_Label ff0000 transparent
+    ${EndIf}
+    ShowWindow $Ana_ClearPkgCache_Label ${SW_SHOW}
+FunctionEnd

@@ -95,6 +95,7 @@ def make_nsi(info, dir_path):
         'ARCH': '%d-bit' % arch,
         'PY_VER': py_version[:3],
         'PYVERSION': py_version,
+        'PYVERSION_MAJOR': py_version.split('.')[0],
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
         'OUTFILE': info['_outpath'],
         'LICENSEFILE': abspath(info.get('license_file',
@@ -126,6 +127,8 @@ def make_nsi(info, dir_path):
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     ppd['register_python_default'] = info.get('register_python_default', None)
     ppd['check_path_length'] = info.get('check_path_length', None)
+    ppd['keep_pkgs'] = info.get('keep_pkgs') or False
+    ppd['post_install_exists'] = bool(info.get('post_install'))
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
 
@@ -142,7 +145,6 @@ def make_nsi(info, dir_path):
         ('@NAME@', name),
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
-        ('@KEEP_PKGS@', '1' if info.get('keep_pkgs', False) else '0'),
         ('@PKG_COMMANDS@', '\n    '.join(cmds)),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
