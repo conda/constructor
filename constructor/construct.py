@@ -225,7 +225,7 @@ interactive installation. (Windows only)
     ('check_path_length',     False, bool, '''
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter path (less than 46 character)
-or enable long path on windows > 10 (require admin right).  By default, True. (Windows only)
+or enable long path on windows > 10 (require admin right). Default is True. (Windows only)
 '''),
 ]
 
