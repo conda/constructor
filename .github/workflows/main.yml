@@ -28,18 +28,13 @@ jobs:
       run: |
           [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
+          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify codecov
     - name: Build the package
-      run: |
-          source ../conda/etc/profile.d/conda.sh
-          conda build conda.recipe --python=${{ matrix.pyver }} --no-test
-    - name: Create a test env and run tests
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
           source ../conda/etc/profile.d/conda.sh
-          conda create -n ctest local::constructor 'pillow>=3.1' pytest pytest-cov codecov
-          conda activate ctest
-          pytest --pyargs -v --cov=constructor constructor.tests
-          coverage run --append scripts/run_examples.py
+          export COVERAGE_FILE=$PWD/.coverage
+          conda build conda.recipe --python=${{ matrix.pyver }}
+          conda activate
           codecov

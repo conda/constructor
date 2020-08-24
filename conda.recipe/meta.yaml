@@ -6,7 +6,7 @@ package:
 
 source:
   # git_url is nice in that it won't capture devenv stuff.  However, it only
-  #    captures committed code, so pay attention.
+  # captures committed code, so pay attention.
   - git_url: ../
 
 build:
@@ -14,6 +14,8 @@ build:
     - python -m pip install --no-deps --ignore-installed .
   entry_points:
     - constructor = constructor.main:main
+  script_env:
+    - COVERAGE_FILE
 
 requirements:
   host:
@@ -35,10 +37,13 @@ test:
   requires:
     - pillow >=3.1
     - pytest
+    - pytest-cov
+    - codecov
   commands:
     - constructor -V
-    - pytest --pyargs -v constructor
+    - pytest --pyargs -v --cov=constructor constructor
     - python scripts/run_examples.py
+    - coverage report
 
 about:
   home: https://conda.io

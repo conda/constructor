@@ -8,6 +8,12 @@ import subprocess
 import sys
 import platform
 
+try:
+    import coverage
+    COV_CMD = ['coverage', 'run', '--append', '-m']
+except ImportError:
+    COV_CMD = []
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 REPO_DIR = os.path.dirname(HERE)
 EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
@@ -27,10 +33,11 @@ def run_examples():
     for fname in os.listdir(EXAMPLES_DIR):
         fpath = os.path.join(EXAMPLES_DIR, fname)
         if os.path.isdir(fpath) and fpath not in whitelist and fpath not in BLACKLIST:
-            example_paths.append(fpath)
+            if os.path.exists(os.path.join(fpath, 'construct.yaml')):
+                example_paths.append(fpath)
 
     for i, example_path in enumerate(sorted(example_paths)):
-        cmd = ['constructor', example_path]
+        cmd = COV_CMD + ['constructor', example_path]
         p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
         print('\n\n# Testing example {}:\n--------------------'.format(i + 1))
         print(example_path)
