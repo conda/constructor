@@ -241,8 +241,13 @@ Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
 interactive installation. (Windows only)
 '''),
-]
 
+    ('check_path_length',     False, bool, '''
+Check the length of the path where the distribution is installed to ensure nodejs
+can be installed.  Raise a message to request shorter path (less than 46 character)
+or enable long path on windows > 10 (require admin right). Default is True. (Windows only)
+'''),
+]
 
 def ns_platform(platform):
     p = platform
