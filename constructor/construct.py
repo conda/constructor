@@ -134,9 +134,11 @@ process.
 '''),
 
     ('keep_pkgs',              False, bool, '''
-By default, no conda packages are preserved after running the created
-installer in the `pkgs` directory.  Using this option changes the default
-behavior.
+If `False` (default), the package cache in the `pkgs` subdirectory is removed
+when the installation process is complete. If `True`, this subdirectory and
+its contents are preserved. If `keep_pkgs` is `False`, Unix `.sh` and Windows `.msi`
+installers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)
+to preserve the package cache.
 '''),
 
     ('signing_identity_name',  False, str, '''
@@ -186,10 +188,11 @@ and a `.bat` file for Windows.
 '''),
 
     ('post_install_desc',      False, str, '''
-Short description of the "post_install" script to be displayed as label of
-the "Do not run post install script" checkbox in the windows installer.
-If used and not an empty string, the "Do not run post install script"
-checkbox will be displayed with this label.
+A description of the purpose of the supplied post_install script. If this
+string is supplied and non-empty, then the Windows and macOS GUI installers
+will display it along with checkbox to enable or disable the execution of the
+script. If this string is not supplied, it is assumed that the script
+is compulsory and the option to disable it will not be offered.
 '''),
 
     ('pre_uninstall',          False, str, '''
@@ -231,9 +234,9 @@ If `header_image` is not provided, use this text when generating the image
 '''),
 
     ('initialize_by_default',    False, bool, '''
-Default choice for whether to add the installation to the PATH environment
-variable. The user is still able to change this during interactive
-installation.
+Whether to add the installation to the PATH environment variable. The default
+is true for GUI installers (msi, pkg) and False for shell installers. The user
+is able to change the default during interactive installation.
 '''),
 
     ('register_python_default',  False, bool, '''

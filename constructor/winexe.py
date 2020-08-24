@@ -39,7 +39,7 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, channels):
+def pkg_commands(download_dir, dists, py_version, attempt_hardlinks, channels):
     for n, dist in enumerate(dists):
         fn = filename_dist(dist)
         yield ''
@@ -50,7 +50,7 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, 
     # CONDA_PKGS_DIRS to the local package cache directory
     _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "%s").r0'%(','.join(channels))
     yield "System::Call '%s'" % _env
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs").r0'
+    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\\pkgs").r0'
     yield "System::Call '%s'" % _env
 
     # Add env vars to bypass safety checks
@@ -75,10 +75,6 @@ def pkg_commands(download_dir, dists, py_version, keep_pkgs, attempt_hardlinks, 
     yield "Pop $0"
     yield r'SetDetailsPrint both'
 
-    if not keep_pkgs:
-        yield ''
-        yield r'RMDir "$INSTDIR\pkgs"'
-
 
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
@@ -99,6 +95,7 @@ def make_nsi(info, dir_path):
         'ARCH': '%d-bit' % arch,
         'PY_VER': py_version[:3],
         'PYVERSION': py_version,
+        'PYVERSION_MAJOR': py_version.split('.')[0],
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
         'OUTFILE': info['_outpath'],
         'LICENSEFILE': abspath(info.get('license_file',
@@ -130,11 +127,12 @@ def make_nsi(info, dir_path):
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     ppd['register_python_default'] = info.get('register_python_default', None)
     ppd['check_path_length'] = info.get('check_path_length', None)
+    ppd['keep_pkgs'] = info.get('keep_pkgs') or False
+    ppd['post_install_exists'] = bool(info.get('post_install'))
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
 
     cmds = pkg_commands(download_dir, dists, py_version,
-                        bool(info.get('keep_pkgs')),
                         bool(info.get('attempt_hardlinks')),
                         get_final_channels(info))
 

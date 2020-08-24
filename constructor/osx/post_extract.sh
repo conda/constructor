@@ -4,31 +4,44 @@
 
 unset DYLD_LIBRARY_PATH
 
-# TODO: We could use syslog instead of echo to log things to the console so
-# that they can actually be seen by someone looking for them.
-
-# $2 is the install location, which is ~ by default, but which the user can
-# change.
 PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
-
 echo "PREFIX=$PREFIX"
 
 CONDA_EXEC="$PREFIX/conda.exe"
 chmod +x "$CONDA_EXEC"
 
-cp "$PREFIX/conda-meta/history" "$PREFIX/conda-meta/history.bak"
+# Create a blank history file so conda thinks this is an existing env
+mkdir -p $PREFIX/conda-meta
+touch $PREFIX/conda-meta/history
+
+# Extract the conda packages but avoiding the overwriting of the
+# custom metadata we have already put in place
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs
+if (( $? )); then
+    echo "ERROR: could not extract the conda packages"
+    exit 1
+fi
+
+# Perform the conda install
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
-cp "$PREFIX/conda-meta/history.bak" "$PREFIX/conda-meta/history"
+if (( $? )); then
+    echo "ERROR: could not complete the conda install"
+    exit 1
+fi
+
+# Move the prepackaged history file into place
+mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
 
 # Cleanup!
 rm -f "$CONDA_EXEC"
-rm -f "$PREFIX/pkgs/env.txt"
+rm -f "$PREFIX/env.txt"
+find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
 __WRITE_CONDARC__
 

@@ -28,6 +28,7 @@ Unicode "true"
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
+!define PYVERSION_MAJOR __PYVERSION_MAJOR__
 !define DEFAULT_PREFIX __DEFAULT_PREFIX__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
@@ -48,6 +49,7 @@ var /global ARGV
 var /global ARGV_Help
 var /global ARGV_InstallationType
 var /global ARGV_AddToPath
+var /global ARGV_KeepPkgCache
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
@@ -176,6 +178,12 @@ FunctionEnd
              Options:$\n$\n\
                 /InstallationType=AllUsers [default: JustMe]$\n$\n\
                 /AddToPath=[0|1] [default: 0]$\n$\n\
+#if keep_pkgs is True
+                /KeepPkgCache=[0|1] [default: 1]$\n$\n\
+#endif
+#if keep_pkgs is False
+                /KeepPkgCache=[0|1] [default: 0]$\n$\n\
+#endif
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
                 /NoScripts=[0|1] [default: 0]$\n$\n\
@@ -221,6 +229,12 @@ FunctionEnd
     ${EndIf}
 
     ClearErrors
+    ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
+    ${If} ${Errors}
+        StrCpy $ARGV_KeepPkgCache "@KEEP_PKGS@"
+    ${EndIf}
+
+    ClearErrors
     ${GetOptions} $ARGV "/NoRegistry=" $ARGV_NoRegistry
     ${If} ${Errors}
         StrCpy $ARGV_NoRegistry "0"
@@ -230,9 +244,9 @@ FunctionEnd
     ${GetOptions} $ARGV "/NoScripts=" $ARGV_NoScripts
     ${IfNot} ${Errors}
         ${If} $ARGV_NoScripts = "1"
-            StrCpy $Ana_NoScripts_State ${BST_CHECKED}
+            StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
         ${ElseIf} $ARGV_NoScripts = "0"
-            StrCpy $Ana_NoScripts_State ${BST_UNCHECKED}
+            StrCpy $Ana_PostInstall_State ${BST_CHECKED}
         ${EndIf}
     ${EndIf}
 
@@ -543,6 +557,18 @@ Function .onInit
 #if check_path_length is False
     StrCpy $CheckPathLength "0"
 #endif
+#if keep_pkgs is True
+    StrCpy $Ana_ClearPkgCache_State ${BST_UNCHECKED}
+#endif
+#if keep_pkgs is False
+    StrCpy $Ana_ClearPkgCache_State ${BST_CHECKED}
+#endif
+#if post_install_exists is True
+    StrCpy $Ana_PostInstall_State ${BST_CHECKED}
+#endif
+#if post_install_exists is False
+    StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
+#endif
 
     Call OnInit_Release
 
@@ -778,26 +804,6 @@ Function .onVerifyInstDir
     PathGood:
 FunctionEnd
 
-Function AbortRetryExecWait
-    Pop $1
-    Pop $2
-    ${Do}
-        ExecWait $2 $0
-        ${If} $0 != "0"
-            MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
-                    $1 /SD IDIGNORE IDABORT abort IDRETRY retry
-            ; IDIGNORE: Continue anyway
-            StrCpy $0 "0"
-            goto retry
-          abort:
-            ; Abort installation
-            Abort
-          retry:
-            ; Retry the ExecWait command
-        ${EndIf}
-    ${LoopWhile} $0 != "0"
-FunctionEnd
-
 Function AbortRetryNSExecWait
     Pop $1
     Pop $2
@@ -814,7 +820,7 @@ Function AbortRetryNSExecWait
             ; Abort installation
             Abort
           retry:
-            ; Retry the ExecWait command
+            ; Retry the nsExec command
         ${EndIf}
     ${LoopWhile} $0 != "0"
 FunctionEnd
@@ -858,6 +864,7 @@ Section "Install"
     @PKG_COMMANDS@
 
     # Cleanup
+    SetOutPath "$INSTDIR"
     Delete "$INSTDIR\pkgs\env.txt"
 
     @WRITE_CONDARC@
@@ -876,21 +883,28 @@ Section "Install"
 
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize Anaconda directories'
-    call AbortRetryExecWait
+    call AbortRetryNSExecWait
 
-    ${If} $Ana_NoScripts_State = ${BST_UNCHECKED}
+    ${If} $Ana_PostInstall_State = ${BST_CHECKED}
         DetailPrint "Running post install..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
         push 'Failed to run post install script'
-        call AbortRetryExecWait
+        call AbortRetryNSExecWait
+    ${EndIf}
+
+    ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
+        DetailPrint "Clearing package cache..."
+        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
+        push 'Failed to clear package cache'
+        call AbortRetryNSExecWait
     ${EndIf}
 
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
+        DetailPrint "Adding to PATH..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
         push 'Failed to add @NAME@ to the system PATH'
-        call AbortRetryExecWait
+        call AbortRetryNSExecWait
     ${EndIf}
-
 
     # Create registry entries saying this is the system Python
     # (for this version)

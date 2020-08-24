@@ -173,9 +173,11 @@ process.
 
 _required:_ no<br/>
 _type:_ boolean<br/>
-By default, no conda packages are preserved after running the created
-installer in the `pkgs` directory.  Using this option changes the default
-behavior.
+If `False` (default), the package cache in the `pkgs` subdirectory is removed
+when the installation process is complete. If `True`, this subdirectory and
+its contents are preserved. If `keep_pkgs` is `False`, Unix `.sh` and Windows `.msi`
+installers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)
+to preserve the package cache.
 
 ## `signing_identity_name`
 
