@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest,ubuntu-latest,windows-latest]
-        pyver: [3.6,3.7,3.8]
+        pyver: [2.7,3.6,3.7,3.8]
     steps:
     - name: Retrieve the source code
       uses: actions/checkout@v2
@@ -28,16 +28,18 @@ jobs:
       run: |
           [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify python=${{ matrix.pyver }} pillow>=3.1 ruamel_yaml conda-forge::codecov pytest pytest-cov
-    - name: Build, unit test, and install the package
+          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
+    - name: Build the package
       run: |
           source ../conda/etc/profile.d/conda.sh
           conda build conda.recipe --python=${{ matrix.pyver }} --no-test
-          conda install local::constructor
-    - name: Run tests
+    - name: Create a test env and run tests
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       run: |
-        source ../conda/etc/profile.d/conda.sh
-        conda activate
-        constructor -V
-        pytest --pyargs -v --cov=constructor constructor
-        python scripts/run_examples.py
+          source ../conda/etc/profile.d/conda.sh
+          conda create -n ctest local::constructor 'pillow>=3.1' pytest pytest-cov codecov
+          conda activate ctest
+          pytest --pyargs -v --cov=constructor constructor.tests
+          coverage run --append scripts/run_examples.py
+          codecov

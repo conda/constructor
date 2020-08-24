@@ -28,11 +28,17 @@ requirements:
     - nsis >=3.01      # [win]
 
 test:
-  imports:
-    - constructor
+  source_files:
+    - scripts
+    - examples
+    - .coveragerc
+  requires:
+    - pillow >=3.1
+    - pytest
   commands:
     - constructor -V
-    - constructor --test .
+    - pytest --pyargs -v constructor
+    - python scripts/run_examples.py
 
 about:
   home: https://conda.io
@@ -54,3 +60,4 @@ extra:
     - msarahan
     - mingwandroid
     - nehaljwani
+    - mcg1969
