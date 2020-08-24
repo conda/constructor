@@ -1,4 +1,5 @@
 [run]
+source=constructor
 omit =
     # omit anything in a tests folder
     */tests/*

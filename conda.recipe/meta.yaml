@@ -1,18 +1,21 @@
+{% set data = load_setup_py_data() %}
+
 package:
   name: constructor
-  version: {{ GIT_DESCRIBE_TAG }}.{{ GIT_BUILD_STR }}
+  version: {{ data.get('version') }}
 
 source:
   # git_url is nice in that it won't capture devenv stuff.  However, it only
-  #    captures committed code, so pay attention.
+  # captures committed code, so pay attention.
   - git_url: ../
 
 build:
   script:
-    - pip install --no-deps -vv .
+    - python -m pip install --no-deps --ignore-installed .
   entry_points:
     - constructor = constructor.main:main
-
+  script_env:
+    - COVERAGE_FILE
 
 requirements:
   host:
@@ -27,11 +30,20 @@ requirements:
     - nsis >=3.01      # [win]
 
 test:
-  imports:
-    - constructor
+  source_files:
+    - scripts
+    - examples
+    - .coveragerc
+  requires:
+    - pillow >=3.1
+    - pytest
+    - pytest-cov
+    - codecov
   commands:
     - constructor -V
-    - constructor --test .
+    - pytest --pyargs -v --cov=constructor constructor
+    - python scripts/run_examples.py
+    - coverage report
 
 about:
   home: https://conda.io
@@ -53,3 +65,4 @@ extra:
     - msarahan
     - mingwandroid
     - nehaljwani
+    - mcg1969

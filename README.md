@@ -3,8 +3,7 @@
 
 ## Build status
 
-[![Build Status](https://travis-ci.org/conda/constructor.svg?branch=master)](https://travis-ci.org/conda/constructor)
-[![Build status](https://ci.appveyor.com/api/projects/status/cxf565h1rh3v0kaq?svg=true)](https://ci.appveyor.com/project/ContinuumAnalyticsFOSS/constructor)
+[![Build status](https://github.com/conda/constructor/workflows/Build%20and%20test%20the%20package/badge.svg)](https://github.com/conda/constructor/actions)
 [![codecov](https://codecov.io/gh/conda/constructor/branch/master/graph/badge.svg)](https://codecov.io/gh/conda/constructor)
 
 ## Description:

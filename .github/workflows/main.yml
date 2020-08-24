@@ -1,0 +1,40 @@
+name: Build and test the package
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+jobs:
+  package:
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest,ubuntu-latest,windows-latest]
+        pyver: [2.7,3.6,3.7,3.8]
+    steps:
+    - name: Retrieve the source code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Build the test root environment
+      run: |
+          [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
+          [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
+          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify codecov
+    - name: Build the package
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: |
+          source ../conda/etc/profile.d/conda.sh
+          export COVERAGE_FILE=$PWD/.coverage
+          conda build conda.recipe --python=${{ matrix.pyver }}
+          conda activate
+          codecov
