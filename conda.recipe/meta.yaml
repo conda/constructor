@@ -31,6 +31,7 @@ requirements:
 
 test:
   source_files:
+    - tests
     - scripts
     - examples
     - .coveragerc
@@ -41,7 +42,7 @@ test:
     - codecov
   commands:
     - constructor -V
-    - pytest --pyargs -v --cov=constructor constructor
+    - pytest -v --cov=constructor tests
     - python scripts/run_examples.py
     - coverage report
 

@@ -6,7 +6,10 @@
 import os
 import subprocess
 import sys
+import tempfile
 import platform
+import shutil
+import glob
 
 try:
     import coverage
@@ -20,6 +23,20 @@ EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
 PY3 = sys.version_info[0] == 3
 WHITELIST = ['grin', 'jetsonconda', 'maxiconda', 'newchan']
 BLACKLIST = []
+
+
+def _execute(cmd):
+    print(' '.join(cmd))
+    p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
+    print('--- STDOUT ---')
+    _, stderr = p.communicate()
+    if stderr:
+        print('--- STDERR ---')
+        if PY3:
+            stderr = stderr.decode()
+        print(stderr.strip())
+    return p.returncode != 0
+
 
 def run_examples():
     """Run examples bundled with the repository."""
@@ -36,25 +53,42 @@ def run_examples():
             if os.path.exists(os.path.join(fpath, 'construct.yaml')):
                 example_paths.append(fpath)
 
+    output_dir = tempfile.mkdtemp()
+    tested_files = set()
     for i, example_path in enumerate(sorted(example_paths)):
-        cmd = COV_CMD + ['constructor', example_path]
-        p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
-        print('\n\n# Testing example {}:\n--------------------'.format(i + 1))
         print(example_path)
-        print('\n')
-        stdout, stderr = p.communicate()
-        if PY3:
-            stderr = stderr.decode().strip()
-
-        if p.returncode != 0:
-            errored += 1
-            print(stderr)
+        print('-' * len(example_path))
+        output_dir = tempfile.mkdtemp()
+        cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
+        errored += _execute(cmd)
+        for fpath in os.listdir(output_dir):
+            ext = fpath.rsplit('.', 1)[-1]
+            if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
+                continue
+            tested_files.add(fpath)
+            env_dir = tempfile.mkdtemp(dir=output_dir)
+            shutil.rmtree(env_dir)
+            print('---- testing %s' % fpath)
+            fpath = os.path.join(output_dir, fpath)
+            if ext == 'sh':
+                cmd = ['bash', fpath, '-b', '-p', env_dir]
+            elif ext == 'pkg':
+                # TODO: figure out how to do a command-line install
+                # to an arbitrary directory. No luck yet. For now
+                # we just expand it out
+                cmd = ['pkgutil', '--expand', fpath, env_dir]
+            elif ext == 'exe':
+                cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
+            errored += _execute(cmd)
+        print('')
 
     if errored:
-        print('\n\nSome examples failed!\n\n')
+        print('Some examples failed!')
+        print('Assets saved in: %s' % output_dir)
         sys.exit(1)
     else:
-        print('\n\nAll examples ran successfully!\n\n')
+        print('All examples ran successfully!')
+        shutil.rmtree(output_dir)
 
 
 if __name__ == '__main__':
