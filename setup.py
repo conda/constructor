@@ -17,7 +17,7 @@ setuptools.setup(
     license="BSD",
     description="create installer from conda packages",
     long_description=open("README.md").read(),
-    packages=["constructor", "constructor.tests"],
+    packages=["constructor"],
     entry_points={
         "console_scripts": ["constructor = constructor.main:main"],
     },

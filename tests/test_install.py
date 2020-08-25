@@ -3,7 +3,7 @@ import os
 import shutil
 import json
 
-from ..install import (
+from constructor.install import (
     PaddingError, binary_replace, name_dist, url_pat,
     link_idists, duplicates_to_remove, create_meta
 )
