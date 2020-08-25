@@ -80,8 +80,6 @@ def run_examples():
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
             errored += _execute(cmd)
-            if ext = 'exe':
-                cmd = 
         print('')
 
     if errored:
