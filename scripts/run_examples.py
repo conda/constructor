@@ -88,7 +88,10 @@ def run_examples():
         sys.exit(1)
     else:
         print('All examples ran successfully!')
-        shutil.rmtree(output_dir)
+        try:
+            shutil.rmtree(output_dir)
+        except Exception:
+            pass
 
 
 if __name__ == '__main__':

@@ -14,8 +14,6 @@ build:
     - python -m pip install --no-deps --ignore-installed .
   entry_points:
     - constructor = constructor.main:main
-  script_env:
-    - COVERAGE_FILE
 
 requirements:
   host:
