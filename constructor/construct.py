@@ -123,9 +123,15 @@ The filename of the installer being created. If not supplied, a reasonable
 default will determined by the `name`, `version`, platform, and installer type.
 '''),
 
-    ('installer_type',     False, str, '''
-The type of the installer being created.  Possible values are "sh", "pkg",
-and "exe". The default type is "sh" on Unix, and "exe" on Windows.
+    ('installer_type',     False, (str, list), '''
+The type of the installer being created.  Possible values are:
+- `sh`: shell-based installer for Linux or macOS;
+- `pkg`: macOS GUI installer
+- `exe`: Windows GUI installer
+
+The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
+value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
+as `sh` on Linux and `exe` on Windows.
 '''),
 
     ('license_file',           False, str, '''

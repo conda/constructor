@@ -21,24 +21,25 @@ from . import __version__
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 
 
-def set_installer_type(info):
+def get_installer_type(info):
     osname, unused_arch = info['_platform'].split('-')
 
-    if not info.get('installer_type'):
-        os_map = {'linux': 'sh', 'osx': 'sh', 'win': 'exe'}
-        info['installer_type'] = os_map[osname]
+    os_allowed = {'linux': ('sh',), 'osx': ('sh', 'pkg'), 'win': ('exe',)}
+    all_allowed = set(sum(os_allowed.values(), ('all',)))
 
-    allowed_types = 'sh', 'pkg', 'exe'
-    itype = info['installer_type']
-    if itype not in allowed_types:
-        sys.exit("Error: invalid installer type '%s',\n"
-                 "allowed types are: %s" % (itype, allowed_types))
-
-    if ((osname == 'linux' and itype != 'sh') or
-        (osname == 'osx' and itype not in ('sh', 'pkg')) or
-        (osname == 'win' and itype != 'exe')):
-        sys.exit("Error: cannot create '.%s' installer for %s" % (itype,
-                                                                  osname))
+    itype = info.get('installer_type')
+    if not itype:
+        return os_allowed[osname][:1]
+    elif itype == 'all':
+        return os_allowed[osname]
+    elif itype not in all_allowed:
+        all_allowed = ', '.join(sorted(all_allowed))
+        sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
+    elif itype not in os_allowed[osname]:
+        os_allowed = ', '.join(sorted(os_allowed[osname]))
+        sys.exit("Error: invalid installer type '%s' for %s; allowed: %s" % (itype, osname, os_allowed))
+    else:
+        return itype,
 
 
 def get_output_filename(info):
@@ -75,20 +76,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
     info['_conda_exe'] = abspath(conda_exe)
-    set_installer_type(info)
-
-    if info['installer_type'] == 'sh':
-        if sys.platform == 'win32':
-            sys.exit("Error: Cannot create .sh installer on Windows.")
-        from .shar import create
-    elif info['installer_type'] == 'pkg':
-        if sys.platform != 'darwin':
-            sys.exit("Error: Can only create .pkg installer on OSX.")
-        from .osxpkg import create
-    elif info['installer_type'] == 'exe':
-        if sys.platform != 'win32':
-            sys.exit("Error: Can only create .pkg installer on Windows.")
-        from .winexe import create
+    itypes = get_installer_type(info)
 
     if verbose:
         print('conda packages download: %s' % info['_download_dir'])
@@ -116,12 +104,11 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
 
+    info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
         print("Dry run, no installer created.")
         return
-
-    info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
 
     # info has keys
     # 'name', 'version', 'channels', 'exclude',
@@ -131,13 +118,25 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     # '_dists': List[Dist]
     # '_urls': List[Tuple[url, md5]]
 
-    create(info, verbose=verbose)
+    for itype in itypes:
+        if itype == 'sh':
+            from .shar import create as shar_create
+            create = shar_create
+        elif itype == 'pkg':
+            from .osxpkg import create as osxpkg_create
+            create = osxpkg_create
+        elif itype == 'exe':
+            from .winexe import create as winexe_create
+            create = winexe_create
+        info['installer_type'] = itype
+        info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
+        create(info, verbose=verbose)
+        print("Successfully created '%(_outpath)s'." % info)
     if 0:
         with open(join(output_dir, 'pkg-list.txt'), 'w') as fo:
             fo.write('# installer: %s\n' % basename(info['_outpath']))
             for dist in info['_dists']:
                 fo.write('%s\n' % dist)
-    print("Successfully created '%(_outpath)s'." % info)
 
 
 def main():

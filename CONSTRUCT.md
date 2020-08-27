@@ -158,9 +158,15 @@ default will determined by the `name`, `version`, platform, and installer type.
 ## `installer_type`
 
 _required:_ no<br/>
-_type:_ string<br/>
-The type of the installer being created.  Possible values are "sh", "pkg",
-and "exe". The default type is "sh" on Unix, and "exe" on Windows.
+_types:_ string, list<br/>
+The type of the installer being created.  Possible values are:
+- `sh`: shell-based installer for Linux or macOS;
+- `pkg`: macOS GUI installer
+- `exe`: Windows GUI installer
+
+The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
+value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
+as `sh` on Linux and `exe` on Windows.
 
 ## `license_file`
 
@@ -245,10 +251,11 @@ and a `.bat` file for Windows.
 
 _required:_ no<br/>
 _type:_ string<br/>
-Short description of the "post_install" script to be displayed as label of
-the "Do not run post install script" checkbox in the windows installer.
-If used and not an empty string, the "Do not run post install script"
-checkbox will be displayed with this label.
+A description of the purpose of the supplied post_install script. If this
+string is supplied and non-empty, then the Windows and macOS GUI installers
+will display it along with checkbox to enable or disable the execution of the
+script. If this string is not supplied, it is assumed that the script
+is compulsory and the option to disable it will not be offered.
 
 ## `pre_uninstall`
 
@@ -304,9 +311,9 @@ If `header_image` is not provided, use this text when generating the image
 
 _required:_ no<br/>
 _type:_ boolean<br/>
-Default choice for whether to add the installation to the PATH environment
-variable. The user is still able to change this during interactive
-installation.
+Whether to add the installation to the PATH environment variable. The default
+is true for GUI installers (msi, pkg) and False for shell installers. The user
+is able to change the default during interactive installation.
 
 ## `register_python_default`
 

@@ -1,5 +1,6 @@
 name: MinicondaX
 version: X
+installer_type: all
 
 install_in_dependency_order: True
 
