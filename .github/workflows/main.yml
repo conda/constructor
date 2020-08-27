@@ -39,11 +39,14 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         PYTHONIOENCODING: utf-8
+        PYTHONUNBUFFERED: true
       run: |
           source ../conda/etc/profile.d/conda.sh
           conda activate ctest
-          constructor -V
-          pytest -v --cov=constructor tests
-          python scripts/run_examples.py
+          cp .coveragerc tests
+          cd tests
+          pytest -v --cov=constructor .
+          coverage run --append -m constructor -V
+          python ../scripts/run_examples.py
           coverage report
           codecov

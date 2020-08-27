@@ -11,6 +11,13 @@ import platform
 
 from constructor.utils import rm_rf
 
+try:
+    import coverage # noqa
+    COV_CMD = ['coverage', 'run', '--append', '-m']
+except ImportError:
+    COV_CMD = []
+
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 REPO_DIR = os.path.dirname(HERE)
 EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
@@ -53,7 +60,7 @@ def run_examples():
         print(example_path)
         print('-' * len(example_path))
         output_dir = tempfile.mkdtemp()
-        cmd = ['constructor', example_path, '--output-dir', output_dir]
+        cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
         errored += _execute(cmd)
         for fpath in os.listdir(output_dir):
             ext = fpath.rsplit('.', 1)[-1]
