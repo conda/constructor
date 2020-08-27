@@ -24,17 +24,26 @@ jobs:
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
-    - name: Build the test root environment
+    - name: Build the package
       run: |
           [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify codecov
-    - name: Build the package
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
+          source ../conda/etc/profile.d/conda.sh
+          conda build conda.recipe --python=${{ matrix.pyver }} --no-test
+    - name: Build the test environment
       run: |
           source ../conda/etc/profile.d/conda.sh
-          export COVERAGE_FILE=$PWD/.coverage
-          conda build conda.recipe --python=${{ matrix.pyver }}
-          conda activate
+          conda create -n ctest local::constructor pytest pytest-cov 'pillow>=3.1' codecov
+    - name: Run the tests
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        PYTHONIOENCODING: utf-8
+      run: |
+          source ../conda/etc/profile.d/conda.sh
+          conda activate ctest
+          constructor -V
+          pytest -v --cov=constructor tests
+          python scripts/run_examples.py
+          coverage report
           codecov

@@ -1,4 +1,4 @@
-from ..utils import make_VIProductVersion, fill_template, preprocess, normalize_path
+from constructor.utils import make_VIProductVersion, fill_template, preprocess, normalize_path
 
 from os import sep
 

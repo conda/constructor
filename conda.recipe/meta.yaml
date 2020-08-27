@@ -14,8 +14,6 @@ build:
     - python -m pip install --no-deps --ignore-installed .
   entry_points:
     - constructor = constructor.main:main
-  script_env:
-    - COVERAGE_FILE
 
 requirements:
   host:
@@ -31,6 +29,7 @@ requirements:
 
 test:
   source_files:
+    - tests
     - scripts
     - examples
     - .coveragerc
@@ -41,7 +40,7 @@ test:
     - codecov
   commands:
     - constructor -V
-    - pytest --pyargs -v --cov=constructor constructor
+    - pytest -v --cov=constructor tests
     - python scripts/run_examples.py
     - coverage report
 

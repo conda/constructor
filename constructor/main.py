@@ -173,10 +173,6 @@ def main():
                  help="the platform for which installer is for, "
                       "defaults to '{}'".format(cc_platform))
 
-    p.add_argument('--test',
-                 help="perform some self tests and exit",
-                 action="store_true")
-
     p.add_argument('--dry-run',
                  help="solve package specs but do not create installer",
                  default=False,
@@ -210,11 +206,6 @@ def main():
         print("cleaning cache: '%s'" % cache_dir)
         if isdir(cache_dir):
             shutil.rmtree(cache_dir)
-        return
-
-    if args.test:
-        from .tests import main as tests_main
-        tests_main()
         return
 
     if args.debug:
