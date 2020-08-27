@@ -7,8 +7,9 @@
 import re
 import sys
 import hashlib
-from os.path import normpath
-from os import sep
+from os.path import normpath, islink, isfile, isdir
+from os import sep, unlink
+from shutil import rmtree
 
 try:
     import yaml
@@ -150,3 +151,19 @@ def get_final_channels(info):
 def normalize_path(path):
     new_path = normpath(path)
     return new_path.replace(sep + sep, sep)
+
+
+def rm_rf(path):
+    """
+    try to delete path, but never fail
+    """
+    try:
+        if islink(path) or isfile(path):
+            # Note that we have to check if the destination is a link because
+            # exists('/path/to/dead-link') will return False, although
+            # islink('/path/to/dead-link') is True.
+            unlink(path)
+        elif isdir(path):
+            rmtree(path)
+    except (OSError, IOError):
+        pass

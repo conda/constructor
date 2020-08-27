@@ -4,9 +4,8 @@ from os.path import isdir, abspath, dirname, exists, join
 from subprocess import check_call
 import xml.etree.ElementTree as ET
 
-from constructor.install import rm_rf
 import constructor.preconda as preconda
-from constructor.utils import add_condarc, get_final_channels
+from constructor.utils import add_condarc, get_final_channels, rm_rf
 
 
 OSX_DIR = join(dirname(__file__), "osx")
