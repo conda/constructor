@@ -1,3 +1,4 @@
+from constructor import construct
 import jinja2
 import sys
 from os.path import join, dirname
@@ -5,8 +6,6 @@ from os.path import join, dirname
 REPO_ROOT = dirname(dirname(__file__))
 
 sys.path.insert(0, REPO_ROOT)
-
-from constructor import construct
 
 
 valid_platforms = construct.ns_platform(sys.platform)
@@ -39,7 +38,7 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>{{key_info[3]}}{% endfor %}
 ## Available selectors
 {% for key, val in platforms|dictsort %}
 - `{{key}}`{% endfor %}
-"""
+""" # noqa
 
 key_info_list = []
 for key_info in construct.KEYS:

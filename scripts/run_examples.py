@@ -9,10 +9,9 @@ import sys
 import tempfile
 import platform
 import shutil
-import glob
 
 try:
-    import coverage
+    import coverage # noqa
     COV_CMD = ['coverage', 'run', '--append', '-m']
 except ImportError:
     COV_CMD = []

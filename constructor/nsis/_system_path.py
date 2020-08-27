@@ -5,10 +5,12 @@
 # Helper script for adding and removing entries in the
 # Windows system path from the NSIS installer.
 
-__all__ = ['remove_from_system_path', 'add_to_system_path', 'broadcast_environment_settings_change', 'get_previous_install_locations']
+__all__ = ['remove_from_system_path', 'add_to_system_path',
+           'broadcast_environment_settings_change']
 
 import sys
-import os, ctypes
+import os
+import ctypes
 import re
 from os import path
 from ctypes import wintypes
@@ -22,11 +24,12 @@ if sys.stdout and sys.stdout.write:
     out = sys.stdout.write
     err = sys.stderr.write
 else:
-    import ctypes
     OutputDebugString = ctypes.windll.kernel32.OutputDebugStringW
     OutputDebugString.argtypes = [ctypes.c_wchar_p]
+
     def out(x):
         OutputDebugString('_nsis.py: ' + x)
+
     def err(x):
         OutputDebugString('_nsis.py: Error: ' + x)
 
@@ -34,9 +37,11 @@ HWND_BROADCAST = 0xffff
 WM_SETTINGCHANGE = 0x001A
 SMTO_ABORTIFHUNG = 0x0002
 SendMessageTimeout = ctypes.windll.user32.SendMessageTimeoutW
-SendMessageTimeout.restype = None #wintypes.LRESULT
+SendMessageTimeout.restype = None  # wintypes.LRESULT
 SendMessageTimeout.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM,
-            wintypes.LPCWSTR, wintypes.UINT, wintypes.UINT, ctypes.POINTER(wintypes.DWORD)]
+                               wintypes.LPCWSTR, wintypes.UINT, wintypes.UINT,
+                               ctypes.POINTER(wintypes.DWORD)]
+
 
 def sz_expand(value, value_type):
     if value_type == reg.REG_EXPAND_SZ:
@@ -53,7 +58,7 @@ def remove_from_system_path(pathname, allusers=True, path_env_var='PATH'):
 
        For example,
          # Remove Anaconda from PATH
-         remove_from_system_path(r'C:\Anaconda')
+         remove_from_system_path('C:\\Anaconda')
          broadcast_environment_settings_change()
     """
     pathname = path.normcase(path.normpath(pathname))
@@ -61,10 +66,10 @@ def remove_from_system_path(pathname, allusers=True, path_env_var='PATH'):
     envkeys = [(reg.HKEY_CURRENT_USER, r'Environment')]
     if allusers:
         envkeys.append((reg.HKEY_LOCAL_MACHINE,
-            r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment'))
+                        r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment'))
     for root, keyname in envkeys:
         key = reg.OpenKey(root, keyname, 0,
-                reg.KEY_QUERY_VALUE|reg.KEY_SET_VALUE)
+                          reg.KEY_QUERY_VALUE | reg.KEY_SET_VALUE)
         reg_value = None
         try:
             reg_value = reg.QueryValueEx(key, path_env_var)
@@ -90,7 +95,7 @@ def remove_from_system_path(pathname, allusers=True, path_env_var='PATH'):
             modified_path = os.pathsep.join(results)
             if any_change:
                 reg.SetValueEx(key, path_env_var, 0, reg_value[1], modified_path)
-        except:
+        except Exception:
             # If there's an error (e.g. when there is no PATH for the current
             # user), continue on to try the next root/keyname pair
             reg.CloseKey(key)
@@ -120,13 +125,13 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
     if allusers:
         # All Users
         root, keyname = (reg.HKEY_LOCAL_MACHINE,
-            r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')
+                         r'SYSTEM\CurrentControlSet\Control\Session Manager\Environment')
     else:
         # Just Me
         root, keyname = (reg.HKEY_CURRENT_USER, r'Environment')
 
     key = reg.OpenKey(root, keyname, 0,
-            reg.KEY_QUERY_VALUE|reg.KEY_SET_VALUE)
+                      reg.KEY_QUERY_VALUE | reg.KEY_SET_VALUE)
 
     reg_type = None
     reg_value = None
@@ -154,7 +159,7 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
         # Warn about directories that do not exist.
         directories = final_value.split(';')
         for directory in directories:
-            if not '%' in directory and not os.path.exists(directory):
+            if '%' not in directory and not os.path.exists(directory):
                 out("WARNING: Old PATH entry '%s' does not exist\n" % (directory))
         reg.SetValueEx(key, path_env_var, 0, reg_type, final_value)
 
@@ -162,17 +167,17 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
         reg.CloseKey(key)
 
 
-def _reg_query_sub_keys(handle, key, keylist = []):
+def _reg_query_sub_keys(handle, key, keylist=[]):
     reghandle = reg.OpenKey(handle, key, 0, reg.KEY_READ)
     try:
         i = 0
         while True:
-           subkey = reg.EnumKey(reghandle, i)
-           i += 1
-           _reg_query_sub_keys(handle, key + subkey + "\\", keylist)
+            subkey = reg.EnumKey(reghandle, i)
+            i += 1
+            _reg_query_sub_keys(handle, key + subkey + "\\", keylist)
     except WindowsError as ex:
-           if ex.winerror == 259:
-               keylist.append(key)
+        if ex.winerror == 259:
+            keylist.append(key)
     finally:
         reg.CloseKey(reghandle)
 
@@ -184,14 +189,16 @@ def get_previous_install_prefixes(pyversion, arch, allusers=True):
     """
     if allusers:
         # All Users
-        key, subkey = (reg.HKEY_LOCAL_MACHINE, r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\')
+        key, subkey = (reg.HKEY_LOCAL_MACHINE,
+                       r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\')
     else:
         # Just Me
-        key, subkey = (reg.HKEY_CURRENT_USER, r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\')
+        key, subkey = (reg.HKEY_CURRENT_USER,
+                       r'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\')
 
     keylist = []
     # We ignore pyversion and instead look for any *conda installations.
-    regex = re.compile('Python \S+ \(\S+conda[0-9]+ \S+ '+arch+'\)')
+    regex = re.compile(r'Python \S+ \(\S+conda[0-9]+ \S+ '+arch+r'\)')
     _reg_query_sub_keys(key, subkey, keylist)
     results = []
     for uninstsubkey in keylist:
@@ -199,10 +206,10 @@ def get_previous_install_prefixes(pyversion, arch, allusers=True):
         if regex.match(final_part):
             try:
                 with reg.OpenKeyEx(key, uninstsubkey, 0,
-                                 reg.KEY_QUERY_VALUE) as keyhandle:
+                                   reg.KEY_QUERY_VALUE) as keyhandle:
                     reg_value = reg.QueryValueEx(keyhandle, 'UninstallString')
                     results.append(os.path.dirname(re.sub(r'^"|"$', '', reg_value[0])))
-            except:
+            except Exception:
                 pass
     return results
 
@@ -214,4 +221,4 @@ def broadcast_environment_settings_change():
     manipulate environment variables.
     """
     SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, u'Environment',
-                SMTO_ABORTIFHUNG, 5000, ctypes.pointer(wintypes.DWORD()))
+                       SMTO_ABORTIFHUNG, 5000, ctypes.pointer(wintypes.DWORD()))

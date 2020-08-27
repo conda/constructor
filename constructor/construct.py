@@ -5,14 +5,13 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 from functools import partial
-from os.path import abspath, dirname
+from os.path import dirname
 import re
 import sys
 from .utils import yaml
 
-from constructor.exceptions import (
-    UnableToParse, UnableToParseMissingJinja2, YamlParsingError,
-)
+from constructor.exceptions import (UnableToParse, UnableToParseMissingJinja2,
+                                    YamlParsingError)
 
 
 # list of tuples (key name, required, type, description)
@@ -258,28 +257,31 @@ or enable long path on windows > 10 (require admin right). Default is True. (Win
 '''),
 ]
 
+
 def ns_platform(platform):
     p = platform
     return dict(
-        linux = p.startswith('linux-'),
-        linux32 = bool(p == 'linux-32'),
-        linux64 = bool(p == 'linux-64'),
-        armv7l = bool(p == 'linux-armv7l'),
-        aarch64 = bool(p == 'linux-aarch64'),
-        ppc64le = bool(p == 'linux-ppc64le'),
-        arm64   = bool(p == 'osx-arm64'),
-        s390x   = bool(p == 'linux-s390x'),
-        x86 = p.endswith(('-32', '-64')),
-        x86_64 = p.endswith('-64'),
-        osx = p.startswith('osx-'),
-        unix = p.startswith(('linux-', 'osx-')),
-        win = p.startswith('win-'),
-        win32 = bool(p == 'win-32'),
-        win64 = bool(p == 'win-64'),
+        linux=p.startswith('linux-'),
+        linux32=bool(p == 'linux-32'),
+        linux64=bool(p == 'linux-64'),
+        armv7l=bool(p == 'linux-armv7l'),
+        aarch64=bool(p == 'linux-aarch64'),
+        ppc64le=bool(p == 'linux-ppc64le'),
+        arm64=bool(p == 'osx-arm64'),
+        s390x=bool(p == 'linux-s390x'),
+        x86=p.endswith(('-32', '-64')),
+        x86_64=p.endswith('-64'),
+        osx=p.startswith('osx-'),
+        unix=p.startswith(('linux-', 'osx-')),
+        win=p.startswith('win-'),
+        win32=bool(p == 'win-32'),
+        win64=bool(p == 'win-64'),
     )
 
 
 sel_pat = re.compile(r'(.+?)\s*\[(.+)\]$')
+
+
 def select_lines(data, namespace):
     lines = []
     for line in data.splitlines():
@@ -336,7 +338,7 @@ def parse(path, platform):
 
 
 def verify(info):
-    types_key = {} # maps key to types
+    types_key = {}  # maps key to types
     required_keys = set()
     for key, required, types, unused_descr in KEYS:
         types_key[key] = types

@@ -86,7 +86,7 @@ def write_images(info, dir_path):
         ('welcome', welcome_size, mk_welcome_image, '.bmp'),
         ('header',  header_size,  mk_header_image,  '.bmp'),
         ('icon',    icon_size,    mk_icon_image,    '.ico'),
-        ]:
+    ]:
         key = tp + '_image'
         if key in info:
             im = Image.open(info[key])

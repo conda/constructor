@@ -37,14 +37,15 @@ def ensure_comspec_set():
             cmd_exe = join(environ.get('windir'), 'System32', 'cmd.exe')
         if not isfile(cmd_exe):
             print("cmd.exe could not be found. "
-                     "Looked in SystemRoot and windir env vars.\n")
+                  "Looked in SystemRoot and windir env vars.\n")
         else:
             environ['COMSPEC'] = cmd_exe
 
 
 def gui_excepthook(exctype, value, tb):
     try:
-        import ctypes, traceback
+        import ctypes
+        import traceback
         MB_ICONERROR = 0x00000010
         title = u'Installation Error'
         msg = u''.join(traceback.format_exception(exctype, value, tb))
@@ -53,6 +54,8 @@ def gui_excepthook(exctype, value, tb):
         # Also call the old exception hook to let it do
         # its thing too.
         old_excepthook(exctype, value, tb)
+
+
 sys.excepthook = gui_excepthook
 
 # If pythonw is being run, there may be no write function
@@ -63,8 +66,10 @@ else:
     import ctypes
     OutputDebugString = ctypes.windll.kernel32.OutputDebugStringW
     OutputDebugString.argtypes = [ctypes.c_wchar_p]
+
     def out(x):
         OutputDebugString('_nsis.py: ' + x)
+
     def err(x):
         OutputDebugString('_nsis.py: Error: ' + x)
 
@@ -81,7 +86,7 @@ class NSISReg:
         try:
             winreg.CreateKey(self.main_key, self.reg_path)
             registry_key = winreg.OpenKey(self.main_key, self.reg_path, 0,
-                                           winreg.KEY_WRITE)
+                                          winreg.KEY_WRITE)
             winreg.SetValueEx(registry_key, name, 0, winreg.REG_SZ, value)
             winreg.CloseKey(registry_key)
             return True
@@ -91,7 +96,7 @@ class NSISReg:
     def get(self, name):
         try:
             registry_key = winreg.OpenKey(self.main_key, self.reg_path, 0,
-                                           winreg.KEY_READ)
+                                          winreg.KEY_READ)
             value, regtype = winreg.QueryValueEx(registry_key, name)
             winreg.CloseKey(registry_key)
             return value
@@ -124,10 +129,12 @@ def mk_menus(remove=False, prefix=None, pkg_names=[]):
         else:
             out("Processed %s successfully.\n" % shortcut)
 
+
 def mk_dirs():
     envs_dir = join(ROOT_PREFIX, 'envs')
     if not exists(envs_dir):
         os.mkdir(envs_dir)
+
 
 def get_conda_envs_from_python_api():
     try:
@@ -260,15 +267,15 @@ def add_to_path(pyversion, arch):
 
 
 def rm_regkeys():
-    cmdproc_reg_entry = NSISReg('Software\Microsoft\Command Processor')
+    cmdproc_reg_entry = NSISReg(r'Software\Microsoft\Command Processor')
     cmdproc_autorun_val = cmdproc_reg_entry.get('AutoRun')
     conda_hook_regex_pat = r'((\s+&\s+)?\"[^\"]*?conda[-_]hook\.bat\")'
     if join(ROOT_PREFIX, 'condabin') in (cmdproc_autorun_val or ''):
         cmdproc_autorun_newval = re.sub(conda_hook_regex_pat, '',
-                cmdproc_autorun_val)
+                                        cmdproc_autorun_val)
         try:
             cmdproc_reg_entry.set('AutoRun', cmdproc_autorun_newval)
-        except:
+        except Exception:
             # Hey, at least we made an attempt to cleanup
             pass
 
@@ -281,26 +288,32 @@ def win_del(dirname):
     try:
         out = check_output('DEL /F/Q/S *.* > NUL', shell=True, stderr=STDOUT, cwd=dirname)
     except CalledProcessError as e:
-            # error code 5 indicates a permission error.  We ignore those, but raise for anything else
-            if e.returncode != 5:
-                print("Removing folder {} the fast way failed. Output was: {}".format(dirname, out))
-                raise
-            else:
-                print("removing dir contents the fast way failed. Output was: {}".format(out))
+        # error code 5 indicates a permission error.  We ignore those, but raise for anything else
+        if e.returncode != 5:
+            print("Removing folder {} the fast way failed. "
+                  "Output was: {}".format(dirname, out))
+            raise
+        else:
+            print("removing dir contents the fast way failed. "
+                  "Output was: {}".format(out))
     else:
-        print("Unexpected error removing dirname {}. Uninstall was probably not successful".format(dirname))
+        print("Unexpected error removing dirname {}. "
+              "Uninstall was probably not successful".format(dirname))
     # next, remove folder hierarchy
     try:
         out = check_output('RD /S /Q "{}" > NUL'.format(dirname), shell=True, stderr=STDOUT)
     except CalledProcessError as e:
-            # error code 5 indicates a permission error.  We ignore those, but raise for anything else
-            if e.returncode != 5:
-                print("Removing folder {} the fast way failed. Output was: {}".format(dirname, out))
-                raise
-            else:
-                print("removing dir folders the fast way failed. Output was: {}".format(out))
+        # error code 5 indicates a permission error.  We ignore those, but raise for anything else
+        if e.returncode != 5:
+            print("Removing folder {} the fast way failed. "
+                  "Output was: {}".format(dirname, out))
+            raise
+        else:
+            print("Removing directory folders the fast way failed. "
+                  "Output was: {}".format(out))
     else:
-        print("Unexpected error removing dirname {}. Uninstall was probably not successful".format(dirname))
+        print("Unexpected error removing dirname {}. "
+              "Uninstall was probably not successful".format(dirname))
 
 
 def main():
@@ -328,7 +341,7 @@ def main():
         if len(sys.argv) > 3:
             arch = sys.argv[2]
         else:
-            arch = '32-bit' if tuple.__itemsize__==4 else '64-bit'
+            arch = '32-bit' if tuple.__itemsize__ == 4 else '64-bit'
         add_to_path(pyver, arch)
     elif cmd == 'rmpath':
         remove_from_path()

@@ -13,14 +13,12 @@ import time
 from .utils import filename_dist, get_final_url
 
 from . import __version__ as CONSTRUCTOR_VERSION
-from .conda_interface import (
-    CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix, PrefixData, write_repodata, get_repodata,
-    all_channel_urls
-)
+from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
+                              PrefixData, write_repodata, get_repodata, all_channel_urls)
 
 try:
     import json
-except:
+except ImportError:
     import ruamel_json as json
 
 files = '.constructor-build.info', 'urls', 'urls.txt', 'env.txt'
@@ -47,7 +45,7 @@ def write_index_cache(info, dst_dir, used_packages):
             src = '%s/%s' % (src, subdir)
             dst = '%s/%s' % (dst, subdir)
             if dst not in repodatas:
-                repodatas[dst] =  {
+                repodatas[dst] = {
                     '_url': dst,
                     'info': {'subdir': subdir},
                     'packages': {},
@@ -152,18 +150,18 @@ def write_repodata_record(info, dst_dir):
         record_file_src = join(info['_download_dir'], record_file)
 
         with open(record_file_src, 'r') as rf:
-          rr_json = json.load(rf)
+            rr_json = json.load(rf)
 
         rr_json['url'] = get_final_url(info, rr_json['url'])
         rr_json['channel'] = get_final_url(info, rr_json['channel'])
 
         if not isdir(join(dst_dir, _dist, 'info')):
-          os.makedirs(join(dst_dir, _dist, 'info'))
+            os.makedirs(join(dst_dir, _dist, 'info'))
 
         record_file_dest = join(dst_dir, record_file)
 
         with open(record_file_dest, 'w') as rf:
-          json.dump(rr_json, rf, indent=2, sort_keys=True)
+            json.dump(rr_json, rf, indent=2, sort_keys=True)
 
 
 def write_env_txt(info, dst_dir):
