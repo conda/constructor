@@ -21,9 +21,9 @@ from .install import name_dist
 from .preconda import write_files as preconda_write_files
 from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess, add_condarc, get_final_channels
 
-THIS_DIR = dirname(__file__)
+THIS_DIR = abspath(dirname(__file__))
 NSIS_DIR = join(THIS_DIR, 'nsis')
-MAKENSIS_EXE = join(sys.prefix, 'NSIS', 'makensis.exe')
+MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 
 
 def str_esc(s):
