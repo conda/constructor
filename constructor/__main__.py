@@ -3,6 +3,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 if __name__ == '__main__':
     import sys
-    from .main import main
+    from constructor.main import main
 
     sys.exit(main())

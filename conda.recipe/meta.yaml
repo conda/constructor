@@ -41,7 +41,7 @@ test:
   commands:
     - constructor -V
     - pytest -v --cov=constructor tests
-    - python scripts/run_examples.py
+    - coverage run scripts/run_examples.py
     - coverage report
 
 about:

@@ -167,3 +167,11 @@ def rm_rf(path):
             rmtree(path)
     except (OSError, IOError):
         pass
+
+
+def yield_lines(path):
+    for line in open(path):
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        yield line

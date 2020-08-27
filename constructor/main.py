@@ -13,8 +13,7 @@ import sys
 from .conda_interface import cc_platform
 from .construct import parse as construct_parse, verify as construct_verify
 from .fcp import main as fcp_main
-from .install import yield_lines
-from .utils import normalize_path
+from .utils import normalize_path, yield_lines
 
 from . import __version__
 
