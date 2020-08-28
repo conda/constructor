@@ -85,8 +85,9 @@ files in them. Enable this option to warn instead and continue.
 '''),
 
     ('install_in_dependency_order', False, (bool, str), '''
-_Obsolete_. The current version of constructor rely entirely on conda's default
-installation behavior. This option is now ignored with a warning.
+_Obsolete_. The current version of constructor relies on the standalone
+conda executable for its installation behavior. This option is now
+ignored with a warning.
 '''),
 
     ('environment', False, str, '''
@@ -154,8 +155,9 @@ in one of your accessible keychains.
 '''),
 
     ('attempt_hardlinks',          False, (bool, str), '''
-_Obsolete_. The current version of constructor relies entirely on conda for its
-installation behavior. This option is now ignored with a warning.
+_Obsolete_. The current version of constructor relies on the standalone
+conda executable for its installation behavior. This option is now
+ignored with a warning.
 '''),
 
     ('write_condarc',          False, bool, '''
