@@ -106,10 +106,10 @@ files in them. Enable this option to warn instead and continue.
 ## `install_in_dependency_order`
 
 _required:_ no<br/>
-_type:_ boolean<br/>
-By default, the conda packages included in the created installer are installed
-in alphabetical order, with the exception of Python itself, which is installed
-first. Using this option, packages are installed in dependency order.
+_types:_ boolean, string<br/>
+_Obsolete_. The current version of constructor relies on the standalone
+conda executable for its installation behavior. This option is now
+ignored with a warning.
 
 ## `environment`
 
@@ -197,11 +197,10 @@ in one of your accessible keychains.
 ## `attempt_hardlinks`
 
 _required:_ no<br/>
-_type:_ boolean<br/>
-By default, conda packages are extracted into the root environment and then
-patched. Enabling this option will result into extraction of the packages into
-the `pkgs` directory and the files in the root environment will be hardlinks to
-the files kept in the `pkgs` directory and then patched accordingly.
+_types:_ boolean, string<br/>
+_Obsolete_. The current version of constructor relies on the standalone
+conda executable for its installation behavior. This option is now
+ignored with a warning.
 
 ## `write_condarc`
 
