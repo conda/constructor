@@ -8,7 +8,6 @@ from functools import partial
 from os.path import dirname
 import re
 import sys
-import warnings
 from .utils import yaml
 
 from constructor.exceptions import (UnableToParse, UnableToParseMissingJinja2,

@@ -222,7 +222,7 @@ def _precs_from_environment(environment, download_dir, user_conda):
 
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
-          exclude=(), menu_packages=(),  ignore_duplicate_files=False, environment=None, 
+          exclude=(), menu_packages=(),  ignore_duplicate_files=False, environment=None,
           environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe"):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
