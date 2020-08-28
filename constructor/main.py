@@ -217,22 +217,27 @@ def main():
     if not isdir(dir_path):
         p.error("no such directory: %s" % dir_path)
 
-    if not args.conda_exe:
-        # try a default name of conda.exe in constructor's installed location
-        conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
-        if os.path.isfile(conda_exe_default_path):
-            args.conda_exe = conda_exe_default_path
+    conda_exe_default_path = join(sys.prefix, "standalone_conda", "conda.exe")
+    conda_exe_default_path = normalize_path(abspath(conda_exe_default_path))
+    conda_exe = normalize_path(abspath(args.conda_exe)) if args.conda_exe else conda_exe_default_path
+    if args.platform and args.platform != cc_platform and conda_exe == conda_exe_default_path:
+        sys.exit("Error: In order to build a '%s' constructor on '%s', the default "
+                 "conda executable cannot be used. Instead, the --conda-exe option "
+                 "must be supplied with the path to a '%s'-compatible standalone "
+                 "conda executable." % (args.platform, cc_platform, args.platform))
+    if not os.path.isfile(conda_exe):
+        if conda_exe == conda_exe_default_path:
+            sys.exit("Error: A standalone conda executable for this platform could not "
+                     "be found. These can be obtained by installing the conda pacakage "
+                     "'conda-standalone', or manually downloaded from another source and "
+                     "suppling its path using the --conda-exe option.")
         else:
-            raise ValueError("You must supply a path to self-contained conda executable with the "
-                             "--conda-exe parameter.  You may prefer to download one for your OS "
-                             "and place it in the root of your prefix, named 'conda.exe' to save "
-                             "yourself some typing.  Self-contained conda executables can be "
-                             "downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/")
+            sys.exit("Error: conda executable not found: %s" % conda_exe)
 
     out_dir = normalize_path(args.output_dir)
-    main_build(dir_path, output_dir=out_dir, platform=args.platform,
+    main_build(dir_path, output_dir=out_dir, platform=args.platform or cc_platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
-               dry_run=args.dry_run, conda_exe=args.conda_exe)
+               dry_run=args.dry_run, conda_exe=conda_exe)
 
 
 if __name__ == '__main__':
