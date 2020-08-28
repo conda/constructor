@@ -8,6 +8,7 @@ from functools import partial
 from os.path import dirname
 import re
 import sys
+import warnings
 from .utils import yaml
 
 from constructor.exceptions import (UnableToParse, UnableToParseMissingJinja2,
@@ -83,10 +84,9 @@ By default, constructor will error out when adding packages with duplicate
 files in them. Enable this option to warn instead and continue.
 '''),
 
-    ('install_in_dependency_order', False, bool, '''
-By default, the conda packages included in the created installer are installed
-in alphabetical order, with the exception of Python itself, which is installed
-first. Using this option, packages are installed in dependency order.
+    ('install_in_dependency_order', False, (bool, str), '''
+_Obsolete_. The current version of constructor rely entirely on conda's default
+installation behavior. This option is now ignored with a warning.
 '''),
 
     ('environment', False, str, '''
@@ -153,11 +153,9 @@ to have a certificate and corresponding private key together called an 'identity
 in one of your accessible keychains.
 '''),
 
-    ('attempt_hardlinks',          False, bool, '''
-By default, conda packages are extracted into the root environment and then
-patched. Enabling this option will result into extraction of the packages into
-the `pkgs` directory and the files in the root environment will be hardlinks to
-the files kept in the `pkgs` directory and then patched accordingly.
+    ('attempt_hardlinks',          False, (bool, str), '''
+_Obsolete_. The current version of constructor relies entirely on conda for its
+installation behavior. This option is now ignored with a warning.
 '''),
 
     ('write_condarc',          False, bool, '''
@@ -340,15 +338,21 @@ def parse(path, platform):
 def verify(info):
     types_key = {}  # maps key to types
     required_keys = set()
-    for key, required, types, unused_descr in KEYS:
+    obsolete_keys = set()
+    for key, required, types, descr in KEYS:
         types_key[key] = types
         if required:
             required_keys.add(key)
+        if 'Obsolete' in descr:
+            obsolete_keys.add(key)
 
     for key in info:
         if key not in types_key:
             sys.exit("Error: unknown key '%s' in construct.yaml" % key)
         elt = info[key]
+        if key in obsolete_keys:
+            sys.stderr.write("Warning: key '%s' is obsolete.\n"
+                             "  Its value '%s' is being ignored.\n" % (key, elt))
         types = types_key[key]
         if not isinstance(elt, types):
             sys.exit("Error: key '%s' points to %s,\n"
