@@ -222,9 +222,8 @@ def _precs_from_environment(environment, download_dir, user_conda):
 
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
-          exclude=(), menu_packages=(), install_in_dependency_order=True,
-          ignore_duplicate_files=False, environment=None, environment_file=None,
-          verbose=True, dry_run=False, conda_exe="conda.exe"):
+          exclude=(), menu_packages=(),  ignore_duplicate_files=False, environment=None, 
+          environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe"):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     specs = list(concatv(specs, ("python",)))
@@ -263,9 +262,6 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             specs_to_add=specs,
         )
         precs = list(solver.solve_final_state())
-
-    if not install_in_dependency_order:
-        precs = sorted(precs, key="name")
 
     # move python first
     python_prec = next(prec for prec in precs if prec.name == "python")
@@ -314,7 +310,6 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     specs = info.get("specs", ())
     exclude = info.get("exclude", ())
     menu_packages = info.get("menu_packages", ())
-    install_in_dependency_order = info.get("install_in_dependency_order", True)
     ignore_duplicate_files = info.get("ignore_duplicate_files", False)
     environment = info.get("environment", None)
     environment_file = info.get("environment_file", None)
@@ -327,9 +322,8 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     }, conda_replace_context_default):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
-            exclude, menu_packages, install_in_dependency_order,
-            ignore_duplicate_files, environment, environment_file, verbose,
-            dry_run, conda_exe,
+            exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
+            verbose, dry_run, conda_exe,
         )
 
     info["_urls"] = _urls

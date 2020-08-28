@@ -38,7 +38,7 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def pkg_commands(download_dir, dists, py_version, attempt_hardlinks, channels):
+def pkg_commands(download_dir, dists, py_version, channels):
     for n, dist in enumerate(dists):
         fn = filename_dist(dist)
         yield ''
@@ -133,7 +133,6 @@ def make_nsi(info, dir_path):
     data = fill_template(data, replace)
 
     cmds = pkg_commands(download_dir, dists, py_version,
-                        bool(info.get('attempt_hardlinks')),
                         get_final_channels(info))
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
