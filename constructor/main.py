@@ -7,14 +7,13 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import abspath, basename, expanduser, isdir, isfile, join
+from os.path import abspath, basename, expanduser, isdir, join
 import sys
 
 from .conda_interface import cc_platform
 from .construct import parse as construct_parse, verify as construct_verify
 from .fcp import main as fcp_main
-from .install import yield_lines
-from .utils import normalize_path
+from .utils import normalize_path, yield_lines
 
 from . import __version__
 
@@ -37,7 +36,8 @@ def get_installer_type(info):
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
     elif itype not in os_allowed[osname]:
         os_allowed = ', '.join(sorted(os_allowed[osname]))
-        sys.exit("Error: invalid installer type '%s' for %s; allowed: %s" % (itype, osname, os_allowed))
+        sys.exit("Error: invalid installer type '%s' for %s; allowed: %s" %
+                 (itype, osname, os_allowed))
     else:
         return itype,
 
@@ -113,7 +113,8 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     # info has keys
     # 'name', 'version', 'channels', 'exclude',
     # '_platform', '_download_dir', '_outpath'
-    # 'specs': ['python 3.5*', 'conda', 'nomkl', 'numpy', 'scipy', 'pandas', 'notebook', 'matplotlib', 'lighttpd']
+    # 'specs': ['python 3.5*', 'conda', 'nomkl', 'numpy', 'scipy', 'pandas',
+    #           'notebook', 'matplotlib', 'lighttpd']
     # 'license_file': '/Users/kfranz/continuum/constructor/examples/maxiconda/EULA.txt'
     # '_dists': List[Dist]
     # '_urls': List[Tuple[url, md5]]
@@ -146,50 +147,50 @@ def main():
         description="build an installer from <DIRECTORY>/construct.yaml")
 
     p.add_argument('--debug',
-                 action="store_true")
+                   action="store_true")
 
     p.add_argument('--output-dir',
-                 action="store",
-                 default=os.getcwd(),
-                 help='path to directory in which output installer is written '
-                      "to, defaults to CWD ('{}')".format(os.getcwd()),
-                 metavar='PATH')
+                   action="store",
+                   default=os.getcwd(),
+                   help='path to directory in which output installer is written '
+                   "to, defaults to CWD ('{}')".format(os.getcwd()),
+                   metavar='PATH')
 
     p.add_argument('--cache-dir',
-                 action="store",
-                 default=DEFAULT_CACHE_DIR,
-                 help='cache directory, used for downloading conda packages, '
-                      'may be changed by CONSTRUCTOR_CACHE, '
-                      "defaults to '{}'".format(DEFAULT_CACHE_DIR),
-                 metavar='PATH')
+                   action="store",
+                   default=DEFAULT_CACHE_DIR,
+                   help='cache directory, used for downloading conda packages, '
+                   'may be changed by CONSTRUCTOR_CACHE, '
+                   "defaults to '{}'".format(DEFAULT_CACHE_DIR),
+                   metavar='PATH')
 
     p.add_argument('--clean',
-                 action="store_true",
-                 help='clean out the cache directory and exit')
+                   action="store_true",
+                   help='clean out the cache directory and exit')
 
     p.add_argument('--platform',
-                 action="store",
-                 default=cc_platform,
-                 help="the platform for which installer is for, "
-                      "defaults to '{}'".format(cc_platform))
+                   action="store",
+                   default=cc_platform,
+                   help="the platform for which installer is for, "
+                   "defaults to '{}'".format(cc_platform))
 
     p.add_argument('--dry-run',
-                 help="solve package specs but do not create installer",
-                 default=False,
-                 action="store_true")
+                   help="solve package specs but do not create installer",
+                   default=False,
+                   action="store_true")
 
     p.add_argument('-v', '--verbose',
-                 action="store_true")
+                   action="store_true")
 
     p.add_argument('-V', '--version',
-                 help="display the version being used and exit",
-                 action="version",
-                 version='%(prog)s {version}'.format(version=__version__))
+                   help="display the version being used and exit",
+                   action="version",
+                   version='%(prog)s {version}'.format(version=__version__))
 
     p.add_argument('--conda-exe',
-                 help="path to conda executable",
-                 action="store",
-                 metavar="CONDA_EXE")
+                   help="path to conda executable",
+                   action="store",
+                   metavar="CONDA_EXE")
 
     p.add_argument('dir_path',
                    help="directory containing construct.yaml",

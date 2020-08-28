@@ -3,7 +3,8 @@
 import textwrap
 SEPARATOR = "-" * 70
 
-indent = lambda s: textwrap.fill(textwrap.dedent(s))
+
+def indent(s): return textwrap.fill(textwrap.dedent(s))
 
 
 class YamlParsingError(Exception):
@@ -29,7 +30,7 @@ class UnableToParse(YamlParsingError):
 
     def indented_exception(self):
         orig = str(self.original)
-        indent = lambda s: s.replace("\n", "\n--> ")
+        def indent(s): return s.replace("\n", "\n--> ")
         return "Error Message:\n--> {}\n\n".format(indent(orig))
 
 

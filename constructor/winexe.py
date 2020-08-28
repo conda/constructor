@@ -13,13 +13,12 @@ from subprocess import Popen, PIPE, check_call, check_output
 import sys
 import math
 import tempfile
-import warnings
 
 from .construct import ns_platform
 from .imaging import write_images
-from .install import name_dist
 from .preconda import write_files as preconda_write_files
-from .utils import filename_dist, fill_template, make_VIProductVersion, preprocess, add_condarc, get_final_channels
+from .utils import (filename_dist, fill_template, make_VIProductVersion,
+                    preprocess, add_condarc, get_final_channels)
 
 THIS_DIR = abspath(dirname(__file__))
 NSIS_DIR = join(THIS_DIR, 'nsis')
@@ -48,7 +47,8 @@ def pkg_commands(download_dir, dists, py_version, attempt_hardlinks, channels):
 
     # Set CONDA_CHANNELS to configured channels and
     # CONDA_PKGS_DIRS to the local package cache directory
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "%s").r0'%(','.join(channels))
+    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "%s").r0' % (
+        ','.join(channels))
     yield "System::Call '%s'" % _env
     _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\\pkgs").r0'
     yield "System::Call '%s'" % _env
@@ -99,7 +99,7 @@ def make_nsi(info, dir_path):
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
         'OUTFILE': info['_outpath'],
         'LICENSEFILE': abspath(info.get('license_file',
-                               join(NSIS_DIR, 'placeholder_license.txt'))),
+                                        join(NSIS_DIR, 'placeholder_license.txt'))),
         'DEFAULT_PREFIX': info.get(
             'default_prefix',
             join('%USERPROFILE%', name.lower())
@@ -150,9 +150,9 @@ def make_nsi(info, dir_path):
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
-            '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
-        )),
-        ]:
+                                      '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
+                                      )),
+    ]:
         data = data.replace(key, value)
 
     nsi_path = join(dir_path, 'main.nsi')

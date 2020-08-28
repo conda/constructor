@@ -68,7 +68,7 @@ def create(info, verbose=False):
     tmp_dir_base_path = join(dirname(info['_outpath']), "tmp")
     try:
         os.makedirs(tmp_dir_base_path)
-    except:
+    except Exception:
         pass
     tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base_path)
     preconda_write_files(info, tmp_dir)

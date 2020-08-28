@@ -16,9 +16,9 @@ import sys
 import tempfile
 
 from constructor.utils import md5_files
-from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData, VersionOrder, concatv, conda_context,
-                              conda_replace_context_default, download, env_vars, groupby, read_paths_json,
-                              all_channel_urls)
+from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
+                              VersionOrder, concatv, conda_context, conda_replace_context_default,
+                              download, env_vars, groupby, read_paths_json, all_channel_urls)
 
 
 def warn_menu_packages_missing(precs, menu_packages):
@@ -50,18 +50,21 @@ def exclude_packages(precs, exclude=()):
             sys.exit("Error: no package named '%s' to remove" % name)
     return accepted_precs
 
+
 def _find_out_of_date_precs(precs, channel_urls, platform):
     out_of_date_package_records = {}
     for prec in precs:
         all_versions = SubdirData.query_all(prec.name, channels=channel_urls, subdirs=[platform])
         if all_versions:
-            most_recent = max(all_versions, key=lambda package_version: (VersionOrder(package_version.version), package_version.build_number))
+            most_recent = max(all_versions, key=lambda package_version: (
+                VersionOrder(package_version.version), package_version.build_number))
             prec_version = VersionOrder(prec.version)
             latest_version = VersionOrder(most_recent.version)
             if prec_version < latest_version or (prec_version == latest_version
-              and prec.build_number < most_recent.build_number):
+                                                 and prec.build_number < most_recent.build_number):
                 out_of_date_package_records[prec.name] = most_recent
     return out_of_date_package_records
+
 
 def _show(name, version, platform, download_dir, precs, more_recent_versions={}):
     print("""
@@ -170,7 +173,7 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
         fns = map_members_icase[member]['fns']
         files = list(map_members_icase[member]['files'])
         msg_str = "Files %s found in the package(s): %s" % (
-                   str(files)[1:-1], ', '.join(fns))
+            str(files)[1:-1], ', '.join(fns))
         if len(files) > 1:
             if ignore_duplicate_files or platform.startswith('linux'):
                 print('Warning: {}'.format(msg_str))
@@ -209,13 +212,12 @@ def _precs_from_environment(environment, download_dir, user_conda):
     precs = []
     for dist_name, url, md5, fn in ordering:
         package = packages[dist_name]
-        platform_arch = package.pop("platform")
         package_tarball_full_path = join(download_dir, fn)
         extracted_package_dir = join(download_dir, dist_name)
         precs.append(PackageCacheRecord(url=url, md5=md5, fn=fn,
-            package_tarball_full_path=package_tarball_full_path,
-            extracted_package_dir=extracted_package_dir,
-            **package))
+                                        package_tarball_full_path=package_tarball_full_path,
+                                        extracted_package_dir=extracted_package_dir,
+                                        **package))
     return precs
 
 
@@ -325,9 +327,9 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     }, conda_replace_context_default):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
-              exclude, menu_packages, install_in_dependency_order,
-              ignore_duplicate_files, environment, environment_file, verbose,
-              dry_run, conda_exe,
+            exclude, menu_packages, install_in_dependency_order,
+            ignore_duplicate_files, environment, environment_file, verbose,
+            dry_run, conda_exe,
         )
 
     info["_urls"] = _urls

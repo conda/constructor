@@ -7,13 +7,15 @@
 import re
 import sys
 import hashlib
-from os.path import normpath
-from os import sep
+from os.path import normpath, islink, isfile, isdir
+from os import sep, unlink
+from shutil import rmtree
 
 try:
     import yaml
-except:
+except ImportError:
     import ruamel_yaml as yaml
+
 
 def filename_dist(dist):
     """ Return the filename of a distribution. """
@@ -49,7 +51,7 @@ def make_VIProductVersion(version):
     """
     always create a version of the form X.X.X.X
     """
-    pat = re.compile('\d+$')
+    pat = re.compile(r'\d+$')
     res = []
     for part in version.split('.'):
         if pat.match(part):
@@ -73,6 +75,8 @@ if_pat = re.compile(r'^#if ([ \S]+)$\n'
                     r'(.*?)'
                     r'(^#else\s*$\n(.*?))?'
                     r'^#endif\s*$\n', re.M | re.S)
+
+
 def preprocess(data, namespace):
 
     def if_repl(match):
@@ -126,8 +130,8 @@ def get_final_url(info, url):
         if url.startswith(src):
             new_url = url.replace(src, dst)
             if url.endswith(".tar.bz2"):
-              print("WARNING: You need to make the package {} available "
-                    "at {}".format(url.rsplit('/', 1)[1], new_url))
+                print("WARNING: You need to make the package {} available "
+                      "at {}".format(url.rsplit('/', 1)[1], new_url))
             return new_url
     return url
 
@@ -143,8 +147,31 @@ def get_final_channels(info):
         mapped_channels.append(url)
     return mapped_channels
 
+
 def normalize_path(path):
     new_path = normpath(path)
     return new_path.replace(sep + sep, sep)
 
 
+def rm_rf(path):
+    """
+    try to delete path, but never fail
+    """
+    try:
+        if islink(path) or isfile(path):
+            # Note that we have to check if the destination is a link because
+            # exists('/path/to/dead-link') will return False, although
+            # islink('/path/to/dead-link') is True.
+            unlink(path)
+        elif isdir(path):
+            rmtree(path)
+    except (OSError, IOError):
+        pass
+
+
+def yield_lines(path):
+    for line in open(path):
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        yield line

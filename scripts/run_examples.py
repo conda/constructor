@@ -8,14 +8,15 @@ import subprocess
 import sys
 import tempfile
 import platform
-import shutil
-import glob
+
+from constructor.utils import rm_rf
 
 try:
-    import coverage
+    import coverage # noqa
     COV_CMD = ['coverage', 'run', '--append', '-m']
 except ImportError:
     COV_CMD = []
+
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 REPO_DIR = os.path.dirname(HERE)
@@ -67,7 +68,7 @@ def run_examples():
                 continue
             tested_files.add(fpath)
             env_dir = tempfile.mkdtemp(dir=output_dir)
-            shutil.rmtree(env_dir)
+            rm_rf(env_dir)
             print('---- testing %s' % fpath)
             fpath = os.path.join(output_dir, fpath)
             if ext == 'sh':
@@ -88,10 +89,7 @@ def run_examples():
         sys.exit(1)
     else:
         print('All examples ran successfully!')
-        try:
-            shutil.rmtree(output_dir)
-        except Exception:
-            pass
+        rm_rf(output_dir)
 
 
 if __name__ == '__main__':

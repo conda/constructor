@@ -4,9 +4,8 @@ from os.path import isdir, abspath, dirname, exists, join
 from subprocess import check_call
 import xml.etree.ElementTree as ET
 
-from constructor.install import rm_rf
 import constructor.preconda as preconda
-from constructor.utils import add_condarc, get_final_channels
+from constructor.utils import add_condarc, get_final_channels, rm_rf
 
 
 OSX_DIR = join(dirname(__file__), "osx")
@@ -36,7 +35,8 @@ def write_readme(dst, info):
 
 def modify_xml(xml_path, info):
     # See
-    # http://developer.apple.com/library/mac/#documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW20 for all the options you can put here.
+    # http://developer.apple.com/library/mac/#documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW20
+    # for all the options you can put here.
 
     tree = ET.parse(xml_path)
     root = tree.getroot()
@@ -92,7 +92,8 @@ def modify_xml(xml_path, info):
             path_choice.set('description', ' '.join(info['post_install_desc'].split()))
         elif ident.endswith('pathupdate'):
             path_choice.set('visible', 'true')
-            path_choice.set('start_selected', 'true' if info.get('initialize_by_default', True) else 'false')
+            path_choice.set('start_selected', 'true' if info.get(
+                'initialize_by_default', True) else 'false')
             path_choice.set('title', "Add conda initialization to the shell")
             path_description = """
             If this box is checked, "conda init" will be executed to ensure that

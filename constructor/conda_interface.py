@@ -4,16 +4,16 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import json
 from os.path import join
 import sys
-import json
 
-NAV_APPS = ['glueviz', 'jupyterlab', 'notebook', 'orange3', 'qtconsole', 'rstudio', 'spyder', 'vscode']
+NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
+            'orange3', 'qtconsole', 'rstudio', 'spyder', 'vscode']
 
 try:
     from conda import __version__ as CONDA_INTERFACE_VERSION
     conda_interface_type = 'conda'
 except ImportError:
     raise RuntimeError("Conda must be installed for python interpreter\n"
-            "with sys.prefix: %s" % sys.prefix)
+                       "with sys.prefix: %s" % sys.prefix)
 
 if conda_interface_type == 'conda':
     CONDA_MAJOR_MINOR = tuple(int(x) for x in CONDA_INTERFACE_VERSION.split('.')[:2])
@@ -21,7 +21,7 @@ if conda_interface_type == 'conda':
     from conda._vendor.toolz.itertoolz import (
         concatv as _concatv, get as _get, groupby as _groupby,
     )
-    from conda.api import SubdirData
+    from conda.api import SubdirData # noqa
     from conda.base.context import (
         context as _conda_context, replace_context_default as _conda_replace_context_default,
     )
@@ -37,7 +37,7 @@ if conda_interface_type == 'conda':
     from conda.models.dist import Dist as _Dist
     from conda.exports import MatchSpec as _MatchSpec
     from conda.exports import download as _download
-    from conda.models.version import VersionOrder
+    from conda.models.version import VersionOrder # noqa
     try:
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:
@@ -47,14 +47,14 @@ if conda_interface_type == 'conda':
     PackageCacheData = _PackageCacheData
     Solver, read_paths_json = _Solver, _read_paths_json
     concatv, get, groupby, all_channel_urls = _concatv, _get, _groupby, _all_channel_urls
-    conda_context, env_vars, conda_replace_context_default = _conda_context, _env_vars, _conda_replace_context_default
+    conda_context, env_vars = _conda_context, _env_vars
+    conda_replace_context_default = _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
 
     # used by preconda.py
     Dist, MatchSpec, PrefixData, default_prefix = _Dist, _MatchSpec, _PrefixData, _default_prefix
 
     cc_platform = conda_context.subdir
-
 
     from conda.exports import cache_fn_url as _cache_fn_url
 
@@ -75,20 +75,19 @@ if conda_interface_type == 'conda':
         return full_repodata
 
     def write_repodata(cache_dir, url, full_repodata, used_packages):
-        used_repodata = {k: full_repodata[k] for k in set(full_repodata.keys()) - set(('packages',
-                                                                                       'packages.conda',
-                                                                                       'removed',))}
+        used_repodata = {k: full_repodata[k] for k in
+                         set(full_repodata.keys()) - {'packages', 'packages.conda', 'removed'}}
         repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
         used_repodata['packages.conda'] = {}
         used_repodata['removed'] = []
         # arbitrary old, expired date, so that conda will want to immediately update it
         # when not being run in offline mode
         used_repodata['_mod'] = "Mon, 07 Jan 2019 15:22:15 GMT"
-        used_repodata['packages'] = {k: v for k, v in full_repodata['packages'].items() if v['name'] in NAV_APPS}
+        used_repodata['packages'] = {
+            k: v for k, v in full_repodata['packages'].items() if v['name'] in NAV_APPS}
         for package in used_packages:
             for key in ('packages', 'packages.conda'):
                 if package in full_repodata.get(key, {}):
                     used_repodata[key][package] = full_repodata[key][package]
         with open(join(cache_dir, repodata_filename), 'w') as fh:
             json.dump(used_repodata, fh, indent=2)
-

@@ -14,6 +14,9 @@ build:
     - python -m pip install --no-deps --ignore-installed .
   entry_points:
     - constructor = constructor.main:main
+  script_env:
+    - CODECOV_TOKEN
+    - CODECOV_COMMIT
 
 requirements:
   host:
@@ -39,9 +42,11 @@ test:
     - pytest-cov
     - codecov
   commands:
-    - constructor -V
     - pytest -v --cov=constructor tests
+    - coverage run --append -m constructor -V
     - python scripts/run_examples.py
+    - if [%CODECOV_TOKEN%] neq [] codecov --commit %CODECOV_COMMIT% # [win]
+    - if ["$CODECOV_TOKEN"]; then codecov --commit $CODECOV_COMMIT; fi # [unix]
     - coverage report
 
 about:

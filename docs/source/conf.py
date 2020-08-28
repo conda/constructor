@@ -51,5 +51,5 @@ html_theme = 'alabaster'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-#Using the index file instead of contents.rst as the master doc
-master_doc='index'
+# Using the index file instead of contents.rst as the master doc
+master_doc = 'index'

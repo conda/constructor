@@ -29,7 +29,7 @@ setuptools.setup(
     ],
     # We could differentiate between operating systems here but that is
     # far more trouble than it is worth
-    package_data = {
+    package_data={
         "constructor": ['header.sh', 'nsis/*', 'osx/*', 'ttf/*']
     }
 )
