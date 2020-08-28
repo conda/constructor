@@ -40,9 +40,9 @@ def get_installer_type(info):
                  (itype, osname, os_allowed))
     else:
         result = itype,
-    if 'pkg' in result and cc_platform != 'osx':
+    if 'pkg' in result and not cc_platform.startswith('osx-'):
         sys.exit("Error: cannot construct an macOS 'pkg' installer on '%s'" % cc_platform)
-    if 'exe' in result and cc_platform != 'win':
+    if 'exe' in result and not cc_platform.startswith('win-'):
         sys.exit("Error: cannot construct a Windows 'exe' installer on '%s'" % cc_platform)
     return result
 
@@ -225,11 +225,14 @@ def main():
     conda_exe_default_path = join(sys.prefix, "standalone_conda", "conda.exe")
     conda_exe_default_path = normalize_path(abspath(conda_exe_default_path))
     conda_exe = normalize_path(abspath(args.conda_exe)) if args.conda_exe else conda_exe_default_path
-    if args.platform and args.platform != cc_platform and conda_exe == conda_exe_default_path:
-        sys.exit("Error: In order to build a '%s' constructor on '%s', the default "
-                 "conda executable cannot be used. Instead, the --conda-exe option "
-                 "must be supplied with the path to a '%s'-compatible standalone "
-                 "conda executable." % (args.platform, cc_platform, args.platform))
+    if args.platform and args.platform != cc_platform:
+        if args.platform.startswith('win-'):
+            sys.exit("Error: cannot construct a '%s' installer on '%s'" % (args.platform, cc_platform))
+        if conda_exe == conda_exe_default_path:
+            sys.exit("Error: In order to build a '%s' constructor on '%s', the default "
+                     "conda executable cannot be used. Instead, the --conda-exe option "
+                     "must be supplied with the path to a '%s'-compatible standalone "
+                     "conda executable." % (args.platform, cc_platform, args.platform))
     if not os.path.isfile(conda_exe):
         if conda_exe == conda_exe_default_path:
             sys.exit("Error: A standalone conda executable for this platform could not "
