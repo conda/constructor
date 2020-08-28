@@ -28,9 +28,9 @@ def get_installer_type(info):
 
     itype = info.get('installer_type')
     if not itype:
-        return os_allowed[osname][:1]
+        result = os_allowed[osname][:1]
     elif itype == 'all':
-        return os_allowed[osname]
+        result = os_allowed[osname]
     elif itype not in all_allowed:
         all_allowed = ', '.join(sorted(all_allowed))
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
@@ -39,7 +39,12 @@ def get_installer_type(info):
         sys.exit("Error: invalid installer type '%s' for %s; allowed: %s" %
                  (itype, osname, os_allowed))
     else:
-        return itype,
+        result = itype,
+    if 'pkg' in result and cc_platform != 'osx':
+        sys.exit("Error: cannot construct an macOS 'pkg' installer on '%s'" % cc_platform)
+    if 'exe' in result and cc_platform != 'win':
+        sys.exit("Error: cannot construct a Windows 'exe' installer on '%s'" % cc_platform)
+    return result
 
 
 def get_output_filename(info):
