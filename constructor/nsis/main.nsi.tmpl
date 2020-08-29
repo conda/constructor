@@ -861,6 +861,16 @@ Section "Install"
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
 
+    # Create and stage a fake home directory. This enables us to isolate conda from existing
+    # settings that might disrupt the expected operation of the installer. The one wrinkle in
+    # this strategy is that it also interrupts the modificaton of ~/.conda/environments.txt.
+    # So we copy the existing value into our fake home directory, let conda modify it, and
+    # then copy it back.
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PREFIX", "$INSTDIR\pkgs\.fake").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("USERPROFILE", "$INSTDIR\pkgs\.fake").r0'
+    CreateDirectory "$INSTDIR\pkgs\.fake\.conda"
+    CopyFiles /silent /filesonly "$PROFILE\.conda\environments.txt" "$INSTDIR\pkgs\.fake\.conda"
+
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", __CHANNELS__).r0'
@@ -880,8 +890,14 @@ Section "Install"
     Pop $0
     SetDetailsPrint both
 
+    # Copy the modified environments.txt file into place
+    CreateDirectory "$PROFILE\.conda"
+    CopyFiles /silent /filesonly "$INSTDIR\pkgs\.fake\.conda\environments.txt" "$PROFILE\.conda"
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("USERPROFILE", "$PROFILE")".r0'
+
     # Cleanup
     SetOutPath "$INSTDIR"
+    RMDir /r "$INSTDIR\pkgs\.fake"
     Delete "$INSTDIR\pkgs\env.txt"
 
     @WRITE_CONDARC@
