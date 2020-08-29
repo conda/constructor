@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import json
 import os
-from os.path import getsize, isdir, isfile, join, splitext
+from os.path import isdir, isfile, join, splitext
 import sys
 import tempfile
 
@@ -19,6 +19,16 @@ from constructor.utils import md5_files
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, concatv, conda_context, conda_replace_context_default,
                               download, env_vars, groupby, read_paths_json, all_channel_urls)
+
+
+def getsize(filename):
+    """Return the size of a file, reported by os.lstat as opposed to os.stat."""
+    # Symlinks might be reported as "not found" if they are provided by a
+    # package's dependencies
+    # We use lstat to obtain the size of the symlink, as opposed to the
+    # size of the file it points to
+    # https://github.com/conda/constructor/issues/311
+    return os.lstat(filename).st_size
 
 
 def warn_menu_packages_missing(precs, menu_packages):
