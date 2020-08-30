@@ -38,42 +38,9 @@ def read_nsi_tmpl():
         return fi.read()
 
 
-def pkg_commands(download_dir, dists, py_version, channels):
-    for n, dist in enumerate(dists):
-        fn = filename_dist(dist)
-        yield ''
-        yield '# --> %s <--' % fn
+def pkg_commands(download_dir, dists):
+    for fn in dists:
         yield 'File %s' % str_esc(join(download_dir, fn))
-
-    # Set CONDA_CHANNELS to configured channels and
-    # CONDA_PKGS_DIRS to the local package cache directory
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "%s").r0' % (
-        ','.join(channels))
-    yield "System::Call '%s'" % _env
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\\pkgs").r0'
-    yield "System::Call '%s'" % _env
-
-    # Add env vars to bypass safety checks
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
-    yield "System::Call '%s'" % _env
-    _env = 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
-    yield "System::Call '%s'" % _env
-
-    # Extract all the .conda and .tar.bz2 conda packages
-    yield r'SetDetailsPrint TextOnly'
-    yield r'DetailPrint "Setting up the package cache ..."'
-    cmd = r'"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
-    yield "nsExec::ExecToLog '%s'" % cmd
-    yield "Pop $0"
-    yield r'SetDetailsPrint both'
-
-    # Install all the extracted packages
-    yield r'SetDetailsPrint TextOnly'
-    yield r'DetailPrint "Setting up the base environment ..."'
-    cmd = r'"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt"'
-    yield "nsExec::ExecToLog '%s'" % cmd
-    yield "Pop $0"
-    yield r'SetDetailsPrint both'
 
 
 def make_nsi(info, dir_path):
@@ -90,37 +57,35 @@ def make_nsi(info, dir_path):
     replace = {
         'NAME': name,
         'VERSION': info['version'],
-        'VIPV': make_VIProductVersion(info['version']),
         'COMPANY': info.get('company', 'Unknown, Inc.'),
         'ARCH': '%d-bit' % arch,
         'PY_VER': py_version[:3],
+        'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
         'PYVERSION': py_version,
         'PYVERSION_MAJOR': py_version.split('.')[0],
-        'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
-        'OUTFILE': info['_outpath'],
-        'LICENSEFILE': abspath(info.get('license_file',
-                                        join(NSIS_DIR, 'placeholder_license.txt'))),
-        'DEFAULT_PREFIX': info.get(
-            'default_prefix',
-            join('%USERPROFILE%', name.lower())
-        ),
+        'DEFAULT_PREFIX': info.get('default_prefix', join('%USERPROFILE%', name.lower())),
         'POST_INSTALL_DESC': info['post_install_desc'],
+        'OUTFILE': info['_outpath'],
+        'VIPV': make_VIProductVersion(info['version']),
+        'ICONFILE': '@icon.ico',
+        'HEADERIMAGE': '@header.bmp',
+        'WELCOMEIMAGE': '@welcome.bmp',
+        'LICENSEFILE': abspath(info.get('license_file', join(NSIS_DIR, 'placeholder_license.txt'))),
+        'CONDA_HISTORY': '@' + join('conda-meta', 'history'),
+        'CONDA_EXE': '@_conda.exe',
+        'ENV_TXT': '@env.txt',
+        'URLS_FILE': '@urls',
+        'URLS_TXT_FILE': '@urls.txt',
+        'POST_INSTALL': '@post_install.bat',
+        'PRE_UNINSTALL': '@pre_uninstall.bat',
+        'INDEX_CACHE': '@cache',
+        'REPODATA_RECORD': '@repodata_record.json',
+        'CHANNELS': ','.join(get_final_channels(info))
     }
-    for key, fn in [('HEADERIMAGE', 'header.bmp'),
-                    ('WELCOMEIMAGE', 'welcome.bmp'),
-                    ('ICONFILE', 'icon.ico'),
-                    ('CONDA_EXE', '_conda.exe'),
-                    ('ENV_TXT', 'env.txt'),
-                    ('URLS_FILE', 'urls'),
-                    ('URLS_TXT_FILE', 'urls.txt'),
-                    ('POST_INSTALL', 'post_install.bat'),
-                    ('PRE_UNINSTALL', 'pre_uninstall.bat'),
-                    ('CONDA_HISTORY', join('conda-meta', 'history')),
-                    ('REPODATA_RECORD', 'repodata_record.json'),
-                    ('INDEX_CACHE', 'cache')]:
-        replace[key] = join(dir_path, fn)
-    for key in replace:
-        replace[key] = str_esc(replace[key])
+    for key, value in replace.items():
+        if value.startswith('@'):
+            value = join(dir_path, value[1:])
+        replace[key] = str_esc(value)
 
     data = read_nsi_tmpl()
     ppd = ns_platform(info['_platform'])
@@ -132,9 +97,6 @@ def make_nsi(info, dir_path):
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
 
-    cmds = pkg_commands(download_dir, dists, py_version,
-                        get_final_channels(info))
-
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
     approx_pkgs_size_kb = int(
         math.ceil(info.get('_approx_pkgs_size', 0) / 1000))
@@ -144,7 +106,7 @@ def make_nsi(info, dir_path):
         ('@NAME@', name),
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
-        ('@PKG_COMMANDS@', '\n    '.join(cmds)),
+        ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
@@ -157,6 +119,9 @@ def make_nsi(info, dir_path):
     nsi_path = join(dir_path, 'main.nsi')
     with open(nsi_path, 'w') as fo:
         fo.write(data)
+    # Uncomment to see the file for debugging
+    # with open('main.nsi', 'w') as fo:
+    #     fo.write(data)
     # Copy all the NSIS header files (*.nsh)
     for fn in os.listdir(NSIS_DIR):
         if fn.endswith('.nsh'):
