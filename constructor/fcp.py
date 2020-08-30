@@ -27,7 +27,11 @@ def getsize(filename):
     # package's dependencies
     # We use lstat to obtain the size of the symlink, as opposed to the
     # size of the file it points to
+    # From the docstring of the os.lstat function
+    #    > On platforms that do not support symbolic links, this is an 
+    #    > alias for stat().
     # https://github.com/conda/constructor/issues/311
+    # https://docs.python.org/3/library/os.html
     return os.lstat(filename).st_size
 
 
