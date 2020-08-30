@@ -466,7 +466,7 @@ rm -f $PREFIX/pkgs/env.txt
 rm -rf $PREFIX/install_tmp
 export TMP="$TMP_BACKUP"
 
-if [ "$HAS_CONDA_IN_INSTALL" = "1"]; then
+if [ "$HAS_CONDA_IN_INSTALL" = "1" ]; then
     mkdir -p $PREFIX/envs
 fi
 
@@ -512,7 +512,7 @@ if [ "$PYTHONPATH" != "" ]; then
     printf "    in __NAME__: $PREFIX\\n"
 fi
 
-if [ "$BATCH" = "0" && "$HAS_CONDA_IN_INSTALL" = "1" ]; then
+if [ "$BATCH" = "0" ] && [ "$HAS_CONDA_IN_INSTALL" = "1" ]; then
     # Interactive mode.
 #if osx
     BASH_RC="$HOME"/.bash_profile
