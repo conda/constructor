@@ -241,7 +241,7 @@ then
     fi
 #endif
 
-#if s390x 
+#if s390x
     if [ "$(uname -m)" != "s390x" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be s390x (big endian), \\n"
@@ -444,13 +444,21 @@ PRECONDA="$PREFIX/preconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$PRECONDA" || exit 1
 rm -f "$PRECONDA"
 
+#The templating doesn't support nested if statements
 #if has_pre_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     export INST_OPT='--skip-scripts'
     printf "WARNING: skipping pre_install.sh by user request\\n" >&2
 else
     export INST_OPT=''
+#endif
+#if has_pre_install and direct_execute_pre_install
+    if ! "$PREFIX/pkgs/pre_install.sh"; then
+#endif
+#if has_pre_install and not direct_execute_pre_install
     if ! $RUNNING_SHELL "$PREFIX/pkgs/pre_install.sh"; then
+#endif
+#if has_pre_install
         printf "ERROR: executing pre_install.sh failed\\n" >&2
         exit 1
     fi
@@ -493,11 +501,19 @@ export TMP="$TMP_BACKUP"
 
 mkdir -p $PREFIX/envs
 
+#The templating doesn't support nested if statements
 #if has_post_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     printf "WARNING: skipping post_install.sh by user request\\n" >&2
 else
+#endif
+#if has_post_install and direct_execute_post_install
+    if ! "$PREFIX/pkgs/post_install.sh"; then
+#endif
+#if has_post_install and not direct_execute_post_install
     if ! $RUNNING_SHELL "$PREFIX/pkgs/post_install.sh"; then
+#endif
+#if has_post_install
         printf "ERROR: executing post_install.sh failed\\n" >&2
         exit 1
     fi
@@ -512,7 +528,7 @@ if [ "$KEEP_PKGS" = "0" ]; then
     rm -rf "$PREFIX"/pkgs
 else
     # Attempt to delete the empty temporary directories in the package cache
-    # These are artifacts of the constructor --extract-conda-pkgs 
+    # These are artifacts of the constructor --extract-conda-pkgs
     find $PREFIX/pkgs -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
