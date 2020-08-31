@@ -236,15 +236,18 @@ Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 
 _required:_ no<br/>
 _type:_ string<br/>
-Path to a pre install script. This is available for Unix only, and
-must be a Bash script.
+Path to a pre install script. This is available for Unix only, and can be
+either a POSIX shell script or provide it's own shebang. Note if a shebang
+is provided this may reduce the portability of the resulting installer.
 
 ## `post_install`
 
 _required:_ no<br/>
 _type:_ string<br/>
-Path to a post install script. This must be a Bash script for Unix
-and a `.bat` file for Windows.
+Path to a post install script. On Unix-like systems this can be either a POSIX
+shell script or provide it's own shebang. Note if a shebang is provided this
+may reduce the portability of the resulting installer. On Windows this must be
+a `.bat` file.
 
 ## `post_install_desc`
 
