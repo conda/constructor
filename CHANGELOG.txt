@@ -1,3 +1,26 @@
+2020-09-31   3.1.0:
+-------------------
+  * COMMON:
+    - New platform selectors: s390x, osx-arm64
+    - Added the ability to build installers from an existing,
+      instantiated environment or an environment.yml spec.
+    - Added conda_channel_alias and condarc options to allow
+      more complete customization of the installed .condarc
+    - Added options to all install types to preserve the
+      package cache after installation
+    - Migrated CI to GitHub Actions and added installation/
+      unpack testing of generated installers
+
+  * NSIS:
+    - Support for pre-install script
+    - Added the ability to check if the path length is longer
+      than 46 characters, so that nodejs package contents will
+      not exceed a path length of 260 characters.
+
+  * PKG:
+    - Added an "all" installer type option to support building
+      both .pkg and .sh installers with a single commmand
+
 2019-09-16   3.0.1:
 -------------------
   * COMMON:
