@@ -4,6 +4,7 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
+import distro
 import os
 from os.path import isdir, join, split as path_split
 import platform
@@ -77,8 +78,7 @@ def system_info():
     if sys.platform == 'darwin':
         out['extra'] = platform.mac_ver()
     elif sys.platform.startswith('linux') and hasattr(platform, 'dist'):
-        # dist() was deprtecated in Python 3.5 and removed in 3.8
-        out['extra'] = platform.dist()
+        out['extra'] = distro.linux_distribution(full_distribution_name=False)
     elif sys.platform.startswith('win'):
         out['extra'] = platform.win32_ver()
         prefix = default_prefix
