@@ -11,6 +11,11 @@
     - Migrated CI to GitHub Actions and added installation/
       unpack testing of generated installers
 
+  * SHELL:
+    - Pre- and post-install scripts are now executed directly
+      if a shebang is present; otherwise they are run by the
+      POSIX shell `sh`.
+
   * NSIS:
     - Support for pre-install script
     - Added the ability to check if the path length is longer
