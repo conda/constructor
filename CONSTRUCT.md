@@ -236,15 +236,21 @@ Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 
 _required:_ no<br/>
 _type:_ string<br/>
-Path to a pre install script. This is available for Unix only, and
-must be a Bash script.
+Path to a pre-install script. For Unix `.sh` installers, the shebang
+line is respected if present; otherwise, the script is run by the POSIX
+shell `sh`. Note that the use of a shebang can reduce the portability of
+the installer. This option is not supported for Windows `.exe` or macOS
+`.pkg` installers.
 
 ## `post_install`
 
 _required:_ no<br/>
 _type:_ string<br/>
-Path to a post install script. This must be a Bash script for Unix
-and a `.bat` file for Windows.
+Path to a post-install script. For Unix `.sh` installers, the shebang
+line is respected if present; otherwise, the script is run by the POSIX
+shell `sh`. Note that the use of a shebang can reduce the portability of
+the installer. For Windows `.exe` installers, this must be a `.bat` file.
+This option is not supported for macOS `.pkg` installers.
 
 ## `post_install_desc`
 
@@ -333,18 +339,18 @@ or enable long path on windows > 10 (require admin right). Default is True. (Win
 
 ## Available selectors
 
-- `arch-64`
-- `arm-64`
+- `aarch64`
+- `arm64`
 - `armv7l`
 - `linux`
-- `linux-32`
-- `linux-64`
-- `osx-64`
+- `linux32`
+- `linux64`
+- `osx`
 - `ppc64le`
 - `s390x`
 - `unix`
 - `win`
-- `win-32`
-- `win-64`
+- `win32`
+- `win64`
 - `x86`
 - `x86_64`

@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from os.path import basename, dirname, getsize, isdir, join
 import shutil
+import stat
 import tarfile
 import tempfile
 
@@ -18,6 +19,16 @@ from .utils import add_condarc, filename_dist, fill_template, md5_files, preproc
     read_ascii_only, get_final_channels
 
 THIS_DIR = dirname(__file__)
+
+
+def has_shebang(filename):
+    with open(filename, "rb") as fp:
+        return b"#!" == fp.read(2)
+
+
+def make_executable(tarinfo):
+    tarinfo.mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    return tarinfo
 
 
 def read_header_template():
@@ -36,6 +47,8 @@ def get_header(conda_exec, tarball, info):
     ppd['has_license'] = has_license
     for key in 'pre_install', 'post_install', 'pre_uninstall':
         ppd['has_%s' % key] = bool(key in info)
+        if key in info:
+            ppd['direct_execute_%s' % key] = has_shebang(info[key])
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     install_lines = list(add_condarc(info))
     # Needs to happen first -- can be templated
@@ -81,7 +94,8 @@ def create(info, verbose=False):
         pre_t.add(join(tmp_dir, fn), 'pkgs/' + fn)
     for key in 'pre_install', 'post_install':
         if key in info:
-            pre_t.add(info[key], 'pkgs/%s.sh' % key)
+            pre_t.add(info[key], 'pkgs/%s.sh' % key,
+                      filter=make_executable if has_shebang(info[key]) else None)
     cache_dir = join(tmp_dir, 'cache')
     if isdir(cache_dir):
         for cf in os.listdir(cache_dir):

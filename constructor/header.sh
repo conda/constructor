@@ -17,45 +17,6 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
     return 1
 fi
 
-# Determine RUNNING_SHELL; if SHELL is non-zero use that.
-if [ -n "$SHELL" ]; then
-    RUNNING_SHELL="$SHELL"
-else
-    if [ "$(uname)" = "Darwin" ]; then
-        RUNNING_SHELL=/bin/bash
-    else
-        if [ -d /proc ] && [ -r /proc ] && [ -d /proc/$$ ] && [ -r /proc/$$ ] && [ -L /proc/$$/exe ] && [ -r /proc/$$/exe ]; then
-            RUNNING_SHELL=$(readlink /proc/$$/exe)
-        fi
-        if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
-            RUNNING_SHELL=$(ps -p $$ -o args= | sed 's|^-||')
-            case "$RUNNING_SHELL" in
-                */*)
-                    ;;
-                default)
-                    RUNNING_SHELL=$(which "$RUNNING_SHELL")
-                    ;;
-            esac
-        fi
-    fi
-fi
-
-# Some final fallback locations
-if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
-    if [ -f /bin/bash ]; then
-        RUNNING_SHELL=/bin/bash
-    else
-        if [ -f /bin/sh ]; then
-            RUNNING_SHELL=/bin/sh
-        fi
-    fi
-fi
-
-if [ -z "$RUNNING_SHELL" ] || [ ! -f "$RUNNING_SHELL" ]; then
-    printf 'Unable to determine your shell. Please set the SHELL env. var and re-run\\n' >&2
-    exit 1
-fi
-
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
@@ -241,7 +202,7 @@ then
     fi
 #endif
 
-#if s390x 
+#if s390x
     if [ "$(uname -m)" != "s390x" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be s390x (big endian), \\n"
@@ -444,13 +405,21 @@ PRECONDA="$PREFIX/preconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$PRECONDA" || exit 1
 rm -f "$PRECONDA"
 
+#The templating doesn't support nested if statements
 #if has_pre_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     export INST_OPT='--skip-scripts'
     printf "WARNING: skipping pre_install.sh by user request\\n" >&2
 else
     export INST_OPT=''
-    if ! $RUNNING_SHELL "$PREFIX/pkgs/pre_install.sh"; then
+#endif
+#if has_pre_install and direct_execute_pre_install
+    if ! "$PREFIX/pkgs/pre_install.sh"; then
+#endif
+#if has_pre_install and not direct_execute_pre_install
+    if ! sh "$PREFIX/pkgs/pre_install.sh"; then
+#endif
+#if has_pre_install
         printf "ERROR: executing pre_install.sh failed\\n" >&2
         exit 1
     fi
@@ -493,11 +462,19 @@ export TMP="$TMP_BACKUP"
 
 mkdir -p $PREFIX/envs
 
+#The templating doesn't support nested if statements
 #if has_post_install
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     printf "WARNING: skipping post_install.sh by user request\\n" >&2
 else
-    if ! $RUNNING_SHELL "$PREFIX/pkgs/post_install.sh"; then
+#endif
+#if has_post_install and direct_execute_post_install
+    if ! "$PREFIX/pkgs/post_install.sh"; then
+#endif
+#if has_post_install and not direct_execute_post_install
+    if ! sh "$PREFIX/pkgs/post_install.sh"; then
+#endif
+#if has_post_install
         printf "ERROR: executing post_install.sh failed\\n" >&2
         exit 1
     fi
@@ -512,7 +489,7 @@ if [ "$KEEP_PKGS" = "0" ]; then
     rm -rf "$PREFIX"/pkgs
 else
     # Attempt to delete the empty temporary directories in the package cache
-    # These are artifacts of the constructor --extract-conda-pkgs 
+    # These are artifacts of the constructor --extract-conda-pkgs
     find $PREFIX/pkgs -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
