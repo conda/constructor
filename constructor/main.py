@@ -171,8 +171,7 @@ def main():
     p.add_argument('--platform',
                    action="store",
                    default=cc_platform,
-                   help="the platform for which installer is for, "
-                   "defaults to '{}'".format(cc_platform))
+                   help=argparse.SUPPRESS)
 
     p.add_argument('--dry-run',
                    help="solve package specs but do not create installer",
@@ -201,6 +200,12 @@ def main():
 
     args = p.parse_args()
 
+    if args.platform != cc_platform:
+        p.error("""
+Constructor 3.x is no longer able to build cross-
+platform installers. Only installers for the '%s' platform can be
+built in this environment.""".lstrip() % cc_platform)
+
     if args.clean:
         import shutil
         cache_dir = abspath(expanduser(args.cache_dir))
@@ -217,22 +222,27 @@ def main():
     if not isdir(dir_path):
         p.error("no such directory: %s" % dir_path)
 
-    if not args.conda_exe:
-        # try a default name of conda.exe in constructor's installed location
-        conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
-        if os.path.isfile(conda_exe_default_path):
-            args.conda_exe = conda_exe_default_path
-        else:
-            raise ValueError("You must supply a path to self-contained conda executable with the "
-                             "--conda-exe parameter.  You may prefer to download one for your OS "
-                             "and place it in the root of your prefix, named 'conda.exe' to save "
-                             "yourself some typing.  Self-contained conda executables can be "
-                             "downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/")
+    conda_exe = args.conda_exe
+    conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
+    conda_exe_default_path = normalize_path(conda_exe_default_path)
+    if conda_exe:
+        conda_exe = normalize_path(os.path.abspath(conda_exe))
+    else:
+        conda_exe = conda_exe_default_path
+    if not os.path.isfile(conda_exe):
+        if conda_exe != conda_exe_default_path:
+            p.error("file not found: %s" % args.conda_exe)
+        p.error("""
+no standalone conda executable was found. The
+easiest way to obtain one is to install the 'conda-standalone' package.
+Alternatively, you can download an executable manually and supply its
+path with the --conda-exe argument. Self-contained executables can be
+downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/""".lstrip())
 
     out_dir = normalize_path(args.output_dir)
     main_build(dir_path, output_dir=out_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
-               dry_run=args.dry_run, conda_exe=args.conda_exe)
+               dry_run=args.dry_run, conda_exe=conda_exe)
 
 
 if __name__ == '__main__':
