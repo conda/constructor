@@ -182,13 +182,19 @@ Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 '''),
 
     ('pre_install',            False, str, '''
-Path to a pre install script. This is available for Unix only, and
-must be a Bash script.
+Path to a pre-install script. For Unix `.sh` installers, the shebang
+line is respected if present; otherwise, the script is run by the POSIX
+shell `sh`. Note that the use of a shebang can reduce the portability of
+the installer. This option is not supported for Windows `.exe` or macOS
+`.pkg` installers.
 '''),
 
     ('post_install',           False, str, '''
-Path to a post install script. This must be a Bash script for Unix
-and a `.bat` file for Windows.
+Path to a post-install script. For Unix `.sh` installers, the shebang
+line is respected if present; otherwise, the script is run by the POSIX
+shell `sh`. Note that the use of a shebang can reduce the portability of
+the installer. For Windows `.exe` installers, this must be a `.bat` file.
+This option is not supported for macOS `.pkg` installers.
 '''),
 
     ('post_install_desc',      False, str, '''
