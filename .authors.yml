@@ -117,11 +117,6 @@
   num_commits: 1
   first_commit: 2018-01-11 04:47:11
   github: astrofrog
-- name: Michael C. Grant
-  email: mcg@cvxr.com
-  num_commits: 4
-  first_commit: 2016-06-13 14:15:26
-  github: mcg1969
 - name: John Kirkham
   email: kirkhamj@janelia.hhmi.org
   num_commits: 1
@@ -141,3 +136,14 @@
   email: trent@trent.me
   num_commits: 1
   first_commit: 2017-09-15 15:04:51
+- name: Michael C. Grant
+  email: mgrant@anaconda.com
+  alternate_emails:
+    - mcg@cvxr.com
+- name: Forrest Waters
+  email: forrestwaters65@gmail.com
+  alternate_emails:
+    - fwaters@0609.local
+    - person@example.com
+    - fwaters@anaconda.com
+
