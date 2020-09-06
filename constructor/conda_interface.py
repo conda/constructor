@@ -58,6 +58,13 @@ if conda_interface_type == 'conda':
 
     from conda.exports import cache_fn_url as _cache_fn_url
 
+    distro = None
+    if sys.platform.startswith('linux'):
+        try:
+            from conda._vendor import distro
+        except ImportError:
+            pass
+
     def get_repodata(url):
         if CONDA_MAJOR_MINOR >= (4, 5):
             from conda.core.subdir_data import fetch_repodata_remote_request

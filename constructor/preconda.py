@@ -15,6 +15,7 @@ from .utils import filename_dist, get_final_url
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
                               PrefixData, write_repodata, get_repodata, all_channel_urls)
+from .conda_interface import distro as conda_distro
 
 try:
     import json
@@ -76,9 +77,11 @@ def system_info():
            'platform_full': platform.version()}
     if sys.platform == 'darwin':
         out['extra'] = platform.mac_ver()
-    elif sys.platform.startswith('linux') and hasattr(platform, 'dist'):
-        # dist() was deprtecated in Python 3.5 and removed in 3.8
-        out['extra'] = platform.dist()
+    elif sys.platform.startswith('linux'):
+        if conda_distro is not None:
+            out['extra'] = conda_distro.linux_distribution(full_distribution_name=False)
+        elif hasattr(platform, 'dist'):
+            out['extra'] = platform.dist()
     elif sys.platform.startswith('win'):
         out['extra'] = platform.win32_ver()
         prefix = default_prefix
