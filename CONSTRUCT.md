@@ -336,18 +336,18 @@ or enable long path on windows > 10 (require admin right). Default is True. (Win
 
 ## Available selectors
 
-- `aarch64`
-- `arm64`
+- `arch-64`
+- `arm-64`
 - `armv7l`
 - `linux`
-- `linux32`
-- `linux64`
-- `osx`
+- `linux-32`
+- `linux-64`
+- `osx-64`
 - `ppc64le`
 - `s390x`
 - `unix`
 - `win`
-- `win32`
-- `win64`
+- `win-32`
+- `win-64`
 - `x86`
 - `x86_64`
