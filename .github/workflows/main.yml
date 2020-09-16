@@ -20,6 +20,13 @@ jobs:
         os: [macos-latest,ubuntu-latest,windows-latest]
         pyver: [2.7,3.6,3.7,3.8]
     steps:
+    - name: Print github context
+      run: |
+        echo "EVENT_NAME:" "$GITHUB_EVENT_NAME"
+        echo "       REF:" "$GITHUB_REF"
+        echo "  HEAD_REF:" "$GITHUB_HEAD_REF"
+        echo "  BASE_REF:" "$GITHUB_BASE_REF"
+        echo "       SHA:" "$GITHUB_SHA"
     - name: Retrieve the source code
       uses: actions/checkout@v2
       with:
@@ -39,3 +46,51 @@ jobs:
           source ../conda/etc/profile.d/conda.sh
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
           conda build conda.recipe --python=${{ matrix.pyver }}
+          mv ../conda/conda-bld .
+    - name: Upload the build artifact
+      if: github.event_name == 'push'
+      uses: actions/upload-artifact@v2
+      with:
+        # By uploading to the same artifact we can download all of the packages
+        # and upload them all to anaconda.org in a single job
+        name: package-${{ github.sha }}
+        path: conda-bld/*/*.tar.bz2
+  upload:
+    needs: package
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+    - name: Retrieve the source code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Download the build artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: package-${{ github.sha }}
+        path: conda-bld
+    - name: Build the documentation for deployment
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        source /usr/share/miniconda/bin/activate
+        cd docs
+        make html
+    - name: Deploy the documentation
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs/build/html
+    - name: Upload to anaconda.org
+      env:
+        ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        GITHUB_REF: ${{ github.ref }}
+      run: |
+        source $CONDA/bin/activate
+        conda install -y anaconda-client
+        [[ "$GITHUB_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev"
+        anaconda --verbose --token $ANACONDA_TOKEN upload --user ctools $LABEL conda-bld/*/*.tar.bz2 --force
+    - name: Clean up older artifacts
+      uses: glassechidna/artifact-cleaner@master
+      with:
+        minimumAge: 86400
