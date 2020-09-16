@@ -3,8 +3,11 @@
 
 ## Build status
 
-[![Build status](https://github.com/conda/constructor/workflows/Build%20and%20test%20the%20package/badge.svg)](https://github.com/conda/constructor/actions)
-[![codecov](https://codecov.io/gh/conda/constructor/branch/master/graph/badge.svg)](https://codecov.io/gh/conda/constructor)
+| [![Build status](https://github.com/conda/constructor/workflows/Build%20and%20test%20the%20package/badge.svg)](https://github.com/conda/constructor/actions) [![codecov](https://codecov.io/gh/conda/constructor/branch/master/graph/badge.svg)](https://codecov.io/gh/conda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/latest_release_date.svg)](https://anaconda.org/ctools/constructor) |
+| --- | :-: |
+| [`conda install ctools/label/dev::constructor`](https://anaconda.org/ctools/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/version.svg)](https://anaconda.org/ctools/constructor) |
+| [`conda install defaults::constructor`](https://anaconda.org/anaconda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/anaconda/constructor/badges/version.svg)](https://anaconda.org/anaconda/constructor) |
+| [`conda install conda-forge::constructor`](https://anaconda.org/conda-forge/constructor) | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/constructor/badges/version.svg)](https://anaconda.org/conda-forge/constructor) |
 
 ## Description:
 
