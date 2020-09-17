@@ -319,7 +319,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     version = info["version"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
-    channel_urls = all_channel_urls(info.get("channels", ()))
+    channel_urls = all_channel_urls(info.get("channels", ()), subdirs=[platform, "noarch"])
     channels_remap = info.get('channels_remap', ())
     specs = info.get("specs", ())
     exclude = info.get("exclude", ())

@@ -171,7 +171,8 @@ def main():
     p.add_argument('--platform',
                    action="store",
                    default=cc_platform,
-                   help=argparse.SUPPRESS)
+                   help="the platform for which installer is for, "
+                   "defaults to '{}'".format(cc_platform))
 
     p.add_argument('--dry-run',
                    help="solve package specs but do not create installer",
@@ -200,12 +201,6 @@ def main():
 
     args = p.parse_args()
 
-    if args.platform != cc_platform:
-        p.error("""
-Constructor 3.x is no longer able to build cross-
-platform installers. Only installers for the '%s' platform can be
-built in this environment.""".lstrip() % cc_platform)
-
     if args.clean:
         import shutil
         cache_dir = abspath(expanduser(args.cache_dir))
@@ -227,6 +222,8 @@ built in this environment.""".lstrip() % cc_platform)
     conda_exe_default_path = normalize_path(conda_exe_default_path)
     if conda_exe:
         conda_exe = normalize_path(os.path.abspath(conda_exe))
+    elif args.platform != cc_platform:
+        p.error("setting --conda-exe is required for building a non-native installer")
     else:
         conda_exe = conda_exe_default_path
     if not os.path.isfile(conda_exe):
