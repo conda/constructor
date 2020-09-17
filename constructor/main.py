@@ -61,6 +61,7 @@ def get_output_filename(info):
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
                dry_run=False, conda_exe="conda.exe"):
+    print('platform: %s' % platform)
     if not os.path.isfile(conda_exe):
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
     cache_dir = abspath(expanduser(cache_dir))
