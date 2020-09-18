@@ -18,7 +18,8 @@ import tempfile
 from constructor.utils import md5_files
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, concatv, conda_context, conda_replace_context_default,
-                              download, env_vars, groupby, read_paths_json, all_channel_urls)
+                              download, env_vars, groupby, read_paths_json, all_channel_urls,
+                              cc_platform)
 
 
 def getsize(filename):
@@ -250,19 +251,26 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         (x['src'] for x in channels_remap),
     ))
 
-    # set conda to be the user's conda (what is in the environment)
-    # for purposese of getting & building environements, rather
-    # than the standalone conda (conda_exe). Fallback to the
-    # standalone, if needed
-    user_conda = os.environ.get('CONDA_EXE', '') or conda_exe
-
     # make the environment, if needed
     if environment_file:
+        # set conda to be the user's conda (what is in the environment)
+        # for purposese of getting & building environements, rather
+        # than the standalone conda (conda_exe). Fallback to the
+        # standalone, if needed
+        user_conda = os.environ.get('CONDA_EXE', '')
+        if not user_conda:
+            if cc_platform == platform:
+                conda_exe
+            else:
+                sys.exit("CONDA_EXE env variable is empty. Need to activate a conda env.")
+
         from subprocess import check_call
 
         environment = tempfile.mkdtemp()
+        new_env = os.environ.copy()
+        new_env["CONDA_SUBDIR"] = platform
         check_call([user_conda, "env", "create", "--file", environment_file,
-                    "--prefix", environment], universal_newlines=True)
+                    "--prefix", environment], universal_newlines=True, env=new_env)
 
     # obtain the package records
     if environment:
@@ -319,7 +327,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     version = info["version"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
-    channel_urls = all_channel_urls(info.get("channels", ()))
+    channel_urls = all_channel_urls(info.get("channels", ()), subdirs=[platform, "noarch"])
     channels_remap = info.get('channels_remap', ())
     specs = info.get("specs", ())
     exclude = info.get("exclude", ())
