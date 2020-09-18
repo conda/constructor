@@ -78,7 +78,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     info['_conda_exe'] = abspath(conda_exe)
     itypes = get_installer_type(info)
 
-    if platform != cc_platform and if 'pkg' in itypes and not cc_platform.startswith('osx-'):
+    if platform != cc_platform and 'pkg' in itypes and not cc_platform.startswith('osx-'):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
 
     if verbose:
