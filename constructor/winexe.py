@@ -96,6 +96,14 @@ def make_nsi(info, dir_path):
     ppd['post_install_exists'] = bool(info.get('post_install'))
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
+    if info['_platform'].startswith("win") and sys.platform != 'win32':
+        # Branding /TRIM commannd is unsupported on non win platform
+        data_lines = data.split("\n")
+        for i, line in enumerate(data_lines):
+            if "/TRIM" in line:
+                del data_lines[i]
+                break
+        data = "\n".join(data_lines)
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
     approx_pkgs_size_kb = int(
@@ -140,7 +148,10 @@ Error: no file %s
     please make sure nsis is installed:
     > conda install nsis
 """ % MAKENSIS_EXE)
-    out = check_output([MAKENSIS_EXE, '/VERSION'])
+    if sys.platform == "win32":
+        out = check_output([MAKENSIS_EXE, '/VERSION'])
+    else:
+        out = check_output([MAKENSIS_EXE, '-VERSION'])
     out = out.decode('utf-8').strip()
     print("NSIS version: %s" % out)
     for dn in 'x86-unicode', 'x86-ansi', '.':
@@ -178,9 +189,13 @@ def create(info, verbose=False):
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir)
     if verbose:
-        verbosity = '/V4'
+        verbosity = 'V4'
     else:
-        verbosity = '/V2'
+        verbosity = 'V2'
+    if sys.platform == "win32"
+        verbosity = "/" + verbosity
+    else:
+        verbosity = "-" + verbosity
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
     if verbose:
