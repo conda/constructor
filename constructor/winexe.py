@@ -192,7 +192,7 @@ def create(info, verbose=False):
         verbosity = 'V4'
     else:
         verbosity = 'V2'
-    if sys.platform == "win32"
+    if sys.platform == "win32":
         verbosity = "/" + verbosity
     else:
         verbosity = "-" + verbosity
