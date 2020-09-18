@@ -109,7 +109,7 @@ def add_condarc(info):
     if isinstance(condarc, dict):
         condarc = yaml.dump(condarc)
     yield '# ----- add condarc'
-    if sys.platform == 'win32':
+    if info['_platform'].startswith('win'):
         yield 'Var /Global CONDARC'
         yield 'FileOpen $CONDARC "$INSTDIR\\.condarc" w'
         for line in condarc.splitlines():
