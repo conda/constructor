@@ -15,7 +15,7 @@ from os.path import isdir, isfile, join, splitext
 import sys
 import tempfile
 
-from constructor.utils import md5_files
+from constructor.utils import md5_files, filename_dist
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, concatv, conda_context, conda_replace_context_default,
                               download, env_vars, groupby, read_paths_json, all_channel_urls,
@@ -323,6 +323,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             if dist.endswith(transmute_file_type):
                 new_dists.append(dist)
             elif dist.endswith(".tar.bz2"):
+                dist = filename_dist(dist)
                 new_file_name = "%s%s" % (dist[:-8], transmute_file_type)
                 new_dists.append(new_file_name)
                 new_file_name = os.path.join(download_dir, new_file_name)
