@@ -29,7 +29,7 @@ def getsize(filename):
     # We use lstat to obtain the size of the symlink, as opposed to the
     # size of the file it points to
     # From the docstring of the os.lstat function
-    #    > On platforms that do not support symbolic links, this is an 
+    #    > On platforms that do not support symbolic links, this is an
     #    > alias for stat().
     # https://github.com/conda/constructor/issues/311
     # https://docs.python.org/3/library/os.html
@@ -318,7 +318,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     if transmute_file_type != '':
         new_dists = []
-        from subprocess import check_call
+        import conda_package_handling.api
         for dist in dists:
             if dist.endswith(transmute_file_type):
                 new_dists.append(dist)
@@ -329,8 +329,8 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
                 if os.path.exists(new_file_name):
                     continue
                 print("transmuting %s" % dist)
-                check_call(["cph", "transmute", os.path.join(download_dir, dist), transmute_file_type],
-                           universal_newlines=True)
+                conda_package_handling.api.transmute(os.path.join(download_dir, dist),
+                    transmute_file_type, out_folder=download_dir)
         new_dists = dists
 
     if environment_file:
