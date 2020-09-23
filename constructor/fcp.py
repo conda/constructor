@@ -238,7 +238,8 @@ def _precs_from_environment(environment, download_dir, user_conda):
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(),  ignore_duplicate_files=False, environment=None,
-          environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe"):
+          environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
+          transmute_file_type=''):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     specs = list(concatv(specs, ("python",)))
@@ -315,6 +316,23 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     dists = list(prec.fn for prec in precs)
 
+    if transmute_file_type != '':
+        new_dists = []
+        from subprocess import check_call
+        for dist in dists:
+            if dist.endswith(transmute_file_type):
+                new_dists.append(dist)
+            elif dist.endswith(".tar.bz2"):
+                new_file_name = "%s%s" % (dist[:-8], transmute_file_type)
+                new_file_name = os.path.join(download_dir, new_file_name)
+                new_dists.append(new_file_name)
+                if os.path.exists(new_file_name):
+                    continue
+                print("transmuting %s" % dist)
+                check_call(["cph", "transmute", os.path.join(download_dir, dist), transmute_file_type],
+                           universal_newlines=True)
+        new_dists = dists
+
     if environment_file:
         import shutil
 
@@ -335,6 +353,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     ignore_duplicate_files = info.get("ignore_duplicate_files", False)
     environment = info.get("environment", None)
     environment_file = info.get("environment_file", None)
+    transmute_file_type = info.get("transmute_file_type", "")
 
     if not channel_urls and not channels_remap:
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
@@ -345,7 +364,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
             exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
-            verbose, dry_run, conda_exe,
+            verbose, dry_run, conda_exe, transmute_file_type
         )
 
     info["_urls"] = _urls

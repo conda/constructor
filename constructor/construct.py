@@ -106,6 +106,12 @@ constructor is using the precise local conda configuration to discover
 and install the packages.
 '''),
 
+    ('transmute_file_type', False, str, '''
+File type extension for the files to be transmuted into. Currently supports
+only '.conda'. See conda-package-handling for supported extension names.
+If left empty, no transumating is done.
+'''),
+
     ('conda_default_channels', False, list, '''
 If this value is provided as well as `write_condarc`, then the channels
 in this list will be included as the value of the `default_channels:`
