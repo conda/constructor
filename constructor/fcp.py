@@ -324,14 +324,16 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
                 new_dists.append(dist)
             elif dist.endswith(".tar.bz2"):
                 new_file_name = "%s%s" % (dist[:-8], transmute_file_type)
-                new_file_name = os.path.join(download_dir, new_file_name)
                 new_dists.append(new_file_name)
+                new_file_name = os.path.join(download_dir, new_file_name)
                 if os.path.exists(new_file_name):
                     continue
                 print("transmuting %s" % dist)
                 conda_package_handling.api.transmute(os.path.join(download_dir, dist),
                     transmute_file_type, out_folder=download_dir)
-        new_dists = dists
+            else:
+                new_dists.append(dist)
+        dists = new_dists
 
     if environment_file:
         import shutil
