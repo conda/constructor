@@ -38,7 +38,8 @@ dash or period.
 
 _required:_ no<br/>
 _type:_ list<br/>
-The conda channels from which packages are retrieved.
+The conda channels from which packages are retrieved. At least one channel must
+be supplied, either in `channels` or `channels_remap`.
 
 ## `channels_remap`
 
@@ -57,6 +58,7 @@ channels_remap:
       src: file:///tmp/r/conda-bld
       dest: https://repo.anaconda.com/pkgs/r
 ```
+At least one channel must be supplied, either in `channels` or `channels_remap`.
 
 ## `specs`
 
