@@ -332,7 +332,9 @@ if ! mkdir -p "$PREFIX"; then
     exit 1
 fi
 
-PREFIX=$(cd "$PREFIX"; pwd)
+# pwd does not convert two leading slashes to one
+# https://github.com/conda/constructor/issues/284
+PREFIX=$(cd "$PREFIX"; pwd | sed 's@//@/@')
 export PREFIX
 
 printf "PREFIX=%s\\n" "$PREFIX"
