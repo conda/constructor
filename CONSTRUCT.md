@@ -132,6 +132,14 @@ that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
 and install the packages.
 
+## `transmute_file_type`
+
+_required:_ no<br/>
+_type:_ string<br/>
+File type extension for the files to be transmuted into. Currently supports
+only '.conda'. See conda-package-handling for supported extension names.
+If left empty, no transumating is done.
+
 ## `conda_default_channels`
 
 _required:_ no<br/>
