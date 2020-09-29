@@ -229,6 +229,9 @@ def _precs_from_environment(environment, download_dir, user_conda):
         package = packages[dist_name]
         package_tarball_full_path = join(download_dir, fn)
         extracted_package_dir = join(download_dir, dist_name)
+        if 'platform' in package:
+            package['subdir'] = package['platform']
+            del package['platform']
         precs.append(PackageCacheRecord(url=url, md5=md5, fn=fn,
                                         package_tarball_full_path=package_tarball_full_path,
                                         extracted_package_dir=extracted_package_dir,
@@ -251,8 +254,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         (x['src'] for x in channels_remap),
     ))
 
-    # make the environment, if needed
-    if environment_file:
+    if environment_file or environment:
         # set conda to be the user's conda (what is in the environment)
         # for purposese of getting & building environements, rather
         # than the standalone conda (conda_exe). Fallback to the
@@ -264,6 +266,8 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             else:
                 sys.exit("CONDA_EXE env variable is empty. Need to activate a conda env.")
 
+    # make the environment, if needed
+    if environment_file:
         from subprocess import check_call
 
         environment = tempfile.mkdtemp()
