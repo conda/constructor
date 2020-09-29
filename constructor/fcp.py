@@ -15,7 +15,7 @@ from os.path import isdir, isfile, join, splitext
 import sys
 import tempfile
 
-from constructor.utils import md5_files
+from constructor.utils import md5_files, filename_dist
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, concatv, conda_context, conda_replace_context_default,
                               download, env_vars, groupby, read_paths_json, all_channel_urls,
@@ -29,7 +29,7 @@ def getsize(filename):
     # We use lstat to obtain the size of the symlink, as opposed to the
     # size of the file it points to
     # From the docstring of the os.lstat function
-    #    > On platforms that do not support symbolic links, this is an 
+    #    > On platforms that do not support symbolic links, this is an
     #    > alias for stat().
     # https://github.com/conda/constructor/issues/311
     # https://docs.python.org/3/library/os.html
@@ -241,7 +241,8 @@ def _precs_from_environment(environment, download_dir, user_conda):
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(),  ignore_duplicate_files=False, environment=None,
-          environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe"):
+          environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
+          transmute_file_type=''):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     specs = list(concatv(specs, ("python",)))
@@ -320,6 +321,26 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     dists = list(prec.fn for prec in precs)
 
+    if transmute_file_type != '':
+        new_dists = []
+        import conda_package_handling.api
+        for dist in dists:
+            if dist.endswith(transmute_file_type):
+                new_dists.append(dist)
+            elif dist.endswith(".tar.bz2"):
+                dist = filename_dist(dist)
+                new_file_name = "%s%s" % (dist[:-8], transmute_file_type)
+                new_dists.append(new_file_name)
+                new_file_name = os.path.join(download_dir, new_file_name)
+                if os.path.exists(new_file_name):
+                    continue
+                print("transmuting %s" % dist)
+                conda_package_handling.api.transmute(os.path.join(download_dir, dist),
+                    transmute_file_type, out_folder=download_dir)
+            else:
+                new_dists.append(dist)
+        dists = new_dists
+
     if environment_file:
         import shutil
 
@@ -340,6 +361,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     ignore_duplicate_files = info.get("ignore_duplicate_files", False)
     environment = info.get("environment", None)
     environment_file = info.get("environment_file", None)
+    transmute_file_type = info.get("transmute_file_type", "")
 
     if not channel_urls and not channels_remap:
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
@@ -350,7 +372,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         _urls, dists, approx_tarballs_size, approx_pkgs_size, has_conda = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
             exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
-            verbose, dry_run, conda_exe,
+            verbose, dry_run, conda_exe, transmute_file_type
         )
 
     info["_urls"] = _urls
