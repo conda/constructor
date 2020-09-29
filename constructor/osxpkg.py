@@ -91,8 +91,9 @@ def modify_xml(xml_path, info):
             path_choice.set('title', "Run the post-install script")
             path_choice.set('description', ' '.join(info['post_install_desc'].split()))
         elif ident.endswith('pathupdate'):
-            path_choice.set('visible', 'true')
-            path_choice.set('start_selected', 'true' if info.get(
+            has_conda = info.get('_has_conda', True)
+            path_choice.set('visible', 'true' if has_conda else 'false')
+            path_choice.set('start_selected', 'true' if has_conda and info.get(
                 'initialize_by_default', True) else 'false')
             path_choice.set('title', "Add conda initialization to the shell")
             path_description = """

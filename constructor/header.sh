@@ -332,7 +332,9 @@ if ! mkdir -p "$PREFIX"; then
     exit 1
 fi
 
-PREFIX=$(cd "$PREFIX"; pwd)
+# pwd does not convert two leading slashes to one
+# https://github.com/conda/constructor/issues/284
+PREFIX=$(cd "$PREFIX"; pwd | sed 's@//@/@')
 export PREFIX
 
 printf "PREFIX=%s\\n" "$PREFIX"
@@ -450,6 +452,12 @@ fi
 
 __INSTALL_COMMANDS__
 
+if [ -f "$PREFIX/bin/conda" ]; then
+    HAS_CONDA_IN_INSTALL=1
+else
+    HAS_CONDA_IN_INSTALL=0
+fi
+
 POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
@@ -460,7 +468,9 @@ rm -f $PREFIX/pkgs/env.txt
 rm -rf $PREFIX/install_tmp
 export TMP="$TMP_BACKUP"
 
-mkdir -p $PREFIX/envs
+if [ "$HAS_CONDA_IN_INSTALL" = "1" ]; then
+    mkdir -p $PREFIX/envs
+fi
 
 #The templating doesn't support nested if statements
 #if has_post_install
@@ -504,7 +514,7 @@ if [ "$PYTHONPATH" != "" ]; then
     printf "    in __NAME__: $PREFIX\\n"
 fi
 
-if [ "$BATCH" = "0" ]; then
+if [ "$BATCH" = "0" ] && [ "$HAS_CONDA_IN_INSTALL" = "1" ]; then
     # Interactive mode.
 #if osx
     BASH_RC="$HOME"/.bash_profile

@@ -309,6 +309,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
     pc_recs = [x for x in pc_recs if x.fn in precs_fns]
 
     _urls = [(pc_rec.url, pc_rec.md5) for pc_rec in pc_recs]
+    has_conda = any(pc_rec.name == 'conda' for pc_rec in pc_recs)
 
     approx_tarballs_size, approx_pkgs_size = check_duplicates_files(
         pc_recs, platform, ignore_duplicate_files
@@ -340,7 +341,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         import shutil
 
         shutil.rmtree(environment)
-    return _urls, dists, approx_tarballs_size, approx_pkgs_size
+    return _urls, dists, approx_tarballs_size, approx_pkgs_size, has_conda
 
 
 def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
@@ -364,7 +365,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     with env_vars({
         "CONDA_PKGS_DIRS": download_dir,
     }, conda_replace_context_default):
-        _urls, dists, approx_tarballs_size, approx_pkgs_size = _main(
+        _urls, dists, approx_tarballs_size, approx_pkgs_size, has_conda = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
             exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
             verbose, dry_run, conda_exe, transmute_file_type
@@ -374,3 +375,4 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     info["_dists"] = dists
     info["_approx_tarballs_size"] = approx_tarballs_size
     info["_approx_pkgs_size"] = approx_pkgs_size
+    info["_has_conda"] = has_conda
