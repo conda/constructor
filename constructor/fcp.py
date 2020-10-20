@@ -366,9 +366,20 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     if not channel_urls and not channels_remap:
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
 
+    # We need to preserve the configuration for proxy servers and ssl, otherwise if constructor is running
+    # in a host that sits behind proxy (usually in a company / corporate environment) it will have this
+    # settings reset with the call to conda_replace_context_default
+    # See: https://github.com/conda/constructor/issues/304
+    proxy_servers = conda_context.proxy_servers
+    ssl_verify = conda_context.ssl_verify
+
     with env_vars({
         "CONDA_PKGS_DIRS": download_dir,
     }, conda_replace_context_default):
+        # Restoring the state for both "proxy_servers" and "ssl_verify" to what was before
+        conda_context.proxy_servers = proxy_servers
+        conda_context.ssl_verify = ssl_verify
+
         _urls, dists, approx_tarballs_size, approx_pkgs_size, has_conda = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
             exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
