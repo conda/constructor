@@ -37,7 +37,7 @@ def write_index_cache(info, dst_dir, used_packages):
     _urls = all_channel_urls(url.rstrip('/') for url in list(_remaps) +
                              info.get('channels', []) +
                              info.get('conda_default_channels', []))
-    repodatas = {url: get_repodata(url) for url in _urls}
+    repodatas = {url: get_repodata(url) for url in _urls if url is not None}
 
     for url, _ in info['_urls']:
         src, subdir, fn = url.rsplit('/', 2)

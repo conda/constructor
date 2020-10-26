@@ -78,7 +78,13 @@ if conda_interface_type == 'conda':
             raw_repodata_str = json.dumps(repodata_obj)
         else:
             raise NotImplementedError("unsupported version of conda: %s" % CONDA_INTERFACE_VERSION)
-        full_repodata = json.loads(raw_repodata_str)
+
+        # noarch-only repos are valid. In this case, the architecture specific channel will return None
+        if raw_repodata_str is None:
+            full_repodata = None
+        else:
+            full_repodata = json.loads(raw_repodata_str)
+
         return full_repodata
 
     def write_repodata(cache_dir, url, full_repodata, used_packages):
