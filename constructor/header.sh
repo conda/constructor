@@ -399,7 +399,7 @@ export TMP=$PREFIX/install_tmp
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
 extract_range $boundary1 $boundary2 | \
-    "$CONDA_EXEC" constructor --extract-tar --prefix "$PREFIX"
+    "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
