@@ -13,6 +13,13 @@ which contains one item per line (excluding lines starting with `#`).
 Also note, that any line in `construct.yaml` may contain a selector at the
 end, in order to allow customization for selected platforms.
 
+Finally, `construct.yaml` is parsed as a `jinja2` template and so any valid
+`jinja2` templating directives may be used. The current shell environment
+is available as the `jinja2` variable `environ`. As an example, setting the
+`version` key from an environment variable called `VERSION` would look like:
+`version: {{ environ["VERSION"] }}`. Note that the special environment variables
+available in `meta.yaml` when running `conda-build` are not available here.
+
 
 ----
 Keys
