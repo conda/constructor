@@ -218,7 +218,18 @@ Path to a pre uninstall script. This is only supported for on Windows,
 and must be a `.bat` file.
 '''),
 
-    ('default_prefix',         False, str, 'XXX'),
+    ('default_prefix',         False, str, '''
+Set default install prefix. On Linux, if not provided, the default prefix is
+`${HOME}/${NAME}`. On windows, if not provided, the default prefix is
+`${USERPROFILE}\${NAME}`.
+'''),
+
+    ('default_prefix_domain_user', False, str, '''
+Set default installation prefix for domain user. If not provided, the
+installation prefix for domain user will be `${LOCALAPPDATA}\${NAME}`.
+By default, it is different from the `default_prefix` value to avoid installing
+the distribution in the roaming profile. Windows only.
+'''),
 
     ('welcome_image',          False, str, '''
 Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
