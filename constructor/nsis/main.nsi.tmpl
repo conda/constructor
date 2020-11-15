@@ -30,6 +30,7 @@ Unicode "true"
 !define PYVERSION __PYVERSION__
 !define PYVERSION_MAJOR __PYVERSION_MAJOR__
 !define DEFAULT_PREFIX __DEFAULT_PREFIX__
+!define DEFAULT_PREFIX_DOMAIN_USER __DEFAULT_PREFIX_DOMAIN_USER__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "@UNINSTALL_NAME@"
@@ -495,7 +496,8 @@ Function .onInit
         ExpandEnvStrings $0 ${DEFAULT_PREFIX}
         StrCpy $INSTDIR_JUSTME $0
     ${ElseIf} $IsDomainUser = 1
-        StrCpy $INSTDIR_JUSTME "$Profile\${NAME}"
+        ExpandEnvStrings $0 ${DEFAULT_PREFIX_DOMAIN_USER}
+        StrCpy $INSTDIR_JUSTME $0
     ${Else}
         # Should never happen; indicates a logic error above.
         MessageBox MB_OK "Internal error: IsUserDomain not set properly!"
