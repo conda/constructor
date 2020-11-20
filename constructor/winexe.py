@@ -66,6 +66,9 @@ def make_nsi(info, dir_path):
         'DEFAULT_PREFIX': info.get('default_prefix', join('%USERPROFILE%', name.lower())),
         'DEFAULT_PREFIX_DOMAIN_USER': info.get('default_prefix_domain_user',
                                                join('%LOCALAPPDATA%', name.lower())),
+        'DEFAULT_PREFIX_ALL_USERS': info.get('default_prefix_all_users',
+                                             join('%ALLUSERSPROFILE%', name.lower())),
+
         'POST_INSTALL_DESC': info['post_install_desc'],
         'OUTFILE': info['_outpath'],
         'VIPV': make_VIProductVersion(info['version']),
