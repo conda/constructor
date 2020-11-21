@@ -151,10 +151,6 @@ get_conda_envs = get_conda_envs_from_python_api
 
 
 def rm_menus(prefix=None):
-    from conda.base.context import context
-    if prefix is not None:
-        context._root_prefix = prefix
-    mk_menus(remove=True)
     try:
         import menuinst
         menuinst
@@ -168,9 +164,14 @@ def rm_menus(prefix=None):
         err("Error: %s\n" % str(e))
         err("Traceback:\n%s\n" % traceback.format_exc(20))
         return
+    if prefix is None:
+        prefix = ROOT_PREFIX
     for env in envs:
         env = str(env)  # force `str` so that `os.path.join` doesn't fail
-        mk_menus(remove=True, prefix=env)
+        # Make sure the environment is in the prefix and it is not from
+        # another distribution
+        if prefix in env:
+            mk_menus(remove=True, prefix=env)
 
 
 def run_post_install():
