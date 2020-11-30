@@ -284,8 +284,9 @@ and must be a `.bat` file.
 _required:_ no<br/>
 _type:_ string<br/>
 Set default install prefix. On Linux, if not provided, the default prefix is
-`${HOME}/${NAME}`. On windows, if not provided, the default prefix is
-`${USERPROFILE}\${NAME}`.
+`${HOME}/${NAME}`. On windows, this is used only for "Just Me" installation;
+for "All Users" installation, use the `default_prefix_all_users` key.
+If not provided, the default prefix is `${USERPROFILE}\${NAME}`.
 
 ## `default_prefix_domain_user`
 
@@ -295,6 +296,14 @@ Set default installation prefix for domain user. If not provided, the
 installation prefix for domain user will be `${LOCALAPPDATA}\${NAME}`.
 By default, it is different from the `default_prefix` value to avoid installing
 the distribution in the roaming profile. Windows only.
+
+## `default_prefix_all_users`
+
+_required:_ no<br/>
+_type:_ string<br/>
+Set default installation prefix for All Users installation. If not provided,
+the installation prefix for all users installation will be
+`${ALLUSERSPROFILE}\${NAME}`. Windows only.
 
 ## `welcome_image`
 

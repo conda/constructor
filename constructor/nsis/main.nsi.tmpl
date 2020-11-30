@@ -31,6 +31,7 @@ Unicode "true"
 !define PYVERSION_MAJOR __PYVERSION_MAJOR__
 !define DEFAULT_PREFIX __DEFAULT_PREFIX__
 !define DEFAULT_PREFIX_DOMAIN_USER __DEFAULT_PREFIX_DOMAIN_USER__
+!define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "@UNINSTALL_NAME@"
@@ -38,8 +39,6 @@ Unicode "true"
                    \Uninstall\${UNINSTALL_NAME}"
 
 var /global INSTDIR_JUSTME
-
-!define INSTDIR_ALLUSERS "$%ALLUSERSPROFILE%\${NAME}"
 
 # UAC shield overlay
 !ifndef BCM_SETSHIELD
@@ -363,7 +362,8 @@ Function InstModeChanged
     ${Else}
         SetShellVarContext All
         ${IfNot} ${Silent}
-            StrCpy $INSTDIR ${INSTDIR_ALLUSERS}
+            ExpandEnvStrings $0 ${DEFAULT_PREFIX_ALL_USERS}
+            StrCpy $INSTDIR $0
         ${Endif}
     ${EndIf}
     Pop $0
@@ -526,7 +526,8 @@ Function .onInit
     ; /D was not used, add default based on install type
     ${If} $InstDir == ""
         ${If} $InstMode == ${ALL_USERS}
-            strcpy $INSTDIR ${INSTDIR_ALLUSERS}
+            ExpandEnvStrings $0 ${DEFAULT_PREFIX_ALL_USERS}
+            StrCpy $INSTDIR $0
         ${Else}
             strcpy $INSTDIR $INSTDIR_JUSTME
         ${EndIf}
