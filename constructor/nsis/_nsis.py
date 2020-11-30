@@ -151,12 +151,9 @@ get_conda_envs = get_conda_envs_from_python_api
 
 
 def rm_menus(prefix=None):
-    from conda.base.context import context
-    if prefix is not None:
-        context._root_prefix = prefix
-    mk_menus(remove=True)
     try:
         import menuinst
+        from conda.base.context import context
         menuinst
     except (ImportError, OSError):
         return
@@ -168,9 +165,17 @@ def rm_menus(prefix=None):
         err("Error: %s\n" % str(e))
         err("Traceback:\n%s\n" % traceback.format_exc(20))
         return
+    envs_dirs = list(context.envs_dirs)
+    if prefix is not None:
+        envs_dirs.append(prefix)
     for env in envs:
         env = str(env)  # force `str` so that `os.path.join` doesn't fail
-        mk_menus(remove=True, prefix=env)
+        for envs_dir in envs_dirs:
+            # Make sure the environment is from one of the directory in
+            # `envs_dirs` to avoid picking up environment from other
+            # distributions. Not perfect but better than no checking
+            if envs_dir in env:
+                mk_menus(remove=True, prefix=env)
 
 
 def run_post_install():
