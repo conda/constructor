@@ -257,14 +257,18 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     if environment_file or environment:
         # set conda to be the user's conda (what is in the environment)
-        # for purposese of getting & building environements, rather
+        # for purpose of getting & building environments, rather
         # than the standalone conda (conda_exe). Fallback to the
         # standalone, if needed
         user_conda = os.environ.get('CONDA_EXE', '')
         if not user_conda:
             if cc_platform == platform:
-                conda_exe
+                # We can use the standalone conda for native platforms if there is no
+                # conda to be installed in the environment.
+                user_conda = conda_exe
             else:
+                # We need a conda for the native platform in order to do environment
+                # based installations.
                 sys.exit("CONDA_EXE env variable is empty. Need to activate a conda env.")
 
     # make the environment, if needed
