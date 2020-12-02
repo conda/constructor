@@ -290,6 +290,12 @@ or enable long path on windows > 10 (require admin right). Default is True. (Win
 Check if the path where the distribution is installed contains spaces and show a warning
 if any spaces are found. Default is True. (Windows only)
 '''),
+    ('nsis_template',           False, str, '''
+
+If ``nsis_template`` is not provided, constructor uses its default
+NSIS template. For more complete customization for the installation experience,
+provide an NSIS template file. (Windows only)
+'''),
 ]
 
 
