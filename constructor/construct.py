@@ -310,7 +310,7 @@ def ns_platform(platform):
     )
 
 
-sel_pat = re.compile(r'(.+?)\s*\[(.+)\]$')
+sel_pat = re.compile(r'(.+?)\s*# \[(.+)\]$')
 
 
 def select_lines(data, namespace):
