@@ -13,7 +13,6 @@ from .utils import yaml
 from constructor.exceptions import (UnableToParse, UnableToParseMissingJinja2,
                                     YamlParsingError)
 
-
 # list of tuples (key name, required, type, description)
 KEYS = [
     ('name',                   True,  str, '''
@@ -309,21 +308,40 @@ def ns_platform(platform):
         win64=bool(p == 'win-64'),
     )
 
-
-sel_pat = re.compile(r'(.+?)\s*# \[(.+)\]$')
-
+# This regex is taken from https://github.com/conda/conda_build/metadata.py
+# The following function "select_lines" is also a slightly modified version of
+# the function of the same name from conda_build/metadata.py
+sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$')
 
 def select_lines(data, namespace):
     lines = []
-    for line in data.splitlines():
+
+    for i, line in enumerate(data.splitlines()):
         line = line.rstrip()
+
+        trailing_quote = ""
+        if line and line[-1] in ("'", '"'):
+            trailing_quote = line[-1]
+
+        if line.lstrip().startswith('#'):
+            # Don't bother with comment only lines
+            continue
         m = sel_pat.match(line)
         if m:
-            cond = m.group(2)
-            if eval(cond, namespace, {}):
-                lines.append(m.group(1))
-            continue
-        lines.append(line)
+            cond = m.group(3)
+            try:
+                if eval(cond, namespace, {}):
+                    lines.append(m.group(1) + trailing_quote)
+            except Exception as e:
+                sys.exit('''\
+Error: Invalid selector in meta.yaml line %d:
+offending line:
+%s
+exception:
+%s
+''' % (i + 1, line, str(e)))
+        else:
+            lines.append(line)
     return '\n'.join(lines) + '\n'
 
 
