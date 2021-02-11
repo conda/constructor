@@ -872,7 +872,7 @@ Section "Install"
     @PKG_COMMANDS@
 
     SetDetailsPrint TextOnly
-    DetailPrint "Settting up the package cache ..."
+    DetailPrint "Setting up the package cache ..."
     nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
     Pop $0
     SetDetailsPrint both
