@@ -729,6 +729,7 @@ Function OnDirectoryLeave
     Call CheckForSpaces
     Pop $R0 # The function returns the number of spaces found in the input string.
 
+#if check_path_spaces is True
     # Check if any spaces exist in $INSTDIR.
     StrCmp $R0 0 NoSpaces
 
@@ -745,6 +746,7 @@ Function OnDirectoryLeave
              Please consider removing the space$R1."
 
     NoSpaces:
+#endif
 
     # List of characters not allowed anywhere in $INSTDIR
     Push "^%!=,"
