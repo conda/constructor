@@ -81,8 +81,8 @@ supplying this list allows a subset to be selected instead.
 '''),
 
     ('ignore_duplicate_files',  False, bool, '''
-By default, constructor will error out when adding packages with duplicate
-files in them. Enable this option to warn instead and continue.
+By default, constructor will warn you when adding packages with duplicate
+files in them. Setting this option to false will raise an error instead.
 '''),
 
     ('install_in_dependency_order', False, (bool, str), '''
