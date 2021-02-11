@@ -80,8 +80,8 @@ supplying this list allows a subset to be selected instead.
 '''),
 
     ('ignore_duplicate_files',  False, bool, '''
-By default, constructor will error out when adding packages with duplicate
-files in them. Enable this option to warn instead and continue.
+By default, constructor will warn you when adding packages with duplicate
+files in them. Setting this option to false will raise an error instead.
 '''),
 
     ('install_in_dependency_order', False, (bool, str), '''
@@ -284,6 +284,11 @@ interactive installation. (Windows only)
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter path (less than 46 character)
 or enable long path on windows > 10 (require admin right). Default is True. (Windows only)
+'''),
+
+    ('check_path_spaces',     False, bool, '''
+Check if the path where the distribution is installed contains spaces and show a warning
+if any spaces are found. Default is True. (Windows only)
 '''),
 ]
 

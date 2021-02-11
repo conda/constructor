@@ -140,7 +140,7 @@ def _fetch(download_dir, precs):
     return tuple(pc.iter_records())
 
 
-def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=False):
+def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=True):
     print('Checking for duplicate files ...')
 
     map_members_scase = defaultdict(set)
@@ -240,7 +240,7 @@ def _precs_from_environment(environment, download_dir, user_conda):
 
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
-          exclude=(), menu_packages=(),  ignore_duplicate_files=False, environment=None,
+          exclude=(), menu_packages=(),  ignore_duplicate_files=True, environment=None,
           environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
           transmute_file_type=''):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
@@ -362,7 +362,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     specs = info.get("specs", ())
     exclude = info.get("exclude", ())
     menu_packages = info.get("menu_packages", ())
-    ignore_duplicate_files = info.get("ignore_duplicate_files", False)
+    ignore_duplicate_files = info.get("ignore_duplicate_files", True)
     environment = info.get("environment", None)
     environment_file = info.get("environment_file", None)
     transmute_file_type = info.get("transmute_file_type", "")

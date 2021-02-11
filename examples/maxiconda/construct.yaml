@@ -1,8 +1,6 @@
 name: Maxiconda
 version: 2.5.5
 
-install_in_dependency_order: True
-
 channels:
   - http://repo.anaconda.com/pkgs/main/
 
