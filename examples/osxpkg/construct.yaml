@@ -15,5 +15,5 @@ specs:
     - setuptools
     - numpy
 
-post_install: post_install.sh   [unix]
-installer_type: pkg  [osx]
+post_install: post_install.sh  # [unix]
+installer_type: pkg # [osx]

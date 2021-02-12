@@ -7,13 +7,13 @@ channels:
 specs:
   - python 3.5*
   - conda
-  - nomkl                                [not win]
+  - nomkl                               # [not win]
   - numpy
   - scipy
   - pandas
   - notebook
   - matplotlib
-  - lighttpd                             [unix]
+  - lighttpd                            # [unix]
 
 exclude:
   - qt
@@ -23,4 +23,4 @@ exclude:
 license_file: EULA.txt
 
 # Welcome image for Windows installer
-welcome_image: bird.png                  [win]
+welcome_image: bird.png                # [win]

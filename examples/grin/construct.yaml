@@ -11,13 +11,13 @@ channels: &id1
 specs:
   - python
   - grin
-  - sample                            [osx]
+  - sample                           # [osx]
 
 # exclude these packages (list of names)
 exclude:
-  - openssl                           [unix]
-  - readline                          [unix]
-  - tk                                [unix]
+  - openssl                          # [unix]
+  - readline                         # [unix]
+  - tk                               # [unix]
   - python
 
 # explicitly listed packages
@@ -27,9 +27,9 @@ packages:
 
 keep_pkgs: True
 
-pre_install: hello.sh                 [unix]
-post_install: goodbye.sh              [unix]
-post_install: test-post.bat           [win]
+pre_install: hello.sh                # [unix]
+post_install: goodbye.sh             # [unix]
+post_install: test-post.bat          # [win]
 
 # The conda default channels which are used when running a conda which
 # was installed be the constructor created (requires conda in the
@@ -38,7 +38,7 @@ conda_default_channels: *id1
 
 # type of the installer being created.  Possible values are "sh", "pkg",
 # and "exe".  By default, the type is "sh" on Unix, and "exe" on Windows.
-installer_type: pkg                   [osx]
+installer_type: pkg                  # [osx]
 
 # installer filename (a reasonable default filename will determined by
 # the `name`, (optional) `version`, OS and installer type)
