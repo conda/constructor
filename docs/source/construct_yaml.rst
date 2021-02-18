@@ -356,6 +356,17 @@ Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
 interactive installation. (Windows only)
 
+~~~~~~~~~~~~~
+nsis_template
+~~~~~~~~~~~~~
+
+required: False
+
+argument type(s): ``str``,
+
+If ``nsis_template`` is not provided, constructor uses its default
+NSIS template. For more complete customization for the installation experience,
+provide an NSIS template file. (Windows only)
 
 ---------------------------
 List of available selectors

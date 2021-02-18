@@ -1,3 +1,10 @@
+2020-XX-XX   X.X.X: (unreleased)
+--------------------------------
+
+  * NSIS:
+    - Support for custom ``nsis_templates`` through the ``nsis_template``
+      variable.
+
 2020-09-31   3.1.0:
 -------------------
   * COMMON:
