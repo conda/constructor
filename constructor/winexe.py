@@ -31,8 +31,8 @@ def str_esc(s):
     return '"%s"' % s
 
 
-def read_nsi_tmpl():
-    path = join(NSIS_DIR, 'main.nsi.tmpl')
+def read_nsi_tmpl(info):
+    path = abspath(info.get('nsis_template', join(NSIS_DIR, 'main.nsi.tmpl')))
     print('Reading: %s' % path)
     with open(path) as fi:
         return fi.read()
@@ -92,7 +92,7 @@ def make_nsi(info, dir_path):
             value = join(dir_path, value[1:])
         replace[key] = str_esc(value)
 
-    data = read_nsi_tmpl()
+    data = read_nsi_tmpl(info)
     ppd = ns_platform(info['_platform'])
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     ppd['register_python_default'] = info.get('register_python_default', None)
