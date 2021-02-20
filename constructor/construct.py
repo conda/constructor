@@ -153,6 +153,12 @@ installers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)
 to preserve the package cache.
 '''),
 
+    ('batch_mode',             False, bool, '''
+Only affects ``.sh`` installers. If ``False`` (default), the installer launches
+an interactive wizard guiding the user through the available options. If
+``True``, the installer runs automatically as if ``-b`` was passed.
+'''),
+
     ('signing_identity_name',  False, str, '''
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
 using this option, it will be used to sign the installer. Note that you will need

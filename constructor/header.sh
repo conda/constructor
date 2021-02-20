@@ -21,7 +21,11 @@ THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX=__DEFAULT_PREFIX__
+#if batch_mode
+BATCH=1
+#else
 BATCH=0
+#endif
 FORCE=0
 #if keep_pkgs
 KEEP_PKGS=1
@@ -36,11 +40,13 @@ usage: $0 [options]
 
 Installs __NAME__ __VERSION__
 
-#if has_license
+#if not batch_mode
+  #if has_license
 -b           run install in batch mode (without manual intervention),
              it is expected the license terms are agreed upon
-#else
+  #else
 -b           run install in batch mode (without manual intervention)
+  #endif
 #endif
 -f           no error if install prefix already exists
 -h           print this help message and exit
