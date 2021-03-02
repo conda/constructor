@@ -40,7 +40,9 @@ usage: $0 [options]
 
 Installs __NAME__ __VERSION__
 
-#if not batch_mode
+#if batch_mode
+-i           run install in interactive mode
+#else
   #if has_license
 -b           run install in batch mode (without manual intervention),
              it is expected the license terms are agreed upon
@@ -62,7 +64,7 @@ Installs __NAME__ __VERSION__
 "
 
 if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bfhkp:sut "$*" 2>/dev/null)
+    OPTS=$(getopt bifhkp:sut "$*" 2>/dev/null)
     if [ ! $? ]; then
         printf "%s\\n" "$USAGE"
         exit 2
@@ -78,6 +80,10 @@ if which getopt > /dev/null 2>&1; then
                 ;;
             -b)
                 BATCH=1
+                shift
+                ;;
+            -i)
+                BATCH=0
                 shift
                 ;;
             -f)
@@ -118,7 +124,7 @@ if which getopt > /dev/null 2>&1; then
         esac
     done
 else
-    while getopts "bfhkp:sut" x; do
+    while getopts "bifhkp:sut" x; do
         case "$x" in
             h)
                 printf "%s\\n" "$USAGE"
@@ -126,6 +132,9 @@ else
             ;;
             b)
                 BATCH=1
+                ;;
+            i)
+                BATCH=0
                 ;;
             f)
                 FORCE=1
