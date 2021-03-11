@@ -229,6 +229,22 @@ then
     fi
 #endif
 
+#if aarch64
+    if [ "$(uname -m)" != "aarch64" ]; then
+        printf "WARNING:\\n"
+        printf "    Your machine hardware does not appear to be aarch64, \\n"
+        printf "    but you are trying to install a aarch64 version of __NAME__.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
+           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+#endif
 
 #if osx
     if [ "$(uname)" != "Darwin" ]; then
