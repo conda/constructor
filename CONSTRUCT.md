@@ -102,8 +102,8 @@ supplying this list allows a subset to be selected instead.
 
 _required:_ no<br/>
 _type:_ boolean<br/>
-By default, constructor will error out when adding packages with duplicate
-files in them. Enable this option to warn instead and continue.
+By default, constructor will warn you when adding packages with duplicate
+files in them. Setting this option to false will raise an error instead.
 
 ## `install_in_dependency_order`
 
@@ -194,6 +194,14 @@ when the installation process is complete. If `True`, this subdirectory and
 its contents are preserved. If `keep_pkgs` is `False`, Unix `.sh` and Windows `.msi`
 installers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)
 to preserve the package cache.
+
+## `batch_mode`
+
+_required:_ no<br/>
+_type:_ boolean<br/>
+Only affects ``.sh`` installers. If ``False`` (default), the installer launches
+an interactive wizard guiding the user through the available options. If
+``True``, the installer runs automatically as if ``-b`` was passed.
 
 ## `signing_identity_name`
 
@@ -378,6 +386,15 @@ _required:_ no<br/>
 _type:_ boolean<br/>
 Check if the path where the distribution is installed contains spaces and show a warning
 if any spaces are found. Default is True. (Windows only)
+
+## `nsis_template`
+
+_required:_ no<br/>
+_type:_ string<br/>
+
+If ``nsis_template`` is not provided, constructor uses its default
+NSIS template. For more complete customization for the installation experience,
+provide an NSIS template file. (Windows only)
 
 
 ## Available selectors
