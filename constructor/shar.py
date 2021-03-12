@@ -44,7 +44,13 @@ def get_header(conda_exec, tarball, info):
     has_license = bool('license_file' in info)
     ppd = ns_platform(info['_platform'])
     ppd['keep_pkgs'] = bool(info.get('keep_pkgs', False))
+    ppd['batch_mode'] = bool(info.get('batch_mode', False))
     ppd['has_license'] = has_license
+    if ppd['batch_mode'] and has_license:
+        raise Exception(
+            "It is not possible to use both the 'batch_mode' and "
+            "'license_file' options together."
+        )
     for key in 'pre_install', 'post_install', 'pre_uninstall':
         ppd['has_%s' % key] = bool(key in info)
         if key in info:
