@@ -6,9 +6,4 @@
 # change.
 PREFIX="$2/__NAME_LOWER__"
 
-if [[ $SHELL = *zsh ]]
-then
-    $PREFIX/bin/conda init zsh
-else
-    $PREFIX/bin/conda init
-fi
+$PREFIX/bin/conda init --all
