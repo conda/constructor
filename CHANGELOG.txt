@@ -1,9 +1,35 @@
-2020-XX-XX   X.X.X: (unreleased)
---------------------------------
+2020-03-30   3.2.1:
+-------------------
+  * Common:
+    - Fixed bug in platform selector regex parsing that was incompatible with using jinja-templated env vars and platform selectors on the same line #428
+    - New option in construct.yaml (`batch_mode`) to make passing the `-b` flag the default option #440
+    - New option in construct.yaml (`check_path_spaces`) to suppress the "Destination Folder contains spaces" warning on Windows #431
+    - Duplicate package files found at environment creation during build on Windows now raises a warning rather than crashing #435
+
+  * Shell:
+    - aarch64 installer now properly checks if system is aarch64 #441
+
+  * PKG:
+    - Initialize all shells post-install on OSX #444
 
   * NSIS:
-    - Support for custom ``nsis_templates`` through the ``nsis_template``
-      variable.
+    - change the default prefix for domain user to `%LOCALAPPDATA%` and the option `default_prefix_domain_user` to set its default value #415
+    - Fix default installation folder all users and add option `default_prefix_all_users` to set its default value #419
+    - Partial fix for removing menu shortcut of other distributions when uninstalling #420
+    - Fix a typo in informational message #424
+    - Support for custom `nsis_templates` through the `nsis_template` variable. #423
+
+
+2020-11-14   3.2.0:
+-------------------
+  * COMMON:
+    - `construct.yaml` file now reads environment variables during the Jinja2 parsing stage. Env vars can be included like: `{{ environ["ENV_VAR"] }}` (#413).
+    - Fixed bug where constructor crashed if a listed spec was in a noarch-only channel (i.e. without a subdir for the specific platform) (#409).
+    - Avoid adding newly installed environment to the list of global conda environments if conda isn't included in the installer itself. (#372)
+
+  * SHELL:
+    - The user-shell initialisation phase of the installer is no longer included in the install script if there is no conda available in the installed environment.
+    - The "test" option is only available if conda is installed in the environment. Previously this would fail in this situation.
 
 2020-09-31   3.1.0:
 -------------------
