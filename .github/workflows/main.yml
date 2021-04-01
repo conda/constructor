@@ -69,11 +69,14 @@ jobs:
       with:
         name: package-${{ github.sha }}
         path: conda-bld
+    - name: Install conda packages
+      run: |
+        source $CONDA/bin/activate
+        conda install -y sphinx anaconda-client
     - name: Build the documentation for deployment
       if: startsWith(github.ref, 'refs/tags/')
       run: |
         source $CONDA/bin/activate
-        conda install -y sphinx anaconda-client
         cd docs
         make html
     - name: Deploy the documentation
