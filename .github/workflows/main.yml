@@ -72,7 +72,8 @@ jobs:
     - name: Build the documentation for deployment
       if: startsWith(github.ref, 'refs/tags/')
       run: |
-        source /usr/share/miniconda/bin/activate
+        source $CONDA/bin/activate
+        conda install -y sphinx anaconda-client
         cd docs
         make html
     - name: Deploy the documentation
@@ -87,7 +88,6 @@ jobs:
         GITHUB_REF: ${{ github.ref }}
       run: |
         source $CONDA/bin/activate
-        conda install -y anaconda-client
         [[ "$GITHUB_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev"
         anaconda --verbose --token $ANACONDA_TOKEN upload --user ctools $LABEL conda-bld/*/*.tar.bz2 --force
     - name: Clean up older artifacts
