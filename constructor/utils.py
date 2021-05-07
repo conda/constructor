@@ -116,7 +116,7 @@ def add_condarc(info):
             yield 'FileWrite $CONDARC "%s$\\r$\\n"' % line
         yield 'FileClose $CONDARC'
     else:
-        yield 'cat <<EOF >$PREFIX/.condarc'
+        yield 'cat <<EOF >"$PREFIX/.condarc"'
         for line in condarc.splitlines():
             yield line
         yield 'EOF'

@@ -56,7 +56,7 @@ Installs __NAME__ __VERSION__
 #if not keep_pkgs
 -k           do not clear the package cache after installation
 #endif
--p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
+-p PREFIX    install prefix, defaults to $PREFIX
 -s           skip running pre/post-link/install scripts
 -u           update an existing installation
 #if has_conda
@@ -64,106 +64,44 @@ Installs __NAME__ __VERSION__
 #endif
 "
 
-if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bifhkp:sut "$*" 2>/dev/null)
-    if [ ! $? ]; then
-        printf "%s\\n" "$USAGE"
-        exit 2
-    fi
-
-    eval set -- "$OPTS"
-
-    while true; do
-        case "$1" in
-            -h)
-                printf "%s\\n" "$USAGE"
-                exit 2
-                ;;
-            -b)
-                BATCH=1
-                shift
-                ;;
-            -i)
-                BATCH=0
-                shift
-                ;;
-            -f)
-                FORCE=1
-                shift
-                ;;
-            -k)
-                KEEP_PKGS=1
-                shift
-                ;;
-            -p)
-                PREFIX="$2"
-                shift
-                shift
-                ;;
-            -s)
-                SKIP_SCRIPTS=1
-                shift
-                ;;
-            -u)
-                FORCE=1
-                shift
-                ;;
-#if has_conda
-            -t)
-                TEST=1
-                shift
-                ;;
-#endif
-            --)
-                shift
-                break
-                ;;
-            *)
-                printf "ERROR: did not recognize option '%s', please try -h\\n" "$1"
-                exit 1
-                ;;
-        esac
-    done
-else
-    while getopts "bifhkp:sut" x; do
-        case "$x" in
-            h)
-                printf "%s\\n" "$USAGE"
-                exit 2
+while getopts "bifhkp:sut" x; do
+    case "$x" in
+        h)
+            printf "%s\\n" "$USAGE"
+            exit 2
+        ;;
+        b)
+            BATCH=1
             ;;
-            b)
-                BATCH=1
-                ;;
-            i)
-                BATCH=0
-                ;;
-            f)
-                FORCE=1
-                ;;
-            k)
-                KEEP_PKGS=1
-                ;;
-            p)
-                PREFIX="$OPTARG"
-                ;;
-            s)
-                SKIP_SCRIPTS=1
-                ;;
-            u)
-                FORCE=1
-                ;;
+        i)
+            BATCH=0
+            ;;
+        f)
+            FORCE=1
+            ;;
+        k)
+            KEEP_PKGS=1
+            ;;
+        p)
+            PREFIX="$OPTARG"
+            ;;
+        s)
+            SKIP_SCRIPTS=1
+            ;;
+        u)
+            FORCE=1
+            ;;
 #if has_conda
-            t)
-                TEST=1
-                ;;
+        t)
+            TEST=1
+            ;;
 #endif
-            ?)
-                printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
-                exit 1
-                ;;
-        esac
-    done
-fi
+        ?)
+            printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
+            exit 1
+            ;;
+    esac
+done
 
 # For testing, keep the package cache around longer
 CLEAR_AFTER_TEST=0
@@ -341,24 +279,9 @@ EOF
     printf "[%s] >>> " "$PREFIX"
     read -r user_prefix
     if [ "$user_prefix" != "" ]; then
-        case "$user_prefix" in
-            *\ * )
-                printf "ERROR: Cannot install into directories with spaces\\n" >&2
-                exit 1
-                ;;
-            *)
-                eval PREFIX="$user_prefix"
-                ;;
-        esac
+        PREFIX="$user_prefix"
     fi
 fi # !BATCH
-
-case "$PREFIX" in
-    *\ * )
-        printf "ERROR: Cannot install into directories with spaces\\n" >&2
-        exit 1
-        ;;
-esac
 
 if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
     printf "ERROR: File or directory already exists: '%s'\\n" "$PREFIX" >&2
@@ -367,7 +290,6 @@ if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
 elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
     REINSTALL=1
 fi
-
 
 if ! mkdir -p "$PREFIX"; then
     printf "ERROR: Could not create directory: '%s'\\n" "$PREFIX" >&2
@@ -437,7 +359,7 @@ chmod +x "$CONDA_EXEC"
 
 export TMP_BACKUP="$TMP"
 export TMP=$PREFIX/install_tmp
-mkdir -p $TMP
+mkdir -p "$TMP"
 
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
@@ -471,7 +393,6 @@ else
 fi
 #endif
 
-PYTHON="$PREFIX/bin/python"
 MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
@@ -489,8 +410,8 @@ CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
 
 if [ "$KEEP_PKGS" = "0" ]; then
-    rm -fr $PREFIX/pkgs/*.tar.bz2
-    rm -fr $PREFIX/pkgs/*.conda
+    rm -f "$PREFIX/pkgs/*.tar.bz2"
+    rm -f "$PREFIX/pkgs/*.conda"
 fi
 
 __INSTALL_COMMANDS__
@@ -499,14 +420,14 @@ POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 
-rm -f $PREFIX/conda.exe
-rm -f $PREFIX/pkgs/env.txt
+rm -f "$CONDA_EXEC"
+rm -f "$PREFIX/pkgs/env.txt"
 
-rm -rf $PREFIX/install_tmp
+rm -rf "$PREFIX/install_tmp"
 export TMP="$TMP_BACKUP"
 
 #if has_conda
-mkdir -p $PREFIX/envs
+mkdir -p "$PREFIX/envs"
 #endif
 
 #The templating doesn't support nested if statements
@@ -537,7 +458,7 @@ if [ "$KEEP_PKGS" = "0" ]; then
 else
     # Attempt to delete the empty temporary directories in the package cache
     # These are artifacts of the constructor --extract-conda-pkgs
-    find $PREFIX/pkgs -type d -empty -exec rmdir {} \; 2>/dev/null || :
+    find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
 printf "installation finished.\\n"
@@ -583,13 +504,13 @@ if [ "$BATCH" = "0" ]; then
         printf "\\n"
     else
         case $SHELL in
-            *zsh) $PREFIX/bin/conda init zsh ;;
-            *) $PREFIX/bin/conda init ;;
+            *zsh) "$PREFIX/bin/conda" init zsh ;;
+            *) "$PREFIX/bin/conda" init ;;
         esac
         if [ -f "$PREFIX/bin/mamba" ]; then
             case $SHELL in
-                *zsh) $PREFIX/bin/mamba init zsh ;;
-                *) $PREFIX/bin/mamba init ;;
+                *zsh) "$PREFIX/bin/mamba" init zsh ;;
+                *) "$PREFIX/bin/mamba" init ;;
             esac
         fi
     fi
