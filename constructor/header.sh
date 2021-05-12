@@ -443,11 +443,11 @@ printf "Unpacking payload ...\n"
 extract_range $boundary1 $boundary2 | \
     "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
-"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
-
 PRECONDA="$PREFIX/preconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$PRECONDA" || exit 1
 rm -f "$PRECONDA"
+
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
 #The templating doesn't support nested if statements
 #if has_pre_install
