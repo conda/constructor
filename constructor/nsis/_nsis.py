@@ -104,7 +104,7 @@ class NSISReg:
             return None
 
 
-def mk_menus(remove=False, prefix=None, pkg_names=[]):
+def mk_menus(remove=False, prefix=None, pkg_names=[], root_prefix=None):
     try:
         import menuinst
     except (ImportError, OSError):
@@ -121,7 +121,8 @@ def mk_menus(remove=False, prefix=None, pkg_names=[]):
             continue
         shortcut = join(menu_dir, fn)
         try:
-            menuinst.install(shortcut, remove, prefix=prefix)
+            menuinst.install(shortcut, remove, prefix=prefix,
+                             root_prefix=root_prefix)
         except Exception as e:
             out("Failed to process %s...\n" % shortcut)
             err("Error: %s\n" % str(e))
