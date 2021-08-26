@@ -881,7 +881,9 @@ Section "Install"
 
     SetDetailsPrint TextOnly
     DetailPrint "Setting up the base environment ..."
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt"'
+    # Need to use `--no-shortcuts` because the shortcuts are created in the following steps. The reason is that `conda install`
+    # doesn't support `menu_packages` entry of `construct.yaml` and will therefore create possible shorcuts
+    nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" --no-shortcuts'
     Pop $0
     SetDetailsPrint both
 
