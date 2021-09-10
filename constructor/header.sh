@@ -42,13 +42,13 @@ Installs __NAME__ __VERSION__
 
 #if batch_mode
 -i           run install in interactive mode
-#else
-  #if has_license
+#endif
+#if not batch_mode and has_license
 -b           run install in batch mode (without manual intervention),
              it is expected the license terms are agreed upon
-  #else
+#endif
+#if not batch_mode and not has_license
 -b           run install in batch mode (without manual intervention)
-  #endif
 #endif
 -f           no error if install prefix already exists
 -h           print this help message and exit
