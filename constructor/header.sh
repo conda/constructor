@@ -34,6 +34,7 @@ KEEP_PKGS=0
 #endif
 SKIP_SCRIPTS=0
 TEST=0
+INIT=""
 REINSTALL=0
 USAGE="
 usage: $0 [options]
@@ -60,11 +61,12 @@ Installs __NAME__ __VERSION__
 -u           update an existing installation
 #if has_conda
 -t           run package tests after installation (may install conda-build)
+-n           do not run conda init
 #endif
 "
 
 if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bifhkp:sut "$*" 2>/dev/null)
+    OPTS=$(getopt bifhkp:sutn "$*" 2>/dev/null)
     if [ ! $? ]; then
         printf "%s\\n" "$USAGE"
         exit 2
@@ -112,6 +114,10 @@ if which getopt > /dev/null 2>&1; then
                 TEST=1
                 shift
                 ;;
+            -n)
+                INIT="no"
+                shift
+                ;;
 #endif
             --)
                 shift
@@ -124,7 +130,7 @@ if which getopt > /dev/null 2>&1; then
         esac
     done
 else
-    while getopts "bifhkp:sut" x; do
+    while getopts "bifhkp:sutn" x; do
         case "$x" in
             h)
                 printf "%s\\n" "$USAGE"
@@ -154,6 +160,9 @@ else
 #if has_conda
             t)
                 TEST=1
+                ;;
+            -n)
+                INIT="no"
                 ;;
 #endif
             ?)
@@ -560,18 +569,25 @@ if [ "$BATCH" = "0" ]; then
     BASH_RC="$HOME"/.bashrc
 #endif
 #if has_conda and initialize_by_default
-    DEFAULT=yes
-  #endif
+    DEFAULT_INIT=yes
+    if [ "$INIT" = "no" ]; then
+        DEFAULT_INIT=$INIT
+    fi
+#endif
 #if has_conda and not initialize_by_default
-    DEFAULT=no
+    DEFAULT_INIT=no
 #endif
 #if has_conda
-    printf "Do you wish the installer to initialize __NAME__\\n"
-    printf "by running conda init? [yes|no]\\n"
-    printf "[%s] >>> " "$DEFAULT"
-    read -r ans
-    if [ "$ans" = "" ]; then
-        ans=$DEFAULT
+    if [ "$INIT" = "" ]; then
+        printf "Do you wish the installer to initialize __NAME__\\n"
+        printf "by running conda init? [yes|no]\\n"
+        printf "[%s] >>> " "$DEFAULT_INIT"
+        read -r ans
+        if [ "$ans" = "" ]; then
+            ans=$DEFAULT_INIT
+        fi
+    else
+        ans=$DEFAULT_INIT
     fi
     if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
        [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
@@ -597,13 +613,9 @@ if [ "$BATCH" = "0" ]; then
     printf "\\n"
     printf "conda config --set auto_activate_base false\\n"
     printf "\\n"
-#endif
-
     printf "Thank you for installing __NAME__!\\n"
 fi # !BATCH
 
-
-#if has_conda
 if [ "$TEST" = "1" ]; then
     printf "INFO: Running package tests in a subshell\\n"
     (. "$PREFIX"/bin/activate
