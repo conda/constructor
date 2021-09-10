@@ -550,23 +550,22 @@ if [ "$PYTHONPATH" != "" ]; then
     printf "    in __NAME__: $PREFIX\\n"
 fi
 
-if [ "$BATCH" = "0" ]; then
 #if has_conda
-    # Interactive mode.
-  #if osx
+if [ "$BATCH" = "0" ]; then
+#endif
+#if has_conda and osx
     BASH_RC="$HOME"/.bash_profile
-    DEFAULT=yes
-  #else
+#endif
+#if has_conda and not osx
     BASH_RC="$HOME"/.bashrc
-    DEFAULT=no
-  #endif
-  #if initialize_by_default is True
+#endif
+#if has_conda and initialize_by_default
     DEFAULT=yes
   #endif
-  #if initialize_by_default is False
+#if has_conda and not initialize_by_default
     DEFAULT=no
-  #endif
-
+#endif
+#if has_conda
     printf "Do you wish the installer to initialize __NAME__\\n"
     printf "by running conda init? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
