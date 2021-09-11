@@ -2,6 +2,7 @@ from constructor.shar import read_header_template, preprocess
 import pytest
 
 
+@pytest.mark.parametrize('osx', [False, True])
 @pytest.mark.parametrize('direct_execute_post_install', [False, True])
 @pytest.mark.parametrize('direct_execute_pre_install', [False, True])
 @pytest.mark.parametrize('batch_mode', [False, True])
@@ -13,13 +14,13 @@ import pytest
 @pytest.mark.parametrize('has_pre_install', [False, True])
 @pytest.mark.parametrize('arch', ['x86', 'x86_64', ' ppc64le', 's390x', 'aarch64'])
 def test_linux_template_processing(
-        arch, has_pre_install, has_post_install,
+        osx, arch, has_pre_install, has_post_install,
         initialize_by_default, has_license, has_conda, keep_pkgs, batch_mode,
         direct_execute_pre_install, direct_execute_post_install):
     template = read_header_template()
     processed = preprocess(template, {
        'has_license': has_license,
-       'osx': False,
+       'osx': osx,
        'batch_mode': batch_mode,
        'keep_pkgs': keep_pkgs,
        'has_conda': has_conda,
