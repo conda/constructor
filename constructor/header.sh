@@ -581,6 +581,12 @@ if [ "$BATCH" = "0" ]; then
             *zsh) $PREFIX/bin/conda init zsh ;;
             *) $PREFIX/bin/conda init ;;
         esac
+        if [ -f "$PREFIX/bin/mamba" ]; then
+            case $SHELL in
+                *zsh) $PREFIX/bin/mamba init zsh ;;
+                *) $PREFIX/bin/mamba init ;;
+            esac
+        fi
     fi
     printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
     printf "   set the auto_activate_base parameter to false: \\n"
