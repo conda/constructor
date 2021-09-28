@@ -29,7 +29,7 @@ def test_linux_template_processing(
        'ppc64le': arch == 'ppc64le',
        's390x': arch == 's390x',
        'aarch64': arch == 'aarch64',
-       'linux': True,
+       'linux': not osx,
        'has_pre_install': has_pre_install,
        'direct_execute_pre_install': direct_execute_pre_install,
        'has_post_install': has_post_install,
