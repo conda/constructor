@@ -53,6 +53,7 @@ var /global ARGV_KeepPkgCache
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
+var /global ARGV_NoShortcuts
 var /global ARGV_CheckPathLength
 
 var /global IsDomainUser
@@ -187,6 +188,7 @@ FunctionEnd
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
                 /NoScripts=[0|1] [default: 0]$\n$\n\
+                /NoShortcuts=[0|1] [default: 0]$\n$\n\
                 /CheckPathLength=[0|1] [default: 1]$\n$\n\
             Examples:$\n\
                 Install for all users, but don't add to PATH env var:$\n\
@@ -248,6 +250,12 @@ FunctionEnd
         ${ElseIf} $ARGV_NoScripts = "0"
             StrCpy $Ana_PostInstall_State ${BST_CHECKED}
         ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/NoShortcuts=" $ARGV_NoShortcuts
+    ${If} ${Errors}
+        StrCpy $ARGV_NoShortcuts "0"
     ${EndIf}
 
     ClearErrors
@@ -900,10 +908,12 @@ Section "Install"
     SetOutPath "$INSTDIR\conda-meta"
     File __CONDA_HISTORY__
 
-    DetailPrint "Creating @NAME@ menus..."
-    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
-    push 'Failed to create menus'
-    call AbortRetryNSExecWait
+    ${If} $ARGV_NoShortcuts == "0"
+        DetailPrint "Creating @NAME@ menus..."
+        push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
+        push 'Failed to create menus'
+        call AbortRetryNSExecWait
+    ${EndIf}
 
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize Anaconda directories'
