@@ -33,6 +33,7 @@ Unicode "true"
 !define DEFAULT_PREFIX_DOMAIN_USER __DEFAULT_PREFIX_DOMAIN_USER__
 !define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
+!define MENU_PKGS "@MENU_PKGS@"
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "@UNINSTALL_NAME@"
 !define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
@@ -254,8 +255,12 @@ FunctionEnd
 
     ClearErrors
     ${GetOptions} $ARGV "/NoShortcuts=" $ARGV_NoShortcuts
-    ${If} ${Errors}
-        StrCpy $ARGV_NoShortcuts "0"
+    ${IfNot} ${Errors}
+        ${If} $ARGV_NoShortcuts = "1"
+            StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
+        ${ElseIf} $ARGV_NoShortcuts = "0"
+            StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
+        ${EndIf}
     ${EndIf}
 
     ClearErrors
@@ -908,7 +913,7 @@ Section "Install"
     SetOutPath "$INSTDIR\conda-meta"
     File __CONDA_HISTORY__
 
-    ${If} $ARGV_NoShortcuts == "0"
+    ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
         DetailPrint "Creating @NAME@ menus..."
         push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
         push 'Failed to create menus'

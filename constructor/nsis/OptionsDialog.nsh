@@ -10,12 +10,14 @@ Var mui_AnaCustomOptions.AddToPath
 Var mui_AnaCustomOptions.RegisterSystemPython
 Var mui_AnaCustomOptions.PostInstall
 Var mui_AnaCustomOptions.ClearPkgCache
+Var mui_AnaCustomOptions.CreateShortcuts
 
 # These are the checkbox states, to be used by the installer
 Var Ana_AddToPath_State
 Var Ana_RegisterSystemPython_State
 Var Ana_PostInstall_State
 Var Ana_ClearPkgCache_State
+Var Ana_CreateShortcuts_State
 
 Var Ana_AddToPath_Label
 Var Ana_RegisterSystemPython_Label
@@ -37,6 +39,9 @@ Function mui_AnaCustomOptions_InitDefaults
         ${Else}
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${EndIf}
+	${If} $Ana_CreateShortcuts_State == ""
+        StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
+    ${EndIf}
     ${EndIf}
 FunctionEnd
 
@@ -60,6 +65,14 @@ Function mui_AnaCustomOptions_Show
         "Advanced Installation Options" \
         "Customize how ${NAME} integrates with Windows"
 
+
+    ${If} "${MENU_PKGS}" != ""
+    ${NSD_CreateCheckbox} 0 0u 100% 11u "Create start menu shortcuts."
+    Pop $mui_AnaCustomOptions.CreateShortcuts
+    ${NSD_SetState} $mui_AnaCustomOptions.CreateShortcuts $Ana_CreateShortcuts_State
+    ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
+    ${EndIf}
+	
     ${If} $InstMode = ${JUST_ME}
         StrCpy $1 "my"
     ${Else}
@@ -187,4 +200,10 @@ Function ClearPkgCache_OnClick
         SetCtlColors $Ana_ClearPkgCache_Label ff0000 transparent
     ${EndIf}
     ShowWindow $Ana_ClearPkgCache_Label ${SW_SHOW}
+FunctionEnd
+
+Function CreateShortcuts_OnClick
+    Pop $0
+    ${NSD_GetState} $0 $Ana_CreateShortcuts_State
+
 FunctionEnd
