@@ -66,12 +66,10 @@ Function mui_AnaCustomOptions_Show
         "Customize how ${NAME} integrates with Windows"
 
 
-    ${If} "${MENU_PKGS}" != ""
-    ${NSD_CreateCheckbox} 0 0u 100% 11u "Create start menu shortcuts."
+    ${NSD_CreateCheckbox} 0 0u 100% 11u "Create start menu shortcuts (supported packages only)."
     Pop $mui_AnaCustomOptions.CreateShortcuts
     ${NSD_SetState} $mui_AnaCustomOptions.CreateShortcuts $Ana_CreateShortcuts_State
     ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
-    ${EndIf}
 	
     ${If} $InstMode = ${JUST_ME}
         StrCpy $1 "my"
