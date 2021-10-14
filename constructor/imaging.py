@@ -17,7 +17,7 @@ white = 0xff, 0xff, 0xff
 welcome_size = 164, 314
 header_size = 150, 57
 icon_size = 256, 256
-# These are for OSX
+# These are for OSX
 welcome_size_osx = 1200, 600
 
 
