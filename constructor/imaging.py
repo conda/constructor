@@ -105,7 +105,7 @@ def write_images(info, dir_path, os="windows"):
             ('welcome', welcome_size_osx, mk_welcome_image_osx, '.png'),
         ]
     else:
-        raise ValueError(f"OS {os} not supported. Choose `windows` or `osx`.")
+        raise ValueError("OS {} not supported. Choose `windows` or `osx`.".format(os))
 
     for name, size, function, ext in instructions:
         key = name + '_image'
