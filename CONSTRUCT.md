@@ -318,9 +318,11 @@ the installation prefix for all users installation will be
 _required:_ no<br/>
 _type:_ string<br/>
 Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
-to be used as the welcome image for the Windows installer.
-The image is re-sized to 164 x 314 pixels.
-By default, an image is automatically generated.
+to be used as the welcome image for the Windows and PKG installers.
+The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on Macos.
+By default, an image is automatically generated on Windows. On MacOS, Anaconda's
+logo is shown if this key is not provided. If you don't want a background on
+PKG installers, set this key to `""` (empty string).
 
 ## `header_image`
 
@@ -347,7 +349,7 @@ The default is `blue`.
 _required:_ no<br/>
 _type:_ string<br/>
 If `welcome_image` is not provided, use this text when generating the image
-(Windows only). Defaults to `name`.
+(Windows and PKG only). Defaults to `name` on Windows.
 
 ## `header_image_text`
 
@@ -370,7 +372,7 @@ _required:_ no<br/>
 _type:_ boolean<br/>
 Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
-interactive installation. (Windows only)
+interactive installation. (Windows only).
 
 ## `check_path_length`
 
@@ -378,14 +380,14 @@ _required:_ no<br/>
 _type:_ boolean<br/>
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter path (less than 46 character)
-or enable long path on windows > 10 (require admin right). Default is True. (Windows only)
+or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
 
 ## `check_path_spaces`
 
 _required:_ no<br/>
 _type:_ boolean<br/>
 Check if the path where the distribution is installed contains spaces and show a warning
-if any spaces are found. Default is True. (Windows only)
+if any spaces are found. Default is True. (Windows only).
 
 ## `nsis_template`
 
@@ -394,7 +396,25 @@ _type:_ string<br/>
 
 If ``nsis_template`` is not provided, constructor uses its default
 NSIS template. For more complete customization for the installation experience,
-provide an NSIS template file. (Windows only)
+provide an NSIS template file. (Windows only).
+
+## `readme_text`
+
+_required:_ no<br/>
+_type:_ string<br/>
+If ``installer_type`` is ``pkg`` on MacOS, this message will be
+shown before the license information, right after the introduction.
+If this key is missing, it defaults to a message about Anaconda Cloud.
+You can disable it altogether if you set this key to `""` (empty string). (MacOS only).
+
+## `conclusion_text`
+
+_required:_ no<br/>
+_type:_ string<br/>
+If ``installer_type`` is ``pkg`` on MacOS, this message will be
+shown at the end of the installer upon success. If this key is missing,
+it defaults to a message about Anaconda Cloud. You can disable it altogether
+if you set this key to `""` (empty string). (MacOS only).
 
 
 ## Available selectors

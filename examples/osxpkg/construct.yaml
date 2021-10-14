@@ -35,8 +35,9 @@ welcome_image_text: osxpkgtest
 # readme_text: |
 #   something for the users
 readme_text: ""
+
+# This will be shown at the end of the wizard
 conclusion_text: |
-# This will be shown in the installer wizard
   Thanks for installing osxpkgtest v1.2.3!
 
 # Disable with "" (empty string):
