@@ -91,7 +91,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     for key in ('license_file', 'welcome_image', 'header_image', 'icon_image',
                 'pre_install', 'post_install', 'pre_uninstall', 'environment_file',
                 'nsis_template'):
-        if key in info:
+        if info.get(key):  # only join if there's a truthy value set
             info[key] = abspath(join(dir_path, info[key]))
 
     for key in 'specs', 'packages':

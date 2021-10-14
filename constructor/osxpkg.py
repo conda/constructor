@@ -3,6 +3,7 @@ import shutil
 from os.path import isdir, abspath, dirname, exists, join
 from subprocess import check_call
 import xml.etree.ElementTree as ET
+from constructor.imaging import write_images
 
 import constructor.preconda as preconda
 from constructor.utils import add_condarc, get_final_channels, rm_rf
@@ -49,20 +50,67 @@ def modify_xml(xml_path, info):
                                                   'No license'))
     root.append(license)
 
-    background = ET.Element('background',
-                            file=join(OSX_DIR, 'MacInstaller.png'),
-                            scaling='proportional', alignment='center')
-    root.append(background)
+    ### BACKGROUND ###
+    # Default setting for the background was using Anaconda's logo
+    # located at ./osx/MacInstaller.png. If `welcome_image` or
+    # `welcome_image_text` are not provided, this will still happen.
+    # However, if the user provides one of those, we will use that instead.
+    # If no background is desired, set `welcome_image` to None
+    if "welcome_image" in info:
+        if not info["welcome_image"]:
+            background_path = None
+        else:
+            write_images(info, PACKAGES_DIR, os="osx")
+            background_path = os.path.join(PACKAGES_DIR, "welcome.png")
+    elif "welcome_image_text" in info:
+        write_images(info, PACKAGES_DIR, os="osx")
+        background_path = os.path.join(PACKAGES_DIR, "welcome.png")
+    else:
+        # Default to Anaconda's logo if the keys above were not specified
+        background_path = join(OSX_DIR, 'MacInstaller.png')
 
-    conclusion = ET.Element('conclusion', file=join(OSX_DIR, 'acloud.rtf'),
-                            attrib={'mime-type': 'richtext/rtf'})
-    root.append(conclusion)
+    if background_path:
+        print("Using background image", background_path)
+        background = ET.Element('background',
+                                file=background_path,
+                                scaling='proportional', alignment='center')
+        root.append(background)
 
-    readme_path = join(PACKAGES_DIR, "readme.rtf")
-    write_readme(readme_path, info)
-    readme = ET.Element('readme', file=readme_path,
-                        attrib={'mime-type': 'richtext/rtf'})
-    root.append(readme)
+    ### CONCLUSION ###
+    if "conclusion_text" in info:
+        if not info["conclusion_text"]:
+            conclusion_path = None
+        else:
+            conclusion_path = join(PACKAGES_DIR, "conclusion.txt")
+            mimetype = "text/plain"
+            with open(conclusion_path, "w") as f:
+                f.write(info["conclusion_text"])
+    else:
+        conclusion_path = join(OSX_DIR, 'acloud.rtf')
+        mimetype = 'richtext/rtf'
+    if conclusion_path:
+        conclusion = ET.Element('conclusion', file=conclusion_path,
+                                attrib={'mime-type': mimetype})
+        root.append(conclusion)
+
+    ### README ###
+    if "readme_text" in info:
+        if not info["readme_text"]:
+            readme_path = None
+        else:
+            readme_path = join(PACKAGES_DIR, "readme.txt")
+            mimetype = "text/plain"
+            with open(readme_path, "w") as f:
+                f.write(info["readme_text"])
+    else:
+        mimetype = 'richtext/rtf'
+        readme_path = join(PACKAGES_DIR, "readme.rtf")
+        write_readme(readme_path, info)
+
+    if readme_path:
+        readme = ET.Element('readme', file=readme_path,
+                            attrib={'mime-type': mimetype})
+        root.append(readme)
 
     # See below for an explanation of the consequences of this
     # customLocation value.
