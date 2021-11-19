@@ -104,24 +104,30 @@ class NSISReg:
             return None
 
 
-def mk_menus(remove=False, prefix=None, pkg_names=[]):
+def mk_menus(remove=False, prefix=None, pkg_names=None, root_prefix=None):
     try:
         import menuinst
     except (ImportError, OSError):
         return
     if prefix is None:
         prefix = sys.prefix
+    if root_prefix is None:
+        root_prefix = sys.prefix
     menu_dir = join(prefix, 'Menu')
     if not os.path.isdir(menu_dir):
         return
     for fn in os.listdir(menu_dir):
         if not fn.endswith('.json'):
             continue
-        if pkg_names and fn[:-5] not in pkg_names:
+        if pkg_names is not None and fn[:-5] not in pkg_names:
+            # skip when not in the list of menus to create
+            # when installing, the pkg_names list is specified, otherwise not
+            # and we don't skip to try to remove shortcuts
             continue
         shortcut = join(menu_dir, fn)
         try:
-            menuinst.install(shortcut, remove, prefix=prefix)
+            menuinst.install(shortcut, remove, prefix=prefix,
+                             root_prefix=root_prefix)
         except Exception as e:
             out("Failed to process %s...\n" % shortcut)
             err("Error: %s\n" % str(e))
@@ -150,7 +156,7 @@ def get_conda_envs_from_python_api():
 get_conda_envs = get_conda_envs_from_python_api
 
 
-def rm_menus(prefix=None):
+def rm_menus(prefix=None, root_prefix=None):
     try:
         import menuinst
         from conda.base.context import context
@@ -175,7 +181,7 @@ def rm_menus(prefix=None):
             # `envs_dirs` to avoid picking up environment from other
             # distributions. Not perfect but better than no checking
             if envs_dir in env:
-                mk_menus(remove=True, prefix=env)
+                mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
 
 
 def run_post_install():
