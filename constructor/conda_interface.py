@@ -23,7 +23,7 @@ except ImportError:
 if conda_interface_type == 'conda':
     from conda.models.version import VersionOrder
 
-    _conda_version = VersionOrder(CONDA_INTERFACE_VERSION)
+    _conda_version = VersionOrder(CONDA_INTERFACE_VERSION).version
     _conda_major = _conda_version[1]
     _conda_minor = _conda_version[2][0] if isinstance(_conda_version[2], list) else _conda_version[2]
     CONDA_MAJOR_MINOR = _conda_major, _conda_minor
