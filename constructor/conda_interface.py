@@ -24,9 +24,7 @@ if conda_interface_type == 'conda':
     from conda.models.version import VersionOrder
 
     _conda_version = VersionOrder(CONDA_INTERFACE_VERSION).version
-    _conda_major = _conda_version[1]
-    _conda_minor = _conda_version[2][0] if isinstance(_conda_version[2], list) else _conda_version[2]
-    CONDA_MAJOR_MINOR = _conda_major, _conda_minor
+    CONDA_MAJOR_MINOR = _conda_version[1][0], _conda_version[2][0]
 
     from conda._vendor.toolz.itertoolz import (
         concatv as _concatv, get as _get, groupby as _groupby,
