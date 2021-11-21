@@ -144,6 +144,14 @@ def move_script(src, dst, info):
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
 
+    if info.get("menu_packages"):
+        data = data.replace(
+            '__SHORTCUTS__',
+            f"--shortcuts-only={','.join(info['menu_packages'])}"
+        )
+    else:
+        data = data.replace('__SHORTCUTS__', "")
+
     with open(dst, 'w') as fo:
         fo.write(data)
     os.chmod(dst, 0o755)

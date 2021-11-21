@@ -76,6 +76,11 @@ def get_header(conda_exec, tarball, info):
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
 
+    if info.get("menu_packages"):
+        replace['SHORTCUTS'] = f"--shortcuts-only={','.join(info['menu_packages'])}"
+    else:
+        replace['SHORTCUTS'] = ""
+
     data = read_header_template()
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
