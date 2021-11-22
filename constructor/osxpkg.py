@@ -147,7 +147,7 @@ def move_script(src, dst, info):
     if info.get("menu_packages"):
         data = data.replace(
             '__SHORTCUTS__',
-            f"--shortcuts-only={','.join(info['menu_packages'])}"
+            " ".join([f"--shortcuts-only={pkg.strip()}" for pkg in info['menu_packages']])
         )
     else:
         data = data.replace('__SHORTCUTS__', "")
