@@ -894,9 +894,7 @@ Section "Install"
 
     SetDetailsPrint TextOnly
     DetailPrint "Setting up the base environment ..."
-    # Need to use `--no-shortcuts` because the shortcuts are created in the following steps. The reason is that `conda install`
-    # doesn't support `menu_packages` entry of `construct.yaml` and will therefore create possible shorcuts
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" --no-shortcuts'
+    nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" @SHORTCUTS@'
     Pop $0
     SetDetailsPrint both
 
@@ -913,12 +911,11 @@ Section "Install"
     SetOutPath "$INSTDIR\conda-meta"
     File __CONDA_HISTORY__
 
-    ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
-        DetailPrint "Creating @NAME@ menus..."
-        push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
-        push 'Failed to create menus'
-        call AbortRetryNSExecWait
-    ${EndIf}
+    # Not needed anymore thanks to the new --shortcuts-only arg, set above in @SHORTCUTS@
+    # DetailPrint "Creating @NAME@ menus..."
+    # push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
+    # push 'Failed to create menus'
+    # call AbortRetryNSExecWait
 
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize Anaconda directories'

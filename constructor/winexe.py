@@ -115,6 +115,17 @@ def make_nsi(info, dir_path):
     approx_pkgs_size_kb = int(
         math.ceil(info.get('_approx_pkgs_size', 0) / 1000))
 
+    menu_packages = info.get("menu_packages")
+    if menu_packages is None:
+        # not set: we create all shortcuts (default behaviour)
+        shortcuts = ""
+    elif menu_packages:
+        # set and populated: we only create shortcuts for some
+        shortcuts = ' '.join([f'--shortcuts-only="{pkg}"' for pkg in menu_packages])
+    else:
+        # set but empty: disable all shortcuts
+        shortcuts = "--no-shortcuts"
+
     # these are unescaped (and unquoted)
     for key, value in [
         ('@NAME@', name),
@@ -122,7 +133,7 @@ def make_nsi(info, dir_path):
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
-        ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
+        ('@SHORTCUTS@', shortcuts),
         ('@SIZE@', str(approx_pkgs_size_kb)),
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
