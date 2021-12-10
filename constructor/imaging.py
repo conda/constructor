@@ -18,7 +18,7 @@ welcome_size = 164, 314
 header_size = 150, 57
 icon_size = 256, 256
 # These are for OSX
-welcome_size_osx = 1200, 600
+welcome_size_osx = 1227, 600
 
 
 def new_background(size, color, bs=20, boxes=50):
