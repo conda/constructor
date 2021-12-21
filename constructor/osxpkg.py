@@ -71,10 +71,11 @@ def modify_xml(xml_path, info):
 
     if background_path:
         print("Using background image", background_path)
-        background = ET.Element('background',
-                                file=background_path,
-                                scaling='proportional', alignment='center')
-        root.append(background)
+        for key in ("background", "background-darkAqua"):
+            background = ET.Element(key,
+                                    file=background_path,
+                                    scaling='proportional', alignment='center')
+            root.append(background)
 
     ### CONCLUSION ###
     if "conclusion_text" in info:
