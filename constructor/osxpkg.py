@@ -3,9 +3,10 @@ import shutil
 from os.path import isdir, abspath, dirname, exists, join
 from subprocess import check_call
 import xml.etree.ElementTree as ET
-from constructor.imaging import write_images
+from pathlib import Path
 
 import constructor.preconda as preconda
+from constructor.imaging import write_images
 from constructor.utils import add_condarc, get_final_channels, rm_rf
 
 
@@ -74,11 +75,40 @@ def modify_xml(xml_path, info):
         for key in ("background", "background-darkAqua"):
             background = ET.Element(key,
                                     file=background_path,
-                                    scaling='proportional', alignment='center')
+                                    scaling='proportional',
+                                    alignment='center')
             root.append(background)
 
+    ### WELCOME ###
+    if "welcome_file" in info:
+        welcome_path = info["welcome_file"]
+        extension = Path(welcome_path).suffix
+        if extension.lower() == ".rtf":
+            mimetype = "richtext/rtf"
+        else:  # we assume it's plain text
+            mimetype = "text/plain"
+    elif "welcome_text" in info and info["welcome_text"]:
+        welcome_path = join(PACKAGES_DIR, "welcome.txt")
+        mimetype = "text/plain"
+        with open(welcome_path, "w") as f:
+            f.write(info["welcome_text"])
+    else:
+        welcome_path = None
+
+    if welcome_path:
+        welcome = ET.Element('welcome', file=welcome_path,
+                             attrib={'mime-type': mimetype})
+        root.append(welcome)
+
     ### CONCLUSION ###
-    if "conclusion_text" in info:
+    if "conclusion_file" in info:
+        conclusion_path = info["conclusion_file"]
+        extension = Path(conclusion_path).suffix
+        if extension.lower() == ".rtf":
+            mimetype = "richtext/rtf"
+        else:  # we assume it's plain text
+            mimetype = "text/plain"
+    elif "conclusion_text" in info:
         if not info["conclusion_text"]:
             conclusion_path = None
         else:
@@ -89,13 +119,22 @@ def modify_xml(xml_path, info):
     else:
         conclusion_path = join(OSX_DIR, 'acloud.rtf')
         mimetype = 'richtext/rtf'
+
     if conclusion_path:
         conclusion = ET.Element('conclusion', file=conclusion_path,
                                 attrib={'mime-type': mimetype})
         root.append(conclusion)
+    # when not provided, conclusion defaults to a system message
 
     ### README ###
-    if "readme_text" in info:
+    if "readme_file" in info:
+        readme_path = info["readme_file"]
+        extension = Path(readme_path).suffix
+        if extension.lower() == ".rtf":
+            mimetype = "richtext/rtf"
+        else:  # we assume it's plain text
+            mimetype = "text/plain"
+    elif "readme_text" in info:
         if not info["readme_text"]:
             readme_path = None
         else:
@@ -104,7 +143,7 @@ def modify_xml(xml_path, info):
             with open(readme_path, "w") as f:
                 f.write(info["readme_text"])
     else:
-        mimetype = 'richtext/rtf'
+        mimetype = "richtext/rtf"
         readme_path = join(PACKAGES_DIR, "readme.rtf")
         write_readme(readme_path, info)
 

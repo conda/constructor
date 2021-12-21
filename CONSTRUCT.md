@@ -393,28 +393,70 @@ if any spaces are found. Default is True. (Windows only).
 
 _required:_ no<br/>
 _type:_ string<br/>
-
-If ``nsis_template`` is not provided, constructor uses its default
+If `nsis_template` is not provided, constructor uses its default
 NSIS template. For more complete customization for the installation experience,
 provide an NSIS template file. (Windows only).
+
+## `welcome_file`
+
+_required:_ no<br/>
+_type:_ string<br/>
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the introduction.
+It accepts path to a plain text file or a rich text file (rtf). If
+both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
+(MacOS only).
+
+## `welcome_text`
+
+_required:_ no<br/>
+_type:_ string<br/>
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the introduction.
+If this key is missing, it defaults to a message about Anaconda Cloud.
+You can disable it altogether so it defaults to the system message
+if you set this key to `""` (empty string).
+(MacOS only).
+
+## `readme_file`
+
+_required:_ no<br/>
+_type:_ string<br/>
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the welcome screen.
+It accepts path to a plain text file or a rich text file (rtf). If
+both `readme_file` and `readme_text` are provided, `readme_file` takes precedence.
+(MacOS only).
 
 ## `readme_text`
 
 _required:_ no<br/>
 _type:_ string<br/>
-If ``installer_type`` is ``pkg`` on MacOS, this message will be
-shown before the license information, right after the introduction.
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the welcome screen.
 If this key is missing, it defaults to a message about Anaconda Cloud.
-You can disable it altogether if you set this key to `""` (empty string). (MacOS only).
+You can disable it altogether if you set this key to `""` (empty string).
+(MacOS only).
+
+## `conclusion_file`
+
+_required:_ no<br/>
+_type:_ string<br/>
+If `installer_type` is `pkg` on MacOS, this message will be
+shown at the end of the installer upon success. It accepts path to
+a plain text file or a rich text file (rtf). If both `conclusion_file`
+and `conclusion_text` are provided, `conclusion_file` takes precedence.
+ (MacOS only).
 
 ## `conclusion_text`
 
 _required:_ no<br/>
 _type:_ string<br/>
-If ``installer_type`` is ``pkg`` on MacOS, this message will be
+If `installer_type` is `pkg` on MacOS, this message will be
 shown at the end of the installer upon success. If this key is missing,
 it defaults to a message about Anaconda Cloud. You can disable it altogether
-if you set this key to `""` (empty string). (MacOS only).
+so it defaults to the system message if you set this key to `""` (empty string).
+(MacOS only).
 
 
 ## Available selectors
