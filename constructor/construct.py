@@ -162,8 +162,16 @@ an interactive wizard guiding the user through the available options. If
     ('signing_identity_name',  False, str, '''
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
 using this option, it will be used to sign the installer. Note that you will need
-to have a certificate and corresponding private key together called an 'identity'
-in one of your accessible keychains.
+to have a certificate (usually an "Installer certificate") and corresponding
+private key together called an 'identity' in one of your accessible keychains.
+'''),
+
+    ('signing_certificate',  False, str, '''
+On Windows only, set this key to the path of a PFX certificate to be used with
+`signtool`. Additional environment variables can be used to configure this step,
+namely: `CONSTRUCTOR_SIGNTOOL_PATH` (absolute path to `signtool.exe`),
+`CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD` (password to unlock the certificate, if
+needed), `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL` (custom timestamping server).
 '''),
 
     ('attempt_hardlinks',          False, (bool, str), '''
