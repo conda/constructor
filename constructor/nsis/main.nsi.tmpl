@@ -993,8 +993,10 @@ Section "Uninstall"
     !insertmacro ExecWaitLibNsisCmd "pre_uninstall"
     !insertmacro ExecWaitLibNsisCmd "rmpath"
     !insertmacro ExecWaitLibNsisCmd "rmreg"
-    !insertmacro ExecWaitLibNsisCmd 'del "$INSTDIR"'
+    DetailPrint "Removing files and folders..."
+    nsExec::Exec 'cmd.exe /k RMDIR /Q/S "$INSTDIR"'
 
+    # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
 
     DeleteRegKey SHCTX "${UNINSTREG}"
