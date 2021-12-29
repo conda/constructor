@@ -33,6 +33,7 @@ Unicode "true"
 !define DEFAULT_PREFIX_DOMAIN_USER __DEFAULT_PREFIX_DOMAIN_USER__
 !define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
+!define MENU_PKGS "@MENU_PKGS@"
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "@UNINSTALL_NAME@"
 !define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
@@ -53,6 +54,7 @@ var /global ARGV_KeepPkgCache
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
+var /global ARGV_NoShortcuts
 var /global ARGV_CheckPathLength
 
 var /global IsDomainUser
@@ -187,6 +189,7 @@ FunctionEnd
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
                 /NoScripts=[0|1] [default: 0]$\n$\n\
+                /NoShortcuts=[0|1] [default: 0]$\n$\n\
                 /CheckPathLength=[0|1] [default: 1]$\n$\n\
             Examples:$\n\
                 Install for all users, but don't add to PATH env var:$\n\
@@ -247,6 +250,16 @@ FunctionEnd
             StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
         ${ElseIf} $ARGV_NoScripts = "0"
             StrCpy $Ana_PostInstall_State ${BST_CHECKED}
+        ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/NoShortcuts=" $ARGV_NoShortcuts
+    ${IfNot} ${Errors}
+        ${If} $ARGV_NoShortcuts = "1"
+            StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
+        ${ElseIf} $ARGV_NoShortcuts = "0"
+            StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
         ${EndIf}
     ${EndIf}
 
@@ -900,10 +913,12 @@ Section "Install"
     SetOutPath "$INSTDIR\conda-meta"
     File __CONDA_HISTORY__
 
-    DetailPrint "Creating @NAME@ menus..."
-    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
-    push 'Failed to create menus'
-    call AbortRetryNSExecWait
+    ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
+        DetailPrint "Creating @NAME@ menus..."
+        push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
+        push 'Failed to create menus'
+        call AbortRetryNSExecWait
+    ${EndIf}
 
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize Anaconda directories'
@@ -993,8 +1008,10 @@ Section "Uninstall"
     !insertmacro ExecWaitLibNsisCmd "pre_uninstall"
     !insertmacro ExecWaitLibNsisCmd "rmpath"
     !insertmacro ExecWaitLibNsisCmd "rmreg"
-    !insertmacro ExecWaitLibNsisCmd 'del "$INSTDIR"'
+    DetailPrint "Removing files and folders..."
+    nsExec::Exec 'cmd.exe /k RMDIR /Q/S "$INSTDIR"'
 
+    # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
 
     DeleteRegKey SHCTX "${UNINSTREG}"
