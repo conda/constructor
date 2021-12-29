@@ -11,7 +11,7 @@ from __future__ import absolute_import, division, print_function
 from collections import defaultdict
 import json
 import os
-from os.path import isdir, isfile, join, splitext
+from os.path import isdir, isfile, join, splitext, abspath, expanduser
 import sys
 import tempfile
 
@@ -19,7 +19,7 @@ from constructor.utils import md5_files, filename_dist
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, concatv, conda_context, conda_replace_context_default,
                               download, env_vars, groupby, read_paths_json, all_channel_urls,
-                              cc_platform)
+                              cc_platform, locate_prefix_by_name, PrefixData)
 
 
 def getsize(filename):
@@ -198,51 +198,24 @@ def check_duplicates_files(pc_recs, platform, ignore_duplicate_files=True):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _precs_from_environment(environment, download_dir, user_conda):
-    from subprocess import check_output
-
-    # get basic data about the environment's packages
-    list_flag = "--prefix" if isdir(environment) else "--name"
-    json_listing = check_output([user_conda, "list", list_flag, environment, "--json"])
-    listing = json.loads(json_listing)
-    packages = {p["dist_name"]: p for p in listing}
-    # get the package install order and MD5 sums,
-    # creating a tuple of dist_name, URL, MD5, filename (fn)
-    explicit = check_output([user_conda, "list", list_flag, environment,
-                             "--explicit", "--json", "--md5"],
-                            universal_newlines=True)
-    ordering = []
-    for line in explicit.splitlines():
-        if not line or line.startswith("#") or line.startswith("@"):
-            continue
-        url, _, md5 = line.rpartition("#")
-        _, _, fn = url.rpartition("/")
-        if fn.endswith(".tar.bz2"):
-            dist_name = fn[:-8]
-        else:
-            dist_name, _ = splitext(fn)
-        ordering.append((dist_name, url, md5, fn))
-
-    # now, create PackageCacheRecords
-    precs = []
-    for dist_name, url, md5, fn in ordering:
-        package = packages[dist_name]
-        package_tarball_full_path = join(download_dir, fn)
-        extracted_package_dir = join(download_dir, dist_name)
-        if 'platform' in package:
-            package['subdir'] = package['platform']
-            del package['platform']
-        precs.append(PackageCacheRecord(url=url, md5=md5, fn=fn,
-                                        package_tarball_full_path=package_tarball_full_path,
-                                        extracted_package_dir=extracted_package_dir,
-                                        **package))
-    return precs
+def _precs_from_environment(environment, dir_path):
+    if not isdir(environment) and ('/' in environment or '\\' in environment):
+        env2 = join(dir_path, environment)
+        if isdir(env2):
+            environment = env2
+    if isdir(environment):
+        environment = abspath(join(dir_path, expanduser(environment)))
+    else:
+        environment = locate_prefix_by_name(environment)
+    pdata = PrefixData(environment)
+    pdata.load()
+    return list(pdata.iter_records())
 
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(),  ignore_duplicate_files=True, environment=None,
           environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
-          transmute_file_type=''):
+          transmute_file_type='', dir_path=''):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     specs = list(concatv(specs, ("python",)))
@@ -278,12 +251,14 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         environment = tempfile.mkdtemp()
         new_env = os.environ.copy()
         new_env["CONDA_SUBDIR"] = platform
-        check_call([user_conda, "env", "create", "--file", environment_file,
+        # use conda env for yaml, and standard conda create otherwise
+        which = ["env", "create"] if environment_file.endswith(('.yml', '.yaml')) else ["create", "--yes"]
+        check_call([user_conda] + which + ["--file", environment_file,
                     "--prefix", environment], universal_newlines=True, env=new_env)
 
     # obtain the package records
     if environment:
-        precs = _precs_from_environment(environment, download_dir, user_conda)
+        precs = _precs_from_environment(environment, dir_path)
     else:
         solver = Solver(
             # The Solver class doesn't do well with `None` as a prefix right now
@@ -335,11 +310,11 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
                 dist = filename_dist(dist)
                 new_file_name = "%s%s" % (dist[:-8], transmute_file_type)
                 new_dists.append(new_file_name)
-                new_file_name = os.path.join(download_dir, new_file_name)
+                new_file_name = join(download_dir, new_file_name)
                 if os.path.exists(new_file_name):
                     continue
                 print("transmuting %s" % dist)
-                conda_package_handling.api.transmute(os.path.join(download_dir, dist),
+                conda_package_handling.api.transmute(join(download_dir, dist),
                     transmute_file_type, out_folder=download_dir)
             else:
                 new_dists.append(dist)
@@ -354,6 +329,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
 def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
+    dir_path = info["_path"]
     version = info["version"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
@@ -367,7 +343,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     environment_file = info.get("environment_file", None)
     transmute_file_type = info.get("transmute_file_type", "")
 
-    if not channel_urls and not channels_remap:
+    if not channel_urls and not channels_remap and not (environment or environment_file):
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
 
     # We need to preserve the configuration for proxy servers and ssl, otherwise if constructor is running
@@ -387,7 +363,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         _urls, dists, approx_tarballs_size, approx_pkgs_size, has_conda = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
             exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
-            verbose, dry_run, conda_exe, transmute_file_type
+            verbose, dry_run, conda_exe, transmute_file_type, dir_path
         )
 
     info["_urls"] = _urls

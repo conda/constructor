@@ -24,6 +24,7 @@ if conda_interface_type == 'conda':
     from conda.api import SubdirData # noqa
     from conda.base.context import (
         context as _conda_context, replace_context_default as _conda_replace_context_default,
+        locate_prefix_by_name
     )
     from conda.common.io import env_vars as _env_vars
     from conda.core.package_cache_data import (

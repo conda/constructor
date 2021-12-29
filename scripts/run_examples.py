@@ -60,6 +60,12 @@ def run_examples():
         print(example_path)
         print('-' * len(example_path))
         output_dir = tempfile.mkdtemp()
+        is_fromenv = os.path.basename(example_path) == 'fromenv'
+        if is_fromenv:
+            env_file = os.path.join(example_path, 'environment.txt')
+            test_prefix = os.path.join(example_path, 'tmp')
+            cmd = ['conda', 'create', '--prefix', test_prefix, '--file', env_file, '--yes']
+            errored += _execute(cmd)
         cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
         errored += _execute(cmd)
         for fpath in os.listdir(output_dir):
@@ -81,6 +87,8 @@ def run_examples():
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
             errored += _execute(cmd)
+        if is_fromenv:
+            rm_rf(test_prefix)
         print('')
 
     if errored:

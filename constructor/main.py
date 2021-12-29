@@ -73,6 +73,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     construct_path = join(dir_path, 'construct.yaml')
     info = construct_parse(construct_path, platform)
     construct_verify(info)
+    info['_path'] = abspath(dir_path)
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
     info['_conda_exe'] = abspath(conda_exe)
