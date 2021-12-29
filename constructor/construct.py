@@ -375,7 +375,7 @@ def yamlize(data, directory, content_filter):
         except ImportError as ex:
             raise UnableToParseMissingJinja2(original=ex)
         data = render_jinja(data, directory, content_filter)
-        return yaml.load(data)
+        return yaml.load(data, Loader=yaml.SafeLoader)
 
 
 def parse(path, platform):
