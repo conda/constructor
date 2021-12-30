@@ -1,3 +1,21 @@
+2022-01-02   3.2.2:
+-------------------
+  * Common:
+    - Fix crashes due to pyyaml >= 6 deprecating automatic use of SafeLoader; it is now safe to run constructor with pyyaml >= 6 #473
+    - 
+
+  * Shell:
+    - Extract pre-conda before extracting conda packages #450
+    - Add tests for header template preprocessing and fix initialize by default #459
+
+  * PKG:
+    - Unset DYLD_FALLBACK_LIBRARY_PATH in header on macOS; installer now works with bash >= 5.1.4 #472
+
+  * NSIS:
+    - Use nsExec:Exec to remove files and folders instead of using a python subprocess, which fails when removing files still being used #467
+    - Add option to disable creation of start menu shortcuts and generally fix shortcut creation #455, #466
+
+
 2020-03-30   3.2.1:
 -------------------
   * Common:
