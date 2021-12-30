@@ -6,23 +6,23 @@ Authors are sorted by number of commits.
 * Michael C. Grant
 * Ray Donnelly
 * Michael Sarahan
-* Isuru Fernando
 * Eric Prestat
+* Isuru Fernando
 * Marcel Bargull
 * Kale Franz
+* Sophia Castellarin
+* Mark Harfouche
+* Jonathan J. Helmus
 * Forrest Waters
 * Angela Gloyna
 * Chris Burr
 * Anthony Scopatz
 * Faustin Carter
-* Mark Harfouche
 * Martin Durant
 * Aaron Stevens
 * Thomas Holder
 * Eric Dill
-* Jonathan J. Helmus
 * Tobias Megies
-* Sophia Castellarin
 * Matthew Newville
 * Jean-Luc Stevens
 * Wolfgang Ulmer
@@ -43,4 +43,8 @@ Authors are sorted by number of commits.
 * astaric
 * Pradipta Ghosh
 * Connor Martin
-* Tom HÃ¶ren
+* Wolf Vollprecht
+* XuehaiPan
+* Tom Hören
+* Jannis Leidel
+* Cheng H. Lee
