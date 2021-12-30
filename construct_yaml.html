@@ -1,0 +1,383 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Using construct.yaml files to customize your installer &#8212; constructor  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Creating custom installers with constructor" href="creating-installers.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="using-construct-yaml-files-to-customize-your-installer">
+<h1>Using construct.yaml files to customize your installer<a class="headerlink" href="#using-construct-yaml-files-to-customize-your-installer" title="Permalink to this headline">¶</a></h1>
+<p>This document describes each of they keys in the <cite>construct.yaml</cite> file,
+which is the main configuration file of a constructor configuration
+directory.</p>
+<p>All keys are optional, except otherwise noted.  Also, the keys <cite>specs</cite>
+and <cite>packages</cite> take either a list of items, or a path to a file,
+which contains one item per line (excluding lines starting with <cite>#</cite>).</p>
+<p>Also note, that any line in <cite>construct.yaml</cite> may contain a selector at the
+end, in order to allow customization for selected platforms.</p>
+<p>Finally, <cite>construct.yaml</cite> is parsed as a <cite>jinja2</cite> template and so any valid
+<cite>jinja2</cite> templating directives may be used. The current shell environment
+is available as the <cite>jinja2</cite> variable <cite>environ</cite>. As an example, setting the
+<cite>version</cite> key from an environment variable called <cite>VERSION</cite> would look like:
+<cite>version: {{ environ[“VERSION”] }}</cite>. Note that the special environment variables
+available in <cite>meta.yaml</cite> when running <cite>conda-build</cite> are not available here.</p>
+<section id="keys">
+<h2>Keys<a class="headerlink" href="#keys" title="Permalink to this headline">¶</a></h2>
+<section id="name">
+<h3>name<a class="headerlink" href="#name" title="Permalink to this headline">¶</a></h3>
+<p>required: True</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Name of the installer.  May also contain uppercase letter.  The installer
+name is independent of the names of any of the conda packages the installer
+is composed of.</p>
+</section>
+<section id="version">
+<h3>version<a class="headerlink" href="#version" title="Permalink to this headline">¶</a></h3>
+<p>required: True</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Version of the installer.  Just like the installer name, this version
+is independent of any conda package versions contained in the installer.</p>
+</section>
+<section id="channels">
+<h3>channels<a class="headerlink" href="#channels" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">list</span></code>,</p>
+<p>The conda channels from which packages are retrieved, when using the <cite>specs</cite>
+key below, but also when using the <cite>packages</cite> key ,unless the full URL is
+given in the <cite>packages</cite> list (see below).</p>
+</section>
+<section id="channels-remap">
+<h3>channels_remap<a class="headerlink" href="#channels-remap" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">list</span></code>,</p>
+<p>List of <cite>(src, dest)</cite> channels, from which, channels from <cite>src</cite> are also
+considered while running solver, but are replaced by corresponding values from
+dest when writing <cite>urls{,.txt}</cite>. Example use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">channels_remap</span><span class="p">:</span>
+  <span class="o">-</span>
+      <span class="n">src</span><span class="p">:</span> <span class="n">file</span><span class="p">:</span><span class="o">///</span><span class="n">tmp</span><span class="o">/</span><span class="n">a3</span><span class="o">/</span><span class="n">conda</span><span class="o">-</span><span class="n">bld</span>
+      <span class="n">dest</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">anaconda</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">pkgs</span><span class="o">/</span><span class="n">main</span>
+  <span class="o">-</span>
+      <span class="n">src</span><span class="p">:</span> <span class="n">file</span><span class="p">:</span><span class="o">///</span><span class="n">tmp</span><span class="o">/</span><span class="n">r</span><span class="o">/</span><span class="n">conda</span><span class="o">-</span><span class="n">bld</span>
+      <span class="n">dest</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">anaconda</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">pkgs</span><span class="o">/</span><span class="n">r</span>
+</pre></div>
+</div>
+</section>
+<section id="specs">
+<h3>specs<a class="headerlink" href="#specs" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">list</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>List of package specifications, e.g. <cite>python 2.7*</cite>, <cite>pyzmq</cite> or <cite>numpy &gt;=1.8</cite>.
+This list of specifications if given to the conda resolver (as if you were
+to create a new environment with those specs). The packages may also be
+specified by their entire URL,
+e.g.`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.</p>
+</section>
+<section id="user-requested-specs">
+<h3>user_requested_specs<a class="headerlink" href="#user-requested-specs" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">list</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>List of package specifications to be recorded as “user-requested” for the
+initial environment in conda’s history file. If not given, user-requested
+specs will fall back to ‘specs’.</p>
+</section>
+<section id="menu-packages">
+<h3>menu_packages<a class="headerlink" href="#menu-packages" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">list</span></code>,</p>
+<p>Packages for menu items will be installed (if the conda package contains the
+necessary metadata in “Menu/&lt;package name&gt;.json”).  Menu items are currently
+only supported on Windows.  By default, all menu items will be installed.</p>
+</section>
+<section id="ignore-duplicate-files">
+<h3>ignore_duplicate_files<a class="headerlink" href="#ignore-duplicate-files" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">bool</span></code>,</p>
+<p>By default, constructor will error out when adding packages with duplicate
+files in them. Enable this option to warn instead and continue.</p>
+</section>
+<section id="conda-default-channels">
+<h3>conda_default_channels<a class="headerlink" href="#conda-default-channels" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">list</span></code>,</p>
+<p>You can list conda channels here which will be the default conda channels
+of the created installer (if it includes conda).</p>
+</section>
+<section id="installer-filename">
+<h3>installer_filename<a class="headerlink" href="#installer-filename" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>The filename of the installer being created.  A reasonable default filename
+will determined by the <cite>name</cite>, <cite>version</cite>, platform and installer type.</p>
+</section>
+<section id="installer-type">
+<h3>installer_type<a class="headerlink" href="#installer-type" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>The type of the installer being created.  Possible values are “sh”, “pkg”,
+and “exe”.  By default, the type is “sh” on Unix, and “exe” on Windows.</p>
+</section>
+<section id="license-file">
+<h3>license_file<a class="headerlink" href="#license-file" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Path to the license file being displayed by the installer during the install
+process.</p>
+</section>
+<section id="keep-pkgs">
+<h3>keep_pkgs<a class="headerlink" href="#keep-pkgs" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">bool</span></code>,</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">False</span></code> (default), the package cache in the <code class="docutils literal notranslate"><span class="pre">pkgs</span></code> subdirectory is removed
+when the installation process is complete. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, this subdirectory and
+its contents are preserved. If <code class="docutils literal notranslate"><span class="pre">keep_pkgs</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, Unix <code class="docutils literal notranslate"><span class="pre">.sh</span></code> and Windows <code class="docutils literal notranslate"><span class="pre">.msi</span></code>
+installers offer a command-line option (<code class="docutils literal notranslate"><span class="pre">-k</span></code> and <code class="docutils literal notranslate"><span class="pre">/KeepPkgCache</span></code>, respectively)
+to preserve the package cache.</p>
+</section>
+<section id="batch-mode">
+<h3>batch_mode<a class="headerlink" href="#batch-mode" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">bool</span></code>,</p>
+<p>Only affects <code class="docutils literal notranslate"><span class="pre">.sh</span></code> installers. If <code class="docutils literal notranslate"><span class="pre">False</span></code> (default), the installer launches
+an interactive wizard guiding the user through the available options. If
+<code class="docutils literal notranslate"><span class="pre">True</span></code>, the installer runs automatically as if <code class="docutils literal notranslate"><span class="pre">-b</span></code> was passed.</p>
+</section>
+<section id="signing-identity-name">
+<h3>signing_identity_name<a class="headerlink" href="#signing-identity-name" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>By default, the MacOS pkg installer isn’t signed. If an identity name is specified
+using this option, it will be used to sign the installer. Note that you will need
+to have a certificate and corresponding private key together called an ‘identity’
+in one of your accessible keychains.</p>
+</section>
+<section id="attempt-hardlinks">
+<h3>attempt_hardlinks<a class="headerlink" href="#attempt-hardlinks" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">bool</span></code>,</p>
+<p>By default, conda packages are extracted into the root environment and then
+patched. Enabling this option will result into extraction of the packages into
+the <cite>pkgs</cite> directory and the files in the root environment will be hardlinks to
+the files kept in the <cite>pkgs</cite> directory and then patched accordingly.</p>
+</section>
+<section id="write-condarc">
+<h3>write_condarc<a class="headerlink" href="#write-condarc" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">bool</span></code>,</p>
+<p>By default, no .condarc file is written. If set, a .condarc file is written to
+the base environment if there are any channels or conda_default_channels is set.</p>
+</section>
+<section id="company">
+<h3>company<a class="headerlink" href="#company" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Name of the company/entity who is responsible for the installer.</p>
+</section>
+<section id="uninstall-name">
+<h3>uninstall_name<a class="headerlink" href="#uninstall-name" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Application name in the Windows “Programs and Features” control panel.
+Defaults to <cite>${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})</cite>.</p>
+</section>
+<section id="pre-install">
+<h3>pre_install<a class="headerlink" href="#pre-install" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Path to a pre install (bash - Unix only) script.</p>
+</section>
+<section id="post-install">
+<h3>post_install<a class="headerlink" href="#post-install" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Path to a post install (bash for Unix - .bat for Windows) script.</p>
+</section>
+<section id="welcome-image">
+<h3>welcome_image<a class="headerlink" href="#welcome-image" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Path to an image (in any common image format <cite>.png</cite>, <cite>.jpg</cite>, <cite>.tif</cite>, etc.)
+which is used as the welcome image for the Windows installer.
+The image is re-sized to 164 x 314 pixels.
+By default, an image is automatically generated.</p>
+</section>
+<section id="header-image">
+<h3>header_image<a class="headerlink" href="#header-image" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Like <cite>welcome_image</cite> for Windows, re-sized to 150 x 57 pixels.</p>
+</section>
+<section id="icon-image">
+<h3>icon_image<a class="headerlink" href="#icon-image" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>Like <cite>welcome_image</cite> for Windows, re-sized to 256 x 256 pixels.</p>
+</section>
+<section id="default-image-color">
+<h3>default_image_color<a class="headerlink" href="#default-image-color" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>The color of the default images (when not providing explicit image files)
+used on Windows.  Possible values are <cite>red</cite>, <cite>green</cite>, <cite>blue</cite>, <cite>yellow</cite>.
+The default is <cite>blue</cite>.</p>
+</section>
+<section id="welcome-image-text">
+<h3>welcome_image_text<a class="headerlink" href="#welcome-image-text" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>If <cite>welcome_image</cite> is not provided, use this text when generating the image
+(Windows only). Defaults to <cite>name</cite>.</p>
+</section>
+<section id="header-image-text">
+<h3>header_image_text<a class="headerlink" href="#header-image-text" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>If <cite>header_image</cite> is not provided, use this text when generating the image
+(Windows only). Defaults to <cite>name</cite>.</p>
+</section>
+<section id="initialize-by-default">
+<h3>initialize_by_default<a class="headerlink" href="#initialize-by-default" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">bool</span></code>,</p>
+<p>Default choice for whether to add the installation to the PATH environment
+variable. The user is still able to change this during interactive
+installation.</p>
+</section>
+<section id="register-python-default">
+<h3>register_python_default<a class="headerlink" href="#register-python-default" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">bool</span></code>,</p>
+<p>Default choice for whether to register the installed Python instance as the
+system’s default Python. The user is still able to change this during
+interactive installation. (Windows only)</p>
+</section>
+<section id="nsis-template">
+<h3>nsis_template<a class="headerlink" href="#nsis-template" title="Permalink to this headline">¶</a></h3>
+<p>required: False</p>
+<p>argument type(s): <code class="docutils literal notranslate"><span class="pre">str</span></code>,</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">nsis_template</span></code> is not provided, constructor uses its default
+NSIS template. For more complete customization for the installation experience,
+provide an NSIS template file. (Windows only)</p>
+</section>
+</section>
+<section id="list-of-available-selectors">
+<h2>List of available selectors<a class="headerlink" href="#list-of-available-selectors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">aarch64</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arm64</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">armv7l</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linux</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linux32</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linux64</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">osx</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ppc64le</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">unix</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">win</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">win32</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">win64</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">x86</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">x86_64</span></code></p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">constructor</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="creating-installers.html">Creating custom installers with constructor</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using construct.yaml files to customize your installer</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#keys">Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-of-available-selectors">List of available selectors</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="creating-installers.html" title="previous chapter">Creating custom installers with constructor</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Anaconda.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/construct_yaml.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Creating custom installers with constructor &#8212; constructor  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Using construct.yaml files to customize your installer" href="construct_yaml.html" />
+    <link rel="prev" title="Welcome to constructor documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="creating-custom-installers-with-constructor">
+<h1>Creating custom installers with constructor<a class="headerlink" href="#creating-custom-installers-with-constructor" title="Permalink to this headline">¶</a></h1>
+<p>Constructor is a tool which allows constructing an installer
+for a collection of conda packages. It solves needed packages using user-provided
+specifications, and bundles those packages.  It can currently create 3 kinds of
+installers, which are best thought of as delivery vehicles for the bundled packages.
+There are shell installers, MacOS .pkg installers, and Windows .exe installers.  Each
+of these will create an environment on the end user’s system that contains the specs
+you provided, along with any necessary dependencies.  These installers are similar
+to the Anaconda and Miniconda installers, and indeed constructor is used to create
+those installers.</p>
+<p>You can install constructor using conda:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="n">constructor</span>
+<span class="n">constructor</span> <span class="o">-</span><span class="n">h</span>
+</pre></div>
+</div>
+<p>The constructor command takes an installer specification directory
+as its argument. This directory needs to contain a <code class="docutils literal notranslate"><span class="pre">construct.yaml</span></code> file,
+which specifies the name of the installer, the conda channels to pull packages
+from, the conda packages included in the installer, etc. The full specification
+for what a construct.yaml file may contain is at <a class="reference internal" href="construct_yaml.html"><span class="doc">Using construct.yaml files to customize your installer</span></a>. Also,
+the directory may contain some additional optional files such as a license file,
+and image files for the Windows installer.</p>
+<section id="an-example-construct-yaml-file">
+<h2>An example construct.yaml file<a class="headerlink" href="#an-example-construct-yaml-file" title="Permalink to this headline">¶</a></h2>
+<p>In this example you will see a few of the common keys such as
+name, version, channels, specs, and a few others like the key
+for <code class="docutils literal notranslate"><span class="pre">license_file</span></code> and <code class="docutils literal notranslate"><span class="pre">welcome_image</span></code>. You will also
+notice that certain packages in specs are specified for only
+specific platforms - UNIX, Win.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">name</span><span class="p">:</span> <span class="n">Maxiconda</span>
+<span class="n">version</span><span class="p">:</span> <span class="mf">2.5.5</span>
+<span class="n">channels</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">continuum</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">pkgs</span><span class="o">/</span><span class="n">main</span><span class="o">/</span>
+<span class="n">specs</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">python</span> <span class="mf">3.7</span><span class="o">*</span>
+<span class="o">-</span> <span class="n">conda</span>
+<span class="o">-</span> <span class="n">nomkl</span>     <span class="p">[</span><span class="ow">not</span> <span class="n">win</span><span class="p">]</span>
+<span class="o">-</span> <span class="n">numpy</span>
+<span class="o">-</span> <span class="n">scipy</span>
+<span class="o">-</span> <span class="n">pandas</span>
+<span class="o">-</span> <span class="n">notebook</span>
+<span class="o">-</span> <span class="n">matplotlib</span>
+<span class="o">-</span> <span class="n">lighttpd</span>          <span class="p">[</span><span class="n">unix</span><span class="p">]</span>
+<span class="n">license_file</span><span class="p">:</span> <span class="n">EULA</span><span class="o">.</span><span class="n">txt</span>
+<span class="n">welcome_image</span><span class="p">:</span> <span class="n">photo</span><span class="o">.</span><span class="n">png</span> <span class="p">[</span><span class="n">win</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>In order to create your custom installer, create a directory
+with your <code class="docutils literal notranslate"><span class="pre">construct.yaml</span></code> file inside as well as any other
+necessary files (EULA.txt, photo.png, etc).</p>
+</section>
+<section id="building-installers">
+<h2>Building installers<a class="headerlink" href="#building-installers" title="Permalink to this headline">¶</a></h2>
+<p>Navigate your terminal so that your current working directory is the folder
+containing your desired construct.yaml. From there, run this command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">constructor</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>Your installer will be created inside of the directory with
+this naming scheme: <cite>name-version-yourPlatform.{sh|exe|pkg}</cite>.</p>
+</section>
+<section id="controlling-which-kind-of-installer-gets-generated">
+<h2>Controlling which kind of installer gets generated<a class="headerlink" href="#controlling-which-kind-of-installer-gets-generated" title="Permalink to this headline">¶</a></h2>
+<p>Constructor is currently limited to generating installers for the platform on
+which it is running. In other words, if you run constructor on a Windows
+computer, you can only generate Windows installers. This is largely because
+OS-native tools are needed to generate the Windows .exe files and MacOS .pkg
+files.  There is a key in construct.yaml, <cite>installer_type</cite>, which dictates
+the type of installer that gets generated. This is primarily only useful for
+MacOS, where you can generate either .pkg or .sh installers. When not set in
+construct.yaml, this value defaults to .sh on Unix platforms, and .exe on
+Windows. Using this key is generally done with selectors.  For example, to
+build a .pkg installer on MacOS, but fall back to default behavior on other
+platforms:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">installer_type</span><span class="p">:</span> <span class="n">pkg</span>                   <span class="p">[</span><span class="n">osx</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="some-additional-considerations">
+<h2>Some additional considerations<a class="headerlink" href="#some-additional-considerations" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>All conda packages must be available for the platform you are
+building the installer for.  Noarch packages are allowed, as of
+constructor version 3.0.0</p></li>
+<li><p>An installer created by constructor does not need to include
+conda itself. If you require the ability to use conda after
+installation, add conda to the package list.  All installers
+include the standalone conda executable, but this is not a
+documented tool for independent use at this time.</p></li>
+<li><p>An installer created by constructor is not the same as
+Miniconda. All packages you want to include in the installer
+need to be listed explicitly. In particular, on Windows this
+means that if you want the “Anaconda Prompt”, you will have
+to list console_shortcut, as well as menuinst.</p></li>
+<li><p>For Windows builds, add the Anaconda channels /main and /msys2
+to the file <code class="docutils literal notranslate"><span class="pre">construct.yaml</span></code>. This provides packages such
+as m2w64-toolchain, which is a dependency of theano. It is best
+to add /msys2 as <a class="reference external" href="https://repo.anaconda.com/pkgs/msys2/">https://repo.anaconda.com/pkgs/msys2/</a>.</p></li>
+<li><p>Constructor requires conda &gt;=4.5.0</p></li>
+<li><p>MacOS .pkg installers are finicky. One great resource on the topic is
+<a class="reference external" href="https://stackoverflow.com/a/11487658">https://stackoverflow.com/a/11487658</a></p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">constructor</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Creating custom installers with constructor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#an-example-construct-yaml-file">An example construct.yaml file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-installers">Building installers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#controlling-which-kind-of-installer-gets-generated">Controlling which kind of installer gets generated</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#some-additional-considerations">Some additional considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="construct_yaml.html">Using construct.yaml files to customize your installer</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to constructor documentation</a></li>
+      <li>Next: <a href="construct_yaml.html" title="next chapter">Using construct.yaml files to customize your installer</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Anaconda.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/creating-installers.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
