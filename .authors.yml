@@ -232,11 +232,6 @@
   num_commits: 20
   first_commit: 2020-02-08 00:55:25
   github: isuruf
-# - name: Tom Hören
-#   email: horen.tom@gmail.com
-#   num_commits: 1
-#   first_commit: 2020-07-19 09:44:03
-#   github: nerohmot
 - name: Jannis Leidel
   email: jannis@leidel.info
   num_commits: 0
@@ -254,7 +249,7 @@
   email: chenghlee@users.noreply.github.com
   num_commits: 0
   first_commit: 2021-05-24 08:52:40
-- name: Tom H�ren
+- name: Tom Hören
   email: horen.tom@gmail.com
   num_commits: 1
   first_commit: 2020-07-19 09:44:03

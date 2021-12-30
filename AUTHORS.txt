@@ -45,6 +45,6 @@ Authors are sorted by number of commits.
 * Connor Martin
 * Wolf Vollprecht
 * XuehaiPan
-* Tom Hören
+* Tom HÃ¶ren
 * Jannis Leidel
 * Cheng H. Lee
