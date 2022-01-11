@@ -6,7 +6,7 @@
 # MD5:   __MD5__
 
 #if osx
-unset DYLD_LIBRARY_PATH
+unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH
 #else
 export OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 unset LD_LIBRARY_PATH
@@ -43,12 +43,8 @@ Installs __NAME__ __VERSION__
 #if batch_mode
 -i           run install in interactive mode
 #else
-  #if has_license
 -b           run install in batch mode (without manual intervention),
-             it is expected the license terms are agreed upon
-  #else
--b           run install in batch mode (without manual intervention)
-  #endif
+             it is expected the license terms (if any) are agreed upon
 #endif
 -f           no error if install prefix already exists
 -h           print this help message and exit
@@ -551,21 +547,14 @@ if [ "$PYTHONPATH" != "" ]; then
 fi
 
 if [ "$BATCH" = "0" ]; then
+#if initialize_by_default is True
+    DEFAULT=yes
+#else
+    DEFAULT=no
+#endif
+
 #if has_conda
     # Interactive mode.
-  #if osx
-    BASH_RC="$HOME"/.bash_profile
-    DEFAULT=yes
-  #else
-    BASH_RC="$HOME"/.bashrc
-    DEFAULT=no
-  #endif
-  #if initialize_by_default is True
-    DEFAULT=yes
-  #endif
-  #if initialize_by_default is False
-    DEFAULT=no
-  #endif
 
     printf "Do you wish the installer to initialize __NAME__\\n"
     printf "by running conda init? [yes|no]\\n"

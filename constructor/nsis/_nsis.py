@@ -119,7 +119,7 @@ def mk_menus(remove=False, prefix=None, pkg_names=None, root_prefix=None):
     for fn in os.listdir(menu_dir):
         if not fn.endswith('.json'):
             continue
-        if pkg_names is not None and fn[:-5] not in pkg_names:
+        if pkg_names is not None and len(pkg_names) > 0 and fn[:-5] not in pkg_names:
             # skip when not in the list of menus to create
             # when installing, the pkg_names list is specified, otherwise not
             # and we don't skip to try to remove shortcuts
