@@ -142,6 +142,15 @@ File type extension for the files to be transmuted into. Currently supports
 only '.conda'. See conda-package-handling for supported extension names.
 If left empty, no transumating is done.
 
+## `write_cache_types`
+
+_required:_ no<br/>
+_type:_ list<br/>
+Which types of repodata cache should be included in the installer. Supported
+values are `conda` and `mamba`. By default this will try to detect if the
+value of `--conda-exe` is `conda-standalone` or `micromamba`, falling back to
+`["conda"]` if this detection fails.
+
 ## `conda_default_channels`
 
 _required:_ no<br/>
