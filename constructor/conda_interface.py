@@ -126,6 +126,59 @@ if conda_interface_type == 'conda':
                 data["md5"] = hash_files([pkg_fn])
                 used_repodata[key][package] = data
 
+        write_cache_types = info.get("write_cache_types", None)
+        if not write_cache_types:
+            conda_exe_fn = os.path.basename(info["_conda_exe"])
+            if "conda.exe" in conda_exe_fn:
+                write_cache_types = ["conda"]
+            elif "micromamba" in conda_exe_fn:
+                write_cache_types = ["mamba"]
+            else:
+                write_cache_types = ["conda"]
+                print(
+                    "WARNING: Failed to detect write_cache_types using",
+                    conda_exe_fn,
+                    "defaulting to",
+                    write_cache_types,
+                )
+
+        for write_cache_type in write_cache_types:
+            if write_cache_type == "conda":
+                _write_repodata_conda(used_repodata, cache_dir, url)
+            elif write_cache_type == "mamba":
+                _write_repodata_mamba(used_repodata,cache_dir, url)
+            else:
+                raise NotImplementedError("unsupported write_cache_type: %s" % write_cache_type)
+
+
+    def _write_repodata_conda(used_repodata, cache_dir, url):
         repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
         with open(join(cache_dir, repodata_filename), 'w') as fh:
             json.dump(used_repodata, fh, indent=2)
+
+
+    def _write_repodata_mamba(used_repodata, cache_dir, url):
+        try:
+            import libmambapy
+        except ImportError:
+            raise ImportError("libmambapy is required for write mamba-style repodata caches")
+
+        # Mamba relies on the first line of the cache to get so metadata
+        full_url = url + "/repodata.json"
+        used_repodata.pop('_url')
+        _mod = used_repodata.pop('_mod')
+        mamba_repodata = json.dumps(used_repodata, indent=2)
+        mamba_repodata_header = json.dumps(
+            {
+                "_mod": _mod,
+                "_url": full_url,
+                "_cache_control": "public, max-age=1200",
+                "_etag": "W/\"82e52e8eca08ad8ed23e41855d49dcd7-7\""
+            }
+        )
+        assert mamba_repodata.startswith("{\n")
+        assert mamba_repodata_header.endswith("}")
+        mamba_repodata = mamba_repodata_header[:-1] + "," + mamba_repodata[1:]
+
+        with open(join(cache_dir, libmambapy.cache_fn_url(full_url)), 'w') as fh:
+            fh.write(mamba_repodata)

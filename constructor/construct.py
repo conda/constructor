@@ -113,6 +113,13 @@ only '.conda'. See conda-package-handling for supported extension names.
 If left empty, no transumating is done.
 '''),
 
+    ('write_cache_types',      False, list, '''
+Which types of repodata cache should be included in the installer. Supported
+values are `conda` and `mamba`. By default this will try to detect if the
+value of `--conda-exe` is `conda-standalone` or `micromamba`, falling back to
+`["conda"]` if this detection fails.
+'''),
+
     ('conda_default_channels', False, list, '''
 If this value is provided as well as `write_condarc`, then the channels
 in this list will be included as the value of the `default_channels:`
