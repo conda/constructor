@@ -15,7 +15,7 @@ import tempfile
 
 from .construct import ns_platform
 from .preconda import files as preconda_files, write_files as preconda_write_files
-from .utils import add_condarc, filename_dist, fill_template, md5_files, preprocess, \
+from .utils import add_condarc, filename_dist, fill_template, hash_files, preprocess, \
     read_ascii_only, get_final_channels
 
 THIS_DIR = dirname(__file__)
@@ -66,7 +66,7 @@ def get_header(conda_exec, tarball, info):
         'PLAT': info['_platform'],
         'DEFAULT_PREFIX': info.get('default_prefix',
                                    '$HOME/%s' % name.lower()),
-        'MD5': md5_files([conda_exec, tarball]),
+        'MD5': hash_files([conda_exec, tarball]),
         'FIRST_PAYLOAD_SIZE': str(getsize(conda_exec)),
         'SECOND_PAYLOAD_SIZE': str(getsize(tarball)),
         'INSTALL_COMMANDS': '\n'.join(install_lines),
