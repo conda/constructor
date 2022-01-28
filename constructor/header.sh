@@ -15,6 +15,7 @@ THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX=__DEFAULT_PREFIX__
 CLEAN_ENV=1
+OVERRIDE_CONDA_EXEC=""
 #if batch_mode
 BATCH=1
 #else
@@ -48,6 +49,7 @@ Installs __NAME__ __VERSION__
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
 -s           skip running pre/post-link/install scripts
 -u           update an existing installation
+-c           override the path to conda.exe used for installation
 -e           disable cleaning of environment variables that may interfer with the installation
 #if has_conda
 -t           run package tests after installation (may install conda-build)
@@ -55,7 +57,7 @@ Installs __NAME__ __VERSION__
 "
 
 if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bifhkp:suet "$*" 2>/dev/null)
+    OPTS=$(getopt bifhkp:suc:et "$*" 2>/dev/null)
     if [ ! $? ]; then
         printf "%s\\n" "$USAGE"
         exit 2
@@ -98,7 +100,12 @@ if which getopt > /dev/null 2>&1; then
                 FORCE=1
                 shift
                 ;;
-            e)
+            -c)
+                OVERRIDE_CONDA_EXEC="$2"
+                shift
+                shift
+                ;;
+            -e)
                 CLEAN_ENV=0
                 shift
                 ;;
@@ -119,7 +126,7 @@ if which getopt > /dev/null 2>&1; then
         esac
     done
 else
-    while getopts "bifhkp:suet" x; do
+    while getopts "bifhkp:suc:et" x; do
         case "$x" in
             h)
                 printf "%s\\n" "$USAGE"
@@ -145,6 +152,9 @@ else
                 ;;
             u)
                 FORCE=1
+                ;;
+            c)
+                OVERRIDE_CONDA_EXEC="$OPTARG"
                 ;;
             e)
                 CLEAN_ENV=0
@@ -438,10 +448,15 @@ if [ "$CLEAN_ENV" = "1" ]; then
     unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 fi
 
-# the first binary payload: the standalone conda executable
-CONDA_EXEC="$PREFIX/conda.exe"
-extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
-chmod +x "$CONDA_EXEC"
+# Allow overriding the conda.exe binary
+if [ "$OVERRIDE_CONDA_EXEC" != "" ]; then
+    CONDA_EXEC="${OVERRIDE_CONDA_EXEC}"
+else
+    # the first binary payload: the standalone conda executable
+    CONDA_EXEC="$PREFIX/conda.exe"
+    extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
+    chmod +x "$CONDA_EXEC"
+fi
 
 export TMP_BACKUP="$TMP"
 export TMP=$PREFIX/install_tmp
@@ -507,7 +522,9 @@ POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 
-rm -f $PREFIX/conda.exe
+if [ "$OVERRIDE_CONDA_EXEC" = "" ]; then
+    rm -f $PREFIX/conda.exe
+fi
 rm -f $PREFIX/pkgs/env.txt
 
 rm -rf $PREFIX/install_tmp
