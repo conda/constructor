@@ -17,6 +17,11 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
     return 1
 fi
 
+# Export variables to make installer metadata available to pre/post install scripts
+export INSTALLER_NAME="__NAME__"
+export INSTALLER_VER="__VERSION__"
+export INSTALLER_PLAT="__PLAT__"
+
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
