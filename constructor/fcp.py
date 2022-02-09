@@ -339,8 +339,16 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
                 new_file_name = os.path.join(download_dir, new_file_name)
                 if not os.path.exists(new_file_name):
                     print("transmuting %s" % dist)
-                    conda_package_handling.api.transmute(os.path.join(download_dir, dist),
-                        transmute_file_type, out_folder=download_dir)
+                    failed_files = conda_package_handling.api.transmute(
+                        os.path.join(download_dir, dist),
+                        transmute_file_type,
+                        out_folder=download_dir,
+                    )
+                    if failed_files:
+                        message = "\n".join(
+                            "    %s failed with: %s" % x for x in failed_files.items()
+                        )
+                        raise RuntimeError("Transmution failed:\n%s" % message)
                 url, md5 = _urls[dist]
                 url = url[:-len(".tar.bz2")] + transmute_file_type
                 md5 = hash_files([new_file_name])
