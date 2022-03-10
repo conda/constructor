@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from os.path import abspath, dirname, isfile, join
 import shutil
-from subprocess import Popen, PIPE, check_call, check_output
+from subprocess import Popen, PIPE, check_call, check_output, SubprocessError
 import sys
 import math
 import tempfile
@@ -239,6 +239,8 @@ def create(info, verbose=False):
             for msg, information in zip((stdout, stderr), ('stdout', 'stderr')):
                 print(f"signtool ({information}):")
                 print(msg)
+            if sub.returncode:
+                raise SubprocessError(f"signtool failed with error {sub.returncode}")
         else:
             check_call(args)
     shutil.rmtree(tmp_dir)

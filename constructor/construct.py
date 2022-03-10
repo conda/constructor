@@ -169,10 +169,11 @@ private key together called an 'identity' in one of your accessible keychains.
     ('signing_certificate',  False, str, '''
 On Windows only, set this key to the path of a PFX certificate to be used with `signtool`.
 Additional environment variables can be used to configure this step, namely:
-`CONSTRUCTOR_SIGNTOOL_PATH` (absolute path to `signtool.exe`, in case is not in PATH),
-`CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD` (password to unlock the certificate, if needed),
-`CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL` (custom RFC 3161 timestamping server, default is
-http://timestamp.sectigo.com).
+
+- `CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD` (password to unlock the certificate, if needed)
+- `CONSTRUCTOR_SIGNTOOL_PATH` (absolute path to `signtool.exe`, in case is not in PATH)
+- `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL` (custom RFC 3161 timestamping server, default is
+http://timestamp.sectigo.com)
 '''),
 
     ('attempt_hardlinks',          False, (bool, str), '''
