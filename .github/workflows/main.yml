@@ -68,7 +68,7 @@ jobs:
             mv "$path" examples_artifacts/
           done
       - name: Upload the example installers as artifacts
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
         uses: actions/upload-artifact@v2
         with:
           # By uploading to the same artifact we can download all of the packages
