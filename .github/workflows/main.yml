@@ -68,8 +68,6 @@ jobs:
         if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
         uses: actions/upload-artifact@v2
         with:
-          # By uploading to the same artifact we can download all of the packages
-          # and upload them all to anaconda.org in a single job
           name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
           path: examples_artifacts/
           retention-days: 7
