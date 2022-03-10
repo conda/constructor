@@ -62,11 +62,8 @@ jobs:
           source ../conda/etc/profile.d/conda.sh
           conda create -n constructor -c local constructor
           conda activate constructor
-          python scripts/run_examples.py
           mkdir -p examples_artifacts/
-          for path in $(cat run_examples_output.txt); do
-            mv "$path" examples_artifacts/
-          done
+          python scripts/run_examples.py --keep-artifacts=examples_artifacts/
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
         uses: actions/upload-artifact@v2

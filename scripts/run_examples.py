@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import platform
+from shutil import move
 
 from constructor.utils import rm_rf
 
@@ -94,8 +95,14 @@ def run_examples():
         return False, tested_files_full_paths
 
 
+def _move_artifacts(artifacts, destination):
+    for artifact in artifacts:
+        move(artifact, destination)
+
+
 if __name__ == '__main__':
     failed, artifacts = run_examples()
-    with open("run_examples_output.txt", "w") as f:
-        print(*artifacts, sep="\n", file=f)
+    if sys.argv[1].startswith('--keep-artifacts='):
+        destination = sys.argv[1].split("=")[1]
+        _move_artifacts(artifacts, destination)
     sys.exit(failed)
