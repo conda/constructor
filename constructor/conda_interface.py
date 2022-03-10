@@ -16,7 +16,11 @@ except ImportError:
                        "with sys.prefix: %s" % sys.prefix)
 
 if conda_interface_type == 'conda':
-    CONDA_MAJOR_MINOR = tuple(int(x) for x in CONDA_INTERFACE_VERSION.split('.')[:2])
+    # This import path has been stable since 2016
+    from conda.models.version import VersionOrder
+
+    _conda_version = VersionOrder(CONDA_INTERFACE_VERSION).version
+    CONDA_MAJOR_MINOR = _conda_version[1][0], _conda_version[2][0]
 
     from conda._vendor.toolz.itertoolz import (
         concatv as _concatv, get as _get, groupby as _groupby,
