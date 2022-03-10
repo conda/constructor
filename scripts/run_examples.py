@@ -86,11 +86,14 @@ def run_examples():
     if errored:
         print('Some examples failed!')
         print('Assets saved in: %s' % output_dir)
-        sys.exit(1)
+        return True, tested_files
     else:
         print('All examples ran successfully!')
-        rm_rf(output_dir)
+        return False, tested_files
 
 
 if __name__ == '__main__':
-    run_examples()
+    failed, artifacts = run_examples()
+    with open("run_examples_output.txt", "w") as f:
+        print(*artifacts, sep="\n", file=f)
+    sys.exit(failed)
