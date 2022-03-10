@@ -1,4 +1,12 @@
 #!/bin/bash
+# Perform some checks before the actual installation starts.
+
+# You might be tempted to use Distribution.xml's `volume-check` and `installer-check`
+# tags with some of the limited JavaScript, but querying the user directory requires
+# additional permissions and that grants a very scary message (this installer wants
+# to run some code that can harm your computer!). Interestingly, preinstall.sh is not
+# affected by those restrictions, but it's only executed once the installer has begun
+# so the only way to prevent an action is to abort and start again from the beginning.
 
 if [[ -e "$2/__NAME_LOWER__" ]]; then
     # The OS X installer provides no way to send a message to the user if this

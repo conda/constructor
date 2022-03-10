@@ -18,6 +18,8 @@ specs:
 post_install: post_install.sh # [unix]
 installer_type: pkg # [osx]
 
+reverse_domain_identifier: org.website.my
+
 ## You can provide `welcome_image` to a 1200x600 PNG file
 ## Ideally, transparent background with your logo on the
 ## bottom left corner.
@@ -30,15 +32,31 @@ welcome_image_text: osxpkgtest
 ## Note that if both `welcome_image` and `welcome_image_text`
 ## are provided, `welcome_image` takes precedence.
 
+# First screen (labeled introduction) text
+# If not provided, defaults to standard message
+# welcome_text: |
+#   something for the users
+welcome_text: ""
+# You can also pass a file (plain or rich text)
+# welcome_file: "path/to/text.rtf"
+
 # Shown before the license; if not provided, it defaults
 # to Anaconda's message. Set it to "" (empty string) to disable it.
 # readme_text: |
 #   something for the users
 readme_text: ""
+# You can also pass a file (plain or rich text)
+# readme_file: "path/to/text.rtf"
 
 # This will be shown at the end of the wizard
 conclusion_text: |
   Thanks for installing osxpkgtest v1.2.3!
 
-# Disable with "" (empty string):
-# conclusion_text: ""
+# Disable with "" (empty string) to default to the system message:
+# conclusion_text: ""
+
+# You can also pass a file (plain or rich text)
+# conclusion_file: "path/to/text.rtf"
+
+# signing_identity_name: "Developer ID Installer: XXX XXXX XXX (XXXXXX)"
+# notarization_identity_name: "Developer ID Application: XXX XXXX XXX (XXXXXX)"
