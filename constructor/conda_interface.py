@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 from os.path import join
+from itertools import chain
 import sys
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
@@ -20,7 +21,8 @@ if conda_interface_type == 'conda':
     from conda.models.version import VersionOrder
 
     _conda_version = VersionOrder(CONDA_INTERFACE_VERSION).version
-    CONDA_MAJOR_MINOR = _conda_version[1][0], _conda_version[2][0]
+    # Flatten VersionOrder.version, skip epoch, and keep only major and minor
+    CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
     from conda._vendor.toolz.itertoolz import (
         concatv as _concatv, get as _get, groupby as _groupby,
