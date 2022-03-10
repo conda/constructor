@@ -56,6 +56,7 @@ def run_examples():
 
     output_dir = tempfile.mkdtemp()
     tested_files = set()
+    tested_files_full_paths = set()
     for i, example_path in enumerate(sorted(example_paths)):
         print(example_path)
         print('-' * len(example_path))
@@ -71,6 +72,7 @@ def run_examples():
             rm_rf(env_dir)
             print('---- testing %s' % fpath)
             fpath = os.path.join(output_dir, fpath)
+            tested_files_full_paths.add(fpath)
             if ext == 'sh':
                 cmd = ['bash', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
@@ -86,10 +88,10 @@ def run_examples():
     if errored:
         print('Some examples failed!')
         print('Assets saved in: %s' % output_dir)
-        return True, tested_files
+        return True, tested_files_full_paths
     else:
         print('All examples ran successfully!')
-        return False, tested_files
+        return False, tested_files_full_paths
 
 
 if __name__ == '__main__':
