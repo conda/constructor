@@ -70,12 +70,12 @@ jobs:
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v2
-        retention-days: 7
         with:
           # By uploading to the same artifact we can download all of the packages
           # and upload them all to anaconda.org in a single job
           name: installers-${{ github.sha }}
           path: examples_artifacts/
+          retention-days: 7
 
   upload:
     needs: package
