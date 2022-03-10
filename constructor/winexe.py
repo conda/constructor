@@ -213,6 +213,7 @@ def create(info, verbose=False):
                 msg = msg.decode()
             print('makensis {}:'.format(information))
             print(msg)
+        sub.check_returncode()
     else:
         check_call(args)
 
@@ -239,8 +240,7 @@ def create(info, verbose=False):
             for msg, information in zip((stdout, stderr), ('stdout', 'stderr')):
                 print(f"signtool ({information}):")
                 print(msg)
-            if sub.returncode:
-                raise SubprocessError(f"signtool failed with error {sub.returncode}")
+            sub.check_returncode()
         else:
             check_call(args)
     shutil.rmtree(tmp_dir)
