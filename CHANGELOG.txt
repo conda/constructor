@@ -2,7 +2,6 @@
 -------------------
   * Common:
     - Fix crashes due to pyyaml >= 6 deprecating automatic use of SafeLoader; it is now safe to run constructor with pyyaml >= 6 #473
-    - 
 
   * Shell:
     - Extract pre-conda before extracting conda packages #450
