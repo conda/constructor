@@ -36,12 +36,12 @@ $ACTIVITIES = [
 #
 $PROJECT = $GITHUB_REPO = "constructor"
 $GITHUB_ORG = "conda"
-$AUTHORS_FILENAME = "AUTHORS.txt"
+$AUTHORS_FILENAME = "AUTHORS.rst"
 
 #
 # Changelog settings
 #
-$CHANGELOG_FILENAME = "CHANGELOG.txt"
+$CHANGELOG_FILENAME = "CHANGELOG.rst"
 $CHANGELOG_PATTERN = "# current developments"
 $CHANGELOG_HEADER = """# current developments
 $RELEASE_DATE $VERSION:
