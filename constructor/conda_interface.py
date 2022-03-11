@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import json
 from os.path import join
+from itertools import chain
 import sys
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
@@ -16,7 +17,12 @@ except ImportError:
                        "with sys.prefix: %s" % sys.prefix)
 
 if conda_interface_type == 'conda':
-    CONDA_MAJOR_MINOR = tuple(int(x) for x in CONDA_INTERFACE_VERSION.split('.')[:2])
+    # This import path has been stable since 2016
+    from conda.models.version import VersionOrder
+
+    _conda_version = VersionOrder(CONDA_INTERFACE_VERSION).version
+    # Flatten VersionOrder.version, skip epoch, and keep only major and minor
+    CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
     from conda._vendor.toolz.itertoolz import (
         concatv as _concatv, get as _get, groupby as _groupby,
