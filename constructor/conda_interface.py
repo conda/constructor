@@ -2,9 +2,13 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
-from os.path import join
-from itertools import chain
+import os
 import sys
+from copy import deepcopy
+from itertools import chain
+from os.path import join
+
+from constructor.utils import hash_files
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
             'orange3', 'qtconsole', 'rstudio', 'spyder', 'vscode']
@@ -93,10 +97,9 @@ if conda_interface_type == 'conda':
 
         return full_repodata
 
-    def write_repodata(cache_dir, url, full_repodata, used_packages):
+    def write_repodata(cache_dir, url, full_repodata, used_packages, info):
         used_repodata = {k: full_repodata[k] for k in
                          set(full_repodata.keys()) - {'packages', 'packages.conda', 'removed'}}
-        repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
         used_repodata['packages.conda'] = {}
         used_repodata['removed'] = []
         # arbitrary old, expired date, so that conda will want to immediately update it
@@ -104,9 +107,30 @@ if conda_interface_type == 'conda':
         used_repodata['_mod'] = "Mon, 07 Jan 2019 15:22:15 GMT"
         used_repodata['packages'] = {
             k: v for k, v in full_repodata['packages'].items() if v['name'] in NAV_APPS}
+
+        # Minify the included repodata
         for package in used_packages:
-            for key in ('packages', 'packages.conda'):
-                if package in full_repodata.get(key, {}):
-                    used_repodata[key][package] = full_repodata[key][package]
+            key = 'packages.conda' if package.endswith(".conda") else 'packages'
+            if package in full_repodata.get(key, {}):
+                used_repodata[key][package] = full_repodata[key][package]
+                continue
+            # If we're transcoding packages, fix-up the metadata
+            if package.endswith(".conda"):
+                original_package = package[:-len(".conda")] + ".tar.bz2"
+                original_key = "packages"
+            elif package.endswith(".tar.bz2"):
+                original_package = package[:-len(".tar.bz2")] + ".conda"
+                original_key = "packages.conda"
+            else:
+                raise NotImplementedError("Package type is unknown for: %s" % package)
+            if original_package in full_repodata.get(original_key, {}):
+                data = deepcopy(full_repodata[original_key][original_package])
+                pkg_fn = join(info["_download_dir"], package)
+                data["size"] = os.stat(pkg_fn).st_size
+                data["sha256"] = hash_files([pkg_fn], algorithm='sha256')
+                data["md5"] = hash_files([pkg_fn])
+                used_repodata[key][package] = data
+
+        repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
         with open(join(cache_dir, repodata_filename), 'w') as fh:
             json.dump(used_repodata, fh, indent=2)
