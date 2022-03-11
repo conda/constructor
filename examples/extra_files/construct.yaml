@@ -1,0 +1,10 @@
+name: ExtraFiles
+version: X
+installer_type: all
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+specs:
+  - python
+extra_files:
+  - something.txt: more_data/README.md
+  - something2.txt

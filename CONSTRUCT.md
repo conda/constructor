@@ -257,7 +257,9 @@ _type:_ string<br/>
 Path to a pre-install script. For Unix `.sh` installers, the shebang
 line is respected if present; otherwise, the script is run by the POSIX
 shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. This option is not supported for Windows `.exe` or macOS
+the installer. Metadata about the installer can be found in the
+`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
+variables. This option is not supported for Windows `.exe` or macOS
 `.pkg` installers.
 
 ## `post_install`
@@ -267,7 +269,9 @@ _type:_ string<br/>
 Path to a post-install script. For Unix `.sh` installers, the shebang
 line is respected if present; otherwise, the script is run by the POSIX
 shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. For Windows `.exe` installers, this must be a `.bat` file.
+the installer. Metadata about the installer can be found in the
+`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
+variables. For Windows `.exe` installers, this must be a `.bat` file.
 This option is not supported for macOS `.pkg` installers.
 
 ## `post_install_desc`
@@ -395,6 +399,16 @@ _type:_ string<br/>
 If ``nsis_template`` is not provided, constructor uses its default
 NSIS template. For more complete customization for the installation experience,
 provide an NSIS template file. (Windows only)
+
+## `extra_files`
+
+_required:_ no<br/>
+_type:_ list<br/>
+Extra, non-packaged files that should be added to the installer. If provided as relative
+paths, they will be considered relative to the directory where `construct.yaml` is.
+This setting can be passed as a list of:
+- `str`: each found file will be copied to the root prefix
+- `Mapping[str, str]`: map of path in disk to path in prefix.
 
 
 ## Available selectors

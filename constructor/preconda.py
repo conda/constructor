@@ -9,6 +9,8 @@ from os.path import isdir, join, split as path_split
 import platform
 import sys
 import time
+from pathlib import Path
+import shutil
 
 from .utils import filename_dist, get_final_url
 
@@ -181,3 +183,23 @@ def write_env_txt(info, dst_dir):
     specs = ['='.join(spec.rsplit('-', 2)) for spec in dists_san_extn]
     with open(join(dst_dir, "env.txt"), "w") as envf:
         envf.write('\n'.join(specs))
+
+
+def copy_extra_files(info, workdir):
+    extra_files = info.get('extra_files')
+    if not extra_files:
+        return []
+    copied = []
+    for path in extra_files:
+        if isinstance(path, str):
+            copied.append(shutil.copy(path, workdir))
+        elif isinstance(path, dict):
+            assert len(path) == 1
+            origin, destination = next(iter(path.items()))
+            orig_path = Path(origin)
+            if not orig_path.exists():
+                raise ValueError(f"File {origin} does not exist")
+            dest_path = Path(workdir) / destination
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            copied.append(shutil.copy(orig_path, dest_path))
+    return copied

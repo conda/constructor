@@ -306,6 +306,13 @@ If ``nsis_template`` is not provided, constructor uses its default
 NSIS template. For more complete customization for the installation experience,
 provide an NSIS template file. (Windows only)
 '''),
+    ('extra_files', False, (list), '''
+Extra, non-packaged files that should be added to the installer. If provided as relative
+paths, they will be considered relative to the directory where `construct.yaml` is.
+This setting can be passed as a list of:
+- `str`: each found file will be copied to the root prefix
+- `Mapping[str, str]`: map of path in disk to path in prefix.
+'''),
 ]
 
 
