@@ -102,9 +102,6 @@ if conda_interface_type == 'conda':
                          set(full_repodata.keys()) - {'packages', 'packages.conda', 'removed'}}
         used_repodata['packages.conda'] = {}
         used_repodata['removed'] = []
-        # arbitrary old, expired date, so that conda will want to immediately update it
-        # when not being run in offline mode
-        used_repodata['_mod'] = "Mon, 07 Jan 2019 15:22:15 GMT"
         used_repodata['packages'] = {
             k: v for k, v in full_repodata['packages'].items() if v['name'] in NAV_APPS}
 
@@ -131,6 +128,18 @@ if conda_interface_type == 'conda':
                 data["md5"] = hash_files([pkg_fn])
                 used_repodata[key][package] = data
 
-        repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
+        # The first line of the JSON should contain cache metadata
+        # Choose an arbitrary old, expired date, so that conda will want to
+        # immediately update it when not being run in offline mode
+        url = used_repodata.pop('_url').rstrip("/")
+        repodata = json.dumps(used_repodata, indent=2)
+        repodata_header = json.dumps(
+            {
+                "_mod": "Mon, 07 Jan 2019 15:22:15 GMT",
+                "_url": url,
+            }
+        )
+        repodata = repodata_header[:-1] + "," + repodata[1:]
+        repodata_filename = _cache_fn_url(url)
         with open(join(cache_dir, repodata_filename), 'w') as fh:
-            json.dump(used_repodata, fh, indent=2)
+            fh.write(repodata)
