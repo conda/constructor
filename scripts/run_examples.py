@@ -112,5 +112,7 @@ def run_examples(keep_artifacts=None):
 if __name__ == '__main__':
     if sys.argv[1].startswith('--keep-artifacts='):
         keep_artifacts = sys.argv[1].split("=")[1]
+    else:
+        keep_artifacts = None
     n_errors = run_examples(keep_artifacts)
     sys.exit(n_errors)
