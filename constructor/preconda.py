@@ -34,9 +34,13 @@ def write_index_cache(info, dst_dir, used_packages):
     _platforms = info['_platform'], 'noarch'
     _remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
                for url in info.get('channels_remap', [])}
-    _urls = all_channel_urls(url.rstrip('/') for url in list(_remaps) +
-                             info.get('channels', []) +
-                             info.get('conda_default_channels', []))
+    _channels = [
+        url.rstrip("/")
+        for url in list(_remaps)
+        + info.get("channels", [])
+        + info.get("conda_default_channels", [])
+    ]
+    _urls = all_channel_urls(_channels, subdirs=_platforms)
     repodatas = {url: get_repodata(url) for url in _urls if url is not None}
 
     for url, _ in info['_urls']:
@@ -60,7 +64,7 @@ def write_index_cache(info, dst_dir, used_packages):
             del repodatas['%s/%s' % (src, subdir)]
 
     for url, repodata in repodatas.items():
-        write_repodata(cache_dir, url, repodata, used_packages)
+        write_repodata(cache_dir, url, repodata, used_packages, info)
 
     for cache_file in os.listdir(cache_dir):
         if not cache_file.endswith(".json"):
