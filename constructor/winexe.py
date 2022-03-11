@@ -52,7 +52,7 @@ def extra_files_commands(paths, common_parent):
         relative_parent = path.relative_to(common_parent).parent
         output_path = f"$INSTDIR\\{relative_parent}"
         if output_path != current_output_path:
-            lines.append(f"SetOutputPath {output_path}")
+            lines.append(f"SetOutPath {output_path}")
             current_output_path = output_path
         lines.append(f"File {path}")
     return lines
