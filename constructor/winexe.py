@@ -45,11 +45,11 @@ def pkg_commands(download_dir, dists):
 
 
 def extra_files_commands(paths, common_parent):
-    paths = sorted(paths)
+    paths = sorted([PureWindowsPath(p) for p in paths])
     lines = []
     current_output_path = "$INSTDIR"
     for path in paths:
-        relative_parent = PureWindowsPath(path).relative_to(common_parent).parent
+        relative_parent = path.relative_to(common_parent).parent
         output_path = f"$INSTDIR\\{relative_parent}"
         if output_path != current_output_path:
             lines.append(f"SetOutputPath {output_path}")
