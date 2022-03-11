@@ -4,96 +4,113 @@ on:
     branches:
       - master
     tags:
-      - '*'
+      - "*"
   pull_request:
     branches:
       - master
+defaults:
+  run:
+    shell: bash
 jobs:
   package:
-    defaults:
-      run:
-        shell: bash
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest,ubuntu-latest,windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
         pyver: ["3.7", "3.8", "3.9", "3.10"]
     steps:
-    - name: Print github context
-      run: |
-        echo "EVENT_NAME:" "$GITHUB_EVENT_NAME"
-        echo "       REF:" "$GITHUB_REF"
-        echo "  HEAD_REF:" "$GITHUB_HEAD_REF"
-        echo "  BASE_REF:" "$GITHUB_BASE_REF"
-        echo "       SHA:" "$GITHUB_SHA"
-    - name: Retrieve the source code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.sha }}
-    - name: Build the build environment
-      run: |
+      - name: Print github context
+        run: |
+          echo "EVENT_NAME:" "$GITHUB_EVENT_NAME"
+          echo "       REF:" "$GITHUB_REF"
+          echo "  HEAD_REF:" "$GITHUB_HEAD_REF"
+          echo "  BASE_REF:" "$GITHUB_BASE_REF"
+          echo "       SHA:" "$GITHUB_SHA"
+      - name: Retrieve the source code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Build the build environment
+        run: |
           [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
           ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
-    - name: Build the package
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        PYTHONIOENCODING: utf-8
-        PYTHONUNBUFFERED: True
-      run: |
+      - name: Build the package
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          PYTHONIOENCODING: utf-8
+          PYTHONUNBUFFERED: True
+          # Uncomment to run within conda build
+          # RUN_EXAMPLES: "1"
+        run: |
           source ../conda/etc/profile.d/conda.sh
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
           conda build conda.recipe --python=${{ matrix.pyver }}
           mv ../conda/conda-bld .
-    - name: Upload the build artifact
-      if: github.event_name == 'push'
-      uses: actions/upload-artifact@v2
-      with:
-        # By uploading to the same artifact we can download all of the packages
-        # and upload them all to anaconda.org in a single job
-        name: package-${{ github.sha }}
-        path: conda-bld/*/*.tar.bz2
+      - name: Upload the packages as artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v2
+        with:
+          # By uploading to the same artifact we can download all of the packages
+          # and upload them all to anaconda.org in a single job
+          name: package-${{ github.sha }}
+          path: conda-bld/*/*.tar.bz2
+      - name: Run examples and prepare artifacts
+        run: |
+          source ../conda/etc/profile.d/conda.sh
+          conda create -n constructor -c local constructor
+          conda activate constructor
+          mkdir -p examples_artifacts/
+          python scripts/run_examples.py --keep-artifacts=examples_artifacts/
+      - name: Upload the example installers as artifacts
+        if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
+        uses: actions/upload-artifact@v2
+        with:
+          name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+          path: examples_artifacts/
+          retention-days: 7
+
   upload:
     needs: package
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
-    - name: Retrieve the source code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - name: Download the build artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: package-${{ github.sha }}
-        path: conda-bld
-    - name: Install conda packages
-      run: |
-        source $CONDA/bin/activate
-        conda install -y sphinx anaconda-client
-    - name: Build the documentation for deployment
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        source $CONDA/bin/activate
-        cd docs
-        make html
-    - name: Deploy the documentation
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/build/html
-    - name: Upload to anaconda.org
-      env:
-        ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        GITHUB_REF: ${{ github.ref }}
-      run: |
-        source $CONDA/bin/activate
-        [[ "$GITHUB_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev"
-        anaconda --verbose --token $ANACONDA_TOKEN upload --user ctools $LABEL conda-bld/*/*.tar.bz2 --force
-    - name: Clean up older artifacts
-      uses: glassechidna/artifact-cleaner@master
-      with:
-        minimumAge: 86400
+      - name: Retrieve the source code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Download the build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: package-${{ github.sha }}
+          path: conda-bld
+      - name: Install conda packages
+        run: |
+          source $CONDA/bin/activate
+          conda install -y sphinx anaconda-client
+      - name: Build the documentation for deployment
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          source $CONDA/bin/activate
+          cd docs
+          make html
+      - name: Deploy the documentation
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/build/html
+      - name: Upload to anaconda.org
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          source $CONDA/bin/activate
+          [[ "$GITHUB_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev"
+          anaconda --verbose --token $ANACONDA_TOKEN upload --user ctools $LABEL conda-bld/*/*.tar.bz2 --force
+      - name: Clean up older artifacts
+        uses: glassechidna/artifact-cleaner@master
+        with:
+          minimumAge: 86400
