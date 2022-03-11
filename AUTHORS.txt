@@ -12,16 +12,18 @@ Authors are sorted by number of commits.
 * Kale Franz
 * Sophia Castellarin
 * Mark Harfouche
+* Chris Burr
+* Faustin Carter
 * Jonathan J. Helmus
 * Forrest Waters
 * Angela Gloyna
-* Chris Burr
 * Anthony Scopatz
-* Faustin Carter
 * Martin Durant
 * Aaron Stevens
 * Thomas Holder
 * Eric Dill
+* conda-bot
+* Jaime Rodríguez-Guerra
 * Tobias Megies
 * Matthew Newville
 * Jean-Luc Stevens
@@ -30,6 +32,7 @@ Authors are sorted by number of commits.
 * Thomas Antony
 * Phil Elson
 * Rachel Rigdon
+* Jannis Leidel
 * Gonzalo Pena-Castellanos
 * y2kbugger
 * bkreider
@@ -46,5 +49,4 @@ Authors are sorted by number of commits.
 * Wolf Vollprecht
 * XuehaiPan
 * Tom Hören
-* Jannis Leidel
 * Cheng H. Lee

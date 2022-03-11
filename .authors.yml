@@ -148,7 +148,7 @@
   email: mgrant@anaconda.com
   alternate_emails:
   - mcg@cvxr.com
-  num_commits: 58
+  num_commits: 59
   first_commit: 2016-06-13 12:15:26
   github: schrodinger
 - name: Forrest Waters
@@ -167,8 +167,10 @@
   github: gabrielcnr
 - name: Chris Burr
   email: christopher.burr@cern.ch
-  num_commits: 7
+  num_commits: 10
   first_commit: 2020-08-31 13:41:03
+  alternate_emails:
+  - chrisburr@users.noreply.github.com
 - name: Mariana Meireles
   email: marian.meireles@gmail.com
   num_commits: 1
@@ -220,7 +222,7 @@
   email: faustin.carter@gmail.com
   alternate_emails:
   - fwcarter@hrl.com
-  num_commits: 7
+  num_commits: 10
   first_commit: 2020-10-21 10:45:10
   github: FaustinCarter
 - name: Connor Martin
@@ -229,12 +231,12 @@
   first_commit: 2021-03-24 12:38:03
 - name: Isuru Fernando
   email: isuruf@gmail.com
-  num_commits: 20
+  num_commits: 21
   first_commit: 2020-02-08 00:55:25
   github: isuruf
 - name: Jannis Leidel
   email: jannis@leidel.info
-  num_commits: 0
+  num_commits: 2
   first_commit: 2021-08-26 05:18:15
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
@@ -249,8 +251,19 @@
   email: chenghlee@users.noreply.github.com
   num_commits: 0
   first_commit: 2021-05-24 08:52:40
+- name: conda-bot
+  email: ad-team+condabot@anaconda.com
+  num_commits: 3
+  first_commit: 2022-01-25 21:38:28
+- name: Jaime Rodríguez-Guerra
+  email: jaimergp@users.noreply.github.com
+  aliases:
+  - Jaime RGP
+  num_commits: 3
+  first_commit: 2022-01-08 14:56:53
+  github: jaimergp
 - name: Tom Hören
   email: horen.tom@gmail.com
   num_commits: 1
-  first_commit: 2020-07-19 09:44:03
+  first_commit: 2020-07-19 18:44:03
   github: nerohmot
