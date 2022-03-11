@@ -1,0 +1,24 @@
+Enhancements:
+-------------
+
+* <news item>
+
+Bug fixes:
+----------
+
+* <news item>
+
+Deprecations:
+-------------
+
+* <news item>
+
+Docs:
+-----
+
+* <news item>
+
+Other:
+------
+
+* CI: Run examples outside conda build to upload installers as artifacts for local testing (#498)

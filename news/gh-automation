@@ -1,0 +1,27 @@
+Enhancements:
+-------------
+
+* <news item>
+
+Bug fixes:
+----------
+
+* <news item>
+
+Deprecations:
+-------------
+
+* <news item>
+
+Docs:
+-----
+
+* <news item>
+
+Other:
+------
+
+* Added project board, issue staleness, thread locking and label automation
+  using GitHub action workflows to improve maintenance of GitHub project.
+
+  More information can be found in the infra repo: https://github.com/conda/infra
