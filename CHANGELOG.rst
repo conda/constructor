@@ -1,4 +1,4 @@
-# current developments
+.. current developments
 
 2022-03-12   3.3.0:
 ===================
