@@ -17,6 +17,11 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
     return 1
 fi
 
+# Export variables to make installer metadata available to pre/post install scripts
+export INSTALLER_NAME="__NAME__"
+export INSTALLER_VER="__VERSION__"
+export INSTALLER_PLAT="__PLAT__"
+
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
@@ -581,6 +586,12 @@ if [ "$BATCH" = "0" ]; then
             *zsh) $PREFIX/bin/conda init zsh ;;
             *) $PREFIX/bin/conda init ;;
         esac
+        if [ -f "$PREFIX/bin/mamba" ]; then
+            case $SHELL in
+                *zsh) $PREFIX/bin/mamba init zsh ;;
+                *) $PREFIX/bin/mamba init ;;
+            esac
+        fi
     fi
     printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
     printf "   set the auto_activate_base parameter to false: \\n"

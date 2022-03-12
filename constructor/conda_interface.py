@@ -2,8 +2,13 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
-from os.path import join
+import os
 import sys
+from copy import deepcopy
+from itertools import chain
+from os.path import join
+
+from constructor.utils import hash_files
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
             'orange3', 'qtconsole', 'rstudio', 'spyder', 'vscode']
@@ -16,7 +21,12 @@ except ImportError:
                        "with sys.prefix: %s" % sys.prefix)
 
 if conda_interface_type == 'conda':
-    CONDA_MAJOR_MINOR = tuple(int(x) for x in CONDA_INTERFACE_VERSION.split('.')[:2])
+    # This import path has been stable since 2016
+    from conda.models.version import VersionOrder
+
+    _conda_version = VersionOrder(CONDA_INTERFACE_VERSION).version
+    # Flatten VersionOrder.version, skip epoch, and keep only major and minor
+    CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
     from conda._vendor.toolz.itertoolz import (
         concatv as _concatv, get as _get, groupby as _groupby,
@@ -87,20 +97,49 @@ if conda_interface_type == 'conda':
 
         return full_repodata
 
-    def write_repodata(cache_dir, url, full_repodata, used_packages):
+    def write_repodata(cache_dir, url, full_repodata, used_packages, info):
         used_repodata = {k: full_repodata[k] for k in
                          set(full_repodata.keys()) - {'packages', 'packages.conda', 'removed'}}
-        repodata_filename = _cache_fn_url(used_repodata['_url'].rstrip("/"))
         used_repodata['packages.conda'] = {}
         used_repodata['removed'] = []
-        # arbitrary old, expired date, so that conda will want to immediately update it
-        # when not being run in offline mode
-        used_repodata['_mod'] = "Mon, 07 Jan 2019 15:22:15 GMT"
         used_repodata['packages'] = {
             k: v for k, v in full_repodata['packages'].items() if v['name'] in NAV_APPS}
+
+        # Minify the included repodata
         for package in used_packages:
-            for key in ('packages', 'packages.conda'):
-                if package in full_repodata.get(key, {}):
-                    used_repodata[key][package] = full_repodata[key][package]
+            key = 'packages.conda' if package.endswith(".conda") else 'packages'
+            if package in full_repodata.get(key, {}):
+                used_repodata[key][package] = full_repodata[key][package]
+                continue
+            # If we're transcoding packages, fix-up the metadata
+            if package.endswith(".conda"):
+                original_package = package[:-len(".conda")] + ".tar.bz2"
+                original_key = "packages"
+            elif package.endswith(".tar.bz2"):
+                original_package = package[:-len(".tar.bz2")] + ".conda"
+                original_key = "packages.conda"
+            else:
+                raise NotImplementedError("Package type is unknown for: %s" % package)
+            if original_package in full_repodata.get(original_key, {}):
+                data = deepcopy(full_repodata[original_key][original_package])
+                pkg_fn = join(info["_download_dir"], package)
+                data["size"] = os.stat(pkg_fn).st_size
+                data["sha256"] = hash_files([pkg_fn], algorithm='sha256')
+                data["md5"] = hash_files([pkg_fn])
+                used_repodata[key][package] = data
+
+        # The first line of the JSON should contain cache metadata
+        # Choose an arbitrary old, expired date, so that conda will want to
+        # immediately update it when not being run in offline mode
+        url = used_repodata.pop('_url').rstrip("/")
+        repodata = json.dumps(used_repodata, indent=2)
+        repodata_header = json.dumps(
+            {
+                "_mod": "Mon, 07 Jan 2019 15:22:15 GMT",
+                "_url": url,
+            }
+        )
+        repodata = repodata_header[:-1] + "," + repodata[1:]
+        repodata_filename = _cache_fn_url(url)
         with open(join(cache_dir, repodata_filename), 'w') as fh:
-            json.dump(used_repodata, fh, indent=2)
+            fh.write(repodata)

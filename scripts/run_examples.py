@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import platform
+import shutil
 
 from constructor.utils import rm_rf
 
@@ -39,13 +40,27 @@ def _execute(cmd):
     return p.returncode != 0
 
 
-def run_examples():
-    """Run examples bundled with the repository."""
+def run_examples(keep_artifacts=None):
+    """Run examples bundled with the repository.
+
+    Parameters
+    ----------
+    keep_artifacts: str, optional=None
+        Path where the generated installers will be moved to.
+        Will be created if it doesn't exist.
+
+    Returns
+    -------
+    int
+        Number of failed examples
+    """
     example_paths = []
     errored = 0
 
     if platform.system() != 'Darwin':
         BLACKLIST.append(os.path.join(EXAMPLES_DIR, "osxpkg"))
+    if keep_artifacts:
+        os.makedirs(keep_artifacts, exist_ok=True)
 
     whitelist = [os.path.join(EXAMPLES_DIR, p) for p in WHITELIST]
     for fname in os.listdir(EXAMPLES_DIR):
@@ -54,12 +69,12 @@ def run_examples():
             if os.path.exists(os.path.join(fpath, 'construct.yaml')):
                 example_paths.append(fpath)
 
-    output_dir = tempfile.mkdtemp()
+    parent_output = tempfile.mkdtemp()
     tested_files = set()
-    for i, example_path in enumerate(sorted(example_paths)):
+    for example_path in sorted(example_paths):
         print(example_path)
         print('-' * len(example_path))
-        output_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mkdtemp(dir=parent_output)
         cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
         errored += _execute(cmd)
         for fpath in os.listdir(output_dir):
@@ -81,16 +96,23 @@ def run_examples():
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
             errored += _execute(cmd)
+            if keep_artifacts:
+                shutil.move(fpath, keep_artifacts)
         print('')
 
     if errored:
         print('Some examples failed!')
-        print('Assets saved in: %s' % output_dir)
-        sys.exit(1)
+        print('Assets saved in: %s' % parent_output)
     else:
         print('All examples ran successfully!')
-        rm_rf(output_dir)
+        shutil.rmtree(parent_output)
+    return errored
 
 
 if __name__ == '__main__':
-    run_examples()
+    if sys.argv[1].startswith('--keep-artifacts='):
+        keep_artifacts = sys.argv[1].split("=")[1]
+    else:
+        keep_artifacts = None
+    n_errors = run_examples(keep_artifacts)
+    sys.exit(n_errors)

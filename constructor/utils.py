@@ -36,8 +36,8 @@ def fill_template(data, d):
     return pat.sub(replace, data)
 
 
-def md5_files(paths):
-    h = hashlib.new('md5')
+def hash_files(paths, algorithm='md5'):
+    h = hashlib.new(algorithm)
     for path in paths:
         with open(path, 'rb') as fi:
             while True:
