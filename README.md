@@ -49,4 +49,3 @@ the script directly with ``python scripts/make_docs.py``.
 | [`conda install ctools/label/dev::constructor`](https://anaconda.org/ctools/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/version.svg)](https://anaconda.org/ctools/constructor) |
 | [`conda install defaults::constructor`](https://anaconda.org/anaconda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/anaconda/constructor/badges/version.svg)](https://anaconda.org/anaconda/constructor) |
 | [`conda install conda-forge::constructor`](https://anaconda.org/conda-forge/constructor) | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/constructor/badges/version.svg)](https://anaconda.org/conda-forge/constructor) |
-
