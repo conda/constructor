@@ -44,8 +44,8 @@ $AUTHORS_FILENAME = "AUTHORS.rst"
 $CHANGELOG_FILENAME = "CHANGELOG.rst"
 $CHANGELOG_PATTERN = "# current developments"
 $CHANGELOG_HEADER = """# current developments
-$RELEASE_DATE $VERSION:
-------------------
+$RELEASE_DATE   $VERSION:
+===================
 
 """
 $CHANGELOG_CATEGORIES = (

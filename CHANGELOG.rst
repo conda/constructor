@@ -1,6 +1,7 @@
 # current developments
-2022-03-12 3.3.0:
-------------------
+
+2022-03-12   3.3.0:
+===================
 
 Enhancements:
 -------------
@@ -36,7 +37,7 @@ Other:
 
 
 2022-01-02   3.2.2:
--------------------
+===================
   * Common:
     - Fix crashes due to pyyaml >= 6 deprecating automatic use of SafeLoader; it is now safe to run constructor with pyyaml >= 6 #473
 
@@ -53,7 +54,7 @@ Other:
 
 
 2020-03-30   3.2.1:
--------------------
+===================
   * Common:
     - Fixed bug in platform selector regex parsing that was incompatible with using jinja-templated env vars and platform selectors on the same line #428
     - New option in construct.yaml (`batch_mode`) to make passing the `-b` flag the default option #440
@@ -75,7 +76,7 @@ Other:
 
 
 2020-11-14   3.2.0:
--------------------
+===================
   * COMMON:
     - `construct.yaml` file now reads environment variables during the Jinja2 parsing stage. Env vars can be included like: `{{ environ["ENV_VAR"] }}` (#413).
     - Fixed bug where constructor crashed if a listed spec was in a noarch-only channel (i.e. without a subdir for the specific platform) (#409).
@@ -86,7 +87,7 @@ Other:
     - The "test" option is only available if conda is installed in the environment. Previously this would fail in this situation.
 
 2020-09-31   3.1.0:
--------------------
+===================
   * COMMON:
     - New platform selectors: s390x, osx-arm64
     - Added the ability to build installers from an existing,
@@ -114,12 +115,12 @@ Other:
       both .pkg and .sh installers with a single commmand
 
 2019-09-16   3.0.1:
--------------------
+===================
   * COMMON:
     - Add dependency on standalone conda executable
 
 2019-08-09   3.0.0:
--------------------
+===================
   * COMMON:
     - this utilizes a fundamentally different approach from before.  A standalone
       conda executable (created with pyinstaller) is used to create environments
@@ -130,7 +131,7 @@ Other:
       the base env.  Let's call those prefix-based operations.
 
 2019-11-04   2.3.0:
--------------------
+===================
   * COMMON:
     - Drop redundant code in install.py
     - Fix bug in size computation for pkgs built with older conda build
@@ -143,7 +144,7 @@ Other:
     - Add new line to bash config before modifying it
 
 2018-09-30   2.2.0:
--------------------
+===================
   * COMMON:
     - Refactor constructor internals to use conda 4.5.x APIs
     - Create and add <pkg>/info/repodata_record.json for each $pkg to preconda
@@ -160,7 +161,7 @@ Other:
 
 
 2018-07-14   2.1.1:
--------------------
+===================
   * NSIS:
     - Don't fail when index cache is empty (local channels)
 
@@ -169,7 +170,7 @@ Other:
 
 
 2018-06-06   2.1.0:
--------------------
+===================
   * COMMON:
     - Populate conda-meta/history file properly
     - Remove references to free channel
@@ -186,14 +187,14 @@ Other:
 
 
 2018-04-03   2.0.3:
--------------------
+===================
   * COMMON:
     - Fix incompatibility with conda 4.5.x
     - Decouple doc generation from source code, templatize it
 
 
 2018-02-01   2.0.2:
--------------------
+===================
   * COMMON:
     - Document platform selectors and new keys
     - Drop usage of libconda
@@ -211,7 +212,7 @@ Other:
     - Add more os, arch checks to the shell installer
 
 2017-11-16   2.0.1:
--------------------
+===================
   * COMMON:
     - Add CI testing for Travis and Appveyor
     - Write basic system info to $PREFIX\pkgs\.constructor-build.info
@@ -221,7 +222,7 @@ Other:
 
 
 2017-11-01   2.0.0:
--------------------
+===================
   * COMMON:
     - Add support for channel remapping
     - Make sure $PREFIX/envs is created by the installers
@@ -282,17 +283,17 @@ Other:
 
 
 2017-08-XX   1.7.0:
--------------------
+===================
   * add support for creating .pkg installers on OSX, #98
 
 
 2017-??-??   1.6.0:
--------------------
+===================
   * ???
 
 
 2017-03-30   1.5.5:
--------------------
+===================
   * proved access to LD_LIBRARY_PATH in Linux install scripts by storing it
     as OLD_LD_LIBRARY_PATH
   * replace '//' by '/' for install.py --root-prefix option
@@ -301,77 +302,77 @@ Other:
 
 
 2017-02-16   1.5.4:
--------------------
+===================
   * skip binary prefix replacement on Windows, #62
   * add writing empty conda-meta/history upon installation
 
 
 2017-01-31   1.5.3:
--------------------
+===================
   * update Visual Studio version map to with with Python 3.6 on Windows
   * add unicode line, update version comment, #61
   * add --clean (cache) option
 
 
 2017-01-12   1.5.2:
--------------------
+===================
   * unlink files prior to writing with a new prefix, #58
   * fix test against NSIS 3.01
 
 
 2017-01-06   1.5.1:
--------------------
+===================
   * add --cache-dir option, which defaults to CONSTRUCTOR_CACHE when set,
     or ~/.conda/constructor otherwise
   * fix typo
 
 
 2016-11-07   1.5.0:
--------------------
+===================
   * add -u (update) option to resulting .sh installer, see #46
 
 
 2016-10-20   1.4.2:
--------------------
+===================
   * allow '-' character in version
 
 
 2016-10-19   1.4.1:
--------------------
+===================
   * add simple check for valid name and version
 
 
 2016-10-06   1.4.0:
--------------------
+===================
   * add menu_packages key in construct.yaml
 
 
 2016-09-15   1.3.4:
--------------------
+===================
   * add -s option to shell installer to run without executing user-defined
     scripts, basically #44
   * allow NSIS 3 to be used to Windows
 
 
 2016-09-12   1.3.3:
--------------------
+===================
   * add support for 'noarch' packages
 
 
 2016-08-11   1.3.2:
--------------------
+===================
   * bug: allow '-' in package name, when using 'exlcude' key
 
 
 2016-07-19   1.3.1:
--------------------
+===================
   * add pkgs/urls.txt to be compatible with current conda
   * add 'md5' and 'installed_by' keys to conda-meta/<dist>.json metadata
     for installed packages
 
 
 2016-07-08   1.3.0:
--------------------
+===================
   * add ability to run `post-link` scripts (inside conda packages) on Windows
   * add ability to run post install `.bat` scripts on Windows
   * improve install logic on Unix, replace post.py by custom install.py,
@@ -381,25 +382,25 @@ Other:
 
 
 2016-06-24   1.2.1:
--------------------
+===================
   * compatibility with conda 4.1, see #26
   * include urls.txt in the pkgs, #27
   * skip machine type check in batch mode (Unix)
 
 
 2016-04-07   1.2.0:
--------------------
+===================
   * ensure empty lists are handled correctly with selectors
   * add keep_pkgs option to construct.yaml
 
 
 2016-03-24   1.1.0:
--------------------
+===================
   * add support for pre and post install scripts on Unix
   * fix issues related to non x86 platforms
   * add default_prefix support for Windows, see #7 and #14
 
 
 2016-03-02   1.0.0:
--------------------
+===================
   * initial release
