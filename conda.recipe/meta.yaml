@@ -49,7 +49,7 @@ test:
     - if ["$CODECOV_TOKEN"]; then codecov --commit $CODECOV_COMMIT; fi # [unix]
     - coverage report
     - if [%RUN_EXAMPLES%] neq [] python scripts/run_examples.py      # [win]
-    - if ["$RUN_EXAMPLES"]; then python scripts/run_examples.py; fi  # [unix]
+    - if [ -n "$RUN_EXAMPLES" ]; then python scripts/run_examples.py; fi  # [unix]
 
 about:
   home: https://conda.io
