@@ -1,16 +1,15 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Run examples bundled with this repo."""
-
-# Standard library imports
 import os
-import subprocess
 import sys
 import tempfile
 import platform
 import shutil
+from itertools import product
+from subprocess import PIPE, Popen
 
 from constructor.utils import rm_rf
+from ruamel_yaml import round_trip_load, round_trip_dump
 
 try:
     import coverage # noqa
@@ -29,15 +28,14 @@ BLACKLIST = []
 
 def _execute(cmd):
     print(' '.join(cmd))
-    p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
+    p = Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     print('--- STDOUT ---')
-    _, stderr = p.communicate()
+    stdout, stderr = p.communicate()
+    print(stdout.strip())
     if stderr:
         print('--- STDERR ---')
-        if PY3:
-            stderr = stderr.decode()
         print(stderr.strip())
-    return p.returncode != 0
+    return p.returncode != 0, stdout.strip()
 
 
 def run_examples(keep_artifacts=None):
@@ -54,6 +52,19 @@ def run_examples(keep_artifacts=None):
     int
         Number of failed examples
     """
+    conda_exes = [None]
+    if platform.system() != 'Windows':
+        env_name = "constructor-testing-micromamba"
+        which_cmd = ["conda", "run", "--name", env_name, "which", "micromamba"]
+        errored, micromamba_path = _execute(which_cmd)
+        if errored:
+            _execute(["conda", "create", "--name", env_name, "--yes", "-c", "conda-forge", "micromamba"])
+            errored, micromamba_path = _execute(which_cmd)
+            if errored:
+                raise NotImplementedError("Failed to find micromamba")
+        print("Found micromamba at:", micromamba_path)
+        conda_exes += [micromamba_path]
+
     example_paths = []
     errored = 0
 
@@ -71,12 +82,26 @@ def run_examples(keep_artifacts=None):
 
     parent_output = tempfile.mkdtemp()
     tested_files = set()
-    for example_path in sorted(example_paths):
+    for example_path, conda_exe in product(sorted(example_paths), conda_exes):
         print(example_path)
         print('-' * len(example_path))
         output_dir = tempfile.mkdtemp(dir=parent_output)
-        cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
-        errored += _execute(cmd)
+        input_dir = os.path.join(output_dir, "input-files")
+        cmd = COV_CMD + ['constructor', input_dir, '--output-dir', output_dir]
+
+        # Copy the input to a temporary directory so we can modify it if needed
+        shutil.copytree(example_path, input_dir)
+        if conda_exe:
+            with open(os.path.join(input_dir, "construct.yaml")) as fp:
+                data = round_trip_load(fp)
+            data["name"] = f"{data['name']}-{os.path.basename(conda_exe)}"
+            with open(os.path.join(input_dir, "construct.yaml"), "wt") as fp:
+                round_trip_dump(data, fp)
+            print("Setting conda.exe to:", conda_exe)
+            cmd += ['--conda-exe', conda_exe]
+
+        # Create the installer
+        errored += _execute(cmd)[0]
         for fpath in os.listdir(output_dir):
             ext = fpath.rsplit('.', 1)[-1]
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
@@ -95,7 +120,7 @@ def run_examples(keep_artifacts=None):
                 cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
-            errored += _execute(cmd)
+            errored += _execute(cmd)[0]
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
         print('')

@@ -1,0 +1,16 @@
+name: Miniforge3
+version: 4.10.1-0
+company: conda-forge
+
+channels:
+  - conda-forge
+
+write_condarc: True
+keep_pkgs: True
+transmute_file_type: .conda
+
+specs:
+  - python 3.9.*
+  - conda 4.10.1
+  - pip
+  - miniforge_console_shortcut 1.*  # [win]
