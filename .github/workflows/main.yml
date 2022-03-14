@@ -47,7 +47,8 @@ jobs:
         run: |
           source ../conda/etc/profile.d/conda.sh
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
-          conda build conda.recipe --python=${{ matrix.pyver }} --croot ${{ runner.temp }}/conda-bld
+          CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
+            conda build conda.recipe --python=${{ matrix.pyver }}
       - name: Upload the packages as artifact
         # if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
@@ -59,7 +60,8 @@ jobs:
       - name: Run examples and prepare artifacts
         run: |
           source ../conda/etc/profile.d/conda.sh
-          conda create -n constructor -c local constructor
+          CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
+            conda create -n constructor -c local constructor
           conda activate constructor
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
