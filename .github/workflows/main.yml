@@ -61,7 +61,7 @@ jobs:
         run: |
           source ../conda/etc/profile.d/conda.sh
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
-            conda create -n constructor -c local constructor
+            conda create -n constructor -c local --strict-channel-priority constructor
           conda activate constructor
           installed_channel=$(conda list --json | jq '.[] | select(.name=="constructor") | .channel')
           echo $(conda list --json | jq '.[] | select(.name=="constructor")')
