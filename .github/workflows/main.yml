@@ -19,8 +19,6 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
         pyver: ["3.7", "3.8", "3.9", "3.10"]
-    env:
-      CONDA_BLD_PATH: ${{ runner.temp }}/conda-bld
     steps:
       - name: Print github context
         run: |
@@ -49,7 +47,7 @@ jobs:
         run: |
           source ../conda/etc/profile.d/conda.sh
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
-          conda build conda.recipe --python=${{ matrix.pyver }}
+          conda build conda.recipe --python=${{ matrix.pyver }} --croot ${{ runner.temp }}/conda-bld
       - name: Upload the packages as artifact
         # if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
@@ -57,7 +55,7 @@ jobs:
           # By uploading to the same artifact we can download all of the packages
           # and upload them all to anaconda.org in a single job
           name: package-${{ github.sha }}
-          path: ${{ env.CONDA_BLD_PATH }}/*/*.tar.bz2
+          path: ${{ runner.temp }}/conda-bld/*/*.tar.bz2
       - name: Run examples and prepare artifacts
         run: |
           source ../conda/etc/profile.d/conda.sh
