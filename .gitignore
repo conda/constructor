@@ -8,3 +8,5 @@ _cenv/
 rever/
 .idea
 docs/build/
+pkgs-list.txt
+info.json
