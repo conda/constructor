@@ -491,11 +491,6 @@ CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
-if [ "$KEEP_PKGS" = "0" ]; then
-    rm -fr $PREFIX/pkgs/*.tar.bz2
-    rm -fr $PREFIX/pkgs/*.conda
-fi
-
 __INSTALL_COMMANDS__
 
 #if has_conda
@@ -527,9 +522,6 @@ rm -f $PREFIX/conda.exe
 rm -rf $PREFIX/install_tmp
 export TMP="$TMP_BACKUP"
 
-#if has_conda
-mkdir -p $PREFIX/envs
-#endif
 
 #The templating doesn't support nested if statements
 #if has_post_install

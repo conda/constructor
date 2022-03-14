@@ -45,10 +45,36 @@ fi
 
 # Move the prepackaged history file into place
 mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
+rm -f "$PREFIX/env.txt"
+
+# Same, but for the extra environments
+
+mkdir -p $PREFIX/envs
+
+for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
+    env_name=$(basename ${env_pkgs})
+    if [[ "${env_name}" == "*" ]]; then
+        continue
+    fi
+
+    notify "Installing ${env_name} packages..."
+    mkdir -p "$PREFIX/envs/$env_name/conda-meta"
+    touch "$PREFIX/envs/$env_name/conda-meta/history"
+
+    # TODO: custom channels per env?
+    # TODO: custom shortcuts per env?
+    CONDA_SAFETY_CHECKS=disabled \
+    CONDA_EXTRA_SAFETY_CHECKS=no \
+    CONDA_CHANNELS=__CHANNELS__ \
+    CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
+    # Move the prepackaged history file into place
+    mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
+    rm -f "${env_pkgs}env.txt"
+done
 
 # Cleanup!
 rm -f "$CONDA_EXEC"
-rm -f "$PREFIX/env.txt"
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
 __WRITE_CONDARC__
