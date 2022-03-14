@@ -874,7 +874,6 @@ Section "Install"
     ${EndIf}
 
     SetOutPath "$INSTDIR\pkgs"
-    File __ENV_TXT__
     File __URLS_FILE__
     File __URLS_TXT_FILE__
     File __POST_INSTALL__
@@ -889,32 +888,11 @@ Section "Install"
 
     @PKG_COMMANDS@
 
-    SetDetailsPrint TextOnly
-    DetailPrint "Setting up the package cache ..."
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
-    Pop $0
-    SetDetailsPrint both
-
-    SetDetailsPrint TextOnly
-    DetailPrint "Setting up the base environment ..."
-    # Need to use `--no-shortcuts` because the shortcuts are created in the following steps. The reason is that `conda install`
-    # doesn't support `menu_packages` entry of `construct.yaml` and will therefore create possible shorcuts
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" --no-shortcuts'
-    Pop $0
-    SetDetailsPrint both
-
-    # Cleanup
-    SetOutPath "$INSTDIR"
-    Delete "$INSTDIR\pkgs\env.txt"
+    @SETUP_ENVS@
 
     @WRITE_CONDARC@
 
     AddSize @SIZE@
-
-    # Restore shipped conda-meta\history for remapped
-    # channels and retain only the first transaction
-    SetOutPath "$INSTDIR\conda-meta"
-    File __CONDA_HISTORY__
 
     ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
         DetailPrint "Creating @NAME@ menus..."

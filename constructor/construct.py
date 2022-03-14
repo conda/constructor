@@ -124,6 +124,23 @@ The channel alias that would be assumed for the created installer
 (only useful if it includes conda).
 '''),
 
+    ('extra_envs', False, (dict,), '''
+Create more environments in addition to the default `base` provided by `specs`,
+`environment` or `environment_file`. This should be a map of `str` (environment
+name) to a dictionary of options:
+- `specs` (list of str): which packages to install in that environment
+- `channels` (list of str): using these channels
+- `user_requested_specs` (list of str): same as the global option, but for this env
+  (not implemented)
+- `exclude` (list of str): same as the global option, but for this env
+  (not implemented)
+- `menu_packages` (list of str): same as the global option, but for this env
+  (not implemented)
+
+Notes:
+- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
+''')
+
     ('installer_filename',     False, str, '''
 The filename of the installer being created. If not supplied, a reasonable
 default will determined by the `name`, `version`, platform, and installer type.
