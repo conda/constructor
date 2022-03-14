@@ -129,17 +129,19 @@ Create more environments in addition to the default `base` provided by `specs`,
 `environment` or `environment_file`. This should be a map of `str` (environment
 name) to a dictionary of options:
 - `specs` (list of str): which packages to install in that environment
-- `channels` (list of str): using these channels
+- `channels` (list of str): using these channels (not implemented yet, will use global)
 - `user_requested_specs` (list of str): same as the global option, but for this env
-  (not implemented)
+  (not implemented yet)
 - `exclude` (list of str): same as the global option, but for this env
-  (not implemented)
+  (not implemented yet)
 - `menu_packages` (list of str): same as the global option, but for this env
-  (not implemented)
+  (not implemented yet)
 
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
-''')
+- `conda` needs to be present in the `base` environment (via `specs`)
+- the `base` environment needs to be created via the global `specs` setting
+'''),
 
     ('installer_filename',     False, str, '''
 The filename of the installer being created. If not supplied, a reasonable
@@ -437,6 +439,15 @@ This setting can be passed as a list of:
 ]
 
 
+_EXTRA_ENVS_SCHEMA = {
+    "specs": list,
+    "channels": list,
+    "user_requested_specs": list,
+    "exclude": list,
+    "menu_packages": list,
+}
+
+
 def ns_platform(platform):
     p = platform
     return dict(
@@ -568,6 +579,17 @@ def verify(info):
         value = info[key]
         if not pat.match(value) or value.endswith(('.', '-')):
             sys.exit("Error: invalid %s '%s'" % (key, value))
+
+    for env_name, env_data in info.get("extra_envs", {}).items():
+        if " " in env_name:
+            sys.exit("Environment names (in 'extra_envs') cannot contain spaces")
+        for key, value in env_data.items():
+            if key not in _EXTRA_ENVS_SCHEMA:
+                sys.exit(f"Key '{key}' not supported in 'extra_envs'.")
+            vtype = _EXTRA_ENVS_SCHEMA[key]
+            if not isinstance(value, vtype):
+                sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
+                         f"must be '{vtype.__name__}'")
 
 
 def generate_doc():
