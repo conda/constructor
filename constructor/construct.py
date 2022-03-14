@@ -327,10 +327,20 @@ If `header_image` is not provided, use this text when generating the image
 (Windows only). Defaults to `name`.
 '''),
 
+    ('initialize_conda',     False, bool, '''
+Add an option to the installer so the user can choose whether to run `conda init`
+after the install. See also `initialize_by_default`.
+'''),
+
     ('initialize_by_default',    False, bool, '''
 Whether to add the installation to the PATH environment variable. The default
 is true for GUI installers (msi, pkg) and False for shell installers. The user
 is able to change the default during interactive installation.
+'''),
+
+    ('register_python',  False, bool, '''
+Whether to offer the user an option to register the installed Python instance as the
+system's default Python. (Windows only)
 '''),
 
     ('register_python_default',  False, bool, '''
