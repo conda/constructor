@@ -71,7 +71,7 @@ def write_index_cache(info, dst_dir, used_packages):
 
     for url, repodata in repodatas.items():
         if repodata is not None:
-            write_repodata(cache_dir, url, repodata, used_packages)
+            write_repodata(cache_dir, url, repodata, used_packages, info)
 
     for cache_file in os.listdir(cache_dir):
         if not cache_file.endswith(".json"):
