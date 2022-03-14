@@ -47,7 +47,8 @@ jobs:
         run: |
           source ../conda/etc/profile.d/conda.sh
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
-          conda build conda.recipe --python=${{ matrix.pyver }}
+          CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
+            conda build conda.recipe --python=${{ matrix.pyver }}
       - name: Upload the packages as artifact
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
@@ -55,12 +56,19 @@ jobs:
           # By uploading to the same artifact we can download all of the packages
           # and upload them all to anaconda.org in a single job
           name: package-${{ github.sha }}
-          path: ../conda/conda-bld/*/*.tar.bz2
+          path: ${{ runner.temp }}/conda-bld/*/*.tar.bz2
       - name: Run examples and prepare artifacts
         run: |
           source ../conda/etc/profile.d/conda.sh
-          conda create -n constructor -c local constructor
+          CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
+            conda create -n constructor -c local --strict-channel-priority constructor
           conda activate constructor
+          installed_channel=$(conda list --json | jq -r '.[] | select(.name=="constructor") | .channel')
+          if [[ "$installed_channel" != "conda-bld" ]]; then
+            echo $(conda list --json | jq '.[] | select(.name=="constructor")')
+            echo "Installed constructor is not local!"
+            exit 1
+          fi
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
       - name: Upload the example installers as artifacts
