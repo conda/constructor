@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from os.path import abspath, basename, expanduser, isdir, join
 import sys
+import json
 
 from .conda_interface import cc_platform
 from .construct import parse as construct_parse, verify as construct_verify
@@ -60,7 +61,7 @@ def get_output_filename(info):
 
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
-               dry_run=False, conda_exe="conda.exe"):
+               dry_run=False, conda_exe="conda.exe", debug=False):
     print('platform: %s' % platform)
     if not os.path.isfile(conda_exe):
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
@@ -137,11 +138,13 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
         print("Successfully created '%(_outpath)s'." % info)
-    if 0:
+    if debug:
         with open(join(output_dir, 'pkg-list.txt'), 'w') as fo:
             fo.write('# installer: %s\n' % basename(info['_outpath']))
             for dist in info['_dists']:
                 fo.write('%s\n' % dist)
+        with open(join(output_dir, "info.json"), "w") as fo:
+            json.dump(info, fo)
 
 
 def main():
@@ -243,7 +246,8 @@ downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/""".lstrip())
     out_dir = normalize_path(args.output_dir)
     main_build(dir_path, output_dir=out_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
-               dry_run=args.dry_run, conda_exe=conda_exe)
+               dry_run=args.dry_run, conda_exe=conda_exe,
+               debug=args.debug)
 
 
 if __name__ == '__main__':
