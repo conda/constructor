@@ -63,6 +63,12 @@ jobs:
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda create -n constructor -c local constructor
           conda activate constructor
+          installed_channel=$(conda list --json | jq '.[] | select(.name=="constructor") | .channel')
+          echo $installed_channel
+          if [[ ! "$installed_channel" =~ *conda-bld* ]]; then
+            echo "Installed constructor is not local!"
+            exit 1
+          fi
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
       - name: Upload the example installers as artifacts
