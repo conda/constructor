@@ -19,11 +19,11 @@ class ConstructorAuthors(ReverAuthors):
         return md
 
 
-$DAG['constructor_authors'] = ConstructorAuthors()  # register the activity
+$DAG['authors'] = ConstructorAuthors()  # register the activity
 
 
 $ACTIVITIES = [
-    "constructor_authors",
+    "authors",
     "changelog",
     # "tag",
     # "push_tag",
