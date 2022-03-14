@@ -361,6 +361,9 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
     extra_envs = extra_envs or {}
     extra_envs_precs = {}
     for env_name, env_config in extra_envs.items():
+        if not any(prec.name == "conda" for prec in precs):
+            raise RuntimeError("conda needs to be present in `base` environment for extra_envs to work")
+
         if verbose:
             print("Solving extra environment:", env_name)
         extra_envs_precs[env_name] = _solve_precs(
