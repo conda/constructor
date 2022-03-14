@@ -59,7 +59,7 @@ def make_nsi(info, dir_path):
         'VERSION': info['version'],
         'COMPANY': info.get('company', 'Unknown, Inc.'),
         'ARCH': '%d-bit' % arch,
-        'PY_VER': py_version[:3],
+        'PY_VER': ".".join(py_version.split(".")[:2]),
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
         'PYVERSION': py_version,
         'PYVERSION_MAJOR': py_version.split('.')[0],
