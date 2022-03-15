@@ -380,19 +380,16 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         return None, None, None, None, None
 
     pc_recs, _urls, dists, has_conda = _fetch_precs(
-        precs, download_dir, platform,
-        transmute_file_type=transmute_file_type
+        precs, download_dir, transmute_file_type=transmute_file_type
     )
 
     extra_envs_data = {}
     for env_name, env_precs in extra_envs_precs.items():
-        env_pc_recs, env_urls, env_dists, env_has_conda = _fetch_precs(
-            env_precs, download_dir, platform,
-            transmute_file_type=transmute_file_type
+        env_pc_recs, env_urls, env_dists, _ = _fetch_precs(
+            env_precs, download_dir, transmute_file_type=transmute_file_type
         )
         extra_envs_data[env_name] = {"_urls": env_urls, "_dists": env_dists}
         pc_recs += env_pc_recs
-        has_conda = has_conda or env_has_conda
 
     duplicate_files = "warn" if ignore_duplicate_files else "error"
     if extra_envs_data:  # this can cause false positives
