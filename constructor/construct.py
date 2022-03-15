@@ -594,10 +594,11 @@ def verify(info):
         for key, value in env_data.items():
             if key not in _EXTRA_ENVS_SCHEMA:
                 sys.exit(f"Key '{key}' not supported in 'extra_envs'.")
-            vtype = _EXTRA_ENVS_SCHEMA[key]
-            if not isinstance(value, vtype):
+            types = _EXTRA_ENVS_SCHEMA[key]
+            if not isinstance(value, types):
+                types_str = " or ".join([type_.__name__ for type_ in types])
                 sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
-                         f"must be an instance of '{vtype}'")
+                         f"must be an instance of {types_str}")
 
 
 def generate_doc():
