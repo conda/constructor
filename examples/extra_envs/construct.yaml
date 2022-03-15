@@ -10,6 +10,8 @@ extra_envs:
   py38:
     specs:
       - python=3.8
+    channels:
+      - conda-forge
   py39:
-    specs:
-      - python=3.9
+    environment_file:
+      - py39_env.yaml
