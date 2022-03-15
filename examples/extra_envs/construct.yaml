@@ -13,5 +13,4 @@ extra_envs:
     channels:
       - conda-forge
   py39:
-    environment_file:
-      - py39_env.yaml
+    environment_file: py39_env.yaml
