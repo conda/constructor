@@ -129,9 +129,11 @@ Create more environments in addition to the default `base` provided by `specs`,
 `environment` or `environment_file`. This should be a map of `str` (environment
 name) to a dictionary of options:
 - `specs` (list of str): which packages to install in that environment
-- `channels` (list of str): using these channels (not implemented yet, will use global)
+- `environment` (str): same as global option, for this env
+- `environment_file` (str): same as global option, for this env
+- `channels` (list of str): using these channels
+- `channels_remap` (list of str): same as global option, for this env
 - `user_requested_specs` (list of str): same as the global option, but for this env
-  (not implemented yet)
 - `exclude` (list of str): same as the global option, but for this env
   (not implemented yet)
 - `menu_packages` (list of str): same as the global option, but for this env
@@ -140,7 +142,6 @@ name) to a dictionary of options:
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
 - `conda` needs to be present in the `base` environment (via `specs`)
-- the `base` environment needs to be created via the global `specs` setting
 '''),
 
     ('installer_filename',     False, str, '''
@@ -440,11 +441,14 @@ This setting can be passed as a list of:
 
 
 _EXTRA_ENVS_SCHEMA = {
-    "specs": list,
-    "channels": list,
-    "user_requested_specs": list,
-    "exclude": list,
-    "menu_packages": list,
+    "specs": (list, tuple),
+    "environment": (str,),
+    "environment_file": (str,),
+    "channels": (list, tuple),
+    "channels_remap": (list, tuple),
+    "user_requested_specs": (list, tuple),
+    "exclude": (list, tuple),
+    "menu_packages": (list, tuple),
 }
 
 
@@ -581,15 +585,19 @@ def verify(info):
             sys.exit("Error: invalid %s '%s'" % (key, value))
 
     for env_name, env_data in info.get("extra_envs", {}).items():
-        if " " in env_name:
-            sys.exit("Environment names (in 'extra_envs') cannot contain spaces")
+        disallowed = ('/', ' ', ':', '#')
+        if any(character in env_name for character in disallowed):
+            sys.exit(
+                f"Environment names (keys in 'extra_envs') cannot contain any of {disallowed}. "
+                f"You tried to use: {env_name}"
+                )
         for key, value in env_data.items():
             if key not in _EXTRA_ENVS_SCHEMA:
                 sys.exit(f"Key '{key}' not supported in 'extra_envs'.")
             vtype = _EXTRA_ENVS_SCHEMA[key]
             if not isinstance(value, vtype):
                 sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
-                         f"must be '{vtype.__name__}'")
+                         f"must be an instance of '{vtype}'")
 
 
 def generate_doc():

@@ -158,6 +158,28 @@ _type:_ string<br/>
 The channel alias that would be assumed for the created installer
 (only useful if it includes conda).
 
+## `extra_envs`
+
+_required:_ no<br/>
+_type:_ dictionary<br/>
+Create more environments in addition to the default `base` provided by `specs`,
+`environment` or `environment_file`. This should be a map of `str` (environment
+name) to a dictionary of options:
+- `specs` (list of str): which packages to install in that environment
+- `environment` (str): same as global option, for this env
+- `environment_file` (str): same as global option, for this env
+- `channels` (list of str): using these channels
+- `channels_remap` (list of str): same as global option, for this env
+- `user_requested_specs` (list of str): same as the global option, but for this env
+- `exclude` (list of str): same as the global option, but for this env
+  (not implemented yet)
+- `menu_packages` (list of str): same as the global option, but for this env
+  (not implemented yet)
+
+Notes:
+- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
+- `conda` needs to be present in the `base` environment (via `specs`)
+
 ## `installer_filename`
 
 _required:_ no<br/>
