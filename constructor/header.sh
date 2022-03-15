@@ -502,11 +502,18 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     fi
     printf "\nInstalling ${env_name} environment...\n\n"
     mkdir -p "$PREFIX/envs/$env_name"
-    # TODO: custom channels per env?
+
+    if [[ -f "${env_pkgs}channels.txt" ]]; then
+        env_channels=$(cat "${env_pkgs}channels.txt")
+        rm -f "${env_pkgs}channels.txt"
+    else
+        env_channels=__CHANNELS__
+    fi
+
     # TODO: custom shortcuts per env?
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
-    CONDA_CHANNELS=__CHANNELS__ \
+    CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
     rm -f "${env_pkgs}env.txt"

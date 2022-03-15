@@ -18,6 +18,7 @@ from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
                               PrefixData, write_repodata, get_repodata, all_channel_urls)
 from .conda_interface import distro as conda_distro
+from .utils import get_final_channels
 
 try:
     import json
@@ -151,6 +152,8 @@ def write_files(info, dst_dir):
         write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
         # environment installation list
         write_env_txt(info, env_dst_dir, env_info["_dists"])
+        # channels
+        write_channels_txt(info, env_dst_dir, env_config)
 
 
 def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
@@ -218,6 +221,16 @@ def write_env_txt(info, dst_dir, dists=None):
     specs = ['='.join(spec.rsplit('-', 2)) for spec in dists_san_extn]
     with open(join(dst_dir, "env.txt"), "w") as envf:
         envf.write('\n'.join(specs))
+
+def write_channels_txt(info, dst_dir, env_config):
+    env_config = env_config.copy()
+    if "channels" not in env_config:
+        env_config["channels"] = info.get("channels", ())
+    if "channels_remap" not in env_config:
+        env_config["channels_remap"] = info.get("channels_remap", ())
+
+    with open(join(dst_dir, "channels.txt"), "w") as f:
+        f.write(",".join(get_final_channels(env_config)))
 
 
 def copy_extra_files(info, workdir):

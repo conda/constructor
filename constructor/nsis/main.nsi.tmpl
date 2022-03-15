@@ -883,7 +883,6 @@ Section "Install"
 
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", __CHANNELS__).r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
 
     @PKG_COMMANDS@

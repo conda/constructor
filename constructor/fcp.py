@@ -312,8 +312,7 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
     return precs
 
 
-def _fetch_precs(precs, download_dir, platform, ignore_duplicate_files=True,
-                 transmute_file_type='', extra_envs=None):
+def _fetch_precs(precs, download_dir, transmute_file_type=''):
     pc_recs = _fetch(download_dir, precs)
     # Constructor cache directory can have multiple packages from different
     # installer creations. Filter out those which the solver picked.
@@ -368,12 +367,14 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             print("Solving extra environment:", env_name)
         extra_envs_precs[env_name] = _solve_precs(
             f"{name}+{env_name}", version, download_dir, platform,
-            channel_urls=env_config.get("channels") or channel_urls,
+            channel_urls=env_config.get("channels", channel_urls),
             channels_remap=env_config.get("channels_remap", channels_remap),
-            specs=env_config["specs"],
+            specs=env_config.get("specs", ()),
+            environment=env_config.get("environment", ()),
+            environment_file=env_config.get("environment_file", ()),
             menu_packages=env_config.get("menu_packages", menu_packages),
-            environment=None, environment_file=None, verbose=verbose,
-            conda_exe=conda_exe
+            verbose=verbose,
+            conda_exe=conda_exe,
         )
     if dry_run:
         return None, None, None, None, None

@@ -71,6 +71,8 @@ def setup_envs_commands(info, dir_path):
         SetOutPath "{conda_meta}"
         FileOpen $0 "history" w
         FileClose $0
+        # Set channels
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         # Run conda
         SetDetailsPrint TextOnly
         nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" @SHORTCUTS@'
@@ -85,17 +87,27 @@ def setup_envs_commands(info, dir_path):
         File {history_abspath}
         """
 
-    lines = template.format(
+    lines = template.format(  # this one block is for the base environment
         name="base",
         prefix=r"$INSTDIR",
         env_txt=r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
         env_txt_dir=r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
         env_txt_abspath=join(dir_path, "env.txt"), # env.txt location while building the installer
         conda_meta=r"$INSTDIR\conda-meta",
-        history_abspath=join(dir_path, "conda-meta", "history")
+        history_abspath=join(dir_path, "conda-meta", "history"),
+        channels=','.join(get_final_channels(info)),
     ).splitlines()
+    # now we generate one more block per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
         lines += ["", ""]
+        env_userconfig = info["extra_envs"][env_name]
+        env_channels = env_userconfig.get("channels", ())
+        if env_channels:
+            # use extra env channel remaps if available, fallback to global if present
+            remap = env_userconfig.get("channels_remap", info.get("channels_remap", ()))
+            channel_info = {"channels": env_channels, "channels_remap": remap}
+        else:  # otherwise, just use the global channels here as well
+            channel_info = info
         lines += template.format(
             name=env_name,
             prefix=join("$INSTDIR", "envs", env_name),
@@ -103,7 +115,8 @@ def setup_envs_commands(info, dir_path):
             env_txt_dir=join("$INSTDIR", "pkgs", "envs", env_name),
             env_txt_abspath=join(dir_path, "envs", env_name, "env.txt"),
             conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
-            history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history")
+            history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
+            channels=",".join(get_final_channels(channel_info))
         ).splitlines()
 
     return [line.strip() for line in lines]
@@ -156,7 +169,6 @@ def make_nsi(info, dir_path, extra_files=()):
         'PRE_UNINSTALL': '@pre_uninstall.bat',
         'INDEX_CACHE': '@cache',
         'REPODATA_RECORD': '@repodata_record.json',
-        'CHANNELS': ','.join(get_final_channels(info))
     }
     for key, value in replace.items():
         if value.startswith('@'):

@@ -61,11 +61,17 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     mkdir -p "$PREFIX/envs/$env_name/conda-meta"
     touch "$PREFIX/envs/$env_name/conda-meta/history"
 
+    if [[ -f "${env_pkgs}channels.txt" ]]; then
+        env_channels=$(cat "${env_pkgs}channels.txt")
+        rm -f "${env_pkgs}channels.txt"
+    else
+        env_channels=__CHANNELS__
+    fi
     # TODO: custom channels per env?
     # TODO: custom shortcuts per env?
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
-    CONDA_CHANNELS=__CHANNELS__ \
+    CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
     # Move the prepackaged history file into place
