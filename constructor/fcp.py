@@ -357,9 +357,8 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         environment_file=environment_file, verbose=verbose, conda_exe=conda_exe
     )
 
-    extra_envs = extra_envs or {}
     extra_envs_precs = {}
-    for env_name, env_config in extra_envs.items():
+    for env_name, env_config in (extra_envs or {}).items():
         if not any(prec.name == "conda" for prec in precs):
             raise RuntimeError("conda needs to be present in `base` environment for extra_envs to work")
 
@@ -370,9 +369,10 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             channel_urls=env_config.get("channels", channel_urls),
             channels_remap=env_config.get("channels_remap", channels_remap),
             specs=env_config.get("specs", ()),
+            exclude=env_config.get("exclude", exclude),
+            menu_packages=env_config.get("menu_packages", menu_packages),
             environment=env_config.get("environment"),
             environment_file=env_config.get("environment_file"),
-            menu_packages=env_config.get("menu_packages", menu_packages),
             verbose=verbose,
             conda_exe=conda_exe,
         )
