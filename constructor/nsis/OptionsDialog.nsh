@@ -80,12 +80,12 @@ Function mui_AnaCustomOptions_Show
         ${Else}
             StrCpy $1 "the system"
         ${EndIf}
-        ${NSD_CreateCheckbox} 0 "${5}u" 100% 11u "Add ${NAME} to $1 &PATH environment variable"
+        ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add ${NAME} to $1 &PATH environment variable"
         Pop $mui_AnaCustomOptions.AddToPath
         ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
         ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
         IntOp $5 $5 + 12
-        ${NSD_CreateLabel} 5% "${5}u" 90% 29u \
+        ${NSD_CreateLabel} 5% "$5u" 90% 29u \
             "NOT recommended; adding ${NAME} to the PATH can lead to conflicts with other \
             applications. Instead, use the Commmand Prompt and Powershell menus added to the \
             $\"Anaconda${PYVERSION_MAJOR} (${ARCH})$\" folder of the Windows Start Menu."
@@ -100,12 +100,12 @@ Function mui_AnaCustomOptions_Show
         ${Else}
             StrCpy $1 "the system"
         ${EndIf}
-        ${NSD_CreateCheckbox} 0 "${5}u" 100% 11u "&Register ${NAME} as $1 Python ${PY_VER}"
+        ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "&Register ${NAME} as $1 Python ${PY_VER}"
         Pop $mui_AnaCustomOptions.RegisterSystemPython
         ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython $Ana_RegisterSystemPython_State
         ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython RegisterSystemPython_OnClick
         IntOp $5 $5 + 12
-        ${NSD_CreateLabel} 5% "${5}u" 90% 20u \
+        ${NSD_CreateLabel} 5% "$5u" 90% 20u \
             "Recommended. Allows other programs, such as VSCode, PyCharm, etc. to automatically \
             detect ${NAME} as the primary Python ${PY_VER} on the system."
         IntOp $5 $5 + 20
@@ -113,22 +113,22 @@ Function mui_AnaCustomOptions_Show
     ${EndIf}
 
 
-    ${NSD_CreateCheckbox} 0 "${5}u" 100% 11u "Clear the package cache upon completion"
+    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Clear the package cache upon completion"
     Pop $mui_AnaCustomOptions.ClearPkgCache
     ${NSD_SetState} $mui_AnaCustomOptions.ClearPkgCache $Ana_ClearPkgCache_State
     ${NSD_OnClick} $mui_AnaCustomOptions.ClearPkgCache ClearPkgCache_OnClick
     IntOp $5 $5 + 11
-    ${NSD_CreateLabel} 5% "${5}u" 90% 11u \
+    ${NSD_CreateLabel} 5% "$5u" 90% 11u \
         "Recommended. Recovers some disk space without harming functionality."
     Pop $Ana_ClearPkgCache_Label
 
     ${If} "${POST_INSTALL_DESC}" != ""
-    ${NSD_CreateCheckbox} 0 "${5}u" 100% 11u "Run the post-install script"
+    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Run the post-install script"
     Pop $mui_AnaCustomOptions.PostInstall
     ${NSD_SetState} $mui_AnaCustomOptions.PostInstall $Ana_PostInstall_State
     ${NSD_OnClick} $mui_AnaCustomOptions.PostInstall PostInstall_OnClick
     IntOp $5 $5 + 12
-    ${NSD_CreateLabel} 5% "${5}u" 90% 20u "Recommended. ${POST_INSTALL_DESC}"
+    ${NSD_CreateLabel} 5% "$5u" 90% 20u "Recommended. ${POST_INSTALL_DESC}"
     Pop $Ana_PostInstall_Label
     ${EndIf}
 
