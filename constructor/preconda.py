@@ -35,13 +35,20 @@ def write_index_cache(info, dst_dir, used_packages):
         os.makedirs(cache_dir)
 
     _platforms = info['_platform'], 'noarch'
+    _remap_configs = list(info.get("channels_remap", []))
+    _env_channels = []
+    for env_info in info.get("extra_envs", {}).values():
+        _remap_configs += env_info.get("channels_remap", [])
+        _env_channels += env_info.get("channels", [])
+
     _remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
-               for url in info.get('channels_remap', [])}
+               for url in _remap_configs}
     _channels = [
         url.rstrip("/")
         for url in list(_remaps)
         + info.get("channels", [])
         + info.get("conda_default_channels", [])
+        + _env_channels
     ]
     _urls = all_channel_urls(_channels, subdirs=_platforms)
     repodatas = {url: get_repodata(url) for url in _urls if url is not None}

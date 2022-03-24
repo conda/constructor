@@ -75,7 +75,7 @@ def setup_envs_commands(info, dir_path):
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         # Run conda
         SetDetailsPrint TextOnly
-        nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" @SHORTCUTS@'
+        nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
         Pop $0
         SetDetailsPrint both
         # Cleanup {name} env.txt
@@ -96,18 +96,16 @@ def setup_envs_commands(info, dir_path):
         conda_meta=r"$INSTDIR\conda-meta",
         history_abspath=join(dir_path, "conda-meta", "history"),
         channels=','.join(get_final_channels(info)),
+        shortcuts="--no-shortcuts"
     ).splitlines()
     # now we generate one more block per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
         lines += ["", ""]
-        env_userconfig = info["extra_envs"][env_name]
-        env_channels = env_userconfig.get("channels", ())
-        if env_channels:
-            # use extra env channel remaps if available, fallback to global if present
-            remap = env_userconfig.get("channels_remap", info.get("channels_remap", ()))
-            channel_info = {"channels": env_channels, "channels_remap": remap}
-        else:  # otherwise, just use the global channels here as well
-            channel_info = info
+        env_info = info["extra_envs"][env_name]
+        channel_info = {
+            "channels": env_info.get("channels", info.get("channels", ())),
+            "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ()))
+        }
         lines += template.format(
             name=env_name,
             prefix=join("$INSTDIR", "envs", env_name),
@@ -116,7 +114,8 @@ def setup_envs_commands(info, dir_path):
             env_txt_abspath=join(dir_path, "envs", env_name, "env.txt"),
             conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
             history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
-            channels=",".join(get_final_channels(channel_info))
+            channels=",".join(get_final_channels(channel_info)),
+            shortcuts="",
         ).splitlines()
 
     return [line.strip() for line in lines]

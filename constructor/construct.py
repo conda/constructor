@@ -131,17 +131,21 @@ name) to a dictionary of options:
 - `specs` (list of str): which packages to install in that environment
 - `environment` (str): same as global option, for this env
 - `environment_file` (str): same as global option, for this env
-- `channels` (list of str): using these channels
-- `channels_remap` (list of str): same as global option, for this env
-- `user_requested_specs` (list of str): same as the global option, but for this env
-- `exclude` (list of str): same as the global option, but for this env
-  (not implemented yet)
-- `menu_packages` (list of str): same as the global option, but for this env
-  (not implemented yet)
+- `channels` (list of str): using these channels; if not provided, the global
+  value is used. To override inheritance, set it to an empty list.
+- `channels_remap` (list of str): same as global option, for this env;
+  if not provided, the global value is used. To override inheritance, set it to
+  an empty list.
+- `user_requested_specs` (list of str): same as the global option, but for this env;
+  if not provided, global value is _not_ used
+- `exclude` (list of str): same as the global option, but for this env;
+  if not provided, global value is _not_ used
 
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
 - `conda` needs to be present in the `base` environment (via `specs`)
+- support for `menu_packages` is planned, but not possible right now. For now, all packages
+  in an `extra_envs` config will be allowed to create their shortcuts.
 '''),
 
     ('installer_filename',     False, str, '''
@@ -448,7 +452,9 @@ _EXTRA_ENVS_SCHEMA = {
     "channels_remap": (list, tuple),
     "user_requested_specs": (list, tuple),
     "exclude": (list, tuple),
-    "menu_packages": (list, tuple),
+    # TODO: we can't support menu_packages for extra envs yet
+    # will implement when the PR for new menuinst lands
+    # "menu_packages": (list, tuple),
 }
 
 
