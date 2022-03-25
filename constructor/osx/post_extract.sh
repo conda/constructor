@@ -9,7 +9,7 @@ PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
 
-CONDA_EXEC="$PREFIX/conda.exe"
+CONDA_EXEC="$PREFIX/_conda.exe"
 chmod +x "$CONDA_EXEC"
 
 # Create a blank history file so conda thinks this is an existing env
@@ -39,7 +39,6 @@ fi
 mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
 
 # Cleanup!
-rm -f "$CONDA_EXEC"
 rm -f "$PREFIX/env.txt"
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 

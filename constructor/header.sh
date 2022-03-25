@@ -431,7 +431,7 @@ cd "$PREFIX"
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
 # the first binary payload: the standalone conda executable
-CONDA_EXEC="$PREFIX/conda.exe"
+CONDA_EXEC="$PREFIX/_conda.exe"
 extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 
@@ -499,7 +499,6 @@ POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 
-rm -f $PREFIX/conda.exe
 rm -f $PREFIX/pkgs/env.txt
 
 rm -rf $PREFIX/install_tmp
