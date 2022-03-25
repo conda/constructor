@@ -894,7 +894,11 @@ Section "Install"
 
     SetDetailsPrint TextOnly
     DetailPrint "Setting up the base environment ..."
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" @SHORTCUTS@'
+    ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
+        nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" @SHORTCUTS@'
+    ${Else}
+        nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" --no-shortcuts'
+    ${EndIf}
     Pop $0
     SetDetailsPrint both
 
