@@ -911,12 +911,6 @@ Section "Install"
     SetOutPath "$INSTDIR\conda-meta"
     File __CONDA_HISTORY__
 
-    # Not needed anymore thanks to the new --shortcuts-only arg, set above in @SHORTCUTS@
-    # DetailPrint "Creating @NAME@ menus..."
-    # push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
-    # push 'Failed to create menus'
-    # call AbortRetryNSExecWait
-
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize Anaconda directories'
     call AbortRetryNSExecWait

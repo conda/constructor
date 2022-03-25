@@ -5,7 +5,7 @@ from subprocess import check_call
 import xml.etree.ElementTree as ET
 
 import constructor.preconda as preconda
-from constructor.utils import add_condarc, get_final_channels, rm_rf
+from constructor.utils import add_condarc, get_final_channels, rm_rf, shortcuts_flags
 
 
 OSX_DIR = join(dirname(__file__), "osx")
@@ -143,14 +143,7 @@ def move_script(src, dst, info):
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
-
-    if info.get("menu_packages"):
-        data = data.replace(
-            '__SHORTCUTS__',
-            " ".join([f"--shortcuts-only={pkg.strip()}" for pkg in info['menu_packages']])
-        )
-    else:
-        data = data.replace('__SHORTCUTS__', "")
+    data = data.replace('__SHORTCUTS__', shortcuts_flags(info))
 
     with open(dst, 'w') as fo:
         fo.write(data)

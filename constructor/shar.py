@@ -16,7 +16,7 @@ import tempfile
 from .construct import ns_platform
 from .preconda import files as preconda_files, write_files as preconda_write_files
 from .utils import add_condarc, filename_dist, fill_template, hash_files, preprocess, \
-    read_ascii_only, get_final_channels
+    read_ascii_only, get_final_channels, shortcuts_flags
 
 THIS_DIR = dirname(__file__)
 
@@ -72,14 +72,10 @@ def get_header(conda_exec, tarball, info):
         'INSTALL_COMMANDS': '\n'.join(install_lines),
         'CHANNELS': ','.join(get_final_channels(info)),
         'pycache': '__pycache__',
+        'SHORTCUTS': shortcuts_flags(info),
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
-
-    if info.get("menu_packages"):
-        replace['SHORTCUTS'] = " ".join([f"--shortcuts-only={pkg.strip()}" for pkg in info['menu_packages']])
-    else:
-        replace['SHORTCUTS'] = ""
 
     data = read_header_template()
     data = preprocess(data, ppd)

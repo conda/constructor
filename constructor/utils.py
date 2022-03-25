@@ -175,3 +175,18 @@ def yield_lines(path):
         if not line or line.startswith('#'):
             continue
         yield line
+
+
+def shortcuts_flags(info):
+    menu_packages = info.get("menu_packages")
+    if menu_packages is None:
+        # not set: we create all shortcuts (default behaviour)
+        shortcuts = ""
+    elif menu_packages:
+        # set and populated: we only create shortcuts for some
+        shortcuts = ' '.join([f'--shortcuts-only="{pkg}"' for pkg in menu_packages])
+    else:
+        # set but empty: disable all shortcuts
+        shortcuts = "--no-shortcuts"
+    
+    return shortcuts
