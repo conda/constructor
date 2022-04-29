@@ -89,10 +89,15 @@ def run_examples(keep_artifacts=None):
             if ext == 'sh':
                 cmd = ['bash', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
-                # TODO: figure out how to do a command-line install
-                # to an arbitrary directory. No luck yet. For now
-                # we just expand it out
-                cmd = ['pkgutil', '--expand', fpath, env_dir]
+                if os.environ.get("CI"):
+                    # We want to run it in an arbitrary directory, but the options
+                    # are limited here... We can only install to $HOME :shrug:
+                    # but that will pollute ~, so we only do it if we are running on CI
+                    cmd = ['installer', '-pkg', fpath, '-dumplog',
+                           '-target', 'CurrentUserHomeDirectory']
+                else:
+                    # This command only expands the PKG, but does not install
+                    cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
             errored += _execute(cmd)
