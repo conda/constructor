@@ -107,15 +107,11 @@ def run_examples(keep_artifacts=None):
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
             # more complete logs are available under /var/log/install.log
-            if ext == "pkg" and os.environ.get("CI"):
+            if test_errored and ext == "pkg" and os.environ.get("CI"):
                 logpath = Path("/var/log/install.log")
                 if logpath.exists():
-                    log_lines = logpath.read_text().splitlines()
-                    if test_errored:
-                        print('---  LOGS  ---')
-                        print("\n".join(log_lines[pkg_install_log_lines:]))
-                    pkg_install_log_lines += len(log_lines)
-                    del log_lines
+                    print('---  LOGS  ---')
+                    print(logpath.read_text())
         print('')
 
     if errored:
