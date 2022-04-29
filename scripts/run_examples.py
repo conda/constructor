@@ -9,6 +9,7 @@ import sys
 import tempfile
 import platform
 import shutil
+from pathlib import Path
 
 from constructor.utils import rm_rf
 
@@ -100,9 +101,18 @@ def run_examples(keep_artifacts=None):
                     cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
-            errored += _execute(cmd)
+            test_errored = _execute(cmd)
+            errored += test_errored
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
+            # more complete logs are available under /var/log/install.log
+            if ext == "pkg" and os.environ.get("CI"):
+                logpath = Path("/var/log/install.log")
+                if logpath.exists():
+                    if test_errored:
+                        print('---  LOGS  ---')
+                        print(logpath.read_text())
+                    logpath.unlink()
         print('')
 
     if errored:
