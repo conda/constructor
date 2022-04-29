@@ -4,6 +4,7 @@
 
 # $2 is the install location, which is ~ by default, but which the user can
 # change.
+set -x
 PREFIX="$2/__PKG_NAME_LOWER__"
-
-$PREFIX/bin/conda init --all
+PREFIX=$(cd "$PREFIX"; pwd)
+"$PREFIX/bin/conda" init --all
