@@ -108,10 +108,9 @@ def run_examples(keep_artifacts=None):
                 shutil.move(fpath, keep_artifacts)
             # more complete logs are available under /var/log/install.log
             if test_errored and ext == "pkg" and os.environ.get("CI"):
-                logpath = Path("/var/log/install.log")
-                if logpath.exists():
-                    print('---  LOGS  ---')
-                    print(logpath.read_text())
+                print('---  LOGS  ---')
+                print("Tip: Debug locally and check the full logs in the Installer UI")
+                print("     or check /var/log/install.log if run from the CLI.")
         print('')
 
     if errored:
