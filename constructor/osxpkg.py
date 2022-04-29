@@ -23,7 +23,7 @@ def write_readme(dst, info):
         data = fi.read()
 
     # This is necessary for when installing on case-sensitive macOS filesystems.
-    data = data.replace('__NAME_LOWER__', info['name'].lower())
+    data = data.replace('__PKG_NAME_LOWER__', info.get("pkg_name", info['name']).lower())
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__VERSION__', info['version'])
 
@@ -223,14 +223,29 @@ def modify_xml(xml_path, info):
 
 
 def move_script(src, dst, info):
+    """
+    Fill template scripts preinstall.sh, post_extract.sh and others,
+    and move them to the installer workspace.
+    """
     with open(src) as fi:
         data = fi.read()
 
     # This is necessary for when installing on case-sensitive macOS filesystems.
-    data = data.replace('__NAME_LOWER__', info['name'].lower())
+    pkg_name_lower = info.get("pkg_name", info['name']).lower()
+    data = data.replace('__PKG_NAME_LOWER__', pkg_name_lower)
+    data = data.replace('__VERSION__', info['version'])
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
+
+    default_path_exists_error_text = (
+        "'{CHOSEN_PATH}' already exists. Please, relaunch the installer and "
+        "choose another location in the Destination Select step."
+    )
+    path_exists_error_text = info.get(
+        "install_path_exists_error_text", default_path_exists_error_text
+    ).format(CHOSEN_PATH=f"$2/{pkg_name_lower}")
+    data = data.replace('__PATH_EXISTS_ERROR_TEXT__', path_exists_error_text)
 
     with open(dst, 'w') as fo:
         fo.write(data)
@@ -313,7 +328,7 @@ def create(info, verbose=False):
     PACKAGES_DIR = join(CACHE_DIR, "built_pkgs")
 
     fresh_dir(PACKAGES_DIR)
-    prefix = join(PACKAGE_ROOT, info['name'].lower())
+    prefix = join(PACKAGE_ROOT, info.get("pkg_name", info['name']).lower())
 
     # See http://stackoverflow.com/a/11487658/161801 for how all this works.
 

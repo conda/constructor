@@ -1,6 +1,11 @@
 name: osxpkgtest
 version: 1.2.3
 
+# This config will result in a default install path:
+# ~/Library/osx-pkg-test
+default_location_pkg: Library
+pkg_name: osx-pkg-test
+
 channels:
   - http://repo.anaconda.com/pkgs/main/
 
@@ -60,3 +65,7 @@ conclusion_text: |
 
 # signing_identity_name: "Developer ID Installer: XXX XXXX XXX (XXXXXX)"
 # notarization_identity_name: "Developer ID Application: XXX XXXX XXX (XXXXXX)"
+
+install_path_exists_error_text: >
+  {CHOSEN_PATH} exists! Please update using our in-app mechanisms or
+  relaunch the installer and choose a different location.

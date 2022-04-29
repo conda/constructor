@@ -4,5 +4,5 @@
 
 # $2 is the install location, which is ~ by default
 # but which the user can change.
-PREFIX="$2/__NAME_LOWER__"
+PREFIX="$2/__PKG_NAME_LOWER__"
 rm -rf "$PREFIX/pkgs"

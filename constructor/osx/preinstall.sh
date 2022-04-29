@@ -8,7 +8,7 @@
 # affected by those restrictions, but it's only executed once the installer has begun
 # so the only way to prevent an action is to abort and start again from the beginning.
 
-if [[ -e "$2/__NAME_LOWER__" ]]; then
+if [[ -e "$2/__PKG_NAME_LOWER__" ]]; then
     # The OS X installer provides no way to send a message to the user if this
     # script fails. So we use AppleScript to do it.
 
@@ -17,7 +17,7 @@ if [[ -e "$2/__NAME_LOWER__" ]]; then
     (osascript -e "try
 tell application (path to frontmost application as text)
 set theAlertText to \"Chosen path already exists!\"
-set theAlertMessage to \"'$2/__NAME_LOWER__' already exists. Please, relaunch the installer and choose another location in the Destination Select step.\"
+set theAlertMessage to \"__PATH_EXISTS_ERROR_TEXT__\"
 display alert theAlertText message theAlertMessage as critical buttons {\"OK\"} default button {\"OK\"}
 end
 activate app (path to frontmost application as text)
@@ -32,7 +32,7 @@ case "$2" in
            (osascript -e "try
 tell application (path to frontmost application as text)
 set theAlertText to \"Chosen path contain spaces!\"
-set theAlertMessage to \"'$2/__NAME_LOWER__' contains spaces. Please, relaunch the installer and choose another location in the Destination Select step.\"
+set theAlertMessage to \"'$2/__PKG_NAME_LOWER__' contains spaces. Please, relaunch the installer and choose another location in the Destination Select step.\"
 display alert theAlertText message theAlertMessage as critical buttons {\"OK\"} default button {\"OK\"}
 end
 activate app (path to frontmost application as text)
