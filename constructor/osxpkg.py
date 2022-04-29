@@ -315,7 +315,11 @@ def pkgbuild_script(name, info, src, dst='postinstall'):
     fresh_dir(SCRIPTS_DIR)
     fresh_dir(PACKAGE_ROOT)
     move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info)
-    pkgbuild(name, identifier=info.get("reverse_domain_identifier"))
+    pkgbuild(
+        name,
+        identifier=info.get("reverse_domain_identifier"),
+        install_location=info.get("default_location_pkg"),
+    )
     rm_rf(SCRIPTS_DIR)
 
 
