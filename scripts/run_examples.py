@@ -72,6 +72,7 @@ def run_examples(keep_artifacts=None):
 
     parent_output = tempfile.mkdtemp()
     tested_files = set()
+    pkg_install_log_lines = 0
     for example_path in sorted(example_paths):
         print(example_path)
         print('-' * len(example_path))
@@ -109,10 +110,12 @@ def run_examples(keep_artifacts=None):
             if ext == "pkg" and os.environ.get("CI"):
                 logpath = Path("/var/log/install.log")
                 if logpath.exists():
+                    log_lines = logpath.read_text().splitlines()
                     if test_errored:
                         print('---  LOGS  ---')
-                        print(logpath.read_text())
-                    logpath.unlink()
+                        print("\n".join(log_lines[pkg_install_log_lines:]))
+                    pkg_install_log_lines += len(log_lines)
+                    del log_lines
         print('')
 
     if errored:
