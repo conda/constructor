@@ -10,7 +10,7 @@ EOF
 
 unset DYLD_LIBRARY_PATH
 
-PREFIX="$2/__PKG_NAME_LOWER__"
+PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"

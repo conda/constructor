@@ -23,7 +23,7 @@ def write_readme(dst, info):
         data = fi.read()
 
     # This is necessary for when installing on case-sensitive macOS filesystems.
-    data = data.replace('__PKG_NAME_LOWER__', info.get("pkg_name", info['name']).lower())
+    data = data.replace('__NAME_LOWER__', info.get("pkg_name", info['name']).lower())
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__VERSION__', info['version'])
 
@@ -232,7 +232,7 @@ def move_script(src, dst, info):
 
     # This is necessary for when installing on case-sensitive macOS filesystems.
     pkg_name_lower = info.get("pkg_name", info['name']).lower()
-    data = data.replace('__PKG_NAME_LOWER__', pkg_name_lower)
+    data = data.replace('__NAME_LOWER__', pkg_name_lower)
     data = data.replace('__VERSION__', info['version'])
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
