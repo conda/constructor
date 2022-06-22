@@ -280,7 +280,7 @@ def add_to_path(pyversion, arch):
 def rm_regkeys():
     cmdproc_reg_entry = NSISReg(r'Software\Microsoft\Command Processor')
     cmdproc_autorun_val = cmdproc_reg_entry.get('AutoRun')
-    conda_hook_regex_pat = r'(if exist \"[^\"]*?conda[-_]hook\.bat\" \"[^\"]*?conda[-_]hook\.bat\")'
+    conda_hook_regex_pat = r'((\s+&\s+)?(if exist)?(\s?\"[^\"]*?conda[-_]hook\.bat\"))'
     if join(ROOT_PREFIX, 'condabin') in (cmdproc_autorun_val or ''):
         cmdproc_autorun_newval = re.sub(conda_hook_regex_pat, '',
                                         cmdproc_autorun_val)
