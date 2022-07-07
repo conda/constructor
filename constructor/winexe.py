@@ -43,6 +43,26 @@ def pkg_commands(download_dir, dists):
         yield 'File %s' % str_esc(join(download_dir, fn))
 
 
+def signtool_command(info):
+    "Generates a signtool command to be used in the NSIS template"
+    pfx_certificate = info.get("signing_certificate")
+    if pfx_certificate:
+        signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
+        password = os.environ.get("CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD")
+        timestamp_server = os.environ.get(
+            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
+            "http://timestamp.sectigo.com"
+        )
+        command = (
+            f'{str_esc(signtool)} sign /f {str_esc(pfx_certificate)} '
+            f'/tr {str_esc(timestamp_server)} /td sha256 /fd sha256'
+        )
+        if password:
+            command += f' /p {str_esc(password)}'
+        return command
+    return ""
+
+
 def make_nsi(info, dir_path):
     "Creates the tmp/main.nsi from the template file"
     name = info['name']
@@ -121,6 +141,7 @@ def make_nsi(info, dir_path):
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
+        ('@SIGNTOOL_COMMAND@', signtool_command(info)),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
@@ -169,8 +190,17 @@ Error: no file %s
         sys.exit("Error: no file untgz.dll")
 
 
+def verify_signtool_install(info):
+    if not info.get("signing_certificate"):
+        return
+    signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
+    print(f"Checking for {signtool}...")
+    check_call([signtool])
+
+
 def create(info, verbose=False):
     verify_nsis_install()
+    verify_signtool_install(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
@@ -217,32 +247,11 @@ def create(info, verbose=False):
     else:
         check_call(args)
 
-    # Signing
-    pfx_certificate = info.get("signing_certificate")
-    if pfx_certificate:
+    if info.get("signing_certificate"):
+        # Verify installer was properly signed by NSIS
         signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-        password = os.environ.get("CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD")
-        timestamp_server = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
-            "http://timestamp.sectigo.com"
-        )
-        args = [
-            signtool, "sign", "/f", pfx_certificate, "/tr",
-            timestamp_server, "/td", "sha256", "/fd", "sha256"
-        ]
-        if password:
-            args += ["/p", password]
-        args.append(info["_outpath"])
-        print("Signing installer with", pfx_certificate)
-        if verbose:
-            sub = Popen(args, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-            stdout, stderr = sub.communicate()
-            for msg, information in zip((stdout, stderr), ('stdout', 'stderr')):
-                print(f"signtool ({information}):")
-                print(msg)
-            sub.check_returncode()
-        else:
-            check_call(args)
+        check_call([signtool, "verify", info['_outpath']])
+
     shutil.rmtree(tmp_dir)
 
 
