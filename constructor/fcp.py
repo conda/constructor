@@ -16,9 +16,10 @@ import sys
 import tempfile
 
 from constructor.utils import hash_files, filename_dist
+from constructor.toolz import concatv, groupby
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
-                              VersionOrder, concatv, conda_context, conda_replace_context_default,
-                              download, env_vars, groupby, read_paths_json, all_channel_urls,
+                              VersionOrder, conda_context, conda_replace_context_default,
+                              download, env_vars, read_paths_json, all_channel_urls,
                               cc_platform)
 
 

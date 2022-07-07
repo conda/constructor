@@ -28,9 +28,6 @@ if conda_interface_type == 'conda':
     # Flatten VersionOrder.version, skip epoch, and keep only major and minor
     CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
-    from conda._vendor.toolz.itertoolz import (
-        concatv as _concatv, get as _get, groupby as _groupby,
-    )
     from conda.api import SubdirData # noqa
     from conda.base.context import (
         context as _conda_context, replace_context_default as _conda_replace_context_default,
