@@ -8,15 +8,17 @@ fcp (fetch conda packages) module
 """
 from __future__ import absolute_import, division, print_function
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 import json
 import os
 from os.path import isdir, isfile, join, splitext
+from itertools import groupby
+
 import sys
 import tempfile
 
 from constructor.utils import hash_files, filename_dist
-from constructor.toolz import concatv, groupby
+from constructor.toolz import concatv
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, conda_context, conda_replace_context_default,
                               download, env_vars, read_paths_json, all_channel_urls,
@@ -45,11 +47,12 @@ def warn_menu_packages_missing(precs, menu_packages):
 
 
 def check_duplicates(precs):
-    groups = groupby(lambda x: x.name, precs)
-    for precs in groups.values():
-        if len(precs) > 1:
-            sys.exit("Error: '%s' listed multiple times: %s" %
-                     (precs[0].name, ', '.join(prec.fn for prec in precs)))
+    prec_counts = Counter(prec.name for prec in precs)
+
+    for name, count in prec_counts.items():
+        if count > 1:
+            filenames = (prec.fn for prec in precs if prec.name == name)
+            sys.exit(f"Error: {name} listed multiple times: {' , '.join(filenames)}")
 
 
 def exclude_packages(precs, exclude=()):
@@ -58,7 +61,8 @@ def exclude_packages(precs, exclude=()):
             if bad_char in name:
                 sys.exit("Error: did not expect '%s' in package name: %s" % (bad_char, name))
 
-    groups = groupby(lambda x: x.name in exclude, precs)
+    groups = groupby(precs, lambda x: x.name in exclude)
+    groups = {group_key: list(values) for group_key, values in groups}
     excluded_precs = groups.get(True, [])
     accepted_precs = groups.get(False, [])
     for name in exclude:
