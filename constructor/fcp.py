@@ -12,13 +12,12 @@ from collections import defaultdict, Counter
 import json
 import os
 from os.path import isdir, isfile, join, splitext
-from itertools import groupby
+from itertools import groupby, chain
 
 import sys
 import tempfile
 
 from constructor.utils import hash_files, filename_dist
-from constructor.toolz import concatv
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, conda_context, conda_replace_context_default,
                               download, env_vars, read_paths_json, all_channel_urls,
@@ -250,15 +249,17 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
           transmute_file_type=''):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
-    specs = list(concatv(specs, ("python",)))
+    specs = (specs, ("python",))
+    specs = list(chain.from_iterable(specs))
     if verbose:
         print("specs: %r" % specs)
 
     # Append channels_remap srcs to channel_urls
-    channel_urls = tuple(concatv(
+    channel_urls = (
         channel_urls,
         (x['src'] for x in channels_remap),
-    ))
+    )
+    channel_urls = tuple(chain.from_iterable(channel_urls))
 
     if environment_file or environment:
         # set conda to be the user's conda (what is in the environment)
