@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from unittest import mock
+from contextlib import nullcontext
 
 import pytest
 
-from constructor.fcp import check_duplicates
+from constructor.fcp import check_duplicates, exclude_packages
 
 
 class GenericObject:
@@ -12,6 +12,9 @@ class GenericObject:
     def __init__(self, name):
         self.name = name
         self.fn = 'filename.txt'
+
+    def __eq__(self, other):
+        return self.name == other.name
 
 
 @pytest.mark.parametrize('values,expected_fails', (
@@ -26,6 +29,37 @@ class GenericObject:
     ),
 ))
 def test_check_duplicates(values: tuple[..., GenericObject], expected_fails: int):
-    with mock.patch('constructor.fcp.sys.exit') as sys_exit:
+    if expected_fails:
+        context = pytest.raises(SystemExit)
+    else:
+        context = nullcontext()
+
+    with context:
         check_duplicates(values)
-        assert len(sys_exit.mock_calls) == expected_fails
+
+
+@pytest.mark.parametrize('values,expected_value', (
+    (
+        (
+            (GenericObject('NameOne'), GenericObject('NameTwo'), GenericObject('NameThree')),
+            ('NameThree',)
+        ),
+        [GenericObject('NameOne'), GenericObject('NameTwo')]
+    ),
+    (
+        (
+            (GenericObject('NameOne'), GenericObject('NameTwo'), GenericObject('NameThree')),
+            ('Not in list',)
+        ),
+        False
+    ),
+))
+def test_exclude_packages(values: tuple[..., GenericObject], expected_value):
+    if expected_value is False:
+        context = pytest.raises(SystemExit)
+    else:
+        context = nullcontext()
+
+    with context:
+        packages = exclude_packages(*values)
+        assert packages == expected_value

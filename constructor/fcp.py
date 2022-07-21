@@ -46,11 +46,11 @@ def warn_menu_packages_missing(precs, menu_packages):
 
 
 def check_duplicates(precs):
-    prec_counts = Counter(prec.name for prec in precs)
+    prec_groups = {key: tuple(value) for key, value in groupby(precs, lambda prec: prec.name)}
 
-    for name, count in prec_counts.items():
-        if count > 1:
-            filenames = (prec.fn for prec in precs if prec.name == name)
+    for name, precs in prec_groups.items():
+        filenames = sorted(prec.fn for prec in precs)
+        if len(filenames) > 1:
             sys.exit(f"Error: {name} listed multiple times: {' , '.join(filenames)}")
 
 
@@ -60,14 +60,11 @@ def exclude_packages(precs, exclude=()):
             if bad_char in name:
                 sys.exit("Error: did not expect '%s' in package name: %s" % (bad_char, name))
 
-    groups = groupby(precs, lambda x: x.name in exclude)
-    groups = {group_key: list(values) for group_key, values in groups}
-    excluded_precs = groups.get(True, [])
-    accepted_precs = groups.get(False, [])
-    for name in exclude:
-        if not any(prec.name == name for prec in excluded_precs):
-            sys.exit("Error: no package named '%s' to remove" % name)
-    return accepted_precs
+    unknown_precs = set(exclude).difference(prec.name for prec in precs)
+    if unknown_precs:
+        sys.exit(f"Error: no package(s) named {', '.join(unknown_precs)} to remove")
+
+    return [prec for prec in precs if prec.name not in exclude]
 
 
 def _find_out_of_date_precs(precs, channel_urls, platform):
@@ -249,17 +246,12 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
           transmute_file_type=''):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
-    specs = (specs, ("python",))
-    specs = list(chain.from_iterable(specs))
+    specs = (*specs, "python")
     if verbose:
         print("specs: %r" % specs)
 
     # Append channels_remap srcs to channel_urls
-    channel_urls = (
-        channel_urls,
-        (x['src'] for x in channels_remap),
-    )
-    channel_urls = tuple(chain.from_iterable(channel_urls))
+    channel_urls = (*channel_urls, *(x['src'] for x in channels_remap))
 
     if environment_file or environment:
         # set conda to be the user's conda (what is in the environment)
