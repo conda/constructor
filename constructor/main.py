@@ -119,7 +119,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     # '_platform', '_download_dir', '_outpath'
     # 'specs': ['python 3.5*', 'conda', 'nomkl', 'numpy', 'scipy', 'pandas',
     #           'notebook', 'matplotlib', 'lighttpd']
-    # 'license_file': '/Users/kfranz/continuum/constructor/examples/maxiconda/EULA.txt'
+    # 'license_file': '/Users/kfranz/continuum/constructor/examples/miniconda/EULA.txt'
     # '_dists': List[Dist]
     # '_urls': List[Tuple[url, md5]]
 

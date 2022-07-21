@@ -101,5 +101,5 @@ def write_images(info, dir_path):
 if __name__ == '__main__':
     info = {'name': 'test', 'version': '0.3.1',
             'default_image_color': 'yellow',
-            'welcome_image': '../examples/maxiconda/bird.png'}
+            'welcome_image': '../examples/miniconda/bird.png'}
     write_images(info, '.')
