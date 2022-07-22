@@ -72,7 +72,6 @@ def run_examples(keep_artifacts=None):
 
     parent_output = tempfile.mkdtemp()
     tested_files = set()
-    pkg_install_log_lines = 0
     for example_path in sorted(example_paths):
         print(example_path)
         print('-' * len(example_path))
