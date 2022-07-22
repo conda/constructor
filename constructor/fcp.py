@@ -8,11 +8,11 @@ fcp (fetch conda packages) module
 """
 from __future__ import absolute_import, division, print_function
 
-from collections import defaultdict, Counter
+from collections import defaultdict
 import json
 import os
 from os.path import isdir, isfile, join, splitext
-from itertools import groupby, chain
+from itertools import groupby
 
 import sys
 import tempfile
