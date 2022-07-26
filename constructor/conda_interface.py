@@ -40,7 +40,6 @@ if conda_interface_type == 'conda':
         PackageCacheData as _PackageCacheData,
     )
     from conda.core.prefix_data import PrefixData as _PrefixData
-    from conda.core.solve import Solver as _Solver
     from conda.exports import default_prefix as _default_prefix
     from conda.models.channel import all_channel_urls as _all_channel_urls
     from conda.gateways.disk.read import read_paths_json as _read_paths_json
@@ -52,6 +51,11 @@ if conda_interface_type == 'conda':
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:
         from conda.models.package_cache_record import PackageCacheRecord as _PackageCacheRecord
+    try:
+        from conda.core.solve import _get_solver_class
+        _Solver = _get_solver_class()
+    except ImportError:
+        from conda.core.solve import Solver as _Solver
 
     # used by fcp.py
     PackageCacheData = _PackageCacheData
