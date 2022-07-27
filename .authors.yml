@@ -231,12 +231,12 @@
   first_commit: 2021-03-24 12:38:03
 - name: Isuru Fernando
   email: isuruf@gmail.com
-  num_commits: 21
+  num_commits: 22
   first_commit: 2020-02-08 00:55:25
   github: isuruf
 - name: Jannis Leidel
   email: jannis@leidel.info
-  num_commits: 2
+  num_commits: 1
   first_commit: 2021-08-26 05:18:15
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
@@ -253,13 +253,13 @@
   first_commit: 2021-05-24 08:52:40
 - name: conda-bot
   email: ad-team+condabot@anaconda.com
-  num_commits: 3
+  num_commits: 4
   first_commit: 2022-01-25 21:38:28
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
   aliases:
   - Jaime RGP
-  num_commits: 3
+  num_commits: 6
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören

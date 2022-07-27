@@ -24,7 +24,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 REPO_DIR = os.path.dirname(HERE)
 EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
 PY3 = sys.version_info[0] == 3
-WHITELIST = ['grin', 'jetsonconda', 'maxiconda', 'newchan']
+WHITELIST = ['grin', 'jetsonconda', 'miniconda', 'newchan']
 BLACKLIST = []
 
 
@@ -122,7 +122,7 @@ def run_examples(keep_artifacts=None):
 
 
 if __name__ == '__main__':
-    if sys.argv[1].startswith('--keep-artifacts='):
+    if len(sys.argv) >=2 and sys.argv[1].startswith('--keep-artifacts='):
         keep_artifacts = sys.argv[1].split("=")[1]
     else:
         keep_artifacts = None

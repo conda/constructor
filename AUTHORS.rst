@@ -18,12 +18,12 @@ Authors are sorted by number of commits.
 * Forrest Waters
 * Angela Gloyna
 * Anthony Scopatz
+* Jaime Rodríguez-Guerra
 * Martin Durant
 * Aaron Stevens
 * Thomas Holder
 * Eric Dill
 * conda-bot
-* Jaime Rodríguez-Guerra
 * Tobias Megies
 * Matthew Newville
 * Jean-Luc Stevens
@@ -32,7 +32,6 @@ Authors are sorted by number of commits.
 * Thomas Antony
 * Phil Elson
 * Rachel Rigdon
-* Jannis Leidel
 * Gonzalo Pena-Castellanos
 * y2kbugger
 * bkreider
@@ -46,6 +45,7 @@ Authors are sorted by number of commits.
 * astaric
 * Pradipta Ghosh
 * Connor Martin
+* Jannis Leidel
 * Wolf Vollprecht
 * XuehaiPan
 * Tom Hören
