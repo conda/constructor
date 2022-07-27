@@ -222,13 +222,19 @@ variables. This option is not supported for Windows `.exe` or macOS
 '''),
 
     ('post_install',           False, str, '''
-Path to a post-install script. For Unix `.sh` installers, the shebang
-line is respected if present; otherwise, the script is run by the POSIX
-shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. Metadata about the installer can be found in the
-`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
-variables. For Windows `.exe` installers, this must be a `.bat` file.
-This option is not supported for macOS `.pkg` installers.
+Path to a post-install script. Some notes:
+
+- For Unix `.sh` installers, the shebang line is respected if present; 
+  otherwise, the script is run by the POSIX shell `sh`. Note that the use 
+  of a shebang can reduce the portability of the installer. The 
+  installation path is available as `$PREFIX`. More info about the installer 
+  can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, 
+  `${INSTALLER_PLAT}` environment   variables.
+- For Windows `.exe` installers, the script must be a `.bat` file. 
+  Installation path is available as `%PREFIX%`.
+- For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
+  `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
+  this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
 '''),
 
     ('post_install_desc',      False, str, '''
