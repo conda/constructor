@@ -287,13 +287,19 @@ variables. This option is not supported for Windows `.exe` or macOS
 
 _required:_ no<br/>
 _type:_ string<br/>
-Path to a post-install script. For Unix `.sh` installers, the shebang
-line is respected if present; otherwise, the script is run by the POSIX
-shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. Metadata about the installer can be found in the
-`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
-variables. For Windows `.exe` installers, this must be a `.bat` file.
-This option is not supported for macOS `.pkg` installers.
+Path to a post-install script. Some notes:
+
+- For Unix `.sh` installers, the shebang line is respected if present; 
+  otherwise, the script is run by the POSIX shell `sh`. Note that the use 
+  of a shebang can reduce the portability of the installer. The 
+  installation path is available as `$PREFIX`. More info about the installer 
+  can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, 
+  `${INSTALLER_PLAT}` environment   variables.
+- For Windows `.exe` installers, the script must be a `.bat` file. 
+  Installation path is available as `%PREFIX%`.
+- For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
+  `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
+  this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
 
 ## `post_install_desc`
 
@@ -344,14 +350,35 @@ _required:_ no<br/>
 _type:_ string<br/>
 Default installation subdirectory in the chosen volume. In PKG installers,
 default installation locations are configured differently. The user can choose
-between a "Just me" installation (which would result in `~/<NAME>`) or another
-volume (which defaults to `<VOLUME>/<NAME>`). If you want a different default,
+between a "Just me" installation (which would result in `~/<PKG_NAME>`) or another
+volume (which defaults to `<VOLUME>/<PKG_NAME>`). If you want a different default,
 you can add a middle component with this option, let's call it `location`. It would
-result in these default values: `~/<LOCATION>/<NAME>` for "Just me",
-`<VOLUME>/<LOCATION>/<NAME>` for custom volumes. For example, setting this option
-to `/Library` in a "Just me" installation will give you `~/Library/<NAME>`.
+result in these default values: `~/<LOCATION>/<PKG_NAME>` for "Just me",
+`<VOLUME>/<LOCATION>/<PKG_NAME>` for custom volumes. For example, setting this option
+to `/Library` in a "Just me" installation will give you `~/Library/<PKG_NAME>`.
 Internally, this is passed to `pkgbuild --install-location`.
 macOS only.
+
+## `pkg_name`
+
+_required:_ no<br/>
+_type:_ string<br/>
+Internal identifier for the installer. This is used in the build prefix and will
+determine part of the default location path. Combine with `default_location_pkg`
+for more flexibility. If not provided, the value of `name` will be used.  (MacOS only)
+
+## `install_path_exists_error_text`
+
+_required:_ no<br/>
+_type:_ string<br/>
+Error message that will be shown if the installation path already exists.
+You cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is
+available and set to the destination causing the error. Defaults to:
+
+> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and
+> choose another location in the Destination Select step.
+
+(MacOS only)
 
 ## `welcome_image`
 
