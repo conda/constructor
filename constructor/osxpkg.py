@@ -56,7 +56,7 @@ def modify_xml(xml_path, info):
     root = tree.getroot()
 
     title = ET.Element('title')
-    title.text = info['name']
+    title.text = f"{info['name']} {info['version']}"
     root.append(title)
 
     license = ET.Element('license', file=info.get('license_file',
