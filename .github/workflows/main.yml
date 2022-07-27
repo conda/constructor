@@ -69,6 +69,8 @@ jobs:
             echo "Installed constructor is not local!"
             exit 1
           fi
+          constructor --version
+          constructor --help-construct
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
       - name: Upload the example installers as artifacts

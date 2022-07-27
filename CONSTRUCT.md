@@ -235,7 +235,7 @@ If set, a `.condarc` file is written to the base environment containing the cont
 of this value. The value can either be a string (likely a multi-line string) or
 a dictionary, which will be converted to a YAML string for writing. _Note:_ if this
 option is used, then all other options related to the construction of a `.condarc`
-file&mdash;`write_condarc`, `conda_default_channels`, etc.&mdash;are ignored.
+file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
 
 ## `company`
 
@@ -257,7 +257,9 @@ _type:_ string<br/>
 Path to a pre-install script. For Unix `.sh` installers, the shebang
 line is respected if present; otherwise, the script is run by the POSIX
 shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. This option is not supported for Windows `.exe` or macOS
+the installer. Metadata about the installer can be found in the
+`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
+variables. This option is not supported for Windows `.exe` or macOS
 `.pkg` installers.
 
 ## `post_install`
@@ -267,7 +269,9 @@ _type:_ string<br/>
 Path to a post-install script. For Unix `.sh` installers, the shebang
 line is respected if present; otherwise, the script is run by the POSIX
 shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. For Windows `.exe` installers, this must be a `.bat` file.
+the installer. Metadata about the installer can be found in the
+`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
+variables. For Windows `.exe` installers, this must be a `.bat` file.
 This option is not supported for macOS `.pkg` installers.
 
 ## `post_install_desc`
