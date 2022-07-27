@@ -24,7 +24,7 @@ touch $PREFIX/conda-meta/history
 
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place
-notify "Preparing packages..."
+logger -p 'install.info' "Preparing packages..."
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs
 if (( $? )); then
     echo "ERROR: could not extract the conda packages"
@@ -32,7 +32,7 @@ if (( $? )); then
 fi
 
 # Perform the conda install
-notify "Installing packages. This might take a few minutes."
+logger -p 'install.info' "Installing packages. This might take a few minutes."
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
@@ -63,7 +63,7 @@ fi
 # install location, the permissions will default to root unless this is done.
 chown -R $USER "$PREFIX"
 
-notify "Done! Installation is available in $PREFIX."
+logger -p 'install.info' "Done! Installation is available in $PREFIX."
 echo "installation to $PREFIX finished."
 
 exit 0
