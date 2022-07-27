@@ -142,7 +142,8 @@ as `sh` on Linux and `exe` on Windows.
 
     ('license_file',           False, str, '''
 Path to the license file being displayed by the installer during the install
-process.
+process. It must be plain text (.txt) for shell-based installers. On PKG,
+.txt, .rtf and .html are supported. On Windows, .txt and .rtf are supported.
 '''),
 
     ('keep_pkgs',              False, bool, '''
@@ -162,8 +163,18 @@ an interactive wizard guiding the user through the available options. If
     ('signing_identity_name',  False, str, '''
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
 using this option, it will be used to sign the installer. Note that you will need
-to have a certificate and corresponding private key together called an 'identity'
-in one of your accessible keychains.
+to have a certificate (usually an "Installer certificate") and corresponding
+private key together called an 'identity' in one of your accessible keychains.
+Common values for this option follow this format
+`Developer ID Installer: Name of the owner (XXXXXX)`.
+'''),
+
+    ('notarization_identity_name', False, str, '''
+If the pkg installer is going to be signed with `signing_identity_name`, you
+can also prepare the bundle for notarization. This will use `codesign` to sign `conda.exe`.
+For this, you need an "Application certificate" (different from the "Installer certificate"
+mentioned above). Common values for this option follow this format
+`Developer ID Application: Name of the owner (XXXXXX)`.
 '''),
 
     ('attempt_hardlinks',          False, (bool, str), '''
@@ -187,6 +198,12 @@ file&mdash;`write_condarc`, `conda_default_channels`, etc.&mdash;are ignored.
 
     ('company',                False, str, '''
 Name of the company/entity who is responsible for the installer.
+'''),
+
+    ('reverse_domain_identifier', False, str, '''
+Unique identifier for this package, formatted with reverse domain notation. This is
+used internally in the PKG installers to handle future updates and others. If not
+provided, it will default to `io.continuum`. (MacOS only)
 '''),
 
     ('uninstall_name',         False, str, '''
@@ -247,11 +264,43 @@ the installation prefix for all users installation will be
 `${ALLUSERSPROFILE}\${NAME}`. Windows only.
 '''),
 
+    ('default_location_pkg', False, str, '''
+Default installation subdirectory in the chosen volume. In PKG installers,
+default installation locations are configured differently. The user can choose
+between a "Just me" installation (which would result in `~/<PKG_NAME>`) or another
+volume (which defaults to `<VOLUME>/<PKG_NAME>`). If you want a different default,
+you can add a middle component with this option, let's call it `location`. It would
+result in these default values: `~/<LOCATION>/<PKG_NAME>` for "Just me",
+`<VOLUME>/<LOCATION>/<PKG_NAME>` for custom volumes. For example, setting this option
+to `/Library` in a "Just me" installation will give you `~/Library/<PKG_NAME>`.
+Internally, this is passed to `pkgbuild --install-location`.
+macOS only.
+'''),
+
+    ('pkg_name', False, str, '''
+Internal identifier for the installer. This is used in the build prefix and will
+determine part of the default location path. Combine with `default_location_pkg`
+for more flexibility. If not provided, the value of `name` will be used.  (MacOS only)
+'''),
+
+    ('install_path_exists_error_text', False, str, '''
+Error message that will be shown if the installation path already exists.
+You cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is
+available and set to the destination causing the error. Defaults to:
+
+> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and
+> choose another location in the Destination Select step.
+
+(MacOS only)
+'''),
+
     ('welcome_image',          False, str, '''
 Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
-to be used as the welcome image for the Windows installer.
-The image is re-sized to 164 x 314 pixels.
-By default, an image is automatically generated.
+to be used as the welcome image for the Windows and PKG installers.
+The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on Macos.
+By default, an image is automatically generated on Windows. On MacOS, Anaconda's
+logo is shown if this key is not provided. If you don't want a background on
+PKG installers, set this key to `""` (empty string).
 '''),
 
     ('header_image',           False, str, '''
@@ -270,7 +319,7 @@ The default is `blue`.
 
     ('welcome_image_text',     False, str, '''
 If `welcome_image` is not provided, use this text when generating the image
-(Windows only). Defaults to `name`.
+(Windows and PKG only). Defaults to `name` on Windows.
 '''),
 
     ('header_image_text',      False, str, '''
@@ -287,24 +336,73 @@ is able to change the default during interactive installation.
     ('register_python_default',  False, bool, '''
 Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
-interactive installation. (Windows only)
+interactive installation. (Windows only).
 '''),
 
     ('check_path_length',     False, bool, '''
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter path (less than 46 character)
-or enable long path on windows > 10 (require admin right). Default is True. (Windows only)
+or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
 '''),
 
     ('check_path_spaces',     False, bool, '''
 Check if the path where the distribution is installed contains spaces and show a warning
-if any spaces are found. Default is True. (Windows only)
+if any spaces are found. Default is True. (Windows only).
 '''),
-    ('nsis_template',           False, str, '''
 
-If ``nsis_template`` is not provided, constructor uses its default
+    ('nsis_template',           False, str, '''
+If `nsis_template` is not provided, constructor uses its default
 NSIS template. For more complete customization for the installation experience,
-provide an NSIS template file. (Windows only)
+provide an NSIS template file. (Windows only).
+'''),
+
+    ('welcome_file', False, str, '''
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the introduction.
+File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
+both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
+(MacOS only).
+'''),
+
+    ('welcome_text', False, str, '''
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the introduction.
+If this key is missing, it defaults to a message about Anaconda Cloud.
+You can disable it altogether so it defaults to the system message
+if you set this key to `""` (empty string).
+(MacOS only).
+'''),
+
+    ('readme_file', False, str, '''
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the welcome screen.
+File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
+both `readme_file` and `readme_text` are provided, `readme_file` takes precedence.
+(MacOS only).
+'''),
+
+    ('readme_text', False, str, '''
+If `installer_type` is `pkg` on MacOS, this message will be
+shown before the license information, right after the welcome screen.
+If this key is missing, it defaults to a message about Anaconda Cloud.
+You can disable it altogether if you set this key to `""` (empty string).
+(MacOS only).
+'''),
+
+    ('conclusion_file', False, str, '''
+If `installer_type` is `pkg` on MacOS, this message will be
+shown at the end of the installer upon success. File can be
+plain text (.txt), rich text (.rtf) or HTML (.html). If both
+`conclusion_file` and `conclusion_text` are provided,
+`conclusion_file` takes precedence. (MacOS only).
+'''),
+
+    ('conclusion_text', False, str, '''
+If `installer_type` is `pkg` on MacOS, this message will be
+shown at the end of the installer upon success. If this key is missing,
+it defaults to a message about Anaconda Cloud. You can disable it altogether
+so it defaults to the system message if you set this key to `""` (empty string).
+(MacOS only).
 '''),
     ('extra_files', False, (list), '''
 Extra, non-packaged files that should be added to the installer. If provided as relative

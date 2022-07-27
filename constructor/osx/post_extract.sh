@@ -2,6 +2,12 @@
 # Copyright (c) 2017 Anaconda, Inc.
 # All rights reserved.
 
+notify() {
+osascript <<EOF
+display notification "$1" with title "📦 Install __NAME__ __VERSION__"
+EOF
+}
+
 unset DYLD_LIBRARY_PATH
 
 PREFIX="$2/__NAME_LOWER__"
@@ -18,6 +24,7 @@ touch $PREFIX/conda-meta/history
 
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place
+notify "Preparing packages..."
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs
 if (( $? )); then
     echo "ERROR: could not extract the conda packages"
@@ -25,6 +32,7 @@ if (( $? )); then
 fi
 
 # Perform the conda install
+notify "Installing packages. This might take a few minutes."
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
@@ -55,6 +63,7 @@ fi
 # install location, the permissions will default to root unless this is done.
 chown -R $USER "$PREFIX"
 
-echo "installation finished."
+notify "Done! Installation is available in $PREFIX."
+echo "installation to $PREFIX finished."
 
 exit 0

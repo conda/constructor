@@ -18,7 +18,7 @@ from pathlib import PureWindowsPath
 from .construct import ns_platform
 from .imaging import write_images
 from .preconda import copy_extra_files, write_files as preconda_write_files
-from .utils import (filename_dist, fill_template, make_VIProductVersion,
+from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels)
 
 THIS_DIR = abspath(dirname(__file__))
@@ -74,7 +74,7 @@ def make_nsi(info, dir_path, extra_files=()):
         'VERSION': info['version'],
         'COMPANY': info.get('company', 'Unknown, Inc.'),
         'ARCH': '%d-bit' % arch,
-        'PY_VER': py_version[:3],
+        'PY_VER': ".".join(py_version.split(".")[:2]),
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
         'PYVERSION': py_version,
         'PYVERSION_MAJOR': py_version.split('.')[0],
@@ -126,9 +126,7 @@ def make_nsi(info, dir_path, extra_files=()):
                 break
         data = "\n".join(data_lines)
 
-    # division by 10^3 instead of 2^10 is deliberate here. gives us more room
-    approx_pkgs_size_kb = int(
-        math.ceil(info.get('_approx_pkgs_size', 0) / 1000))
+    approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
     # these are unescaped (and unquoted)
     for key, value in [

@@ -1,4 +1,16 @@
 .. current developments
+2022-03-14   3.3.1:
+===================
+
+Bug fixes:
+----------
+
+* Fix building examples in CI. (#502, #504, #505)
+
+* Fix truncated Python version if minor has two digits on Windows,
+  e.g. "3.10". (#506)
+
+
 
 2022-03-12   3.3.0:
 ===================
