@@ -1,4 +1,15 @@
 .. current developments
+
+XXXX-XX-XX   X.X.X:
+===================
+
+Enhancements:
+-------------
+
+* The graphical macOS installers now use the macOS logging system to log
+  messages. Previously, notification badges would be displayed. (#535)
+
+
 2022-03-14   3.3.1:
 ===================
 
