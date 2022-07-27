@@ -6,7 +6,7 @@ XXXX-XX-XX   X.X.X:
 Enhancements:
 -------------
 
-* The graphical macOS installers now use the macOS logging system to log
+* macOS installers now use the macOS logging system to log
   messages. Previously, notification badges would be displayed. (#535)
 
 
