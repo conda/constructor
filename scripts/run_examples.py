@@ -9,6 +9,7 @@ import sys
 import tempfile
 import platform
 import shutil
+from pathlib import Path
 
 from constructor.utils import rm_rf
 
@@ -89,15 +90,26 @@ def run_examples(keep_artifacts=None):
             if ext == 'sh':
                 cmd = ['bash', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
-                # TODO: figure out how to do a command-line install
-                # to an arbitrary directory. No luck yet. For now
-                # we just expand it out
-                cmd = ['pkgutil', '--expand', fpath, env_dir]
+                if os.environ.get("CI"):
+                    # We want to run it in an arbitrary directory, but the options
+                    # are limited here... We can only install to $HOME :shrug:
+                    # but that will pollute ~, so we only do it if we are running on CI
+                    cmd = ['installer', '-pkg', fpath, '-dumplog',
+                           '-target', 'CurrentUserHomeDirectory']
+                else:
+                    # This command only expands the PKG, but does not install
+                    cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
-            errored += _execute(cmd)
+            test_errored = _execute(cmd)
+            errored += test_errored
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
+            # more complete logs are available under /var/log/install.log
+            if test_errored and ext == "pkg" and os.environ.get("CI"):
+                print('---  LOGS  ---')
+                print("Tip: Debug locally and check the full logs in the Installer UI")
+                print("     or check /var/log/install.log if run from the CLI.")
         print('')
 
     if errored:

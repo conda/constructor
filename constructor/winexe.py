@@ -17,7 +17,7 @@ import tempfile
 from .construct import ns_platform
 from .imaging import write_images
 from .preconda import write_files as preconda_write_files
-from .utils import (filename_dist, fill_template, make_VIProductVersion,
+from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels)
 
 THIS_DIR = abspath(dirname(__file__))
@@ -111,9 +111,7 @@ def make_nsi(info, dir_path):
                 break
         data = "\n".join(data_lines)
 
-    # division by 10^3 instead of 2^10 is deliberate here. gives us more room
-    approx_pkgs_size_kb = int(
-        math.ceil(info.get('_approx_pkgs_size', 0) / 1000))
+    approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
     # these are unescaped (and unquoted)
     for key, value in [
