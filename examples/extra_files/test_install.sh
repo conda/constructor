@@ -10,4 +10,3 @@ fi
 
 test -f "$PREFIX/more_data/README.md"
 test -f "$PREFIX/something2.txt"
-test -f "$PREFIX/this_one_does_not_exist.haha"
