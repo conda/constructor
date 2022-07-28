@@ -100,6 +100,21 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
 
+    # normalize paths to be copied; if they are relative, they must be to
+    # construct.yaml's parent (dir_path)
+    extra_files = info.get("extra_files", ())
+    new_extra_files = []
+    for path in extra_files:
+        if isinstance(path, str):
+            new_extra_files.append(abspath(join(dir_path, path)))
+        elif isinstance(path, dict):
+            assert len(path) == 1
+            orig, dest = next(iter(path.items()))
+            orig = abspath(join(dir_path, orig))
+            new_extra_files.append({orig: dest})
+    info["extra_files"] = new_extra_files
+
+
     for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
         if key in info:
             # ensure strings in those lists are stripped

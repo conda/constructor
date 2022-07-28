@@ -343,6 +343,7 @@ def create(info, verbose=False):
     pkgs_dir = join(prefix, 'pkgs')
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
+    preconda.copy_extra_files(info, prefix)
     for dist in info['_dists']:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
     shutil.copyfile(info['_conda_exe'], join(prefix, "conda.exe"))
