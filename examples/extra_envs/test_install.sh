@@ -17,7 +17,9 @@ test -f "$PREFIX/conda-meta/history"
 test -f "$PREFIX/envs/py38/conda-meta/history"
 "$PREFIX/envs/py38/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 8)"
 # this env shouldn't have tkinter
+set +e
 "$PREFIX/envs/py38/bin/python" -c "import tkinter" && exit 1
+set -e
 
 # extra env named 'py39' uses python 3.9
 test -f "$PREFIX/envs/py39/conda-meta/history"
