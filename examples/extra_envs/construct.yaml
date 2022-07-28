@@ -17,3 +17,6 @@ extra_envs:
       - tk   # [unix]
   py39:
     environment_file: py39_env.yaml
+
+post_install: test_install.sh  # [unix]
+post_install: test_install.bat  # [win]
