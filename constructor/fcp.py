@@ -54,15 +54,16 @@ def check_duplicates(precs):
             sys.exit(f"Error: {name} listed multiple times: {' , '.join(filenames)}")
 
 
-def exclude_packages(precs, exclude=()):
+def exclude_packages(precs, exclude=(), error_on_absence=True):
     for name in exclude:
         for bad_char in ' =<>*':
             if bad_char in name:
                 sys.exit("Error: did not expect '%s' in package name: %s" % (bad_char, name))
 
-    unknown_precs = set(exclude).difference(prec.name for prec in precs)
-    if unknown_precs:
-        sys.exit(f"Error: no package(s) named {', '.join(unknown_precs)} to remove")
+    if error_on_absence:
+        unknown_precs = set(exclude).difference(prec.name for prec in precs)
+        if unknown_precs:
+            sys.exit(f"Error: no package(s) named {', '.join(unknown_precs)} to remove")
 
     return [prec for prec in precs if prec.name not in exclude]
 
@@ -143,7 +144,6 @@ def _fetch(download_dir, precs):
 
 def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     assert duplicate_files in ("warn", "skip", "error")
-    print('Checking for duplicate files ...')
 
     map_members_scase = defaultdict(set)
     map_members_icase = defaultdict(lambda: {'files': set(), 'fns': set()})
@@ -177,6 +177,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     if duplicate_files == "skip":
         return total_tarball_size, total_extracted_pkgs_size
 
+    print('Checking for duplicate files ...')
     for member in map_members_scase:
         fns = map_members_scase[member]
         if len(fns) > 1:
@@ -248,12 +249,19 @@ def _precs_from_environment(environment, download_dir, user_conda):
 
 def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
                  exclude=(), menu_packages=(), environment=None, environment_file=None,
-                 verbose=True, conda_exe="conda.exe"):
+                 verbose=True, conda_exe="conda.exe", extra_env=False):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
-    specs = (*specs, "python")
+    # JRG: This only applies to the `base` environment; `extra_envs` are exempt
+    if not extra_env:
+        specs = (*specs, "python")
     if verbose:
-        print("specs:", specs)
+        if environment:
+            print(f"specs: <from existing environment '{environment}'>")
+        elif environment_file:
+            print(f"specs: <from environment file '{environment_file}'>")
+        else:
+            print("specs:", specs)
 
     # Append channels_remap srcs to channel_urls
     channel_urls = (*channel_urls, *(x['src'] for x in channels_remap))
@@ -280,7 +288,7 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         new_env = os.environ.copy()
         new_env["CONDA_SUBDIR"] = platform
         check_call([user_conda, "env", "create", "--file", environment_file,
-                    "--prefix", environment], universal_newlines=True, env=new_env)
+                    "--prefix", environment, "--quiet"], universal_newlines=True, env=new_env)
     # obtain the package records
     if environment:
         precs = _precs_from_environment(environment, download_dir, user_conda)
@@ -293,13 +301,22 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
             specs_to_add=specs,
         )
         precs = list(solver.solve_final_state())
-    # move python first
-    python_prec = next(prec for prec in precs if prec.name == "python")
-    precs.remove(python_prec)
-    precs.insert(0, python_prec)
+
+
+    python_prec = next((prec for prec in precs if prec.name == "python"), None)
+    if python_prec:
+        precs.remove(python_prec)
+        precs.insert(0, python_prec)
+    elif not extra_env:
+        # the base environment must always have python; this has been addressed
+        # at the beginning of _main() but we can still get here through the
+        # environment_file option
+        sys.exit("python MUST be part of the base environment")
+
     warn_menu_packages_missing(precs, menu_packages)
     check_duplicates(precs)
-    precs = exclude_packages(precs, exclude)
+
+    precs = exclude_packages(precs, exclude, error_on_absence=not extra_env)
     if verbose:
         more_recent_versions = _find_out_of_date_precs(precs, channel_urls, platform)
         _show(name, version, platform, download_dir, precs, more_recent_versions)
@@ -365,16 +382,17 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         if verbose:
             print("Solving extra environment:", env_name)
         extra_envs_precs[env_name] = _solve_precs(
-            f"{name}+{env_name}", version, download_dir, platform,
+            f"{name}/envs/{env_name}", version, download_dir, platform,
             channel_urls=env_config.get("channels", channel_urls),
             channels_remap=env_config.get("channels_remap", channels_remap),
             specs=env_config.get("specs", ()),
-            exclude=env_config.get("exclude", ()),
+            exclude=exclude,
             menu_packages=env_config.get("menu_packages", ()),
             environment=env_config.get("environment"),
             environment_file=env_config.get("environment_file"),
             verbose=verbose,
             conda_exe=conda_exe,
+            extra_env=True,
         )
     if dry_run:
         return None, None, None, None, None

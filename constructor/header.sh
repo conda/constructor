@@ -486,7 +486,7 @@ printf "\nInstalling base environment...\n\n"
 
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_CHANNELS=__CHANNELS__ \
+CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
@@ -507,7 +507,7 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
         env_channels=$(cat "${env_pkgs}channels.txt")
         rm -f "${env_pkgs}channels.txt"
     else
-        env_channels=__CHANNELS__
+        env_channels="__CHANNELS__"
     fi
 
     # TODO: custom shortcuts per env?

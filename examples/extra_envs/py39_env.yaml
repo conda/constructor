@@ -1,3 +1,0 @@
-name: py39
-dependencies:
-  - python=3.9

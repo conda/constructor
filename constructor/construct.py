@@ -104,7 +104,7 @@ Path to an environment file to construct from. If this option is present, the
 create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
-and install the packages.
+and install the packages. The created environment MUST include `python`.
 '''),
 
     ('transmute_file_type', False, str, '''
@@ -138,14 +138,16 @@ name) to a dictionary of options:
   an empty list.
 - `user_requested_specs` (list of str): same as the global option, but for this env;
   if not provided, global value is _not_ used
-- `exclude` (list of str): same as the global option, but for this env;
-  if not provided, global value is _not_ used
 
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
 - `conda` needs to be present in the `base` environment (via `specs`)
 - support for `menu_packages` is planned, but not possible right now. For now, all packages
   in an `extra_envs` config will be allowed to create their shortcuts.
+- If a global `exclude` option is used, it will have an effect on the environments created
+  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
+  extra environmentss will have it either. Unlike the global option, an error will not be
+  thrown if the excluded package is not found in the packages required by the extra environment.
 '''),
 
     ('installer_filename',     False, str, '''
