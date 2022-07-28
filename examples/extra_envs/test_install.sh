@@ -10,7 +10,7 @@ fi
 # tests
 # base environment uses python 3.7
 test -f "$PREFIX/conda-meta/history"
-"$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 8)"
+"$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 7)"
 "$PREFIX/bin/pip" -V
 
 
