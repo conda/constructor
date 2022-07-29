@@ -239,7 +239,7 @@ Path to a post-install script. Some notes:
 If necessary, you can activate the installed `base` environment like this:
 
 - Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
-- Windows: `call "%PREFIX%\Scripts\activate.bat"`
+- Windows: `call "%PREFIX%\\Scripts\\activate.bat"`
 '''),
 
     ('post_install_desc',      False, str, '''
