@@ -248,7 +248,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
     # probably want to add conda too.
     specs = (*specs, "python")
     if verbose:
-        print("specs: %r" % specs)
+        print("specs:", specs)
 
     # Append channels_remap srcs to channel_urls
     channel_urls = (*channel_urls, *(x['src'] for x in channels_remap))

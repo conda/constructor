@@ -13,10 +13,11 @@ from subprocess import Popen, PIPE, check_call, check_output
 import sys
 import math
 import tempfile
+from pathlib import PureWindowsPath
 
 from .construct import ns_platform
 from .imaging import write_images
-from .preconda import write_files as preconda_write_files
+from .preconda import copy_extra_files, write_files as preconda_write_files
 from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels)
 
@@ -43,7 +44,21 @@ def pkg_commands(download_dir, dists):
         yield 'File %s' % str_esc(join(download_dir, fn))
 
 
-def make_nsi(info, dir_path):
+def extra_files_commands(paths, common_parent):
+    paths = sorted([PureWindowsPath(p) for p in paths])
+    lines = []
+    current_output_path = "$INSTDIR"
+    for path in paths:
+        relative_parent = path.relative_to(common_parent).parent
+        output_path = f"$INSTDIR\\{relative_parent}"
+        if output_path != current_output_path:
+            lines.append(f"SetOutPath {output_path}")
+            current_output_path = output_path
+        lines.append(f"File {path}")
+    return lines
+
+
+def make_nsi(info, dir_path, extra_files=()):
     "Creates the tmp/main.nsi from the template file"
     name = info['name']
     download_dir = info['_download_dir']
@@ -125,6 +140,7 @@ def make_nsi(info, dir_path):
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
+        ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
     ]:
         data = data.replace(key, value)
 
@@ -171,6 +187,7 @@ def create(info, verbose=False):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
+    copied_extra_files = copy_extra_files(info, tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
     if 'pre_install' in info:
@@ -191,7 +208,7 @@ def create(info, verbose=False):
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
-    nsi = make_nsi(info, tmp_dir)
+    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)
     if verbose:
         verbosity = 'V4'
     else:

@@ -92,7 +92,15 @@ if conda_interface_type == 'conda':
 
         # noarch-only repos are valid. In this case, the architecture specific channel will return None
         if raw_repodata_str is None:
-            full_repodata = None
+            full_repodata = {
+                '_url': url,
+                'info': {
+                    'subdir': cc_platform
+                },
+                'packages': {},
+                'packages.conda': {},
+                'removed': []
+            }
         else:
             full_repodata = json.loads(raw_repodata_str)
 

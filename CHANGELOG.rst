@@ -9,6 +9,9 @@ Enhancements:
 * macOS installers now use the macOS logging system to log
   messages. Previously, notification badges would be displayed. (#535)
 
+* The graphical macOS installer now also displays the version number of the
+  software in the window title. (#536)
+
 
 2022-03-14   3.3.1:
 ===================

@@ -864,6 +864,9 @@ Section "Install"
     SetOutPath "$INSTDIR"
     File __CONDA_EXE__
 
+    # Copy extra files (code generated on winexe.py)
+    @EXTRA_FILES@
+
     ${If} $InstMode = ${JUST_ME}
         SetOutPath "$INSTDIR"
         FileOpen $0 ".nonadmin" w

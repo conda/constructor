@@ -20,7 +20,7 @@ specs:
   - setuptools
   - numpy
 
-post_install: post_install.sh # [unix]
+post_install: test_install.sh # [unix]
 installer_type: pkg # [osx]
 
 reverse_domain_identifier: org.website.my
