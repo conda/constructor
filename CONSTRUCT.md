@@ -132,7 +132,7 @@ Path to an environment file to construct from. If this option is present, the
 create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
-and install the packages.
+and install the packages. The created environment MUST include `python`.
 
 ## `transmute_file_type`
 
@@ -157,6 +157,34 @@ _required:_ no<br/>
 _type:_ string<br/>
 The channel alias that would be assumed for the created installer
 (only useful if it includes conda).
+
+## `extra_envs`
+
+_required:_ no<br/>
+_type:_ dictionary<br/>
+Create more environments in addition to the default `base` provided by `specs`,
+`environment` or `environment_file`. This should be a map of `str` (environment
+name) to a dictionary of options:
+- `specs` (list of str): which packages to install in that environment
+- `environment` (str): same as global option, for this env
+- `environment_file` (str): same as global option, for this env
+- `channels` (list of str): using these channels; if not provided, the global
+  value is used. To override inheritance, set it to an empty list.
+- `channels_remap` (list of str): same as global option, for this env;
+  if not provided, the global value is used. To override inheritance, set it to
+  an empty list.
+- `user_requested_specs` (list of str): same as the global option, but for this env;
+  if not provided, global value is _not_ used
+
+Notes:
+- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
+- `conda` needs to be present in the `base` environment (via `specs`)
+- support for `menu_packages` is planned, but not possible right now. For now, all packages
+  in an `extra_envs` config will be allowed to create their shortcuts.
+- If a global `exclude` option is used, it will have an effect on the environments created
+  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
+  extra environmentss will have it either. Unlike the global option, an error will not be
+  thrown if the excluded package is not found in the packages required by the extra environment.
 
 ## `installer_filename`
 
@@ -278,18 +306,33 @@ _type:_ string<br/>
 Path to a pre-install script. For Unix `.sh` installers, the shebang
 line is respected if present; otherwise, the script is run by the POSIX
 shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. This option is not supported for Windows `.exe` or macOS
+the installer. Metadata about the installer can be found in the
+`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
+variables. This option is not supported for Windows `.exe` or macOS
 `.pkg` installers.
 
 ## `post_install`
 
 _required:_ no<br/>
 _type:_ string<br/>
-Path to a post-install script. For Unix `.sh` installers, the shebang
-line is respected if present; otherwise, the script is run by the POSIX
-shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. For Windows `.exe` installers, this must be a `.bat` file.
-This option is not supported for macOS `.pkg` installers.
+Path to a post-install script. Some notes:
+
+- For Unix `.sh` installers, the shebang line is respected if present; 
+  otherwise, the script is run by the POSIX shell `sh`. Note that the use 
+  of a shebang can reduce the portability of the installer. The 
+  installation path is available as `$PREFIX`. More info about the installer 
+  can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, 
+  `${INSTALLER_PLAT}` environment   variables.
+- For Windows `.exe` installers, the script must be a `.bat` file. 
+  Installation path is available as `%PREFIX%`.
+- For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
+  `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
+  this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
+
+If necessary, you can activate the installed `base` environment like this:
+
+- Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
+- Windows: `call "%PREFIX%\Scripts\activate.bat"`
 
 ## `post_install_desc`
 
@@ -340,14 +383,35 @@ _required:_ no<br/>
 _type:_ string<br/>
 Default installation subdirectory in the chosen volume. In PKG installers,
 default installation locations are configured differently. The user can choose
-between a "Just me" installation (which would result in `~/<NAME>`) or another
-volume (which defaults to `<VOLUME>/<NAME>`). If you want a different default,
+between a "Just me" installation (which would result in `~/<PKG_NAME>`) or another
+volume (which defaults to `<VOLUME>/<PKG_NAME>`). If you want a different default,
 you can add a middle component with this option, let's call it `location`. It would
-result in these default values: `~/<LOCATION>/<NAME>` for "Just me",
-`<VOLUME>/<LOCATION>/<NAME>` for custom volumes. For example, setting this option
-to `/Library` in a "Just me" installation will give you `~/Library/<NAME>`.
+result in these default values: `~/<LOCATION>/<PKG_NAME>` for "Just me",
+`<VOLUME>/<LOCATION>/<PKG_NAME>` for custom volumes. For example, setting this option
+to `/Library` in a "Just me" installation will give you `~/Library/<PKG_NAME>`.
 Internally, this is passed to `pkgbuild --install-location`.
 macOS only.
+
+## `pkg_name`
+
+_required:_ no<br/>
+_type:_ string<br/>
+Internal identifier for the installer. This is used in the build prefix and will
+determine part of the default location path. Combine with `default_location_pkg`
+for more flexibility. If not provided, the value of `name` will be used.  (MacOS only)
+
+## `install_path_exists_error_text`
+
+_required:_ no<br/>
+_type:_ string<br/>
+Error message that will be shown if the installation path already exists.
+You cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is
+available and set to the destination causing the error. Defaults to:
+
+> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and
+> choose another location in the Destination Select step.
+
+(MacOS only)
 
 ## `welcome_image`
 
@@ -493,6 +557,16 @@ shown at the end of the installer upon success. If this key is missing,
 it defaults to a message about Anaconda Cloud. You can disable it altogether
 so it defaults to the system message if you set this key to `""` (empty string).
 (MacOS only).
+
+## `extra_files`
+
+_required:_ no<br/>
+_type:_ list<br/>
+Extra, non-packaged files that should be added to the installer. If provided as relative
+paths, they will be considered relative to the directory where `construct.yaml` is.
+This setting can be passed as a list of:
+- `str`: each found file will be copied to the root prefix
+- `Mapping[str, str]`: map of path in disk to path in prefix.
 
 
 ## Available selectors

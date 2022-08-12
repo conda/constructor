@@ -1,4 +1,15 @@
 .. current developments
+
+XXXX-XX-XX   X.X.X:
+===================
+
+Enhancements:
+-------------
+
+* The graphical macOS installer now also displays the version number of the
+  software in the window title. (#536)
+
+
 2022-03-14   3.3.1:
 ===================
 

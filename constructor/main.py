@@ -100,6 +100,21 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
 
+    # normalize paths to be copied; if they are relative, they must be to
+    # construct.yaml's parent (dir_path)
+    extra_files = info.get("extra_files", ())
+    new_extra_files = []
+    for path in extra_files:
+        if isinstance(path, str):
+            new_extra_files.append(abspath(join(dir_path, path)))
+        elif isinstance(path, dict):
+            assert len(path) == 1
+            orig, dest = next(iter(path.items()))
+            orig = abspath(join(dir_path, orig))
+            new_extra_files.append({orig: dest})
+    info["extra_files"] = new_extra_files
+
+
     for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
         if key in info:
             # ensure strings in those lists are stripped
@@ -107,6 +122,15 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             # ensure there are no empty strings
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
+
+    for env_name, env_config in info.get("extra_envs", {}).items():
+        if env_name in ("base", "root"):
+            raise ValueError(f"Environment name '{env_name}' cannot be used")
+        for config_key, value in env_config.copy().items():
+            if isinstance(value, (list, tuple)):
+                env_config[config_key] = [val.strip() for val in value]
+            if config_key == "environment_file":
+                env_config[config_key] = abspath(join(dir_path, value))
 
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
@@ -142,6 +166,10 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             fo.write('# installer: %s\n' % basename(info['_outpath']))
             for dist in info['_dists']:
                 fo.write('%s\n' % dist)
+            for env_name, env_info in info["_extra_envs_info"].items():
+                fo.write(f"# extra_env: {env_name}\n")
+                for dist_ in env_info["_dists"]:
+                    fo.write('%s\n' % dist_)
 
 
 def main():

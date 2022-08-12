@@ -9,6 +9,8 @@ from os.path import isdir, join, split as path_split
 import platform
 import sys
 import time
+from pathlib import Path
+import shutil
 
 from .utils import filename_dist, get_final_url
 
@@ -16,6 +18,7 @@ from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
                               PrefixData, write_repodata, get_repodata, all_channel_urls)
 from .conda_interface import distro as conda_distro
+from .utils import get_final_channels
 
 try:
     import json
@@ -32,18 +35,29 @@ def write_index_cache(info, dst_dir, used_packages):
         os.makedirs(cache_dir)
 
     _platforms = info['_platform'], 'noarch'
+    _remap_configs = list(info.get("channels_remap", []))
+    _env_channels = []
+    for env_info in info.get("extra_envs", {}).values():
+        _remap_configs += env_info.get("channels_remap", [])
+        _env_channels += env_info.get("channels", [])
+
     _remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
-               for url in info.get('channels_remap', [])}
+               for url in _remap_configs}
     _channels = [
         url.rstrip("/")
         for url in list(_remaps)
         + info.get("channels", [])
         + info.get("conda_default_channels", [])
+        + _env_channels
     ]
     _urls = all_channel_urls(_channels, subdirs=_platforms)
     repodatas = {url: get_repodata(url) for url in _urls if url is not None}
 
-    for url, _ in info['_urls']:
+    all_urls = info["_urls"].copy()
+    for env_info in info.get("_extra_envs_info", {}).values():
+        all_urls += env_info["_urls"]
+
+    for url, _ in all_urls:
         src, subdir, fn = url.rsplit('/', 2)
         dst = _remaps.get(src)
         if dst is not None:
@@ -64,7 +78,8 @@ def write_index_cache(info, dst_dir, used_packages):
             del repodatas['%s/%s' % (src, subdir)]
 
     for url, repodata in repodatas.items():
-        write_repodata(cache_dir, url, repodata, used_packages, info)
+        if repodata is not None:
+            write_repodata(cache_dir, url, repodata, used_packages, info)
 
     for cache_file in os.listdir(cache_dir):
         if not cache_file.endswith(".json"):
@@ -101,30 +116,57 @@ def write_files(info, dst_dir):
     with open(join(dst_dir, '.constructor-build.info'), 'w') as fo:
         json.dump(system_info(), fo)
 
-    final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in info['_urls'])
+    all_urls = info["_urls"].copy()
+    for env_info in info.get("_extra_envs_info", {}).values():
+        all_urls += env_info["_urls"]
+
+    final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in info["_urls"])
+    all_final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in all_urls)
 
     with open(join(dst_dir, 'urls'), 'w') as fo:
-        for url, md5 in final_urls_md5s:
+        for url, md5 in all_final_urls_md5s:
             fo.write('%s#%s\n' % (url, md5))
 
     with open(join(dst_dir, 'urls.txt'), 'w') as fo:
-        for url, _ in final_urls_md5s:
+        for url, _ in all_final_urls_md5s:
             fo.write('%s\n' % url)
 
-    write_index_cache(info, dst_dir, info['_dists'])
+    all_dists = info["_dists"].copy()
+    for env_info in info.get("_extra_envs_info", {}).values():
+        all_dists += env_info["_dists"]
+    all_dists = list({dist: None for dist in all_dists})  # de-duplicate
 
+    write_index_cache(info, dst_dir, all_dists)
+
+    # base environment conda-meta
     write_conda_meta(info, dst_dir, final_urls_md5s)
 
     write_repodata_record(info, dst_dir)
 
-    write_env_txt(info, dst_dir)
+    # base environment file used with conda install --file
+    # (list of specs/dists to install)
+    write_env_txt(info, dst_dir, info["_dists"])
 
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
 
+    for env_name, env_info in info.get("_extra_envs_info", {}).items():
+        env_config = info["extra_envs"][env_name]
+        env_dst_dir = os.path.join(dst_dir, "envs", env_name)
+        # environment conda-meta
+        env_urls_md5 = tuple((get_final_url(info, url), md5) for url, md5 in env_info["_urls"])
+        user_requested_specs = env_config.get('user_requested_specs', env_config.get('specs', ()))
+        write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
+        # environment installation list
+        write_env_txt(info, env_dst_dir, env_info["_dists"])
+        # channels
+        write_channels_txt(info, env_dst_dir, env_config)
 
-def write_conda_meta(info, dst_dir, final_urls_md5s):
-    user_requested_specs = info.get('user_requested_specs', info.get('specs', ()))
+
+def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
+    if user_requested_specs is None:
+        user_requested_specs = info.get('user_requested_specs', info.get('specs', ()))
+
     cmd = path_split(sys.argv[0])[-1]
     if len(sys.argv) > 1:
         cmd = "%s %s" % (cmd, " ".join(sys.argv[1:]))
@@ -148,7 +190,10 @@ def write_conda_meta(info, dst_dir, final_urls_md5s):
 
 
 def write_repodata_record(info, dst_dir):
-    for dist in info['_dists']:
+    all_dists = info["_dists"].copy()
+    for env_data in info.get("_extra_envs_info", {}).values():
+        all_dists += env_data["_dists"]
+    for dist in all_dists:
         if filename_dist(dist).endswith(".conda"):
             _dist = filename_dist(dist)[:-6]
         elif filename_dist(dist).endswith(".tar.bz2"):
@@ -171,9 +216,11 @@ def write_repodata_record(info, dst_dir):
             json.dump(rr_json, rf, indent=2, sort_keys=True)
 
 
-def write_env_txt(info, dst_dir):
+def write_env_txt(info, dst_dir, dists=None):
+    if dists is None:
+        dists = info["_dists"]
     dists_san_extn = []
-    for dist in info['_dists']:
+    for dist in dists:
         if filename_dist(dist).endswith('.conda'):
             dists_san_extn.append(filename_dist(dist)[:-6])
         elif filename_dist(dist).endswith('.tar.bz2'):
@@ -181,3 +228,33 @@ def write_env_txt(info, dst_dir):
     specs = ['='.join(spec.rsplit('-', 2)) for spec in dists_san_extn]
     with open(join(dst_dir, "env.txt"), "w") as envf:
         envf.write('\n'.join(specs))
+
+def write_channels_txt(info, dst_dir, env_config):
+    env_config = env_config.copy()
+    if "channels" not in env_config:
+        env_config["channels"] = info.get("channels", ())
+    if "channels_remap" not in env_config:
+        env_config["channels_remap"] = info.get("channels_remap", ())
+
+    with open(join(dst_dir, "channels.txt"), "w") as f:
+        f.write(",".join(get_final_channels(env_config)))
+
+
+def copy_extra_files(info, workdir):
+    extra_files = info.get('extra_files')
+    if not extra_files:
+        return []
+    copied = []
+    for path in extra_files:
+        if isinstance(path, str):
+            copied.append(shutil.copy(path, workdir))
+        elif isinstance(path, dict):
+            assert len(path) == 1
+            origin, destination = next(iter(path.items()))
+            orig_path = Path(origin)
+            if not orig_path.exists():
+                raise ValueError(f"File {origin} does not exist")
+            dest_path = Path(workdir) / destination
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            copied.append(shutil.copy(orig_path, dest_path))
+    return copied

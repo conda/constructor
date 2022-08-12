@@ -13,10 +13,11 @@ from subprocess import Popen, PIPE, check_call, check_output
 import sys
 import math
 import tempfile
+from pathlib import PureWindowsPath
 
 from .construct import ns_platform
 from .imaging import write_images
-from .preconda import write_files as preconda_write_files
+from .preconda import copy_extra_files, write_files as preconda_write_files
 from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels)
 
@@ -43,11 +44,93 @@ def pkg_commands(download_dir, dists):
         yield 'File %s' % str_esc(join(download_dir, fn))
 
 
-def make_nsi(info, dir_path):
+def extra_files_commands(paths, common_parent):
+    paths = sorted([PureWindowsPath(p) for p in paths])
+    lines = []
+    current_output_path = "$INSTDIR"
+    for path in paths:
+        relative_parent = path.relative_to(common_parent).parent
+        output_path = f"$INSTDIR\\{relative_parent}"
+        if output_path != current_output_path:
+            lines.append(f"SetOutPath {output_path}")
+            current_output_path = output_path
+        lines.append(f"File {path}")
+    return lines
+
+
+def setup_envs_commands(info, dir_path):
+    template = """
+        # Set up {name} env
+        SetDetailsPrint TextOnly
+        DetailPrint "Setting up the {name} environment ..."
+        SetDetailsPrint both
+        # List of packages to install
+        SetOutPath "{env_txt_dir}"
+        File {env_txt_abspath}
+        # A conda-meta\history file is required for a valid conda prefix
+        SetOutPath "{conda_meta}"
+        FileOpen $0 "history" w
+        FileClose $0
+        # Set channels
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
+        # Run conda
+        SetDetailsPrint TextOnly
+        nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
+        Pop $0
+        SetDetailsPrint both
+        # Cleanup {name} env.txt
+        SetOutPath "$INSTDIR"
+        Delete "{env_txt}"
+        # Restore shipped conda-meta\history for remapped
+        # channels and retain only the first transaction
+        SetOutPath "{conda_meta}"
+        File {history_abspath}
+        """
+
+    lines = template.format(  # this one block is for the base environment
+        name="base",
+        prefix=r"$INSTDIR",
+        env_txt=r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
+        env_txt_dir=r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
+        env_txt_abspath=join(dir_path, "env.txt"), # env.txt location while building the installer
+        conda_meta=r"$INSTDIR\conda-meta",
+        history_abspath=join(dir_path, "conda-meta", "history"),
+        channels=','.join(get_final_channels(info)),
+        shortcuts="--no-shortcuts"
+    ).splitlines()
+    # now we generate one more block per extra env, if present
+    for env_name in info.get("_extra_envs_info", {}):
+        lines += ["", ""]
+        env_info = info["extra_envs"][env_name]
+        channel_info = {
+            "channels": env_info.get("channels", info.get("channels", ())),
+            "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ()))
+        }
+        lines += template.format(
+            name=env_name,
+            prefix=join("$INSTDIR", "envs", env_name),
+            env_txt=join("$INSTDIR", "pkgs", "envs", env_name, "env.txt"),
+            env_txt_dir=join("$INSTDIR", "pkgs", "envs", env_name),
+            env_txt_abspath=join(dir_path, "envs", env_name, "env.txt"),
+            conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
+            history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
+            channels=",".join(get_final_channels(channel_info)),
+            shortcuts="",
+        ).splitlines()
+
+    return [line.strip() for line in lines]
+
+
+def make_nsi(info, dir_path, extra_files=()):
     "Creates the tmp/main.nsi from the template file"
     name = info['name']
     download_dir = info['_download_dir']
-    dists = info['_dists']
+
+    dists = info['_dists'].copy()
+    for env_info in info["_extra_envs_info"].values():
+        dists += env_info["_dists"]
+    dists = list({dist: None for dist in dists})  # de-duplicate
+
     py_name, py_version, unused_build = filename_dist(dists[0]).rsplit('-', 2)
     assert py_name == 'python'
     arch = int(info['_platform'].split('-')[1])
@@ -87,7 +170,6 @@ def make_nsi(info, dir_path):
         'PRE_UNINSTALL': '@pre_uninstall.bat',
         'INDEX_CACHE': '@cache',
         'REPODATA_RECORD': '@repodata_record.json',
-        'CHANNELS': ','.join(get_final_channels(info))
     }
     for key, value in replace.items():
         if value.startswith('@'):
@@ -123,12 +205,14 @@ def make_nsi(info, dir_path):
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
+        ('@SETUP_ENVS@', '\n    '.join(setup_envs_commands(info, dir_path))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
+        ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
     ]:
         data = data.replace(key, value)
 
@@ -175,6 +259,7 @@ def create(info, verbose=False):
     verify_nsis_install()
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
+    copied_extra_files = copy_extra_files(info, tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
     if 'pre_install' in info:
@@ -195,7 +280,7 @@ def create(info, verbose=False):
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
-    nsi = make_nsi(info, tmp_dir)
+    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)
     if verbose:
         verbosity = 'V4'
     else:

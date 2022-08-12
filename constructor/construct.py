@@ -104,7 +104,7 @@ Path to an environment file to construct from. If this option is present, the
 create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
-and install the packages.
+and install the packages. The created environment MUST include `python`.
 '''),
 
     ('transmute_file_type', False, str, '''
@@ -122,6 +122,32 @@ only if `conda` is included in the environmnent.
     ('conda_channel_alias', False, str, '''
 The channel alias that would be assumed for the created installer
 (only useful if it includes conda).
+'''),
+
+    ('extra_envs', False, (dict,), '''
+Create more environments in addition to the default `base` provided by `specs`,
+`environment` or `environment_file`. This should be a map of `str` (environment
+name) to a dictionary of options:
+- `specs` (list of str): which packages to install in that environment
+- `environment` (str): same as global option, for this env
+- `environment_file` (str): same as global option, for this env
+- `channels` (list of str): using these channels; if not provided, the global
+  value is used. To override inheritance, set it to an empty list.
+- `channels_remap` (list of str): same as global option, for this env;
+  if not provided, the global value is used. To override inheritance, set it to
+  an empty list.
+- `user_requested_specs` (list of str): same as the global option, but for this env;
+  if not provided, global value is _not_ used
+
+Notes:
+- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
+- `conda` needs to be present in the `base` environment (via `specs`)
+- support for `menu_packages` is planned, but not possible right now. For now, all packages
+  in an `extra_envs` config will be allowed to create their shortcuts.
+- If a global `exclude` option is used, it will have an effect on the environments created
+  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
+  extra environmentss will have it either. Unlike the global option, an error will not be
+  thrown if the excluded package is not found in the packages required by the extra environment.
 '''),
 
     ('installer_filename',     False, str, '''
@@ -222,13 +248,24 @@ variables. This option is not supported for Windows `.exe` or macOS
 '''),
 
     ('post_install',           False, str, '''
-Path to a post-install script. For Unix `.sh` installers, the shebang
-line is respected if present; otherwise, the script is run by the POSIX
-shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. Metadata about the installer can be found in the
-`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
-variables. For Windows `.exe` installers, this must be a `.bat` file.
-This option is not supported for macOS `.pkg` installers.
+Path to a post-install script. Some notes:
+
+- For Unix `.sh` installers, the shebang line is respected if present; 
+  otherwise, the script is run by the POSIX shell `sh`. Note that the use 
+  of a shebang can reduce the portability of the installer. The 
+  installation path is available as `$PREFIX`. More info about the installer 
+  can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, 
+  `${INSTALLER_PLAT}` environment   variables.
+- For Windows `.exe` installers, the script must be a `.bat` file. 
+  Installation path is available as `%PREFIX%`.
+- For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
+  `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
+  this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
+
+If necessary, you can activate the installed `base` environment like this:
+
+- Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
+- Windows: `call "%PREFIX%\\Scripts\\activate.bat"`
 '''),
 
     ('post_install_desc',      False, str, '''
@@ -414,7 +451,28 @@ it defaults to a message about Anaconda Cloud. You can disable it altogether
 so it defaults to the system message if you set this key to `""` (empty string).
 (MacOS only).
 '''),
+    ('extra_files', False, (list), '''
+Extra, non-packaged files that should be added to the installer. If provided as relative
+paths, they will be considered relative to the directory where `construct.yaml` is.
+This setting can be passed as a list of:
+- `str`: each found file will be copied to the root prefix
+- `Mapping[str, str]`: map of path in disk to path in prefix.
+'''),
 ]
+
+
+_EXTRA_ENVS_SCHEMA = {
+    "specs": (list, tuple),
+    "environment": (str,),
+    "environment_file": (str,),
+    "channels": (list, tuple),
+    "channels_remap": (list, tuple),
+    "user_requested_specs": (list, tuple),
+    "exclude": (list, tuple),
+    # TODO: we can't support menu_packages for extra envs yet
+    # will implement when the PR for new menuinst lands
+    # "menu_packages": (list, tuple),
+}
 
 
 def ns_platform(platform):
@@ -548,6 +606,22 @@ def verify(info):
         value = info[key]
         if not pat.match(value) or value.endswith(('.', '-')):
             sys.exit("Error: invalid %s '%s'" % (key, value))
+
+    for env_name, env_data in info.get("extra_envs", {}).items():
+        disallowed = ('/', ' ', ':', '#')
+        if any(character in env_name for character in disallowed):
+            sys.exit(
+                f"Environment names (keys in 'extra_envs') cannot contain any of {disallowed}. "
+                f"You tried to use: {env_name}"
+                )
+        for key, value in env_data.items():
+            if key not in _EXTRA_ENVS_SCHEMA:
+                sys.exit(f"Key '{key}' not supported in 'extra_envs'.")
+            types = _EXTRA_ENVS_SCHEMA[key]
+            if not isinstance(value, types):
+                types_str = " or ".join([type_.__name__ for type_ in types])
+                sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
+                         f"must be an instance of {types_str}")
 
 
 def generate_doc():
