@@ -29,7 +29,14 @@ def write_readme(dst, info):
 
     with open(dst, 'w') as f:
         f.write(data)
-        for dist in sorted(info['_dists']):
+
+        all_dists = info["_dists"].copy()
+        for env_info in info.get("_extra_envs_info", {}).values():
+            all_dists += env_info["_dists"]
+        all_dists = list({dist: None for dist in all_dists})  # de-duplicate
+
+        # TODO: Split output by env name
+        for dist in sorted(all_dists):
             if dist.startswith('_'):
                 continue
             f.write("{\\listtext\t\n\\f1 \\uc0\\u8259 \n\\f0 \t}%s %s\\\n" %
@@ -344,8 +351,14 @@ def create(info, verbose=False):
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
     preconda.copy_extra_files(info, prefix)
-    for dist in info['_dists']:
+    
+    all_dists = info["_dists"].copy()
+    for env_info in info.get("_extra_envs_info", {}).values():
+        all_dists += env_info["_dists"]
+    all_dists = list({dist: None for dist in all_dists})  # de-duplicate
+    for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
+
     shutil.copyfile(info['_conda_exe'], join(prefix, "conda.exe"))
 
     # Sign conda-standalone so it can pass notarization
