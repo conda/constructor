@@ -375,7 +375,7 @@ def create(info, verbose=False):
             plist_dump(plist, f)
         check_call(
             [
-                'codesign',
+                "/usr/bin/codesign",
                 "--verbose",
                 '--sign', notarization_identity_name,
                 "--prefix", info.get("reverse_domain_identifier", info['name']),
@@ -420,7 +420,7 @@ def create(info, verbose=False):
 
     identity_name = info.get('signing_identity_name')
     check_call([
-        "productbuild",
+        "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info.get("reverse_domain_identifier", info['name']),
@@ -428,7 +428,7 @@ def create(info, verbose=False):
     ])
     if identity_name:
         check_call([
-            'productsign', '--sign', identity_name,
+            '/usr/bin/productsign', '--sign', identity_name,
             "tmp.pkg",
             info['_outpath'],
         ])

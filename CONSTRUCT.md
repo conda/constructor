@@ -237,10 +237,10 @@ an interactive wizard guiding the user through the available options. If
 _required:_ no<br/>
 _type:_ string<br/>
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
-using this option, it will be used to sign the installer. Note that you will need
-to have a certificate (usually an "Installer certificate") and corresponding
-private key together called an 'identity' in one of your accessible keychains.
-Common values for this option follow this format
+using this option, it will be used to sign the installer with Apple's `productsign`. 
+Note that you will need to have a certificate (usually an "Installer certificate")
+and the corresponding private key, together called an 'identity', in one of your 
+accessible keychains. Common values for this option follow this format
 `Developer ID Installer: Name of the owner (XXXXXX)`.
 
 ## `notarization_identity_name`
@@ -248,9 +248,9 @@ Common values for this option follow this format
 _required:_ no<br/>
 _type:_ string<br/>
 If the pkg installer is going to be signed with `signing_identity_name`, you
-can also prepare the bundle for notarization. This will use `codesign` to sign `conda.exe`.
-For this, you need an "Application certificate" (different from the "Installer certificate"
-mentioned above). Common values for this option follow this format
+can also prepare the bundle for notarization. This will use Apple's `codesign` 
+to sign `conda.exe`. For this, you need an "Application certificate" (different from the 
+"Installer certificate" mentioned above). Common values for this option follow the format
 `Developer ID Application: Name of the owner (XXXXXX)`.
 
 ## `attempt_hardlinks`
