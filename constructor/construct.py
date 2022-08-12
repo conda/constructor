@@ -235,6 +235,11 @@ Path to a post-install script. Some notes:
 - For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
   `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
   this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
+
+If necessary, you can activate the installed `base` environment like this:
+
+- Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
+- Windows: `call "%PREFIX%\\Scripts\\activate.bat"`
 '''),
 
     ('post_install_desc',      False, str, '''
