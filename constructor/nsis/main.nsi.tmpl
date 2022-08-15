@@ -863,6 +863,7 @@ Section "Install"
 
     SetOutPath "$INSTDIR"
     File __CONDA_EXE__
+    File __PRE_UNINSTALL__
 
     # Copy extra files (code generated on winexe.py)
     @EXTRA_FILES@
@@ -877,7 +878,6 @@ Section "Install"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
     File __POST_INSTALL__
-    File __PRE_UNINSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
 
