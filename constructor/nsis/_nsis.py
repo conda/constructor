@@ -211,7 +211,7 @@ def run_pre_uninstall():
     """
     call the pre uninstall script, if the file exists
     """
-    path = join(ROOT_PREFIX, 'pkgs', 'pre_uninstall.bat')
+    path = join(ROOT_PREFIX, 'pre_uninstall.bat')
     if not isfile(path):
         return
     env = os.environ
