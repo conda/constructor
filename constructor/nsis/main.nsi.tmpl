@@ -5,6 +5,24 @@
 
 Unicode "true"
 
+#if enable_debugging
+!define ENABLE_LOGGING
+
+!define LogSet "!insertmacro LogSetMacro"
+!macro LogSetMacro SETTING
+  !ifdef ENABLE_LOGGING
+    LogSet ${SETTING}
+  !endif
+!macroend
+
+!define LogText "!insertmacro LogTextMacro"
+!macro LogTextMacro INPUT_TEXT
+  !ifdef ENABLE_LOGGING
+    LogText ${INPUT_TEXT}
+  !endif
+!macroend
+#endif
+
 !include "WinMessages.nsh"
 !include "WordFunc.nsh"
 !include "LogicLib.nsh"
@@ -414,6 +432,7 @@ Function InstModePage_Leave
 FunctionEnd
 
 Function .onInit
+    ${LogSet} on
     Push $0
     Push $1
     Push $2
@@ -835,6 +854,7 @@ Function AbortRetryNSExecWait
         nsExec::ExecToLog $2
         pop $0
         ${If} $0 != "0"
+            DetailPrint "::error:: $1"
             MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
                     $1 /SD IDIGNORE IDABORT abort IDRETRY retry
             ; IDIGNORE: Continue anyway
@@ -906,9 +926,13 @@ Section "Install"
         call AbortRetryNSExecWait
     ${EndIf}
 
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
-    push 'Failed to initialize Anaconda directories'
-    call AbortRetryNSExecWait
+    DetailPrint "Running mkdirs..."
+    nsExec::ExecToLog '"$INSTDIR\pythonw.exe" "$INSTDIR\Lib\_nsis.py" mkdirs'
+    Pop $0
+    ${If} $0 != "0"
+        push 'Failed to set directories!'
+        call AbortRetryNSExecWait
+    ${EndIf}
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
         DetailPrint "Running post install..."

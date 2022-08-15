@@ -102,6 +102,13 @@ def run_examples(keep_artifacts=None):
             elif ext == 'exe':
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
             test_errored = _execute(cmd)
+            if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
+                test_errored = 0
+                with open(os.path.join(env_dir, "install.log")) as f:
+                    for line in f:
+                        if ":error:" in line:
+                            print(line)
+                            test_errored = 1
             errored += test_errored
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)

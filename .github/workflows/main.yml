@@ -37,6 +37,7 @@ jobs:
           [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
           ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
+
       - name: Build the package
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -57,7 +58,7 @@ jobs:
           # and upload them all to anaconda.org in a single job
           name: package-${{ github.sha }}
           path: ${{ runner.temp }}/conda-bld/*/*.tar.bz2
-      - name: Run examples and prepare artifacts
+      - name: Install local constructor
         run: |
           source ../conda/etc/profile.d/conda.sh
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
@@ -69,6 +70,16 @@ jobs:
             echo "Installed constructor is not local!"
             exit 1
           fi
+      - name: Patch NSIS to use logging builds on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          source ../conda/etc/profile.d/conda.sh
+          nsis_version=$(conda list nsis --json | jq -r ".[].version")
+          curl -sL "https://sourceforge.net/projects/nsis/files/NSIS%203/${nsis_version}/nsis-${nsis_version}-log.zip/download" -o "nsis-${nsis_version}-log.zip"
+          unzip "nsis-${nsis_version}-log.zip" -d "$CONDA_PREFIX/NSIS/"
+          echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
+      - name: Run examples and prepare artifacts
+          source ../conda/etc/profile.d/conda.sh
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
       - name: Upload the example installers as artifacts
