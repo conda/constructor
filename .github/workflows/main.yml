@@ -37,7 +37,6 @@ jobs:
           [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
           ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
-
       - name: Build the package
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -64,9 +63,9 @@ jobs:
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda create -n constructor -c local --strict-channel-priority constructor
           conda activate constructor
-          installed_channel=$(conda list --json | jq -r '.[] | select(.name=="constructor") | .channel')
+          installed_channel=$(conda list constructor --json | jq -r '.[].channel')
           if [[ "$installed_channel" != "conda-bld" ]]; then
-            echo $(conda list --json | jq '.[] | select(.name=="constructor")')
+            echo $(conda list constructor --json)
             echo "Installed constructor is not local!"
             exit 1
           fi
