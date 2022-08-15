@@ -179,7 +179,7 @@ def make_nsi(info, dir_path, extra_files=()):
         # See https://nsis.sourceforge.io/Docs/Modern%20UI/Readme.html#toggle_pgf
         # for the newlines business
         replace['CONCLUSION_TEXT'] = str_esc("\\r\\n".join(conclusion_lines[1:]), newlines=False),
-    }
+
     for key, value in replace.items():
         if value.startswith('@'):
             value = join(dir_path, value[1:])
@@ -193,7 +193,7 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['check_path_spaces'] = info.get('check_path_spaces', True)
     ppd['keep_pkgs'] = info.get('keep_pkgs') or False
     ppd['post_install_exists'] = bool(info.get('post_install'))
-    ppd['with_conclusion_text'] = with_conclusion_text
+    ppd['with_conclusion_text'] = bool(conclusion_text)
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
