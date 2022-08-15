@@ -72,6 +72,7 @@ def get_header(conda_exec, tarball, info):
         'SECOND_PAYLOAD_SIZE': str(getsize(tarball)),
         'INSTALL_COMMANDS': '\n'.join(install_lines),
         'CHANNELS': ','.join(get_final_channels(info)),
+        'CONCLUSION_TEXT': info.get("conclusion_text", "installation finished."),
         'pycache': '__pycache__',
     }
     if has_license:
