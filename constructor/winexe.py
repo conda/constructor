@@ -11,7 +11,6 @@ from os.path import abspath, dirname, isfile, join
 import shutil
 from subprocess import Popen, PIPE, check_call, check_output
 import sys
-import math
 import tempfile
 from pathlib import PureWindowsPath
 
@@ -29,7 +28,7 @@ MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 def str_esc(s, newlines=True):
     maps = [('$', '$$'), ('"', '$\\"'), ('\t', '$\\t')]
     if newlines:
-        maps.append(('\n', '$\\n'), ('\r', '$\\r'))
+        maps.extend([('\n', '$\\n'), ('\r', '$\\r')])
     for a, b in maps:
         s = s.replace(a, b)
     return '"%s"' % s
