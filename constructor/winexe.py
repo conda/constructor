@@ -175,15 +175,16 @@ def make_nsi(info, dir_path, extra_files=()):
     conclusion_text = info.get("conclusion_text", "")
     if conclusion_text:
         conclusion_lines = conclusion_text.strip().splitlines()
-        replace['CONCLUSION_TITLE'] = str_esc(conclusion_lines[0].strip()),
+        replace['CONCLUSION_TITLE'] = conclusion_lines[0].strip(),
         # See https://nsis.sourceforge.io/Docs/Modern%20UI/Readme.html#toggle_pgf
         # for the newlines business
-        replace['CONCLUSION_TEXT'] = str_esc("\\r\\n".join(conclusion_lines[1:]), newlines=False),
+        replace['CONCLUSION_TEXT'] = "\\r\\n".join(conclusion_lines[1:])
 
     for key, value in replace.items():
         if value.startswith('@'):
             value = join(dir_path, value[1:])
-        replace[key] = str_esc(value)
+        newlines = key not in ("CONCLUSION_TEXT",)
+        replace[key] = str_esc(value, newlines=newlines)
 
     data = read_nsi_tmpl(info)
     ppd = ns_platform(info['_platform'])
