@@ -6,8 +6,9 @@ XXXX-XX-XX   X.X.X:
 Enhancements:
 -------------
 
-* macOS installers now use the macOS logging system to log
-  messages. Previously, notification badges would be displayed. (#535)
+* PKG installers now default to the macOS logging system to log messages.
+  UI notifications can be enabled with `progress_notifications`
+  (off by default). (#535)
 
 * The graphical macOS installer now also displays the version number of the
   software in the window title. (#536)

@@ -388,7 +388,7 @@ Whether to show UI notifications on PKG installers. On large installations,
 the progress bar reaches ~90% very quickly and stays there for a long time.
 This might look like the installer froze. This option enables UI notifications
 so the user receives updates after each command executed by the installer.   
-(MacOS only) 
+(macOS only) 
 
 ## `welcome_image`
 
