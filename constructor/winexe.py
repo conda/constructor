@@ -26,8 +26,11 @@ NSIS_DIR = join(THIS_DIR, 'nsis')
 MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 
 
-def str_esc(s):
-    for a, b in [('$', '$$'), ('"', '$\\"'), ('\n', '$\\n'), ('\t', '$\\t')]:
+def str_esc(s, newlines=True):
+    maps = [('$', '$$'), ('"', '$\\"'), ('\t', '$\\t')]
+    if newlines:
+        maps.append(('\n', '$\\n'), ('\r', '$\\r'))
+    for a, b in maps:
         s = s.replace(a, b)
     return '"%s"' % s
 
@@ -168,6 +171,10 @@ def make_nsi(info, dir_path, extra_files=()):
         'PRE_UNINSTALL': '@pre_uninstall.bat',
         'INDEX_CACHE': '@cache',
         'REPODATA_RECORD': '@repodata_record.json',
+        'CONCLUSION_TITLE': str_esc(info.get("conclusion_text", "").splitlines[0].strip()),
+        # See https://nsis.sourceforge.io/Docs/Modern%20UI/Readme.html#toggle_pgf
+        # for the newlines business
+        'CONCLUSION_TEXT': str_esc("\\r\\n".join(info.get("conclusion_text", "").splitlines[1:]), newlines=False),
     }
     for key, value in replace.items():
         if value.startswith('@'):
@@ -182,6 +189,7 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['check_path_spaces'] = info.get('check_path_spaces', True)
     ppd['keep_pkgs'] = info.get('keep_pkgs') or False
     ppd['post_install_exists'] = bool(info.get('post_install'))
+    ppd['with_conclusion_text'] = bool(info.get('conclusion_text')) or False
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
     if info['_platform'].startswith("win") and sys.platform != 'win32':

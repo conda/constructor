@@ -100,6 +100,7 @@ BrandingText /TRIMLEFT "${COMPANY}"
 !define MUI_UNICON __ICONFILE__
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP __HEADERIMAGE__
+!define MUI_HEADERIMAGE_UNBITMAP __HEADERIMAGE__
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
@@ -120,6 +121,11 @@ Page Custom InstModePage_Create InstModePage_Leave
 # Custom options now differ depending on installation mode.
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
+#if with_conclusion_text is True
+!define MUI_FINISHPAGE_TITLE __CONCLUSION_TITLE__
+!define MUI_FINISHPAGE_TITLE_3LINES
+!define MUI_FINISHPAGE_TEXT __CONCLUSION_TEXT__
+#endif
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
