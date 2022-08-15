@@ -39,6 +39,7 @@ if conda_interface_type == 'conda':
     from conda.core.prefix_data import PrefixData as _PrefixData
     from conda.exports import default_prefix as _default_prefix
     from conda.models.channel import all_channel_urls as _all_channel_urls
+    from conda.gateways.disk import mkdir_p_sudo_safe as _mkdir_p_sudo_safe
     from conda.gateways.disk.read import read_paths_json as _read_paths_json
     from conda.models.dist import Dist as _Dist
     from conda.exports import MatchSpec as _MatchSpec
@@ -61,6 +62,7 @@ if conda_interface_type == 'conda':
     conda_context, env_vars = _conda_context, _env_vars
     conda_replace_context_default = _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
+    mkdir_p_sudo_safe = _mkdir_p_sudo_safe
 
     # used by preconda.py
     Dist, MatchSpec, PrefixData, default_prefix = _Dist, _MatchSpec, _PrefixData, _default_prefix

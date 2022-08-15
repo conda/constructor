@@ -21,7 +21,7 @@ from constructor.utils import hash_files, filename_dist
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, conda_context, conda_replace_context_default,
                               download, env_vars, read_paths_json, all_channel_urls,
-                              cc_platform)
+                              cc_platform, mkdir_p_sudo_safe)
 
 
 def getsize(filename):
@@ -107,7 +107,7 @@ platform: %(platform)s""" % dict(
 def _fetch(download_dir, precs):
     assert conda_context.pkgs_dirs[0] == download_dir
     if not isdir(download_dir):
-        os.makedirs(download_dir)
+        mkdir_p_sudo_safe(download_dir)
     pc = PackageCacheData(download_dir)
     assert pc.is_writable, download_dir + " does not exist or is not writable"
 
