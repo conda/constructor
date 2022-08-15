@@ -78,6 +78,7 @@ jobs:
           unzip "nsis-${nsis_version}-log.zip" -d "$CONDA_PREFIX/NSIS/"
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
       - name: Run examples and prepare artifacts
+        run: |
           source ../conda/etc/profile.d/conda.sh
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
