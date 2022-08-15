@@ -64,44 +64,106 @@ Installs __NAME__ __VERSION__
 #endif
 "
 
-while getopts "bifhkp:sut" x; do
-    case "$x" in
-        h)
-            printf "%s\\n" "$USAGE"
-            exit 2
-        ;;
-        b)
-            BATCH=1
-            ;;
-        i)
-            BATCH=0
-            ;;
-        f)
-            FORCE=1
-            ;;
-        k)
-            KEEP_PKGS=1
-            ;;
-        p)
-            PREFIX="$OPTARG"
-            ;;
-        s)
-            SKIP_SCRIPTS=1
-            ;;
-        u)
-            FORCE=1
-            ;;
+if which getopt > /dev/null 2>&1; then
+    OPTS=$(getopt bifhkp:sut "$*" 2>/dev/null)
+    if [ ! $? ]; then
+        printf "%s\\n" "$USAGE"
+        exit 2
+    fi
+
+    eval set -- "$OPTS"
+
+    while true; do
+        case "$1" in
+            -h)
+                printf "%s\\n" "$USAGE"
+                exit 2
+                ;;
+            -b)
+                BATCH=1
+                shift
+                ;;
+            -i)
+                BATCH=0
+                shift
+                ;;
+            -f)
+                FORCE=1
+                shift
+                ;;
+            -k)
+                KEEP_PKGS=1
+                shift
+                ;;
+            -p)
+                PREFIX="$2"
+                shift
+                shift
+                ;;
+            -s)
+                SKIP_SCRIPTS=1
+                shift
+                ;;
+            -u)
+                FORCE=1
+                shift
+                ;;
 #if has_conda
-        t)
-            TEST=1
-            ;;
+            -t)
+                TEST=1
+                shift
+                ;;
 #endif
-        ?)
-            printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
-            exit 1
+            --)
+                shift
+                break
+                ;;
+            *)
+                printf "ERROR: did not recognize option '%s', please try -h\\n" "$1"
+                exit 1
+                ;;
+        esac
+    done
+else
+    while getopts "bifhkp:sut" x; do
+        case "$x" in
+            h)
+                printf "%s\\n" "$USAGE"
+                exit 2
             ;;
-    esac
-done
+            b)
+                BATCH=1
+                ;;
+            i)
+                BATCH=0
+                ;;
+            f)
+                FORCE=1
+                ;;
+            k)
+                KEEP_PKGS=1
+                ;;
+            p)
+                PREFIX="$OPTARG"
+                ;;
+            s)
+                SKIP_SCRIPTS=1
+                ;;
+            u)
+                FORCE=1
+                ;;
+#if has_conda
+            t)
+                TEST=1
+                ;;
+#endif
+            ?)
+                printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
+                exit 1
+                ;;
+        esac
+    done
+fi
 
 # For testing, keep the package cache around longer
 CLEAR_AFTER_TEST=0
@@ -445,7 +507,7 @@ POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 
-rm -f $PREFIX/conda.exe
+rm -f "$CONDA_EXEC"
 
 rm -rf "$PREFIX/install_tmp"
 export TMP="$TMP_BACKUP"
