@@ -28,8 +28,8 @@ requirements:
     - python
     - ruamel_yaml >=0.11.14,<0.16
     - conda-standalone
-    - pillow >=3.1     # [win]
-    - nsis >=3.01      # [win]
+    - pillow >=3.1     # [win or osx]
+    - nsis ==3.01      # [win]
 
 test:
   source_files:

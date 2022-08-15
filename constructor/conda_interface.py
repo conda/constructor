@@ -28,9 +28,6 @@ if conda_interface_type == 'conda':
     # Flatten VersionOrder.version, skip epoch, and keep only major and minor
     CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
-    from conda._vendor.toolz.itertoolz import (
-        concatv as _concatv, get as _get, groupby as _groupby,
-    )
     from conda.api import SubdirData # noqa
     from conda.base.context import (
         context as _conda_context, replace_context_default as _conda_replace_context_default,
@@ -40,7 +37,6 @@ if conda_interface_type == 'conda':
         PackageCacheData as _PackageCacheData,
     )
     from conda.core.prefix_data import PrefixData as _PrefixData
-    from conda.core.solve import Solver as _Solver
     from conda.exports import default_prefix as _default_prefix
     from conda.models.channel import all_channel_urls as _all_channel_urls
     from conda.gateways.disk.read import read_paths_json as _read_paths_json
@@ -52,11 +48,16 @@ if conda_interface_type == 'conda':
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:
         from conda.models.package_cache_record import PackageCacheRecord as _PackageCacheRecord
+    try:
+        from conda.core.solve import _get_solver_class
+        _Solver = _get_solver_class()
+    except ImportError:
+        from conda.core.solve import Solver as _Solver
 
     # used by fcp.py
     PackageCacheData = _PackageCacheData
     Solver, read_paths_json = _Solver, _read_paths_json
-    concatv, get, groupby, all_channel_urls = _concatv, _get, _groupby, _all_channel_urls
+    all_channel_urls = _all_channel_urls
     conda_context, env_vars = _conda_context, _env_vars
     conda_replace_context_default = _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
@@ -91,7 +92,15 @@ if conda_interface_type == 'conda':
 
         # noarch-only repos are valid. In this case, the architecture specific channel will return None
         if raw_repodata_str is None:
-            full_repodata = None
+            full_repodata = {
+                '_url': url,
+                'info': {
+                    'subdir': cc_platform
+                },
+                'packages': {},
+                'packages.conda': {},
+                'removed': []
+            }
         else:
             full_repodata = json.loads(raw_repodata_str)
 

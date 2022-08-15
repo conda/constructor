@@ -7,6 +7,7 @@
 import re
 import sys
 import hashlib
+import math
 from os.path import normpath, islink, isfile, isdir
 from os import sep, unlink
 from shutil import rmtree
@@ -175,3 +176,19 @@ def yield_lines(path):
         if not line or line.startswith('#'):
             continue
         yield line
+
+
+def approx_size_kb(info, which="pkgs"):
+    valid = ("pkgs", "tarballs", "total")
+    assert which in valid, f"'which' must be one of {valid}"
+    size_pkgs = info.get('_approx_pkgs_size', 0)
+    size_tarballs = info.get('_approx_tarballs_size', 0)
+    if which == "pkgs":
+        size_bytes = size_pkgs
+    elif which == "tarballs":
+        size_bytes = size_tarballs
+    else:
+        size_bytes = size_pkgs + size_tarballs
+
+    # division by 10^3 instead of 2^10 is deliberate here. gives us more room
+    return int(math.ceil(size_bytes/1000))
