@@ -138,6 +138,7 @@ def make_nsi(info, dir_path, extra_files=()):
     assert py_name == 'python'
     arch = int(info['_platform'].split('-')[1])
     info['post_install_desc'] = info.get('post_install_desc', "")
+    conclusion_lines = info.get("conclusion_text", "").splitlines()
 
     # these appear as __<key>__ in the template, and get escaped
     replace = {
@@ -171,10 +172,10 @@ def make_nsi(info, dir_path, extra_files=()):
         'PRE_UNINSTALL': '@pre_uninstall.bat',
         'INDEX_CACHE': '@cache',
         'REPODATA_RECORD': '@repodata_record.json',
-        'CONCLUSION_TITLE': str_esc(info.get("conclusion_text", "").splitlines[0].strip()),
+        'CONCLUSION_TITLE': str_esc(conclusion_lines[0].strip()),
         # See https://nsis.sourceforge.io/Docs/Modern%20UI/Readme.html#toggle_pgf
         # for the newlines business
-        'CONCLUSION_TEXT': str_esc("\\r\\n".join(info.get("conclusion_text", "").splitlines[1:]), newlines=False),
+        'CONCLUSION_TEXT': str_esc("\\r\\n".join(conclusion_lines[1:]), newlines=False),
     }
     for key, value in replace.items():
         if value.startswith('@'):
