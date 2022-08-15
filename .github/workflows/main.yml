@@ -76,7 +76,7 @@ jobs:
           conda activate constructor
           nsis_version=$(conda list nsis --json | jq -r ".[].version")
           curl -sL "https://sourceforge.net/projects/nsis/files/NSIS%203/${nsis_version}/nsis-${nsis_version}-log.zip/download" -o "nsis-${nsis_version}-log.zip"
-          unzip "nsis-${nsis_version}-log.zip" -d "$CONDA_PREFIX/NSIS/"
+          7za x "nsis-${nsis_version}-log.zip" -o"$CONDA_PREFIX/NSIS/"
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
       - name: Run examples and prepare artifacts
         run: |
