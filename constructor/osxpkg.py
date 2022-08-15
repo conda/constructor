@@ -374,8 +374,9 @@ def create(info, verbose=False):
             }
             plist_dump(plist, f)
         check_call(
-            [
-                'codesign',
+            [   
+                # hardcode to system location to avoid accidental clobber in PATH
+                "/usr/bin/codesign",  
                 "--verbose",
                 '--sign', notarization_identity_name,
                 "--prefix", info.get("reverse_domain_identifier", info['name']),
@@ -413,7 +414,8 @@ def create(info, verbose=False):
     # The default distribution file needs to be modified, so we create
     # it to a temporary location, edit it, and supply it to the final call.
     xml_path = join(PACKAGES_DIR, 'distribution.xml')
-    args = ["productbuild", "--synthesize"]
+    # hardcode to system location to avoid accidental clobber in PATH
+    args = ["/usr/bin/productbuild", "--synthesize"]
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
@@ -422,7 +424,7 @@ def create(info, verbose=False):
 
     identity_name = info.get('signing_identity_name')
     check_call([
-        "productbuild",
+        "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info.get("reverse_domain_identifier", info['name']),
@@ -430,7 +432,8 @@ def create(info, verbose=False):
     ])
     if identity_name:
         check_call([
-            'productsign', '--sign', identity_name,
+            # hardcode to system location to avoid accidental clobber in PATH
+            '/usr/bin/productsign', '--sign', identity_name,
             "tmp.pkg",
             info['_outpath'],
         ])

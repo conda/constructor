@@ -158,9 +158,8 @@ get_conda_envs = get_conda_envs_from_python_api
 
 def rm_menus(prefix=None, root_prefix=None):
     try:
-        import menuinst
+        import menuinst  # noqa
         from conda.base.context import context
-        menuinst
     except (ImportError, OSError):
         return
     try:
@@ -170,18 +169,21 @@ def rm_menus(prefix=None, root_prefix=None):
         out("Failed to get conda environments list\n")
         err("Error: %s\n" % str(e))
         err("Traceback:\n%s\n" % traceback.format_exc(20))
-        return
-    envs_dirs = list(context.envs_dirs)
-    if prefix is not None:
-        envs_dirs.append(prefix)
-    for env in envs:
-        env = str(env)  # force `str` so that `os.path.join` doesn't fail
-        for envs_dir in envs_dirs:
-            # Make sure the environment is from one of the directory in
-            # `envs_dirs` to avoid picking up environment from other
-            # distributions. Not perfect but better than no checking
-            if envs_dir in env:
-                mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
+        if prefix is not None:
+            out("Will only remove shortcuts created from '%s'" % prefix)
+            mk_menus(remove=True, prefix=prefix, root_prefix=root_prefix)
+    else:
+        envs_dirs = list(context.envs_dirs)
+        if prefix is not None:
+            envs_dirs.append(prefix)
+        for env in envs:
+            env = str(env)  # force `str` so that `os.path.join` doesn't fail
+            for envs_dir in envs_dirs:
+                # Make sure the environment is from one of the directory in
+                # `envs_dirs` to avoid picking up environment from other
+                # distributions. Not perfect but better than no checking
+                if envs_dir in env:
+                    mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
 
 
 def run_post_install():
@@ -211,7 +213,7 @@ def run_pre_uninstall():
     """
     call the pre uninstall script, if the file exists
     """
-    path = join(ROOT_PREFIX, 'pkgs', 'pre_uninstall.bat')
+    path = join(ROOT_PREFIX, 'pre_uninstall.bat')
     if not isfile(path):
         return
     env = os.environ
