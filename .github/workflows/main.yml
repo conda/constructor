@@ -73,6 +73,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         run: |
           source ../conda/etc/profile.d/conda.sh
+          conda activate constructor
           nsis_version=$(conda list nsis --json | jq -r ".[].version")
           curl -sL "https://sourceforge.net/projects/nsis/files/NSIS%203/${nsis_version}/nsis-${nsis_version}-log.zip/download" -o "nsis-${nsis_version}-log.zip"
           unzip "nsis-${nsis_version}-log.zip" -d "$CONDA_PREFIX/NSIS/"
