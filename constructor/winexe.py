@@ -174,7 +174,7 @@ def make_nsi(info, dir_path, extra_files=()):
     conclusion_text = info.get("conclusion_text", "")
     if conclusion_text:
         conclusion_lines = conclusion_text.strip().splitlines()
-        replace['CONCLUSION_TITLE'] = conclusion_lines[0].strip(),
+        replace['CONCLUSION_TITLE'] = conclusion_lines[0].strip()
         # See https://nsis.sourceforge.io/Docs/Modern%20UI/Readme.html#toggle_pgf
         # for the newlines business
         replace['CONCLUSION_TEXT'] = "\\r\\n".join(conclusion_lines[1:])
