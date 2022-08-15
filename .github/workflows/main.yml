@@ -81,6 +81,7 @@ jobs:
       - name: Run examples and prepare artifacts
         run: |
           source ../conda/etc/profile.d/conda.sh
+          conda activate constructor
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
       - name: Upload the example installers as artifacts
