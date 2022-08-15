@@ -237,6 +237,7 @@ def move_script(src, dst, info):
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
+    data = data.replace('__PROGRESS_NOTIFICATIONS__', str(info.get('progress_notifications')))
 
     default_path_exists_error_text = (
         "'{CHOSEN_PATH}' already exists. Please, relaunch the installer and "

@@ -3,9 +3,12 @@
 # All rights reserved.
 
 notify() {
+if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
 EOF
+fi
+logger -p "install.info" "$1" || echo "$1"
 }
 
 unset DYLD_LIBRARY_PATH
@@ -24,7 +27,7 @@ touch $PREFIX/conda-meta/history
 
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place
-logger -p 'install.info' "Preparing packages..."
+notify "Preparing packages..."
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs
 if (( $? )); then
     echo "ERROR: could not extract the conda packages"
@@ -32,7 +35,7 @@ if (( $? )); then
 fi
 
 # Perform the conda install
-logger -p 'install.info' "Installing packages. This might take a few minutes."
+notify "Installing packages. This might take a few minutes."
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
@@ -63,7 +66,6 @@ fi
 # install location, the permissions will default to root unless this is done.
 chown -R $USER "$PREFIX"
 
-logger -p 'install.info' "Done! Installation is available in $PREFIX."
-echo "installation to $PREFIX finished."
+notify "Done! Installation is available in $PREFIX."
 
 exit 0
