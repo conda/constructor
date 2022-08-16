@@ -105,9 +105,10 @@ def run_examples(keep_artifacts=None):
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
                 with open(os.path.join(env_dir, "install.log")) as f:
+                    print('---  LOGS  ---')
                     for line in f:
+                        print(line.rstrip())
                         if ":error:" in line:
-                            print(line)
                             test_errored = 1
             errored += test_errored
             if keep_artifacts:
