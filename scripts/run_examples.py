@@ -104,13 +104,9 @@ def run_examples(keep_artifacts=None):
             test_errored = _execute(cmd)
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
-                with open(os.path.join(env_dir, "install.log")) as f:
+                with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
                     print('---  LOGS  ---')
                     for line in f:
-                        line_b = line.encode()
-                        if b'\xef\xbf\xbd' in line_b:
-                            line = line_b.replace(b'\xef\xbf\xbd', '').decode("utf-8")
-                        print(line)
                         if ":error:" in line:
                             test_errored = 1
             errored += test_errored
