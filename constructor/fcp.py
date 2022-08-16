@@ -109,6 +109,7 @@ def _fetch(download_dir, precs):
     if not isdir(download_dir):
         os.makedirs(download_dir)
     pc = PackageCacheData(download_dir)
+    pc.first_writable()
     assert pc.is_writable, download_dir + " does not exist or is not writable"
 
     for prec in precs:
