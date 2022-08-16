@@ -917,6 +917,13 @@ Section "Install"
 
     @PKG_COMMANDS@
 
+    SetDetailsPrint TextOnly
+    DetailPrint "Setting up the package cache ..."
+    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
+    push 'Failed to extract packages'
+    call AbortRetryNSExecWait
+    SetDetailsPrint both
+
     @SETUP_ENVS@
 
     @WRITE_CONDARC@
