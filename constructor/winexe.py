@@ -68,17 +68,21 @@ def setup_envs_commands(info, dir_path):
         SetDetailsPrint both
         # List of packages to install
         SetOutPath "{env_txt_dir}"
-        File {env_txt_abspath}
+        File "{env_txt_abspath}"
         # A conda-meta\history file is required for a valid conda prefix
         SetOutPath "{conda_meta}"
-        FileOpen $0 "history" w
-        FileClose $0
+        File "{history_abspath}"
         # Set channels
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         # Run conda
         SetDetailsPrint TextOnly
         nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
         Pop $0
+        ${{If}} $0 != "0"
+            DetailPrint "::error:: Failed to link extracted packages to {prefix}!"
+            MessageBox MB_OK|MB_ICONSTOP "Failed to link extracted packages to {prefix}. Please check logs." /SD IDOK
+            Abort
+        ${{EndIf}}
         SetDetailsPrint both
         # Cleanup {name} env.txt
         SetOutPath "$INSTDIR"
@@ -86,7 +90,7 @@ def setup_envs_commands(info, dir_path):
         # Restore shipped conda-meta\history for remapped
         # channels and retain only the first transaction
         SetOutPath "{conda_meta}"
-        File {history_abspath}
+        File "{history_abspath}"
         """
 
     lines = template.format(  # this one block is for the base environment
@@ -193,6 +197,8 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['keep_pkgs'] = info.get('keep_pkgs') or False
     ppd['post_install_exists'] = bool(info.get('post_install'))
     ppd['with_conclusion_text'] = bool(conclusion_text)
+    ppd["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
+    ppd["has_conda"] = info["_has_conda"]
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
     if info['_platform'].startswith("win") and sys.platform != 'win32':

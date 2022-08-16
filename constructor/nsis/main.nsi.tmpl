@@ -5,6 +5,27 @@
 
 Unicode "true"
 
+#if enable_debugging is True
+# Special logging build needed for ENABLE_LOGGING
+# See https://nsis.sourceforge.io/Special_Builds
+!define ENABLE_LOGGING
+#endif
+
+# Comes from https://nsis.sourceforge.io/Logging:Enable_Logs_Quickly
+!define LogSet "!insertmacro LogSetMacro"
+!macro LogSetMacro SETTING
+  !ifdef ENABLE_LOGGING
+    LogSet ${SETTING}
+  !endif
+!macroend
+
+!define LogText "!insertmacro LogTextMacro"
+!macro LogTextMacro INPUT_TEXT
+  !ifdef ENABLE_LOGGING
+    LogText ${INPUT_TEXT}
+  !endif
+!macroend
+
 !include "WinMessages.nsh"
 !include "WordFunc.nsh"
 !include "LogicLib.nsh"
@@ -414,6 +435,7 @@ Function InstModePage_Leave
 FunctionEnd
 
 Function .onInit
+    ${LogSet} on
     Push $0
     Push $1
     Push $2
@@ -835,6 +857,7 @@ Function AbortRetryNSExecWait
         nsExec::ExecToLog $2
         pop $0
         ${If} $0 != "0"
+            DetailPrint "::error:: $1"
             MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
                     $1 /SD IDIGNORE IDABORT abort IDRETRY retry
             ; IDIGNORE: Continue anyway
@@ -851,6 +874,7 @@ FunctionEnd
 
 # Installer sections
 Section "Install"
+    ${LogSet} on
 
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
@@ -893,6 +917,13 @@ Section "Install"
 
     @PKG_COMMANDS@
 
+    SetDetailsPrint TextOnly
+    DetailPrint "Setting up the package cache ..."
+    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
+    push 'Failed to extract packages'
+    call AbortRetryNSExecWait
+    SetDetailsPrint both
+
     @SETUP_ENVS@
 
     @WRITE_CONDARC@
@@ -906,9 +937,12 @@ Section "Install"
         call AbortRetryNSExecWait
     ${EndIf}
 
+#if has_conda is True
+    DetailPrint "Initializing conda directories..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
-    push 'Failed to initialize Anaconda directories'
+    push 'Failed to initialize conda directories'
     call AbortRetryNSExecWait
+#endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
         DetailPrint "Running post install..."
