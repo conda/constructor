@@ -107,7 +107,10 @@ def run_examples(keep_artifacts=None):
                 with open(os.path.join(env_dir, "install.log")) as f:
                     print('---  LOGS  ---')
                     for line in f:
-                        print(line.rstrip())
+                        line_b = line.encode()
+                        if b'\xef\xbf\xbd' in line_b:
+                            line = line_b.replace(b'\xef\xbf\xbd', '').decode("utf-8")
+                        print(line)
                         if ":error:" in line:
                             test_errored = 1
             errored += test_errored

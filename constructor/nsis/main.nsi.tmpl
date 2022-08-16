@@ -5,9 +5,9 @@
 
 Unicode "true"
 
+#if enable_debugging is True
 # Special logging build needed for ENABLE_LOGGING
 # See https://nsis.sourceforge.io/Special_Builds
-#if enable_debugging
 !define ENABLE_LOGGING
 #endif
 
@@ -874,6 +874,7 @@ FunctionEnd
 
 # Installer sections
 Section "Install"
+    ${LogSet} on
 
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
