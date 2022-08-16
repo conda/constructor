@@ -108,6 +108,7 @@ def run_examples(keep_artifacts=None):
                     print('---  LOGS  ---')
                     for line in f:
                         if ":error:" in line:
+                            print(line.rstrip())
                             test_errored = 1
             errored += test_errored
             if keep_artifacts:
