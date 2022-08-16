@@ -7,5 +7,6 @@ specs:
   - python
 conclusion_text: |
   Thanks for installing NoConda!
-
   You are now ready to run your Python installation.
+  This is a second line and should appear as such on the installer UI.
+  This would be the third one.
