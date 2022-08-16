@@ -71,8 +71,7 @@ def setup_envs_commands(info, dir_path):
         File "{env_txt_abspath}"
         # A conda-meta\history file is required for a valid conda prefix
         SetOutPath "{conda_meta}"
-        FileOpen $0 "history" w
-        FileClose $0
+        File "{history_abspath}"
         # Set channels
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         # Run conda
@@ -81,7 +80,7 @@ def setup_envs_commands(info, dir_path):
         Pop $0
         ${{If}} $0 != "0"
             DetailPrint "::error:: Failed to link extracted packages to {prefix}!"
-            MessageBox mb_ok|MB_ICONEXCLAMATION "Failed to link extracted packages to {prefix}. Please check logs."
+            MessageBox MB_OK|MB_ICONSTOP "Failed to link extracted packages to {prefix}. Please check logs." /SD IDOK
             Abort
         ${{EndIf}}
         SetDetailsPrint both
@@ -200,6 +199,7 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['post_install_exists'] = bool(info.get('post_install'))
     ppd['with_conclusion_text'] = bool(conclusion_text)
     ppd["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
+    ppd["has_conda"] = info["_has_conda"]
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
     if info['_platform'].startswith("win") and sys.platform != 'win32':

@@ -929,13 +929,12 @@ Section "Install"
         call AbortRetryNSExecWait
     ${EndIf}
 
-    DetailPrint "Running mkdirs..."
-    nsExec::ExecToLog '"$INSTDIR\pythonw.exe" "$INSTDIR\Lib\_nsis.py" mkdirs'
-    Pop $0
-    ${If} $0 != "0"
-        push 'Failed to set directories!'
-        call AbortRetryNSExecWait
-    ${EndIf}
+#if has_conda is True
+    DetailPrint "Initializing conda directories..."
+    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
+    push 'Failed to initialize conda directories'
+    call AbortRetryNSExecWait
+#endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
         DetailPrint "Running post install..."
