@@ -5,9 +5,13 @@
 
 Unicode "true"
 
+# Special logging build needed for ENABLE_LOGGING
+# See https://nsis.sourceforge.io/Special_Builds
 #if enable_debugging
 !define ENABLE_LOGGING
+#endif
 
+# Comes from https://nsis.sourceforge.io/Logging:Enable_Logs_Quickly
 !define LogSet "!insertmacro LogSetMacro"
 !macro LogSetMacro SETTING
   !ifdef ENABLE_LOGGING
@@ -21,7 +25,6 @@ Unicode "true"
     LogText ${INPUT_TEXT}
   !endif
 !macroend
-#endif
 
 !include "WinMessages.nsh"
 !include "WordFunc.nsh"

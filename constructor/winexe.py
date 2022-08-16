@@ -79,6 +79,11 @@ def setup_envs_commands(info, dir_path):
         SetDetailsPrint TextOnly
         nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
         Pop $0
+        ${{If}} $0 != "0"
+            DetailPrint "::error:: Failed to link extracted packages to {prefix}!"
+            MessageBox mb_ok|MB_ICONEXCLAMATION "Failed to link extracted packages to {prefix}. Please check logs."
+            Abort
+        ${{EndIf}}
         SetDetailsPrint both
         # Cleanup {name} env.txt
         SetOutPath "$INSTDIR"
