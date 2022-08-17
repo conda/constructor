@@ -25,7 +25,7 @@ export INSTALLER_PLAT="__PLAT__"
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
-PREFIX=__DEFAULT_PREFIX__
+PREFIX="__DEFAULT_PREFIX__"
 #if batch_mode
 BATCH=1
 #else
@@ -362,7 +362,7 @@ extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 
 export TMP_BACKUP="$TMP"
-export TMP=$PREFIX/install_tmp
+export "TMP=$PREFIX/install_tmp"
 mkdir -p "$TMP"
 
 # the second binary payload: the tarball of packages

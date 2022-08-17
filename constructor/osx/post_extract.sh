@@ -19,8 +19,8 @@ CONDA_EXEC="$PREFIX/conda.exe"
 chmod +x "$CONDA_EXEC"
 
 # Create a blank history file so conda thinks this is an existing env
-mkdir -p $PREFIX/conda-meta
-touch $PREFIX/conda-meta/history
+mkdir -p "$PREFIX/conda-meta"
+touch "$PREFIX/conda-meta/history"
 
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place
@@ -49,10 +49,10 @@ rm -f "$PREFIX/env.txt"
 
 # Same, but for the extra environments
 
-mkdir -p $PREFIX/envs
+mkdir -p "$PREFIX/envs"
 
-for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
-    env_name=$(basename ${env_pkgs})
+for env_pkgs in "${PREFIX}/pkgs/envs/*/"; do
+    env_name=$(basename "${env_pkgs}")
     if [[ "${env_name}" == "*" ]]; then
         continue
     fi
@@ -81,7 +81,7 @@ done
 
 # Cleanup!
 rm -f "$CONDA_EXEC"
-find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
+find "$PREFIX/pkgs" -type d -empty -exec rmdir "{}" \; 2>/dev/null || :
 
 __WRITE_CONDARC__
 
@@ -93,7 +93,7 @@ fi
 
 # This is unneeded for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
-chown -R $USER "$PREFIX"
+chown -R "$USER" "$PREFIX"
 
 notify "Done! Installation is available in $PREFIX."
 echo "installation to $PREFIX finished."
