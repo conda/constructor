@@ -3,7 +3,7 @@ set -ex
 
 # if PREFIX is not defined, then this was called from an OSX PKG installer
 # $2 is the install location, ($HOME by default)
-if [ -z "PREFIX" ]; then
+if [ -z "${PREFIX:-}" ]; then
     PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)
 fi
 
