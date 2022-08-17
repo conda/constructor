@@ -507,7 +507,9 @@ else
     find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
-printf "installation finished.\\n"
+cat <<EOF
+__CONCLUSION_TEXT__
+EOF
 
 if [ "$PYTHONPATH" != "" ]; then
     printf "WARNING:\\n"

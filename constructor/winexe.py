@@ -11,7 +11,6 @@ from os.path import abspath, dirname, isfile, join
 import shutil
 from subprocess import Popen, PIPE, check_call, check_output
 import sys
-import math
 import tempfile
 from pathlib import PureWindowsPath
 
@@ -26,8 +25,11 @@ NSIS_DIR = join(THIS_DIR, 'nsis')
 MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 
 
-def str_esc(s):
-    for a, b in [('$', '$$'), ('"', '$\\"'), ('\n', '$\\n'), ('\t', '$\\t')]:
+def str_esc(s, newlines=True):
+    maps = [('$', '$$'), ('"', '$\\"'), ('\t', '$\\t')]
+    if newlines:
+        maps.extend([('\n', '$\\n'), ('\r', '$\\r')])
+    for a, b in maps:
         s = s.replace(a, b)
     return '"%s"' % s
 
@@ -66,17 +68,21 @@ def setup_envs_commands(info, dir_path):
         SetDetailsPrint both
         # List of packages to install
         SetOutPath "{env_txt_dir}"
-        File {env_txt_abspath}
+        File "{env_txt_abspath}"
         # A conda-meta\history file is required for a valid conda prefix
         SetOutPath "{conda_meta}"
-        FileOpen $0 "history" w
-        FileClose $0
+        File "{history_abspath}"
         # Set channels
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         # Run conda
         SetDetailsPrint TextOnly
         nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
         Pop $0
+        ${{If}} $0 != "0"
+            DetailPrint "::error:: Failed to link extracted packages to {prefix}!"
+            MessageBox MB_OK|MB_ICONSTOP "Failed to link extracted packages to {prefix}. Please check logs." /SD IDOK
+            Abort
+        ${{EndIf}}
         SetDetailsPrint both
         # Cleanup {name} env.txt
         SetOutPath "$INSTDIR"
@@ -84,7 +90,7 @@ def setup_envs_commands(info, dir_path):
         # Restore shipped conda-meta\history for remapped
         # channels and retain only the first transaction
         SetOutPath "{conda_meta}"
-        File {history_abspath}
+        File "{history_abspath}"
         """
 
     lines = template.format(  # this one block is for the base environment
@@ -169,6 +175,14 @@ def make_nsi(info, dir_path, extra_files=()):
         'INDEX_CACHE': '@cache',
         'REPODATA_RECORD': '@repodata_record.json',
     }
+    conclusion_text = info.get("conclusion_text", "")
+    if conclusion_text:
+        conclusion_lines = conclusion_text.strip().splitlines()
+        replace['CONCLUSION_TITLE'] = conclusion_lines[0].strip()
+        # See https://nsis.sourceforge.io/Docs/Modern%20UI/Readme.html#toggle_pgf
+        # for the newlines business
+        replace['CONCLUSION_TEXT'] = "\r\n".join(conclusion_lines[1:])
+
     for key, value in replace.items():
         if value.startswith('@'):
             value = join(dir_path, value[1:])
@@ -182,6 +196,9 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['check_path_spaces'] = info.get('check_path_spaces', False)
     ppd['keep_pkgs'] = info.get('keep_pkgs') or False
     ppd['post_install_exists'] = bool(info.get('post_install'))
+    ppd['with_conclusion_text'] = bool(conclusion_text)
+    ppd["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
+    ppd["has_conda"] = info["_has_conda"]
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
     if info['_platform'].startswith("win") and sys.platform != 'win32':

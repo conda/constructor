@@ -5,6 +5,27 @@
 
 Unicode "true"
 
+#if enable_debugging is True
+# Special logging build needed for ENABLE_LOGGING
+# See https://nsis.sourceforge.io/Special_Builds
+!define ENABLE_LOGGING
+#endif
+
+# Comes from https://nsis.sourceforge.io/Logging:Enable_Logs_Quickly
+!define LogSet "!insertmacro LogSetMacro"
+!macro LogSetMacro SETTING
+  !ifdef ENABLE_LOGGING
+    LogSet ${SETTING}
+  !endif
+!macroend
+
+!define LogText "!insertmacro LogTextMacro"
+!macro LogTextMacro INPUT_TEXT
+  !ifdef ENABLE_LOGGING
+    LogText ${INPUT_TEXT}
+  !endif
+!macroend
+
 !include "WinMessages.nsh"
 !include "WordFunc.nsh"
 !include "LogicLib.nsh"
@@ -100,6 +121,7 @@ BrandingText /TRIMLEFT "${COMPANY}"
 !define MUI_UNICON __ICONFILE__
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP __HEADERIMAGE__
+!define MUI_HEADERIMAGE_UNBITMAP __HEADERIMAGE__
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
@@ -120,6 +142,11 @@ Page Custom InstModePage_Create InstModePage_Leave
 # Custom options now differ depending on installation mode.
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
+#if with_conclusion_text is True
+!define MUI_FINISHPAGE_TITLE __CONCLUSION_TITLE__
+!define MUI_FINISHPAGE_TITLE_3LINES
+!define MUI_FINISHPAGE_TEXT __CONCLUSION_TEXT__
+#endif
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
@@ -408,6 +435,7 @@ Function InstModePage_Leave
 FunctionEnd
 
 Function .onInit
+    ${LogSet} on
     Push $0
     Push $1
     Push $2
@@ -829,6 +857,7 @@ Function AbortRetryNSExecWait
         nsExec::ExecToLog $2
         pop $0
         ${If} $0 != "0"
+            DetailPrint "::error:: $1"
             MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
                     $1 /SD IDIGNORE IDABORT abort IDRETRY retry
             ; IDIGNORE: Continue anyway
@@ -845,6 +874,7 @@ FunctionEnd
 
 # Installer sections
 Section "Install"
+    ${LogSet} on
 
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
@@ -863,6 +893,7 @@ Section "Install"
 
     SetOutPath "$INSTDIR"
     File __CONDA_EXE__
+    File __PRE_UNINSTALL__
 
     # Copy extra files (code generated on winexe.py)
     @EXTRA_FILES@
@@ -877,7 +908,6 @@ Section "Install"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
     File __POST_INSTALL__
-    File __PRE_UNINSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
 
@@ -886,6 +916,13 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
 
     @PKG_COMMANDS@
+
+    SetDetailsPrint TextOnly
+    DetailPrint "Setting up the package cache ..."
+    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
+    push 'Failed to extract packages'
+    call AbortRetryNSExecWait
+    SetDetailsPrint both
 
     @SETUP_ENVS@
 
@@ -900,9 +937,12 @@ Section "Install"
         call AbortRetryNSExecWait
     ${EndIf}
 
+#if has_conda is True
+    DetailPrint "Initializing conda directories..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
-    push 'Failed to initialize Anaconda directories'
+    push 'Failed to initialize conda directories'
     call AbortRetryNSExecWait
+#endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
         DetailPrint "Running post install..."

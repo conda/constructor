@@ -435,12 +435,15 @@ plain text (.txt), rich text (.rtf) or HTML (.html). If both
 '''),
 
     ('conclusion_text', False, str, '''
-If `installer_type` is `pkg` on MacOS, this message will be
-shown at the end of the installer upon success. If this key is missing,
-it defaults to a message about Anaconda Cloud. You can disable it altogether
-so it defaults to the system message if you set this key to `""` (empty string).
-(MacOS only).
+A message that will be shown at the end of the installer upon success. 
+The behaviour is slightly different across installer types:
+- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.
+  You can disable it altogether so it defaults to the system message if you set this 
+  key to `""` (empty string).
+- EXE: The first line will be used as a title. The following lines will be used as text.
+(macOS PKG and Windows only).
 '''),
+
     ('extra_files', False, (list), '''
 Extra, non-packaged files that should be added to the installer. If provided as relative
 paths, they will be considered relative to the directory where `construct.yaml` is.

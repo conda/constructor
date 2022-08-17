@@ -81,7 +81,7 @@ done
 
 # Cleanup!
 rm -f "$CONDA_EXEC"
-find "$PREFIX/pkgs" -type d -empty -exec rmdir "{}" \; 2>/dev/null || :
+find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
 __WRITE_CONDARC__
 
