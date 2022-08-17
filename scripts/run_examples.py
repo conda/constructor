@@ -70,7 +70,7 @@ def run_examples(keep_artifacts=None):
                 example_paths.append(fpath)
 
     # NSIS won't error out when running scripts unless we set this custom environment variable
-    os.environ["NSIS_SCRIPTS_RAISE_ERRORS"] = 1
+    os.environ["NSIS_SCRIPTS_RAISE_ERRORS"] = "1"
     
     parent_output = tempfile.mkdtemp()
     tested_files = set()
@@ -102,7 +102,16 @@ def run_examples(keep_artifacts=None):
                     # This command only expands the PKG, but does not install
                     cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
-                cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
+                # NSIS manual:
+                # > /D sets the default installation directory ($INSTDIR), overriding InstallDir and
+                # > InstallDirRegKey. It must be the last parameter used in the command line and must
+                # > not contain any quotes, even if the path contains spaces. Only absolute paths are
+                # > supported.
+                # Since subprocess.Popen WILL escape the spaces with quotes, we need to provide them
+                # as separate arguments. We don't care about multiple spaces collapsing into one, since
+                # the point is to just have spaces in the installation path -- one would be enough too :)
+                # This is why we have this weird .split() thingy down here:
+                cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
             test_errored = _execute(cmd)
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
