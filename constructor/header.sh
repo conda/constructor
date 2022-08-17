@@ -283,7 +283,7 @@ EOF
     printf "[%s] >>> " "$PREFIX"
     read -r user_prefix
     if [ "$user_prefix" != "" ]; then
-#if check_path_spaces is True        
+#if check_path_spaces is True
         case "$user_prefix" in
             *\ * )
                 printf "ERROR: Cannot install into directories with spaces\\n" >&2
@@ -442,7 +442,7 @@ __INSTALL_COMMANDS__
 #if has_conda
 mkdir -p "$PREFIX/envs"
 for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
-    env_name=$(basename "${env_pkgs}")
+    env_name="$(basename "${env_pkgs}")"
     if [[ "${env_name}" == "*" ]]; then
         continue
     fi
@@ -450,7 +450,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     mkdir -p "$PREFIX/envs/$env_name"
 
     if [[ -f "${env_pkgs}channels.txt" ]]; then
-        env_channels=$(cat "${env_pkgs}channels.txt")
+        env_channels="$(cat "${env_pkgs}channels.txt")"
         rm -f "${env_pkgs}channels.txt"
     else
         env_channels="__CHANNELS__"

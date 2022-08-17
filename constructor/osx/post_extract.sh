@@ -51,8 +51,8 @@ rm -f "$PREFIX/env.txt"
 
 mkdir -p "$PREFIX/envs"
 
-for env_pkgs in "${PREFIX}/pkgs/envs/*/"; do
-    env_name=$(basename "${env_pkgs}")
+for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
+    env_name="$(basename "${env_pkgs}")"
     if [[ "${env_name}" == "*" ]]; then
         continue
     fi
@@ -62,10 +62,10 @@ for env_pkgs in "${PREFIX}/pkgs/envs/*/"; do
     touch "$PREFIX/envs/$env_name/conda-meta/history"
 
     if [[ -f "${env_pkgs}channels.txt" ]]; then
-        env_channels=$(cat "${env_pkgs}channels.txt")
+        env_channels="$(cat "${env_pkgs}channels.txt")"
         rm -f "${env_pkgs}channels.txt"
     else
-        env_channels=__CHANNELS__
+        env_channels="__CHANNELS__"
     fi
     # TODO: custom channels per env?
     # TODO: custom shortcuts per env?
