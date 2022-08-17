@@ -9,7 +9,6 @@ import sys
 import tempfile
 import platform
 import shutil
-from pathlib import Path
 
 from constructor.utils import rm_rf
 
@@ -70,6 +69,9 @@ def run_examples(keep_artifacts=None):
             if os.path.exists(os.path.join(fpath, 'construct.yaml')):
                 example_paths.append(fpath)
 
+    # NSIS won't error out when running scripts unless we set this custom environment variable
+    os.environ["NSIS_SCRIPTS_RAISE_ERRORS"] = 1
+    
     parent_output = tempfile.mkdtemp()
     tested_files = set()
     for example_path in sorted(example_paths):
