@@ -26,6 +26,7 @@ end")
     exit 1
 fi
 
+#if check_path_spaces is True
 # Check if the path has spaces
 case "$2" in
      *\ * )
@@ -44,3 +45,4 @@ end")
 
            ;;
 esac
+#endif

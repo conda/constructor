@@ -7,9 +7,17 @@ from pathlib import Path
 from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
 
-import constructor.preconda as preconda
-from constructor.imaging import write_images
-from constructor.utils import add_condarc, get_final_channels, rm_rf, approx_size_kb
+from . import preconda
+from .construct import ns_platform
+from .imaging import write_images
+from .utils import (
+    add_condarc,
+    get_final_channels,
+    rm_rf,
+    approx_size_kb,
+    preprocess,
+    fill_template,
+)
 
 
 OSX_DIR = join(dirname(__file__), "osx")
@@ -236,15 +244,13 @@ def move_script(src, dst, info):
     """
     with open(src) as fi:
         data = fi.read()
-
+    
+    # ppd hosts the conditions for the #if/#else/#endif preprocessors on scripts
+    ppd = ns_platform(info['_platform'])
+    ppd['check_path_spaces'] = info.get("check_path_spaces", False)
+    
     # This is necessary for when installing on case-sensitive macOS filesystems.
     pkg_name_lower = info.get("pkg_name", info['name']).lower()
-    data = data.replace('__NAME_LOWER__', pkg_name_lower)
-    data = data.replace('__VERSION__', info['version'])
-    data = data.replace('__NAME__', info['name'])
-    data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
-    data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
-
     default_path_exists_error_text = (
         "'{CHOSEN_PATH}' already exists. Please, relaunch the installer and "
         "choose another location in the Destination Select step."
@@ -252,7 +258,16 @@ def move_script(src, dst, info):
     path_exists_error_text = info.get(
         "install_path_exists_error_text", default_path_exists_error_text
     ).format(CHOSEN_PATH=f"$2/{pkg_name_lower}")
-    data = data.replace('__PATH_EXISTS_ERROR_TEXT__', path_exists_error_text)
+    replace = {
+        'NAME': info['name'],
+        'NAME_LOWER': pkg_name_lower,
+        'VERSION': info['version'],
+        'CHANNELS': ','.join(get_final_channels(info)),
+        'WRITE_CONDARC': '\n'.join(add_condarc(info)),
+        'PATH_EXISTS_ERROR_TEXT': path_exists_error_text
+    }
+    data = preprocess(data, ppd)
+    data = fill_template(data, replace)
 
     with open(dst, 'w') as fo:
         fo.write(data)

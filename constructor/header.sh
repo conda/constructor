@@ -283,9 +283,30 @@ EOF
     printf "[%s] >>> " "$PREFIX"
     read -r user_prefix
     if [ "$user_prefix" != "" ]; then
+#if check_path_spaces is True        
+        case "$user_prefix" in
+            *\ * )
+                printf "ERROR: Cannot install into directories with spaces\\n" >&2
+                exit 1
+                ;;
+            *)
+                eval PREFIX="$user_prefix"
+                ;;
+        esac
+#else
         PREFIX="$user_prefix"
+#endif
     fi
 fi # !BATCH
+
+#if check_path_spaces is True
+case "$PREFIX" in
+    *\ * )
+        printf "ERROR: Cannot install into directories with spaces\\n" >&2
+        exit 1
+        ;;
+esac
+#endif
 
 if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
     printf "ERROR: File or directory already exists: '%s'\\n" "$PREFIX" >&2
