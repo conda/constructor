@@ -2,7 +2,7 @@
 set -ex
 
 # $2 is the install location, ($HOME by default)
-if [ xxx$PREFIX == 'xxx' ]; then
+if [ -z "PREFIX" ]; then
     PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)
 fi
 
