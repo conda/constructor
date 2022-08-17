@@ -83,7 +83,7 @@ def run_examples(keep_artifacts=None):
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
                 continue
             tested_files.add(fpath)
-            env_dir = tempfile.mkdtemp(dir=output_dir)
+            env_dir = tempfile.mkdtemp(suffix="s p a c e s", dir=output_dir)
             rm_rf(env_dir)
             print('---- testing %s' % fpath)
             fpath = os.path.join(output_dir, fpath)
