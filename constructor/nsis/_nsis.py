@@ -199,12 +199,14 @@ def run_post_install():
     if not os.path.isfile(cmd_exe):
         err("Error: running %s failed.  cmd.exe could not be found.  "
             "Looked in SystemRoot and windir env vars.\n" % path)
+        sys.exit(1)
     args = [cmd_exe, '/d', '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
         err("Error: running %s failed\n" % path)
+        sys.exit(1)
 
 
 def run_pre_uninstall():
@@ -222,12 +224,14 @@ def run_pre_uninstall():
     if not os.path.isfile(cmd_exe):
         err("Error: running %s failed.  cmd.exe could not be found.  "
             "Looked in SystemRoot and windir env vars.\n" % path)
+        sys.exit(1)
     args = [cmd_exe, '/d', '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
         err("Error: running %s failed\n" % path)
+        sys.exit(1)
 
 
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
