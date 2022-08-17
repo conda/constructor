@@ -383,7 +383,7 @@ extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 
 export TMP_BACKUP="$TMP"
-export "TMP=$PREFIX/install_tmp"
+export TMP="$PREFIX/install_tmp"
 mkdir -p "$TMP"
 
 # the second binary payload: the tarball of packages
