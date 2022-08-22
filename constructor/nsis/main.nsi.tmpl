@@ -945,6 +945,9 @@ Section "Install"
 #endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'
         DetailPrint "Running post install..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
         push 'Failed to run post install script'
@@ -1024,6 +1027,10 @@ Section "Uninstall"
     # our newest Python builds have a patch that allows us to control the PATH search stuff much more
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
+
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'
 
     !insertmacro ExecWaitLibNsisCmd "pre_uninstall"
     !insertmacro ExecWaitLibNsisCmd "rmpath"
