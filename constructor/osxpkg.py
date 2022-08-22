@@ -389,12 +389,18 @@ def create(info, verbose=False):
         os.unlink(f.name)
 
     # This script checks to see if the install location already exists
+    # not to be confused with the user-provided pre_install!
     move_script(join(OSX_DIR, 'preinstall.sh'), join(SCRIPTS_DIR, 'preinstall'), info)
     # This script performs the full installation
     move_script(join(OSX_DIR, 'post_extract.sh'), join(SCRIPTS_DIR, 'postinstall'), info)
     pkgbuild_main(info)
     names = ['main']
 
+    if info.get('pre_install'):
+        print(
+            "! Warning: user-provided pre-install scripts are not "
+            "supported for PKG installers. Ignoring..."
+        )
     # The next three packages contain nothing but scripts to execute a
     # particular optional task. The Mac installer GUI will allow each of
     # these scripts to be enabled or disabled by the user in the GUI
