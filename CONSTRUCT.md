@@ -237,9 +237,9 @@ an interactive wizard guiding the user through the available options. If
 _required:_ no<br/>
 _type:_ string<br/>
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
-using this option, it will be used to sign the installer with Apple's `productsign`. 
+using this option, it will be used to sign the installer with Apple's `productsign`.
 Note that you will need to have a certificate (usually an "Installer certificate")
-and the corresponding private key, together called an 'identity', in one of your 
+and the corresponding private key, together called an 'identity', in one of your
 accessible keychains. Common values for this option follow this format
 `Developer ID Installer: Name of the owner (XXXXXX)`.
 
@@ -248,8 +248,8 @@ accessible keychains. Common values for this option follow this format
 _required:_ no<br/>
 _type:_ string<br/>
 If the pkg installer is going to be signed with `signing_identity_name`, you
-can also prepare the bundle for notarization. This will use Apple's `codesign` 
-to sign `conda.exe`. For this, you need an "Application certificate" (different from the 
+can also prepare the bundle for notarization. This will use Apple's `codesign`
+to sign `conda.exe`. For this, you need an "Application certificate" (different from the
 "Installer certificate" mentioned above). Common values for this option follow the format
 `Developer ID Application: Name of the owner (XXXXXX)`.
 
@@ -303,13 +303,20 @@ Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 
 _required:_ no<br/>
 _type:_ string<br/>
-Path to a pre-install script. For Unix `.sh` installers, the shebang
-line is respected if present; otherwise, the script is run by the POSIX
-shell `sh`. Note that the use of a shebang can reduce the portability of
-the installer. Metadata about the installer can be found in the
-`${INSTALLER_NAME}`/`${INSTALLER_VER}`/`${INSTALLER_PLAT}` environment
-variables. This option is not supported for Windows `.exe` or macOS
-`.pkg` installers.
+Path to a pre-install script, run after the package cache has been set, but
+before the files are linked to their final locations.
+
+- For Unix `.sh` installers, the shebang line is respected if present;
+  otherwise, the script is run by the POSIX shell `sh`. Note that the use
+  of a shebang can reduce the portability of the installer. Metadata about
+  the installer can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
+  `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
+- For Windows `.exe` installers, the script must be a `.bat` file.
+  Installation path is available as `%PREFIX%`. Metadata about
+  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
+  `%INSTALLER_PLAT%` environment variables.
+
+This option is not yet supported for macOS `.pkg` installers.
 
 ## `post_install`
 
@@ -317,15 +324,17 @@ _required:_ no<br/>
 _type:_ string<br/>
 Path to a post-install script. Some notes:
 
-- For Unix `.sh` installers, the shebang line is respected if present; 
-  otherwise, the script is run by the POSIX shell `sh`. Note that the use 
-  of a shebang can reduce the portability of the installer. The 
-  installation path is available as `$PREFIX`. More info about the installer 
-  can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, 
-  `${INSTALLER_PLAT}` environment   variables.
-- For Windows `.exe` installers, the script must be a `.bat` file. 
-  Installation path is available as `%PREFIX%`.
-- For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
+- For Unix `.sh` installers, the shebang line is respected if present;
+  otherwise, the script is run by the POSIX shell `sh`. Note that the use
+  of a shebang can reduce the portability of the installer. The
+  installation path is available as `$PREFIX`. More info about the installer
+  can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
+  `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
+- For Windows `.exe` installers, the script must be a `.bat` file.
+  Installation path is available as `%PREFIX%`. Metadata about
+  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
+  `%INSTALLER_PLAT%` environment variables.
+- For MacOS `.pkg` installers, the script MUST have a shebang (e.g.
   `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
   this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
 
@@ -349,7 +358,9 @@ is compulsory and the option to disable it will not be offered.
 _required:_ no<br/>
 _type:_ string<br/>
 Path to a pre uninstall script. This is only supported for on Windows,
-and must be a `.bat` file.
+and must be a `.bat` file. Installation path is available as `%PREFIX%`. 
+Metadata about the installer can be found in the `%INSTALLER_NAME%`,
+`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
 
 ## `default_prefix`
 
@@ -552,10 +563,10 @@ plain text (.txt), rich text (.rtf) or HTML (.html). If both
 
 _required:_ no<br/>
 _type:_ string<br/>
-A message that will be shown at the end of the installer upon success. 
+A message that will be shown at the end of the installer upon success.
 The behaviour is slightly different across installer types:
 - PKG: If this key is missing, it defaults to a message about Anaconda Cloud.
-  You can disable it altogether so it defaults to the system message if you set this 
+  You can disable it altogether so it defaults to the system message if you set this
   key to `""` (empty string).
 - EXE: The first line will be used as a title. The following lines will be used as text.
 (macOS PKG and Windows only).

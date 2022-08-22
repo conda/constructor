@@ -21,6 +21,7 @@ fi
 export INSTALLER_NAME="__NAME__"
 export INSTALLER_VER="__VERSION__"
 export INSTALLER_PLAT="__PLAT__"
+export INSTALLER_TYPE="SH"
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")

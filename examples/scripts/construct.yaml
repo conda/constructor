@@ -1,0 +1,11 @@
+name: Scripts
+version: X
+installer_type: all
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+specs:
+  - python
+pre_install: pre_install.sh   # [linux]
+pre_install: pre_install.bat  # [win]
+post_install: post_install.sh  # [unix]
+post_install: post_install.bat  # [win]

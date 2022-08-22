@@ -245,7 +245,7 @@ before the files are linked to their final locations.
   otherwise, the script is run by the POSIX shell `sh`. Note that the use
   of a shebang can reduce the portability of the installer. Metadata about
   the installer can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
-  `${INSTALLER_PLAT}` environment variables.
+  `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
@@ -262,7 +262,7 @@ Path to a post-install script. Some notes:
   of a shebang can reduce the portability of the installer. The
   installation path is available as `$PREFIX`. More info about the installer
   can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
-  `${INSTALLER_PLAT}` environment   variables.
+  `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
