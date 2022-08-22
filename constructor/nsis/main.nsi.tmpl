@@ -923,6 +923,7 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
     # Extra info for pre and post install scripts
+    # NOTE: If more vars are added, make sure to update the examples/scripts tests too
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'
