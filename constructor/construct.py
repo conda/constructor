@@ -263,13 +263,12 @@ Path to a post-install script. Some notes:
   installation path is available as `$PREFIX`. More info about the installer
   can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
   `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
+- For PKG installers, `bash` is used if a shebang is not provided. The same
+  variables mentioned for `sh` installers are available here.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
   `%INSTALLER_PLAT%` environment variables.
-- For MacOS `.pkg` installers, the script MUST have a shebang (e.g.
-  `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
-  this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
 
 If necessary, you can activate the installed `base` environment like this:
 
