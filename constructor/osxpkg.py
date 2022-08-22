@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
+from textwrap import dedent
 
 import constructor.preconda as preconda
 from constructor.imaging import write_images
@@ -229,7 +230,7 @@ def modify_xml(xml_path, info):
     tree.write(xml_path)
 
 
-def move_script(src, dst, info):
+def move_script(src, dst, info, user_provided=False):
     """
     Fill template scripts preinstall.sh, post_extract.sh and others,
     and move them to the installer workspace.
@@ -255,6 +256,22 @@ def move_script(src, dst, info):
     data = data.replace('__PATH_EXISTS_ERROR_TEXT__', path_exists_error_text)
 
     with open(dst, 'w') as fo:
+        if not data.startswith("#!"):
+            fo.write("#!/bin/bash\n")
+        if user_provided:
+            fo.write(
+                dedent(
+                    f"""
+                    # block added automatically by constructor
+                    export PREFIX="$(cd "$2/{pkg_name_lower}"; pwd)"
+                    export INSTALLER_NAME="{info['name']}"
+                    export INSTALLER_VER="{info['version']}"
+                    export INSTALLER_PLAT="{info['_platform']}"
+                    export INSTALLER_TYPE="PKG"
+                    # end of constructor block
+                    """
+                ).lstrip()
+            )
         fo.write(data)
     os.chmod(dst, 0o755)
 
@@ -318,10 +335,10 @@ def pkgbuild_main(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
-def pkgbuild_script(name, info, src, dst='postinstall'):
+def pkgbuild_script(name, info, src, dst='postinstall', user_provided=False):
     fresh_dir(SCRIPTS_DIR)
     fresh_dir(PACKAGE_ROOT)
-    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info)
+    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info, user_provided=user_provided)
     pkgbuild(
         name,
         identifier=info.get("reverse_domain_identifier"),
