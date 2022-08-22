@@ -6,9 +6,20 @@ set -euxo pipefail
 echo "INSTALLER_NAME=${INSTALLER_NAME}"
 echo "INSTALLER_VER=${INSTALLER_VER}"
 echo "INSTALLER_PLAT=${INSTALLER_PLAT}"
-# TODO: PKG pending
-# echo "INSTALLER_TYPE=${INSTALLER_TYPE}"
-if [[ ${INSTALLER_TYPE:-} == "SH" ]]; then
+echo "INSTALLER_TYPE=${INSTALLER_TYPE}"
+
+test "${INSTALLER_NAME}" = "Scripts"
+test "${INSTALLER_VER}" = "X"
+if [[ $(uname -s) == Linux ]]; then
+    if [[ ${INSTALLER_PLAT} != linux-* ]]; then
+        exit 1
+    fi
+else  # macOS
+    if [[ ${INSTALLER_PLAT} != osx-* ]]; then
+        exit 1
+    fi
+fi
+if [[ ${INSTALLER_TYPE} == "SH" ]]; then
     # pre_install not available on osx pkg yet
     test -f "${PREFIX}/pre_install_sentinel.txt"
 fi
