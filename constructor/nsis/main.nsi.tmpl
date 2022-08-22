@@ -872,6 +872,13 @@ Function AbortRetryNSExecWait
     ${LoopWhile} $0 != "0"
 FunctionEnd
 
+!macro ExecWaitLibNsisCmd cmd
+    IfSilent +3
+        ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+        Goto +2
+    ExecWait '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+!macroend
+
 # Installer sections
 Section "Install"
     ${LogSet} on
@@ -907,6 +914,7 @@ Section "Install"
     SetOutPath "$INSTDIR\pkgs"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
+    File __PRE_INSTALL__
     File __POST_INSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
@@ -914,6 +922,10 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
+    # Extra info for pre and post install scripts
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'
 
     @PKG_COMMANDS@
 
@@ -923,6 +935,8 @@ Section "Install"
     push 'Failed to extract packages'
     call AbortRetryNSExecWait
     SetDetailsPrint both
+
+    !insertmacro ExecWaitLibNsisCmd "pre_install"
 
     @SETUP_ENVS@
 
@@ -945,9 +959,6 @@ Section "Install"
 #endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'
         DetailPrint "Running post install..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
         push 'Failed to run post install script'
@@ -1005,13 +1016,6 @@ Section "Install"
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
 SectionEnd
 
-!macro ExecWaitLibNsisCmd cmd
-    IfSilent +3
-        ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
-        Goto +2
-    ExecWait '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
-!macroend
-
 Section "Uninstall"
     # Remove menu items, path entries
 
@@ -1028,6 +1032,7 @@ Section "Uninstall"
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
+    # Extra info for pre_uninstall scripts
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'

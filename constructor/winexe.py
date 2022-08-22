@@ -170,6 +170,7 @@ def make_nsi(info, dir_path, extra_files=()):
         'ENV_TXT': '@env.txt',
         'URLS_FILE': '@urls',
         'URLS_TXT_FILE': '@urls.txt',
+        'PRE_INSTALL': '@pre_install.bat',
         'POST_INSTALL': '@post_install.bat',
         'PRE_UNINSTALL': '@pre_uninstall.bat',
         'INDEX_CACHE': '@cache',
@@ -195,6 +196,7 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['check_path_length'] = info.get('check_path_length', None)
     ppd['check_path_spaces'] = info.get('check_path_spaces', True)
     ppd['keep_pkgs'] = info.get('keep_pkgs') or False
+    ppd['pre_install_exists'] = bool(info.get('pre_install'))
     ppd['post_install_exists'] = bool(info.get('post_install'))
     ppd['with_conclusion_text'] = bool(conclusion_text)
     ppd["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
@@ -278,6 +280,13 @@ def create(info, verbose=False):
     if 'pre_install' in info:
         sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
 
+    pre_dst = join(tmp_dir, 'pre_install.bat')
+    try:
+        shutil.copy(info['pre_install'], pre_dst)
+    except KeyError:
+        with open(pre_dst, 'w') as fo:
+            fo.write(":: this is an empty pre install .bat script\n")
+    
     post_dst = join(tmp_dir, 'post_install.bat')
     try:
         shutil.copy(info['post_install'], post_dst)
@@ -285,11 +294,11 @@ def create(info, verbose=False):
         with open(post_dst, 'w') as fo:
             fo.write(":: this is an empty post install .bat script\n")
 
-    pre_dst = join(tmp_dir, 'pre_uninstall.bat')
+    preun_dst = join(tmp_dir, 'pre_uninstall.bat')
     try:
-        shutil.copy(info['pre_uninstall'], pre_dst)
+        shutil.copy(info['pre_uninstall'], preun_dst)
     except KeyError:
-        with open(pre_dst, 'w') as fo:
+        with open(preun_dst, 'w') as fo:
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
