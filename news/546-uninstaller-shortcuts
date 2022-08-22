@@ -6,7 +6,7 @@ Enhancements:
 Bug fixes:
 ----------
 
-* Shortcuts will be removed in installations that do not require `conda` (#461)
+* Shortcuts will be removed in installations that do not require ``conda`` (#461)
 
 Deprecations:
 -------------
