@@ -277,9 +277,6 @@ def create(info, verbose=False):
     copied_extra_files = copy_extra_files(info, tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
-    if 'pre_install' in info:
-        sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
-
     pre_dst = join(tmp_dir, 'pre_install.bat')
     try:
         shutil.copy(info['pre_install'], pre_dst)
