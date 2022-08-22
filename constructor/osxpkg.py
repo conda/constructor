@@ -423,7 +423,7 @@ def create(info, verbose=False):
     # these scripts to be enabled or disabled by the user in the GUI
     # The user-supplied post-install script
     if info.get('post_install'):
-        pkgbuild_script('postinstall', info, abspath(info['post_install']))
+        pkgbuild_script('postinstall', info, abspath(info['post_install']), user_provided=True)
         names.append('postinstall')
     # The script to run conda init
     pkgbuild_script('pathupdate', info, 'update_path.sh')
