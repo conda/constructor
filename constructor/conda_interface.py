@@ -141,6 +141,7 @@ if conda_interface_type == 'conda':
         # Choose an arbitrary old, expired date, so that conda will want to
         # immediately update it when not being run in offline mode
         url = used_repodata.pop('_url').rstrip("/")
+        used_repodata.pop("_mod", None)
         repodata = json.dumps(used_repodata, indent=2)
         repodata_header = json.dumps(
             {
@@ -152,3 +153,8 @@ if conda_interface_type == 'conda':
         repodata_filename = _cache_fn_url(url)
         with open(join(cache_dir, repodata_filename), 'w') as fh:
             fh.write(repodata)
+
+    def write_cache_dir():
+        cache_dir = join(PackageCacheData.first_writable().pkgs_dir, 'cache')
+        mkdir_p_sudo_safe(cache_dir)
+        return cache_dir

@@ -132,7 +132,7 @@ Path to an environment file to construct from. If this option is present, the
 create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
-and install the packages.
+and install the packages. The created environment MUST include `python`.
 
 ## `transmute_file_type`
 
@@ -157,6 +157,34 @@ _required:_ no<br/>
 _type:_ string<br/>
 The channel alias that would be assumed for the created installer
 (only useful if it includes conda).
+
+## `extra_envs`
+
+_required:_ no<br/>
+_type:_ dictionary<br/>
+Create more environments in addition to the default `base` provided by `specs`,
+`environment` or `environment_file`. This should be a map of `str` (environment
+name) to a dictionary of options:
+- `specs` (list of str): which packages to install in that environment
+- `environment` (str): same as global option, for this env
+- `environment_file` (str): same as global option, for this env
+- `channels` (list of str): using these channels; if not provided, the global
+  value is used. To override inheritance, set it to an empty list.
+- `channels_remap` (list of str): same as global option, for this env;
+  if not provided, the global value is used. To override inheritance, set it to
+  an empty list.
+- `user_requested_specs` (list of str): same as the global option, but for this env;
+  if not provided, global value is _not_ used
+
+Notes:
+- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
+- `conda` needs to be present in the `base` environment (via `specs`)
+- support for `menu_packages` is planned, but not possible right now. For now, all packages
+  in an `extra_envs` config will be allowed to create their shortcuts.
+- If a global `exclude` option is used, it will have an effect on the environments created
+  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
+  extra environmentss will have it either. Unlike the global option, an error will not be
+  thrown if the excluded package is not found in the packages required by the extra environment.
 
 ## `installer_filename`
 
@@ -209,10 +237,10 @@ an interactive wizard guiding the user through the available options. If
 _required:_ no<br/>
 _type:_ string<br/>
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
-using this option, it will be used to sign the installer. Note that you will need
-to have a certificate (usually an "Installer certificate") and corresponding
-private key together called an 'identity' in one of your accessible keychains.
-Common values for this option follow this format
+using this option, it will be used to sign the installer with Apple's `productsign`. 
+Note that you will need to have a certificate (usually an "Installer certificate")
+and the corresponding private key, together called an 'identity', in one of your 
+accessible keychains. Common values for this option follow this format
 `Developer ID Installer: Name of the owner (XXXXXX)`.
 
 ## `notarization_identity_name`
@@ -220,9 +248,9 @@ Common values for this option follow this format
 _required:_ no<br/>
 _type:_ string<br/>
 If the pkg installer is going to be signed with `signing_identity_name`, you
-can also prepare the bundle for notarization. This will use `codesign` to sign `conda.exe`.
-For this, you need an "Application certificate" (different from the "Installer certificate"
-mentioned above). Common values for this option follow this format
+can also prepare the bundle for notarization. This will use Apple's `codesign` 
+to sign `conda.exe`. For this, you need an "Application certificate" (different from the 
+"Installer certificate" mentioned above). Common values for this option follow the format
 `Developer ID Application: Name of the owner (XXXXXX)`.
 
 ## `attempt_hardlinks`
@@ -300,6 +328,11 @@ Path to a post-install script. Some notes:
 - For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
   `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
   this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
+
+If necessary, you can activate the installed `base` environment like this:
+
+- Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
+- Windows: `call "%PREFIX%\Scripts\activate.bat"`
 
 ## `post_install_desc`
 
@@ -529,11 +562,13 @@ plain text (.txt), rich text (.rtf) or HTML (.html). If both
 
 _required:_ no<br/>
 _type:_ string<br/>
-If `installer_type` is `pkg` on MacOS, this message will be
-shown at the end of the installer upon success. If this key is missing,
-it defaults to a message about Anaconda Cloud. You can disable it altogether
-so it defaults to the system message if you set this key to `""` (empty string).
-(MacOS only).
+A message that will be shown at the end of the installer upon success. 
+The behaviour is slightly different across installer types:
+- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.
+  You can disable it altogether so it defaults to the system message if you set this 
+  key to `""` (empty string).
+- EXE: The first line will be used as a title. The following lines will be used as text.
+(macOS PKG and Windows only).
 
 ## `extra_files`
 

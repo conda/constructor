@@ -1,0 +1,20 @@
+name: ExtraEnvs
+version: X
+installer_type: all
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+specs:
+  - python=3.7
+  - conda # conda is required for extra_envs
+  - console_shortcut # [win]
+extra_envs:
+  py38:
+    specs:
+      - python=3.8
+    channels:
+      - conda-forge
+  dav1d:
+    environment_file: dav1d_env.yaml
+
+post_install: test_install.sh  # [unix]
+post_install: test_install.bat  # [win]

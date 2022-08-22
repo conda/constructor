@@ -104,7 +104,7 @@ Path to an environment file to construct from. If this option is present, the
 create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
-and install the packages.
+and install the packages. The created environment MUST include `python`.
 '''),
 
     ('transmute_file_type', False, str, '''
@@ -122,6 +122,32 @@ only if `conda` is included in the environmnent.
     ('conda_channel_alias', False, str, '''
 The channel alias that would be assumed for the created installer
 (only useful if it includes conda).
+'''),
+
+    ('extra_envs', False, (dict,), '''
+Create more environments in addition to the default `base` provided by `specs`,
+`environment` or `environment_file`. This should be a map of `str` (environment
+name) to a dictionary of options:
+- `specs` (list of str): which packages to install in that environment
+- `environment` (str): same as global option, for this env
+- `environment_file` (str): same as global option, for this env
+- `channels` (list of str): using these channels; if not provided, the global
+  value is used. To override inheritance, set it to an empty list.
+- `channels_remap` (list of str): same as global option, for this env;
+  if not provided, the global value is used. To override inheritance, set it to
+  an empty list.
+- `user_requested_specs` (list of str): same as the global option, but for this env;
+  if not provided, global value is _not_ used
+
+Notes:
+- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
+- `conda` needs to be present in the `base` environment (via `specs`)
+- support for `menu_packages` is planned, but not possible right now. For now, all packages
+  in an `extra_envs` config will be allowed to create their shortcuts.
+- If a global `exclude` option is used, it will have an effect on the environments created
+  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
+  extra environmentss will have it either. Unlike the global option, an error will not be
+  thrown if the excluded package is not found in the packages required by the extra environment.
 '''),
 
     ('installer_filename',     False, str, '''
@@ -162,18 +188,18 @@ an interactive wizard guiding the user through the available options. If
 
     ('signing_identity_name',  False, str, '''
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
-using this option, it will be used to sign the installer. Note that you will need
-to have a certificate (usually an "Installer certificate") and corresponding
-private key together called an 'identity' in one of your accessible keychains.
-Common values for this option follow this format
+using this option, it will be used to sign the installer with Apple's `productsign`. 
+Note that you will need to have a certificate (usually an "Installer certificate")
+and the corresponding private key, together called an 'identity', in one of your 
+accessible keychains. Common values for this option follow this format
 `Developer ID Installer: Name of the owner (XXXXXX)`.
 '''),
 
     ('notarization_identity_name', False, str, '''
 If the pkg installer is going to be signed with `signing_identity_name`, you
-can also prepare the bundle for notarization. This will use `codesign` to sign `conda.exe`.
-For this, you need an "Application certificate" (different from the "Installer certificate"
-mentioned above). Common values for this option follow this format
+can also prepare the bundle for notarization. This will use Apple's `codesign` 
+to sign `conda.exe`. For this, you need an "Application certificate" (different from the 
+"Installer certificate" mentioned above). Common values for this option follow the format
 `Developer ID Application: Name of the owner (XXXXXX)`.
 '''),
 
@@ -235,6 +261,11 @@ Path to a post-install script. Some notes:
 - For MacOS `.pkg` installers, the script MUST have a shebang (e.g. 
   `#!/bin/bash`). `$PREFIX` will be undefined but can be calculated with
   this one-liner: `PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)`.
+
+If necessary, you can activate the installed `base` environment like this:
+
+- Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
+- Windows: `call "%PREFIX%\\Scripts\\activate.bat"`
 '''),
 
     ('post_install_desc',      False, str, '''
@@ -412,11 +443,13 @@ plain text (.txt), rich text (.rtf) or HTML (.html). If both
 '''),
 
     ('conclusion_text', False, str, '''
-If `installer_type` is `pkg` on MacOS, this message will be
-shown at the end of the installer upon success. If this key is missing,
-it defaults to a message about Anaconda Cloud. You can disable it altogether
-so it defaults to the system message if you set this key to `""` (empty string).
-(MacOS only).
+A message that will be shown at the end of the installer upon success. 
+The behaviour is slightly different across installer types:
+- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.
+  You can disable it altogether so it defaults to the system message if you set this 
+  key to `""` (empty string).
+- EXE: The first line will be used as a title. The following lines will be used as text.
+(macOS PKG and Windows only).
 '''),
 
     ('extra_files', False, (list), '''
@@ -427,6 +460,20 @@ This setting can be passed as a list of:
 - `Mapping[str, str]`: map of path in disk to path in prefix.
 '''),
 ]
+
+
+_EXTRA_ENVS_SCHEMA = {
+    "specs": (list, tuple),
+    "environment": (str,),
+    "environment_file": (str,),
+    "channels": (list, tuple),
+    "channels_remap": (list, tuple),
+    "user_requested_specs": (list, tuple),
+    "exclude": (list, tuple),
+    # TODO: we can't support menu_packages for extra envs yet
+    # will implement when the PR for new menuinst lands
+    # "menu_packages": (list, tuple),
+}
 
 
 def ns_platform(platform):
@@ -560,6 +607,22 @@ def verify(info):
         value = info[key]
         if not pat.match(value) or value.endswith(('.', '-')):
             sys.exit("Error: invalid %s '%s'" % (key, value))
+
+    for env_name, env_data in info.get("extra_envs", {}).items():
+        disallowed = ('/', ' ', ':', '#')
+        if any(character in env_name for character in disallowed):
+            sys.exit(
+                f"Environment names (keys in 'extra_envs') cannot contain any of {disallowed}. "
+                f"You tried to use: {env_name}"
+                )
+        for key, value in env_data.items():
+            if key not in _EXTRA_ENVS_SCHEMA:
+                sys.exit(f"Key '{key}' not supported in 'extra_envs'.")
+            types = _EXTRA_ENVS_SCHEMA[key]
+            if not isinstance(value, types):
+                types_str = " or ".join([type_.__name__ for type_ in types])
+                sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
+                         f"must be an instance of {types_str}")
 
 
 def generate_doc():

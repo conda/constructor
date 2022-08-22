@@ -29,7 +29,14 @@ def write_readme(dst, info):
 
     with open(dst, 'w') as f:
         f.write(data)
-        for dist in sorted(info['_dists']):
+
+        all_dists = info["_dists"].copy()
+        for env_info in info.get("_extra_envs_info", {}).values():
+            all_dists += env_info["_dists"]
+        all_dists = list({dist: None for dist in all_dists})  # de-duplicate
+
+        # TODO: Split output by env name
+        for dist in sorted(all_dists):
             if dist.startswith('_'):
                 continue
             f.write("{\\listtext\t\n\\f1 \\uc0\\u8259 \n\\f0 \t}%s %s\\\n" %
@@ -345,8 +352,14 @@ def create(info, verbose=False):
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
     preconda.copy_extra_files(info, prefix)
-    for dist in info['_dists']:
+    
+    all_dists = info["_dists"].copy()
+    for env_info in info.get("_extra_envs_info", {}).values():
+        all_dists += env_info["_dists"]
+    all_dists = list({dist: None for dist in all_dists})  # de-duplicate
+    for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
+
     shutil.copyfile(info['_conda_exe'], join(prefix, "conda.exe"))
 
     # Sign conda-standalone so it can pass notarization
@@ -362,8 +375,9 @@ def create(info, verbose=False):
             }
             plist_dump(plist, f)
         check_call(
-            [
-                'codesign',
+            [   
+                # hardcode to system location to avoid accidental clobber in PATH
+                "/usr/bin/codesign",  
                 "--verbose",
                 '--sign', notarization_identity_name,
                 "--prefix", info.get("reverse_domain_identifier", info['name']),
@@ -399,7 +413,8 @@ def create(info, verbose=False):
     # The default distribution file needs to be modified, so we create
     # it to a temporary location, edit it, and supply it to the final call.
     xml_path = join(PACKAGES_DIR, 'distribution.xml')
-    args = ["productbuild", "--synthesize"]
+    # hardcode to system location to avoid accidental clobber in PATH
+    args = ["/usr/bin/productbuild", "--synthesize"]
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
@@ -408,7 +423,7 @@ def create(info, verbose=False):
 
     identity_name = info.get('signing_identity_name')
     check_call([
-        "productbuild",
+        "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info.get("reverse_domain_identifier", info['name']),
@@ -416,7 +431,8 @@ def create(info, verbose=False):
     ])
     if identity_name:
         check_call([
-            'productsign', '--sign', identity_name,
+            # hardcode to system location to avoid accidental clobber in PATH
+            '/usr/bin/productsign', '--sign', identity_name,
             "tmp.pkg",
             info['_outpath'],
         ])
