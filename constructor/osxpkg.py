@@ -230,7 +230,7 @@ def modify_xml(xml_path, info):
     tree.write(xml_path)
 
 
-def move_script(src, dst, info, user_provided=False):
+def move_script(src, dst, info, ensure_shebang=False, ensure_vars=False):
     """
     Fill template scripts preinstall.sh, post_extract.sh and others,
     and move them to the installer workspace.
@@ -245,6 +245,7 @@ def move_script(src, dst, info, user_provided=False):
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
+    data = data.replace('__PLAT__', info['_platform'])
 
     default_path_exists_error_text = (
         "'{CHOSEN_PATH}' already exists. Please, relaunch the installer and "
@@ -255,23 +256,39 @@ def move_script(src, dst, info, user_provided=False):
     ).format(CHOSEN_PATH=f"$2/{pkg_name_lower}")
     data = data.replace('__PATH_EXISTS_ERROR_TEXT__', path_exists_error_text)
 
+    has_shell_shebang = data.startswith(("#!/bin/bash", "#!/bin/sh"))
     with open(dst, 'w') as fo:
-        if not data.startswith("#!"):
-            fo.write("#!/bin/bash\n")
-        if user_provided:
-            fo.write(
-                dedent(
-                    f"""
-                    # block added automatically by constructor
-                    export PREFIX="$(cd "$2/{pkg_name_lower}"; pwd)"
-                    export INSTALLER_NAME="{info['name']}"
-                    export INSTALLER_VER="{info['version']}"
-                    export INSTALLER_PLAT="{info['_platform']}"
-                    export INSTALLER_TYPE="PKG"
-                    # end of constructor block
-                    """
-                ).lstrip()
-            )
+        if (ensure_shebang or ensure_vars) and (src.endswith(".sh") or has_shell_shebang):
+            # Shell scripts provided by the user (post-install) are injected
+            # with some convenience environment variables
+            # We also take care of the shebang if not present, otherwise it
+            # will fail to start with error posix_spawn 8
+            if ensure_shebang:
+                if has_shell_shebang:
+                    data_lines = data.splitlines(keepends=True)
+                    fo.write(data_lines[0])
+                    data = "".join(data_lines[1:])
+                else:
+                    fo.write("#!/bin/bash\n")
+            if ensure_vars:
+                fo.write(
+                    dedent(
+                        f"""
+                        # block added automatically by constructor
+                        if [ -d "$2/{pkg_name_lower}" ]; then
+                            export PREFIX="$(cd "$2/{pkg_name_lower}"; pwd)"
+                        else
+                            export PREFIX="$2/{pkg_name_lower}"
+                            echo "PREFIX=($PREFIX) does not exist yet!"
+                        fi
+                        export INSTALLER_NAME="{info['name']}"
+                        export INSTALLER_VER="{info['version']}"
+                        export INSTALLER_PLAT="{info['_platform']}"
+                        export INSTALLER_TYPE="PKG"
+                        # end of constructor block
+                        """
+                    ).lstrip()
+                )
         fo.write(data)
     os.chmod(dst, 0o755)
 
@@ -335,10 +352,10 @@ def pkgbuild_main(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
-def pkgbuild_script(name, info, src, dst='postinstall', user_provided=False):
+def pkgbuild_script(name, info, src, dst='postinstall', **kwargs):
     fresh_dir(SCRIPTS_DIR)
     fresh_dir(PACKAGE_ROOT)
-    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info, user_provided=user_provided)
+    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info, **kwargs)
     pkgbuild(
         name,
         identifier=info.get("reverse_domain_identifier"),
@@ -368,7 +385,7 @@ def create(info, verbose=False):
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
     preconda.copy_extra_files(info, prefix)
-    
+
     all_dists = info["_dists"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
         all_dists += env_info["_dists"]
@@ -406,24 +423,33 @@ def create(info, verbose=False):
         os.unlink(f.name)
 
     # This script checks to see if the install location already exists
-    # not to be confused with the user-provided pre_install!
+    # Not to be confused with the user-provided pre_install!
     move_script(join(OSX_DIR, 'preinstall.sh'), join(SCRIPTS_DIR, 'preinstall'), info)
+    if info.get('pre_install'):
+        move_script(
+            abspath(info['pre_install']),
+            join(pkgs_dir, 'user_preinstall'),
+            info, 
+            ensure_shebang=True,
+        )
     # This script performs the full installation
     move_script(join(OSX_DIR, 'post_extract.sh'), join(SCRIPTS_DIR, 'postinstall'), info)
     pkgbuild_main(info)
     names = ['main']
 
-    if info.get('pre_install'):
-        print(
-            "! Warning: user-provided pre-install scripts are not "
-            "supported for PKG installers. Ignoring..."
-        )
-    # The next three packages contain nothing but scripts to execute a
+    # The next four packages contain nothing but scripts to execute a
     # particular optional task. The Mac installer GUI will allow each of
     # these scripts to be enabled or disabled by the user in the GUI
+    # The user-supplied pre-install script
     # The user-supplied post-install script
     if info.get('post_install'):
-        pkgbuild_script('postinstall', info, abspath(info['post_install']), user_provided=True)
+        pkgbuild_script(
+            'postinstall', 
+            info, 
+            abspath(info['post_install']), 
+            ensure_shebang=True, 
+            ensure_vars=True,
+        )
         names.append('postinstall')
     # The script to run conda init
     pkgbuild_script('pathupdate', info, 'update_path.sh')

@@ -18,5 +18,4 @@ else  # macOS
         exit 1
     fi
 fi
-
 echo "Added by pre-install script" > "$PREFIX/pre_install_sentinel.txt"

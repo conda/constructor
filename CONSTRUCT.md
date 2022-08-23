@@ -310,13 +310,17 @@ before the files are linked to their final locations.
   otherwise, the script is run by the POSIX shell `sh`. Note that the use
   of a shebang can reduce the portability of the installer. Metadata about
   the installer can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
-  `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
+  `${INSTALLER_PLAT}` environment variables. `${INSTALLER_TYPE}` is also
+  available and always set to `SH`.
+- For PKG installers, `bash` is used if a shebang is not provided. The same
+  variables mentioned for `sh` installers are available here, as long as
+  the scripts are shell scripts (filename ends with `.sh` or the contents
+  start with `#!/bin/bash` or `#!/bin/sh`). `${INSTALLER_TYPE}` is set to `PKG`.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
   `%INSTALLER_PLAT%` environment variables.
 
-This option is not yet supported for macOS `.pkg` installers.
 
 ## `post_install`
 
@@ -327,11 +331,13 @@ Path to a post-install script. Some notes:
 - For Unix `.sh` installers, the shebang line is respected if present;
   otherwise, the script is run by the POSIX shell `sh`. Note that the use
   of a shebang can reduce the portability of the installer. The
-  installation path is available as `$PREFIX`. More info about the installer
+  installation path is available as `${PREFIX}`. More info about the installer
   can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
   `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
 - For PKG installers, `bash` is used if a shebang is not provided. The same
-  variables mentioned for `sh` installers are available here.
+  variables mentioned for `sh` installers are available here, as long as
+  the scripts are shell scripts (filename ends with `.sh` or the contents
+  start with `#!/bin/bash` or `#!/bin/sh`).
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,

@@ -14,6 +14,10 @@ PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
+export INSTALLER_NAME="__NAME__"
+export INSTALLER_VER="__VERSION__"
+export INSTALLER_PLAT="__PLAT__"
+export INSTALLER_TYPE="PKG"
 
 CONDA_EXEC="$PREFIX/conda.exe"
 chmod +x "$CONDA_EXEC"
@@ -29,6 +33,17 @@ notify "Preparing packages..."
 if (( $? )); then
     echo "ERROR: could not extract the conda packages"
     exit 1
+fi
+
+# Run user-provided pre-install script
+if [ -f "$PREFIX/pkgs/user_preinstall" ]; then
+    notify "Running pre-installation scripts..."
+    chmod +x "$PREFIX/pkgs/user_preinstall"
+    "$PREFIX/pkgs/user_preinstall"
+    if (( $? )); then
+        echo "ERROR: could not run user-provided pre_install script!"
+        exit 1
+    fi
 fi
 
 # Perform the conda install

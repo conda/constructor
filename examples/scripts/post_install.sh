@@ -19,7 +19,4 @@ else  # macOS
         exit 1
     fi
 fi
-if [[ ${INSTALLER_TYPE} == "SH" ]]; then
-    # pre_install not available on osx pkg yet
-    test -f "${PREFIX}/pre_install_sentinel.txt"
-fi
+test -f "${PREFIX}/pre_install_sentinel.txt"
