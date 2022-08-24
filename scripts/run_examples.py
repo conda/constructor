@@ -126,33 +126,37 @@ def run_examples(keep_artifacts=None):
                 # This is why we have this weird .split() thingy down here:
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
             test_errored = _execute(cmd)
+            # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
+            # which are only written if a special NSIS build is used
+            win_error_lines = []
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
-                print('---  LOGS  ---')
                 try:
                     with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
                         for line in f:
                             if ":error:" in line:
-                                print(line.rstrip())
+                                win_error_lines.append(line)
                                 test_errored = 1
                 except Exception as exc:
                     test_errored = 1
                     print(f"{type(exc)}: {exc}")
-                    
             errored += test_errored
-            if keep_artifacts:
-                shutil.move(fpath, keep_artifacts)
-            # more complete logs are available under /var/log/install.log
             if test_errored:
                 which_errored.setdefault(example_path, []).append(fpath)
+                if win_error_lines:
+                    print('---  LOGS  ---')
+                    for line in win_error_lines:
+                        print(line.rstrip())
                 if ext == "pkg" and os.environ.get("CI"):
+                    # more complete logs are available under /var/log/install.log
                     print('---  LOGS  ---')
                     print("Tip: Debug locally and check the full logs in the Installer UI")
                     print("     or check /var/log/install.log if run from the CLI.")
+            if keep_artifacts:
+                shutil.move(fpath, keep_artifacts)
         if creation_errored:
             which_errored.setdefault(example_path, []).append("could not create installer")
         print('')
-        break
 
     if errored:
         print('Some examples failed:')
