@@ -63,9 +63,16 @@ def run_examples(keep_artifacts=None):
     int
         Number of failed examples
     """
+    if sys.platform.startswith("win") and "NSIS_USING_LOG_BUILD" not in os.environ:
+        print(
+            "! Warning !"
+            "  Windows installers are tested with NSIS in silent mode, which does"
+            "  not report errors on exit. You should use logging-enabled NSIS builds"
+            "  to generate a 'install.log' file the script will search for errors"
+            "  after completion."
+        )
     example_paths = []
     errored = 0
-
     if platform.system() != 'Darwin':
         BLACKLIST.append(os.path.join(EXAMPLES_DIR, "osxpkg"))
     if keep_artifacts:
@@ -132,11 +139,16 @@ def run_examples(keep_artifacts=None):
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
                 try:
+                    log_is_empty = True
                     with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
                         for line in f:
+                            log_is_empty = False
                             if ":error:" in line:
                                 win_error_lines.append(line)
                                 test_errored = 1
+                    if log_is_empty:
+                        test_errored = 1
+                        win_error_lines.append("Logfile was unexpectedly empty!")
                 except Exception as exc:
                     test_errored = 1
                     win_error_lines.append(
