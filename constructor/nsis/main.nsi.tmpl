@@ -785,6 +785,10 @@ Function OnDirectoryLeave
             "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
              This can cause problems with several Conda packages.$\n \
              Please consider removing the space$R1."
+        ${If} ${Silent}
+            DetailPrint "::error:: 'Destination folder' contains $R0 space$R1."
+            abort
+        ${EndIf}
     NoSpaces:
 #endif
 
@@ -795,6 +799,7 @@ Function OnDirectoryLeave
     Pop $R0
 
     StrCmp $R0 "" NoInvalidCharaceters
+        DetailPrint "::error:: 'Destination Folder' contains the following invalid character: $R0"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Error: 'Destination Folder' contains the following invalid character: $R0"
         abort
@@ -803,6 +808,7 @@ Function OnDirectoryLeave
     UnicodePathTest::SpecialCharPathTest $INSTDIR
     Pop $R1
     StrCmp $R1 "nothingspecial" nothing_special_path
+        DetailPrint "::error:: 'Destination Folder' contains the following invalid character$R1"
         messagebox mb_ok|MB_ICONEXCLAMATION \
             "Error: 'Destination Folder' contains the following invalid character$R1"
         abort
@@ -819,7 +825,9 @@ Function OnDirectoryLeave
       StrCmp ${PY_VER} "2.7" not_cp_acp_capable
       StrCmp $R1 "ascii_cp_acp" valid_path
       not_cp_acp_capable:
-
+          DetailPrint "::error:: Due to incompatibility with several \
+              Python libraries, 'Destination Folder' cannot contain non-ascii characters \
+              (special characters or diacritics).  Please choose another location."
           messagebox mb_ok|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
               Python libraries, 'Destination Folder' cannot contain non-ascii characters \
               (special characters or diacritics).  Please choose another location."
@@ -831,6 +839,8 @@ Function OnDirectoryLeave
     ${IsWritable} $INSTDIR $R1
     IntCmp $R1 0 pathgood
     Pop $R1
+    DetailPrint "::error: Path $INSTDIR is not writable. Please check permissions or \
+         try respawning the installer with elevated privileges."
     MessageBox mb_ok|MB_ICONEXCLAMATION \
         "Error: Path $INSTDIR is not writable. Please check permissions or \
          try respawning the installer with elevated privileges."
@@ -874,19 +884,6 @@ FunctionEnd
 # Installer sections
 Section "Install"
     ${LogSet} on
-
-    ${If} ${Silent}
-        # Call the CheckForSpaces function.
-        Push $INSTDIR # Input string (install path).
-        Call CheckForSpaces
-        Pop $R0 # The function returns the number of spaces found in the input string.
-#if check_path_spaces is True
-        StrCmp $R0 0 NoSpaces
-            DetailPrint "::error:: The chosen path contains one or more spaces."
-            Abort
-        NoSpaces:
-#endif
-    ${EndIf}
 
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
