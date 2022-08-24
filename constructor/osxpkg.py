@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from os.path import isdir, abspath, dirname, exists, join
 from subprocess import check_call
@@ -247,7 +248,7 @@ def move_script(src, dst, info):
     
     # ppd hosts the conditions for the #if/#else/#endif preprocessors on scripts
     ppd = ns_platform(info['_platform'])
-    ppd['check_path_spaces'] = info.get("check_path_spaces", True)
+    ppd['check_path_spaces'] = bool(info.get("check_path_spaces", True))
     
     # This is necessary for when installing on case-sensitive macOS filesystems.
     pkg_name_lower = info.get("pkg_name", info['name']).lower()
@@ -346,6 +347,21 @@ def pkgbuild_script(name, info, src, dst='postinstall'):
 
 
 def create(info, verbose=False):
+    # Do some configuration checks
+    if info.get("check_path_spaces", True) is True:
+        if " " in info.get("default_location_pkg", ""):
+            sys.exit(
+                "ERROR: 'check_path_spaces' is enabled, but 'default_location_pkg' "
+                "contains spaces. This will always result in a failed "
+                "installation! Aborting!"
+            )
+        if " " in info.get("pkg_name", ""):
+            sys.exit(
+                "ERROR: 'check_path_spaces' is enabled, but 'pkg_name' "
+                "contains spaces. This will always result in a failed "
+                "installation! Aborting!"
+            )
+
     global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR, SCRIPTS_DIR
 
     CACHE_DIR = info['_download_dir']
