@@ -9,5 +9,5 @@ specs:
   - python
   - conda
 
-check_path_spaces: False # [unix]
+check_path_spaces: False
 check_path_length: False
