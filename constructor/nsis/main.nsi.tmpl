@@ -785,7 +785,6 @@ Function OnDirectoryLeave
             "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
              This can cause problems with several Conda packages.$\n \
              Please consider removing the space$R1."
-
     NoSpaces:
 #endif
 
@@ -875,6 +874,19 @@ FunctionEnd
 # Installer sections
 Section "Install"
     ${LogSet} on
+
+    ${If} ${Silent}
+        # Call the CheckForSpaces function.
+        Push $INSTDIR # Input string (install path).
+        Call CheckForSpaces
+        Pop $R0 # The function returns the number of spaces found in the input string.
+#if check_path_spaces is True
+        StrCmp $R0 0 NoSpaces
+            DetailPrint "::error:: The chosen path contains one or more spaces."
+            Abort
+        NoSpaces:
+#endif
+    ${EndIf}
 
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
