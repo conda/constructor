@@ -224,8 +224,9 @@ FunctionEnd
                 Install for just me, add to PATH and register as system Python:$\n\
                     $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
                 Install for just me, with no registry modification (for CI):$\n\
-                    $EXEFILE /NoRegistry=1$\n"
-                    Abort
+                    $EXEFILE /NoRegistry=1$\n" \
+            /SD IDOK
+            Abort
      ${EndIf}
 
     ClearErrors
@@ -455,7 +456,8 @@ Function .onInit
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "This installer is for a 64-bit version for @NAME@$\n\
             but your system is 32-bit. Please use the 32-bit Windows$\n\
-            @NAME@ installer."
+            @NAME@ installer." \
+            /SD IDOK
         Abort
     ${EndIf}
 #endif
@@ -541,7 +543,8 @@ Function .onInit
         StrCpy $INSTDIR_JUSTME $0
     ${Else}
         # Should never happen; indicates a logic error above.
-        MessageBox MB_OK "Internal error: IsUserDomain not set properly!"
+        MessageBox MB_OK "Internal error: IsUserDomain not set properly!" \
+                   /SD IDOK
         Abort
     ${EndIf}
 
@@ -734,7 +737,8 @@ Function OnDirectoryLeave
         DetailPrint "::error:: Directory '$INSTDIR' is not empty, please choose a different location."
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Directory '$INSTDIR' is not empty,$\n\
-             please choose a different location."
+             please choose a different location." \
+            /SD IDOK
         Abort
     ${EndIf}
 
@@ -758,7 +762,8 @@ Function OnDirectoryLeave
                              path on Windows."
                 MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters or \
                                               the installation requires administrator rights to enable long \
-                                              path on Windows."
+                                              path on Windows." \
+                           /SD IDOK
                 Abort
             ${EndIf}
         ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
@@ -766,7 +771,8 @@ Function OnDirectoryLeave
             DetailPrint "::error:: The installation path should be shorter than 46 characters. \
                          Please choose another location."
             MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters. \
-                                          Please choose another location."
+                                          Please choose another location." \
+                       /SD IDOK
             Abort
         ${EndIf}
     ${EndIf}
@@ -790,7 +796,8 @@ Function OnDirectoryLeave
         MessageBox MB_OK|MB_ICONINFORMATION \
             "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
              This can cause problems with several Conda packages.$\n \
-             Please consider removing the space$R1."
+             Please consider removing the space$R1." \
+            /SD IDOK
         ${If} ${Silent}
             DetailPrint "::error:: 'Destination folder' contains $R0 space$R1."
             abort
@@ -807,7 +814,8 @@ Function OnDirectoryLeave
     StrCmp $R0 "" NoInvalidCharaceters
         DetailPrint "::error:: 'Destination Folder' contains the following invalid character: $R0"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "Error: 'Destination Folder' contains the following invalid character: $R0"
+            "Error: 'Destination Folder' contains the following invalid character: $R0" \
+            /SD IDOK
         abort
     NoInvalidCharaceters:
 
@@ -815,8 +823,9 @@ Function OnDirectoryLeave
     Pop $R1
     StrCmp $R1 "nothingspecial" nothing_special_path
         DetailPrint "::error:: 'Destination Folder' contains the following invalid character$R1"
-        messagebox mb_ok|MB_ICONEXCLAMATION \
-            "Error: 'Destination Folder' contains the following invalid character$R1"
+        MessageBox MB_OK|MB_ICONEXCLAMATION \
+            "Error: 'Destination Folder' contains the following invalid character$R1" \
+            /SD IDOK
         abort
     nothing_special_path:
 
@@ -834,9 +843,10 @@ Function OnDirectoryLeave
           DetailPrint "::error:: Due to incompatibility with several \
               Python libraries, 'Destination Folder' cannot contain non-ascii characters \
               (special characters or diacritics).  Please choose another location."
-          messagebox mb_ok|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
+          MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
               Python libraries, 'Destination Folder' cannot contain non-ascii characters \
-              (special characters or diacritics).  Please choose another location."
+              (special characters or diacritics).  Please choose another location." \
+              /SD IDOK
           abort
 
       valid_path:
@@ -847,9 +857,10 @@ Function OnDirectoryLeave
     Pop $R1
     DetailPrint "::error: Path $INSTDIR is not writable. Please check permissions or \
                  try respawning the installer with elevated privileges."
-    MessageBox mb_ok|MB_ICONEXCLAMATION \
+    MessageBox MB_OK|MB_ICONEXCLAMATION \
         "Error: Path $INSTDIR is not writable. Please check permissions or \
-         try respawning the installer with elevated privileges."
+         try respawning the installer with elevated privileges." \
+        /SD IDOK
     Abort
 
     pathgood:
