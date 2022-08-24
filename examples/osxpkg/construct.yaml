@@ -6,6 +6,7 @@ version: 1.2.3
 default_location_pkg: Library
 pkg_name: "osx pkg test"
 check_path_spaces: False
+check_path_length: False
 
 channels:
   - http://repo.anaconda.com/pkgs/main/

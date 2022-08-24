@@ -12,3 +12,4 @@ conclusion_text: |
   This would be the third one.
 
 check_path_spaces: False
+check_path_length: False

@@ -20,3 +20,4 @@ specs:
 welcome_image: bird.png                 # [win]
 
 check_path_spaces: False
+check_path_length: False

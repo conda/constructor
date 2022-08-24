@@ -60,3 +60,4 @@ license_file: eula.txt
 #                    header-text
 
 check_path_spaces: False
+check_path_length: False
