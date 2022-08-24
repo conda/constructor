@@ -10,3 +10,5 @@ conclusion_text: |
   You are now ready to run your Python installation.
   This is a second line and should appear as such on the installer UI.
   This would be the third one.
+
+check_path_spaces: False

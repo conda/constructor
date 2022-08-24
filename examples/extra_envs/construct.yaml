@@ -1,6 +1,7 @@
 name: ExtraEnvs
 version: X
 installer_type: all
+check_path_spaces: False
 channels:
   - http://repo.anaconda.com/pkgs/main/
 specs:

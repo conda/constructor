@@ -18,3 +18,5 @@ specs:
 
 # Welcome image for Windows installer
 welcome_image: bird.png                 # [win]
+
+check_path_spaces: False

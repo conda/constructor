@@ -8,3 +8,5 @@ channels:
 specs:
   - python
   - conda
+
+check_path_spaces: False
