@@ -9,6 +9,9 @@ import sys
 import tempfile
 import platform
 import shutil
+import time
+from datetime import timedelta
+
 from pathlib import Path
 
 from constructor.utils import rm_rf
@@ -30,14 +33,17 @@ BLACKLIST = []
 
 def _execute(cmd):
     print(' '.join(cmd))
+    t0 = time.time()
     p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
     print('--- STDOUT ---')
     _, stderr = p.communicate()
+    t1 = time.time()
     if stderr:
         print('--- STDERR ---')
         if PY3:
             stderr = stderr.decode()
         print(stderr.strip())
+    print('--- Execution done in', timedelta(seconds=t1 - t0))
     return p.returncode != 0
 
 
@@ -118,12 +124,17 @@ def run_examples(keep_artifacts=None):
             test_errored = _execute(cmd)
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
-                with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
-                    print('---  LOGS  ---')
-                    for line in f:
-                        if ":error:" in line:
-                            print(line.rstrip())
-                            test_errored = 1
+                print('---  LOGS  ---')
+                try:
+                    with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
+                        for line in f:
+                            if ":error:" in line:
+                                print(line.rstrip())
+                                test_errored = 1
+                except Exception as exc:
+                    test_errored = 1
+                    print(f"{type(exc)}: {exc}")
+                    
             errored += test_errored
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
