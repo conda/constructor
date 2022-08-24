@@ -382,7 +382,7 @@ can be installed.  Raise a message to request shorter path (less than 46 charact
 or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
 '''),
 
-    ('check_path_spaces',     True, bool, '''
+    ('check_path_spaces',     False, bool, '''
 Check if the path where the distribution is installed contains spaces and show a warning
 (EXE, SH installers) or error (PKG installer) if any spaces are found. Default is True.
 '''),

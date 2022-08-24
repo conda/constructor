@@ -484,7 +484,7 @@ or enable long path on windows > 10 (require admin right). Default is True. (Win
 
 ## `check_path_spaces`
 
-_required:_ yes<br/>
+_required:_ no<br/>
 _type:_ boolean<br/>
 Check if the path where the distribution is installed contains spaces and show a warning
 (EXE, SH installers) or error (PKG installer) if any spaces are found. Default is True.
