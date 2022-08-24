@@ -139,7 +139,7 @@ def run_examples(keep_artifacts=None):
                                 test_errored = 1
                 except Exception as exc:
                     test_errored = 1
-                    print(f"{type(exc)}: {exc}")
+                    win_error_lines.append(f"Could not read logs! {type(exc)}: {exc}")
             errored += test_errored
             if test_errored:
                 which_errored.setdefault(example_path, []).append(fpath)
