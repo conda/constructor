@@ -731,6 +731,7 @@ Pop $0
 
 Function OnDirectoryLeave
     ${If} ${IsNonEmptyDirectory} "$InstDir"
+        DetailPrint "::error:: Directory '$INSTDIR' is not empty, please choose a different location."
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Directory '$INSTDIR' is not empty,$\n\
              please choose a different location."
@@ -752,6 +753,9 @@ Function OnDirectoryLeave
                 WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
             ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
             ${Else}
+                DetailPrint "::error:: The installation path should be shorter than 46 characters or \
+                             the installation requires administrator rights to enable long \
+                             path on Windows."
                 MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters or \
                                               the installation requires administrator rights to enable long \
                                               path on Windows."
@@ -759,6 +763,8 @@ Function OnDirectoryLeave
             ${EndIf}
         ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
         ${Else}
+            DetailPrint "::error:: The installation path should be shorter than 46 characters. \
+                         Please choose another location."
             MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters. \
                                           Please choose another location."
             Abort
@@ -840,7 +846,7 @@ Function OnDirectoryLeave
     IntCmp $R1 0 pathgood
     Pop $R1
     DetailPrint "::error: Path $INSTDIR is not writable. Please check permissions or \
-         try respawning the installer with elevated privileges."
+                 try respawning the installer with elevated privileges."
     MessageBox mb_ok|MB_ICONEXCLAMATION \
         "Error: Path $INSTDIR is not writable. Please check permissions or \
          try respawning the installer with elevated privileges."
@@ -884,6 +890,10 @@ FunctionEnd
 # Installer sections
 Section "Install"
     ${LogSet} on
+
+    ${If} ${Silent}
+        call OnDirectoryLeave
+    ${EndIf}
 
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
