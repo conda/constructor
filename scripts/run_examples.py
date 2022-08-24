@@ -34,17 +34,19 @@ BLACKLIST = []
 def _execute(cmd):
     print(' '.join(cmd))
     t0 = time.time()
-    p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
-    print('--- STDOUT ---')
-    _, stderr = p.communicate()
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    stdout, stderr = p.communicate()
     t1 = time.time()
-    if stderr:
-        print('--- STDERR ---')
-        if PY3:
-            stderr = stderr.decode()
-        print(stderr.strip())
+    errored = p.returncode != 0
+    if errored:
+        if stdout:
+            print('--- STDOUT ---')
+            print(stdout)
+        if stderr:
+            print('--- STDERR ---')
+            print(stderr)
     print('--- Execution done in', timedelta(seconds=t1 - t0))
-    return p.returncode != 0
+    return errored
 
 
 def run_examples(keep_artifacts=None):
@@ -81,14 +83,16 @@ def run_examples(keep_artifacts=None):
     
     parent_output = tempfile.mkdtemp()
     tested_files = set()
+    which_errored = {}
     for example_path in sorted(example_paths):
         print(example_path)
         print('-' * len(example_path))
         output_dir = tempfile.mkdtemp(dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
-        output_dir = Path(output_dir).resolve()
+        output_dir = str(Path(output_dir).resolve())
         cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
-        errored += _execute(cmd)
+        creation_errored = _execute(cmd)
+        errored += creation_errored
         for fpath in os.listdir(output_dir):
             ext = fpath.rsplit('.', 1)[-1]
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
@@ -139,14 +143,23 @@ def run_examples(keep_artifacts=None):
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
             # more complete logs are available under /var/log/install.log
-            if test_errored and ext == "pkg" and os.environ.get("CI"):
-                print('---  LOGS  ---')
-                print("Tip: Debug locally and check the full logs in the Installer UI")
-                print("     or check /var/log/install.log if run from the CLI.")
+            if test_errored:
+                which_errored.setdefault(example_path, []).append(fpath)
+                if ext == "pkg" and os.environ.get("CI"):
+                    print('---  LOGS  ---')
+                    print("Tip: Debug locally and check the full logs in the Installer UI")
+                    print("     or check /var/log/install.log if run from the CLI.")
+        if creation_errored:
+            which_errored.setdefault(example_path, []).append("could not create installer")
         print('')
+        break
 
     if errored:
-        print('Some examples failed!')
+        print('Some examples failed:')
+        for installer, reasons in which_errored.items():
+            print(f"+ {os.path.basename(installer)}")
+            for reason in reasons:
+                print(f"---> {os.path.basename(reason)}")
         print('Assets saved in: %s' % parent_output)
     else:
         print('All examples ran successfully!')
