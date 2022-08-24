@@ -158,12 +158,21 @@ default will determined by the `name`, `version`, platform, and installer type.
     ('installer_type',     False, (str, list), '''
 The type of the installer being created.  Possible values are:
 - `sh`: shell-based installer for Linux or macOS;
-- `pkg`: macOS GUI installer
-- `exe`: Windows GUI installer
+- `pkg`: macOS GUI installer built with Apple's `pkgbuild`
+- `exe`: Windows GUI installer built with NSIS
 
 The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
 as `sh` on Linux and `exe` on Windows.
+
+Notes for silent mode `/S` on Windows EXEs: 
+- NSIS Silent mode will not print any error message, but will silently abort the installation.
+  If needed, NSIS log-builds can be used to print to `%PREFIX%\\install.log`, which can be 
+  searched for `::error::` strings. Pre- and post- install scripts will only throw an error
+  if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
+- The `/D` flag can be used to specify the target location. It must be the last argument in
+  the command and should NEVER be quoted, even if it contains quotes. For example:
+  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.
 '''),
 
     ('license_file',           False, str, '''
@@ -380,11 +389,17 @@ interactive installation. (Windows only).
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter path (less than 46 character)
 or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
+
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
 '''),
 
     ('check_path_spaces',     False, bool, '''
 Check if the path where the distribution is installed contains spaces and show a warning
 (EXE, SH installers) or error (PKG installer) if any spaces are found. Default is True.
+
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
 '''),
 
     ('nsis_template',           False, str, '''
