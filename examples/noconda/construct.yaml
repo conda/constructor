@@ -11,5 +11,5 @@ conclusion_text: |
   This is a second line and should appear as such on the installer UI.
   This would be the third one.
 
-check_path_spaces: False  # [unix]
+check_path_spaces: False
 check_path_length: False
