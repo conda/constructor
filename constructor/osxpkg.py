@@ -247,7 +247,7 @@ def move_script(src, dst, info):
     
     # ppd hosts the conditions for the #if/#else/#endif preprocessors on scripts
     ppd = ns_platform(info['_platform'])
-    ppd['check_path_spaces'] = info.get("check_path_spaces", False)
+    ppd['check_path_spaces'] = info.get("check_path_spaces", True)
     
     # This is necessary for when installing on case-sensitive macOS filesystems.
     pkg_name_lower = info.get("pkg_name", info['name']).lower()
