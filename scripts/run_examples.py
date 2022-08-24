@@ -9,6 +9,7 @@ import sys
 import tempfile
 import platform
 import shutil
+from pathlib import Path
 
 from constructor.utils import rm_rf
 
@@ -78,6 +79,8 @@ def run_examples(keep_artifacts=None):
         print(example_path)
         print('-' * len(example_path))
         output_dir = tempfile.mkdtemp(dir=parent_output)
+        # resolve path to avoid some issues with TEMPDIR on Windows
+        output_dir = Path(output_dir).resolve()
         cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
         errored += _execute(cmd)
         for fpath in os.listdir(output_dir):
