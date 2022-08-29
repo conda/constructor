@@ -1,27 +1,22 @@
-Enhancements:
--------------
+### Enhancements:
 
 * PKG installers now default to the macOS logging system to log messages.
   UI notifications can be enabled with `progress_notifications`
   (off by default). (#535)
 
-Bug fixes:
-----------
+### Bug fixes:
 
 * <news item>
 
-Deprecations:
--------------
+### Deprecations:
 
 * <news item>
 
-Docs:
------
+### Docs:
 
 * <news item>
 
-Other:
-------
+### Other:
 
 * <news item>
 

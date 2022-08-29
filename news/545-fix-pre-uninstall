@@ -1,25 +1,20 @@
-Enhancements:
--------------
+### Enhancements:
 
 * <news item>
 
-Bug fixes:
-----------
+### Bug fixes:
 
 * Prevent ``pre_uninstall.bat`` script from being deleted accidentally on cache clearing. (#514)
 
-Deprecations:
--------------
+### Deprecations:
 
 * <news item>
 
-Docs:
------
+### Docs:
 
 * <news item>
 
-Other:
-------
+### Other:
 
 * <news item>
 

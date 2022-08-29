@@ -1,0 +1,21 @@
+### Enhancements:
+
+* Added two new keys, `initialize_conda` and `register_python`, to control whether these options
+  should be offered in the installer or not. (#507)
+
+### Bug fixes:
+
+* <news item>
+
+### Deprecations:
+
+* <news item>
+
+### Docs:
+
+* <news item>
+
+### Other:
+
+* <news item>
+

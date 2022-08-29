@@ -1,25 +1,20 @@
-Enhancements:
--------------
+### Enhancements:
 
 * <news item>
 
-Bug fixes:
-----------
+### Bug fixes:
 
 * <news item>
 
-Deprecations:
--------------
+### Deprecations:
 
 * <news item>
 
-Docs:
------
+### Docs:
 
 * Improved documentation for ``post_install`` scripts (#537)
 
-Other:
-------
+### Other:
 
 * <news item>
 

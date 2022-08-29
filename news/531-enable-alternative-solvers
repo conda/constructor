@@ -1,25 +1,20 @@
-Enhancements:
--------------
+### Enhancements:
 
 * Enable alternative solvers by obeying `CONDA_EXPERIMENTAL_SOLVER` if set and available. (#531)
 
-Bug fixes:
-----------
+### Bug fixes:
 
 * <news item>
 
-Deprecations:
--------------
+### Deprecations:
 
 * <news item>
 
-Docs:
------
+### Docs:
 
 * <news item>
 
-Other:
-------
+### Other:
 
 * <news item>
 

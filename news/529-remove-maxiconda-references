@@ -1,25 +1,20 @@
-Enhancements:
--------------
+### Enhancements:
 
 * <news item>
 
-Bug fixes:
-----------
+### Bug fixes:
 
 * <news item>
 
-Deprecations:
--------------
+### Deprecations:
 
 * <news item>
 
-Docs:
------
+### Docs:
 
 * <news item>
 
-Other:
-------
+### Other:
 
 * Removed Maxiconda constructor example and updated Miniconda and Jetsonconda READMEs (and several scripts) to not contain references to Maxiconda anymore. (#470)
 

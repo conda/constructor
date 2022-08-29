@@ -1,25 +1,20 @@
-Enhancements:
--------------
+### Enhancements:
 
 * <news item>
 
-Bug fixes:
-----------
+### Bug fixes:
 
 * Freshly created download directories are now guaranteed to be writable (#411)
 
-Deprecations:
--------------
+### Deprecations:
 
 * <news item>
 
-Docs:
------
+### Docs:
 
 * <news item>
 
-Other:
-------
+### Other:
 
 * <news item>
 

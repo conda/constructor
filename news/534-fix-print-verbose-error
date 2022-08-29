@@ -1,25 +1,20 @@
-Enhancements:
--------------
+### Enhancements:
 
 * <news item>
 
-Bug fixes:
-----------
+### Bug fixes:
 
 * Fix logging error that would make ``constructor`` crash if ``verbose`` mode was enabled. (#534)
 
-Deprecations:
--------------
+### Deprecations:
 
 * <news item>
 
-Docs:
------
+### Docs:
 
 * <news item>
 
-Other:
-------
+### Other:
 
 * <news item>
 
