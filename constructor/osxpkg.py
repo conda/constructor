@@ -244,6 +244,7 @@ def move_script(src, dst, info):
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
+    data = data.replace('__PROGRESS_NOTIFICATIONS__', str(info.get('progress_notifications')))
 
     default_path_exists_error_text = (
         "'{CHOSEN_PATH}' already exists. Please, relaunch the installer and "
@@ -374,8 +375,9 @@ def create(info, verbose=False):
             }
             plist_dump(plist, f)
         check_call(
-            [
-                'codesign',
+            [   
+                # hardcode to system location to avoid accidental clobber in PATH
+                "/usr/bin/codesign",  
                 "--verbose",
                 '--sign', notarization_identity_name,
                 "--prefix", info.get("reverse_domain_identifier", info['name']),
@@ -413,7 +415,8 @@ def create(info, verbose=False):
     # The default distribution file needs to be modified, so we create
     # it to a temporary location, edit it, and supply it to the final call.
     xml_path = join(PACKAGES_DIR, 'distribution.xml')
-    args = ["productbuild", "--synthesize"]
+    # hardcode to system location to avoid accidental clobber in PATH
+    args = ["/usr/bin/productbuild", "--synthesize"]
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
@@ -422,7 +425,7 @@ def create(info, verbose=False):
 
     identity_name = info.get('signing_identity_name')
     check_call([
-        "productbuild",
+        "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info.get("reverse_domain_identifier", info['name']),
@@ -430,7 +433,8 @@ def create(info, verbose=False):
     ])
     if identity_name:
         check_call([
-            'productsign', '--sign', identity_name,
+            # hardcode to system location to avoid accidental clobber in PATH
+            '/usr/bin/productsign', '--sign', identity_name,
             "tmp.pkg",
             info['_outpath'],
         ])
