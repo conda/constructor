@@ -429,6 +429,16 @@ available and set to the destination causing the error. Defaults to:
 
 (MacOS only)
 
+## `progress_notifications`
+
+_required:_ no<br/>
+_type:_ boolean<br/>
+Whether to show UI notifications on PKG installers. On large installations,
+the progress bar reaches ~90% very quickly and stays there for a long time.
+This might look like the installer froze. This option enables UI notifications
+so the user receives updates after each command executed by the installer.   
+(macOS only) 
+
 ## `welcome_image`
 
 _required:_ no<br/>

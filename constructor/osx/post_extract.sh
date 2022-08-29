@@ -3,9 +3,12 @@
 # All rights reserved.
 
 notify() {
+if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
 EOF
+fi
+logger -p "install.info" "$1" || echo "$1"
 }
 
 unset DYLD_LIBRARY_PATH
@@ -111,6 +114,5 @@ fi
 chown -R $USER "$PREFIX"
 
 notify "Done! Installation is available in $PREFIX."
-echo "installation to $PREFIX finished."
 
 exit 0
