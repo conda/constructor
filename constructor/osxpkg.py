@@ -265,7 +265,8 @@ def move_script(src, dst, info):
         'VERSION': info['version'],
         'CHANNELS': ','.join(get_final_channels(info)),
         'WRITE_CONDARC': '\n'.join(add_condarc(info)),
-        'PATH_EXISTS_ERROR_TEXT': path_exists_error_text
+        'PATH_EXISTS_ERROR_TEXT': path_exists_error_text,
+        'PROGRESS_NOTIFICATIONS': str(info.get('progress_notifications', False)),
     }
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
