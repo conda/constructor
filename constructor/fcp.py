@@ -106,10 +106,9 @@ platform: %(platform)s""" % dict(
 
 def _fetch(download_dir, precs):
     assert conda_context.pkgs_dirs[0] == download_dir
-    if not isdir(download_dir):
-        os.makedirs(download_dir)
-    pc = PackageCacheData(download_dir)
-    assert pc.is_writable, download_dir + " does not exist or is not writable"
+    pc = PackageCacheData.first_writable()
+    assert pc.pkgs_dir == download_dir
+    assert pc.is_writable, f"{download_dir} does not exist or is not writable"
 
     for prec in precs:
         package_tarball_full_path = join(download_dir, prec.fn)
