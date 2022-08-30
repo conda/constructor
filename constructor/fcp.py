@@ -21,7 +21,7 @@ from constructor.utils import hash_files, filename_dist
 from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
                               VersionOrder, conda_context, conda_replace_context_default,
                               download, env_vars, read_paths_json, all_channel_urls,
-                              cc_platform)
+                              cc_platform, PrefixGraph)
 
 
 def getsize(filename):
@@ -94,7 +94,7 @@ platform: %(platform)s""" % dict(
         platform=platform,
         download_dir=download_dir,
     ))
-    print("number of package: %d" % len(precs))
+    print("number of packages: %d" % len(precs))
     for prec in precs:
         more_recent_version = more_recent_versions.get(prec.name, None)
         if more_recent_version:
@@ -138,7 +138,7 @@ def _fetch(download_dir, precs):
         )
         pc.insert(package_cache_record)
 
-    return tuple(pc.iter_records())
+    return list(dict.fromkeys(PrefixGraph(pc.iter_records()).graph))
 
 
 def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
@@ -243,7 +243,8 @@ def _precs_from_environment(environment, download_dir, user_conda):
                                         package_tarball_full_path=package_tarball_full_path,
                                         extracted_package_dir=extracted_package_dir,
                                         **package))
-    return precs
+    # topological sort + deduplication
+    return list(dict.fromkeys(PrefixGraph(precs).graph))
 
 
 def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
@@ -299,6 +300,7 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
             subdirs=(platform, "noarch"),
             specs_to_add=specs,
         )
+        # the records are already returned in topological sort
         precs = list(solver.solve_final_state())
 
 
@@ -394,11 +396,11 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             extra_env=True,
         )
     if dry_run:
-        return None, None, None, None, None
-
+        return None, None, None, None, None, None
     pc_recs, _urls, dists, has_conda = _fetch_precs(
         precs, download_dir, transmute_file_type=transmute_file_type
     )
+    all_pc_recs = pc_recs.copy()
 
     extra_envs_data = {}
     for env_name, env_precs in extra_envs_precs.items():
@@ -406,14 +408,14 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             env_precs, download_dir, transmute_file_type=transmute_file_type
         )
         extra_envs_data[env_name] = {"_urls": env_urls, "_dists": env_dists}
-        pc_recs += env_pc_recs
+        all_pc_recs += env_pc_recs
 
     duplicate_files = "warn" if ignore_duplicate_files else "error"
     if extra_envs_data:  # this can cause false positives
         print("Info: Skipping duplicate files checks because `extra_envs` in use")
         duplicate_files = "skip"
 
-    pc_recs = list({rec: None for rec in pc_recs}) # deduplicate
+    all_pc_recs = list({rec: None for rec in all_pc_recs}) # deduplicate
     approx_tarballs_size, approx_pkgs_size = check_duplicates_files(
         pc_recs, platform, duplicate_files=duplicate_files
     )
