@@ -575,13 +575,14 @@ if [ "$PYTHONPATH" != "" ]; then
 fi
 
 if [ "$BATCH" = "0" ]; then
-#if initialize_by_default is True
+#if initialize_conda is True and initialize_by_default is True
     DEFAULT=yes
-#else
+#endif
+#if initialize_conda is True and initialize_by_default is False
     DEFAULT=no
 #endif
 
-#if has_conda
+#if has_conda and initialize_conda is True
     # Interactive mode.
 
     printf "Do you wish the installer to initialize __NAME__\\n"

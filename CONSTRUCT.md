@@ -468,6 +468,13 @@ _type:_ string<br/>
 If `header_image` is not provided, use this text when generating the image
 (Windows only). Defaults to `name`.
 
+## `initialize_conda`
+
+_required:_ no<br/>
+_type:_ boolean<br/>
+Add an option to the installer so the user can choose whether to run `conda init`
+after the install. See also `initialize_by_default`.
+
 ## `initialize_by_default`
 
 _required:_ no<br/>
@@ -475,6 +482,13 @@ _type:_ boolean<br/>
 Whether to add the installation to the PATH environment variable. The default
 is true for GUI installers (msi, pkg) and False for shell installers. The user
 is able to change the default during interactive installation.
+
+## `register_python`
+
+_required:_ no<br/>
+_type:_ boolean<br/>
+Whether to offer the user an option to register the installed Python instance as the
+system's default Python. (Windows only)
 
 ## `register_python_default`
 
