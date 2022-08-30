@@ -4,7 +4,7 @@
 
 ### Bug fixes:
 
-* Freshly created download directories are now guaranteed to be writable (#411)
+* Fix logging error that would make ``constructor`` crash if ``verbose`` mode was enabled. (#534)
 
 ### Deprecations:
 

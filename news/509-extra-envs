@@ -1,10 +1,10 @@
 ### Enhancements:
 
-* <news item>
+* Add support for multi-environment installs via ``extra_envs`` keyword (#359 via #509)
 
 ### Bug fixes:
 
-* Freshly created download directories are now guaranteed to be writable (#411)
+* <news item>
 
 ### Deprecations:
 
@@ -17,4 +17,3 @@
 ### Other:
 
 * <news item>
-
