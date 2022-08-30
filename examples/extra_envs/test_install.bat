@@ -11,9 +11,6 @@ if not exist "%PREFIX%\envs\dav1d\conda-meta\history" exit 1
 if exist "%PREFIX%\envs\dav1d\python.exe" exit 1
 "%PREFIX%\envs\dav1d\Library\bin\dav1d.exe" --version || goto :error
 
-echo "This is an error on purpose"
-exit 1
-
 goto :EOF
 
 :error
