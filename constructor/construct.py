@@ -146,8 +146,9 @@ Notes:
   in an `extra_envs` config will be allowed to create their shortcuts.
 - If a global `exclude` option is used, it will have an effect on the environments created
   by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
-  extra environmentss will have it either. Unlike the global option, an error will not be
+  extra environments will have it either. Unlike the global option, an error will not be
   thrown if the excluded package is not found in the packages required by the extra environment.
+  To override the global `exclude` value, use an empty list `[]`.
 '''),
 
     ('installer_filename',     False, str, '''
