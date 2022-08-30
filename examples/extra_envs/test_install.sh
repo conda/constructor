@@ -7,24 +7,33 @@ if [ xxx$PREFIX = 'xxx' ]; then
     PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)
 fi
 
+source "$PREFIX/etc/profile.d/conda.sh"
+
 # tests
 # base environment uses python 3.7 and excludes tk
+conda activate "$PREFIX"
 test -f "$PREFIX/conda-meta/history"
 "$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 7)"
 "$PREFIX/bin/pip" -V
+# tk(inter) shouldn't be listed by conda or importable by python!
+conda list -p "$PREFIX" | grep tk && exit 1
 "$PREFIX/bin/python" -c "import tkinter" && exit 1
 echo "Previous test failed as expected"
 
 
 # extra env named 'py38' uses python 3.8, has tk, but we removed setuptools
+conda activate "$PREFIX/envs/py38"
 test -f "$PREFIX/envs/py38/conda-meta/history"
 "$PREFIX/envs/py38/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 8)"
 "$PREFIX/envs/py38/bin/python" -c "import tkinter"
+# setuptools shouldn't be listed by conda or importable by python!
+conda list -p "$PREFIX/envs/py38" | grep setuptools && exit 1
 "$PREFIX/envs/py38/bin/python" -c "import setuptools" && exit 1
 echo "Previous test failed as expected"
 
 # this env only contains dav1d, no python; it should have been created with no errors,
 # even if we had excluded tk from the package list
+conda activate "$PREFIX/envs/dav1d"
 test -f "$PREFIX/envs/dav1d/conda-meta/history"
 test ! -f "$PREFIX/envs/dav1d/bin/python"
 "$PREFIX/envs/dav1d/bin/dav1d" --version

@@ -5,8 +5,8 @@ channels:
   - http://repo.anaconda.com/pkgs/main/
 specs:
   - python
-exclude:
-  - tk
+exclude:  # [unix]
+  - tk  # [unix]
 conclusion_text: |
   Thanks for installing NoConda!
   You are now ready to run your Python installation.
