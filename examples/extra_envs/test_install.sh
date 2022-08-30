@@ -12,14 +12,16 @@ fi
 test -f "$PREFIX/conda-meta/history"
 "$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 7)"
 "$PREFIX/bin/pip" -V
-"$PREFIX/bin/python" -c "import tkinter"; test "$?" -ne 0
+"$PREFIX/bin/python" -c "import tkinter" && exit 1
+echo "Previous test failed as expected"
 
 
 # extra env named 'py38' uses python 3.8, has tk, but we removed setuptools
 test -f "$PREFIX/envs/py38/conda-meta/history"
 "$PREFIX/envs/py38/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 8)"
 "$PREFIX/envs/py38/bin/python" -c "import tkinter"
-"$PREFIX/envs/py38/bin/python" -c "import setuptools"; test "$?" -ne 0
+"$PREFIX/envs/py38/bin/python" -c "import setuptools" && exit 1
+echo "Previous test failed as expected"
 
 # this env only contains dav1d, no python; it should have been created with no errors,
 # even if we had excluded tk from the package list
