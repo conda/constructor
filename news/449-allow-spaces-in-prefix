@@ -1,27 +1,22 @@
-Enhancements:
--------------
+### Enhancements:
 
-* Installers will allow spaces in `PREFIX` by default now.
+* Installers support spaces in `PREFIX` now.
   Old behaviour (reject chosen path if it contained spaces) is still default.
-  Opt-in by setting `check_path_spaces` to `False`.
+  Opt-in by setting `check_path_spaces` to `False`. (#449)
 
-Bug fixes:
-----------
-
-* <news item>
-
-Deprecations:
--------------
+### Bug fixes:
 
 * <news item>
 
-Docs:
------
+### Deprecations:
 
 * <news item>
 
-Other:
-------
+### Docs:
+
+* <news item>
+
+### Other:
 
 * <news item>
 
