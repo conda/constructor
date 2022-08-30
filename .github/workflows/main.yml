@@ -27,6 +27,14 @@ jobs:
           echo "  HEAD_REF:" "$GITHUB_HEAD_REF"
           echo "  BASE_REF:" "$GITHUB_BASE_REF"
           echo "       SHA:" "$GITHUB_SHA"
+      - name: Set temp dirs correctly
+        if: startsWith(matrix.os, 'windows')
+        # https://github.com/actions/virtual-environments/issues/712
+        shell: powershell
+        run: |
+          echo "TMPDIR=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+          echo "TEMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+          echo "TMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
       - name: Retrieve the source code
         uses: actions/checkout@v2
         with:
