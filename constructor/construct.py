@@ -171,7 +171,7 @@ Notes for silent mode `/S` on Windows EXEs:
   searched for `::error::` strings. Pre- and post- install scripts will only throw an error
   if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
 - The `/D` flag can be used to specify the target location. It must be the last argument in
-  the command and should NEVER be quoted, even if it contains quotes. For example:
+  the command and should NEVER be quoted, even if it contains spaces. For example:
   `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.
 
 [nsis-log]: https://nsis.sourceforge.io/Special_Builds
