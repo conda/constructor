@@ -136,6 +136,7 @@ jobs:
           minimumAge: 86400
 
   docs:
+    name: Check docs are up-to-date
     runs-on: ubuntu-latest
     steps:
       - name: Retrieve the source code
@@ -145,7 +146,7 @@ jobs:
       - name: Install local constructor
         run: |
           source $CONDA/bin/activate
-          conda create -n constructor -c local constructor --deps-only
+          conda create -n constructor -c local constructor --only-deps
           conda activate constructor
           pip install constructor --no-deps
       - name: Build docs
