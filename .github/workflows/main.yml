@@ -146,9 +146,9 @@ jobs:
       - name: Install local constructor
         run: |
           source $CONDA/bin/activate
-          conda create -n constructor -c local constructor --only-deps
+          conda create -n constructor constructor jinja2
           conda activate constructor
-          pip install . --no-deps
+          pip install -U . --no-deps
       - name: Build docs
         run: |
           source $CONDA/bin/activate
