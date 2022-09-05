@@ -134,3 +134,24 @@ jobs:
         uses: glassechidna/artifact-cleaner@master
         with:
           minimumAge: 86400
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve the source code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install local constructor
+        run: |
+          source $CONDA/bin/activate
+          conda create -n constructor -c local constructor --deps-only
+          conda activate constructor
+          pip install constructor --no-deps
+      - name: Build docs
+        run: |
+          source $CONDA/bin/activate
+          conda activate constructor
+          set -ex
+          python scripts/make_docs.py
+          git diff --exit-code
