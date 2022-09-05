@@ -148,7 +148,7 @@ jobs:
           source $CONDA/bin/activate
           conda create -n constructor -c local constructor --only-deps
           conda activate constructor
-          pip install constructor --no-deps
+          pip install . --no-deps
       - name: Build docs
         run: |
           source $CONDA/bin/activate
