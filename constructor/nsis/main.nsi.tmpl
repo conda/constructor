@@ -1,7 +1,7 @@
 # Installer template file for creating a Windows installer using NSIS.
 
 # Dependencies:
-#   NSIS 3.01      conda install nsis  (includes extra unicode plugins)
+#   NSIS >=3.01      conda install nsis  (includes extra unicode plugins)
 
 Unicode "true"
 
@@ -853,15 +853,30 @@ Function .onVerifyInstDir
 FunctionEnd
 
 Function AbortRetryNSExecWait
+    # This function expects three arguments in the stack
+    # $1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
+    # $2: The message to show if an error occurred
+    # $3: The command to run, quoted
+    # Note that the args need to be pushed to the stack in reverse order!
+    # Search 'AbortRetryNSExecWait' in this script to see examples
+    ${LogSet} on
     Pop $1
     Pop $2
+    Pop $3
     ${Do}
-        nsExec::ExecToLog $2
+        ${If} $1 == "WithLog"
+            nsExec::ExecToLog $3
+        ${ElseIf} $1 == "NoLog"
+            nsExec::Exec $3
+        ${Else}
+            DetailPrint "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
+            Abort
+        ${EndIf}
         pop $0
         ${If} $0 != "0"
-            DetailPrint "::error:: $1"
+            DetailPrint "::error:: $2"
             MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
-                    $1 /SD IDIGNORE IDABORT abort IDRETRY retry
+                    $2 /SD IDIGNORE IDABORT abort IDRETRY retry
             ; IDIGNORE: Continue anyway
             StrCpy $0 "0"
             goto retry
@@ -923,6 +938,9 @@ Section "Install"
     DetailPrint "Setting up the package cache ..."
     push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
     push 'Failed to extract packages'
+    push 'NoLog'
+    # We use NoLog here because TQDM progress bars are parsed as a single line in NSIS 3.08
+    # These can crash the installer if they get too long (a few packages is enough!)
     call AbortRetryNSExecWait
     SetDetailsPrint both
 
@@ -936,6 +954,7 @@ Section "Install"
         DetailPrint "Creating @NAME@ menus..."
         push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
         push 'Failed to create menus'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
@@ -943,6 +962,7 @@ Section "Install"
     DetailPrint "Initializing conda directories..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize conda directories'
+    push 'WithLog'
     call AbortRetryNSExecWait
 #endif
 
@@ -950,6 +970,7 @@ Section "Install"
         DetailPrint "Running post install..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
         push 'Failed to run post install script'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
@@ -957,6 +978,7 @@ Section "Install"
         DetailPrint "Clearing package cache..."
         push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
         push 'Failed to clear package cache'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
@@ -964,6 +986,7 @@ Section "Install"
         DetailPrint "Adding to PATH..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
         push 'Failed to add @NAME@ to the system PATH'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
