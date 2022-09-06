@@ -553,13 +553,15 @@ if [ "$BATCH" = "0" ]; then
         printf "\\n"
     else
         case $SHELL in
-            *zsh) "$PREFIX/bin/conda" init zsh ;;
-            *) "$PREFIX/bin/conda" init ;;
+            # We call the module directly to avoid issues with spaces in shebang
+            *zsh) "$PREFIX/bin/python" -m conda init zsh ;;
+            *) "$PREFIX/bin/python" -m conda init ;;
         esac
         if [ -f "$PREFIX/bin/mamba" ]; then
             case $SHELL in
-                *zsh) "$PREFIX/bin/mamba" init zsh ;;
-                *) "$PREFIX/bin/mamba" init ;;
+                # We call the entry point directly to avoid issues with spaces in shebang
+                *zsh) "$PREFIX/bin/python" "$PREFIX/bin/mamba" init zsh ;;
+                *) "$PREFIX/bin/python" "$PREFIX/bin/mamba" init ;;
             esac
         fi
     fi
