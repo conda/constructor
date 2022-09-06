@@ -16,5 +16,5 @@
 
 ### Other:
 
-* <news item>
+* Removes the usage of ``conda._vendor.toolz`` (#525)
 

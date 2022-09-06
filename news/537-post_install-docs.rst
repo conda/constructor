@@ -12,7 +12,7 @@
 
 ### Docs:
 
-* <news item>
+* Improved documentation for ``post_install`` scripts (#537)
 
 ### Other:
 

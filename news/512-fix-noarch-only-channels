@@ -4,7 +4,7 @@
 
 ### Bug fixes:
 
-* <news item>
+* Fix constructor failures when the repo/subchannel only has ``noarch`` packages. (#512)
 
 ### Deprecations:
 
@@ -17,4 +17,3 @@
 ### Other:
 
 * <news item>
-

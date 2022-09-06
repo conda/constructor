@@ -1,6 +1,6 @@
 ### Enhancements:
 
-* <news item>
+* Users can now add arbitrary files to the installer using the ``extra_files`` keyword. (#465 via #500)
 
 ### Bug fixes:
 
@@ -17,4 +17,3 @@
 ### Other:
 
 * <news item>
-

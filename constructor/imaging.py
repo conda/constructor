@@ -12,10 +12,13 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 ttf_path = join(dirname(__file__), 'ttf', 'Vera.ttf')
+white = 0xff, 0xff, 0xff
+# These are for Windows
 welcome_size = 164, 314
 header_size = 150, 57
 icon_size = 256, 256
-white = 0xff, 0xff, 0xff
+# These are for OSX
+welcome_size_osx = 1227, 600
 
 
 def new_background(size, color, bs=20, boxes=50):
@@ -50,6 +53,15 @@ def mk_welcome_image(info):
     return im
 
 
+def mk_welcome_image_osx(info):
+    font = ImageFont.truetype(ttf_path, 40)
+    # Transparent background
+    im = Image.new('RGBA', welcome_size_osx, color=(0, 0, 0, 0))
+    text = '\n'.join([info['welcome_image_text'], info['version']])
+    add_text(im, (40, 450), text, 2, 60, font, info['_color'])
+    return im
+
+
 def mk_header_image(info):
     font = ImageFont.truetype(ttf_path, 20)
     im = Image.new('RGB', header_size, color=white)
@@ -81,21 +93,30 @@ def add_color_info(info):
         sys.exit("Error: color '%s' not defined" % color_name)
 
 
-def write_images(info, dir_path):
-    for tp, size, f, ext in [
-        ('welcome', welcome_size, mk_welcome_image, '.bmp'),
-        ('header',  header_size,  mk_header_image,  '.bmp'),
-        ('icon',    icon_size,    mk_icon_image,    '.ico'),
-    ]:
-        key = tp + '_image'
-        if key in info:
+def write_images(info, dir_path, os="windows"):
+    if os == "windows":
+        instructions = [
+            ('welcome', welcome_size, mk_welcome_image, '.bmp'),
+            ('header',  header_size,  mk_header_image,  '.bmp'),
+            ('icon',    icon_size,    mk_icon_image,    '.ico'),
+        ]
+    elif os == "osx":
+        instructions = [
+            ('welcome', welcome_size_osx, mk_welcome_image_osx, '.png'),
+        ]
+    else:
+        raise ValueError("OS {} not supported. Choose `windows` or `osx`.".format(os))
+
+    for name, size, function, ext in instructions:
+        key = name + '_image'
+        if info.get(key):
             im = Image.open(info[key])
             im = im.resize(size)
         else:
             add_color_info(info)
-            im = f(info)
+            im = function(info)
         assert im.size == size
-        im.save(join(dir_path, tp + ext))
+        im.save(join(dir_path, name + ext))
 
 
 if __name__ == '__main__':

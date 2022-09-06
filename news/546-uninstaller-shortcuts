@@ -4,7 +4,7 @@
 
 ### Bug fixes:
 
-* <news item>
+* Shortcuts will be removed in installations that do not require ``conda`` (#461)
 
 ### Deprecations:
 

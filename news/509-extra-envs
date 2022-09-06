@@ -1,6 +1,6 @@
 ### Enhancements:
 
-* <news item>
+* Add support for multi-environment installs via ``extra_envs`` keyword (#359 via #509 and #553)
 
 ### Bug fixes:
 
@@ -17,4 +17,3 @@
 ### Other:
 
 * <news item>
-

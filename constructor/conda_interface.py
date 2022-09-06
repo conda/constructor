@@ -37,7 +37,6 @@ if conda_interface_type == 'conda':
         PackageCacheData as _PackageCacheData,
     )
     from conda.core.prefix_data import PrefixData as _PrefixData
-    from conda.core.solve import Solver as _Solver
     from conda.exports import default_prefix as _default_prefix
     from conda.models.channel import all_channel_urls as _all_channel_urls
     from conda.gateways.disk.read import read_paths_json as _read_paths_json
@@ -49,6 +48,11 @@ if conda_interface_type == 'conda':
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:
         from conda.models.package_cache_record import PackageCacheRecord as _PackageCacheRecord
+    try:
+        from conda.core.solve import _get_solver_class
+        _Solver = _get_solver_class()
+    except ImportError:
+        from conda.core.solve import Solver as _Solver
 
     # used by fcp.py
     PackageCacheData = _PackageCacheData
@@ -88,7 +92,15 @@ if conda_interface_type == 'conda':
 
         # noarch-only repos are valid. In this case, the architecture specific channel will return None
         if raw_repodata_str is None:
-            full_repodata = None
+            full_repodata = {
+                '_url': url,
+                'info': {
+                    'subdir': cc_platform
+                },
+                'packages': {},
+                'packages.conda': {},
+                'removed': []
+            }
         else:
             full_repodata = json.loads(raw_repodata_str)
 
@@ -129,6 +141,7 @@ if conda_interface_type == 'conda':
         # Choose an arbitrary old, expired date, so that conda will want to
         # immediately update it when not being run in offline mode
         url = used_repodata.pop('_url').rstrip("/")
+        used_repodata.pop("_mod", None)
         repodata = json.dumps(used_repodata, indent=2)
         repodata_header = json.dumps(
             {
@@ -140,3 +153,8 @@ if conda_interface_type == 'conda':
         repodata_filename = _cache_fn_url(url)
         with open(join(cache_dir, repodata_filename), 'w') as fh:
             fh.write(repodata)
+
+    def write_cache_dir():
+        cache_dir = join(PackageCacheData.first_writable().pkgs_dir, 'cache')
+        mkdir_p_sudo_safe(cache_dir)
+        return cache_dir

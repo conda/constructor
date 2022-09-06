@@ -4,7 +4,7 @@
 
 ### Bug fixes:
 
-* <news item>
+* Prevent ``pre_uninstall.bat`` script from being deleted accidentally on cache clearing. (#514)
 
 ### Deprecations:
 

@@ -4,7 +4,7 @@
 
 ### Bug fixes:
 
-* <news item>
+* Fix logging error that would make ``constructor`` crash if ``verbose`` mode was enabled. (#534)
 
 ### Deprecations:
 

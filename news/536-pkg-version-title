@@ -1,6 +1,6 @@
 ### Enhancements:
 
-* <news item>
+* The graphical macOS installer now also displays the version number of the software in the window title. (#536)
 
 ### Bug fixes:
 
