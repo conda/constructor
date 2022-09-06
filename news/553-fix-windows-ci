@@ -1,10 +1,10 @@
 ### Enhancements:
 
-* A single installer can now provide multiple environments through the ``extra_envs`` key (#359 via #509 and #553)
+* <news item>
 
 ### Bug fixes:
 
-* Windows CI now correctly detects installation problems (#551)
+* Windows CI now correctly detects installation problems (#551 and #560)
 
 ### Deprecations:
 

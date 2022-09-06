@@ -55,6 +55,8 @@ Unicode "true"
 !define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
 !define MENU_PKGS "@MENU_PKGS@"
+!define SHOW_REGISTER_PYTHON __SHOW_REGISTER_PYTHON__
+!define SHOW_ADD_TO_PATH __SHOW_ADD_TO_PATH__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "@UNINSTALL_NAME@"
 !define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
@@ -594,16 +596,16 @@ Function .onInit
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from contruct.yaml.
     # If initialize_by_default (register_python_default) is None, do nothing.
-#if initialize_by_default is True
+#if initialize_conda is True and initialize_by_default is True
     StrCpy $Ana_AddToPath_State ${BST_CHECKED}
 #endif
-#if initialize_by_default is False
+#if initialize_conda is True and initialize_by_default is False
     StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
 #endif
-#if register_python_default is True
+#if register_python is True and register_python_default is True
     StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
 #endif
-#if register_python_default is False
+#if register_python is True and register_python_default is False
     StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
 #endif
 #if check_path_length is True

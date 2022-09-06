@@ -167,12 +167,14 @@ as `sh` on Linux and `exe` on Windows.
 
 Notes for silent mode `/S` on Windows EXEs: 
 - NSIS Silent mode will not print any error message, but will silently abort the installation.
-  If needed, NSIS log-builds can be used to print to `%PREFIX%\\install.log`, which can be 
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be 
   searched for `::error::` strings. Pre- and post- install scripts will only throw an error
   if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
 - The `/D` flag can be used to specify the target location. It must be the last argument in
-  the command and should NEVER be quoted, even if it contains quotes. For example:
+  the command and should NEVER be quoted, even if it contains spaces. For example:
   `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.
+
+[nsis-log]: https://nsis.sourceforge.io/Special_Builds
 '''),
 
     ('license_file',           False, str, '''
@@ -381,10 +383,20 @@ If `header_image` is not provided, use this text when generating the image
 (Windows only). Defaults to `name`.
 '''),
 
+    ('initialize_conda',     False, bool, '''
+Add an option to the installer so the user can choose whether to run `conda init`
+after the install. See also `initialize_by_default`.
+'''),
+
     ('initialize_by_default',    False, bool, '''
 Whether to add the installation to the PATH environment variable. The default
 is true for GUI installers (msi, pkg) and False for shell installers. The user
 is able to change the default during interactive installation.
+'''),
+
+    ('register_python',  False, bool, '''
+Whether to offer the user an option to register the installed Python instance as the
+system's default Python. (Windows only)
 '''),
 
     ('register_python_default',  False, bool, '''

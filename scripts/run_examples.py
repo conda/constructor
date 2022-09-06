@@ -45,7 +45,7 @@ def _execute(cmd):
         if stderr:
             print('--- STDERR ---')
             print(stderr)
-    print('--- Execution done in', timedelta(seconds=t1 - t0))
+    print('--- Done in', timedelta(seconds=t1 - t0))
     return errored
 
 
@@ -68,7 +68,7 @@ def run_examples(keep_artifacts=None):
             "! Warning !"
             "  Windows installers are tested with NSIS in silent mode, which does"
             "  not report errors on exit. You should use logging-enabled NSIS builds"
-            "  to generate a 'install.log' file the script will search for errors"
+            "  to generate an 'install.log' file this script will search for errors"
             "  after completion."
         )
     example_paths = []
@@ -107,7 +107,7 @@ def run_examples(keep_artifacts=None):
             tested_files.add(fpath)
             env_dir = tempfile.mkdtemp(suffix="s p a c e s", dir=output_dir)
             rm_rf(env_dir)
-            print('---- testing %s' % fpath)
+            print('--- Testing %s' % fpath)
             fpath = os.path.join(output_dir, fpath)
             if ext == 'sh':
                 cmd = ['bash', fpath, '-b', '-p', env_dir]
@@ -172,9 +172,10 @@ def run_examples(keep_artifacts=None):
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
         if creation_errored:
-            which_errored.setdefault(example_path, []).append("could not create installer")
-        print('')
+            which_errored.setdefault(example_path, []).append("Could not create installer!")
+        print()
 
+    print("-------------------------------")
     if errored:
         print('Some examples failed:')
         for installer, reasons in which_errored.items():

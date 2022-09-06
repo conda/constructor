@@ -435,11 +435,13 @@ def create(info, verbose=False):
         pkgbuild_script('postinstall', info, abspath(info['post_install']))
         names.append('postinstall')
     # The script to run conda init
-    pkgbuild_script('pathupdate', info, 'update_path.sh')
-    names.append('pathupdate')
+    if info.get('initialize_conda', True):
+        pkgbuild_script('pathupdate', info, 'update_path.sh')
+        names.append('pathupdate')
     # The script to clear the package cache
-    pkgbuild_script('cacheclean', info, 'clean_cache.sh')
-    names.append('cacheclean')
+    if not info.get('keep_pkgs'):
+        pkgbuild_script('cacheclean', info, 'clean_cache.sh')
+        names.append('cacheclean')
 
     # The default distribution file needs to be modified, so we create
     # it to a temporary location, edit it, and supply it to the final call.
