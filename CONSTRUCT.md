@@ -199,12 +199,23 @@ _required:_ no<br/>
 _types:_ string, list<br/>
 The type of the installer being created.  Possible values are:
 - `sh`: shell-based installer for Linux or macOS;
-- `pkg`: macOS GUI installer
-- `exe`: Windows GUI installer
+- `pkg`: macOS GUI installer built with Apple's `pkgbuild`
+- `exe`: Windows GUI installer built with NSIS
 
 The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
 as `sh` on Linux and `exe` on Windows.
+
+Notes for silent mode `/S` on Windows EXEs: 
+- NSIS Silent mode will not print any error message, but will silently abort the installation.
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\install.log`, which can be 
+  searched for `::error::` strings. Pre- and post- install scripts will only throw an error
+  if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
+- The `/D` flag can be used to specify the target location. It must be the last argument in
+  the command and should NEVER be quoted, even if it contains spaces. For example:
+  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\path with spaces\my project`.
+
+[nsis-log]: https://nsis.sourceforge.io/Special_Builds
 
 ## `license_file`
 
@@ -304,7 +315,8 @@ Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 _required:_ no<br/>
 _type:_ string<br/>
 Path to a pre-install script, run after the package cache has been set, but
-before the files are linked to their final locations.
+before the files are linked to their final locations. As a result, you should
+only rely on tools known to be available on most systems (e.g. `bash`, `cmd`...).
 
 - For Unix `.sh` installers, the shebang line is respected if present;
   otherwise, the script is run by the POSIX shell `sh`. Note that the use
@@ -319,8 +331,7 @@ before the files are linked to their final locations.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
-  `%INSTALLER_PLAT%` environment variables.
-
+  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
 
 ## `post_install`
 
@@ -341,7 +352,7 @@ Path to a post-install script. Some notes:
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
-  `%INSTALLER_PLAT%` environment variables.
+  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
 
 If necessary, you can activate the installed `base` environment like this:
 
@@ -365,7 +376,8 @@ _type:_ string<br/>
 Path to a pre uninstall script. This is only supported for on Windows,
 and must be a `.bat` file. Installation path is available as `%PREFIX%`. 
 Metadata about the installer can be found in the `%INSTALLER_NAME%`,
-`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
+`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. 
+`%INSTALLER_TYPE%` is set to `EXE`.
 
 ## `default_prefix`
 
@@ -522,12 +534,18 @@ Check the length of the path where the distribution is installed to ensure nodej
 can be installed.  Raise a message to request shorter path (less than 46 character)
 or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
 
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
+
 ## `check_path_spaces`
 
 _required:_ no<br/>
 _type:_ boolean<br/>
 Check if the path where the distribution is installed contains spaces and show a warning
 if any spaces are found. Default is True. (Windows only).
+
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
 
 ## `nsis_template`
 

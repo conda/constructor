@@ -978,6 +978,7 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
     @PKG_COMMANDS@
 
@@ -1111,6 +1112,7 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"

@@ -250,7 +250,8 @@ Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 
     ('pre_install',            False, str, '''
 Path to a pre-install script, run after the package cache has been set, but
-before the files are linked to their final locations.
+before the files are linked to their final locations. As a result, you should
+only rely on tools known to be available on most systems (e.g. `bash`, `cmd`...).
 
 - For Unix `.sh` installers, the shebang line is respected if present;
   otherwise, the script is run by the POSIX shell `sh`. Note that the use
@@ -265,8 +266,7 @@ before the files are linked to their final locations.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
-  `%INSTALLER_PLAT%` environment variables.
-
+  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
 '''),
 
     ('post_install',           False, str, '''
@@ -285,7 +285,7 @@ Path to a post-install script. Some notes:
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
-  `%INSTALLER_PLAT%` environment variables.
+  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
 
 If necessary, you can activate the installed `base` environment like this:
 
@@ -305,7 +305,8 @@ is compulsory and the option to disable it will not be offered.
 Path to a pre uninstall script. This is only supported for on Windows,
 and must be a `.bat` file. Installation path is available as `%PREFIX%`. 
 Metadata about the installer can be found in the `%INSTALLER_NAME%`,
-`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
+`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. 
+`%INSTALLER_TYPE%` is set to `EXE`.
 '''),
 
     ('default_prefix',         False, str, '''
