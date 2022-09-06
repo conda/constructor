@@ -1,10 +1,10 @@
 ### Enhancements:
 
-* <news item>
+* Enable alternative solvers by obeying `CONDA_EXPERIMENTAL_SOLVER` if set and available. (#531)
 
 ### Bug fixes:
 
-* Freshly created download directories are now guaranteed to be writable (#411)
+* <news item>
 
 ### Deprecations:
 

@@ -9,12 +9,13 @@ import pytest
 @pytest.mark.parametrize('keep_pkgs', [False, True])
 @pytest.mark.parametrize('has_conda', [False, True])
 @pytest.mark.parametrize('has_license', [False, True])
+@pytest.mark.parametrize('initialize_conda', [False, True])
 @pytest.mark.parametrize('initialize_by_default', [False, True])
 @pytest.mark.parametrize('has_post_install', [False, True])
 @pytest.mark.parametrize('has_pre_install', [False, True])
 @pytest.mark.parametrize('arch', ['x86', 'x86_64', ' ppc64le', 's390x', 'aarch64'])
 def test_linux_template_processing(
-        osx, arch, has_pre_install, has_post_install,
+        osx, arch, has_pre_install, has_post_install, initialize_conda,
         initialize_by_default, has_license, has_conda, keep_pkgs, batch_mode,
         direct_execute_pre_install, direct_execute_post_install):
     template = read_header_template()
@@ -34,6 +35,7 @@ def test_linux_template_processing(
        'direct_execute_pre_install': direct_execute_pre_install,
        'has_post_install': has_post_install,
        'direct_execute_post_install': direct_execute_post_install,
+       'initialize_conda': initialize_conda,
        'initialize_by_default': initialize_by_default,
     })
     assert '#if' not in processed

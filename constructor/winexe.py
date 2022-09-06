@@ -159,6 +159,8 @@ def make_nsi(info, dir_path, extra_files=()):
                                              join('%ALLUSERSPROFILE%', name.lower())),
 
         'POST_INSTALL_DESC': info['post_install_desc'],
+        'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
+        'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
         'OUTFILE': info['_outpath'],
         'VIPV': make_VIProductVersion(info['version']),
         'ICONFILE': '@icon.ico',
@@ -191,7 +193,9 @@ def make_nsi(info, dir_path, extra_files=()):
 
     data = read_nsi_tmpl(info)
     ppd = ns_platform(info['_platform'])
+    ppd['initialize_conda'] = info.get('initialize_conda', True)
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
+    ppd['register_python'] = info.get('register_python', True)
     ppd['register_python_default'] = info.get('register_python_default', None)
     ppd['check_path_length'] = info.get('check_path_length', None)
     ppd['check_path_spaces'] = info.get('check_path_spaces', True)

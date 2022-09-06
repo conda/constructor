@@ -4,7 +4,7 @@
 
 ### Bug fixes:
 
-* Freshly created download directories are now guaranteed to be writable (#411)
+* <news item>
 
 ### Deprecations:
 
@@ -16,5 +16,5 @@
 
 ### Other:
 
-* <news item>
+* Removes the usage of ``conda._vendor.toolz`` (#525)
 

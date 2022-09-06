@@ -1,10 +1,10 @@
 ### Enhancements:
 
-* <news item>
+* Users can now add arbitrary files to the installer using the ``extra_files`` keyword. (#465 via #500)
 
 ### Bug fixes:
 
-* Freshly created download directories are now guaranteed to be writable (#411)
+* <news item>
 
 ### Deprecations:
 
@@ -17,4 +17,3 @@
 ### Other:
 
 * <news item>
-

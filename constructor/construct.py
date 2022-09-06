@@ -158,12 +158,23 @@ default will determined by the `name`, `version`, platform, and installer type.
     ('installer_type',     False, (str, list), '''
 The type of the installer being created.  Possible values are:
 - `sh`: shell-based installer for Linux or macOS;
-- `pkg`: macOS GUI installer
-- `exe`: Windows GUI installer
+- `pkg`: macOS GUI installer built with Apple's `pkgbuild`
+- `exe`: Windows GUI installer built with NSIS
 
 The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
 as `sh` on Linux and `exe` on Windows.
+
+Notes for silent mode `/S` on Windows EXEs: 
+- NSIS Silent mode will not print any error message, but will silently abort the installation.
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be 
+  searched for `::error::` strings. Pre- and post- install scripts will only throw an error
+  if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
+- The `/D` flag can be used to specify the target location. It must be the last argument in
+  the command and should NEVER be quoted, even if it contains spaces. For example:
+  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.
+
+[nsis-log]: https://nsis.sourceforge.io/Special_Builds
 '''),
 
     ('license_file',           False, str, '''
@@ -388,10 +399,20 @@ If `header_image` is not provided, use this text when generating the image
 (Windows only). Defaults to `name`.
 '''),
 
+    ('initialize_conda',     False, bool, '''
+Add an option to the installer so the user can choose whether to run `conda init`
+after the install. See also `initialize_by_default`.
+'''),
+
     ('initialize_by_default',    False, bool, '''
 Whether to add the installation to the PATH environment variable. The default
 is true for GUI installers (msi, pkg) and False for shell installers. The user
 is able to change the default during interactive installation.
+'''),
+
+    ('register_python',  False, bool, '''
+Whether to offer the user an option to register the installed Python instance as the
+system's default Python. (Windows only)
 '''),
 
     ('register_python_default',  False, bool, '''
@@ -404,11 +425,17 @@ interactive installation. (Windows only).
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter path (less than 46 character)
 or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
+
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
 '''),
 
     ('check_path_spaces',     False, bool, '''
 Check if the path where the distribution is installed contains spaces and show a warning
 if any spaces are found. Default is True. (Windows only).
+
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
 '''),
 
     ('nsis_template',           False, str, '''

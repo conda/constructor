@@ -224,12 +224,16 @@ def run_post_install():
     if not os.path.isfile(cmd_exe):
         err("Error: running %s failed.  cmd.exe could not be found.  "
             "Looked in SystemRoot and windir env vars.\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
     args = [cmd_exe, '/d', '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
         err("Error: running %s failed\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
 
 
 def run_pre_uninstall():
@@ -247,12 +251,16 @@ def run_pre_uninstall():
     if not os.path.isfile(cmd_exe):
         err("Error: running %s failed.  cmd.exe could not be found.  "
             "Looked in SystemRoot and windir env vars.\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
     args = [cmd_exe, '/d', '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
         err("Error: running %s failed\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
 
 
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
@@ -305,7 +313,7 @@ def add_to_path(pyversion, arch):
 def rm_regkeys():
     cmdproc_reg_entry = NSISReg(r'Software\Microsoft\Command Processor')
     cmdproc_autorun_val = cmdproc_reg_entry.get('AutoRun')
-    conda_hook_regex_pat = r'((\s+&\s+)?\"[^\"]*?conda[-_]hook\.bat\")'
+    conda_hook_regex_pat = r'((\s+&\s+)?(if +exist)?(\s*?\"[^\"]*?conda[-_]hook\.bat\"))'
     if join(ROOT_PREFIX, 'condabin') in (cmdproc_autorun_val or ''):
         cmdproc_autorun_newval = re.sub(conda_hook_regex_pat, '',
                                         cmdproc_autorun_val)
