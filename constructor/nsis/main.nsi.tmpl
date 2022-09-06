@@ -982,19 +982,19 @@ Section "Install"
     @PKG_COMMANDS@
 
     SetDetailsPrint TextOnly
-    DetailPrint "Setting up the package cache ..."
+    DetailPrint "Setting up the package cache..."
     push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
     push 'Failed to extract packages'
     call AbortRetryNSExecWait
     SetDetailsPrint both
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
-    DetailPrint "Running ${cmd} scripts..."
+    DetailPrint "Running pre_install scripts..."
     # At this point we don't have Python available yet, so we can't use the cmd wrapper
     # _nsis.py as we do with post_install and pre_uninstall. We'll have to trust the
     # system is well configured (CMD in patch, COMSPEC defined, etc.)
     push '"$INSTDIR\pkgs\pre_install.bat"'
-    push "Failed to run ${cmd}"
+    push "Failed to run pre_install"
     call AbortRetryNSExecWait
     NoPreInstall:
 
