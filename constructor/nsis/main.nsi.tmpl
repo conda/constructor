@@ -894,7 +894,7 @@ FunctionEnd
 # Make function available for both installer and uninstaller
 # Uninstaller functions need an `un.` prefix, so we macro this
 # see https://nsis.sourceforge.io/Sharing_functions_between_Installer_and_Uninstaller
-!macro AbortRetryNSExecWaitMacro
+!macro AbortRetryNSExecWaitMacro un
     Function ${un}AbortRetryNSExecWait
         ${LogSet} on
         SetDetailsPrint listonly
