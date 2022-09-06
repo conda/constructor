@@ -147,6 +147,7 @@ def make_nsi(info, dir_path, extra_files=()):
         'NAME': name,
         'VERSION': info['version'],
         'COMPANY': info.get('company', 'Unknown, Inc.'),
+        'PLATFORM': info.get['_platform'],
         'ARCH': '%d-bit' % arch,
         'PY_VER': ".".join(py_version.split(".")[:2]),
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),

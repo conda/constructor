@@ -46,6 +46,7 @@ Unicode "true"
 !define VERSION __VERSION__
 !define COMPANY __COMPANY__
 !define ARCH __ARCH__
+!define PLATFORM __PLATFORM__
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
@@ -890,35 +891,37 @@ Function .onVerifyInstDir
     PathGood:
 FunctionEnd
 
-Function AbortRetryNSExecWait
-    ${LogSet} on
-    Pop $1
-    Pop $2
-    ${Do}
-        nsExec::ExecToLog $2
-        pop $0
-        ${If} $0 != "0"
-            DetailPrint "::error:: $1"
-            MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
-                    $1 /SD IDIGNORE IDABORT abort IDRETRY retry
-            ; IDIGNORE: Continue anyway
-            StrCpy $0 "0"
-            goto retry
-          abort:
-            ; Abort installation
-            Abort
-          retry:
-            ; Retry the nsExec command
-        ${EndIf}
-    ${LoopWhile} $0 != "0"
-FunctionEnd
-
-!macro ExecWaitLibNsisCmd cmd
-    IfSilent +3
-        ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
-        Goto +2
-    ExecWait '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+# Make function available for both installer and uninstaller
+# Uninstaller functions need an `un.` prefix, so we macro this
+# see https://nsis.sourceforge.io/Sharing_functions_between_Installer_and_Uninstaller
+!macro AbortRetryNSExecWaitMacro
+    Function ${un}AbortRetryNSExecWait
+        ${LogSet} on
+        SetDetailsPrint listonly
+        Pop $1
+        Pop $2
+        ${Do}
+            nsExec::ExecToLog $2
+            pop $0
+            ${If} $0 != "0"
+                DetailPrint "::error:: $1"
+                MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
+                        $1 /SD IDIGNORE IDABORT abort IDRETRY retry
+                ; IDIGNORE: Continue anyway
+                StrCpy $0 "0"
+                goto retry
+            abort:
+                ; Abort installation
+                Abort
+            retry:
+                ; Retry the nsExec command
+            ${EndIf}
+        ${LoopWhile} $0 != "0"
+        SetDetailsPrint both
+    FunctionEnd
 !macroend
+!insertmacro AbortRetryNSExecWaitMacro ""
+!insertmacro AbortRetryNSExecWaitMacro "un."
 
 # Installer sections
 Section "Install"
@@ -969,9 +972,12 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
     # Extra info for pre and post install scripts
     # NOTE: If more vars are added, make sure to update the examples/scripts tests too
+    #       There's a similar block for the pre_uninstall script, further down this file. 
+    #       Update that one as well!
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
 
     @PKG_COMMANDS@
 
@@ -982,7 +988,15 @@ Section "Install"
     call AbortRetryNSExecWait
     SetDetailsPrint both
 
-    !insertmacro ExecWaitLibNsisCmd "pre_install"
+    IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
+    DetailPrint "Running ${cmd} scripts..."
+    # At this point we don't have Python available yet, so we can't use the cmd wrapper
+    # _nsis.py as we do with post_install and pre_uninstall. We'll have to trust the
+    # system is well configured (CMD in patch, COMSPEC defined, etc.)
+    push '"$INSTDIR\pkgs\pre_install.bat"'
+    push "Failed to run ${cmd}"
+    call AbortRetryNSExecWait
+    NoPreInstall:
 
     @SETUP_ENVS@
 
@@ -1062,6 +1076,20 @@ Section "Install"
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
 SectionEnd
 
+!macro AbortRetryNSExecWaitLibNsisCmd cmd
+    SetDetailsPrint both
+    DetailPrint "Running ${cmd} scripts..."
+    SetDetailsPrint listonly
+    ${If} ${Silent}
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+    ${Else}
+        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+    ${EndIf}
+    push "Failed to run ${cmd}"
+    call un.AbortRetryNSExecWait
+    SetDetailsPrint both
+!macroend
+
 Section "Uninstall"
     # Remove menu items, path entries
 
@@ -1079,13 +1107,15 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
     # Extra info for pre_uninstall scripts
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "win-${ARCH}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
 
-    !insertmacro ExecWaitLibNsisCmd "pre_uninstall"
-    !insertmacro ExecWaitLibNsisCmd "rmpath"
-    !insertmacro ExecWaitLibNsisCmd "rmreg"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+    
     DetailPrint "Removing files and folders..."
     nsExec::Exec 'cmd.exe /k RMDIR /Q/S "$INSTDIR"'
 
