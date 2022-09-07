@@ -233,7 +233,7 @@ If set, a `.condarc` file is written to the base environment containing the cont
 of this value. The value can either be a string (likely a multi-line string) or
 a dictionary, which will be converted to a YAML string for writing. _Note:_ if this
 option is used, then all other options related to the construction of a `.condarc`
-file&mdash;`write_condarc`, `conda_default_channels`, etc.&mdash;are ignored.
+file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
 '''),
 
     ('company',                False, str, '''
@@ -504,6 +504,25 @@ _EXTRA_ENVS_SCHEMA = {
     # will implement when the PR for new menuinst lands
     # "menu_packages": (list, tuple),
 }
+
+
+def generate_key_info_list():
+    key_info_list = []
+    for key_info in KEYS:
+        type_names = {str: 'string', list: 'list', dict: 'dictionary', bool: 'boolean'}
+        key_types = key_info[2]
+        if not isinstance(key_types, (tuple, list)):
+            key_types = key_types,
+        plural = 's' if len(key_types) > 1 else ''
+        key_types = ', '.join(type_names.get(k, '') for k in key_types)
+        required = 'yes' if key_info[1] else 'no'
+
+        if key_info[3] == 'XXX':
+            print("Not including %s because the skip sentinel ('XXX') is set" % key_info[0])
+            continue
+
+        key_info_list.append((key_info[0], required, key_types, key_info[3], plural))
+    return key_info_list
 
 
 def ns_platform(platform):

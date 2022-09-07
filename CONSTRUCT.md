@@ -290,7 +290,7 @@ If set, a `.condarc` file is written to the base environment containing the cont
 of this value. The value can either be a string (likely a multi-line string) or
 a dictionary, which will be converted to a YAML string for writing. _Note:_ if this
 option is used, then all other options related to the construction of a `.condarc`
-file&mdash;`write_condarc`, `conda_default_channels`, etc.&mdash;are ignored.
+file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
 
 ## `company`
 

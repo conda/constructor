@@ -77,6 +77,8 @@ jobs:
             echo "Installed constructor is not local!"
             exit 1
           fi
+          constructor --version
+          constructor --help-construct
       - name: Patch NSIS to use logging builds on Windows
         if: startsWith(matrix.os, 'windows')
         run: |
