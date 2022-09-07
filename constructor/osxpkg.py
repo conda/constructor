@@ -181,7 +181,10 @@ def modify_xml(xml_path, info):
             path_choice.set('title', 'Install {}'.format(info['name']))
             path_choice.set('enabled', 'false')
         elif ident.endswith('run_installation'):
-            path_choice.set('visible', 'true')  # We leave this one out on purpose!
+            # We leave this one out on purpose! The user does not need to
+            # know we separated the installation in two steps to accommodate
+            # for the pre-install scripts optionality
+            path_choice.set('visible', 'false')
             path_choice.set('title', 'Apply {}'.format(info['name']))
             path_choice.set('enabled', 'false')
         elif ident.endswith('user_pre_install') and info.get('pre_install_desc'):
