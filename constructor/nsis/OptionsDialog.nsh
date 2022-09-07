@@ -9,6 +9,7 @@ Var mui_AnaCustomOptions
 Var mui_AnaCustomOptions.AddToPath
 Var mui_AnaCustomOptions.RegisterSystemPython
 Var mui_AnaCustomOptions.PostInstall
+Var mui_AnaCustomOptions.PreInstall
 Var mui_AnaCustomOptions.ClearPkgCache
 Var mui_AnaCustomOptions.CreateShortcuts
 
@@ -16,6 +17,7 @@ Var mui_AnaCustomOptions.CreateShortcuts
 Var Ana_AddToPath_State
 Var Ana_RegisterSystemPython_State
 Var Ana_PostInstall_State
+Var Ana_PreInstall_State
 Var Ana_ClearPkgCache_State
 Var Ana_CreateShortcuts_State
 
@@ -23,6 +25,7 @@ Var Ana_AddToPath_Label
 Var Ana_RegisterSystemPython_Label
 Var Ana_ClearPkgCache_Label
 Var Ana_PostInstall_Label
+Var Ana_PreInstall_Label
 
 Function mui_AnaCustomOptions_InitDefaults
     # Initialize defaults
@@ -132,6 +135,16 @@ Function mui_AnaCustomOptions_Show
     Pop $Ana_PostInstall_Label
     ${EndIf}
 
+    ${If} "${PRE_INSTALL_DESC}" != ""
+    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Run the pre-install script"
+    Pop $mui_AnaCustomOptions.PreInstall
+    ${NSD_SetState} $mui_AnaCustomOptions.PreInstall $Ana_PreInstall_State
+    ${NSD_OnClick} $mui_AnaCustomOptions.PreInstall PreInstall_OnClick
+    IntOp $5 $5 + 12
+    ${NSD_CreateLabel} 5% "$5u" 90% 20u "Recommended. ${PRE_INSTALL_DESC}"
+    Pop $Ana_PreInstall_Label
+    ${EndIf}
+
     nsDialogs::Show
 FunctionEnd
 
@@ -200,6 +213,19 @@ Function PostInstall_OnClick
         SetCtlColors $Ana_PostInstall_Label ff0000 transparent
     ${EndIf}
     ShowWindow $Ana_PostInstall_Label ${SW_SHOW}
+FunctionEnd
+
+Function PreInstall_OnClick
+    Pop $0
+
+    ShowWindow $Ana_PreInstall_Label ${SW_HIDE}
+    ${NSD_GetState} $0 $Ana_PreInstall_State
+    ${If} $Ana_PreInstall_State == ${BST_CHECKED}
+        SetCtlColors $Ana_PreInstall_Label 000000 transparent
+    ${Else}
+        SetCtlColors $Ana_PreInstall_Label ff0000 transparent
+    ${EndIf}
+    ShowWindow $Ana_PreInstall_Label ${SW_SHOW}
 FunctionEnd
 
 Function ClearPkgCache_OnClick
