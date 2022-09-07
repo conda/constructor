@@ -316,22 +316,8 @@ _required:_ no<br/>
 _type:_ string<br/>
 Path to a pre-install script, run after the package cache has been set, but
 before the files are linked to their final locations. As a result, you should
-only rely on tools known to be available on most systems (e.g. `bash`, `cmd`...).
-
-- For Unix `.sh` installers, the shebang line is respected if present;
-  otherwise, the script is run by the POSIX shell `sh`. Note that the use
-  of a shebang can reduce the portability of the installer. Metadata about
-  the installer can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
-  `${INSTALLER_PLAT}` environment variables. `${INSTALLER_TYPE}` is also
-  available and always set to `SH`.
-- For PKG installers, `bash` is used if a shebang is not provided. The same
-  variables mentioned for `sh` installers are available here, as long as
-  the scripts are shell scripts (filename ends with `.sh` or the contents
-  start with `#!/bin/bash` or `#!/bin/sh`). `${INSTALLER_TYPE}` is set to `PKG`.
-- For Windows `.exe` installers, the script must be a `.bat` file.
-  Installation path is available as `%PREFIX%`. Metadata about
-  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
-  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
+only rely on tools known to be available on most systems (e.g. `bash`, `cmd`,
+etc). See `post_install` for information about available environment variables.
 
 ## `post_install`
 
@@ -342,13 +328,13 @@ Path to a post-install script. Some notes:
 - For Unix `.sh` installers, the shebang line is respected if present;
   otherwise, the script is run by the POSIX shell `sh`. Note that the use
   of a shebang can reduce the portability of the installer. The
-  installation path is available as `${PREFIX}`. More info about the installer
-  can be found in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`,
-  `${INSTALLER_PLAT}`, `${INSTALLER_TYPE}` environment variables.
+  installation path is available as `${PREFIX}`. Installer metadata is
+  available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`
+  environment variables. `${INSTALLER_TYPE}` is set to `SH`.
 - For PKG installers, `bash` is used if a shebang is not provided. The same
   variables mentioned for `sh` installers are available here, as long as
   the scripts are shell scripts (filename ends with `.sh` or the contents
-  start with `#!/bin/bash` or `#!/bin/sh`).
+  start with `#!/bin/bash` or `#!/bin/sh`). `${INSTALLER_TYPE}` is set to `PKG`.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
