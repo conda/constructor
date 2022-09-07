@@ -140,6 +140,7 @@ def make_nsi(info, dir_path, extra_files=()):
     py_name, py_version, unused_build = filename_dist(dists[0]).rsplit('-', 2)
     assert py_name == 'python'
     arch = int(info['_platform'].split('-')[1])
+    info['pre_install_desc'] = info.get('pre_install_desc', "")
     info['post_install_desc'] = info.get('post_install_desc', "")
 
     # these appear as __<key>__ in the template, and get escaped
@@ -158,7 +159,7 @@ def make_nsi(info, dir_path, extra_files=()):
                                                join('%LOCALAPPDATA%', name.lower())),
         'DEFAULT_PREFIX_ALL_USERS': info.get('default_prefix_all_users',
                                              join('%ALLUSERSPROFILE%', name.lower())),
-
+        'PRE_INSTALL_DESC': info['pre_install_desc'],
         'POST_INSTALL_DESC': info['post_install_desc'],
         'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
         'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
