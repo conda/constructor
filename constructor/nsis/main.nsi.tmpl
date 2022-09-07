@@ -622,11 +622,17 @@ Function .onInit
 #if keep_pkgs is False
     StrCpy $Ana_ClearPkgCache_State ${BST_CHECKED}
 #endif
-#if post_install_exists is True
-    StrCpy $Ana_PostInstall_State ${BST_CHECKED}
+#if pre_install_exists is True
+    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
 #endif
-#if post_install_exists is False
-    StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
+#if pre_install_exists is False
+    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
+#endif
+#if pre_install_exists is True
+    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
+#endif
+#if pre_install_exists is False
+    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
 #endif
 
     Call OnInit_Release
@@ -991,13 +997,13 @@ Section "Install"
     SetDetailsPrint both
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
-    DetailPrint "Running pre_install scripts..."
-    # At this point we don't have Python available yet, so we can't use the cmd wrapper
-    # _nsis.py as we do with post_install and pre_uninstall. We'll have to trust the
-    # system is well configured (CMD in patch, COMSPEC defined, etc.)
-    push '"$INSTDIR\pkgs\pre_install.bat"'
-    push "Failed to run pre_install"
-    call AbortRetryNSExecWait
+        DetailPrint "Running pre_install scripts..."
+        # At this point we don't have Python available yet, so we can't use the cmd wrapper
+        # _nsis.py as we do with post_install and pre_uninstall. We'll have to trust the
+        # system is well configured (CMD in patch, COMSPEC defined, etc.)
+        push '"$INSTDIR\pkgs\pre_install.bat"'
+        push "Failed to run pre_install"
+        call AbortRetryNSExecWait
     NoPreInstall:
 
     @SETUP_ENVS@
