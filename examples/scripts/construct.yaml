@@ -7,5 +7,7 @@ specs:
   - python
 pre_install: pre_install.sh   # [unix]
 pre_install: pre_install.bat  # [win]
+pre_install_desc: "Adding this description makes the script selectable in the UI"
 post_install: post_install.sh  # [unix]
 post_install: post_install.bat  # [win]
+post_install_desc: "Adding this description makes the script selectable in the UI"
