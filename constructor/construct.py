@@ -30,22 +30,25 @@ dash or period.
     ('channels',               False, list, '''
 The conda channels from which packages are retrieved. At least one channel must
 be supplied, either in `channels` or `channels_remap`.
+
+See notes in `channels_remap` for details about local channels.
 '''),
 
     ('channels_remap',         False, list, '''
-A list of `src/dest` channel pairs. When retrieving the packages, conda will
-use the `src` channels; but rename those channels to `dst` within the installer.
+A list of `src/dest` channel pairs. When building the installer, conda will
+use the `src` channels to solve and fetch the packages. However, the resulting
+installation will see the packages as coming from the `dest` equivalent.
 This allows an installer to be built against a different set of channels than
 will be present when the installer is actually used. Example use:
-```
+
+```yaml
 channels_remap:
-  -
-      src: file:///tmp/a3/conda-bld
-      dest: https://repo.anaconda.com/pkgs/main
-  -
-      src: file:///tmp/r/conda-bld
-      dest: https://repo.anaconda.com/pkgs/r
+  - src: file:///tmp/a3/conda-bld              # [unix]
+    dest: https://repo.anaconda.com/pkgs/main  # [unix]
+  - src: file:///D:/tmp/a3/conda-bld           # [win]
+    dest: https://repo.anaconda.com/pkgs/main  # [unix]
 ```
+
 At least one channel must be supplied, either in `channels` or `channels_remap`.
 '''),
 

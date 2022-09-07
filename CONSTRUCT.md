@@ -41,23 +41,26 @@ _type:_ list<br/>
 The conda channels from which packages are retrieved. At least one channel must
 be supplied, either in `channels` or `channels_remap`.
 
+See notes in `channels_remap` for details about local channels.
+
 ## `channels_remap`
 
 _required:_ no<br/>
 _type:_ list<br/>
-A list of `src/dest` channel pairs. When retrieving the packages, conda will
-use the `src` channels; but rename those channels to `dst` within the installer.
+A list of `src/dest` channel pairs. When building the installer, conda will
+use the `src` channels to solve and fetch the packages. However, the resulting
+installation will see the packages as coming from the `dest` equivalent.
 This allows an installer to be built against a different set of channels than
 will be present when the installer is actually used. Example use:
-```
+
+```yaml
 channels_remap:
-  -
-      src: file:///tmp/a3/conda-bld
-      dest: https://repo.anaconda.com/pkgs/main
-  -
-      src: file:///tmp/r/conda-bld
-      dest: https://repo.anaconda.com/pkgs/r
+  - src: file:///tmp/a3/conda-bld              # [unix]
+    dest: https://repo.anaconda.com/pkgs/main  # [unix]
+  - src: file:///D:/tmp/a3/conda-bld           # [win]
+    dest: https://repo.anaconda.com/pkgs/main  # [unix]
 ```
+
 At least one channel must be supplied, either in `channels` or `channels_remap`.
 
 ## `specs`
@@ -199,12 +202,23 @@ _required:_ no<br/>
 _types:_ string, list<br/>
 The type of the installer being created.  Possible values are:
 - `sh`: shell-based installer for Linux or macOS;
-- `pkg`: macOS GUI installer
-- `exe`: Windows GUI installer
+- `pkg`: macOS GUI installer built with Apple's `pkgbuild`
+- `exe`: Windows GUI installer built with NSIS
 
 The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
 as `sh` on Linux and `exe` on Windows.
+
+Notes for silent mode `/S` on Windows EXEs: 
+- NSIS Silent mode will not print any error message, but will silently abort the installation.
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\install.log`, which can be 
+  searched for `::error::` strings. Pre- and post- install scripts will only throw an error
+  if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
+- The `/D` flag can be used to specify the target location. It must be the last argument in
+  the command and should NEVER be quoted, even if it contains spaces. For example:
+  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\path with spaces\my project`.
+
+[nsis-log]: https://nsis.sourceforge.io/Special_Builds
 
 ## `license_file`
 
@@ -506,12 +520,18 @@ Check the length of the path where the distribution is installed to ensure nodej
 can be installed.  Raise a message to request shorter path (less than 46 character)
 or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
 
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
+
 ## `check_path_spaces`
 
 _required:_ no<br/>
 _type:_ boolean<br/>
 Check if the path where the distribution is installed contains spaces and show a warning
 if any spaces are found. Default is True. (Windows only).
+
+Read notes about the particularities of Windows silent mode `/S` in the
+`installer_type` documentation.
 
 ## `nsis_template`
 
