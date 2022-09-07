@@ -1,0 +1,21 @@
+### Enhancements:
+
+* All installers support pre- and post-install scripts and expose the same environment variables: 
+  `PREFIX`, `INSTALLER_NAME`, `INSTALLER_VER`, `INSTALLER_PLAT`, `INSTALLER_TYPE`. (#556 via #558)
+
+### Bug fixes:
+
+* <news item>
+
+### Deprecations:
+
+* <news item>
+
+### Docs:
+
+* <news item>
+
+### Other:
+
+* <news item>
+
