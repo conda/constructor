@@ -491,8 +491,6 @@ CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
-__INSTALL_COMMANDS__
-
 #if has_conda
 mkdir -p $PREFIX/envs
 for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
@@ -519,6 +517,8 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     rm -f "${env_pkgs}env.txt"
 done
 #endif
+
+__INSTALL_COMMANDS__
 
 POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
