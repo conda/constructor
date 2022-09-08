@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from os.path import abspath, dirname, isfile, join
 import shutil
-from subprocess import Popen, PIPE, check_call, check_output, SubprocessError
+from subprocess import PIPE, check_call, check_output, run
 import sys
 import tempfile
 from pathlib import PureWindowsPath
@@ -328,28 +328,14 @@ def create(info, verbose=False):
 
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)
-    if verbose:
-        verbosity = 'V4'
-    else:
-        verbosity = 'V2'
-    if sys.platform == "win32":
-        verbosity = "/" + verbosity
-    else:
-        verbosity = "-" + verbosity
+    verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
+    process = run(args, stdout=PIPE, stderr=PIPE, text=True)
     if verbose:
-        sub = Popen(args, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = sub.communicate()
-        for msg, information in zip((stdout, stderr), ('stdout', 'stderr')):
-            # on Python3 we're getting bytes
-            if hasattr(msg, 'decode'):
-                msg = msg.decode()
-            print('makensis {}:'.format(information))
-            print(msg)
-        sub.check_returncode()
-    else:
-        check_call(args)
+        print("makensis stdout:", process.stdout, sep="\n")
+        print("makensis stderr:", process.stderr, sep="\n")
+    process.check_returncode()
 
     if info.get("signing_certificate"):
         # Verify installer was properly signed by NSIS
