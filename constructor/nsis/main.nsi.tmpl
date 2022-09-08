@@ -1018,6 +1018,7 @@ Section "Install"
         # system is well configured (CMD in patch, COMSPEC defined, etc.)
         push '"$INSTDIR\pkgs\pre_install.bat"'
         push "Failed to run pre_install"
+        push 'WithLog'
         call AbortRetryNSExecWait
     NoPreInstall:
 
@@ -1114,6 +1115,7 @@ SectionEnd
         push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
     ${EndIf}
     push "Failed to run ${cmd}"
+    push 'WithLog'
     call un.AbortRetryNSExecWait
     SetDetailsPrint both
 !macroend
