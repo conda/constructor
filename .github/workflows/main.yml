@@ -77,6 +77,8 @@ jobs:
             echo "Installed constructor is not local!"
             exit 1
           fi
+          constructor --version
+          constructor --help-construct
       - name: Patch NSIS to use logging builds on Windows
         if: startsWith(matrix.os, 'windows')
         run: |
@@ -138,3 +140,25 @@ jobs:
           source $CONDA/bin/activate
           [[ "$GITHUB_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev"
           anaconda --verbose --token $ANACONDA_TOKEN upload --user ctools $LABEL conda-bld/*/*.tar.bz2 --force
+
+  docs:
+    name: Check docs are up-to-date
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve the source code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install local constructor
+        run: |
+          source $CONDA/bin/activate
+          conda create -n constructor constructor jinja2
+          conda activate constructor
+          pip install -U . --no-deps
+      - name: Build docs
+        run: |
+          source $CONDA/bin/activate
+          conda activate constructor
+          set -ex
+          python scripts/make_docs.py
+          git diff --exit-code

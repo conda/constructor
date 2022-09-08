@@ -44,6 +44,7 @@ if conda_interface_type == 'conda':
     from conda.exports import MatchSpec as _MatchSpec
     from conda.exports import download as _download
     from conda.models.version import VersionOrder # noqa
+    from conda.models.prefix_graph import PrefixGraph as _PrefixGraph
     try:
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:
@@ -56,6 +57,7 @@ if conda_interface_type == 'conda':
 
     # used by fcp.py
     PackageCacheData = _PackageCacheData
+    PrefixGraph = _PrefixGraph
     Solver, read_paths_json = _Solver, _read_paths_json
     all_channel_urls = _all_channel_urls
     conda_context, env_vars = _conda_context, _env_vars

@@ -41,23 +41,26 @@ _type:_ list<br/>
 The conda channels from which packages are retrieved. At least one channel must
 be supplied, either in `channels` or `channels_remap`.
 
+See notes in `channels_remap` for details about local channels.
+
 ## `channels_remap`
 
 _required:_ no<br/>
 _type:_ list<br/>
-A list of `src/dest` channel pairs. When retrieving the packages, conda will
-use the `src` channels; but rename those channels to `dst` within the installer.
+A list of `src/dest` channel pairs. When building the installer, conda will
+use the `src` channels to solve and fetch the packages. However, the resulting
+installation will see the packages as coming from the `dest` equivalent.
 This allows an installer to be built against a different set of channels than
 will be present when the installer is actually used. Example use:
-```
+
+```yaml
 channels_remap:
-  -
-      src: file:///tmp/a3/conda-bld
-      dest: https://repo.anaconda.com/pkgs/main
-  -
-      src: file:///tmp/r/conda-bld
-      dest: https://repo.anaconda.com/pkgs/r
+  - src: file:///tmp/a3/conda-bld              # [unix]
+    dest: https://repo.anaconda.com/pkgs/main  # [unix]
+  - src: file:///D:/tmp/a3/conda-bld           # [win]
+    dest: https://repo.anaconda.com/pkgs/main  # [unix]
 ```
+
 At least one channel must be supplied, either in `channels` or `channels_remap`.
 
 ## `specs`
@@ -183,8 +186,9 @@ Notes:
   in an `extra_envs` config will be allowed to create their shortcuts.
 - If a global `exclude` option is used, it will have an effect on the environments created
   by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
-  extra environmentss will have it either. Unlike the global option, an error will not be
+  extra environments will have it either. Unlike the global option, an error will not be
   thrown if the excluded package is not found in the packages required by the extra environment.
+  To override the global `exclude` value, use an empty list `[]`.
 
 ## `installer_filename`
 
@@ -287,7 +291,7 @@ If set, a `.condarc` file is written to the base environment containing the cont
 of this value. The value can either be a string (likely a multi-line string) or
 a dictionary, which will be converted to a YAML string for writing. _Note:_ if this
 option is used, then all other options related to the construction of a `.condarc`
-file&mdash;`write_condarc`, `conda_default_channels`, etc.&mdash;are ignored.
+file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
 
 ## `company`
 
