@@ -1,0 +1,20 @@
+### Enhancements:
+
+* Windows (un)installers can be signed using the new `signing_certificate` option (#475)
+
+### Bug fixes:
+
+* <news item>
+
+### Deprecations:
+
+* <news item>
+
+### Docs:
+
+* <news item>
+
+### Other:
+
+* <news item>
+
