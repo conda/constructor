@@ -4,7 +4,7 @@
 
 ### Bug fixes:
 
-* <news item>
+* Check `makensis.exe` exit code in verbose mode too (#453 via #475)
 
 ### Deprecations:
 
