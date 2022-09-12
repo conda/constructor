@@ -51,3 +51,5 @@ end")
         ;;
 esac
 #endif
+
+exit 0

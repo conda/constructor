@@ -46,6 +46,7 @@ Unicode "true"
 !define VERSION __VERSION__
 !define COMPANY __COMPANY__
 !define ARCH __ARCH__
+!define PLATFORM __PLATFORM__
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
@@ -53,6 +54,7 @@ Unicode "true"
 !define DEFAULT_PREFIX __DEFAULT_PREFIX__
 !define DEFAULT_PREFIX_DOMAIN_USER __DEFAULT_PREFIX_DOMAIN_USER__
 !define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
+!define PRE_INSTALL_DESC __PRE_INSTALL_DESC__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
 !define MENU_PKGS "@MENU_PKGS@"
 !define SHOW_REGISTER_PYTHON __SHOW_REGISTER_PYTHON__
@@ -620,11 +622,17 @@ Function .onInit
 #if keep_pkgs is False
     StrCpy $Ana_ClearPkgCache_State ${BST_CHECKED}
 #endif
-#if post_install_exists is True
-    StrCpy $Ana_PostInstall_State ${BST_CHECKED}
+#if pre_install_exists is True
+    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
 #endif
-#if post_install_exists is False
-    StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
+#if pre_install_exists is False
+    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
+#endif
+#if pre_install_exists is True
+    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
+#endif
+#if pre_install_exists is False
+    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
 #endif
 
     Call OnInit_Release
@@ -890,42 +898,49 @@ Function .onVerifyInstDir
     PathGood:
 FunctionEnd
 
-Function AbortRetryNSExecWait
-    # This function expects three arguments in the stack
-    # $1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
-    # $2: The message to show if an error occurred
-    # $3: The command to run, quoted
-    # Note that the args need to be pushed to the stack in reverse order!
-    # Search 'AbortRetryNSExecWait' in this script to see examples
-    ${LogSet} on
-    Pop $1
-    Pop $2
-    Pop $3
-    ${Do}
-        ${If} $1 == "WithLog"
-            nsExec::ExecToLog $3
-        ${ElseIf} $1 == "NoLog"
-            nsExec::Exec $3
-        ${Else}
-            DetailPrint "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
-            Abort
-        ${EndIf}
-        pop $0
-        ${If} $0 != "0"
-            DetailPrint "::error:: $2"
-            MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
-                    $2 /SD IDIGNORE IDABORT abort IDRETRY retry
-            ; IDIGNORE: Continue anyway
-            StrCpy $0 "0"
-            goto retry
-          abort:
-            ; Abort installation
-            Abort
-          retry:
-            ; Retry the nsExec command
-        ${EndIf}
-    ${LoopWhile} $0 != "0"
-FunctionEnd
+# Make function available for both installer and uninstaller
+# Uninstaller functions need an `un.` prefix, so we use a macro to do both
+# see https://nsis.sourceforge.io/Sharing_functions_between_Installer_and_Uninstaller
+!macro AbortRetryNSExecWaitMacro un
+    Function ${un}AbortRetryNSExecWait
+        # This function expects three arguments in the stack
+        # $1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
+        # $2: The message to show if an error occurred
+        # $3: The command to run, quoted
+        # Note that the args need to be pushed to the stack in reverse order!
+        # Search 'AbortRetryNSExecWait' in this script to see examples
+        ${LogSet} on
+        Pop $1
+        Pop $2
+        Pop $3
+        ${Do}
+            ${If} $1 == "WithLog"
+                nsExec::ExecToLog $3
+            ${ElseIf} $1 == "NoLog"
+                nsExec::Exec $3
+            ${Else}
+                DetailPrint "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
+                Abort
+            ${EndIf}
+            pop $0
+            ${If} $0 != "0"
+                DetailPrint "::error:: $2"
+                MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
+                        $2 /SD IDIGNORE IDABORT abort IDRETRY retry
+                ; IDIGNORE: Continue anyway
+                StrCpy $0 "0"
+                goto retry
+            abort:
+                ; Abort installation
+                Abort
+            retry:
+                ; Retry the nsExec command
+            ${EndIf}
+        ${LoopWhile} $0 != "0"
+    FunctionEnd
+!macroend
+!insertmacro AbortRetryNSExecWaitMacro ""
+!insertmacro AbortRetryNSExecWaitMacro "un."
 
 # Installer sections
 Section "Install"
@@ -966,6 +981,7 @@ Section "Install"
     SetOutPath "$INSTDIR\pkgs"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
+    File __PRE_INSTALL__
     File __POST_INSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
@@ -973,11 +989,20 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
+    # Extra info for pre and post install scripts
+    # NOTE: If more vars are added, make sure to update the examples/scripts tests too
+    #       There's a similar block for the pre_uninstall script, further down this file. 
+    #       Update that one as well!
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
     @PKG_COMMANDS@
 
     SetDetailsPrint TextOnly
-    DetailPrint "Setting up the package cache ..."
+    DetailPrint "Setting up the package cache..."
     push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
     push 'Failed to extract packages'
     push 'NoLog'
@@ -985,6 +1010,17 @@ Section "Install"
     # These can crash the installer if they get too long (a few packages is enough!)
     call AbortRetryNSExecWait
     SetDetailsPrint both
+
+    IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
+        DetailPrint "Running pre_install scripts..."
+        # At this point we don't have Python available yet, so we can't use the cmd wrapper
+        # _nsis.py as we do with post_install and pre_uninstall. We'll have to trust the
+        # system is well configured (CMD in patch, COMSPEC defined, etc.)
+        push '"$INSTDIR\pkgs\pre_install.bat"'
+        push "Failed to run pre_install"
+        push 'WithLog'
+        call AbortRetryNSExecWait
+    NoPreInstall:
 
     @SETUP_ENVS@
 
@@ -1069,11 +1105,19 @@ Section "Install"
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
 SectionEnd
 
-!macro ExecWaitLibNsisCmd cmd
-    IfSilent +3
-        ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
-        Goto +2
-    ExecWait '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+!macro AbortRetryNSExecWaitLibNsisCmd cmd
+    SetDetailsPrint both
+    DetailPrint "Running ${cmd} scripts..."
+    SetDetailsPrint listonly
+    ${If} ${Silent}
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+    ${Else}
+        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+    ${EndIf}
+    push "Failed to run ${cmd}"
+    push 'WithLog'
+    call un.AbortRetryNSExecWait
+    SetDetailsPrint both
 !macroend
 
 Section "Uninstall"
@@ -1092,11 +1136,19 @@ Section "Uninstall"
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
-    !insertmacro ExecWaitLibNsisCmd "pre_uninstall"
-    !insertmacro ExecWaitLibNsisCmd "rmpath"
-    !insertmacro ExecWaitLibNsisCmd "rmreg"
+    # Extra info for pre_uninstall scripts
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
+
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+    
     DetailPrint "Removing files and folders..."
-    nsExec::Exec 'cmd.exe /k RMDIR /Q/S "$INSTDIR"'
+    nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
 
     # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"

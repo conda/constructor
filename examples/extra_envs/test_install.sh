@@ -1,12 +1,6 @@
 #!/bin/bash
 set -ex
 
-# if PREFIX is not defined, then this was called from an OSX PKG installer
-# $2 is the install location, ($HOME by default)
-if [ -z "${PREFIX:-}" ]; then
-    PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)
-fi
-
 # tests
 # base environment uses python 3.9 and excludes tk
 test -f "$PREFIX/conda-meta/history"
@@ -17,14 +11,14 @@ test -f "$PREFIX/conda-meta/history"
 # we need. same with conda in the block below!
 "$PREFIX/bin/python" -m pip -V
 # tk(inter) shouldn't be listed by conda!
-"$PREFIX/bin/python" -m conda list -p "$PREFIX" | grep tk && exit 1
+"$PREFIX/bin/python" -m conda list -p "$PREFIX" | jq -e '.[] | select(.name == "tk")' && exit 1
 echo "Previous test failed as expected"
 
 # extra env named 'py310' uses python 3.10, has tk, but we removed setuptools
 test -f "$PREFIX/envs/py310/conda-meta/history"
 "$PREFIX/envs/py310/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 10)"
 # setuptools shouldn't be listed by conda!
-"$PREFIX/bin/python" -m conda list -p "$PREFIX/envs/py310" | grep setuptools && exit 1
+"$PREFIX/bin/python" -m conda list -p "$PREFIX/envs/py310" | jq -e '.[] | select(.name == "setuptools")' && exit 1
 "$PREFIX/envs/py310/bin/python" -c "import setuptools" && exit 1
 echo "Previous test failed as expected"
 

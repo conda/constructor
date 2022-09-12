@@ -193,8 +193,8 @@ def run_post_install():
     path = join(ROOT_PREFIX, 'pkgs', 'post_install.bat')
     if not isfile(path):
         return
-    env = os.environ
-    env['PREFIX'] = str(ROOT_PREFIX)
+    env = os.environ.copy()
+    env.setdefault('PREFIX', str(ROOT_PREFIX))
     cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
     if not os.path.isfile(cmd_exe):
         cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
@@ -220,8 +220,8 @@ def run_pre_uninstall():
     path = join(ROOT_PREFIX, 'pre_uninstall.bat')
     if not isfile(path):
         return
-    env = os.environ
-    env['PREFIX'] = str(ROOT_PREFIX)
+    env = os.environ.copy()
+    env.setdefault('PREFIX', str(ROOT_PREFIX))
     cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
     if not os.path.isfile(cmd_exe):
         cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
