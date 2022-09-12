@@ -54,7 +54,15 @@ def test_linux_template_processing(
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])
 @pytest.mark.parametrize(
-    "script", ["post_extract.sh", "preinstall.sh", "update_path.sh", "clean_cache.sh"]
+    "script", 
+    [
+        "checks_before_install.sh", 
+        "prepare_installation.sh", 
+        "run_installation.sh", 
+        "update_path.sh", 
+        "clean_cache.sh",
+        "run_user_script.sh",
+    ]
 )
 def test_osxpkg_template_processing(arch, check_path_spaces, script):
     with open(os.path.join(OSX_DIR, script)) as f:
