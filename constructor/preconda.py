@@ -11,6 +11,7 @@ import sys
 import time
 from pathlib import Path
 import shutil
+from textwrap import dedent
 
 from .utils import filename_dist, get_final_url
 
@@ -145,7 +146,7 @@ def write_files(info, dst_dir):
 
     # base environment file used with conda install --file
     # (list of specs/dists to install)
-    write_env_txt(info, dst_dir, info["_dists"])
+    write_env_txt(info, dst_dir, info["_urls"])
 
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
@@ -158,7 +159,7 @@ def write_files(info, dst_dir):
         user_requested_specs = env_config.get('user_requested_specs', env_config.get('specs', ()))
         write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
         # environment installation list
-        write_env_txt(info, env_dst_dir, env_info["_dists"])
+        write_env_txt(info, env_dst_dir, env_info["_urls"])
         # channels
         write_channels_txt(info, env_dst_dir, env_config)
 
@@ -216,18 +217,22 @@ def write_repodata_record(info, dst_dir):
             json.dump(rr_json, rf, indent=2, sort_keys=True)
 
 
-def write_env_txt(info, dst_dir, dists=None):
-    if dists is None:
-        dists = info["_dists"]
-    dists_san_extn = []
-    for dist in dists:
-        if filename_dist(dist).endswith('.conda'):
-            dists_san_extn.append(filename_dist(dist)[:-6])
-        elif filename_dist(dist).endswith('.tar.bz2'):
-            dists_san_extn.append(filename_dist(dist)[:-8])
-    specs = ['='.join(spec.rsplit('-', 2)) for spec in dists_san_extn]
+def write_env_txt(info, dst_dir, urls):
+    """
+    urls is an iterable of tuples with url and md5 values
+    """
+    header = dedent(
+        f"""
+        # This file may be used to create an environment using:
+        # $ conda create --name <env> --file <this file>
+        # platform: {info['_platform']}
+        @EXPLICIT
+        """.lstrip()
+    )
     with open(join(dst_dir, "env.txt"), "w") as envf:
-        envf.write('\n'.join(specs))
+        envf.write(header)
+        envf.write('\n'.join([f"{url}#{md5}" for url, md5 in urls]))
+
 
 def write_channels_txt(info, dst_dir, env_config):
     env_config = env_config.copy()

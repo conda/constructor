@@ -8,15 +8,21 @@ if [ -z "${PREFIX:-}" ]; then
 fi
 
 # tests
-# base environment uses python 3.9
+# base environment uses python 3.9 and excludes tk
 test -f "$PREFIX/conda-meta/history"
 "$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 9)"
-"$PREFIX/bin/python" -m pip -V
+"$PREFIX/bin/pip" -V
+# tk(inter) shouldn't be listed by conda!
+"$PREFIX/bin/conda" list -p "$PREFIX" | grep tk && exit 1
+echo "Previous test failed as expected"
 
-# extra env named 'py310' uses python 3.10
+# extra env named 'py310' uses python 3.10, has tk, but we removed setuptools
 test -f "$PREFIX/envs/py310/conda-meta/history"
 "$PREFIX/envs/py310/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 10)"
-"$PREFIX/envs/py310/bin/python" -m pip -V
+# setuptools shouldn't be listed by conda!
+"$PREFIX/bin/conda" list -p "$PREFIX/envs/py310" | grep setuptools && exit 1
+"$PREFIX/envs/py310/bin/python" -c "import setuptools" && exit 1
+echo "Previous test failed as expected"
 
 # this env only contains dav1d, no python; it should have been created with no errors,
 # even if we had excluded tk from the package list

@@ -9,12 +9,17 @@ specs:
   - python=3.9
   - conda # conda is required for extra_envs
   - console_shortcut # [win]
+exclude:  # [unix]
+  - tk  # [unix]
 extra_envs:
   py310:
     specs:
       - python=3.10
+      - pip
     channels:
       - conda-forge
+    exclude:
+      - setuptools
   dav1d:
     environment_file: dav1d_env.yaml
 
