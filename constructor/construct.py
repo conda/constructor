@@ -260,11 +260,13 @@ etc). See `post_install` for information about available environment variables.
 '''),
 
     ('pre_install_desc',      False, str, '''
-A description of the purpose of the supplied pre_install script. If this
+A description of the purpose of the supplied `pre_install` script. If this
 string is supplied and non-empty, then the Windows and macOS GUI installers
 will display it along with checkbox to enable or disable the execution of the
 script. If this string is not supplied, it is assumed that the script
 is compulsory and the option to disable it will not be offered.
+
+This option has no effect on `SH` installers.
 '''),
 
     ('post_install',           False, str, '''
@@ -291,11 +293,13 @@ If necessary, you can activate the installed `base` environment like this:
 '''),
 
     ('post_install_desc',      False, str, '''
-A description of the purpose of the supplied post_install script. If this
+A description of the purpose of the supplied `post_install` script. If this
 string is supplied and non-empty, then the Windows and macOS GUI installers
 will display it along with checkbox to enable or disable the execution of the
 script. If this string is not supplied, it is assumed that the script
 is compulsory and the option to disable it will not be offered.
+
+This option has no effect on `SH` installers.
 '''),
 
     ('pre_uninstall',          False, str, '''
