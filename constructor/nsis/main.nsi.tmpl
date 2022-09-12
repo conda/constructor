@@ -1162,7 +1162,7 @@ Section "Uninstall"
     ${EndIf}
 SectionEnd
 
-!if "@SIGNTOOL_COMMAND@" != ""
+!if '@SIGNTOOL_COMMAND@' != ''
     # Signing for installer and uninstaller; nsis 3.08 required for uninstfinalize!
     # "= 0" comparison required to prevent both tasks running in parallel, which would cause signtool to fail
     # %1 is replaced by the installer and uninstaller paths, respectively
