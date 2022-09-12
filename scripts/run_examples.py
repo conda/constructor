@@ -173,7 +173,15 @@ def run_examples(keep_artifacts=None):
                 # The installer succeeded, test the uninstaller on Windows
                 uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
                 if uninstaller:
-                    cmd = ['cmd.exe', '/c', 'start', '/wait', os.path.join(env_dir, uninstaller), "/S"]
+                    cmd = [
+                        'cmd.exe', '/c', 'start', '/wait', 
+                        os.path.join(env_dir, uninstaller), 
+                        # We need silent mode + "uninstaller location" (_?=...) so the command can be
+                        # waited; otherwise, since the uninstaller copies itself to a different location
+                        # so it can be auto-deleted, it returns immediately and it gives us problems with
+                        # the tempdir cleanup later
+                        f"/S _?={env_dir}"
+                    ]
                     _execute(cmd)
                     paths_after_uninstall = os.listdir(env_dir)
                     if len(paths_after_uninstall) > 2:
