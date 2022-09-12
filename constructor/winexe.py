@@ -160,6 +160,7 @@ def make_nsi(info, dir_path, extra_files=()):
     py_name, py_version, unused_build = filename_dist(dists[0]).rsplit('-', 2)
     assert py_name == 'python'
     arch = int(info['_platform'].split('-')[1])
+    info['pre_install_desc'] = info.get('pre_install_desc', "")
     info['post_install_desc'] = info.get('post_install_desc', "")
 
     # these appear as __<key>__ in the template, and get escaped
@@ -167,6 +168,7 @@ def make_nsi(info, dir_path, extra_files=()):
         'NAME': name,
         'VERSION': info['version'],
         'COMPANY': info.get('company', 'Unknown, Inc.'),
+        'PLATFORM': info['_platform'],
         'ARCH': '%d-bit' % arch,
         'PY_VER': ".".join(py_version.split(".")[:2]),
         'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
@@ -177,7 +179,7 @@ def make_nsi(info, dir_path, extra_files=()):
                                                join('%LOCALAPPDATA%', name.lower())),
         'DEFAULT_PREFIX_ALL_USERS': info.get('default_prefix_all_users',
                                              join('%ALLUSERSPROFILE%', name.lower())),
-
+        'PRE_INSTALL_DESC': info['pre_install_desc'],
         'POST_INSTALL_DESC': info['post_install_desc'],
         'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
         'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
@@ -192,6 +194,7 @@ def make_nsi(info, dir_path, extra_files=()):
         'ENV_TXT': '@env.txt',
         'URLS_FILE': '@urls',
         'URLS_TXT_FILE': '@urls.txt',
+        'PRE_INSTALL': '@pre_install.bat',
         'POST_INSTALL': '@post_install.bat',
         'PRE_UNINSTALL': '@pre_uninstall.bat',
         'INDEX_CACHE': '@cache',
@@ -219,6 +222,7 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['check_path_length'] = info.get('check_path_length', None)
     ppd['check_path_spaces'] = info.get('check_path_spaces', True)
     ppd['keep_pkgs'] = info.get('keep_pkgs') or False
+    ppd['pre_install_exists'] = bool(info.get('pre_install'))
     ppd['post_install_exists'] = bool(info.get('post_install'))
     ppd['with_conclusion_text'] = bool(conclusion_text)
     ppd["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
@@ -328,9 +332,13 @@ def create(info, verbose=False):
     copied_extra_files = copy_extra_files(info, tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
-    if 'pre_install' in info:
-        sys.exit("Error: Cannot run pre install on Windows, sorry.\n")
-
+    pre_dst = join(tmp_dir, 'pre_install.bat')
+    try:
+        shutil.copy(info['pre_install'], pre_dst)
+    except KeyError:
+        with open(pre_dst, 'w') as fo:
+            fo.write(":: this is an empty pre install .bat script\n")
+    
     post_dst = join(tmp_dir, 'post_install.bat')
     try:
         shutil.copy(info['post_install'], post_dst)
@@ -338,11 +346,11 @@ def create(info, verbose=False):
         with open(post_dst, 'w') as fo:
             fo.write(":: this is an empty post install .bat script\n")
 
-    pre_dst = join(tmp_dir, 'pre_uninstall.bat')
+    preun_dst = join(tmp_dir, 'pre_uninstall.bat')
     try:
-        shutil.copy(info['pre_uninstall'], pre_dst)
+        shutil.copy(info['pre_uninstall'], preun_dst)
     except KeyError:
-        with open(pre_dst, 'w') as fo:
+        with open(preun_dst, 'w') as fo:
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)

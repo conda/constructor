@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* <news item>
+* Fix tests that check for the presence of the `tk` package in a given environment (#570)
 
 ### Deprecations
 
