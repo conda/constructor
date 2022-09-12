@@ -176,7 +176,7 @@ def run_examples(keep_artifacts=None):
                     cmd = ['cmd.exe', '/c', 'start', '/wait', os.path.join(env_dir, uninstaller), "/S"]
                     _execute(cmd)
                     paths_after_uninstall = os.listdir(env_dir)
-                    if paths_after_uninstall > 2:
+                    if len(paths_after_uninstall) > 2:
                         # The debug installer writes to install.log too, which will only
                         # be deleted _after_ a reboot. Finding some files is ok, but more
                         # than two usually means a problem with the uninstaller.
