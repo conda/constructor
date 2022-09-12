@@ -9,6 +9,7 @@ Var mui_AnaCustomOptions
 Var mui_AnaCustomOptions.AddToPath
 Var mui_AnaCustomOptions.RegisterSystemPython
 Var mui_AnaCustomOptions.PostInstall
+Var mui_AnaCustomOptions.PreInstall
 Var mui_AnaCustomOptions.ClearPkgCache
 Var mui_AnaCustomOptions.CreateShortcuts
 
@@ -16,6 +17,7 @@ Var mui_AnaCustomOptions.CreateShortcuts
 Var Ana_AddToPath_State
 Var Ana_RegisterSystemPython_State
 Var Ana_PostInstall_State
+Var Ana_PreInstall_State
 Var Ana_ClearPkgCache_State
 Var Ana_CreateShortcuts_State
 
@@ -23,6 +25,7 @@ Var Ana_AddToPath_Label
 Var Ana_RegisterSystemPython_Label
 Var Ana_ClearPkgCache_Label
 Var Ana_PostInstall_Label
+Var Ana_PreInstall_Label
 
 Function mui_AnaCustomOptions_InitDefaults
     # Initialize defaults
@@ -65,14 +68,14 @@ Function mui_AnaCustomOptions_Show
         "Advanced Installation Options" \
         "Customize how ${NAME} integrates with Windows"
 
+    # We will use $5 as the y axis accumulator, starting at 0
+    # We sum the the number of 'u' units added by 'NSD_Create*' functions
 
     ${NSD_CreateCheckbox} 0 0u 100% 11u "Create start menu shortcuts (supported packages only)."
+    IntOp $5 0 + 11
     Pop $mui_AnaCustomOptions.CreateShortcuts
     ${NSD_SetState} $mui_AnaCustomOptions.CreateShortcuts $Ana_CreateShortcuts_State
     ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
-
-    # We will use $5 as the y axis accumulator, starting at 12u
-    IntOp $5 0 + 12
 
     ${If} "${SHOW_ADD_TO_PATH}" == "yes"
         ${If} $InstMode = ${JUST_ME}
@@ -81,17 +84,15 @@ Function mui_AnaCustomOptions_Show
             StrCpy $1 "the system"
         ${EndIf}
         ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add ${NAME} to $1 &PATH environment variable"
+        IntOp $5 $5 + 11
         Pop $mui_AnaCustomOptions.AddToPath
         ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
         ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
-        IntOp $5 $5 + 12
-        ${NSD_CreateLabel} 5% "$5u" 90% 29u \
-            "NOT recommended; adding ${NAME} to the PATH can lead to conflicts with other \
-            applications. Instead, use the Commmand Prompt and Powershell menus added to the \
-            $\"Anaconda${PYVERSION_MAJOR} (${ARCH})$\" folder of the Windows Start Menu."
+        ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+            "NOT recommended. This can lead to conflicts with other applications. Instead, use \
+            the Commmand Prompt and Powershell menus added to the Windows Start Menu."
+        IntOp $5 $5 + 20
         Pop $Ana_AddToPath_Label
-        # add offset
-        IntOp $5 $5 + 29
     ${EndIf}
 
     ${If} "${SHOW_REGISTER_PYTHON}" == "yes"
@@ -101,10 +102,10 @@ Function mui_AnaCustomOptions_Show
             StrCpy $1 "the system"
         ${EndIf}
         ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "&Register ${NAME} as $1 Python ${PY_VER}"
+        IntOp $5 $5 + 11
         Pop $mui_AnaCustomOptions.RegisterSystemPython
         ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython $Ana_RegisterSystemPython_State
         ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython RegisterSystemPython_OnClick
-        IntOp $5 $5 + 12
         ${NSD_CreateLabel} 5% "$5u" 90% 20u \
             "Recommended. Allows other programs, such as VSCode, PyCharm, etc. to automatically \
             detect ${NAME} as the primary Python ${PY_VER} on the system."
@@ -114,22 +115,35 @@ Function mui_AnaCustomOptions_Show
 
 
     ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Clear the package cache upon completion"
+    IntOp $5 $5 + 12
     Pop $mui_AnaCustomOptions.ClearPkgCache
     ${NSD_SetState} $mui_AnaCustomOptions.ClearPkgCache $Ana_ClearPkgCache_State
     ${NSD_OnClick} $mui_AnaCustomOptions.ClearPkgCache ClearPkgCache_OnClick
-    IntOp $5 $5 + 11
     ${NSD_CreateLabel} 5% "$5u" 90% 11u \
         "Recommended. Recovers some disk space without harming functionality."
+    IntOp $5 $5 + 11
     Pop $Ana_ClearPkgCache_Label
 
+    ${If} "${PRE_INSTALL_DESC}" != ""
+        ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Run the pre-install script"
+        IntOp $5 $5 + 11
+        Pop $mui_AnaCustomOptions.PreInstall
+        ${NSD_SetState} $mui_AnaCustomOptions.PreInstall $Ana_PreInstall_State
+        ${NSD_OnClick} $mui_AnaCustomOptions.PreInstall PreInstall_OnClick
+        ${NSD_CreateLabel} 5% "$5u" 90% 20u "${PRE_INSTALL_DESC}"
+        IntOp $5 $5 + 20
+        Pop $Ana_PreInstall_Label
+    ${EndIf}
+
     ${If} "${POST_INSTALL_DESC}" != ""
-    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Run the post-install script"
-    Pop $mui_AnaCustomOptions.PostInstall
-    ${NSD_SetState} $mui_AnaCustomOptions.PostInstall $Ana_PostInstall_State
-    ${NSD_OnClick} $mui_AnaCustomOptions.PostInstall PostInstall_OnClick
-    IntOp $5 $5 + 12
-    ${NSD_CreateLabel} 5% "$5u" 90% 20u "Recommended. ${POST_INSTALL_DESC}"
-    Pop $Ana_PostInstall_Label
+        ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Run the post-install script"
+        IntOp $5 $5 + 11
+        Pop $mui_AnaCustomOptions.PostInstall
+        ${NSD_SetState} $mui_AnaCustomOptions.PostInstall $Ana_PostInstall_State
+        ${NSD_OnClick} $mui_AnaCustomOptions.PostInstall PostInstall_OnClick
+        ${NSD_CreateLabel} 5% "$5u" 90% 20u "${POST_INSTALL_DESC}"
+        IntOp $5 $5 + 20
+        Pop $Ana_PostInstall_Label
     ${EndIf}
 
     nsDialogs::Show
@@ -200,6 +214,19 @@ Function PostInstall_OnClick
         SetCtlColors $Ana_PostInstall_Label ff0000 transparent
     ${EndIf}
     ShowWindow $Ana_PostInstall_Label ${SW_SHOW}
+FunctionEnd
+
+Function PreInstall_OnClick
+    Pop $0
+
+    ShowWindow $Ana_PreInstall_Label ${SW_HIDE}
+    ${NSD_GetState} $0 $Ana_PreInstall_State
+    ${If} $Ana_PreInstall_State == ${BST_CHECKED}
+        SetCtlColors $Ana_PreInstall_Label 000000 transparent
+    ${Else}
+        SetCtlColors $Ana_PreInstall_Label ff0000 transparent
+    ${EndIf}
+    ShowWindow $Ana_PreInstall_Label ${SW_SHOW}
 FunctionEnd
 
 Function ClearPkgCache_OnClick
