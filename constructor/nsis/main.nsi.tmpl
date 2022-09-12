@@ -1148,7 +1148,7 @@ Section "Uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
     
     DetailPrint "Removing files and folders..."
-    nsExec::Exec 'cmd.exe /k RMDIR /Q/S "$INSTDIR"'
+    nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
 
     # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
