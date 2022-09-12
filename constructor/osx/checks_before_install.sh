@@ -49,3 +49,5 @@ end")
 
            ;;
 esac
+
+exit 0

@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
+from textwrap import dedent
 
 import constructor.preconda as preconda
 from constructor.imaging import write_images
@@ -175,11 +176,22 @@ def modify_xml(xml_path, info):
         ident = path_choice.get('id')
         if ident == 'default':
             root.remove(path_choice)
-        elif ident.endswith('main'):
+        elif ident.endswith('prepare_installation'):
             path_choice.set('visible', 'true')
             path_choice.set('title', 'Install {}'.format(info['name']))
             path_choice.set('enabled', 'false')
-        elif ident.endswith('postinstall') and info.get('post_install_desc'):
+        elif ident.endswith('run_installation'):
+            # We leave this one out on purpose! The user does not need to
+            # know we separated the installation in two steps to accommodate
+            # for the pre-install scripts optionality
+            path_choice.set('visible', 'false')
+            path_choice.set('title', 'Apply {}'.format(info['name']))
+            path_choice.set('enabled', 'false')
+        elif ident.endswith('user_pre_install') and info.get('pre_install_desc'):
+            path_choice.set('visible', 'true')
+            path_choice.set('title', "Run the pre-install script")
+            path_choice.set('description', ' '.join(info['pre_install_desc'].split()))
+        elif ident.endswith('user_post_install') and info.get('post_install_desc'):
             path_choice.set('visible', 'true')
             path_choice.set('title', "Run the post-install script")
             path_choice.set('description', ' '.join(info['post_install_desc'].split()))
@@ -229,9 +241,9 @@ def modify_xml(xml_path, info):
     tree.write(xml_path)
 
 
-def move_script(src, dst, info):
+def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     """
-    Fill template scripts preinstall.sh, post_extract.sh and others,
+    Fill template scripts checks_before_install.sh, prepare_installation.sh and others,
     and move them to the installer workspace.
     """
     with open(src) as fi:
@@ -244,7 +256,13 @@ def move_script(src, dst, info):
     data = data.replace('__NAME__', info['name'])
     data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
     data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
+    data = data.replace('__PLAT__', info['_platform'])
     data = data.replace('__PROGRESS_NOTIFICATIONS__', str(info.get('progress_notifications')))
+    # Is this a user-provided script?
+    if user_script_type == "pre_install":
+        data = data.replace('__PRE_OR_POST__', "pre_install")
+    elif user_script_type == "post_install":
+        data = data.replace('__PRE_OR_POST__', "post_install")
 
     default_path_exists_error_text = (
         "'{CHOSEN_PATH}' already exists. Please, relaunch the installer and "
@@ -256,6 +274,15 @@ def move_script(src, dst, info):
     data = data.replace('__PATH_EXISTS_ERROR_TEXT__', path_exists_error_text)
 
     with open(dst, 'w') as fo:
+        if (
+            ensure_shebang
+            and os.path.splitext(dst)[1] in ('', '.sh')
+            and not data.startswith(("#!/bin/bash", "#!/bin/sh"))
+        ):
+            # Shell scripts provided by the user require a shebang, otherwise it
+            # will fail to start with error posix_spawn 8
+            # We only handle shell scripts this way
+            fo.write("#!/bin/bash\n")
         fo.write(data)
     os.chmod(dst, 0o755)
 
@@ -289,9 +316,9 @@ def pkgbuild(name, identifier=None, version=None, install_location=None):
     return output
 
 
-def pkgbuild_main(info):
+def pkgbuild_prepare_installation(info):
     pkg = pkgbuild(
-        "main",
+        "prepare_installation",
         identifier=info.get("reverse_domain_identifier"),
         version=info["version"],
         install_location=info.get("default_location_pkg"),
@@ -319,10 +346,10 @@ def pkgbuild_main(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
-def pkgbuild_script(name, info, src, dst='postinstall'):
+def pkgbuild_script(name, info, src, dst='postinstall', **kwargs):
     fresh_dir(SCRIPTS_DIR)
     fresh_dir(PACKAGE_ROOT)
-    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info)
+    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info, **kwargs)
     pkgbuild(
         name,
         identifier=info.get("reverse_domain_identifier"),
@@ -342,17 +369,39 @@ def create(info, verbose=False):
     fresh_dir(PACKAGES_DIR)
     prefix = join(PACKAGE_ROOT, info.get("pkg_name", info['name']).lower())
 
+    # We need to split tasks in sub-PKGs so the GUI allows the user to enable/disable
+    # the ones marked as optional. Optionality is controlled in modify_xml() by
+    # patching the XML blocks corresponding to each sub-PKG name.
     # See http://stackoverflow.com/a/11487658/161801 for how all this works.
 
-    # The main package contains the prepopulated package cache, the modified
-    # conda-meta metadata staged into pkgs/conda-meta, and conda.exe
+    # 1. Prepare installation
+    # The 'prepare_installation' package contains the prepopulated package cache, the modified
+    # conda-meta metadata staged into pkgs/conda-meta, conda.exe,
+    # Optionally, extra files and the user-provided scripts.
+    # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
     fresh_dir(SCRIPTS_DIR)
     pkgs_dir = join(prefix, 'pkgs')
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
     preconda.copy_extra_files(info, prefix)
-    
+    # These are the user-provided scripts, maybe patched to have a shebang
+    # They will be called by a wrapping script added later, if present
+    if info.get('pre_install'):
+        move_script(
+            abspath(info['pre_install']),
+            abspath(join(pkgs_dir, 'user_pre_install')),
+            info,
+            ensure_shebang=True,
+        )
+    if info.get('post_install'):
+        move_script(
+            abspath(info['post_install']),
+            abspath(join(pkgs_dir, 'user_post_install')),
+            info,
+            ensure_shebang=True,
+        )
+
     all_dists = info["_dists"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
         all_dists += env_info["_dists"]
@@ -375,9 +424,9 @@ def create(info, verbose=False):
             }
             plist_dump(plist, f)
         check_call(
-            [   
+            [
                 # hardcode to system location to avoid accidental clobber in PATH
-                "/usr/bin/codesign",  
+                "/usr/bin/codesign",
                 "--verbose",
                 '--sign', notarization_identity_name,
                 "--prefix", info.get("reverse_domain_identifier", info['name']),
@@ -389,25 +438,40 @@ def create(info, verbose=False):
         )
         os.unlink(f.name)
 
-    # This script checks to see if the install location already exists
-    move_script(join(OSX_DIR, 'preinstall.sh'), join(SCRIPTS_DIR, 'preinstall'), info)
-    # This script performs the full installation
-    move_script(join(OSX_DIR, 'post_extract.sh'), join(SCRIPTS_DIR, 'postinstall'), info)
-    pkgbuild_main(info)
-    names = ['main']
+    # This script checks to see if the install location already exists and/or contains spaces
+    # Not to be confused with the user-provided pre_install!
+    move_script(join(OSX_DIR, 'checks_before_install.sh'), join(SCRIPTS_DIR, 'preinstall'), info)
+    # This script populates the cache, mainly
+    move_script(join(OSX_DIR, 'prepare_installation.sh'), join(SCRIPTS_DIR, 'postinstall'), info)
+    pkgbuild_prepare_installation(info)
+    names = ['prepare_installation']
 
-    # The next three packages contain nothing but scripts to execute a
-    # particular optional task. The Mac installer GUI will allow each of
-    # these scripts to be enabled or disabled by the user in the GUI
-    # The user-supplied post-install script
+    # 2. (Optional) Run user-provided pre-install script
+    # The preinstall script is run _after_ the tarballs have been extracted!
+    if info.get('pre_install'):
+        pkgbuild_script(
+            'user_pre_install', info, 'run_user_script.sh', user_script_type='pre_install'
+        )
+        names.append('user_pre_install')
+
+    # 3. Run the installation
+    # This script-only package will run conda to link and install the packages
+    pkgbuild_script('run_installation', info, 'run_installation.sh')
+    names.append('run_installation')
+
+    # 4. The user-supplied post-install script
     if info.get('post_install'):
-        pkgbuild_script('postinstall', info, abspath(info['post_install']))
-        names.append('postinstall')
-    # The script to run conda init
+        pkgbuild_script(
+            'user_post_install', info, 'run_user_script.sh', user_script_type='post_install'
+        )
+        names.append('user_post_install')
+
+    # 5. The script to run conda init
     if info.get('initialize_conda', True):
         pkgbuild_script('pathupdate', info, 'update_path.sh')
         names.append('pathupdate')
-    # The script to clear the package cache
+
+    # 6. The script to clear the package cache
     if not info.get('keep_pkgs'):
         pkgbuild_script('cacheclean', info, 'clean_cache.sh')
         names.append('cacheclean')

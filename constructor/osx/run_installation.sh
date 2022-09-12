@@ -2,6 +2,8 @@
 # Copyright (c) 2017 Anaconda, Inc.
 # All rights reserved.
 
+# COMMON UTILS
+# If you update this block, please propagate changes to the other scripts using it
 notify() {
 if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
 osascript <<EOF
@@ -17,22 +19,8 @@ PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-
 CONDA_EXEC="$PREFIX/conda.exe"
-chmod +x "$CONDA_EXEC"
-
-# Create a blank history file so conda thinks this is an existing env
-mkdir -p $PREFIX/conda-meta
-touch $PREFIX/conda-meta/history
-
-# Extract the conda packages but avoiding the overwriting of the
-# custom metadata we have already put in place
-notify "Preparing packages..."
-"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs
-if (( $? )); then
-    echo "ERROR: could not extract the conda packages"
-    exit 1
-fi
+# /COMMON UTILS
 
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."

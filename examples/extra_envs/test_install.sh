@@ -1,12 +1,6 @@
 #!/bin/bash
 set -ex
 
-# if PREFIX is not defined, then this was called from an OSX PKG installer
-# $2 is the install location, ($HOME by default)
-if [ xxx$PREFIX = 'xxx' ]; then
-    PREFIX=$(cd "$2/__NAME_LOWER__"; pwd)
-fi
-
 # tests
 # base environment uses python 3.7 and excludes tk
 test -f "$PREFIX/conda-meta/history"
