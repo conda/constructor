@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from os.path import abspath, dirname, isfile, join
 import shutil
-from subprocess import PIPE, check_call, check_output, run
+from subprocess import PIPE, check_call, check_output, run, STDOUT
 import sys
 import tempfile
 from pathlib import PureWindowsPath
@@ -293,17 +293,36 @@ Error: no file %s
         sys.exit("Error: no file untgz.dll")
 
 
-def verify_signtool_install(info):
+def verify_signtool_is_available(info):
     if not info.get("signing_certificate"):
         return
     signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-    print(f"Checking for {signtool}...")
-    check_call([signtool])
+    print(f"Checking for '{signtool}'...")
+    check_call([signtool, "/?"], stdout=PIPE, stderr=PIPE)
 
+
+def verify_installer_signature(path):
+    """
+    Verify installer was properly signed by NSIS
+    We'll assume that the uninstaller was handled in the same way
+    """
+    signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
+    p = run([signtool, "verify", "/v", path], stdout=PIPE, stderr=STDOUT, text=True)
+    print(p.stdout)
+    if "SignTool Error: No signature found" in p.stdout:
+        # This is a signing error!
+        p.check_returncode()
+    elif p.returncode:
+        # we had errors but maybe not critical ones
+        print(
+            f"!!! SignTool could find a signature in {path} but detected errors. "
+            "Please check your certificate!", 
+            file=sys.stderr
+        )
 
 def create(info, verbose=False):
     verify_nsis_install()
-    verify_signtool_install(info)
+    verify_signtool_is_available(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info, tmp_dir)
@@ -338,9 +357,7 @@ def create(info, verbose=False):
     process.check_returncode()
 
     if info.get("signing_certificate"):
-        # Verify installer was properly signed by NSIS
-        signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-        check_call([signtool, "verify", info['_outpath']])
+        verify_installer_signature(info['_outpath'])
 
     shutil.rmtree(tmp_dir)
 

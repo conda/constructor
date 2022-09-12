@@ -88,6 +88,17 @@ jobs:
           curl -sL "https://sourceforge.net/projects/nsis/files/NSIS%203/${nsis_version}/nsis-${nsis_version}-log.zip/download" -o "nsis-${nsis_version}-log.zip"
           7z x "nsis-${nsis_version}-log.zip" -aoa -o"$CONDA_PREFIX/NSIS/"
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
+      - name: Generate self-signed certificate (Windows)
+        if: startsWith(matrix.os, 'windows')
+        shell: cmd
+        run: |
+          set "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}/certificate.pfx" 
+          set "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234"
+          powershell scripts/create_self_signed_certificate.ps1
+          copy /Y "%CONSTRUCTOR_SIGNING_CERTIFICATE%" examples/signing/certificate.pfx
+
+          echo "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234" >> %GITHUB_ENV%
+          echo "CONSTRUCTOR_SIGNTOOL_PATH=C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe" >> %GITHUB_ENV%
       - name: Run examples and prepare artifacts
         run: |
           source ../conda/etc/profile.d/conda.sh
