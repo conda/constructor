@@ -534,9 +534,6 @@ Check if the path where the distribution is installed contains spaces and show a
 Read notes about the particularities of Windows silent mode `/S` in the
 `installer_type` documentation.
 
-Read notes about the particularities of Windows silent mode `/S` in the
-`installer_type` documentation.
-
 ## `nsis_template`
 
 _required:_ no<br/>
