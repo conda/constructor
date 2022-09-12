@@ -13,7 +13,7 @@ test -f "$PREFIX/conda-meta/history"
 "$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 7)"
 "$PREFIX/bin/pip" -V
 # tk(inter) shouldn't be listed by conda!
-"$PREFIX/bin/conda" list -p "$PREFIX" | grep tk && exit 1
+"$PREFIX/bin/conda" list -p "$PREFIX" | grep -E '^tk\s+' && exit 1
 echo "Previous test failed as expected"
 
 # extra env named 'py38' uses python 3.8, has tk, but we removed setuptools
