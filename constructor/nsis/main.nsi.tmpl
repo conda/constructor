@@ -1110,9 +1110,10 @@ Section "Uninstall"
     ${EndIf}
 SectionEnd
 
-${IfNot} "@SIGNTOOL_COMMAND@" == ""
+!if "@SIGNTOOL_COMMAND@" != ""
     # Signing for installer and uninstaller; nsis 3.08 required for uninstfinalize!
     # "= 0" comparison required to prevent both tasks running in parallel, which would cause signtool to fail
-    !finalize '@SIGNTOOL_COMMAND@ "%1"' = 0 ; %1 is replaced by the install exe to be signed.
-    !uninstfinalize '@SIGNTOOL_COMMAND@ "%1"' = 0 ; %1 is replaced by the uninstaller exe to be signed.
-${EndIf}
+    # %1 is replaced by the installer and uninstaller paths, respectively
+    !finalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+    !uninstfinalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+!endif
