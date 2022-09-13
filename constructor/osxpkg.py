@@ -255,7 +255,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     Fill template scripts checks_before_install.sh, prepare_installation.sh and others,
     and move them to the installer workspace.
     """
-    assert user_script_type in ("pre_install", "post_install")
+    assert user_script_type in (None, "pre_install", "post_install")
     with open(src) as fi:
         data = fi.read()
     
