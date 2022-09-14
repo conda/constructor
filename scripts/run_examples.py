@@ -169,6 +169,35 @@ def run_examples(keep_artifacts=None):
                     print('---  LOGS  ---')
                     print("Tip: Debug locally and check the full logs in the Installer UI")
                     print("     or check /var/log/install.log if run from the CLI.")
+            elif ext == "exe":
+                # The installer succeeded, test the uninstaller on Windows
+                uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
+                if uninstaller:
+                    cmd = [
+                        'cmd.exe', '/c', 'start', '/wait', 
+                        os.path.join(env_dir, uninstaller), 
+                        # We need silent mode + "uninstaller location" (_?=...) so the command can be
+                        # waited; otherwise, since the uninstaller copies itself to a different location
+                        # so it can be auto-deleted, it returns immediately and it gives us problems with
+                        # the tempdir cleanup later
+                        f"/S _?={env_dir}"
+                    ]
+                    _execute(cmd)
+                    paths_after_uninstall = os.listdir(env_dir)
+                    if len(paths_after_uninstall) > 2:
+                        # The debug installer writes to install.log too, which will only
+                        # be deleted _after_ a reboot. Finding some files is ok, but more
+                        # than two usually means a problem with the uninstaller.
+                        # Note this is is not exhaustive, because we are not checking 
+                        # whether the registry was restored, menu items were deleted, etc.
+                        # TODO :)
+                        which_errored.setdefault(example_path, []).append(
+                            "Uninstaller left too many files behind!\n - "
+                            "\n - ".join(paths_after_uninstall)
+                        )
+                else:
+                    which_errored.setdefault(example_path, []).append("Could not find uninstaller!")
+
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
         if creation_errored:
