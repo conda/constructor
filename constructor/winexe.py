@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 import os
 from os.path import abspath, dirname, isfile, join
 import shutil
-from subprocess import Popen, PIPE, check_call, check_output
+from subprocess import PIPE, check_call, check_output, run, STDOUT
 import sys
 import tempfile
 from pathlib import PureWindowsPath
@@ -127,6 +127,26 @@ def setup_envs_commands(info, dir_path):
     return [line.strip() for line in lines]
 
 
+def signtool_command(info):
+    "Generates a signtool command to be used in the NSIS template"
+    pfx_certificate = info.get("signing_certificate")
+    if pfx_certificate:
+        signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
+        timestamp_server = os.environ.get(
+            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
+            "http://timestamp.sectigo.com"
+        )
+        command = (
+            f'{str_esc(signtool)} sign /f {str_esc(pfx_certificate)} '
+            f'/tr {str_esc(timestamp_server)} /td sha256 /fd sha256'
+        )
+        if "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD" in os.environ:
+            # signtool can get the password from the env var on its own
+            command += f' /p "%CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD%"'
+        return command
+    return ""
+
+
 def make_nsi(info, dir_path, extra_files=()):
     "Creates the tmp/main.nsi from the template file"
     name = info['name']
@@ -226,6 +246,7 @@ def make_nsi(info, dir_path, extra_files=()):
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
+        ('@SIGNTOOL_COMMAND@', signtool_command(info)),
         ('@SETUP_ENVS@', '\n    '.join(setup_envs_commands(info, dir_path))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
@@ -276,8 +297,36 @@ Error: no file %s
         sys.exit("Error: no file untgz.dll")
 
 
+def verify_signtool_is_available(info):
+    if not info.get("signing_certificate"):
+        return
+    signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
+    print(f"Checking for '{signtool}'...")
+    check_call([signtool, "/?"], stdout=PIPE, stderr=PIPE)
+
+
+def verify_installer_signature(path):
+    """
+    Verify installer was properly signed by NSIS
+    We'll assume that the uninstaller was handled in the same way
+    """
+    signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
+    p = run([signtool, "verify", "/v", path], stdout=PIPE, stderr=STDOUT, text=True)
+    print(p.stdout)
+    if "SignTool Error: No signature found" in p.stdout:
+        # This is a signing error!
+        p.check_returncode()
+    elif p.returncode:
+        # we had errors but maybe not critical ones
+        print(
+            f"!!! SignTool could find a signature in {path} but detected errors. "
+            "Please check your certificate!", 
+            file=sys.stderr
+        )
+
 def create(info, verbose=False):
     verify_nsis_install()
+    verify_signtool_is_available(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info, tmp_dir)
@@ -306,27 +355,18 @@ def create(info, verbose=False):
 
     write_images(info, tmp_dir)
     nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)
-    if verbose:
-        verbosity = 'V4'
-    else:
-        verbosity = 'V2'
-    if sys.platform == "win32":
-        verbosity = "/" + verbosity
-    else:
-        verbosity = "-" + verbosity
+    verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
+    process = run(args, stdout=PIPE, stderr=PIPE, text=True)
     if verbose:
-        sub = Popen(args, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = sub.communicate()
-        for msg, information in zip((stdout, stderr), ('stdout', 'stderr')):
-            # on Python3 we're getting bytes
-            if hasattr(msg, 'decode'):
-                msg = msg.decode()
-            print('makensis {}:'.format(information))
-            print(msg)
-    else:
-        check_call(args)
+        print("makensis stdout:", process.stdout, sep="\n")
+        print("makensis stderr:", process.stderr, sep="\n")
+    process.check_returncode()
+
+    if info.get("signing_certificate"):
+        verify_installer_signature(info['_outpath'])
+
     shutil.rmtree(tmp_dir)
 
 

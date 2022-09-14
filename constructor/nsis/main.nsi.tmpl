@@ -1,7 +1,7 @@
 # Installer template file for creating a Windows installer using NSIS.
 
 # Dependencies:
-#   NSIS >=3.01      conda install nsis  (includes extra unicode plugins)
+#   NSIS >=3.08      conda install "nsis>=3.08"  (includes extra unicode plugins)
 
 Unicode "true"
 
@@ -1161,3 +1161,11 @@ Section "Uninstall"
         DeleteRegKey SHCTX "Software\Python\PythonCore\${PY_VER}"
     ${EndIf}
 SectionEnd
+
+!if '@SIGNTOOL_COMMAND@' != ''
+    # Signing for installer and uninstaller; nsis 3.08 required for uninstfinalize!
+    # "= 0" comparison required to prevent both tasks running in parallel, which would cause signtool to fail
+    # %1 is replaced by the installer and uninstaller paths, respectively
+    !finalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+    !uninstfinalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+!endif

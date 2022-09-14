@@ -97,7 +97,7 @@ def run_examples(keep_artifacts=None):
         output_dir = tempfile.mkdtemp(dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
-        cmd = COV_CMD + ['constructor', example_path, '--output-dir', output_dir]
+        cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
         creation_errored = _execute(cmd)
         errored += creation_errored
         for fpath in os.listdir(output_dir):

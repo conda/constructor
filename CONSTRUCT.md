@@ -268,6 +268,18 @@ to sign `conda.exe`. For this, you need an "Application certificate" (different 
 "Installer certificate" mentioned above). Common values for this option follow the format
 `Developer ID Application: Name of the owner (XXXXXX)`.
 
+## `signing_certificate`
+
+_required:_ no<br/>
+_type:_ string<br/>
+On Windows only, set this key to the path of a PFX certificate to be used with `signtool`.
+Additional environment variables can be used to configure this step, namely:
+
+- `CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD` (password to unlock the certificate, if needed)
+- `CONSTRUCTOR_SIGNTOOL_PATH` (absolute path to `signtool.exe`, in case is not in `PATH`)
+- `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL` (custom RFC 3161 timestamping server, default is
+http://timestamp.sectigo.com)
+
 ## `attempt_hardlinks`
 
 _required:_ no<br/>
