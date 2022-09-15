@@ -158,9 +158,8 @@ get_conda_envs = get_conda_envs_from_python_api
 
 def rm_menus(prefix=None, root_prefix=None):
     try:
-        import menuinst
+        import menuinst  # noqa
         from conda.base.context import context
-        menuinst
     except (ImportError, OSError):
         return
     try:
@@ -170,18 +169,21 @@ def rm_menus(prefix=None, root_prefix=None):
         out("Failed to get conda environments list\n")
         err("Error: %s\n" % str(e))
         err("Traceback:\n%s\n" % traceback.format_exc(20))
-        return
-    envs_dirs = list(context.envs_dirs)
-    if prefix is not None:
-        envs_dirs.append(prefix)
-    for env in envs:
-        env = str(env)  # force `str` so that `os.path.join` doesn't fail
-        for envs_dir in envs_dirs:
-            # Make sure the environment is from one of the directory in
-            # `envs_dirs` to avoid picking up environment from other
-            # distributions. Not perfect but better than no checking
-            if envs_dir in env:
-                mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
+        if prefix is not None:
+            out("Will only remove shortcuts created from '%s'" % prefix)
+            mk_menus(remove=True, prefix=prefix, root_prefix=root_prefix)
+    else:
+        envs_dirs = list(context.envs_dirs)
+        if prefix is not None:
+            envs_dirs.append(prefix)
+        for env in envs:
+            env = str(env)  # force `str` so that `os.path.join` doesn't fail
+            for envs_dir in envs_dirs:
+                # Make sure the environment is from one of the directory in
+                # `envs_dirs` to avoid picking up environment from other
+                # distributions. Not perfect but better than no checking
+                if envs_dir in env:
+                    mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
 
 
 def run_post_install():
@@ -191,43 +193,51 @@ def run_post_install():
     path = join(ROOT_PREFIX, 'pkgs', 'post_install.bat')
     if not isfile(path):
         return
-    env = os.environ
-    env['PREFIX'] = str(ROOT_PREFIX)
+    env = os.environ.copy()
+    env.setdefault('PREFIX', str(ROOT_PREFIX))
     cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
     if not os.path.isfile(cmd_exe):
         cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
     if not os.path.isfile(cmd_exe):
         err("Error: running %s failed.  cmd.exe could not be found.  "
             "Looked in SystemRoot and windir env vars.\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
     args = [cmd_exe, '/d', '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
         err("Error: running %s failed\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
 
 
 def run_pre_uninstall():
     """
     call the pre uninstall script, if the file exists
     """
-    path = join(ROOT_PREFIX, 'pkgs', 'pre_uninstall.bat')
+    path = join(ROOT_PREFIX, 'pre_uninstall.bat')
     if not isfile(path):
         return
-    env = os.environ
-    env['PREFIX'] = str(ROOT_PREFIX)
+    env = os.environ.copy()
+    env.setdefault('PREFIX', str(ROOT_PREFIX))
     cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
     if not os.path.isfile(cmd_exe):
         cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
     if not os.path.isfile(cmd_exe):
         err("Error: running %s failed.  cmd.exe could not be found.  "
             "Looked in SystemRoot and windir env vars.\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
     args = [cmd_exe, '/d', '/c', path]
     import subprocess
     try:
         subprocess.check_call(args, env=env)
     except subprocess.CalledProcessError:
         err("Error: running %s failed\n" % path)
+        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
+            sys.exit(1)
 
 
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
@@ -280,7 +290,7 @@ def add_to_path(pyversion, arch):
 def rm_regkeys():
     cmdproc_reg_entry = NSISReg(r'Software\Microsoft\Command Processor')
     cmdproc_autorun_val = cmdproc_reg_entry.get('AutoRun')
-    conda_hook_regex_pat = r'((\s+&\s+)?\"[^\"]*?conda[-_]hook\.bat\")'
+    conda_hook_regex_pat = r'((\s+&\s+)?(if +exist)?(\s*?\"[^\"]*?conda[-_]hook\.bat\"))'
     if join(ROOT_PREFIX, 'condabin') in (cmdproc_autorun_val or ''):
         cmdproc_autorun_newval = re.sub(conda_hook_regex_pat, '',
                                         cmdproc_autorun_val)

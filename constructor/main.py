@@ -9,9 +9,12 @@ from __future__ import absolute_import, division, print_function
 import os
 from os.path import abspath, basename, expanduser, isdir, join
 import sys
+import argparse
+from textwrap import dedent, indent
 
 from .conda_interface import cc_platform
-from .construct import parse as construct_parse, verify as construct_verify
+from .construct import parse as construct_parse, verify as construct_verify, \
+    generate_key_info_list, ns_platform
 from .fcp import main as fcp_main
 from .utils import normalize_path, yield_lines
 
@@ -90,8 +93,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     for key in ('license_file', 'welcome_image', 'header_image', 'icon_image',
                 'pre_install', 'post_install', 'pre_uninstall', 'environment_file',
-                'nsis_template'):
-        if key in info:
+                'nsis_template', 'welcome_file', 'readme_file', 'conclusion_file',
+                'signing_certificate'):
+        if info.get(key):  # only join if there's a truthy value set
             info[key] = abspath(join(dir_path, info[key]))
 
     for key in 'specs', 'packages':
@@ -100,6 +104,21 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
 
+    # normalize paths to be copied; if they are relative, they must be to
+    # construct.yaml's parent (dir_path)
+    extra_files = info.get("extra_files", ())
+    new_extra_files = []
+    for path in extra_files:
+        if isinstance(path, str):
+            new_extra_files.append(abspath(join(dir_path, path)))
+        elif isinstance(path, dict):
+            assert len(path) == 1
+            orig, dest = next(iter(path.items()))
+            orig = abspath(join(dir_path, orig))
+            new_extra_files.append({orig: dest})
+    info["extra_files"] = new_extra_files
+
+
     for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
         if key in info:
             # ensure strings in those lists are stripped
@@ -107,6 +126,15 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             # ensure there are no empty strings
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
+
+    for env_name, env_config in info.get("extra_envs", {}).items():
+        if env_name in ("base", "root"):
+            raise ValueError(f"Environment name '{env_name}' cannot be used")
+        for config_key, value in env_config.copy().items():
+            if isinstance(value, (list, tuple)):
+                env_config[config_key] = [val.strip() for val in value]
+            if config_key == "environment_file":
+                env_config[config_key] = abspath(join(dir_path, value))
 
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
@@ -119,7 +147,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     # '_platform', '_download_dir', '_outpath'
     # 'specs': ['python 3.5*', 'conda', 'nomkl', 'numpy', 'scipy', 'pandas',
     #           'notebook', 'matplotlib', 'lighttpd']
-    # 'license_file': '/Users/kfranz/continuum/constructor/examples/maxiconda/EULA.txt'
+    # 'license_file': '/Users/kfranz/continuum/constructor/examples/miniconda/EULA.txt'
     # '_dists': List[Dist]
     # '_urls': List[Tuple[url, md5]]
 
@@ -142,13 +170,90 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             fo.write('# installer: %s\n' % basename(info['_outpath']))
             for dist in info['_dists']:
                 fo.write('%s\n' % dist)
+            for env_name, env_info in info["_extra_envs_info"].items():
+                fo.write(f"# extra_env: {env_name}\n")
+                for dist_ in env_info["_dists"]:
+                    fo.write('%s\n' % dist_)
 
 
+
+class _HelpConstructAction(argparse.Action):
+    def __init__(
+        self,
+        option_strings,
+        dest=argparse.SUPPRESS,
+        default=argparse.SUPPRESS,
+        help="describe available configuration options for construct.yaml files and exit",
+    ):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+
+        parser._print_message(self._build_message(), sys.stdout)
+        parser.exit()
+
+    def _build_message(self):
+        msg = dedent(
+            """
+            The 'construct.yaml' specification
+            ==================================
+
+            constructor version {version}
+
+            The `construct.yaml` file is the primary mechanism for controlling
+            the output of the Constructor package. The file contains a list of
+            key/value pairs in the standard YAML format.
+
+            Available keys
+            --------------
+
+            {available_keys}
+
+            Available selectors
+            -------------------
+
+            Constructor can use the same Selector enhancement of the YAML format
+            used in conda-build ('# [selector]'). Available keywords are:
+
+            {available_selectors}
+            """
+        )
+        available_keys_list = []
+        for key, required, key_types, help_msg, plural in generate_key_info_list():
+            available_keys_list.append(
+                "\n".join(
+                    [
+                        key,
+                        "·" * len(key),
+                        indent(
+                            f"Required: {required}, type{plural}: {key_types}", "    "
+                        ),
+                        indent(help_msg.strip(), "    "),
+                        "",
+                    ]
+                )
+            )
+        available_selectors_list = [
+            f"- {sel}" for sel in sorted(ns_platform(sys.platform).keys())
+        ]
+        return msg.format(
+            version=__version__,
+            available_keys="\n".join(available_keys_list),
+            available_selectors="\n".join(available_selectors_list),
+        )
+
+    
 def main():
-    import argparse
-
     p = argparse.ArgumentParser(
         description="build an installer from <DIRECTORY>/construct.yaml")
+    
+    p.add_argument("--help-construct", action=_HelpConstructAction)
 
     p.add_argument('--debug',
                    action="store_true")

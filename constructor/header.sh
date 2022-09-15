@@ -18,9 +18,11 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
 fi
 
 # Export variables to make installer metadata available to pre/post install scripts
+# NOTE: If more vars are added, make sure to update the examples/scripts tests too
 export INSTALLER_NAME="__NAME__"
 export INSTALLER_VER="__VERSION__"
 export INSTALLER_PLAT="__PLAT__"
+export INSTALLER_TYPE="SH"
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
@@ -482,16 +484,47 @@ export FORCE
 # https://github.com/conda/conda/pull/9073
 mkdir -p ~/.conda > /dev/null 2>&1
 
+printf "\nInstalling base environment...\n\n"
+
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_CHANNELS=__CHANNELS__ \
+CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" __SHORTCUTS__ || exit 1
+rm -f "$PREFIX/pkgs/env.txt"
 
-if [ "$KEEP_PKGS" = "0" ]; then
-    rm -fr $PREFIX/pkgs/*.tar.bz2
-    rm -fr $PREFIX/pkgs/*.conda
-fi
+#if has_conda
+mkdir -p $PREFIX/envs
+for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
+    env_name=$(basename ${env_pkgs})
+    if [[ "${env_name}" == "*" ]]; then
+        continue
+    fi
+    printf "\nInstalling ${env_name} environment...\n\n"
+    mkdir -p "$PREFIX/envs/$env_name"
+
+    if [[ -f "${env_pkgs}channels.txt" ]]; then
+        env_channels=$(cat "${env_pkgs}channels.txt")
+        rm -f "${env_pkgs}channels.txt"
+    else
+        env_channels="__CHANNELS__"
+    fi
+    if [[ -f "${env_pkgs}shortcuts.txt" ]]; then
+        env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
+        rm -f "${env_pkgs}shortcuts.txt"
+    else
+        env_shortcuts="__SHORTCUTS__"
+    fi
+
+    # TODO: custom shortcuts per env?
+    CONDA_SAFETY_CHECKS=disabled \
+    CONDA_EXTRA_SAFETY_CHECKS=no \
+    CONDA_CHANNELS="$env_channels" \
+    CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
+    rm -f "${env_pkgs}env.txt"
+done
+#endif
 
 __INSTALL_COMMANDS__
 
@@ -499,14 +532,9 @@ POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 
-rm -f $PREFIX/pkgs/env.txt
-
 rm -rf $PREFIX/install_tmp
 export TMP="$TMP_BACKUP"
 
-#if has_conda
-mkdir -p $PREFIX/envs
-#endif
 
 #The templating doesn't support nested if statements
 #if has_post_install
@@ -539,7 +567,9 @@ else
     find $PREFIX/pkgs -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
-printf "installation finished.\\n"
+cat <<EOF
+__CONCLUSION_TEXT__
+EOF
 
 if [ "$PYTHONPATH" != "" ]; then
     printf "WARNING:\\n"
@@ -551,13 +581,14 @@ if [ "$PYTHONPATH" != "" ]; then
 fi
 
 if [ "$BATCH" = "0" ]; then
-#if initialize_by_default is True
+#if initialize_conda is True and initialize_by_default is True
     DEFAULT=yes
-#else
+#endif
+#if initialize_conda is True and initialize_by_default is False
     DEFAULT=no
 #endif
 
-#if has_conda
+#if has_conda and initialize_conda is True
     # Interactive mode.
 
     printf "Do you wish the installer to initialize __NAME__\\n"
