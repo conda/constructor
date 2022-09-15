@@ -22,13 +22,21 @@ echo "PREFIX=$PREFIX"
 CONDA_EXEC="$PREFIX/conda.exe"
 # /COMMON UTILS
 
+# Check whether the user wants shortcuts or not
+# See check_shortcuts.sh script for details
+if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then
+    shortcuts="__SHORTCUTS__"
+else
+    shortcuts="--no-shortcuts"
+fi
+
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts || exit 1
 if (( $? )); then
     echo "ERROR: could not complete the conda install"
     exit 1
@@ -56,22 +64,27 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
         env_channels=$(cat "${env_pkgs}channels.txt")
         rm -f "${env_pkgs}channels.txt"
     else
-        env_channels=__CHANNELS__
+        env_channels="__CHANNELS__"
     fi
-    # TODO: custom channels per env?
+    if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then
+        # This file is guaranteed to exist, even if empty
+        env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
+        rm -f "${env_pkgs}shortcuts.txt"
+    else
+        env_shortcuts="--no-shortcuts"
+    fi
     # TODO: custom shortcuts per env?
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
     # Move the prepackaged history file into place
     mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
     rm -f "${env_pkgs}env.txt"
 done
 
 # Cleanup!
-rm -f "$CONDA_EXEC"
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
 __WRITE_CONDARC__

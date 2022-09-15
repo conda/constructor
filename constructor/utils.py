@@ -178,6 +178,19 @@ def yield_lines(path):
         yield line
 
 
+def shortcuts_flags(info):
+    menu_packages = info.get("menu_packages")
+    if menu_packages is None:
+        # not set: we create all shortcuts (default behaviour)
+        return ""
+    if menu_packages:
+        # set and populated: we only create shortcuts for some
+        # NOTE: This syntax requires conda xx.y or above
+        return f"--shortcuts-only={' '.join(menu_packages)}"
+    # set but empty: disable all shortcuts
+    return "--no-shortcuts"
+
+
 def approx_size_kb(info, which="pkgs"):
     valid = ("pkgs", "tarballs", "total")
     assert which in valid, f"'which' must be one of {valid}"

@@ -5,6 +5,7 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 from __future__ import absolute_import, division, print_function
+from cgitb import enable
 
 import os
 from os.path import abspath, dirname, isfile, join
@@ -16,7 +17,7 @@ from pathlib import PureWindowsPath
 
 from .construct import ns_platform
 from .imaging import write_images
-from .preconda import copy_extra_files, write_files as preconda_write_files
+from .preconda import copy_extra_files, write_files as preconda_write_files, shortcuts_flags
 from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels, shortcuts_flags)
 
@@ -79,24 +80,18 @@ def setup_envs_commands(info, dir_path):
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         
         # Run conda install
-        DetailPrint "Linking packages for {name}..."
-        SetDetailsPrint listonly
-        push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
+        ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
+            DetailPrint "Installing packages for {name}, creating shortcuts if necessary..."
+            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
+        ${Else}
+            DetailPrint "Installing packages for {name}..."
+            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
+        ${EndIf}
         push 'Failed to link extracted packages to {prefix}!"
         push 'WithLog'
+        SetDetailsPrint listonly
         call AbortRetryNSExecWait
         SetDetailsPrint both
-        
-        # Handle shortcuts
-        ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
-            DetailPrint "Creating {name} menus..."
-            SetDetailsPrint listonly
-            push '"$INSTDIR\_conda.exe" constructor --prefix "{prefix}" --make-menus {menu_pkgs}'
-            push 'Failed to create menus'
-            push 'WithLog'
-            call AbortRetryNSExecWait
-            SetDetailsPrint both
-        ${EndIf}
 
         # Cleanup {name} env.txt
         SetOutPath "$INSTDIR"
@@ -117,7 +112,7 @@ def setup_envs_commands(info, dir_path):
         conda_meta=r"$INSTDIR\conda-meta",
         history_abspath=join(dir_path, "conda-meta", "history"),
         channels=','.join(get_final_channels(info)),
-        menu_pkgs=' '.join(info.get('menu_packages', [])),
+        shortcuts=shortcuts_flags(info),
     ).splitlines()
     # now we generate one more block per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
@@ -136,7 +131,7 @@ def setup_envs_commands(info, dir_path):
             conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
             history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
             channels=",".join(get_final_channels(channel_info)),
-            menu_pkgs=' '.join(env_info.get('menu_packages', info.get('menu_packages', []))),
+            shortcuts=shortcuts_flags(env_info),
         ).splitlines()
 
     return [line.strip() for line in lines]
@@ -179,6 +174,10 @@ def make_nsi(info, dir_path, extra_files=()):
     info['post_install_desc'] = info.get('post_install_desc', "")
 
     # these appear as __<key>__ in the template, and get escaped
+    enable_shortcuts =  bool(
+        info.get("menu_packages", True) 
+        or any(env.get("menu_packages", True) for env in info.get("_extra_envs_info", {}).values())
+    )
     replace = {
         'NAME': name,
         'VERSION': info['version'],
@@ -196,6 +195,7 @@ def make_nsi(info, dir_path, extra_files=()):
                                              join('%ALLUSERSPROFILE%', name.lower())),
         'PRE_INSTALL_DESC': info['pre_install_desc'],
         'POST_INSTALL_DESC': info['post_install_desc'],
+        'ENABLE_SHORTCUTS': "yes" if enable_shortcuts else "no",
         'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
         'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
         'OUTFILE': info['_outpath'],

@@ -43,7 +43,11 @@ Function mui_AnaCustomOptions_InitDefaults
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${EndIf}
 	${If} $Ana_CreateShortcuts_State == ""
-        StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
+        ${If} "${ENABLE_SHORTCUTS}" == "yes"
+            StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
+        ${Else}
+            StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
+        ${EndIf}
     ${EndIf}
     ${EndIf}
 FunctionEnd
@@ -70,12 +74,15 @@ Function mui_AnaCustomOptions_Show
 
     # We will use $5 as the y axis accumulator, starting at 0
     # We sum the the number of 'u' units added by 'NSD_Create*' functions
+    IntOp $5 0 + 0
 
-    ${NSD_CreateCheckbox} 0 0u 100% 11u "Create start menu shortcuts (supported packages only)."
-    IntOp $5 0 + 11
-    Pop $mui_AnaCustomOptions.CreateShortcuts
-    ${NSD_SetState} $mui_AnaCustomOptions.CreateShortcuts $Ana_CreateShortcuts_State
-    ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
+    ${If} "${ENABLE_SHORTCUTS}" == "yes"
+        ${NSD_CreateCheckbox} 0 0u 100% 11u "Create start menu shortcuts (supported packages only)."
+        IntOp $5 $5 + 11
+        Pop $mui_AnaCustomOptions.CreateShortcuts
+        ${NSD_SetState} $mui_AnaCustomOptions.CreateShortcuts $Ana_CreateShortcuts_State
+        ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
+    ${EndIf}
 
     ${If} "${SHOW_ADD_TO_PATH}" == "yes"
         ${If} $InstMode = ${JUST_ME}

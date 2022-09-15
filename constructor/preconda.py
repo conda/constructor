@@ -13,7 +13,7 @@ from pathlib import Path
 import shutil
 from textwrap import dedent
 
-from .utils import filename_dist, get_final_url
+from .utils import filename_dist, get_final_url, shortcuts_flags
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
@@ -162,6 +162,8 @@ def write_files(info, dst_dir):
         write_env_txt(info, env_dst_dir, env_info["_urls"])
         # channels
         write_channels_txt(info, env_dst_dir, env_config)
+        # shortcuts
+        write_shortcuts_txt(info, env_dst_dir, env_config)
 
 
 def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
@@ -243,6 +245,15 @@ def write_channels_txt(info, dst_dir, env_config):
 
     with open(join(dst_dir, "channels.txt"), "w") as f:
         f.write(",".join(get_final_channels(env_config)))
+
+
+def write_shortcuts_txt(info, dst_dir, env_config):
+    if "menu_packages" in env_config:
+        contents = shortcuts_flags(env_config)
+    else:
+        contents = shortcuts_flags(info)
+    with open(join(dst_dir, "shortcuts.txt"), "w") as f:
+        f.write(contents)
 
 
 def copy_extra_files(info, workdir):

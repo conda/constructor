@@ -40,6 +40,9 @@ KEEP_PKGS=1
 KEEP_PKGS=0
 #endif
 SKIP_SCRIPTS=0
+#if enable_shortcuts
+SKIP_SHORTCUTS=0
+#endif
 TEST=0
 REINSTALL=0
 USAGE="
@@ -60,6 +63,9 @@ Installs __NAME__ __VERSION__
 #endif
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
 -s           skip running pre/post-link/install scripts
+#if enable_shortcuts
+-m           disable the creation of menu items / shortcuts
+#endif
 -u           update an existing installation
 #if has_conda
 -t           run package tests after installation (may install conda-build)
@@ -106,6 +112,12 @@ if which getopt > /dev/null 2>&1; then
                 SKIP_SCRIPTS=1
                 shift
                 ;;
+#if enable_shortcuts
+            -m)
+                SKIP_SHORTCUTS=1
+                shift
+                ;;
+#endif
             -u)
                 FORCE=1
                 shift
@@ -486,11 +498,21 @@ mkdir -p ~/.conda > /dev/null 2>&1
 
 printf "\nInstalling base environment...\n\n"
 
+#if enable_shortcuts
+if [ "$SKIP_SHORTCUTS" = "1" ]; then
+    shortcuts="--no-shortcuts"
+else
+    shortcuts="__SHORTCUTS__"
+fi
+#else
+shortcuts="--no-shortcuts"
+#endif
+
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" __SHORTCUTS__ || exit 1
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
 #if has_conda
@@ -509,13 +531,17 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     else
         env_channels="__CHANNELS__"
     fi
-    if [[ -f "${env_pkgs}shortcuts.txt" ]]; then
+#if enable_shortcuts
+    if [[ "$SKIP_SHORTCUTS" = "1" ]]; then
+        env_shortcuts="--no-shortcuts"
+    else
+        # This file is guaranteed to exist, even if empty
         env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
         rm -f "${env_pkgs}shortcuts.txt"
-    else
-        env_shortcuts="__SHORTCUTS__"
     fi
-
+#else
+env_shortcuts="--no-shortcuts"
+#endif
     # TODO: custom shortcuts per env?
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \

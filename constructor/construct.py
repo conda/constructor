@@ -77,9 +77,13 @@ is contained as a result of resolving the specs for `python 2.7`.
 
     ('menu_packages',           False, list, '''
 A list of packages with menu items to be instsalled. The packages must have
-necessary metadata in "Menu/<package name>.json").  Menu items are currently
-only supported on Windows. By default, all menu items will be installed;
-supplying this list allows a subset to be selected instead.
+necessary metadata in "Menu/<package name>.json"). By default, all menu items 
+found in the installation will be created; supplying this list allows a 
+subset to be selected instead. If an empty list is supplied, no shortcuts will
+be created.
+
+If all environments (`extra_envs` included) set `menu_packages` to an empty list,
+no UI options about shortcuts will be offered to the user.
 '''),
 
     ('ignore_duplicate_files',  False, bool, '''
@@ -141,6 +145,8 @@ name) to a dictionary of options:
   an empty list.
 - `user_requested_specs` (list of str): same as the global option, but for this env;
   if not provided, global value is _not_ used
+- `menu_packages` (list of str): same as the global option, for this env;
+  if not provided, the global value is _not_ used.
 
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.

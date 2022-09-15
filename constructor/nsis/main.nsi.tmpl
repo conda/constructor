@@ -56,7 +56,7 @@ Unicode "true"
 !define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
 !define PRE_INSTALL_DESC __PRE_INSTALL_DESC__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
-!define MENU_PKGS "@MENU_PKGS@"
+!define ENABLE_SHORTCUTS __ENABLE_SHORTCUTS__
 !define SHOW_REGISTER_PYTHON __SHOW_REGISTER_PYTHON__
 !define SHOW_ADD_TO_PATH __SHOW_ADD_TO_PATH__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
@@ -286,14 +286,18 @@ FunctionEnd
         ${EndIf}
     ${EndIf}
 
-    ClearErrors
-    ${GetOptions} $ARGV "/NoShortcuts=" $ARGV_NoShortcuts
-    ${IfNot} ${Errors}
-        ${If} $ARGV_NoShortcuts = "1"
-            StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
-        ${ElseIf} $ARGV_NoShortcuts = "0"
-            StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
+    ${If} "${ENABLE_SHORTCUTS}" == "yes"
+        ClearErrors
+        ${GetOptions} $ARGV "/NoShortcuts=" $ARGV_NoShortcuts
+        ${IfNot} ${Errors}
+            ${If} $ARGV_NoShortcuts = "1"
+                StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
+            ${ElseIf} $ARGV_NoShortcuts = "0"
+                StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
+            ${EndIf}
         ${EndIf}
+    ${Else}
+        StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
     ${EndIf}
 
     ClearErrors

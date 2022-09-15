@@ -171,6 +171,7 @@ def modify_xml(xml_path, info):
         choices_outline.extend(list(child))
         choices_outline.remove(child)
 
+    menu_packages = info.get('menu_packages', True)
     for path_choice in root.findall('choice'):
         ident = path_choice.get('id')
         if ident == 'default':
@@ -186,6 +187,18 @@ def modify_xml(xml_path, info):
             path_choice.set('visible', 'false')
             path_choice.set('title', 'Apply {}'.format(info['name']))
             path_choice.set('enabled', 'false')
+        elif ident.endswith('shortcuts') and menu_packages:
+            # Show this option if menu_packages was set to a non-empty value
+            # or if the option was not set at all. We don't show the option
+            # menu_packages was set to an empty list!
+            path_choice.set('visible', 'true')
+            path_choice.set('title', "Create shortcuts")
+            path_choice.set('enabled', 'true')
+            descr = "Create shortcuts for compatible packages"
+            menu_packages = info.get("menu_packages")
+            if isinstance(menu_packages, (list, tuple)):
+                descr += f" ({', '.join(menu_packages)})"
+            path_choice.set('description', descr)
         elif ident.endswith('user_pre_install') and info.get('pre_install_desc'):
             path_choice.set('visible', 'true')
             path_choice.set('title', "Run the pre-install script")
@@ -453,6 +466,19 @@ def create(info, verbose=False):
             'user_pre_install', info, 'run_user_script.sh', user_script_type='pre_install'
         )
         names.append('user_pre_install')
+
+    # pre-3. Enable or disable shortcuts creation
+    # Available as long as at least one env (base or extras)
+    # has not disabled menus (setting their menu_packages to [])
+    if (
+        info.get("menu_packages", True) 
+        or any(
+            env.get("menu_packages", True) 
+            for env in info.get("_extra_envs_info", {}).values()
+        )
+    ):
+        pkgbuild_script('shortcuts', info, 'shortcuts.sh')
+        names.append('shortcuts')
 
     # 3. Run the installation
     # This script-only package will run conda to link and install the packages
