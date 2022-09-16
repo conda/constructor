@@ -136,6 +136,16 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
 
+    # Installers will provide shortcut options and features only if the user 
+    # didn't opt-out by setting every `menu_packages` item to an empty list
+    info['_enable_shortcuts'] =  bool(
+        info.get("menu_packages", True) 
+        or any(
+            env.get("menu_packages", True) 
+            for env in info.get("_extra_envs_info", {}).values()
+        )
+    )
+
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:

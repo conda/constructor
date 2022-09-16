@@ -13,11 +13,12 @@ import pytest
 @pytest.mark.parametrize('initialize_by_default', [False, True])
 @pytest.mark.parametrize('has_post_install', [False, True])
 @pytest.mark.parametrize('has_pre_install', [False, True])
+@pytest.mark.parametrize('enable_shortcuts', [False, True])
 @pytest.mark.parametrize('arch', ['x86', 'x86_64', ' ppc64le', 's390x', 'aarch64'])
 def test_linux_template_processing(
         osx, arch, has_pre_install, has_post_install, initialize_conda,
         initialize_by_default, has_license, has_conda, keep_pkgs, batch_mode,
-        direct_execute_pre_install, direct_execute_post_install):
+        direct_execute_pre_install, direct_execute_post_install, enable_shortcuts):
     template = read_header_template()
     processed = preprocess(template, {
        'has_license': has_license,
@@ -37,6 +38,7 @@ def test_linux_template_processing(
        'direct_execute_post_install': direct_execute_post_install,
        'initialize_conda': initialize_conda,
        'initialize_by_default': initialize_by_default,
+       'enable_shortcuts': enable_shortcuts,
     })
     assert '#if' not in processed
     assert '#else' not in processed

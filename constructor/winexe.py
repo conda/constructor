@@ -17,7 +17,7 @@ from pathlib import PureWindowsPath
 
 from .construct import ns_platform
 from .imaging import write_images
-from .preconda import copy_extra_files, write_files as preconda_write_files, shortcuts_flags
+from .preconda import copy_extra_files, write_files as preconda_write_files
 from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels, shortcuts_flags)
 
@@ -173,11 +173,6 @@ def make_nsi(info, dir_path, extra_files=()):
     info['pre_install_desc'] = info.get('pre_install_desc', "")
     info['post_install_desc'] = info.get('post_install_desc', "")
 
-    # these appear as __<key>__ in the template, and get escaped
-    enable_shortcuts =  bool(
-        info.get("menu_packages", True) 
-        or any(env.get("menu_packages", True) for env in info.get("_extra_envs_info", {}).values())
-    )
     replace = {
         'NAME': name,
         'VERSION': info['version'],
@@ -195,7 +190,7 @@ def make_nsi(info, dir_path, extra_files=()):
                                              join('%ALLUSERSPROFILE%', name.lower())),
         'PRE_INSTALL_DESC': info['pre_install_desc'],
         'POST_INSTALL_DESC': info['post_install_desc'],
-        'ENABLE_SHORTCUTS': "yes" if enable_shortcuts else "no",
+        'ENABLE_SHORTCUTS': "yes" if info['_enable_shortcuts'] else "no",
         'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
         'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
         'OUTFILE': info['_outpath'],
@@ -264,7 +259,6 @@ def make_nsi(info, dir_path, extra_files=()):
         ('@SIGNTOOL_COMMAND@', signtool_command(info)),
         ('@SETUP_ENVS@', '\n    '.join(setup_envs_commands(info, dir_path))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
-        ('@SHORTCUTS@', shortcuts_flags(info)),
         ('@SIZE@', str(approx_pkgs_size_kb)),
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'

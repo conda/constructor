@@ -470,13 +470,7 @@ def create(info, verbose=False):
     # pre-3. Enable or disable shortcuts creation
     # Available as long as at least one env (base or extras)
     # has not disabled menus (setting their menu_packages to [])
-    if (
-        info.get("menu_packages", True) 
-        or any(
-            env.get("menu_packages", True) 
-            for env in info.get("_extra_envs_info", {}).values()
-        )
-    ):
+    if info['_enable_shortcuts']:
         pkgbuild_script('shortcuts', info, 'shortcuts.sh')
         names.append('shortcuts')
 
