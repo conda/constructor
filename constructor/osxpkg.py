@@ -468,10 +468,8 @@ def create(info, verbose=False):
         names.append('user_pre_install')
 
     # pre-3. Enable or disable shortcuts creation
-    # Available as long as at least one env (base or extras)
-    # has not disabled menus (setting their menu_packages to [])
     if info['_enable_shortcuts']:
-        pkgbuild_script('shortcuts', info, 'shortcuts.sh')
+        pkgbuild_script('shortcuts', info, 'check_shortcuts.sh')
         names.append('shortcuts')
 
     # 3. Run the installation
