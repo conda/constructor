@@ -87,7 +87,7 @@ def setup_envs_commands(info, dir_path):
             DetailPrint "Installing packages for {name}..."
             push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
         ${{EndIf}}
-        push 'Failed to link extracted packages to {prefix}!"
+        push 'Failed to link extracted packages to {prefix}!'
         push 'WithLog'
         SetDetailsPrint listonly
         call AbortRetryNSExecWait
