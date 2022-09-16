@@ -374,6 +374,12 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         menu_packages=menu_packages, environment=environment,
         environment_file=environment_file, verbose=verbose, conda_exe=conda_exe
     )
+    base_has_conda = any(rec.name == 'conda' for rec in precs)
+    if extra_envs and not base_has_conda:
+        sys.exit(
+            "Using 'extra_envs' requires 'conda'! "
+            "Add it to 'specs', 'environment_file', or 'environment'."
+        )
 
     extra_envs_precs = {}
     for env_name, env_config in (extra_envs or {}).items():

@@ -515,7 +515,6 @@ CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
-#if has_conda
 mkdir -p $PREFIX/envs
 for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     env_name=$(basename ${env_pkgs})
@@ -550,7 +549,6 @@ env_shortcuts="--no-shortcuts"
     "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
     rm -f "${env_pkgs}env.txt"
 done
-#endif
 
 __INSTALL_COMMANDS__
 
