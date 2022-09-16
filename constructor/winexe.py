@@ -80,13 +80,13 @@ def setup_envs_commands(info, dir_path):
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         
         # Run conda install
-        ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
+        ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
             DetailPrint "Installing packages for {name}, creating shortcuts if necessary..."
             push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
-        ${Else}
+        ${{Else}}
             DetailPrint "Installing packages for {name}..."
             push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
-        ${EndIf}
+        ${{EndIf}}
         push 'Failed to link extracted packages to {prefix}!"
         push 'WithLog'
         SetDetailsPrint listonly
