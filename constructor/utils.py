@@ -186,7 +186,7 @@ def shortcuts_flags(info):
     if menu_packages:
         # set and populated: we only create shortcuts for some
         # NOTE: This syntax requires conda xx.y or above
-        return f"--shortcuts-only={' '.join(menu_packages)}"
+        return " ".join([f"--shortcuts-only={pkg.strip()}" for pkg in menu_packages])
     # set but empty: disable all shortcuts
     return "--no-shortcuts"
 
