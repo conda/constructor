@@ -7,6 +7,7 @@ import sys
 from copy import deepcopy
 from itertools import chain
 from os.path import join
+import datetime
 
 from constructor.utils import hash_files
 
@@ -145,16 +146,23 @@ if conda_interface_type == 'conda':
         url = used_repodata.pop('_url').rstrip("/")
         used_repodata.pop("_mod", None)
         repodata = json.dumps(used_repodata, indent=2)
+        mod_time = "Mon, 07 Jan 2019 15:22:15 GMT"
         repodata_header = json.dumps(
             {
-                "_mod": "Mon, 07 Jan 2019 15:22:15 GMT",
+                "_mod": mod_time,
                 "_url": url,
             }
         )
         repodata = repodata_header[:-1] + "," + repodata[1:]
-        repodata_filename = _cache_fn_url(url)
-        with open(join(cache_dir, repodata_filename), 'w') as fh:
+        repodata_filepath = join(cache_dir, _cache_fn_url(url))
+        with open(repodata_filepath, 'w') as fh:
             fh.write(repodata)
+
+        # set the modification time to mod_time. needed for mamba
+        mod_time_datetime = datetime.datetime.strptime(mod_time,
+            "%a, %d %b %Y %H:%M:%S %Z")
+        mod_time_s = int(mod_time_datetime.timestamp())
+        os.utime(repodata_filepath, times=(mod_time_s, mod_time_s))
 
     def write_cache_dir():
         cache_dir = join(PackageCacheData.first_writable().pkgs_dir, 'cache')
