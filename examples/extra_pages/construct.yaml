@@ -1,4 +1,5 @@
 name: Miniconda
+company: "Anaconda, Inc."
 version: 22.9.0
 installer_type: all
 channels:
