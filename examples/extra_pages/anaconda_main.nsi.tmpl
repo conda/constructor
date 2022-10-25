@@ -7,7 +7,7 @@ Unicode "true"
 
 #if enable_debugging is True
 # Special logging build needed for ENABLE_LOGGING
-# See https://nsis.sourceforge.io/Special_Builds
+# See https://nsis.sourceforge.io/Special_Builds
 !define ENABLE_LOGGING
 #endif
 
@@ -147,47 +147,77 @@ Page Custom InstModePage_Create InstModePage_Leave
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
 
+# Start Anaconda extra pages
+Page Custom muiPyCharm_Create
 
-# Anaconda extra page: PyCharm installation page
 var PyCharmIntroText
 var PyCharmInstallationLink
 var PyCharmADImg
 var PyCharmADImgCtl
-var PyCharmADImgHandle
 
-Push $0
-
-!insertmacro MUI_HEADER_TEXT_PAGE \
-    "${PRODUCT_NAME}" \
-    "Anaconda + JetBrains"
-
-nsDialogs::Create /NOUNLOAD 1018
-${NSD_CreateLabel} 10u 10u 280u 40u "Working with Python and Jupyter is a breeze in DataSpell. It is an IDE designed for exploratory data analysis and ML. Get better data insights with DataSpell.$\r$\n$\r$\n$\r$\nDataSpell for Anaconda is available at:"
-Pop $PyCharmIntroText
-
-${NSD_CreateLink} 10u 55u 200u 10u "https://www.anaconda.com/dataspell"
-Pop $PyCharmInstallationLink
-${NSD_OnClick} $PyCharmInstallationLink muiPyCharm_InstallationLink
-
-nsDialogs::CreateControl STATIC ${WS_VISIBLE}|${WS_CHILD}|${WS_CLIPSIBLINGS}|${SS_BITMAP}|${SS_REALSIZECONTROL} 0 10u 90u 280u 40u ""
-Pop $PyCharmADImgCtl
-StrCpy $0 $PLUGINSDIR\AnacondaJetBrains.bmp
-System::Call 'user32::LoadImage(i 0, t r0, i ${IMAGE_BITMAP}, i 0, i 0, i ${LR_LOADFROMFILE}|${LR_LOADTRANSPARENT}|${LR_LOADMAP3DCOLORS}) i.s'
-Pop $PyCharmADImg
-SendMessage $PyCharmADImgCtl ${STM_SETIMAGE} ${IMAGE_BITMAP} $PyCharmADImg
-
-nsDialogs::Show
-
-System::Call 'gdi32:DeleteObject(i $PyCharmADImg)'
-
-Pop $0
+Function LaunchLink
+  ExecShell "open" "https://www.anaconda.com/products/distribution/installation-success"
+FunctionEnd
 
 Function muiPyCharm_InstallationLink
     ExecShell "open" "https://www.anaconda.com/dataspell"
 FunctionEnd
 
+Function muiPyCharm_Create
+    Push $0
 
-# And commands for another page can be added here.
+    !insertmacro MUI_HEADER_TEXT_PAGE \
+        "${PRODUCT_NAME}" \
+        "Anaconda + JetBrains"
+
+    nsDialogs::Create /NOUNLOAD 1018
+    ${NSD_CreateLabel} 10u 10u 280u 40u "Working with Python and Jupyter is a breeze in DataSpell. It is an IDE designed for exploratory data analysis and ML. Get better data insights with DataSpell.$\r$\n$\r$\n$\r$\nDataSpell for Anaconda is available at:"
+    Pop $PyCharmIntroText
+
+    ${NSD_CreateLink} 10u 55u 200u 10u "https://www.anaconda.com/dataspell"
+    Pop $PyCharmInstallationLink
+    ${NSD_OnClick} $PyCharmInstallationLink muiPyCharm_InstallationLink
+
+    nsDialogs::CreateControl STATIC ${WS_VISIBLE}|${WS_CHILD}|${WS_CLIPSIBLINGS}|${SS_BITMAP}|${SS_REALSIZECONTROL} 0 10u 90u 280u 40u ""
+    Pop $PyCharmADImgCtl
+    StrCpy $0 $PLUGINSDIR\AnacondaJetBrains.bmp
+    System::Call 'user32::LoadImage(i 0, t r0, i ${IMAGE_BITMAP}, i 0, i 0, i ${LR_LOADFROMFILE}|${LR_LOADTRANSPARENT}|${LR_LOADMAP3DCOLORS}) i.s'
+    Pop $PyCharmADImg
+    SendMessage $PyCharmADImgCtl ${STM_SETIMAGE} ${IMAGE_BITMAP} $PyCharmADImg
+
+    nsDialogs::Show
+
+    System::Call 'gdi32:DeleteObject(i $PyCharmADImg)'
+
+    Pop $0
+FunctionEnd
+
+!define MUI_FINISHPAGE_TEXT "Thank you for installing Anaconda Distribution. $\r$\n$\r$\n\
+Here are some helpful tips and resources to get you started. We recommend you bookmark these links so you can refer back to them later.$\r$\n$\r$\n\"
+!define MUI_FINISHPAGE_RUN
+!define MUI_FINISHPAGE_RUN_TEXT "Anaconda Distribution Tutorial"
+!define MUI_FINISHPAGE_RUN_FUNCTION "LaunchLink"
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW MyFinishShow
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE MyFinishLeave
+
+var gettingStartedCheckBox
+
+Function MyFinishShow
+    ${NSD_CreateCheckbox} 120u 110u 100% 10u "Getting Started with Anaconda"
+    Pop $gettingStartedCheckBox
+    ${NSD_Check} $gettingStartedCheckBox
+    SetCtlColors $gettingStartedCheckBox "" "ffffff"
+FunctionEnd
+
+Function MyFinishLeave
+${NSD_GetState} $gettingStartedCheckBox $0
+${If} $0 <> 0
+    ExecShell "open" "https://anaconda.cloud/getting-started-with-anaconda-distribution?source=win_installer"
+${EndIf}
+FunctionEnd
+
+# End Anaconda extra pages
+
 
 #if with_conclusion_text is True
 !define MUI_FINISHPAGE_TITLE __CONCLUSION_TITLE__

@@ -1,15 +1,29 @@
-name: ExtraPages
-version: X
+name: Miniconda
+version: 22.9.0
 installer_type: all
 channels:
   - http://repo.anaconda.com/pkgs/main/
 specs:
-  - python
-  - conda
+    - python
+    - setuptools
+    - pip
+    - wheel
+    - menuinst          # [win]
+    - console_shortcut  # [win]
+    - powershell_shortcut  # [win]
+    - python.app        # [osx]
+    - conda
+    - conda-content-trust
 # This certificate is generated an copied over on the spot during CI
 # See scripts/create_self_signed_certificate.ps1 for more info
 # signing_certificate: certificate.pfx # [win]
 
+license_file: EULA.txt
+header_image: header.bmp
+icon_image: icon.ico
+welcome_image: welcome.bmp
+
 nsis_template: anaconda_main.nsi.tmpl  # [win]
+
 post_install: test_install.sh          # [osx]
-post_install: test_install.bat         # [win]
+#post_install: test_install.bat         # [win]
