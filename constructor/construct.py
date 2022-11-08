@@ -514,6 +514,12 @@ This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
 '''),
+
+    ('extra_pages_file', False, (str), '''
+Extra pages can be displayed in the Windows GUI installer. Code block to add extra
+pages should be saved in a .txt file and specified here, relative to the directory
+where `construct.yaml` is. (Windows only).
+'''),
 ]
 
 
