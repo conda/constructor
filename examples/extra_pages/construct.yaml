@@ -5,16 +5,16 @@ installer_type: all
 channels:
   - http://repo.anaconda.com/pkgs/main/
 specs:
-    - python
-    - setuptools
-    - pip
-    - wheel
-    - menuinst          # [win]
-    - console_shortcut  # [win]
-    - powershell_shortcut  # [win]
-    - python.app        # [osx]
-    - conda
-    - conda-content-trust
+  - python
+  - setuptools
+  - pip
+  - wheel
+  - menuinst          # [win]
+  - console_shortcut  # [win]
+  - powershell_shortcut  # [win]
+  - python.app        # [osx]
+  - conda
+  - conda-content-trust
 # This certificate is generated an copied over on the spot during CI
 # See scripts/create_self_signed_certificate.ps1 for more info
 # signing_certificate: certificate.pfx # [win]
@@ -23,6 +23,10 @@ license_file: EULA.txt
 header_image: header.bmp
 icon_image: icon.ico
 welcome_image: welcome.bmp
+
 extra_pages_file: extra_pages.txt
+extra_pages_image_files:
+  - AnacondaJetBrains.bmp
+
 post_install: test_install.sh          # [osx]
 #post_install: test_install.bat         # [win]

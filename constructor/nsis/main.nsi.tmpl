@@ -460,6 +460,8 @@ Function .onInit
     Push $R2
 
     InitPluginsDir
+    # For extra pages: Image files to make available in PluginsDir.
+    @EXTRA_PAGES_IMAGE_FILES@
 
     !insertmacro ParseCommandLineArgs
 

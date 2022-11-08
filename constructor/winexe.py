@@ -60,6 +60,21 @@ def extra_files_commands(paths, common_parent):
     return lines
 
 
+def extra_pages_image_files(image_file_paths):
+    """
+    Returns a list of File commands to insert into main.nsi @EXTRA_PAGES_IMAGE_FILES@.
+    """
+    if not image_file_paths:
+        return []
+    image_file_paths = sorted([PureWindowsPath(p) for p in image_file_paths])
+    lines = []
+    for img_file_path in image_file_paths:
+        fn = os.path.basename(img_file_path)
+        file_line = f'File /oname=$PLUGINSDIR\{fn} {img_file_path}'
+        lines.append(file_line)
+    return lines
+
+
 def setup_envs_commands(info, dir_path):
     template = """
         # Set up {name} env
@@ -256,6 +271,7 @@ def make_nsi(info, dir_path, extra_files=()):
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
         ('@EXTRA_PAGES@', load_extra_pages_file(info.get('extra_pages_file', ''))),
+        ('@EXTRA_PAGES_IMAGE_FILES@', '\n    '.join(extra_pages_image_files(info.get('extra_pages_image_files', [])))),
     ]:
         data = data.replace(key, value)
 
@@ -277,7 +293,8 @@ def make_nsi(info, dir_path, extra_files=()):
 
 def load_extra_pages_file(path_to_extra_pages_file):
     '''
-    Returns string to insert into main.nsi.tmpl to add extra pages in the installer.
+    Returns string to insert into main.nsi.tmpl @EXTRA_PAGES@ placeholder variable
+    (to add extra pages in the installer).
     '''
     if not path_to_extra_pages_file:
         return ''

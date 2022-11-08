@@ -520,6 +520,13 @@ Extra pages can be displayed in the Windows GUI installer. Code block to add ext
 pages should be saved in a .txt file and specified here, relative to the directory
 where `construct.yaml` is. (Windows only).
 '''),
+
+    ('extra_pages_image_files', False, (list), '''
+Image files to be referenced in the `extra_pages_file` (see above). Should be a list of 
+filepaths to the supported image files (e.g. `.bmp`), relative to the directory where
+`construct.yaml` is. (Windows only).
+'''),
+
 ]
 
 
