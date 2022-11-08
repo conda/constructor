@@ -255,6 +255,7 @@ def make_nsi(info, dir_path, extra_files=()):
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
+        ('@EXTRA_PAGES@', load_extra_pages_file(info.get('extra_pages_file', ''))),
     ]:
         data = data.replace(key, value)
 
@@ -272,6 +273,17 @@ def make_nsi(info, dir_path, extra_files=()):
 
     print('Created %s file' % nsi_path)
     return nsi_path
+
+
+def load_extra_pages_file(path_to_extra_pages_file):
+    '''
+    Returns string to insert into main.nsi.tmpl to add extra pages in the installer.
+    '''
+    if not path_to_extra_pages_file:
+        return ''
+    with open(PureWindowsPath(path_to_extra_pages_file)) as f:
+        extra_pages_block = f.read()
+        return extra_pages_block
 
 
 def verify_nsis_install():
