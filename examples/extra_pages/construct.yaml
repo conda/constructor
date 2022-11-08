@@ -23,8 +23,6 @@ license_file: EULA.txt
 header_image: header.bmp
 icon_image: icon.ico
 welcome_image: welcome.bmp
-
-nsis_template: anaconda_main.nsi.tmpl  # [win]
-
+extra_pages_file: extra_pages.txt
 post_install: test_install.sh          # [osx]
 #post_install: test_install.bat         # [win]
