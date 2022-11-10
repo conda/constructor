@@ -60,7 +60,7 @@ def extra_files_commands(paths, common_parent):
     return lines
 
 
-def extra_pages_image_files(image_file_paths):
+def extra_pages_image_files_commands(image_file_paths):
     """
     Returns a list of File commands to insert into main.nsi @EXTRA_PAGES_IMAGE_FILES@.
     """
@@ -271,7 +271,7 @@ def make_nsi(info, dir_path, extra_files=()):
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
         ('@EXTRA_PAGES@', load_extra_pages_file(info.get('extra_pages_file', ''))),
-        ('@EXTRA_PAGES_IMAGE_FILES@', '\n    '.join(extra_pages_image_files(info.get('extra_pages_image_files', [])))),
+        ('@EXTRA_PAGES_IMAGE_FILES@', '\n    '.join(extra_pages_image_files_commands(info.get('extra_pages_image_files', [])))),
     ]:
         data = data.replace(key, value)
 
