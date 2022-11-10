@@ -643,6 +643,21 @@ This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
 
+## `extra_pages_file`
+
+_required:_ no<br/>
+_type:_ string<br/>
+Extra pages can be displayed in the Windows GUI installer. The code block to add extra
+pages should be saved in a .txt file and specified here, relative to the directory
+where `construct.yaml` is. (Windows only).
+
+## `extra_pages_image_files`
+
+_required:_ no<br/>
+_type:_ list<br/>
+Image files to be referenced in the `extra_pages_file` (see above). Should be a list of
+filepaths to the supported image files (e.g. `.bmp`), relative to the directory where
+`construct.yaml` is. (Windows only).
 
 ## Available selectors
 
