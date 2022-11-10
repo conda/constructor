@@ -94,7 +94,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     for key in ('license_file', 'welcome_image', 'header_image', 'icon_image',
                 'pre_install', 'post_install', 'pre_uninstall', 'environment_file',
                 'nsis_template', 'welcome_file', 'readme_file', 'conclusion_file',
-                'signing_certificate'):
+                'signing_certificate', 'extra_pages_file'):
         if info.get(key):  # only join if there's a truthy value set
             info[key] = abspath(join(dir_path, info[key]))
 
@@ -104,20 +104,22 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
 
-    # normalize paths to be copied; if they are relative, they must be to
+    # For construct.yaml parameters that are lists or dicts.
+    # Normalize paths to be copied; if they are relative, they must be to
     # construct.yaml's parent (dir_path)
-    extra_files = info.get("extra_files", ())
-    new_extra_files = []
-    for path in extra_files:
-        if isinstance(path, str):
-            new_extra_files.append(abspath(join(dir_path, path)))
-        elif isinstance(path, dict):
-            assert len(path) == 1
-            orig, dest = next(iter(path.items()))
-            orig = abspath(join(dir_path, orig))
-            new_extra_files.append({orig: dest})
-    info["extra_files"] = new_extra_files
-
+    extras_types = ['extra_files', 'extra_pages_image_files']
+    for extra_type in extras_types:
+        extras = info.get(extra_type, ())
+        new_extras = []
+        for path in extras:
+            if isinstance(path, str):
+                new_extras.append(abspath(join(dir_path, path)))
+            elif isinstance(path, dict):
+                assert len(path) == 1
+                orig, dest = next(iter(path.items()))
+                orig = abspath(join(dir_path, orig))
+                new_extras.append({orig: dest})
+        info[extra_type] = new_extras
 
     for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
         if key in info:
