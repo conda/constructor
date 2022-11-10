@@ -1,0 +1,19 @@
+### Enhancements
+
+* Users can now add extra pages to Windows installers using the `extra_pages` keyword. ([#582](https://github.com/conda/constructor/pull/582))
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
