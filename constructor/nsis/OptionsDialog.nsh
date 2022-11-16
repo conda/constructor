@@ -86,6 +86,14 @@ Function mui_AnaCustomOptions_Show
         ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add ${NAME} to $1 &PATH environment variable"
         IntOp $5 $5 + 11
         Pop $mui_AnaCustomOptions.AddToPath
+
+        # To address CVE-2022-26526.
+        # In AllUsers install mode, disable AddToPath as an option.
+        ${If} $InstMode = ${ALL_USERS}
+            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+            EnableWindow $mui_AnaCustomOptions.AddToPath 0
+        ${EndIf}
+
         ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
         ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
         ${NSD_CreateLabel} 5% "$5u" 90% 20u \
@@ -93,6 +101,13 @@ Function mui_AnaCustomOptions_Show
             the Commmand Prompt and Powershell menus added to the Windows Start Menu."
         IntOp $5 $5 + 20
         Pop $Ana_AddToPath_Label
+
+        # To address CVE-2022-26526.
+        # In AllUsers install mode, disable AddToPath label as well.
+        ${If} $InstMode = ${ALL_USERS}
+            EnableWindow $Ana_AddToPath_Label 0
+        ${EndIf}
+
     ${EndIf}
 
     ${If} "${SHOW_REGISTER_PYTHON}" == "yes"
