@@ -32,6 +32,7 @@ fi
 
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
+CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
@@ -74,6 +75,7 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
         env_shortcuts="--no-shortcuts"
     fi
     # TODO: custom shortcuts per env?
+    CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \

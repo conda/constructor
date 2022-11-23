@@ -992,10 +992,11 @@ Section "Install"
 
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
     # Extra info for pre and post install scripts
     # NOTE: If more vars are added, make sure to update the examples/scripts tests too
-    #       There's a similar block for the pre_uninstall script, further down this file. 
+    #       There's a similar block for the pre_uninstall script, further down this file.
     #       Update that one as well!
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
@@ -1142,7 +1143,7 @@ Section "Uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
-    
+
     DetailPrint "Removing files and folders..."
     nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
 
