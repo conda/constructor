@@ -169,9 +169,9 @@ The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
 as `sh` on Linux and `exe` on Windows.
 
-Notes for silent mode `/S` on Windows EXEs: 
+Notes for silent mode `/S` on Windows EXEs:
 - NSIS Silent mode will not print any error message, but will silently abort the installation.
-  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be 
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be
   searched for `::error::` strings. Pre- and post- install scripts will only throw an error
   if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
 - The `/D` flag can be used to specify the target location. It must be the last argument in
@@ -289,7 +289,7 @@ Path to a post-install script. Some notes:
   available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`
   environment variables. `${INSTALLER_TYPE}` is set to `SH`.
 - For PKG installers, the shebang line is respected if present;
-  otherwise, `bash` is used. The same variables mentioned for `sh` 
+  otherwise, `bash` is used. The same variables mentioned for `sh`
   installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
@@ -314,9 +314,9 @@ This option has no effect on `SH` installers.
 
     ('pre_uninstall',          False, str, '''
 Path to a pre uninstall script. This is only supported for on Windows,
-and must be a `.bat` file. Installation path is available as `%PREFIX%`. 
+and must be a `.bat` file. Installation path is available as `%PREFIX%`.
 Metadata about the installer can be found in the `%INSTALLER_NAME%`,
-`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. 
+`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
 `%INSTALLER_TYPE%` is set to `EXE`.
 '''),
 
@@ -374,8 +374,8 @@ available and set to the destination causing the error. Defaults to:
 Whether to show UI notifications on PKG installers. On large installations,
 the progress bar reaches ~90% very quickly and stays there for a long time.
 This might look like the installer froze. This option enables UI notifications
-so the user receives updates after each command executed by the installer.   
-(macOS only) 
+so the user receives updates after each command executed by the installer.
+(macOS only)
 '''),
 
     ('welcome_image',          False, str, '''
@@ -462,6 +462,10 @@ shown before the license information, right after the introduction.
 File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
 both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
 (MacOS only).
+
+If the installer is for windows and welcome file type is nsi,
+it will use the nsi script to add in extra pages before the installer
+begins the installation process.
 '''),
 
     ('welcome_text', False, str, '''
@@ -495,6 +499,10 @@ shown at the end of the installer upon success. File can be
 plain text (.txt), rich text (.rtf) or HTML (.html). If both
 `conclusion_file` and `conclusion_text` are provided,
 `conclusion_file` takes precedence. (MacOS only).
+
+If the installer is for windows and conclusion file type is nsi,
+it will use the nsi script to add in extra pages and the conclusion file
+at the end of the installer.
 '''),
 
     ('conclusion_text', False, str, '''
