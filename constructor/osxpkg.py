@@ -100,7 +100,9 @@ def modify_xml(xml_path, info):
             root.append(background)
 
     ### WELCOME ###
-    if "welcome_file" in info:
+    # The endswith .nsi is for windows specifically.  The nsi script will add in
+    # welcome pages if added.
+    if "welcome_file" in info and not info["welcome_file"].endswith(".nsi"):
         welcome_path = info["welcome_file"]
     elif "welcome_text" in info and info["welcome_text"]:
         welcome_path = join(PACKAGES_DIR, "welcome.txt")
@@ -117,7 +119,9 @@ def modify_xml(xml_path, info):
         root.append(welcome)
 
     ### CONCLUSION ###
-    if "conclusion_file" in info:
+    # The endswith .nsi is for windows specifically.  The nsi script will add in
+    # conclusion pages if added.
+    if "conclusion_file" in info and not info["conclusion_file"].endswith(".nsi"):
         conclusion_path = info["conclusion_file"]
     elif "conclusion_text" in info:
         if not info["conclusion_text"]:

@@ -12,7 +12,7 @@ import shutil
 from subprocess import PIPE, check_call, check_output, run, STDOUT
 import sys
 import tempfile
-from pathlib import PureWindowsPath
+from pathlib import Path
 
 from .construct import ns_platform
 from .imaging import write_images
@@ -34,7 +34,7 @@ def str_esc(s, newlines=True):
     return '"%s"' % s
 
 
-def read_nsi_tmpl(info):
+def read_nsi_tmpl(info) -> str:
     path = abspath(info.get('nsis_template', join(NSIS_DIR, 'main.nsi.tmpl')))
     print('Reading: %s' % path)
     with open(path) as fi:
@@ -47,7 +47,7 @@ def pkg_commands(download_dir, dists):
 
 
 def extra_files_commands(paths, common_parent):
-    paths = sorted([PureWindowsPath(p) for p in paths])
+    paths = sorted([Path(p) for p in paths])
     lines = []
     current_output_path = "$INSTDIR"
     for path in paths:
@@ -59,6 +59,20 @@ def extra_files_commands(paths, common_parent):
         lines.append(f"File {path}")
     return lines
 
+def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
+    """Insert NSI script commands from file.
+
+    Args:
+        filepath (os.PathLike): Path to file
+
+    Returns:
+        list: List of strings to be inserted in final script
+    """
+    if not filepath:
+        return ''
+    with open(Path(path_to_extra_pages_file)) as f:
+        extra_pages_block = f.read()
+        return extra_pages_block
 
 def setup_envs_commands(info, dir_path):
     template = """
@@ -255,6 +269,8 @@ def make_nsi(info, dir_path, extra_files=()):
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
+        ('@CUSTOM_WELCOME_FILE@', ),
+        ('@CUSTOM_CONCLUSION_FILE@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
     ]:
         data = data.replace(key, value)
 
@@ -320,7 +336,7 @@ def verify_installer_signature(path):
         # we had errors but maybe not critical ones
         print(
             f"!!! SignTool could find a signature in {path} but detected errors. "
-            "Please check your certificate!", 
+            "Please check your certificate!",
             file=sys.stderr
         )
 
@@ -338,7 +354,7 @@ def create(info, verbose=False):
     except KeyError:
         with open(pre_dst, 'w') as fo:
             fo.write(":: this is an empty pre install .bat script\n")
-    
+
     post_dst = join(tmp_dir, 'post_install.bat')
     try:
         shutil.copy(info['post_install'], post_dst)
