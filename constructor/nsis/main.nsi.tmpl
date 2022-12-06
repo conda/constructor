@@ -460,7 +460,7 @@ Function .onInit
     Push $R2
 
     InitPluginsDir
-
+    @EXTRA_FILES_TO_PLUGINS_DIR@
     !insertmacro ParseCommandLineArgs
 
     # Select the correct registry to look at, depending

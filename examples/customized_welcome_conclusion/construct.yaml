@@ -6,3 +6,5 @@ channels:
 specs:
   - python
 conclusion_file: custom_conclusion.nsi  # [win]
+extra_files:
+  - ExtraPagesExampleImg.bmp

@@ -13,6 +13,7 @@ from subprocess import PIPE, check_call, check_output, run, STDOUT
 import sys
 import tempfile
 from pathlib import Path
+from typing import List
 
 from .construct import ns_platform
 from .imaging import write_images
@@ -58,6 +59,24 @@ def extra_files_commands(paths, common_parent):
             current_output_path = output_path
         lines.append(f"File {path}")
     return lines
+
+def insert_tempfile_commands(paths: os.PathLike) -> List[str]:
+    """Helper function that copies paths into temporary install directory.
+
+    Args:
+        paths (os.PathLike): Paths to files that need to be copied
+
+    Returns:
+        List[str]: Commands to be inserted into nsi template
+    """
+    if paths:
+        lines = ['SetOutPath $PLUGINSDIR']
+        for path in sorted([Path(p) for p in paths]):
+            lines.append(f"File {path}")
+        return lines
+    else:
+        return ['']
+
 
 def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
     """Insert NSI script commands from file.
@@ -270,6 +289,7 @@ def make_nsi(info, dir_path, extra_files=()):
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
         ('@CUSTOM_WELCOME_FILE@', custom_nsi_insert_from_file(info.get('welcome_file', ''))),
         ('@CUSTOM_CONCLUSION_FILE@', custom_nsi_insert_from_file(info.get('conclusion_file', ''))),
+        ('@EXTRA_FILES_TO_PLUGINS_DIR@', '\n    '.join(insert_tempfile_commands(extra_files)))
     ]:
         data = data.replace(key, value)
 
