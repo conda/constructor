@@ -66,13 +66,12 @@ def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
         filepath (os.PathLike): Path to file
 
     Returns:
-        list: List of strings to be inserted in final script
+        string block of file
     """
     if not filepath:
         return ''
-    with open(Path(path_to_extra_pages_file)) as f:
-        extra_pages_block = f.read()
-        return extra_pages_block
+    return Path(filepath).read_text()
+
 
 def setup_envs_commands(info, dir_path):
     template = """
@@ -269,8 +268,8 @@ def make_nsi(info, dir_path, extra_files=()):
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
-        ('@CUSTOM_WELCOME_FILE@', ),
-        ('@CUSTOM_CONCLUSION_FILE@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
+        ('@CUSTOM_WELCOME_FILE@', custom_nsi_insert_from_file(info.get('welcome_file', ''))),
+        ('@CUSTOM_CONCLUSION_FILE@', custom_nsi_insert_from_file(info.get('conclusion_file', ''))),
     ]:
         data = data.replace(key, value)
 
