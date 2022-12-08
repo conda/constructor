@@ -1118,8 +1118,9 @@ SectionEnd
 !macroend
 
 Section "Uninstall"
-    # Remove menu items, path entries
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 
+    # Remove menu items, path entries
     DetailPrint "Deleting @NAME@ menus..."
     nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --rm-menus'
 
