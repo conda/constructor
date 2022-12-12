@@ -261,7 +261,12 @@ FunctionEnd
     ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
     ${IfNot} ${Errors}
         ${If} $ARGV_AddToPath = "1"
-            StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+            ${If} $InstMode = ${ALL_USERS}
+                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is ignored in 'All Users' installations" /SD IDOK
+                StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+            ${Else}
+                StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+            ${EndIf}
         ${ElseIf} $ARGV_AddToPath = "0"
             StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
         ${EndIf}
