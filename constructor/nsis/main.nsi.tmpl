@@ -229,7 +229,10 @@ FunctionEnd
                 Install for just me, add to PATH and register as system Python:$\n\
                     $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
                 Install for just me, with no registry modification (for CI):$\n\
-                    $EXEFILE /NoRegistry=1$\n" \
+                    $EXEFILE /NoRegistry=1$\n$\n\
+            NOTE: If you install for AllUsers, then the option to AddToPath$\n\
+            is disabled (i.e. if ./InstallationType=AllUsers, then$\n\
+            /AddToPath=1 will be ignored).$\n\" \
             /SD IDOK
             Abort
      ${EndIf}
