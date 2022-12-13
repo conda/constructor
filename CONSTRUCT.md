@@ -524,7 +524,8 @@ _required:_ no<br/>
 _type:_ boolean<br/>
 Whether to add the installation to the PATH environment variable. The default
 is true for GUI installers (msi, pkg) and False for shell installers. The user
-is able to change the default during interactive installation.
+is able to change the default during interactive installation. NOTE: For Windows,
+`AddToPath` is disabled when `InstallationType=AllUsers`.
 
 ## `register_python`
 
