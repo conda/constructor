@@ -258,23 +258,6 @@ FunctionEnd
     ${EndIf}
 
     ClearErrors
-    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
-    ${IfNot} ${Errors}
-        ${If} $ARGV_AddToPath = "1"
-            ${If} $InstMode == ${ALL_USERS}
-                # To address CVE-2022-26526.
-                # In AllUsers install mode, do not allow AddToPath as an option.
-                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
-                StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
-            ${Else}
-                StrCpy $Ana_AddToPath_State ${BST_CHECKED}
-            ${EndIf}
-        ${ElseIf} $ARGV_AddToPath = "0"
-            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
-        ${EndIf}
-    ${EndIf}
-
-    ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
     ${If} ${Errors}
         StrCpy $ARGV_KeepPkgCache "@KEEP_PKGS@"
@@ -322,6 +305,24 @@ Function OnInit_Release
     ${LogSet} on
     !insertmacro ParseCommandLineArgs
 
+    # Parsing the AddToPath option here (and not in ParseCommandLineArgs) to prevent the MessageBox from showing twice.
+    # For more context, see https://github.com/conda/constructor/pull/584#issuecomment-1347688020
+    ClearErrors
+    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
+    ${IfNot} ${Errors}
+        ${If} $ARGV_AddToPath = "1"
+            ${If} $InstMode == ${ALL_USERS}
+                # To address CVE-2022-26526.
+                # In AllUsers install mode, do not allow AddToPath as an option.
+                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+            ${Else}
+                StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+            ${EndIf}
+        ${ElseIf} $ARGV_AddToPath = "0"
+            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
 FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
