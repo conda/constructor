@@ -419,9 +419,8 @@ after the install. See also `initialize_by_default`.
     ('initialize_by_default',    False, bool, '''
 Whether to add the installation to the PATH environment variable. The default
 is true for GUI installers (msi, pkg) and False for shell installers. The user
-is able to change the default during interactive installation.
-
-NOTE: For Windows, `AddToPath` is disabled when `InstallationType=AllUsers`.
+is able to change the default during interactive installation. NOTE: For Windows,
+`AddToPath` is disabled when `InstallationType=AllUsers`.
 '''),
 
     ('register_python',  False, bool, '''
