@@ -261,8 +261,10 @@ FunctionEnd
     ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
     ${IfNot} ${Errors}
         ${If} $ARGV_AddToPath = "1"
-            ${If} $InstMode = ${ALL_USERS}
-                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is ignored in 'All Users' installations" /SD IDOK
+            ${If} $InstMode == ${ALL_USERS}
+                # To address CVE-2022-26526.
+                # In AllUsers install mode, do not allow AddToPath as an option.
+                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
                 StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
             ${Else}
                 StrCpy $Ana_AddToPath_State ${BST_CHECKED}
@@ -270,12 +272,6 @@ FunctionEnd
         ${ElseIf} $ARGV_AddToPath = "0"
             StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
         ${EndIf}
-    ${EndIf}
-
-    # To address CVE-2022-26526.
-    # In AllUsers install mode, do not allow AddToPath as an option.
-    ${If} $InstMode = ${ALL_USERS}
-        StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
     ${EndIf}
 
     ClearErrors
