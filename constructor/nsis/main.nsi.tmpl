@@ -318,12 +318,6 @@ FunctionEnd
 
 !macroend
 
-Function OnInit_Release
-    ${LogSet} on
-    !insertmacro ParseCommandLineArgs
-
-FunctionEnd
-
 Function InstModePage_RadioButton_OnClick
     ${LogSet} on
     Exch $0
@@ -646,8 +640,6 @@ Function .onInit
 #if pre_install_exists is False
     StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
 #endif
-
-    Call OnInit_Release
 
     Pop $R2
     Pop $R1
