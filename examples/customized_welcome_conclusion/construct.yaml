@@ -8,4 +8,4 @@ specs:
 conclusion_file: custom_conclusion.nsi  # [win]
 welcome_file: custom_welcome.nsi  # [win]
 extra_files:
-  ExtraPagesExampleImg.bmp: "$PluginsDir"
+  - ExtraPagesExampleImg.bmp: "$PluginsDir"
