@@ -65,3 +65,5 @@ ${If} $0 <> 0
     ExecShell "open" "https://nsis.sourceforge.io/Reference/File"
 ${EndIf}
 FunctionEnd
+
+!insertmacro MUI_PAGE_FINISH

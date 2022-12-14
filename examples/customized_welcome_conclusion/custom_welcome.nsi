@@ -1,3 +1,6 @@
+!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
+!insertmacro MUI_PAGE_WELCOME
+
 Page Custom muiExtraPagesAfterWelcome_Create
 
 var IntroAfterWelcomeText
