@@ -135,10 +135,13 @@ BrandingText /TRIMLEFT "${COMPANY}"
 
 # Pages
 #!define MUI_PAGE_CUSTOMFUNCTION_SHOW OnStartup
-!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
-!insertmacro MUI_PAGE_WELCOME
+#if custom_welcome
 # Custom welcome file(s)
 @CUSTOM_WELCOME_FILE@
+#else
+!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
+!insertmacro MUI_PAGE_WELCOME
+#endif
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !insertmacro MUI_PAGE_LICENSE __LICENSEFILE__
 Page Custom InstModePage_Create InstModePage_Leave
