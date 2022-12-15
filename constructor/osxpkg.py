@@ -111,7 +111,7 @@ def modify_xml(xml_path, info):
     else:
         welcome_path = None
         if "welcome_file" in info and info["welcome_file"].endswith(".nsi"):
-            print(f"NSI welcome_file, {info['welcome_file'].endswith('.nsi')}, is ignored.")
+            print(f"Warning: NSI welcome_file, {info['welcome_file'].endswith('.nsi')}, is ignored.")
 
     if welcome_path:
         welcome = ET.Element(
