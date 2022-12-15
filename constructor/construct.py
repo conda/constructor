@@ -523,6 +523,16 @@ This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
 '''),
+    ('temp_extra_files', False, (list), '''
+Temporary files that could be referenced in the installation process (i.e. customized
+ `welcome_file` and `conclusion_file` (see above)) . Should be a list of
+filepaths, relative to the directory where `construct.yaml` is. In Windows, these
+files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
+install process (Windows only).
+This setting can be passed as a list of:
+- `str`: each found file will be copied to the root prefix
+- `Mapping[str, str]`: map of path in disk to path in prefix.
+'''),
 ]
 
 

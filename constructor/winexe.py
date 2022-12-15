@@ -21,8 +21,7 @@ from .preconda import copy_extra_files, write_files as preconda_write_files
 from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels)
 
-THIS_DIR = abspath(dirname(__file__))
-NSIS_DIR = join(THIS_DIR, 'nsis')
+NSIS_DIR = join(abspath(dirname(__file__)), 'nsis')
 MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 
 
@@ -60,7 +59,7 @@ def extra_files_commands(paths, common_parent):
         lines.append(f"File {path}")
     return lines
 
-def insert_tempfile_commands(paths: os.PathLike) -> List[str]:
+def insert_tempfiles_commands(paths: os.PathLike) -> List[str]:
     """Helper function that copies paths into temporary install directory.
 
     Args:
@@ -70,6 +69,7 @@ def insert_tempfile_commands(paths: os.PathLike) -> List[str]:
         List[str]: Commands to be inserted into nsi template
     """
     if paths:
+        # Setting OutPath to PlugnsDir so NSIS File command copies the path into the PluginsDir
         lines = ['SetOutPath $PLUGINSDIR']
         for path in sorted([Path(p) for p in paths]):
             lines.append(f"File {path}")
@@ -179,8 +179,13 @@ def signtool_command(info):
     return ""
 
 
-def make_nsi(info, dir_path, extra_files=()):
+def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
     "Creates the tmp/main.nsi from the template file"
+
+    if extra_files is None:
+        extra_files = []
+    if temp_extra_files is None:
+        temp_extra_files = []
     name = info['name']
     download_dir = info['_download_dir']
 
@@ -291,7 +296,7 @@ def make_nsi(info, dir_path, extra_files=()):
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
         ('@CUSTOM_WELCOME_FILE@', custom_nsi_insert_from_file(info.get('welcome_file', ''))),
         ('@CUSTOM_CONCLUSION_FILE@', custom_nsi_insert_from_file(info.get('conclusion_file', ''))),
-        ('@EXTRA_FILES_TO_PLUGINS_DIR@', '\n    '.join(insert_tempfile_commands(extra_files)))
+        ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files)))
     ]:
         data = data.replace(key, value)
 
@@ -367,6 +372,7 @@ def create(info, verbose=False):
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info, tmp_dir)
+#    copied_temp_extra_files = copy_extra_files(info, tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
     pre_dst = join(tmp_dir, 'pre_install.bat')
@@ -391,7 +397,7 @@ def create(info, verbose=False):
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
-    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)
+    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)#, temp_extra_files=copied_temp_extra_files)
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
