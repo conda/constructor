@@ -371,8 +371,8 @@ def create(info, verbose=False):
     verify_signtool_is_available(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
-    copied_extra_files = copy_extra_files(info, tmp_dir)
-#    copied_temp_extra_files = copy_extra_files(info, tmp_dir)
+    copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
+    copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
     pre_dst = join(tmp_dir, 'pre_install.bat')
@@ -397,7 +397,7 @@ def create(info, verbose=False):
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
-    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)#, temp_extra_files=copied_temp_extra_files)
+    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files, temp_extra_files=copied_temp_extra_files)
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
