@@ -108,6 +108,8 @@ def create(info, verbose=False):
     for env_name in info.get("_extra_envs_info", ()):
         pre_t.add(join(tmp_dir, "envs", env_name, "env.txt"),
                   f"pkgs/envs/{env_name}/env.txt")
+        pre_t.add(join(tmp_dir, "envs", env_name, "shortcuts.txt"),
+                  f"pkgs/envs/{env_name}/shortcuts.txt")
 
     for key in 'pre_install', 'post_install':
         if key in info:
