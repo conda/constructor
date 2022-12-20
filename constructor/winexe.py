@@ -5,7 +5,6 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 from __future__ import absolute_import, division, print_function
-from cgitb import enable
 
 import os
 from os.path import abspath, dirname, isfile, join
