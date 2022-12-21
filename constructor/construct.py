@@ -521,7 +521,7 @@ Additional artifacts to be produced after building the installer.
 It expects either a list of strings or single-key dictionaries:
 Allowed keys are:
 - `info.json`: The internal `info` object, serialized to JSON. Takes no options.
-- `pkgs-list`: The list of packages contained in a given environment. Options:
+- `pkgs_list`: The list of packages contained in a given environment. Options:
     - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
 - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
     - `include_text` (optional, default=`False`): Whether to dump the license text in the JSON.
