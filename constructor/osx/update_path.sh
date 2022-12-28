@@ -4,11 +4,7 @@
 
 # $2 is the install location, which is ~ by default, but which the user can
 # change.
+set -x
 PREFIX="$2/__NAME_LOWER__"
-
-if [[ $SHELL = *zsh ]]
-then
-    $PREFIX/bin/conda init zsh
-else
-    $PREFIX/bin/conda init
-fi
+PREFIX=$(cd "$PREFIX"; pwd)
+"$PREFIX/bin/conda" init --all

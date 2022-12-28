@@ -6,7 +6,7 @@
 # MD5:   __MD5__
 
 #if osx
-unset DYLD_LIBRARY_PATH
+unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH
 #else
 export OLD_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
 unset LD_LIBRARY_PATH
@@ -17,11 +17,22 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
     return 1
 fi
 
+# Export variables to make installer metadata available to pre/post install scripts
+# NOTE: If more vars are added, make sure to update the examples/scripts tests too
+export INSTALLER_NAME="__NAME__"
+export INSTALLER_VER="__VERSION__"
+export INSTALLER_PLAT="__PLAT__"
+export INSTALLER_TYPE="SH"
+
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX=__DEFAULT_PREFIX__
+#if batch_mode
+BATCH=1
+#else
 BATCH=0
+#endif
 FORCE=0
 #if keep_pkgs
 KEEP_PKGS=1
@@ -36,11 +47,11 @@ usage: $0 [options]
 
 Installs __NAME__ __VERSION__
 
-#if has_license
--b           run install in batch mode (without manual intervention),
-             it is expected the license terms are agreed upon
+#if batch_mode
+-i           run install in interactive mode
 #else
--b           run install in batch mode (without manual intervention)
+-b           run install in batch mode (without manual intervention),
+             it is expected the license terms (if any) are agreed upon
 #endif
 -f           no error if install prefix already exists
 -h           print this help message and exit
@@ -56,7 +67,7 @@ Installs __NAME__ __VERSION__
 "
 
 if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bfhkp:sut "$*" 2>/dev/null)
+    OPTS=$(getopt bifhkp:sut "$*" 2>/dev/null)
     if [ ! $? ]; then
         printf "%s\\n" "$USAGE"
         exit 2
@@ -72,6 +83,10 @@ if which getopt > /dev/null 2>&1; then
                 ;;
             -b)
                 BATCH=1
+                shift
+                ;;
+            -i)
+                BATCH=0
                 shift
                 ;;
             -f)
@@ -112,7 +127,7 @@ if which getopt > /dev/null 2>&1; then
         esac
     done
 else
-    while getopts "bfhkp:sut" x; do
+    while getopts "bifhkp:sut" x; do
         case "$x" in
             h)
                 printf "%s\\n" "$USAGE"
@@ -120,6 +135,9 @@ else
             ;;
             b)
                 BATCH=1
+                ;;
+            i)
+                BATCH=0
                 ;;
             f)
                 FORCE=1
@@ -229,6 +247,22 @@ then
     fi
 #endif
 
+#if aarch64
+    if [ "$(uname -m)" != "aarch64" ]; then
+        printf "WARNING:\\n"
+        printf "    Your machine hardware does not appear to be aarch64, \\n"
+        printf "    but you are trying to install a aarch64 version of __NAME__.\\n"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
+           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+#endif
 
 #if osx
     if [ "$(uname)" != "Darwin" ]; then
@@ -405,17 +439,18 @@ chmod +x "$CONDA_EXEC"
 
 export TMP_BACKUP="$TMP"
 export TMP=$PREFIX/install_tmp
+mkdir -p $TMP
 
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
 extract_range $boundary1 $boundary2 | \
     "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
-"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
-
 PRECONDA="$PREFIX/preconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$PRECONDA" || exit 1
 rm -f "$PRECONDA"
+
+"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
 #The templating doesn't support nested if statements
 #if has_pre_install
@@ -449,16 +484,41 @@ export FORCE
 # https://github.com/conda/conda/pull/9073
 mkdir -p ~/.conda > /dev/null 2>&1
 
+printf "\nInstalling base environment...\n\n"
+
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_CHANNELS=__CHANNELS__ \
+CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+rm -f "$PREFIX/pkgs/env.txt"
 
-if [ "$KEEP_PKGS" = "0" ]; then
-    rm -fr $PREFIX/pkgs/*.tar.bz2
-    rm -fr $PREFIX/pkgs/*.conda
-fi
+#if has_conda
+mkdir -p $PREFIX/envs
+for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
+    env_name=$(basename ${env_pkgs})
+    if [[ "${env_name}" == "*" ]]; then
+        continue
+    fi
+    printf "\nInstalling ${env_name} environment...\n\n"
+    mkdir -p "$PREFIX/envs/$env_name"
+
+    if [[ -f "${env_pkgs}channels.txt" ]]; then
+        env_channels=$(cat "${env_pkgs}channels.txt")
+        rm -f "${env_pkgs}channels.txt"
+    else
+        env_channels="__CHANNELS__"
+    fi
+
+    # TODO: custom shortcuts per env?
+    CONDA_SAFETY_CHECKS=disabled \
+    CONDA_EXTRA_SAFETY_CHECKS=no \
+    CONDA_CHANNELS="$env_channels" \
+    CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
+    rm -f "${env_pkgs}env.txt"
+done
+#endif
 
 __INSTALL_COMMANDS__
 
@@ -467,14 +527,10 @@ POSTCONDA="$PREFIX/postconda.tar.bz2"
 rm -f "$POSTCONDA"
 
 rm -f $PREFIX/conda.exe
-rm -f $PREFIX/pkgs/env.txt
 
 rm -rf $PREFIX/install_tmp
 export TMP="$TMP_BACKUP"
 
-#if has_conda
-mkdir -p $PREFIX/envs
-#endif
 
 #The templating doesn't support nested if statements
 #if has_post_install
@@ -507,7 +563,9 @@ else
     find $PREFIX/pkgs -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
-printf "installation finished.\\n"
+cat <<EOF
+__CONCLUSION_TEXT__
+EOF
 
 if [ "$PYTHONPATH" != "" ]; then
     printf "WARNING:\\n"
@@ -519,21 +577,15 @@ if [ "$PYTHONPATH" != "" ]; then
 fi
 
 if [ "$BATCH" = "0" ]; then
-#if has_conda
+#if initialize_conda is True and initialize_by_default is True
+    DEFAULT=yes
+#endif
+#if initialize_conda is True and initialize_by_default is False
+    DEFAULT=no
+#endif
+
+#if has_conda and initialize_conda is True
     # Interactive mode.
-  #if osx
-    BASH_RC="$HOME"/.bash_profile
-    DEFAULT=yes
-  #else
-    BASH_RC="$HOME"/.bashrc
-    DEFAULT=no
-  #endif
-  #if initialize_by_default is True
-    DEFAULT=yes
-  #endif
-  #if initialize_by_default is False
-    DEFAULT=no
-  #endif
 
     printf "Do you wish the installer to initialize __NAME__\\n"
     printf "by running conda init? [yes|no]\\n"
@@ -560,6 +612,12 @@ if [ "$BATCH" = "0" ]; then
             *zsh) $PREFIX/bin/conda init zsh ;;
             *) $PREFIX/bin/conda init ;;
         esac
+        if [ -f "$PREFIX/bin/mamba" ]; then
+            case $SHELL in
+                *zsh) $PREFIX/bin/mamba init zsh ;;
+                *) $PREFIX/bin/mamba init ;;
+            esac
+        fi
     fi
     printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
     printf "   set the auto_activate_base parameter to false: \\n"
