@@ -1,2 +1,2 @@
-```{include} ../CONSTRUCT.md
+```{include} ../../CONSTRUCT.md
 ```

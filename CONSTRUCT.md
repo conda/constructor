@@ -21,7 +21,7 @@ syntax for selectors is described in
 [this section](https://docs.conda.io/projects/conda-build/en/latest/resources/define-metadata.html#preprocessing-selectors)
 of the `conda-build` documentation. The list of selectors available
 for use in Constructor specs is given in the section
-[Available selectors](#Available-selectors) below.
+[Available selectors](#available-selectors) below.
 
 Finally, `construct.yaml` is parsed as a `jinja2` template and so any valid
 `jinja2` templating directives may be used. The current shell environment

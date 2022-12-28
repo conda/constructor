@@ -1,6 +1,4 @@
-===========================================
-Creating custom installers with constructor
-===========================================
+# Creating custom installers with constructor
 
 Constructor is a tool which allows constructing an installer
 for a collection of conda packages. It solves needed packages using user-provided
@@ -14,69 +12,66 @@ those installers.
 
 You can install constructor using conda:
 
-.. code-block::
+```console
+$ conda install constructor
+$ constructor -h
+```
 
-    conda install constructor
-    constructor -h
- 
 The constructor command takes an installer specification directory
-as its argument. This directory needs to contain a ``construct.yaml`` file,
+as its argument. This directory needs to contain a `construct.yaml` file,
 which specifies the name of the installer, the conda channels to pull packages
 from, the conda packages included in the installer, etc. The full specification
-for what a construct.yaml file may contain is at :doc:`construct_yaml`. Also,
+for what a `construct.yaml` file may contain is at {doc}`construct-yaml`. Also,
 the directory may contain some additional optional files such as a license file,
 and image files for the Windows installer.
 
 
-An example construct.yaml file
-==============================
+## An example `construct.yaml` file
  
 In this example you will see a few of the common keys such as
 name, version, channels, specs, and a few others like the key
-for ``license_file`` and ``welcome_image``. You will also
+for `license_file` and `welcome_image`. You will also
 notice that certain packages in specs are specified for only
 specific platforms - UNIX, Win.
 
-.. code-block::
-
-    name: Miniconda
-    version: 2.5.5
-    channels:
-    - http://repo.continuum.io/pkgs/main/
-    specs:
-    - python 3.7*
-    - conda
-    - nomkl   	[not win]
-    - numpy
-    - scipy
-    - pandas
-    - notebook
-    - matplotlib
-    - lighttpd   	[unix]
-    license_file: EULA.txt
-    welcome_image: photo.png [win]
+```yaml
+name: Miniconda
+version: "2.5.5"
+channels:
+  - "http://repo.continuum.io/pkgs/main/"
+specs:
+  - python 3.7*
+  - conda
+  - nomkl  # [not win]
+  - numpy
+  - scipy
+  - pandas
+  - notebook
+  - matplotlib
+  - lighttpd  # [unix]
+license_file: EULA.txt
+welcome_image: photo.png  # [win]
+```
 
 In order to create your custom installer, create a directory
-with your ``construct.yaml`` file inside as well as any other
+with your `construct.yaml` file inside as well as any other
 necessary files (EULA.txt, photo.png, etc).
 
 
-Building installers
-===================
+## Building installers
 
 Navigate your terminal so that your current working directory is the folder
 containing your desired construct.yaml. From there, run this command:
 
-.. code-block::
-
-    constructor .
+```console
+$ constructor .
+```
 
 Your installer will be created inside of the directory with
 this naming scheme: `name-version-yourPlatform.{sh|exe|pkg}`.
 
 
-Controlling which kind of installer gets generated
-==================================================
+## Controlling which kind of installer gets generated
 
 Constructor is currently limited to generating installers for the platform on
 which it is running. In other words, if you run constructor on a Windows
@@ -90,13 +85,12 @@ Windows. Using this key is generally done with selectors.  For example, to
 build a .pkg installer on MacOS, but fall back to default behavior on other
 platforms:
 
-.. code-block::
-
-   installer_type: pkg                   [osx]
-
+```yaml
+installer_type: pkg  #[osx]
+```
  
-Some additional considerations
-==============================
+## Some additional considerations
+
 * All conda packages must be available for the platform you are
   building the installer for.  Noarch packages are allowed, as of
   constructor version 3.0.0
@@ -111,7 +105,7 @@ Some additional considerations
   means that if you want the "Anaconda Prompt", you will have
   to list console_shortcut, as well as menuinst.
 * For Windows builds, add the Anaconda channels /main and /msys2
-  to the file ``construct.yaml``. This provides packages such
+  to the file `construct.yaml`. This provides packages such
   as m2w64-toolchain, which is a dependency of theano. It is best
   to add /msys2 as https://repo.anaconda.com/pkgs/msys2/.
 * Constructor requires conda >=4.5.0
