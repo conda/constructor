@@ -1,33 +1,62 @@
-name: Documentation
+name: Docs
 
 on:
+  # Runs on pushes targeting the default branch
   push:
-    branches:
-      - master
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  docs:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v2
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: 3.x
+          activate-environment: conda-libmamba-solver
+          environment-file: docs/environment.yml
+          python-version: '3.11'
+          auto-activate-base: false
 
-      - name: Install Sphinx
-        run: pip install sphinx
-
-      - name: Build Site
+      - name: Build Documentation
         run: |
-          cd docs/
-          make html
-          touch build/.nojekyll
+          cd docs
+          make dirhtml
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build/html/
-          publish_branch: gh-pages
+          # Upload entire repository
+          path: 'docs/_build/dirhtml'
+
+  pages:
+
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [docs]
+
+    # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
