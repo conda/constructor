@@ -110,7 +110,7 @@ def run_examples(keep_artifacts=None):
             print('--- Testing %s' % fpath)
             fpath = os.path.join(output_dir, fpath)
             if ext == 'sh':
-                cmd = ['bash', fpath, '-b', '-p', env_dir]
+                cmd = ['/bin/sh', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
                 if os.environ.get("CI"):
                     # We want to run it in an arbitrary directory, but the options
