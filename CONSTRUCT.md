@@ -5,7 +5,7 @@ Edit scripts/make_docs.py and/or constructor/construct.py
 and regenerate.
 -->
 
-# Using `construct.yaml` files to customize your installer
+# The `construct.yaml` specification
 
 The `construct.yaml` file is the primary mechanism for controlling
 the output of the Constructor package. The file contains a list of
