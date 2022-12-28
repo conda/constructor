@@ -1,24 +1,11 @@
 ======================================================
-Using construct.yaml files to customize your installer
 ======================================================
 
 This document describes each of they keys in the `construct.yaml` file,
 which is the main configuration file of a constructor configuration
 directory.
 
-All keys are optional, except otherwise noted.  Also, the keys `specs`
-and `packages` take either a list of items, or a path to a file,
-which contains one item per line (excluding lines starting with `#`).
 
-Also note, that any line in `construct.yaml` may contain a selector at the
-end, in order to allow customization for selected platforms.
-
-Finally, `construct.yaml` is parsed as a `jinja2` template and so any valid
-`jinja2` templating directives may be used. The current shell environment
-is available as the `jinja2` variable `environ`. As an example, setting the
-`version` key from an environment variable called `VERSION` would look like:
-`version: {{ environ["VERSION"] }}`. Note that the special environment variables
-available in `meta.yaml` when running `conda-build` are not available here.
 
 
 ----

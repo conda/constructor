@@ -12,7 +12,7 @@ Welcome to constructor documentation
    :maxdepth: 2
 
    creating-installers
-   construct_yaml
+   construct-yaml
 
 |
 
