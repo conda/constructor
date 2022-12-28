@@ -58,6 +58,7 @@ The specifications are identical in form and purpose to those that would be
 included in a `conda create --file` command. Packages may also be specified
 by an exact URL; e.g.,
 `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
+This key can also take a `str` pointing to a requirements file with the same syntax.
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
