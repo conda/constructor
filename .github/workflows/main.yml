@@ -117,6 +117,12 @@ jobs:
           conda activate constructor
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
+      - name: Test with conda-libmamba-solver
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate constructor
+          conda install conda-libmamba-solver
+          CONDA_SOLVER=libmamba constructor examples/noconda/ --output-dir=examples_artifacts/
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
         uses: actions/upload-artifact@v3
