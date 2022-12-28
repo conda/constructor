@@ -51,9 +51,9 @@ if conda_interface_type == 'conda':
     except ImportError:
         from conda.models.package_cache_record import PackageCacheRecord as _PackageCacheRecord
     try:
-        from conda.core.solve import _get_solver_class
-        _Solver = _get_solver_class()
-    except ImportError:
+        from conda.base.context import context
+        _Solver = context.plugin_manager.get_cached_solver_backend()
+    except (ImportError, AttributeError):
         from conda.core.solve import Solver as _Solver
 
     # used by fcp.py
