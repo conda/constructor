@@ -497,7 +497,7 @@ rm -f "$PREFIX/pkgs/env.txt"
 mkdir -p $PREFIX/envs
 for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     env_name=$(basename ${env_pkgs})
-    if [ "${env_name}" == "*" ]; then
+    if [ "$env_name" = "*" ]; then
         continue
     fi
     printf "\nInstalling ${env_name} environment...\n\n"
