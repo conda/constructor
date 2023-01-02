@@ -561,9 +561,9 @@ if [ "$BATCH" = "0" ]; then
         esac
         if [ -f "$PREFIX/bin/mamba" ]; then
             case $SHELL in
-                # We call the entry point directly to avoid issues with spaces in shebang
-                *zsh) "$PREFIX/bin/python" "$PREFIX/bin/mamba" init zsh ;;
-                *) "$PREFIX/bin/python" "$PREFIX/bin/mamba" init ;;
+                # We call the module directly to avoid issues with spaces in shebang
+                *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
+                *) "$PREFIX/bin/python" -m mamba.mamba init ;;
             esac
         fi
     fi
