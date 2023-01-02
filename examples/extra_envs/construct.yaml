@@ -23,3 +23,9 @@ extra_envs:
 
 post_install: test_install.sh  # [unix]
 post_install: test_install.bat  # [win]
+build_outputs:
+  - info.json
+  - pkgs_list
+  - pkgs_list:
+      env: py38
+  - licenses

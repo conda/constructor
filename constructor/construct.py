@@ -515,6 +515,18 @@ This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
 '''),
+
+    ('build_outputs', False, list, '''
+Additional artifacts to be produced after building the installer.
+It expects either a list of strings or single-key dictionaries:
+Allowed keys are:
+- `info.json`: The internal `info` object, serialized to JSON. Takes no options.
+- `pkgs_list`: The list of packages contained in a given environment. Options:
+    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
+- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
+    - `include_text` (optional, default=`False`): Whether to dump the license text in the JSON.
+      If false, only the path will be included.
+''')
 ]
 
 
