@@ -8,6 +8,16 @@ on:
   pull_request:
     branches:
       - main
+
+concurrency:
+  # Concurrency group that uses the workflow name and PR number if available
+  # or commit SHA as a fallback. If a new build is triggered under that
+  # concurrency group while a previous build is running it will be canceled.
+  # Repeated pushes to a PR will cancel all previous builds, while multiple
+  # merges to main will not cancel.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 defaults:
   run:
     shell: bash
@@ -36,15 +46,15 @@ jobs:
           echo "TEMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
           echo "TMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
       - name: Retrieve the source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Build the build environment
         run: |
-          [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
+          source $CONDA/etc/profile.d/conda.sh
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
+          conda create -p ../conda conda-build conda-verify
       - name: Build the package
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -53,13 +63,14 @@ jobs:
           # Uncomment to run within conda build
           # RUN_EXAMPLES: "1"
         run: |
-          source ../conda/etc/profile.d/conda.sh
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate ../conda
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda build conda.recipe --python=${{ matrix.pyver }}
       - name: Upload the packages as artifact
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           # By uploading to the same artifact we can download all of the packages
           # and upload them all to anaconda.org in a single job
@@ -67,7 +78,7 @@ jobs:
           path: ${{ runner.temp }}/conda-bld/*/*.tar.bz2
       - name: Install local constructor
         run: |
-          source ../conda/etc/profile.d/conda.sh
+          source $CONDA/etc/profile.d/conda.sh
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda create -n constructor -c local --strict-channel-priority constructor
           conda activate constructor
@@ -82,7 +93,7 @@ jobs:
       - name: Patch NSIS to use logging builds on Windows
         if: startsWith(matrix.os, 'windows')
         run: |
-          source ../conda/etc/profile.d/conda.sh
+          source $CONDA/etc/profile.d/conda.sh
           conda activate constructor
           nsis_version=$(conda list nsis --json | jq -r ".[].version")
           curl -sL "https://sourceforge.net/projects/nsis/files/NSIS%203/${nsis_version}/nsis-${nsis_version}-log.zip/download" -o "nsis-${nsis_version}-log.zip"
@@ -110,13 +121,13 @@ jobs:
           echo CONSTRUCTOR_SIGNTOOL_PATH=C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe>> %GITHUB_ENV%
       - name: Run examples and prepare artifacts
         run: |
-          source ../conda/etc/profile.d/conda.sh
+          source $CONDA/etc/profile.d/conda.sh
           conda activate constructor
           mkdir -p examples_artifacts/
           python scripts/run_examples.py --keep-artifacts=examples_artifacts/
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
           path: examples_artifacts/
@@ -128,11 +139,11 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - name: Retrieve the source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Download the build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: package-${{ github.sha }}
           path: conda-bld
@@ -166,7 +177,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Retrieve the source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Install local constructor

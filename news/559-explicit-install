@@ -6,6 +6,7 @@
 
 * Restore the ability to use `exclude` without solving issues. (#319 via #559)
 * Restore the ability to use force reinstall without solving issues. (#456 via #559)
+* Fix env.txt indendation to be parsable by mamba again. (#592)
 
 ### Deprecations:
 

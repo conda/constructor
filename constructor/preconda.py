@@ -227,8 +227,8 @@ def write_env_txt(info, dst_dir, urls):
         # $ conda create --name <env> --file <this file>
         # platform: {info['_platform']}
         @EXPLICIT
-        """.lstrip()
-    )
+        """
+    ).lstrip()
     with open(join(dst_dir, "env.txt"), "w") as envf:
         envf.write(header)
         envf.write('\n'.join([f"{url}#{md5}" for url, md5 in urls]))
