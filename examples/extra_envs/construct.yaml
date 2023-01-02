@@ -25,3 +25,4 @@ extra_envs:
 
 post_install: test_install.sh  # [unix]
 post_install: test_install.bat  # [win]
+check_path_spaces: False

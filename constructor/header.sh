@@ -441,7 +441,7 @@ rm -f "$PREFIX/pkgs/env.txt"
 
 #if has_conda
 mkdir -p "$PREFIX/envs"
-for env_pkgs in "${PREFIX}/pkgs/envs/*/"; do
+for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     env_name=$(basename "${env_pkgs}")
     if [ "$env_name" = "*" ]; then
         continue
