@@ -35,9 +35,15 @@ def _execute(cmd):
     print(' '.join(cmd))
     t0 = time.time()
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    stdout, stderr = p.communicate()
+    try:
+        stdout, stderr = p.communicate(timeout=300)
+        errored = p.returncode != 0
+    except subprocess.TimeoutExpired:
+        p.kill()
+        stdout, stderr = p.communicate()
+        print('--- TEST TIMEOUT ---')
+        errored = True
     t1 = time.time()
-    errored = p.returncode != 0
     if errored:
         if stdout:
             print('--- STDOUT ---')
