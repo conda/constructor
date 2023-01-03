@@ -497,13 +497,13 @@ rm -f "$PREFIX/pkgs/env.txt"
 mkdir -p $PREFIX/envs
 for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     env_name=$(basename ${env_pkgs})
-    if [[ "${env_name}" == "*" ]]; then
+    if [ "$env_name" = "*" ]; then
         continue
     fi
     printf "\nInstalling ${env_name} environment...\n\n"
     mkdir -p "$PREFIX/envs/$env_name"
 
-    if [[ -f "${env_pkgs}channels.txt" ]]; then
+    if [ -f "${env_pkgs}channels.txt" ]; then
         env_channels=$(cat "${env_pkgs}channels.txt")
         rm -f "${env_pkgs}channels.txt"
     else
