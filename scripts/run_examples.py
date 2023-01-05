@@ -187,7 +187,7 @@ def run_examples(keep_artifacts=None):
                         # waited; otherwise, since the uninstaller copies itself to a different location
                         # so it can be auto-deleted, it returns immediately and it gives us problems with
                         # the tempdir cleanup later
-                        f"/S _?={env_dir}"
+                        "/S", *f"_?={env_dir}".split()
                     ]
                     test_errored = _execute(cmd)
                     errored += test_errored
