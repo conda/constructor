@@ -188,7 +188,12 @@ def run_examples(keep_artifacts=None):
                         # the tempdir cleanup later
                         f"/S _?={env_dir}"
                     ]
-                    _execute(cmd)
+                    test_errored = _execute(cmd)
+                    errored += test_errored
+                    if test_errored:
+                        which_errored.setdefault(example_path, []).append(
+                            "Wrong uninstall exit code or timeout."
+                        )
                     paths_after_uninstall = os.listdir(env_dir)
                     if len(paths_after_uninstall) > 2:
                         # The debug installer writes to install.log too, which will only
