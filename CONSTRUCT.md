@@ -665,6 +665,7 @@ Allowed keys are:
 - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
     - `include_text` (optional, default=`False`): Whether to dump the license text in the JSON.
       If false, only the path will be included.
+
 ## `temp_extra_files`
 
 _required:_ no<br/>
