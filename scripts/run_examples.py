@@ -111,7 +111,8 @@ def run_examples(keep_artifacts=None):
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
                 continue
             tested_files.add(fpath)
-            env_dir = tempfile.mkdtemp(suffix="s p a c e s", dir=output_dir)
+            test_suffix = "s p a c e s" if not sys.platform.startswith("win") else None
+            env_dir = tempfile.mkdtemp(suffix=test_suffix, dir=output_dir)
             rm_rf(env_dir)
             print('--- Testing %s' % fpath)
             fpath = os.path.join(output_dir, fpath)
