@@ -177,10 +177,10 @@ def run_examples(keep_artifacts=None):
                     print('---  LOGS  ---')
                     print("Tip: Debug locally and check the full logs in the Installer UI")
                     print("     or check /var/log/install.log if run from the CLI.")
-            elif ext == "exe" and not test_with_spaces:
+            elif ext == "exe":
                 # The installer succeeded, test the uninstaller on Windows
-                # The un-installers are only tested when testing without spaces, as they hang during
-                # testing but work in UI mode.
+                # The un-installers are only tested when testing without spaces, as they hang
+                # during testing but work in UI mode.
                 uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
                 if uninstaller:
                     cmd = [
@@ -190,7 +190,7 @@ def run_examples(keep_artifacts=None):
                         # waited; otherwise, since the uninstaller copies itself to a different location
                         # so it can be auto-deleted, it returns immediately and it gives us problems with
                         # the tempdir cleanup later
-                        f"/S _?={env_dir}"
+                        f"/S _?='{env_dir}'"
                     ]
                     test_errored = _execute(cmd)
                     errored += test_errored
