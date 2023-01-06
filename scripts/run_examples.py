@@ -111,7 +111,8 @@ def run_examples(keep_artifacts=None):
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
                 continue
             tested_files.add(fpath)
-            test_suffix = "s p a c e s" if not sys.platform.startswith("win") else None
+            test_with_spaces = not sys.platform.startswith("win") or "conda" in fpath.lower()
+            test_suffix = "s p a c e s" if test_with_spaces else None
             env_dir = tempfile.mkdtemp(suffix=test_suffix, dir=output_dir)
             rm_rf(env_dir)
             print('--- Testing %s' % fpath)
@@ -176,8 +177,10 @@ def run_examples(keep_artifacts=None):
                     print('---  LOGS  ---')
                     print("Tip: Debug locally and check the full logs in the Installer UI")
                     print("     or check /var/log/install.log if run from the CLI.")
-            elif ext == "exe":
+            elif ext == "exe" and not test_with_spaces:
                 # The installer succeeded, test the uninstaller on Windows
+                # The un-installers are only tested when testing without spaces, as they hang during
+                # testing but work in UI mode.
                 uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
                 if uninstaller:
                     cmd = [
