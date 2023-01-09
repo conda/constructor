@@ -58,7 +58,11 @@ Installs __NAME__ __VERSION__
 #if not keep_pkgs
 -k           do not clear the package cache after installation
 #endif
+#if check_path_spaces
+-p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
+#else
 -p PREFIX    install prefix, defaults to $PREFIX
+#endif
 -s           skip running pre/post-link/install scripts
 -u           update an existing installation
 #if has_conda

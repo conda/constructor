@@ -374,18 +374,13 @@ def pkgbuild_script(name, info, src, dst='postinstall', **kwargs):
 def create(info, verbose=False):
     # Do some configuration checks
     if info.get("check_path_spaces", True) is True:
-        if " " in info.get("default_location_pkg", ""):
-            sys.exit(
-                "ERROR: 'check_path_spaces' is enabled, but 'default_location_pkg' "
-                "contains spaces. This will always result in a failed "
-                "installation! Aborting!"
-            )
-        if " " in info.get("pkg_name", ""):
-            sys.exit(
-                "ERROR: 'check_path_spaces' is enabled, but 'pkg_name' "
-                "contains spaces. This will always result in a failed "
-                "installation! Aborting!"
-            )
+        for key in "default_location_pkg", "pkg_name":
+            if " " in info.get(key, ""):
+                sys.exit(
+                    f"ERROR: 'check_path_spaces' is enabled, but '{key}' "
+                    "contains spaces. This will always result in a failed "
+                    "installation! Aborting!"
+                )
 
     global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR, SCRIPTS_DIR
 
