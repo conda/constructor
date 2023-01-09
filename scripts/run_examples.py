@@ -29,6 +29,7 @@ EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
 PY3 = sys.version_info[0] == 3
 WHITELIST = ['grin', 'jetsonconda', 'miniconda', 'newchan']
 BLACKLIST = []
+WITH_SPACES = {"extra_files", "noconda", "signing", "scripts"}
 
 
 def _execute(cmd):
@@ -103,6 +104,8 @@ def run_examples(keep_artifacts=None):
         output_dir = tempfile.mkdtemp(dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
+        example_name = Path(example_path).parent.name
+        test_with_spaces = example_name in WITH_SPACES
         cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
         creation_errored = _execute(cmd)
         errored += creation_errored
@@ -111,7 +114,6 @@ def run_examples(keep_artifacts=None):
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
                 continue
             tested_files.add(fpath)
-            test_with_spaces = not sys.platform.startswith("win") or "conda" in fpath.lower()
             test_suffix = "s p a c e s" if test_with_spaces else None
             env_dir = tempfile.mkdtemp(suffix=test_suffix, dir=output_dir)
             rm_rf(env_dir)

@@ -10,5 +10,3 @@ specs:
   - conda
   - console_shortcut # [win]
 
-check_path_spaces: False
-check_path_length: False

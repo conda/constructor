@@ -11,5 +11,3 @@ specs:
 
 register_python: False
 initialize_conda: False
-check_path_spaces: False
-check_path_length: False
