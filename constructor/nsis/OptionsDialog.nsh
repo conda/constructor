@@ -85,21 +85,20 @@ Function mui_AnaCustomOptions_Show
     ${EndIf}
 
     ${If} "${SHOW_ADD_TO_PATH}" == "yes"
+        # AddToPath is only an option for JustMe installations; it is disabled for AllUsers
+        # installations. (Addresses CVE-2022-26526)
         ${If} $InstMode = ${JUST_ME}
-            StrCpy $1 "my"
-        ${Else}
-            StrCpy $1 "the system"
+            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add ${NAME} to my &PATH environment variable"
+            IntOp $5 $5 + 11
+            Pop $mui_AnaCustomOptions.AddToPath
+            ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
+            ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
+            ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+                "NOT recommended. This can lead to conflicts with other applications. Instead, use \
+                the Commmand Prompt and Powershell menus added to the Windows Start Menu."
+            IntOp $5 $5 + 20
+            Pop $Ana_AddToPath_Label
         ${EndIf}
-        ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add ${NAME} to $1 &PATH environment variable"
-        IntOp $5 $5 + 11
-        Pop $mui_AnaCustomOptions.AddToPath
-        ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
-        ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
-        ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-            "NOT recommended. This can lead to conflicts with other applications. Instead, use \
-            the Commmand Prompt and Powershell menus added to the Windows Start Menu."
-        IntOp $5 $5 + 20
-        Pop $Ana_AddToPath_Label
     ${EndIf}
 
     ${If} "${SHOW_REGISTER_PYTHON}" == "yes"

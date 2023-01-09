@@ -402,7 +402,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             extra_env=True,
         )
     if dry_run:
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None, None
     pc_recs, _urls, dists, has_conda = _fetch_precs(
         precs, download_dir, transmute_file_type=transmute_file_type
     )
@@ -426,8 +426,15 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         pc_recs, platform, duplicate_files=duplicate_files
     )
 
-    return _urls, dists, approx_tarballs_size, approx_pkgs_size, has_conda, extra_envs_data
-
+    return (
+        all_pc_recs,
+        _urls,
+        dists,
+        approx_tarballs_size,
+        approx_pkgs_size,
+        has_conda,
+        extra_envs_data
+    )
 
 def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
@@ -462,13 +469,14 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         conda_context.proxy_servers = proxy_servers
         conda_context.ssl_verify = ssl_verify
 
-        (_urls, dists, approx_tarballs_size, approx_pkgs_size,
+        (pkg_records, _urls, dists, approx_tarballs_size, approx_pkgs_size,
         has_conda, extra_envs_info) = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
             exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
             verbose, dry_run, conda_exe, transmute_file_type, extra_envs
         )
 
+    info["_all_pkg_records"] = pkg_records  # full PackageRecord objects
     info["_urls"] = _urls  # needed to mock the repodata cache
     info["_dists"] = dists  # needed to tell conda what to install
     info["_approx_tarballs_size"] = approx_tarballs_size

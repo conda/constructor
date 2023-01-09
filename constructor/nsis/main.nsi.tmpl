@@ -229,7 +229,10 @@ FunctionEnd
                 Install for just me, add to PATH and register as system Python:$\n\
                     $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
                 Install for just me, with no registry modification (for CI):$\n\
-                    $EXEFILE /NoRegistry=1$\n" \
+                    $EXEFILE /NoRegistry=1$\n$\n\
+            NOTE: If you install for AllUsers, then the option to AddToPath$\n\
+                is disabled (i.e. if ./InstallationType=AllUsers, then$\n\
+                /AddToPath=1 will be ignored).$\n" \
             /SD IDOK
             Abort
      ${EndIf}
@@ -251,16 +254,6 @@ FunctionEnd
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${ElseIf} $ARGV_RegisterPython = "0"
             StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
-        ${EndIf}
-    ${EndIf}
-
-    ClearErrors
-    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
-    ${IfNot} ${Errors}
-        ${If} $ARGV_AddToPath = "1"
-            StrCpy $Ana_AddToPath_State ${BST_CHECKED}
-        ${ElseIf} $ARGV_AddToPath = "0"
-            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
 
@@ -316,6 +309,24 @@ Function OnInit_Release
     ${LogSet} on
     !insertmacro ParseCommandLineArgs
 
+    # Parsing the AddToPath option here (and not in ParseCommandLineArgs) to prevent the MessageBox from showing twice.
+    # For more context, see https://github.com/conda/constructor/pull/584#issuecomment-1347688020
+    ClearErrors
+    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
+    ${IfNot} ${Errors}
+        ${If} $ARGV_AddToPath = "1"
+            ${If} $InstMode == ${ALL_USERS}
+                # To address CVE-2022-26526.
+                # In AllUsers install mode, do not allow AddToPath as an option.
+                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+            ${Else}
+                StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+            ${EndIf}
+        ${ElseIf} $ARGV_AddToPath = "0"
+            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
 FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
@@ -603,7 +614,9 @@ Function .onInit
     # Override custom options with explicitly given values from contruct.yaml.
     # If initialize_by_default (register_python_default) is None, do nothing.
 #if initialize_conda is True and initialize_by_default is True
-    StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+    ${If} $InstMode == ${JUST_ME}
+        StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+    ${EndIF}
 #endif
 #if initialize_conda is True and initialize_by_default is False
     StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
@@ -1100,6 +1113,22 @@ Section "Install"
     ${EndIf}
 
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
+
+    # To address CVE-2022-26526.
+    # Revoke the write permission on directory "$INSTDIR" for Users if this is
+    # being run with administrative privileges. Users are:
+    #   AU - authenticated users
+    #   BU - built-in (local) users
+    #   DU - domain users
+    ${If} ${UAC_IsAdmin}
+        DetailPrint "Setting installation directory permissions..."
+        AccessControl::DisableFileInheritance "$INSTDIR"
+        AccessControl::RevokeOnFile "$INSTDIR" "(AU)" "GenericWrite"
+        AccessControl::RevokeOnFile "$INSTDIR" "(DU)" "GenericWrite"
+        AccessControl::RevokeOnFile "$INSTDIR" "(BU)" "GenericWrite"
+        AccessControl::SetOnFile "$INSTDIR" "(BU)" "GenericRead + GenericExecute"
+        AccessControl::SetOnFile "$INSTDIR" "(DU)" "GenericRead + GenericExecute"
+    ${EndIf}
 SectionEnd
 
 !macro AbortRetryNSExecWaitLibNsisCmd cmd
