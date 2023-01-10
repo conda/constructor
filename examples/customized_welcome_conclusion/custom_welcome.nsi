@@ -1,3 +1,10 @@
+# Below is an example of creating multiple pages after the welcome page of the installer.
+#
+# This file contains code that is inserted where the @CUSTOM_WELCOME_FILE@ is located
+# in the main.nsi.tmpl. The main mechanism for extra pages occurs with the
+# "Page Custom muiExtraPagesAfterWelcome_Create" line, which
+# references the function "muiExtraPagesAfterWelcome_Create" for page creation.
+
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !insertmacro MUI_PAGE_WELCOME
 
