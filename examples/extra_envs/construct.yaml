@@ -28,4 +28,6 @@ build_outputs:
   - pkgs_list
   - pkgs_list:
       env: py38
-  - licenses
+  - licenses:
+      include_text: True
+      text_errors: replace
