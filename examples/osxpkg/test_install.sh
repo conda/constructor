@@ -8,4 +8,4 @@ printenv >> "$HOME/postinstall.txt"
 # default_location_pkg
 [ "$(basename "$(dirname "$PREFIX")")" = "Library" ] || exit 1
 # pkg_name
-[ "$(basename "$PREFIX")" = "osx pkg test" ] || exit 1
+[ "$(basename "$PREFIX")" = "osx-pkg-test" ] || exit 1
