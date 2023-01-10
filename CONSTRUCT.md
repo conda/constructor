@@ -563,8 +563,11 @@ Read notes about the particularities of Windows silent mode `/S` in the
 
 _required:_ no<br/>
 _type:_ boolean<br/>
-Check if the path where the distribution is installed contains spaces and show a warning
-if any spaces are found. Default is True. (Windows only).
+Check if the path where the distribution is installed contains spaces. Default is True.
+To allow installations with spaces, change to False. Note that:
+
+- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.
+- `conda` cannot be present in the `base` environment
 
 Read notes about the particularities of Windows silent mode `/S` in the
 `installer_type` documentation.
@@ -661,8 +664,11 @@ Allowed keys are:
 - `pkgs_list`: The list of packages contained in a given environment. Options:
     - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
 - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
-    - `include_text` (optional, default=`False`): Whether to dump the license text in the JSON.
+    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
       If false, only the path will be included.
+    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
+      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors' 
+      argument is valid. See https://docs.python.org/3/library/functions.html#open.
 
 
 ## Available selectors

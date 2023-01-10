@@ -1,10 +1,10 @@
-:: base env
+:: base env has python 3.9
 if not exist "%PREFIX%\conda-meta\history" exit 1
-"%PREFIX%\python.exe" -c "from sys import version_info; assert version_info[:2] == (3, 7)" || goto :error
+"%PREFIX%\python.exe" -c "from sys import version_info; assert version_info[:2] == (3, 9)" || goto :error
 
-:: extra env named 'py38'
-if not exist "%PREFIX%\envs\py38\conda-meta\history" exit 1
-"%PREFIX%\envs\py38\python.exe" -c "from sys import version_info; assert version_info[:2] == (3, 8)" || goto :error
+:: extra env named 'py310' has python 3.10
+if not exist "%PREFIX%\envs\py310\conda-meta\history" exit 1
+"%PREFIX%\envs\py310\python.exe" -c "from sys import version_info; assert version_info[:2] == (3, 10)" || goto :error
 
 :: extra env named 'dav1d' only contains dav1d, no python
 if not exist "%PREFIX%\envs\dav1d\conda-meta\history" exit 1

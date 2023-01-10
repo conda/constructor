@@ -49,10 +49,10 @@ rm -f "$PREFIX/env.txt"
 
 # Same, but for the extra environments
 
-mkdir -p $PREFIX/envs
+mkdir -p "$PREFIX/envs"
 
-for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
-    env_name=$(basename ${env_pkgs})
+for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
+    env_name="$(basename "${env_pkgs}")"
     if [[ "${env_name}" == "*" ]]; then
         continue
     fi
@@ -62,7 +62,7 @@ for env_pkgs in ${PREFIX}/pkgs/envs/*/; do
     touch "$PREFIX/envs/$env_name/conda-meta/history"
 
     if [[ -f "${env_pkgs}channels.txt" ]]; then
-        env_channels=$(cat "${env_pkgs}channels.txt")
+        env_channels="$(cat "${env_pkgs}channels.txt")"
         rm -f "${env_pkgs}channels.txt"
     else
         env_channels="__CHANNELS__"
@@ -99,7 +99,7 @@ fi
 
 # This is unneeded for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
-chown -R $USER "$PREFIX"
+chown -R "$USER" "$PREFIX"
 
 notify "Done! Installation is available in $PREFIX."
 

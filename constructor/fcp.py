@@ -367,25 +367,28 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(), ignore_duplicate_files=True, environment=None,
           environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
-          transmute_file_type='', extra_envs=None):
+          transmute_file_type='', extra_envs=None, check_path_spaces=True):
     precs = _solve_precs(
         name, version, download_dir, platform, channel_urls=channel_urls,
         channels_remap=channels_remap, specs=specs, exclude=exclude,
         menu_packages=menu_packages, environment=environment,
         environment_file=environment_file, verbose=verbose, conda_exe=conda_exe
     )
-    base_has_conda = any(rec.name == 'conda' for rec in precs)
-    if extra_envs and not base_has_conda:
-        sys.exit(
-            "Using 'extra_envs' requires 'conda'! "
-            "Add it to 'specs', 'environment_file', or 'environment'."
+    extra_envs = extra_envs or {}
+    conda_in_base: PackageCacheRecord = next((prec for prec in precs if prec.name == "conda"), None)
+    if conda_in_base:
+        if not check_path_spaces and platform.startswith(("linux-", "osx-")):
+            raise RuntimeError(
+                "'check_path_spaces=False' cannot be used on Linux and macOS installers "
+                "if 'conda' is present in the 'base' environment."
+            )
+    elif extra_envs:
+        raise RuntimeError(
+            "conda needs to be present in 'base' environment for 'extra_envs' to work"
         )
 
     extra_envs_precs = {}
-    for env_name, env_config in (extra_envs or {}).items():
-        if not any(prec.name == "conda" for prec in precs):
-            raise RuntimeError("conda needs to be present in `base` environment for extra_envs to work")
-
+    for env_name, env_config in extra_envs.items():
         if verbose:
             print("Solving extra environment:", env_name)
         extra_envs_precs[env_name] = _solve_precs(
@@ -451,6 +454,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     environment_file = info.get("environment_file", None)
     transmute_file_type = info.get("transmute_file_type", "")
     extra_envs = info.get("extra_envs", {})
+    check_path_spaces = info.get("check_path_spaces", True)
 
     if not channel_urls and not channels_remap:
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
@@ -473,7 +477,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         has_conda, extra_envs_info) = _main(
             name, version, download_dir, platform, channel_urls, channels_remap, specs,
             exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
-            verbose, dry_run, conda_exe, transmute_file_type, extra_envs
+            verbose, dry_run, conda_exe, transmute_file_type, extra_envs, check_path_spaces
         )
 
     info["_all_pkg_records"] = pkg_records  # full PackageRecord objects

@@ -60,6 +60,7 @@ def get_header(conda_exec, tarball, info):
     ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     ppd['has_conda'] = info['_has_conda']
     ppd['enable_shortcuts'] = info['_enable_shortcuts']
+    ppd['check_path_spaces'] = info.get("check_path_spaces", True)
     install_lines = list(add_condarc(info))
     # Needs to happen first -- can be templated
     replace = {

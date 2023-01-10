@@ -1,7 +1,7 @@
 ### Enhancements
 
 * A new key `build_outputs` allows to generate extra artifacts besides the installer,
-  like JSON metadata files, solved environments lock files, or licensing reports (#595).
+  like JSON metadata files, solved environments lock files, or licensing reports (#595, #602).
 
 ### Bug fixes
 
