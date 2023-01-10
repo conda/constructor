@@ -58,6 +58,10 @@ The specifications are identical in form and purpose to those that would be
 included in a `conda create --file` command. Packages may also be specified
 by an exact URL; e.g.,
 `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
+
+The specs will be solved with the solver configured for your `base` conda installation,
+if any. Starting with conda 22.11, this behavior can be overriden with the
+`CONDA_SOLVER` environment variable.
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
@@ -108,12 +112,14 @@ create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
 and install the packages. The created environment MUST include `python`.
+
+Read notes about the solver in the `specs` field.
 '''),
 
     ('transmute_file_type', False, str, '''
 File type extension for the files to be transmuted into. Currently supports
 only '.conda'. See conda-package-handling for supported extension names.
-If left empty, no transumating is done.
+If left empty, no transmuting is done.
 '''),
 
     ('conda_default_channels', False, list, '''
