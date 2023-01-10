@@ -68,14 +68,13 @@ def insert_tempfiles_commands(paths: os.PathLike) -> List[str]:
     Returns:
         List[str]: Commands to be inserted into nsi template
     """
-    if paths:
-        # Setting OutPath to PlugnsDir so NSIS File command copies the path into the PluginsDir
-        lines = ['SetOutPath $PLUGINSDIR']
-        for path in sorted([Path(p) for p in paths]):
-            lines.append(f"File {path}")
-        return lines
-    else:
-        return ['']
+    if not paths:
+        return []
+    # Setting OutPath to PluginsDir so NSIS File command copies the path into the PluginsDir
+    lines = ['SetOutPath $PLUGINSDIR']
+    for path in sorted([Path(p) for p in paths]):
+        lines.append(f"File {path}")
+    return lines
 
 
 def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
