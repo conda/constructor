@@ -7,4 +7,4 @@
 set -x
 PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
-"$PREFIX/bin/conda" init --all
+"$PREFIX/bin/python" -m conda init --all

@@ -11,3 +11,5 @@ pre_install_desc: "Adding this description makes the script selectable in the UI
 post_install: post_install.sh  # [unix]
 post_install: post_install.bat  # [win]
 post_install_desc: "Adding this description makes the script selectable in the UI"
+check_path_spaces: False
+check_path_length: False
