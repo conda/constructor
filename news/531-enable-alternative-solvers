@@ -1,6 +1,6 @@
 ### Enhancements:
 
-* Enable alternative solvers by obeying `CONDA_EXPERIMENTAL_SOLVER` if set and available. (#531)
+* Enable alternative solvers by obeying `CONDA_SOLVER` if set and available. (#531, #597)
 
 ### Bug fixes:
 
