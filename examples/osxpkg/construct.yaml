@@ -2,9 +2,9 @@ name: osxpkgtest
 version: 1.2.3
 
 # This config will result in a default install path:
-# ~/Library/osx-pkg-test
+# "~/Library/osx-pkg-test" (spaces not allowed because 'conda' is in 'specs')
 default_location_pkg: Library
-pkg_name: osx-pkg-test
+pkg_name: "osx-pkg-test"
 
 channels:
   - http://repo.anaconda.com/pkgs/main/

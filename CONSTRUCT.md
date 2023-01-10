@@ -563,8 +563,11 @@ Read notes about the particularities of Windows silent mode `/S` in the
 
 _required:_ no<br/>
 _type:_ boolean<br/>
-Check if the path where the distribution is installed contains spaces and show a warning
-if any spaces are found. Default is True. (Windows only).
+Check if the path where the distribution is installed contains spaces. Default is True.
+To allow installations with spaces, change to False. Note that:
+
+- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.
+- `conda` cannot be present in the `base` environment
 
 Read notes about the particularities of Windows silent mode `/S` in the
 `installer_type` documentation.
@@ -649,6 +652,20 @@ paths, they will be considered relative to the directory where `construct.yaml` 
 This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
+
+## `build_outputs`
+
+_required:_ no<br/>
+_type:_ list<br/>
+Additional artifacts to be produced after building the installer.
+It expects either a list of strings or single-key dictionaries:
+Allowed keys are:
+- `info.json`: The internal `info` object, serialized to JSON. Takes no options.
+- `pkgs_list`: The list of packages contained in a given environment. Options:
+    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
+- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
+    - `include_text` (optional, default=`False`): Whether to dump the license text in the JSON.
+      If false, only the path will be included.
 
 
 ## Available selectors
