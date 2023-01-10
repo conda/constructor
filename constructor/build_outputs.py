@@ -55,7 +55,33 @@ def dump_packages_list(info, env="base"):
     return outpath
 
 
-def dump_licenses(info, include_text=False):
+def dump_licenses(info, include_text=False, text_errors=None):
+    """
+    Create a JSON document with a mapping with schema:
+
+    {
+        PackageRecord.dist_str(): {
+            "type": str, # the license identifier
+            "files: [
+                {
+                    "path": str,
+                    "text": Optional[str],
+                },
+                ...
+            ]
+        },
+        ...
+    }
+
+    Args:
+        include_text: bool
+            Whether to copy the contents of each license file in the JSON document,
+            under .*.files[].text.
+        text_errors: str or None
+            How to handle decoding errors when reading the license text. Only relevant
+            if include_text is True. Any str accepted by open()'s 'errors' argument is
+            valid. See https://docs.python.org/3/library/functions.html#open.
+    """
     licenses = defaultdict(dict)
     for pkg_record in info["_all_pkg_records"]:
         extracted_package_dir = pkg_record.extracted_package_dir
@@ -68,11 +94,11 @@ def dump_licenses(info, include_text=False):
         for directory, _, files in os.walk(licenses_dir):
             for filepath in files:
                 license_path = os.path.join(directory, filepath)
-                license_file = {"path": license_path}
+                license_file = {"path": license_path, "text": None}
                 if include_text:
-                    license_file["text"] = Path(license_path).read_text()
+                    license_file["text"] = Path(license_path).read_text(errors=text_errors)
                 license_files.append(license_file)
-    
+
     outpath = os.path.join(info["_output_dir"], "licenses.json")
     with open(outpath, "w") as f:
         json.dump(licenses, f, indent=2, default=repr)
