@@ -131,7 +131,7 @@ def run_examples(keep_artifacts=None):
         output_dir = tempfile.mkdtemp(prefix=f"{test_key}-", dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
-        creation_errored = _execute(cmd)
+        creation_errored, *_ = _execute(cmd)
         errored += creation_errored
         for fpath in os.listdir(output_dir):
             ext = fpath.rsplit('.', 1)[-1]
@@ -168,7 +168,7 @@ def run_examples(keep_artifacts=None):
                 # the point is to just have spaces in the installation path -- one would be enough too :)
                 # This is why we have this weird .split() thingy down here:
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
-            test_errored = _execute(cmd)
+            test_errored, *_ = _execute(cmd)
             # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
             # which are only written if a special NSIS build is used
             win_error_lines = []
@@ -220,7 +220,7 @@ def run_examples(keep_artifacts=None):
                         # the tempdir cleanup later
                         f"/S _?={env_dir}"
                     ]
-                    test_errored = _execute(cmd)
+                    test_errored, *_ = _execute(cmd)
                     errored += test_errored
                     if test_errored:
                         which_errored.setdefault(example_path, []).append(
