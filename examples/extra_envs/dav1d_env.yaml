@@ -1,0 +1,5 @@
+name: NOT_USED
+channels:
+  - conda-forge
+dependencies:
+  - dav1d

@@ -5,8 +5,12 @@ import sys
 import tempfile
 import platform
 import shutil
+import time
+import subprocess
+from datetime import timedelta
 from itertools import product
-from subprocess import PIPE, Popen
+
+from pathlib import Path
 
 from constructor.utils import rm_rf
 from ruamel_yaml import round_trip_load, round_trip_dump
@@ -22,20 +26,33 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 REPO_DIR = os.path.dirname(HERE)
 EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
 PY3 = sys.version_info[0] == 3
-WHITELIST = ['grin', 'jetsonconda', 'maxiconda', 'newchan']
+WHITELIST = ['grin', 'jetsonconda', 'miniconda', 'newchan']
 BLACKLIST = []
+WITH_SPACES = {"extra_files", "noconda", "signing", "scripts"}
 
 
 def _execute(cmd):
     print(' '.join(cmd))
-    p = Popen(cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-    print('--- STDOUT ---')
-    stdout, stderr = p.communicate()
-    print(stdout.strip())
-    if stderr:
-        print('--- STDERR ---')
-        print(stderr.strip())
-    return p.returncode != 0, stdout.strip()
+    t0 = time.time()
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        stdout, stderr = p.communicate(timeout=420)
+        errored = p.returncode != 0
+    except subprocess.TimeoutExpired:
+        p.kill()
+        stdout, stderr = p.communicate()
+        print('--- TEST TIMEOUT ---')
+        errored = True
+    t1 = time.time()
+    if errored:
+        if stdout:
+            print('--- STDOUT ---')
+            print(stdout)
+        if stderr:
+            print('--- STDERR ---')
+            print(stderr)
+    print('--- Done in', timedelta(seconds=t1 - t0))
+    return errored, stdout.strip(), stderr.strip()
 
 
 def run_examples(keep_artifacts=None):
@@ -56,18 +73,25 @@ def run_examples(keep_artifacts=None):
     if platform.system() != 'Windows':
         env_name = "constructor-testing-micromamba"
         which_cmd = ["conda", "run", "--name", env_name, "which", "micromamba"]
-        errored, micromamba_path = _execute(which_cmd)
+        errored, micromamba_path, _ = _execute(which_cmd)
         if errored:
             _execute(["conda", "create", "--name", env_name, "--yes", "-c", "conda-forge", "micromamba"])
-            errored, micromamba_path = _execute(which_cmd)
+            errored, micromamba_path, _ = _execute(which_cmd)
             if errored:
-                raise NotImplementedError("Failed to find micromamba")
+                micromamba_path = "micromamba-could-not-be-found"
         print("Found micromamba at:", micromamba_path)
-        conda_exes += [micromamba_path]
+        conda_exes.append(micromamba_path)
 
+    if sys.platform.startswith("win") and "NSIS_USING_LOG_BUILD" not in os.environ:
+        print(
+            "! Warning !"
+            "  Windows installers are tested with NSIS in silent mode, which does"
+            "  not report errors on exit. You should use logging-enabled NSIS builds"
+            "  to generate an 'install.log' file this script will search for errors"
+            "  after completion."
+        )
     example_paths = []
     errored = 0
-
     if platform.system() != 'Darwin':
         BLACKLIST.append(os.path.join(EXAMPLES_DIR, "osxpkg"))
     if keep_artifacts:
@@ -80,54 +104,157 @@ def run_examples(keep_artifacts=None):
             if os.path.exists(os.path.join(fpath, 'construct.yaml')):
                 example_paths.append(fpath)
 
+    # NSIS won't error out when running scripts unless we set this custom environment variable
+    os.environ["NSIS_SCRIPTS_RAISE_ERRORS"] = "1"
+    
     parent_output = tempfile.mkdtemp()
     tested_files = set()
+    which_errored = {}
     for example_path, conda_exe in product(sorted(example_paths), conda_exes):
-        print(example_path)
-        print('-' * len(example_path))
-        output_dir = tempfile.mkdtemp(dir=parent_output)
-        input_dir = os.path.join(output_dir, "input-files")
-        cmd = COV_CMD + ['constructor', input_dir, '--output-dir', output_dir]
-
-        # Copy the input to a temporary directory so we can modify it if needed
-        shutil.copytree(example_path, input_dir)
+        example_name = Path(example_path).parent.name
+        test_with_spaces = example_name in WITH_SPACES
+        test_key = example_name
+        cmd = COV_CMD + ['constructor', '-v', example_path]
         if conda_exe:
-            with open(os.path.join(input_dir, "construct.yaml")) as fp:
-                data = round_trip_load(fp)
-            data["name"] = f"{data['name']}-{os.path.basename(conda_exe)}"
-            with open(os.path.join(input_dir, "construct.yaml"), "wt") as fp:
-                round_trip_dump(data, fp)
-            print("Setting conda.exe to:", conda_exe)
-            cmd += ['--conda-exe', conda_exe]
+            if not os.path.isfile(conda_exe):
+                errored +=1
+                which_errored.setdefault(
+                    (example_path, conda_exe), []
+                ).append("Could not find micromamba!")
+                continue
+            cmd += ["--conda-exe", conda_exe]
+            test_key = f"{example_name}+{os.path.basename(conda_exe)}"
+        
+        print(test_key)
+        print('-' * len(test_key))
 
-        # Create the installer
-        errored += _execute(cmd)[0]
+        output_dir = tempfile.mkdtemp(prefix=f"{test_key}-", dir=parent_output)
+        # resolve path to avoid some issues with TEMPDIR on Windows
+        output_dir = str(Path(output_dir).resolve())
+        creation_errored = _execute(cmd)
+        errored += creation_errored
         for fpath in os.listdir(output_dir):
             ext = fpath.rsplit('.', 1)[-1]
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
                 continue
             tested_files.add(fpath)
-            env_dir = tempfile.mkdtemp(dir=output_dir)
+            test_suffix = "s p a c e s" if test_with_spaces else None
+            env_dir = tempfile.mkdtemp(suffix=test_suffix, dir=output_dir)
             rm_rf(env_dir)
-            print('---- testing %s' % fpath)
-            fpath = os.path.join(output_dir, fpath)
+            fpath = Path(output_dir) / fpath
+            if conda_exe:
+                fpath = fpath.rename(fpath.parent / f"{fpath.stem}.micromamba{fpath.suffix}")
+            print('--- Testing %s' % fpath.name)
             if ext == 'sh':
-                cmd = ['bash', fpath, '-b', '-p', env_dir]
+                cmd = ['/bin/sh', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
-                # TODO: figure out how to do a command-line install
-                # to an arbitrary directory. No luck yet. For now
-                # we just expand it out
-                cmd = ['pkgutil', '--expand', fpath, env_dir]
+                if os.environ.get("CI"):
+                    # We want to run it in an arbitrary directory, but the options
+                    # are limited here... We can only install to $HOME :shrug:
+                    # but that will pollute ~, so we only do it if we are running on CI
+                    cmd = ['installer', '-pkg', fpath, '-dumplog',
+                           '-target', 'CurrentUserHomeDirectory']
+                else:
+                    # This command only expands the PKG, but does not install
+                    cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
-                cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', '/D=%s' % env_dir]
-            errored += _execute(cmd)[0]
+                # NSIS manual:
+                # > /D sets the default installation directory ($INSTDIR), overriding InstallDir and
+                # > InstallDirRegKey. It must be the last parameter used in the command line and must
+                # > not contain any quotes, even if the path contains spaces. Only absolute paths are
+                # > supported.
+                # Since subprocess.Popen WILL escape the spaces with quotes, we need to provide them
+                # as separate arguments. We don't care about multiple spaces collapsing into one, since
+                # the point is to just have spaces in the installation path -- one would be enough too :)
+                # This is why we have this weird .split() thingy down here:
+                cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
+            test_errored = _execute(cmd)
+            # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
+            # which are only written if a special NSIS build is used
+            win_error_lines = []
+            if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
+                test_errored = 0
+                try:
+                    log_is_empty = True
+                    with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
+                        for line in f:
+                            log_is_empty = False
+                            if ":error:" in line:
+                                win_error_lines.append(line)
+                                test_errored = 1
+                    if log_is_empty:
+                        test_errored = 1
+                        win_error_lines.append("Logfile was unexpectedly empty!")
+                except Exception as exc:
+                    test_errored = 1
+                    win_error_lines.append(
+                        f"Could not read logs! {exc.__class__.__name__}: {exc}\n"
+                        "This usually means that the destination folder could not be created.\n"
+                        "Possible causes: permissions, non-supported characters, long paths...\n"
+                        "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
+                        )
+            errored += test_errored
+            if test_errored:
+                which_errored.setdefault(example_path, []).append(fpath)
+                if win_error_lines:
+                    print('---  LOGS  ---')
+                    for line in win_error_lines:
+                        print(line.rstrip())
+                if ext == "pkg" and os.environ.get("CI"):
+                    # more complete logs are available under /var/log/install.log
+                    print('---  LOGS  ---')
+                    print("Tip: Debug locally and check the full logs in the Installer UI")
+                    print("     or check /var/log/install.log if run from the CLI.")
+            elif ext == "exe" and not test_with_spaces:
+                # The installer succeeded, test the uninstaller on Windows
+                # The un-installers are only tested when testing without spaces, as they hang during
+                # testing but work in UI mode.
+                uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
+                if uninstaller:
+                    cmd = [
+                        'cmd.exe', '/c', 'start', '/wait', 
+                        os.path.join(env_dir, uninstaller), 
+                        # We need silent mode + "uninstaller location" (_?=...) so the command can be
+                        # waited; otherwise, since the uninstaller copies itself to a different location
+                        # so it can be auto-deleted, it returns immediately and it gives us problems with
+                        # the tempdir cleanup later
+                        f"/S _?={env_dir}"
+                    ]
+                    test_errored = _execute(cmd)
+                    errored += test_errored
+                    if test_errored:
+                        which_errored.setdefault(example_path, []).append(
+                            "Wrong uninstall exit code or timeout."
+                        )
+                    paths_after_uninstall = os.listdir(env_dir)
+                    if len(paths_after_uninstall) > 2:
+                        # The debug installer writes to install.log too, which will only
+                        # be deleted _after_ a reboot. Finding some files is ok, but more
+                        # than two usually means a problem with the uninstaller.
+                        # Note this is is not exhaustive, because we are not checking 
+                        # whether the registry was restored, menu items were deleted, etc.
+                        # TODO :)
+                        which_errored.setdefault(example_path, []).append(
+                            "Uninstaller left too many files behind!\n - "
+                            "\n - ".join(paths_after_uninstall)
+                        )
+                else:
+                    which_errored.setdefault(example_path, []).append("Could not find uninstaller!")
+
             if keep_artifacts:
                 shutil.move(fpath, keep_artifacts)
-        print('')
+        if creation_errored:
+            which_errored.setdefault(example_path, []).append("Could not create installer!")
+        print()
 
+    print("-------------------------------")
     if errored:
-        print('Some examples failed!')
-        print('Assets saved in: %s' % parent_output)
+        print('Some examples failed:')
+        for key, reasons in which_errored.items():
+            print(f"+ {key}")
+            for reason in reasons:
+                print(f"---> {reason}")
+        print('Assets saved in: ', parent_output)
     else:
         print('All examples ran successfully!')
         shutil.rmtree(parent_output)

@@ -39,7 +39,7 @@ specific platforms - UNIX, Win.
 
 .. code-block::
 
-    name: Maxiconda
+    name: Miniconda
     version: 2.5.5
     channels:
     - http://repo.continuum.io/pkgs/main/

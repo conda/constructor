@@ -1,0 +1,20 @@
+### Enhancements:
+
+* Enable ``conclusion_text`` on Windows ``.exe`` and Unix ``.sh`` installers (#443 via #547 and #550).
+
+### Bug fixes:
+
+* <news item>
+
+### Deprecations:
+
+* <news item>
+
+### Docs:
+
+* <news item>
+
+### Other:
+
+* <news item>
+

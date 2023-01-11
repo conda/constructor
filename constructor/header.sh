@@ -18,14 +18,16 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
 fi
 
 # Export variables to make installer metadata available to pre/post install scripts
+# NOTE: If more vars are added, make sure to update the examples/scripts tests too
 export INSTALLER_NAME="__NAME__"
 export INSTALLER_VER="__VERSION__"
 export INSTALLER_PLAT="__PLAT__"
+export INSTALLER_TYPE="SH"
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
-PREFIX=__DEFAULT_PREFIX__
+PREFIX="__DEFAULT_PREFIX__"
 #if batch_mode
 BATCH=1
 #else
@@ -56,7 +58,11 @@ Installs __NAME__ __VERSION__
 #if not keep_pkgs
 -k           do not clear the package cache after installation
 #endif
+#if check_path_spaces
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
+#else
+-p PREFIX    install prefix, defaults to $PREFIX
+#endif
 -s           skip running pre/post-link/install scripts
 -u           update an existing installation
 #if has_conda
@@ -64,106 +70,48 @@ Installs __NAME__ __VERSION__
 #endif
 "
 
-if which getopt > /dev/null 2>&1; then
-    OPTS=$(getopt bifhkp:sut "$*" 2>/dev/null)
-    if [ ! $? ]; then
-        printf "%s\\n" "$USAGE"
-        exit 2
-    fi
-
-    eval set -- "$OPTS"
-
-    while true; do
-        case "$1" in
-            -h)
-                printf "%s\\n" "$USAGE"
-                exit 2
-                ;;
-            -b)
-                BATCH=1
-                shift
-                ;;
-            -i)
-                BATCH=0
-                shift
-                ;;
-            -f)
-                FORCE=1
-                shift
-                ;;
-            -k)
-                KEEP_PKGS=1
-                shift
-                ;;
-            -p)
-                PREFIX="$2"
-                shift
-                shift
-                ;;
-            -s)
-                SKIP_SCRIPTS=1
-                shift
-                ;;
-            -u)
-                FORCE=1
-                shift
-                ;;
-#if has_conda
-            -t)
-                TEST=1
-                shift
-                ;;
-#endif
-            --)
-                shift
-                break
-                ;;
-            *)
-                printf "ERROR: did not recognize option '%s', please try -h\\n" "$1"
-                exit 1
-                ;;
-        esac
-    done
-else
-    while getopts "bifhkp:sut" x; do
-        case "$x" in
-            h)
-                printf "%s\\n" "$USAGE"
-                exit 2
+# We used to have a getopt version here, falling back to getopts if needed
+# However getopt is not standardized and the version on Mac has different
+# behaviour. getopts is good enough for what we need :)
+# More info: https://unix.stackexchange.com/questions/62950/
+while getopts "bifhkp:sut" x; do
+    case "$x" in
+        h)
+            printf "%s\\n" "$USAGE"
+            exit 2
+        ;;
+        b)
+            BATCH=1
             ;;
-            b)
-                BATCH=1
-                ;;
-            i)
-                BATCH=0
-                ;;
-            f)
-                FORCE=1
-                ;;
-            k)
-                KEEP_PKGS=1
-                ;;
-            p)
-                PREFIX="$OPTARG"
-                ;;
-            s)
-                SKIP_SCRIPTS=1
-                ;;
-            u)
-                FORCE=1
-                ;;
+        i)
+            BATCH=0
+            ;;
+        f)
+            FORCE=1
+            ;;
+        k)
+            KEEP_PKGS=1
+            ;;
+        p)
+            PREFIX="$OPTARG"
+            ;;
+        s)
+            SKIP_SCRIPTS=1
+            ;;
+        u)
+            FORCE=1
+            ;;
 #if has_conda
-            t)
-                TEST=1
-                ;;
+        t)
+            TEST=1
+            ;;
 #endif
-            ?)
-                printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
-                exit 1
-                ;;
-        esac
-    done
-fi
+        ?)
+            printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
+            exit 1
+            ;;
+    esac
+done
 
 # For testing, keep the package cache around longer
 CLEAR_AFTER_TEST=0
@@ -341,6 +289,7 @@ EOF
     printf "[%s] >>> " "$PREFIX"
     read -r user_prefix
     if [ "$user_prefix" != "" ]; then
+#if check_path_spaces is True
         case "$user_prefix" in
             *\ * )
                 printf "ERROR: Cannot install into directories with spaces\\n" >&2
@@ -350,15 +299,20 @@ EOF
                 eval PREFIX="$user_prefix"
                 ;;
         esac
+#else
+        PREFIX="$user_prefix"
+#endif
     fi
 fi # !BATCH
 
+#if check_path_spaces is True
 case "$PREFIX" in
     *\ * )
         printf "ERROR: Cannot install into directories with spaces\\n" >&2
         exit 1
         ;;
 esac
+#endif
 
 if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
     printf "ERROR: File or directory already exists: '%s'\\n" "$PREFIX" >&2
@@ -367,7 +321,6 @@ if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
 elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
     REINSTALL=1
 fi
-
 
 if ! mkdir -p "$PREFIX"; then
     printf "ERROR: Could not create directory: '%s'\\n" "$PREFIX" >&2
@@ -436,8 +389,8 @@ extract_range $boundary0 $boundary1 > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 
 export TMP_BACKUP="$TMP"
-export TMP=$PREFIX/install_tmp
-mkdir -p $TMP
+export TMP="$PREFIX/install_tmp"
+mkdir -p "$TMP"
 
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
@@ -471,7 +424,6 @@ else
 fi
 #endif
 
-PYTHON="$PREFIX/bin/python"
 MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
@@ -482,16 +434,41 @@ export FORCE
 # https://github.com/conda/conda/pull/9073
 mkdir -p ~/.conda > /dev/null 2>&1
 
+printf "\nInstalling base environment...\n\n"
+
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_CHANNELS=__CHANNELS__ \
+CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+rm -f "$PREFIX/pkgs/env.txt"
 
-if [ "$KEEP_PKGS" = "0" ]; then
-    rm -fr $PREFIX/pkgs/*.tar.bz2
-    rm -fr $PREFIX/pkgs/*.conda
-fi
+#if has_conda
+mkdir -p "$PREFIX/envs"
+for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
+    env_name=$(basename "${env_pkgs}")
+    if [ "$env_name" = "*" ]; then
+        continue
+    fi
+    printf "\nInstalling ${env_name} environment...\n\n"
+    mkdir -p "$PREFIX/envs/$env_name"
+
+    if [ -f "${env_pkgs}channels.txt" ]; then
+        env_channels=$(cat "${env_pkgs}channels.txt")
+        rm -f "${env_pkgs}channels.txt"
+    else
+        env_channels="__CHANNELS__"
+    fi
+
+    # TODO: custom shortcuts per env?
+    CONDA_SAFETY_CHECKS=disabled \
+    CONDA_EXTRA_SAFETY_CHECKS=no \
+    CONDA_CHANNELS="$env_channels" \
+    CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
+    rm -f "${env_pkgs}env.txt"
+done
+#endif
 
 __INSTALL_COMMANDS__
 
@@ -499,15 +476,11 @@ POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 
-rm -f $PREFIX/conda.exe
-rm -f $PREFIX/pkgs/env.txt
+rm -f "$CONDA_EXEC"
 
-rm -rf $PREFIX/install_tmp
+rm -rf "$PREFIX/install_tmp"
 export TMP="$TMP_BACKUP"
 
-#if has_conda
-mkdir -p $PREFIX/envs
-#endif
 
 #The templating doesn't support nested if statements
 #if has_post_install
@@ -537,10 +510,12 @@ if [ "$KEEP_PKGS" = "0" ]; then
 else
     # Attempt to delete the empty temporary directories in the package cache
     # These are artifacts of the constructor --extract-conda-pkgs
-    find $PREFIX/pkgs -type d -empty -exec rmdir {} \; 2>/dev/null || :
+    find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
-printf "installation finished.\\n"
+cat <<EOF
+__CONCLUSION_TEXT__
+EOF
 
 if [ "$PYTHONPATH" != "" ]; then
     printf "WARNING:\\n"
@@ -552,13 +527,14 @@ if [ "$PYTHONPATH" != "" ]; then
 fi
 
 if [ "$BATCH" = "0" ]; then
-#if initialize_by_default is True
+#if initialize_conda is True and initialize_by_default is True
     DEFAULT=yes
-#else
+#endif
+#if initialize_conda is True and initialize_by_default is False
     DEFAULT=no
 #endif
 
-#if has_conda
+#if has_conda and initialize_conda is True
     # Interactive mode.
 
     printf "Do you wish the installer to initialize __NAME__\\n"
@@ -583,13 +559,15 @@ if [ "$BATCH" = "0" ]; then
         printf "\\n"
     else
         case $SHELL in
-            *zsh) $PREFIX/bin/conda init zsh ;;
-            *) $PREFIX/bin/conda init ;;
+            # We call the module directly to avoid issues with spaces in shebang
+            *zsh) "$PREFIX/bin/python" -m conda init zsh ;;
+            *) "$PREFIX/bin/python" -m conda init ;;
         esac
         if [ -f "$PREFIX/bin/mamba" ]; then
             case $SHELL in
-                *zsh) $PREFIX/bin/mamba init zsh ;;
-                *) $PREFIX/bin/mamba init ;;
+                # We call the module directly to avoid issues with spaces in shebang
+                *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
+                *) "$PREFIX/bin/python" -m mamba.mamba init ;;
             esac
         fi
     fi

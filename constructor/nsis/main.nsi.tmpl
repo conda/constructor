@@ -1,9 +1,30 @@
 # Installer template file for creating a Windows installer using NSIS.
 
 # Dependencies:
-#   NSIS 3.01      conda install nsis  (includes extra unicode plugins)
+#   NSIS >=3.08      conda install "nsis>=3.08"  (includes extra unicode plugins)
 
 Unicode "true"
+
+#if enable_debugging is True
+# Special logging build needed for ENABLE_LOGGING
+# See https://nsis.sourceforge.io/Special_Builds
+!define ENABLE_LOGGING
+#endif
+
+# Comes from https://nsis.sourceforge.io/Logging:Enable_Logs_Quickly
+!define LogSet "!insertmacro LogSetMacro"
+!macro LogSetMacro SETTING
+  !ifdef ENABLE_LOGGING
+    LogSet ${SETTING}
+  !endif
+!macroend
+
+!define LogText "!insertmacro LogTextMacro"
+!macro LogTextMacro INPUT_TEXT
+  !ifdef ENABLE_LOGGING
+    LogText ${INPUT_TEXT}
+  !endif
+!macroend
 
 !include "WinMessages.nsh"
 !include "WordFunc.nsh"
@@ -25,6 +46,7 @@ Unicode "true"
 !define VERSION __VERSION__
 !define COMPANY __COMPANY__
 !define ARCH __ARCH__
+!define PLATFORM __PLATFORM__
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
@@ -32,8 +54,11 @@ Unicode "true"
 !define DEFAULT_PREFIX __DEFAULT_PREFIX__
 !define DEFAULT_PREFIX_DOMAIN_USER __DEFAULT_PREFIX_DOMAIN_USER__
 !define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
+!define PRE_INSTALL_DESC __PRE_INSTALL_DESC__
 !define POST_INSTALL_DESC __POST_INSTALL_DESC__
 !define MENU_PKGS "@MENU_PKGS@"
+!define SHOW_REGISTER_PYTHON __SHOW_REGISTER_PYTHON__
+!define SHOW_ADD_TO_PATH __SHOW_ADD_TO_PATH__
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "@UNINSTALL_NAME@"
 !define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
@@ -100,6 +125,7 @@ BrandingText /TRIMLEFT "${COMPANY}"
 !define MUI_UNICON __ICONFILE__
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_BITMAP __HEADERIMAGE__
+!define MUI_HEADERIMAGE_UNBITMAP __HEADERIMAGE__
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
@@ -120,6 +146,11 @@ Page Custom InstModePage_Create InstModePage_Leave
 # Custom options now differ depending on installation mode.
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
+#if with_conclusion_text is True
+!define MUI_FINISHPAGE_TITLE __CONCLUSION_TITLE__
+!define MUI_FINISHPAGE_TITLE_3LINES
+!define MUI_FINISHPAGE_TEXT __CONCLUSION_TEXT__
+#endif
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
@@ -131,6 +162,7 @@ Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_LANGUAGE "English"
 
 Function SkipPageIfUACInnerInstance
+    ${LogSet} on
     ${If} ${UAC_IsInnerInstance}
         Abort
     ${EndIf}
@@ -197,8 +229,12 @@ FunctionEnd
                 Install for just me, add to PATH and register as system Python:$\n\
                     $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
                 Install for just me, with no registry modification (for CI):$\n\
-                    $EXEFILE /NoRegistry=1$\n"
-                    Abort
+                    $EXEFILE /NoRegistry=1$\n$\n\
+            NOTE: If you install for AllUsers, then the option to AddToPath$\n\
+                is disabled (i.e. if ./InstallationType=AllUsers, then$\n\
+                /AddToPath=1 will be ignored).$\n" \
+            /SD IDOK
+            Abort
      ${EndIf}
 
     ClearErrors
@@ -218,16 +254,6 @@ FunctionEnd
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${ElseIf} $ARGV_RegisterPython = "0"
             StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
-        ${EndIf}
-    ${EndIf}
-
-    ClearErrors
-    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
-    ${IfNot} ${Errors}
-        ${If} $ARGV_AddToPath = "1"
-            StrCpy $Ana_AddToPath_State ${BST_CHECKED}
-        ${ElseIf} $ARGV_AddToPath = "0"
-            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
 
@@ -276,11 +302,31 @@ FunctionEnd
 !macroend
 
 Function OnInit_Release
+    ${LogSet} on
     !insertmacro ParseCommandLineArgs
 
+    # Parsing the AddToPath option here (and not in ParseCommandLineArgs) to prevent the MessageBox from showing twice.
+    # For more context, see https://github.com/conda/constructor/pull/584#issuecomment-1347688020
+    ClearErrors
+    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
+    ${IfNot} ${Errors}
+        ${If} $ARGV_AddToPath = "1"
+            ${If} $InstMode == ${ALL_USERS}
+                # To address CVE-2022-26526.
+                # In AllUsers install mode, do not allow AddToPath as an option.
+                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+            ${Else}
+                StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+            ${EndIf}
+        ${ElseIf} $ARGV_AddToPath = "0"
+            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
 FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
+    ${LogSet} on
     Exch $0
     Push $1
     Push $2
@@ -296,6 +342,7 @@ Function InstModePage_RadioButton_OnClick
 FunctionEnd
 
 Function InstModePage_Create
+    ${LogSet} on
     Push $0
     Push $1
     Push $2
@@ -342,6 +389,7 @@ Function InstModePage_Create
 FunctionEnd
 
 Function DisableBackButtonIfUACInnerInstance
+    ${LogSet} on
     Push $0
     ${If} ${UAC_IsInnerInstance}
         GetDlgItem $0 $HWNDParent 3
@@ -351,6 +399,7 @@ Function DisableBackButtonIfUACInnerInstance
 FunctionEnd
 
 Function RemoveNextBtnShield
+    ${LogSet} on
     Push $0
     GetDlgItem $0 $HWNDParent 1
     SendMessage $0 ${BCM_SETSHIELD} 0 0
@@ -358,6 +407,7 @@ Function RemoveNextBtnShield
 FunctionEnd
 
 Function InstModeChanged
+    ${LogSet} on
     # When using the installer with /S (silent mode), the /D option sets $INSTDIR,
     # and it is therefore important not to overwrite $INSTDIR here, but it is also
     # important that we do call SetShellVarContext with the appropriate value.
@@ -388,6 +438,7 @@ FunctionEnd
 !macroend
 
 Function InstModePage_Leave
+    ${LogSet} on
     Push $0
     Push $1
     Push $2
@@ -408,6 +459,7 @@ Function InstModePage_Leave
 FunctionEnd
 
 Function .onInit
+    ${LogSet} on
     Push $0
     Push $1
     Push $2
@@ -427,7 +479,8 @@ Function .onInit
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "This installer is for a 64-bit version for @NAME@$\n\
             but your system is 32-bit. Please use the 32-bit Windows$\n\
-            @NAME@ installer."
+            @NAME@ installer." \
+            /SD IDOK
         Abort
     ${EndIf}
 #endif
@@ -513,7 +566,8 @@ Function .onInit
         StrCpy $INSTDIR_JUSTME $0
     ${Else}
         # Should never happen; indicates a logic error above.
-        MessageBox MB_OK "Internal error: IsUserDomain not set properly!"
+        MessageBox MB_OK "Internal error: IsUserDomain not set properly!" \
+                   /SD IDOK
         Abort
     ${EndIf}
 
@@ -555,16 +609,18 @@ Function .onInit
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from contruct.yaml.
     # If initialize_by_default (register_python_default) is None, do nothing.
-#if initialize_by_default is True
-    StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+#if initialize_conda is True and initialize_by_default is True
+    ${If} $InstMode == ${JUST_ME}
+        StrCpy $Ana_AddToPath_State ${BST_CHECKED}
+    ${EndIF}
 #endif
-#if initialize_by_default is False
+#if initialize_conda is True and initialize_by_default is False
     StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
 #endif
-#if register_python_default is True
+#if register_python is True and register_python_default is True
     StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
 #endif
-#if register_python_default is False
+#if register_python is True and register_python_default is False
     StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
 #endif
 #if check_path_length is True
@@ -579,11 +635,17 @@ Function .onInit
 #if keep_pkgs is False
     StrCpy $Ana_ClearPkgCache_State ${BST_CHECKED}
 #endif
-#if post_install_exists is True
-    StrCpy $Ana_PostInstall_State ${BST_CHECKED}
+#if pre_install_exists is True
+    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
 #endif
-#if post_install_exists is False
-    StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
+#if pre_install_exists is False
+    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
+#endif
+#if pre_install_exists is True
+    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
+#endif
+#if pre_install_exists is False
+    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
 #endif
 
     Call OnInit_Release
@@ -620,6 +682,7 @@ FunctionEnd
 
 # http://nsis.sourceforge.net/Check_for_spaces_in_a_directory_path
 Function CheckForSpaces
+    ${LogSet} on
     Exch $R0
     Push $R1
     Push $R2
@@ -643,6 +706,7 @@ FunctionEnd
 
 # http://nsis.sourceforge.net/StrCSpn,_StrCSpnReverse:_Scan_strings_for_characters
 Function StrCSpn
+ ${LogSet} on
  Exch $R0 ; string to check
  Exch
  Exch $R1 ; string of chars
@@ -702,10 +766,13 @@ Pop $0
 
 
 Function OnDirectoryLeave
+    ${LogSet} on
     ${If} ${IsNonEmptyDirectory} "$InstDir"
+        DetailPrint "::error:: Directory '$INSTDIR' is not empty, please choose a different location."
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Directory '$INSTDIR' is not empty,$\n\
-             please choose a different location."
+             please choose a different location." \
+            /SD IDOK
         Abort
     ${EndIf}
 
@@ -724,15 +791,22 @@ Function OnDirectoryLeave
                 WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
             ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
             ${Else}
+                DetailPrint "::error:: The installation path should be shorter than 46 characters or \
+                             the installation requires administrator rights to enable long \
+                             path on Windows."
                 MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters or \
                                               the installation requires administrator rights to enable long \
-                                              path on Windows."
+                                              path on Windows." \
+                           /SD IDOK
                 Abort
             ${EndIf}
         ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
         ${Else}
+            DetailPrint "::error:: The installation path should be shorter than 46 characters. \
+                         Please choose another location."
             MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters. \
-                                          Please choose another location."
+                                          Please choose another location." \
+                       /SD IDOK
             Abort
         ${EndIf}
     ${EndIf}
@@ -756,8 +830,12 @@ Function OnDirectoryLeave
         MessageBox MB_OK|MB_ICONINFORMATION \
             "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
              This can cause problems with several Conda packages.$\n \
-             Please consider removing the space$R1."
-
+             Please consider removing the space$R1." \
+            /SD IDOK
+        ${If} ${Silent}
+            DetailPrint "::error:: 'Destination folder' contains $R0 space$R1."
+            abort
+        ${EndIf}
     NoSpaces:
 #endif
 
@@ -768,16 +846,20 @@ Function OnDirectoryLeave
     Pop $R0
 
     StrCmp $R0 "" NoInvalidCharaceters
+        DetailPrint "::error:: 'Destination Folder' contains the following invalid character: $R0"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "Error: 'Destination Folder' contains the following invalid character: $R0"
+            "Error: 'Destination Folder' contains the following invalid character: $R0" \
+            /SD IDOK
         abort
     NoInvalidCharaceters:
 
     UnicodePathTest::SpecialCharPathTest $INSTDIR
     Pop $R1
     StrCmp $R1 "nothingspecial" nothing_special_path
-        messagebox mb_ok|MB_ICONEXCLAMATION \
-            "Error: 'Destination Folder' contains the following invalid character$R1"
+        DetailPrint "::error:: 'Destination Folder' contains the following invalid character$R1"
+        MessageBox MB_OK|MB_ICONEXCLAMATION \
+            "Error: 'Destination Folder' contains the following invalid character$R1" \
+            /SD IDOK
         abort
     nothing_special_path:
 
@@ -792,10 +874,13 @@ Function OnDirectoryLeave
       StrCmp ${PY_VER} "2.7" not_cp_acp_capable
       StrCmp $R1 "ascii_cp_acp" valid_path
       not_cp_acp_capable:
-
-          messagebox mb_ok|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
+          DetailPrint "::error:: Due to incompatibility with several \
               Python libraries, 'Destination Folder' cannot contain non-ascii characters \
               (special characters or diacritics).  Please choose another location."
+          MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
+              Python libraries, 'Destination Folder' cannot contain non-ascii characters \
+              (special characters or diacritics).  Please choose another location." \
+              /SD IDOK
           abort
 
       valid_path:
@@ -804,9 +889,12 @@ Function OnDirectoryLeave
     ${IsWritable} $INSTDIR $R1
     IntCmp $R1 0 pathgood
     Pop $R1
-    MessageBox mb_ok|MB_ICONEXCLAMATION \
+    DetailPrint "::error: Path $INSTDIR is not writable. Please check permissions or \
+                 try respawning the installer with elevated privileges."
+    MessageBox MB_OK|MB_ICONEXCLAMATION \
         "Error: Path $INSTDIR is not writable. Please check permissions or \
-         try respawning the installer with elevated privileges."
+         try respawning the installer with elevated privileges." \
+        /SD IDOK
     Abort
 
     pathgood:
@@ -815,6 +903,7 @@ Function OnDirectoryLeave
 FunctionEnd
 
 Function .onVerifyInstDir
+    ${LogSet} on
     StrLen $0 $Desktop
     StrCpy $0 $INSTDIR $0
     StrCmp $0 $Desktop 0 PathGood
@@ -822,29 +911,57 @@ Function .onVerifyInstDir
     PathGood:
 FunctionEnd
 
-Function AbortRetryNSExecWait
-    Pop $1
-    Pop $2
-    ${Do}
-        nsExec::ExecToLog $2
-        pop $0
-        ${If} $0 != "0"
-            MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
-                    $1 /SD IDIGNORE IDABORT abort IDRETRY retry
-            ; IDIGNORE: Continue anyway
-            StrCpy $0 "0"
-            goto retry
-          abort:
-            ; Abort installation
-            Abort
-          retry:
-            ; Retry the nsExec command
-        ${EndIf}
-    ${LoopWhile} $0 != "0"
-FunctionEnd
+# Make function available for both installer and uninstaller
+# Uninstaller functions need an `un.` prefix, so we use a macro to do both
+# see https://nsis.sourceforge.io/Sharing_functions_between_Installer_and_Uninstaller
+!macro AbortRetryNSExecWaitMacro un
+    Function ${un}AbortRetryNSExecWait
+        # This function expects three arguments in the stack
+        # $1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
+        # $2: The message to show if an error occurred
+        # $3: The command to run, quoted
+        # Note that the args need to be pushed to the stack in reverse order!
+        # Search 'AbortRetryNSExecWait' in this script to see examples
+        ${LogSet} on
+        Pop $1
+        Pop $2
+        Pop $3
+        ${Do}
+            ${If} $1 == "WithLog"
+                nsExec::ExecToLog $3
+            ${ElseIf} $1 == "NoLog"
+                nsExec::Exec $3
+            ${Else}
+                DetailPrint "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
+                Abort
+            ${EndIf}
+            pop $0
+            ${If} $0 != "0"
+                DetailPrint "::error:: $2"
+                MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
+                        $2 /SD IDIGNORE IDABORT abort IDRETRY retry
+                ; IDIGNORE: Continue anyway
+                StrCpy $0 "0"
+                goto retry
+            abort:
+                ; Abort installation
+                Abort
+            retry:
+                ; Retry the nsExec command
+            ${EndIf}
+        ${LoopWhile} $0 != "0"
+    FunctionEnd
+!macroend
+!insertmacro AbortRetryNSExecWaitMacro ""
+!insertmacro AbortRetryNSExecWaitMacro "un."
 
 # Installer sections
 Section "Install"
+    ${LogSet} on
+
+    ${If} ${Silent}
+        call OnDirectoryLeave
+    ${EndIf}
 
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
@@ -863,6 +980,10 @@ Section "Install"
 
     SetOutPath "$INSTDIR"
     File __CONDA_EXE__
+    File __PRE_UNINSTALL__
+
+    # Copy extra files (code generated on winexe.py)
+    @EXTRA_FILES@
 
     ${If} $InstMode = ${JUST_ME}
         SetOutPath "$INSTDIR"
@@ -871,63 +992,76 @@ Section "Install"
     ${EndIf}
 
     SetOutPath "$INSTDIR\pkgs"
-    File __ENV_TXT__
     File __URLS_FILE__
     File __URLS_TXT_FILE__
+    File __PRE_INSTALL__
     File __POST_INSTALL__
-    File __PRE_UNINSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
 
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", __CHANNELS__).r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
+    # Extra info for pre and post install scripts
+    # NOTE: If more vars are added, make sure to update the examples/scripts tests too
+    #       There's a similar block for the pre_uninstall script, further down this file. 
+    #       Update that one as well!
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
     @PKG_COMMANDS@
 
     SetDetailsPrint TextOnly
-    DetailPrint "Setting up the package cache ..."
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
-    Pop $0
+    DetailPrint "Setting up the package cache..."
+    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
+    push 'Failed to extract packages'
+    push 'NoLog'
+    # We use NoLog here because TQDM progress bars are parsed as a single line in NSIS 3.08
+    # These can crash the installer if they get too long (a few packages is enough!)
+    call AbortRetryNSExecWait
     SetDetailsPrint both
 
-    SetDetailsPrint TextOnly
-    DetailPrint "Setting up the base environment ..."
-    # Need to use `--no-shortcuts` because the shortcuts are created in the following steps. The reason is that `conda install`
-    # doesn't support `menu_packages` entry of `construct.yaml` and will therefore create possible shorcuts
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "$INSTDIR" --file "$INSTDIR\pkgs\env.txt" --no-shortcuts'
-    Pop $0
-    SetDetailsPrint both
+    IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
+        DetailPrint "Running pre_install scripts..."
+        # At this point we don't have Python available yet, so we can't use the cmd wrapper
+        # _nsis.py as we do with post_install and pre_uninstall. We'll have to trust the
+        # system is well configured (CMD in patch, COMSPEC defined, etc.)
+        push '"$INSTDIR\pkgs\pre_install.bat"'
+        push "Failed to run pre_install"
+        push 'WithLog'
+        call AbortRetryNSExecWait
+    NoPreInstall:
 
-    # Cleanup
-    SetOutPath "$INSTDIR"
-    Delete "$INSTDIR\pkgs\env.txt"
+    @SETUP_ENVS@
 
     @WRITE_CONDARC@
 
     AddSize @SIZE@
 
-    # Restore shipped conda-meta\history for remapped
-    # channels and retain only the first transaction
-    SetOutPath "$INSTDIR\conda-meta"
-    File __CONDA_HISTORY__
-
     ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
         DetailPrint "Creating @NAME@ menus..."
         push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --make-menus @MENU_PKGS@'
         push 'Failed to create menus'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
+#if has_conda is True
+    DetailPrint "Initializing conda directories..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
-    push 'Failed to initialize Anaconda directories'
+    push 'Failed to initialize conda directories'
+    push 'WithLog'
     call AbortRetryNSExecWait
+#endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
         DetailPrint "Running post install..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
         push 'Failed to run post install script'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
@@ -935,6 +1069,7 @@ Section "Install"
         DetailPrint "Clearing package cache..."
         push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
         push 'Failed to clear package cache'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
@@ -942,6 +1077,7 @@ Section "Install"
         DetailPrint "Adding to PATH..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
         push 'Failed to add @NAME@ to the system PATH'
+        push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
 
@@ -980,13 +1116,37 @@ Section "Install"
     ${EndIf}
 
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
+
+    # To address CVE-2022-26526.
+    # Revoke the write permission on directory "$INSTDIR" for Users if this is
+    # being run with administrative privileges. Users are:
+    #   AU - authenticated users
+    #   BU - built-in (local) users
+    #   DU - domain users
+    ${If} ${UAC_IsAdmin}
+        DetailPrint "Setting installation directory permissions..."
+        AccessControl::DisableFileInheritance "$INSTDIR"
+        AccessControl::RevokeOnFile "$INSTDIR" "(AU)" "GenericWrite"
+        AccessControl::RevokeOnFile "$INSTDIR" "(DU)" "GenericWrite"
+        AccessControl::RevokeOnFile "$INSTDIR" "(BU)" "GenericWrite"
+        AccessControl::SetOnFile "$INSTDIR" "(BU)" "GenericRead + GenericExecute"
+        AccessControl::SetOnFile "$INSTDIR" "(DU)" "GenericRead + GenericExecute"
+    ${EndIf}
 SectionEnd
 
-!macro ExecWaitLibNsisCmd cmd
-    IfSilent +3
-        ExecWait '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
-        Goto +2
-    ExecWait '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+!macro AbortRetryNSExecWaitLibNsisCmd cmd
+    SetDetailsPrint both
+    DetailPrint "Running ${cmd} scripts..."
+    SetDetailsPrint listonly
+    ${If} ${Silent}
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+    ${Else}
+        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
+    ${EndIf}
+    push "Failed to run ${cmd}"
+    push 'WithLog'
+    call un.AbortRetryNSExecWait
+    SetDetailsPrint both
 !macroend
 
 Section "Uninstall"
@@ -1005,11 +1165,19 @@ Section "Uninstall"
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
-    !insertmacro ExecWaitLibNsisCmd "pre_uninstall"
-    !insertmacro ExecWaitLibNsisCmd "rmpath"
-    !insertmacro ExecWaitLibNsisCmd "rmreg"
+    # Extra info for pre_uninstall scripts
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
+
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+    
     DetailPrint "Removing files and folders..."
-    nsExec::Exec 'cmd.exe /k RMDIR /Q/S "$INSTDIR"'
+    nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
 
     # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
@@ -1022,3 +1190,11 @@ Section "Uninstall"
         DeleteRegKey SHCTX "Software\Python\PythonCore\${PY_VER}"
     ${EndIf}
 SectionEnd
+
+!if '@SIGNTOOL_COMMAND@' != ''
+    # Signing for installer and uninstaller; nsis 3.08 required for uninstfinalize!
+    # "= 0" comparison required to prevent both tasks running in parallel, which would cause signtool to fail
+    # %1 is replaced by the installer and uninstaller paths, respectively
+    !finalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+    !uninstfinalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+!endif
