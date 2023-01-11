@@ -59,6 +59,7 @@ def extra_files_commands(paths, common_parent):
         lines.append(f"File {path}")
     return lines
 
+
 def insert_tempfiles_commands(paths: os.PathLike) -> List[str]:
     """Helper function that copies paths into temporary install directory.
 
@@ -397,7 +398,12 @@ def create(info, verbose=False):
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
-    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files, temp_extra_files=copied_temp_extra_files)
+    nsi = make_nsi(
+        info,
+        tmp_dir,
+        extra_files=copied_extra_files,
+        temp_extra_files=copied_temp_extra_files,
+    )
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)

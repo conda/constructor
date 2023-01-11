@@ -119,7 +119,8 @@ def modify_xml(xml_path, info):
     else:
         welcome_path = None
         if info.get("welcome_file", "").endswith(".nsi"):
-            print(f"Warning: NSI welcome_file, {info['welcome_file'].endswith('.nsi')}, is ignored.")
+            print(f"Warning: NSI welcome_file, {info['welcome_file'].endswith('.nsi')}, "
+                  "is ignored.")
 
     if welcome_path:
         welcome = ET.Element(
@@ -143,7 +144,8 @@ def modify_xml(xml_path, info):
     else:
         conclusion_path = join(OSX_DIR, 'acloud.rtf')
         if info.get("conclusion_file", "").endswith(".nsi"):
-            print(f"Warning: NSI conclusion_file, {info['conclusion_file'].endswith('.nsi')}, is ignored.")
+            print(f"Warning: NSI conclusion_file, {info['conclusion_file'].endswith('.nsi')}, "
+                  "is ignored.")
     if conclusion_path:
         conclusion = ET.Element(
             'conclusion', file=conclusion_path,

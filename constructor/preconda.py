@@ -246,7 +246,9 @@ def write_channels_txt(info, dst_dir, env_config):
         f.write(",".join(get_final_channels(env_config)))
 
 
-def copy_extra_files(extra_files: List[Union[os.PathLike, Mapping]], workdir: os.PathLike) -> List[os.PathLike]:
+def copy_extra_files(
+    extra_files: List[Union[os.PathLike, Mapping]], workdir: os.PathLike
+) -> List[os.PathLike]:
     """Copy list of extra files to a working directory
 
     Args:
