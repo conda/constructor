@@ -9,6 +9,8 @@ from itertools import chain
 from os.path import join
 import datetime
 
+from conda.gateways.disk import mkdir_p_sudo_safe
+
 from constructor.utils import hash_files
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
@@ -168,6 +170,5 @@ if conda_interface_type == 'conda':
 
     def write_cache_dir():
         cache_dir = join(PackageCacheData.first_writable().pkgs_dir, 'cache')
-        # TODO: fix function mkdir_p_sudo_safe not existing
-        mkdir_p_sudo_safe(cache_dir)  # noqa
+        mkdir_p_sudo_safe(cache_dir)
         return cache_dir
