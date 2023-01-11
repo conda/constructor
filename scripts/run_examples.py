@@ -94,7 +94,7 @@ def run_examples(keep_artifacts=None):
 
     # NSIS won't error out when running scripts unless we set this custom environment variable
     os.environ["NSIS_SCRIPTS_RAISE_ERRORS"] = "1"
-    
+
     parent_output = tempfile.mkdtemp()
     tested_files = set()
     which_errored = {}
@@ -186,8 +186,8 @@ def run_examples(keep_artifacts=None):
                 uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
                 if uninstaller:
                     cmd = [
-                        'cmd.exe', '/c', 'start', '/wait', 
-                        os.path.join(env_dir, uninstaller), 
+                        'cmd.exe', '/c', 'start', '/wait',
+                        os.path.join(env_dir, uninstaller),
                         # We need silent mode + "uninstaller location" (_?=...) so the command can be
                         # waited; otherwise, since the uninstaller copies itself to a different location
                         # so it can be auto-deleted, it returns immediately and it gives us problems with
@@ -205,7 +205,7 @@ def run_examples(keep_artifacts=None):
                         # The debug installer writes to install.log too, which will only
                         # be deleted _after_ a reboot. Finding some files is ok, but more
                         # than two usually means a problem with the uninstaller.
-                        # Note this is is not exhaustive, because we are not checking 
+                        # Note this is is not exhaustive, because we are not checking
                         # whether the registry was restored, menu items were deleted, etc.
                         # TODO :)
                         which_errored.setdefault(example_path, []).append(

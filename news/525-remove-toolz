@@ -17,4 +17,3 @@
 ### Other:
 
 * Removes the usage of ``conda._vendor.toolz`` (#525)
-

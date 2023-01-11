@@ -265,11 +265,11 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     assert user_script_type in (None, "pre_install", "post_install")
     with open(src) as fi:
         data = fi.read()
-    
+
     # ppd hosts the conditions for the #if/#else/#endif preprocessors on scripts
     ppd = ns_platform(info['_platform'])
     ppd['check_path_spaces'] = bool(info.get("check_path_spaces", True))
-    
+
     # This is necessary for when installing on case-sensitive macOS filesystems.
     pkg_name_lower = info.get("pkg_name", info['name']).lower()
     default_path_exists_error_text = (

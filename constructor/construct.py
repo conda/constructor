@@ -554,7 +554,7 @@ Allowed keys are:
     - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
       If false, only the path will be included.
     - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
-      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors' 
+      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors'
       argument is valid. See https://docs.python.org/3/library/functions.html#open.
 '''),
 ]

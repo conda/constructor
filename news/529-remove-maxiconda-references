@@ -17,4 +17,3 @@
 ### Other:
 
 * Removed Maxiconda constructor example and updated Miniconda and Jetsonconda READMEs (and several scripts) to not contain references to Maxiconda anymore. (#470)
-

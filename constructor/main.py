@@ -170,7 +170,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
         print("Successfully created '%(_outpath)s'." % info)
-    
+
     process_build_outputs(info)
 
 class _HelpConstructAction(argparse.Action):
