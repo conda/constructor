@@ -128,7 +128,8 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           if [[ "${{ matrix.micromamba }}" != "" ]]; then
             conda create -yqp ./micromamba -c conda-forge micromamba
-            echo "CONSTRUCTOR_CONDA_EXE=$(pwd)/micromamba/bin/micromamba" >> $GITHUB_ENV
+            conda activate ./micromamba
+            echo "CONSTRUCTOR_CONDA_EXE=$(which micromamba)" >> $GITHUB_ENV
           else
             conda activate constructor
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
