@@ -218,8 +218,8 @@ as `sh` on Linux and `exe` on Windows.
 
 Notes for silent mode `/S` on Windows EXEs:
 - NSIS Silent mode will not print any error message, but will silently abort the installation.
-  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\install.log`, which can be
-  searched for `::error::` strings. Pre- and post- install scripts will only throw an error
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\install.log`, which
+  can be searched for `::error::` strings. Pre- and post- install scripts will only throw an error
   if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
 - The `/D` flag can be used to specify the target location. It must be the last argument in
   the command and should NEVER be quoted, even if it contains spaces. For example:
