@@ -30,7 +30,6 @@ jobs:
       matrix:
         os: [macos, ubuntu, windows]
         pyver: ["3.7", "3.8", "3.9", "3.10"]
-        micromamba: [false]
         include:
           - os: ubuntu
             pyver: "3.9"
