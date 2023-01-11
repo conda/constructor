@@ -73,6 +73,10 @@ included in a `conda create --file` command. Packages may also be specified
 by an exact URL; e.g.,
 `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
 
+The specs will be solved with the solver configured for your `base` conda installation,
+if any. Starting with conda 22.11, this behavior can be overriden with the
+`CONDA_SOLVER` environment variable.
+
 ## `user_requested_specs`
 
 _required:_ no<br/>
@@ -137,13 +141,15 @@ that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
 and install the packages. The created environment MUST include `python`.
 
+Read notes about the solver in the `specs` field.
+
 ## `transmute_file_type`
 
 _required:_ no<br/>
 _type:_ string<br/>
 File type extension for the files to be transmuted into. Currently supports
 only '.conda'. See conda-package-handling for supported extension names.
-If left empty, no transumating is done.
+If left empty, no transmuting is done.
 
 ## `conda_default_channels`
 
@@ -557,8 +563,11 @@ Read notes about the particularities of Windows silent mode `/S` in the
 
 _required:_ no<br/>
 _type:_ boolean<br/>
-Check if the path where the distribution is installed contains spaces and show a warning
-if any spaces are found. Default is True. (Windows only).
+Check if the path where the distribution is installed contains spaces. Default is True.
+To allow installations with spaces, change to False. Note that:
+
+- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.
+- `conda` cannot be present in the `base` environment
 
 Read notes about the particularities of Windows silent mode `/S` in the
 `installer_type` documentation.
@@ -663,8 +672,11 @@ Allowed keys are:
 - `pkgs_list`: The list of packages contained in a given environment. Options:
     - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
 - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
-    - `include_text` (optional, default=`False`): Whether to dump the license text in the JSON.
+    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
       If false, only the path will be included.
+    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
+      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors' 
+      argument is valid. See https://docs.python.org/3/library/functions.html#open.
 
 ## `temp_extra_files`
 

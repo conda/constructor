@@ -58,3 +58,6 @@ license_file: eula.txt
 #header_image_text:  |-
 #                    multi-line
 #                    header-text
+
+check_path_spaces: False
+check_path_length: False

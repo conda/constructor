@@ -58,6 +58,10 @@ The specifications are identical in form and purpose to those that would be
 included in a `conda create --file` command. Packages may also be specified
 by an exact URL; e.g.,
 `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
+
+The specs will be solved with the solver configured for your `base` conda installation,
+if any. Starting with conda 22.11, this behavior can be overriden with the
+`CONDA_SOLVER` environment variable.
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
@@ -108,12 +112,14 @@ create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
 and install the packages. The created environment MUST include `python`.
+
+Read notes about the solver in the `specs` field.
 '''),
 
     ('transmute_file_type', False, str, '''
 File type extension for the files to be transmuted into. Currently supports
 only '.conda'. See conda-package-handling for supported extension names.
-If left empty, no transumating is done.
+If left empty, no transmuting is done.
 '''),
 
     ('conda_default_channels', False, list, '''
@@ -444,8 +450,11 @@ Read notes about the particularities of Windows silent mode `/S` in the
 '''),
 
     ('check_path_spaces',     False, bool, '''
-Check if the path where the distribution is installed contains spaces and show a warning
-if any spaces are found. Default is True. (Windows only).
+Check if the path where the distribution is installed contains spaces. Default is True.
+To allow installations with spaces, change to False. Note that:
+
+- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.
+- `conda` cannot be present in the `base` environment
 
 Read notes about the particularities of Windows silent mode `/S` in the
 `installer_type` documentation.
@@ -516,12 +525,22 @@ The behaviour is slightly different across installer types:
 (macOS PKG and Windows only).
 '''),
 
-    ('extra_files', False, (list), '''
+    ('extra_files', False, list, '''
 Extra, non-packaged files that should be added to the installer. If provided as relative
 paths, they will be considered relative to the directory where `construct.yaml` is.
 This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
+'''),
+
+    ('temp_extra_files', False, list, '''
+Temporary files that could be referenced in the installation process (i.e. customized
+ `welcome_file` and `conclusion_file` (see above)) . Should be a list of
+file paths, relative to the directory where `construct.yaml` is. In Windows, these
+files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
+install process (Windows only).
+
+Supports the same values as `extra_files`.
 '''),
 
     ('build_outputs', False, list, '''
@@ -532,18 +551,11 @@ Allowed keys are:
 - `pkgs_list`: The list of packages contained in a given environment. Options:
     - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
 - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
-    - `include_text` (optional, default=`False`): Whether to dump the license text in the JSON.
+    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
       If false, only the path will be included.
-'''),
-    ('temp_extra_files', False, (list), '''
-Temporary files that could be referenced in the installation process (i.e. customized
- `welcome_file` and `conclusion_file` (see above)) . Should be a list of
-filepaths, relative to the directory where `construct.yaml` is. In Windows, these
-files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
-install process (Windows only).
-This setting can be passed as a list of:
-- `str`: each found file will be copied to the root prefix
-- `Mapping[str, str]`: map of path in disk to path in prefix.
+    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
+      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors' 
+      argument is valid. See https://docs.python.org/3/library/functions.html#open.
 '''),
 ]
 
