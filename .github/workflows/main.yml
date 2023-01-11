@@ -23,7 +23,7 @@ defaults:
     shell: bash
 jobs:
   package:
-    name: ${{ matrix.os }}, Python ${{ matrix.pyver }}, ${{ matrix.micromamba  && "micromamba" || "conda-standalone" }}
+    name: ${{ matrix.os }}, Python ${{ matrix.pyver }}, ${{ matrix.micromamba && 'micromamba' || 'conda-standalone' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
