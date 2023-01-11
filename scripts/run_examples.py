@@ -2,12 +2,12 @@
 """Run examples bundled with this repo."""
 import argparse
 import os
+import subprocess
 import sys
 import tempfile
 import platform
 import shutil
 import time
-import subprocess
 from datetime import timedelta
 from pathlib import Path
 
@@ -50,7 +50,7 @@ def _execute(cmd):
             print('--- STDERR ---')
             print(stderr)
     print('--- Done in', timedelta(seconds=t1 - t0))
-    return errored, stdout.strip(), stderr.strip()
+    return errored
 
 
 def run_examples(keep_artifacts=None, conda_exe=None):
@@ -107,7 +107,7 @@ def run_examples(keep_artifacts=None, conda_exe=None):
         cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
         if conda_exe:
             cmd += ['--conda-exe', conda_exe]
-        creation_errored, *_ = _execute(cmd)
+        creation_errored = _execute(cmd)
         errored += creation_errored
         for fpath in os.listdir(output_dir):
             ext = fpath.rsplit('.', 1)[-1]
@@ -142,7 +142,7 @@ def run_examples(keep_artifacts=None, conda_exe=None):
                 # the point is to just have spaces in the installation path -- one would be enough too :)
                 # This is why we have this weird .split() thingy down here:
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
-            test_errored, *_ = _execute(cmd)
+            test_errored = _execute(cmd)
             # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
             # which are only written if a special NSIS build is used
             win_error_lines = []
@@ -194,7 +194,7 @@ def run_examples(keep_artifacts=None, conda_exe=None):
                         # the tempdir cleanup later
                         f"/S _?={env_dir}"
                     ]
-                    test_errored, *_ = _execute(cmd)
+                    test_errored = _execute(cmd)
                     errored += test_errored
                     if test_errored:
                         which_errored.setdefault(example_path, []).append(
@@ -220,12 +220,12 @@ def run_examples(keep_artifacts=None, conda_exe=None):
         if creation_errored:
             which_errored.setdefault(example_path, []).append("Could not create installer!")
         print()
-        break
+
     print("-------------------------------")
     if errored:
         print('Some examples failed:')
-        for key, reasons in which_errored.items():
-            print(f"+ {key}")
+        for installer, reasons in which_errored.items():
+            print(f"+ {os.path.basename(installer)}")
             for reason in reasons:
                 print(f"---> {reason}")
         print('Assets saved in: ', parent_output)
