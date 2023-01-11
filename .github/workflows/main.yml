@@ -23,20 +23,22 @@ defaults:
     shell: bash
 jobs:
   package:
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} Python ${{ matrix.pyver }} ${{ matrix.micromamba || "" }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos, ubuntu, windows]
         pyver: ["3.7", "3.8", "3.9", "3.10"]
+        micromamba: [false]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu
             pyver: "3.9"
             micromamba: true
-          - os: macos-latest
+          - os: macos
             pyver: "3.10"
             micromamba: true
-          - os: windows-latest
+          - os: windows
             pyver: "3.8"
             micromamba: true
     env:
