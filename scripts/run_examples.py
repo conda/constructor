@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Run examples bundled with this repo."""
+import argparse
 import os
 import sys
 import tempfile
@@ -8,12 +9,9 @@ import shutil
 import time
 import subprocess
 from datetime import timedelta
-from itertools import product
-
 from pathlib import Path
 
 from constructor.utils import rm_rf
-from ruamel_yaml import round_trip_load, round_trip_dump
 
 try:
     import coverage # noqa
@@ -55,7 +53,7 @@ def _execute(cmd):
     return errored, stdout.strip(), stderr.strip()
 
 
-def run_examples(keep_artifacts=None):
+def run_examples(keep_artifacts=None, conda_exe=None):
     """Run examples bundled with the repository.
 
     Parameters
@@ -69,19 +67,6 @@ def run_examples(keep_artifacts=None):
     int
         Number of failed examples
     """
-    conda_exes = [None]
-    if platform.system() != 'Windows':
-        env_name = "constructor-testing-micromamba"
-        which_cmd = ["conda", "run", "--name", env_name, "which", "micromamba"]
-        errored, micromamba_path, _ = _execute(which_cmd)
-        if errored:
-            _execute(["conda", "create", "--name", env_name, "--yes", "-c", "conda-forge", "micromamba"])
-            errored, micromamba_path, _ = _execute(which_cmd)
-            if errored:
-                micromamba_path = "micromamba-could-not-be-found"
-        print("Found micromamba at:", micromamba_path)
-        conda_exes.append(micromamba_path)
-
     if sys.platform.startswith("win") and "NSIS_USING_LOG_BUILD" not in os.environ:
         print(
             "! Warning !"
@@ -110,27 +95,18 @@ def run_examples(keep_artifacts=None):
     parent_output = tempfile.mkdtemp()
     tested_files = set()
     which_errored = {}
-    for example_path, conda_exe in product(sorted(example_paths), conda_exes):
-        example_name = Path(example_path).parent.name
+    for example_path in sorted(example_paths):
+        example_name = Path(example_path).name
         test_with_spaces = example_name in WITH_SPACES
-        test_key = example_name
-        cmd = COV_CMD + ['constructor', '-v', example_path]
-        if conda_exe:
-            if not os.path.isfile(conda_exe):
-                errored +=1
-                which_errored.setdefault(
-                    (example_path, conda_exe), []
-                ).append("Could not find micromamba!")
-                continue
-            cmd += ["--conda-exe", conda_exe]
-            test_key = f"{example_name}+{os.path.basename(conda_exe)}"
-        
-        print(test_key)
-        print('-' * len(test_key))
+        print(example_name)
+        print('-' * len(example_name))
 
-        output_dir = tempfile.mkdtemp(prefix=f"{test_key}-", dir=parent_output)
+        output_dir = tempfile.mkdtemp(prefix=f"{example_name}-", dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
+        cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
+        if conda_exe:
+            cmd += ['--conda-exe', conda_exe]
         creation_errored, *_ = _execute(cmd)
         errored += creation_errored
         for fpath in os.listdir(output_dir):
@@ -141,10 +117,8 @@ def run_examples(keep_artifacts=None):
             test_suffix = "s p a c e s" if test_with_spaces else None
             env_dir = tempfile.mkdtemp(suffix=test_suffix, dir=output_dir)
             rm_rf(env_dir)
-            fpath = Path(output_dir) / fpath
-            if conda_exe:
-                fpath = fpath.rename(fpath.parent / f"{fpath.stem}.micromamba{fpath.suffix}")
-            print('--- Testing %s' % fpath.name)
+            fpath = os.path.join(output_dir, fpath)
+            print('--- Testing', os.path.basename(fpath))
             if ext == 'sh':
                 cmd = ['/bin/sh', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
@@ -246,7 +220,7 @@ def run_examples(keep_artifacts=None):
         if creation_errored:
             which_errored.setdefault(example_path, []).append("Could not create installer!")
         print()
-
+        break
     print("-------------------------------")
     if errored:
         print('Some examples failed:')
@@ -261,10 +235,16 @@ def run_examples(keep_artifacts=None):
     return errored
 
 
+def cli():
+    p = argparse.ArgumentParser()
+    p.add_argument("--keep-artifacts")
+    p.add_argument("--conda-exe")
+    return p.parse_args()
+
+
 if __name__ == '__main__':
-    if len(sys.argv) >=2 and sys.argv[1].startswith('--keep-artifacts='):
-        keep_artifacts = sys.argv[1].split("=")[1]
-    else:
-        keep_artifacts = None
-    n_errors = run_examples(keep_artifacts)
+    args = cli()
+    if args.conda_exe:
+        assert os.path.isfile(args.conda_exe)
+    n_errors = run_examples(keep_artifacts=args.keep_artifacts, conda_exe=args.conda_exe)
     sys.exit(n_errors)

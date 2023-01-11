@@ -29,6 +29,16 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
         pyver: ["3.7", "3.8", "3.9", "3.10"]
+        include:
+          - os: ubuntu-latest
+            pyver: "3.9"
+            micromamba: true
+          - os: macos-latest
+            pyver: "3.10"
+            micromamba: true
+          - os: windows-latest
+            pyver: "3.8"
+            micromamba: true
     env:
       PYTHONUNBUFFERED: True
     steps:
@@ -112,12 +122,24 @@ jobs:
           :: Careful with the trailing spaces before the >> redirect!
           echo CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234>> %GITHUB_ENV%
           echo CONSTRUCTOR_SIGNTOOL_PATH=C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe>> %GITHUB_ENV%
+      - name: Set up conda executable
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          if [[ "${{ matrix.micromamba }}" != "" ]]; then
+            conda create -yqp ./micromamba -c conda-forge micromamba
+            echo "CONSTRUCTOR_CONDA_EXE=$(pwd)/micromamba/bin/micromamba" >> $GITHUB_ENV
+          else
+            conda activate constructor
+            echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
+          fi
       - name: Run examples and prepare artifacts
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate constructor
           mkdir -p examples_artifacts/
-          python scripts/run_examples.py --keep-artifacts=examples_artifacts/
+          python scripts/run_examples.py \
+            --keep-artifacts=examples_artifacts/ \
+            --conda-exe="${CONSTRUCTOR_CONDA_EXE}"
       - name: Test with conda-libmamba-solver
         run: |
           source $CONDA/etc/profile.d/conda.sh
