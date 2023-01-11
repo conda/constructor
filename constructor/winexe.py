@@ -12,7 +12,8 @@ import shutil
 from subprocess import PIPE, check_call, check_output, run, STDOUT
 import sys
 import tempfile
-from pathlib import PureWindowsPath
+from pathlib import Path
+from typing import List
 
 from .construct import ns_platform
 from .imaging import write_images
@@ -20,8 +21,7 @@ from .preconda import copy_extra_files, write_files as preconda_write_files
 from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
                     preprocess, add_condarc, get_final_channels)
 
-THIS_DIR = abspath(dirname(__file__))
-NSIS_DIR = join(THIS_DIR, 'nsis')
+NSIS_DIR = join(abspath(dirname(__file__)), 'nsis')
 MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 
 
@@ -34,7 +34,7 @@ def str_esc(s, newlines=True):
     return '"%s"' % s
 
 
-def read_nsi_tmpl(info):
+def read_nsi_tmpl(info) -> str:
     path = abspath(info.get('nsis_template', join(NSIS_DIR, 'main.nsi.tmpl')))
     print('Reading: %s' % path)
     with open(path) as fi:
@@ -47,7 +47,7 @@ def pkg_commands(download_dir, dists):
 
 
 def extra_files_commands(paths, common_parent):
-    paths = sorted([PureWindowsPath(p) for p in paths])
+    paths = sorted([Path(p) for p in paths])
     lines = []
     current_output_path = "$INSTDIR"
     for path in paths:
@@ -58,6 +58,37 @@ def extra_files_commands(paths, common_parent):
             current_output_path = output_path
         lines.append(f"File {path}")
     return lines
+
+def insert_tempfiles_commands(paths: os.PathLike) -> List[str]:
+    """Helper function that copies paths into temporary install directory.
+
+    Args:
+        paths (os.PathLike): Paths to files that need to be copied
+
+    Returns:
+        List[str]: Commands to be inserted into nsi template
+    """
+    if not paths:
+        return []
+    # Setting OutPath to PluginsDir so NSIS File command copies the path into the PluginsDir
+    lines = ['SetOutPath $PLUGINSDIR']
+    for path in sorted([Path(p) for p in paths]):
+        lines.append(f"File {path}")
+    return lines
+
+
+def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
+    """Insert NSI script commands from file.
+
+    Args:
+        filepath (os.PathLike): Path to file
+
+    Returns:
+        string block of file
+    """
+    if not filepath:
+        return ''
+    return Path(filepath).read_text()
 
 
 def setup_envs_commands(info, dir_path):
@@ -147,8 +178,13 @@ def signtool_command(info):
     return ""
 
 
-def make_nsi(info, dir_path, extra_files=()):
+def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
     "Creates the tmp/main.nsi from the template file"
+
+    if extra_files is None:
+        extra_files = []
+    if temp_extra_files is None:
+        temp_extra_files = []
     name = info['name']
     download_dir = info['_download_dir']
 
@@ -227,6 +263,8 @@ def make_nsi(info, dir_path, extra_files=()):
     ppd['with_conclusion_text'] = bool(conclusion_text)
     ppd["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
     ppd["has_conda"] = info["_has_conda"]
+    ppd["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
+    ppd["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
@@ -255,6 +293,9 @@ def make_nsi(info, dir_path, extra_files=()):
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
+        ('@CUSTOM_WELCOME_FILE@', custom_nsi_insert_from_file(info.get('welcome_file', ''))),
+        ('@CUSTOM_CONCLUSION_FILE@', custom_nsi_insert_from_file(info.get('conclusion_file', ''))),
+        ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files)))
     ]:
         data = data.replace(key, value)
 
@@ -320,7 +361,7 @@ def verify_installer_signature(path):
         # we had errors but maybe not critical ones
         print(
             f"!!! SignTool could find a signature in {path} but detected errors. "
-            "Please check your certificate!", 
+            "Please check your certificate!",
             file=sys.stderr
         )
 
@@ -329,7 +370,8 @@ def create(info, verbose=False):
     verify_signtool_is_available(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
-    copied_extra_files = copy_extra_files(info, tmp_dir)
+    copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
+    copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
     pre_dst = join(tmp_dir, 'pre_install.bat')
@@ -338,7 +380,7 @@ def create(info, verbose=False):
     except KeyError:
         with open(pre_dst, 'w') as fo:
             fo.write(":: this is an empty pre install .bat script\n")
-    
+
     post_dst = join(tmp_dir, 'post_install.bat')
     try:
         shutil.copy(info['post_install'], post_dst)
@@ -354,7 +396,7 @@ def create(info, verbose=False):
             fo.write(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
-    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files)
+    nsi = make_nsi(info, tmp_dir, extra_files=copied_extra_files, temp_extra_files=copied_temp_extra_files)
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)

@@ -109,7 +109,9 @@ def modify_xml(xml_path, info):
             root.append(background)
 
     ### WELCOME ###
-    if "welcome_file" in info:
+    # The endswith .nsi is for windows specifically.  The nsi script will add in
+    # welcome pages if added.
+    if "welcome_file" in info and not info["welcome_file"].endswith(".nsi"):
         welcome_path = info["welcome_file"]
     elif "welcome_text" in info and info["welcome_text"]:
         welcome_path = join(PACKAGES_DIR, "welcome.txt")
@@ -117,6 +119,8 @@ def modify_xml(xml_path, info):
             f.write(info["welcome_text"])
     else:
         welcome_path = None
+        if info.get("welcome_file", "").endswith(".nsi"):
+            print(f"Warning: NSI welcome_file, {info['welcome_file'].endswith('.nsi')}, is ignored.")
 
     if welcome_path:
         welcome = ET.Element(
@@ -126,7 +130,9 @@ def modify_xml(xml_path, info):
         root.append(welcome)
 
     ### CONCLUSION ###
-    if "conclusion_file" in info:
+    # The endswith .nsi is for windows specifically.  The nsi script will add in
+    # conclusion pages if added.
+    if "conclusion_file" in info and not info["conclusion_file"].endswith(".nsi"):
         conclusion_path = info["conclusion_file"]
     elif "conclusion_text" in info:
         if not info["conclusion_text"]:
@@ -137,7 +143,8 @@ def modify_xml(xml_path, info):
                 f.write(info["conclusion_text"])
     else:
         conclusion_path = join(OSX_DIR, 'acloud.rtf')
-
+        if info.get("conclusion_file", "").endswith(".nsi"):
+            print(f"Warning: NSI conclusion_file, {info['conclusion_file'].endswith('.nsi')}, is ignored.")
     if conclusion_path:
         conclusion = ET.Element(
             'conclusion', file=conclusion_path,
@@ -407,7 +414,7 @@ def create(info, verbose=False):
     pkgs_dir = join(prefix, 'pkgs')
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
-    preconda.copy_extra_files(info, prefix)
+    preconda.copy_extra_files(info.get("extra_files", []), prefix)
     # These are the user-provided scripts, maybe patched to have a shebang
     # They will be called by a wrapping script added later, if present
     if info.get('pre_install'):

@@ -175,9 +175,9 @@ The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
 as `sh` on Linux and `exe` on Windows.
 
-Notes for silent mode `/S` on Windows EXEs: 
+Notes for silent mode `/S` on Windows EXEs:
 - NSIS Silent mode will not print any error message, but will silently abort the installation.
-  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be 
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be
   searched for `::error::` strings. Pre- and post- install scripts will only throw an error
   if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
 - The `/D` flag can be used to specify the target location. It must be the last argument in
@@ -295,7 +295,7 @@ Path to a post-install script. Some notes:
   available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`
   environment variables. `${INSTALLER_TYPE}` is set to `SH`.
 - For PKG installers, the shebang line is respected if present;
-  otherwise, `bash` is used. The same variables mentioned for `sh` 
+  otherwise, `bash` is used. The same variables mentioned for `sh`
   installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
@@ -320,9 +320,9 @@ This option has no effect on `SH` installers.
 
     ('pre_uninstall',          False, str, '''
 Path to a pre uninstall script. This is only supported for on Windows,
-and must be a `.bat` file. Installation path is available as `%PREFIX%`. 
+and must be a `.bat` file. Installation path is available as `%PREFIX%`.
 Metadata about the installer can be found in the `%INSTALLER_NAME%`,
-`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. 
+`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
 `%INSTALLER_TYPE%` is set to `EXE`.
 '''),
 
@@ -380,8 +380,8 @@ available and set to the destination causing the error. Defaults to:
 Whether to show UI notifications on PKG installers. On large installations,
 the progress bar reaches ~90% very quickly and stays there for a long time.
 This might look like the installer froze. This option enables UI notifications
-so the user receives updates after each command executed by the installer.   
-(macOS only) 
+so the user receives updates after each command executed by the installer.
+(macOS only)
 '''),
 
     ('welcome_image',          False, str, '''
@@ -472,6 +472,10 @@ shown before the license information, right after the introduction.
 File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
 both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
 (MacOS only).
+
+If the installer is for windows and welcome file type is nsi,
+it will use the nsi script to add in extra pages before the installer
+begins the installation process.
 '''),
 
     ('welcome_text', False, str, '''
@@ -505,6 +509,10 @@ shown at the end of the installer upon success. File can be
 plain text (.txt), rich text (.rtf) or HTML (.html). If both
 `conclusion_file` and `conclusion_text` are provided,
 `conclusion_file` takes precedence. (MacOS only).
+
+If the installer is for windows and conclusion file type is nsi,
+it will use the nsi script to add in extra pages and the conclusion file
+at the end of the installer.
 '''),
 
     ('conclusion_text', False, str, '''
@@ -517,12 +525,22 @@ The behaviour is slightly different across installer types:
 (macOS PKG and Windows only).
 '''),
 
-    ('extra_files', False, (list), '''
+    ('extra_files', False, list, '''
 Extra, non-packaged files that should be added to the installer. If provided as relative
 paths, they will be considered relative to the directory where `construct.yaml` is.
 This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
+'''),
+
+    ('temp_extra_files', False, list, '''
+Temporary files that could be referenced in the installation process (i.e. customized
+ `welcome_file` and `conclusion_file` (see above)) . Should be a list of
+file paths, relative to the directory where `construct.yaml` is. In Windows, these
+files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
+install process (Windows only).
+
+Supports the same values as `extra_files`.
 '''),
 
     ('build_outputs', False, list, '''
@@ -538,7 +556,7 @@ Allowed keys are:
     - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
       license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors' 
       argument is valid. See https://docs.python.org/3/library/functions.html#open.
-''')
+'''),
 ]
 
 
