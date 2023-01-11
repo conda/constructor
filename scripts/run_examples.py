@@ -133,18 +133,19 @@ def run_examples(keep_artifacts=None):
                     cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
                 # NSIS manual:
-                # > /D sets the default installation directory ($INSTDIR), overriding InstallDir and
-                # > InstallDirRegKey. It must be the last parameter used in the command line and must
-                # > not contain any quotes, even if the path contains spaces. Only absolute paths are
-                # > supported.
-                # Since subprocess.Popen WILL escape the spaces with quotes, we need to provide them
-                # as separate arguments. We don't care about multiple spaces collapsing into one, since
-                # the point is to just have spaces in the installation path -- one would be enough too :)
+                # > /D sets the default installation directory ($INSTDIR), overriding InstallDir
+                # > and InstallDirRegKey. It must be the last parameter used in the command line
+                # > and must not contain any quotes, even if the path contains spaces. Only
+                # > absolute paths are supported.
+                # Since subprocess.Popen WILL escape the spaces with quotes, we need to provide
+                # them as separate arguments. We don't care about multiple spaces collapsing into
+                # one, since the point is to just have spaces in the installation path -- one
+                # would be enough too :)
                 # This is why we have this weird .split() thingy down here:
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
             test_errored = _execute(cmd)
             # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
-            # which are only written if a special NSIS build is used
+            # which are only written if a special NSIS build is used
             win_error_lines = []
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
@@ -183,15 +184,17 @@ def run_examples(keep_artifacts=None):
                 # The installer succeeded, test the uninstaller on Windows
                 # The un-installers are only tested when testing without spaces, as they hang during
                 # testing but work in UI mode.
-                uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
+                uninstaller = next(
+                    (p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None
+                )
                 if uninstaller:
                     cmd = [
                         'cmd.exe', '/c', 'start', '/wait',
                         os.path.join(env_dir, uninstaller),
-                        # We need silent mode + "uninstaller location" (_?=...) so the command can be
-                        # waited; otherwise, since the uninstaller copies itself to a different location
-                        # so it can be auto-deleted, it returns immediately and it gives us problems with
-                        # the tempdir cleanup later
+                        # We need silent mode + "uninstaller location" (_?=...) so the command can
+                        # be waited; otherwise, since the uninstaller copies itself to a different
+                        # location so it can be auto-deleted, it returns immediately and it gives
+                        # us problems with the tempdir cleanup later
                         f"/S _?={env_dir}"
                     ]
                     test_errored = _execute(cmd)
@@ -207,7 +210,7 @@ def run_examples(keep_artifacts=None):
                         # than two usually means a problem with the uninstaller.
                         # Note this is is not exhaustive, because we are not checking
                         # whether the registry was restored, menu items were deleted, etc.
-                        # TODO :)
+                        # TODO :)
                         which_errored.setdefault(example_path, []).append(
                             "Uninstaller left too many files behind!\n - "
                             "\n - ".join(paths_after_uninstall)
@@ -236,7 +239,7 @@ def run_examples(keep_artifacts=None):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) >=2 and sys.argv[1].startswith('--keep-artifacts='):
+    if len(sys.argv) >= 2 and sys.argv[1].startswith('--keep-artifacts='):
         keep_artifacts = sys.argv[1].split("=")[1]
     else:
         keep_artifacts = None

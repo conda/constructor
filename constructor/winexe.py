@@ -122,14 +122,14 @@ def setup_envs_commands(info, dir_path):
         # channels and retain only the first transaction
         SetOutPath "{conda_meta}"
         File "{history_abspath}"
-        """
+        """  # noqa
 
     lines = template.format(  # this one block is for the base environment
         name="base",
         prefix=r"$INSTDIR",
         env_txt=r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
         env_txt_dir=r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
-        env_txt_abspath=join(dir_path, "env.txt"), # env.txt location while building the installer
+        env_txt_abspath=join(dir_path, "env.txt"),  # env.txt location while building the installer
         conda_meta=r"$INSTDIR\conda-meta",
         history_abspath=join(dir_path, "conda-meta", "history"),
         channels=','.join(get_final_channels(info)),
@@ -173,7 +173,7 @@ def signtool_command(info):
         )
         if "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD" in os.environ:
             # signtool can get the password from the env var on its own
-            command += f' /p "%CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD%"'
+            command += ' /p "%CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD%"'
         return command
     return ""
 
@@ -364,6 +364,7 @@ def verify_installer_signature(path):
             "Please check your certificate!",
             file=sys.stderr
         )
+
 
 def create(info, verbose=False):
     verify_nsis_install()

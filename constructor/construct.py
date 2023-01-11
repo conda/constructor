@@ -177,8 +177,8 @@ as `sh` on Linux and `exe` on Windows.
 
 Notes for silent mode `/S` on Windows EXEs:
 - NSIS Silent mode will not print any error message, but will silently abort the installation.
-  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be
-  searched for `::error::` strings. Pre- and post- install scripts will only throw an error
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which
+  can be searched for `::error::` strings. Pre- and post- install scripts will only throw an error
   if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
 - The `/D` flag can be used to specify the target location. It must be the last argument in
   the command and should NEVER be quoted, even if it contains spaces. For example:
@@ -331,20 +331,20 @@ Set default install prefix. On Linux, if not provided, the default prefix is
 `${HOME}/${NAME}`. On windows, this is used only for "Just Me" installation;
 for "All Users" installation, use the `default_prefix_all_users` key.
 If not provided, the default prefix is `${USERPROFILE}\${NAME}`.
-'''),
+'''),  # noqa
 
     ('default_prefix_domain_user', False, str, '''
 Set default installation prefix for domain user. If not provided, the
 installation prefix for domain user will be `${LOCALAPPDATA}\${NAME}`.
 By default, it is different from the `default_prefix` value to avoid installing
 the distribution in the roaming profile. Windows only.
-'''),
+'''),  # noqa
 
     ('default_prefix_all_users', False, str, '''
 Set default installation prefix for All Users installation. If not provided,
 the installation prefix for all users installation will be
 `${ALLUSERSPROFILE}\${NAME}`. Windows only.
-'''),
+'''),  # noqa
 
     ('default_location_pkg', False, str, '''
 Default installation subdirectory in the chosen volume. In PKG installers,
@@ -613,10 +613,12 @@ def ns_platform(platform):
         win64=bool(p == 'win-64'),
     )
 
+
 # This regex is taken from https://github.com/conda/conda_build/metadata.py
 # The following function "select_lines" is also a slightly modified version of
 # the function of the same name from conda_build/metadata.py
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$')
+
 
 def select_lines(data, namespace):
     lines = []

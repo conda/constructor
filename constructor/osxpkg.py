@@ -7,7 +7,6 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
-from textwrap import dedent
 
 from . import preconda
 from .construct import ns_platform
@@ -80,7 +79,7 @@ def modify_xml(xml_path, info):
                                                   'No license'))
     root.append(license)
 
-    ### BACKGROUND ###
+    # -- BACKGROUND -- #
     # Default setting for the background was using Anaconda's logo
     # located at ./osx/MacInstaller.png. If `welcome_image` or
     # `welcome_image_text` are not provided, this will still happen.
@@ -108,7 +107,7 @@ def modify_xml(xml_path, info):
                                     alignment='center')
             root.append(background)
 
-    ### WELCOME ###
+    # -- WELCOME -- #
     # The endswith .nsi is for windows specifically.  The nsi script will add in
     # welcome pages if added.
     if "welcome_file" in info and not info["welcome_file"].endswith(".nsi"):
@@ -129,7 +128,7 @@ def modify_xml(xml_path, info):
         )
         root.append(welcome)
 
-    ### CONCLUSION ###
+    # -- CONCLUSION -- #
     # The endswith .nsi is for windows specifically.  The nsi script will add in
     # conclusion pages if added.
     if "conclusion_file" in info and not info["conclusion_file"].endswith(".nsi"):
@@ -153,7 +152,7 @@ def modify_xml(xml_path, info):
         root.append(conclusion)
     # when not provided, conclusion defaults to a system message
 
-    ### README ###
+    # -- README -- #
     if "readme_file" in info:
         readme_path = info["readme_file"]
     elif "readme_text" in info:
@@ -197,7 +196,7 @@ def modify_xml(xml_path, info):
             path_choice.set('title', 'Install {}'.format(info['name']))
             path_choice.set('enabled', 'false')
         elif ident.endswith('run_installation'):
-            # We leave this one out on purpose! The user does not need to
+            # We leave this one out on purpose! The user does not need to
             # know we separated the installation in two steps to accommodate
             # for the pre-install scripts optionality
             path_choice.set('visible', 'false')
@@ -301,7 +300,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         ):
             # Shell scripts provided by the user require a shebang, otherwise it
             # will fail to start with error posix_spawn 8
-            # We only handle shell scripts this way
+            # We only handle shell scripts this way
             fo.write("#!/bin/bash\n")
         fo.write(data)
     os.chmod(dst, 0o755)
@@ -408,7 +407,7 @@ def create(info, verbose=False):
     # The 'prepare_installation' package contains the prepopulated package cache, the modified
     # conda-meta metadata staged into pkgs/conda-meta, conda.exe,
     # Optionally, extra files and the user-provided scripts.
-    # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
+    # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
     fresh_dir(SCRIPTS_DIR)
     pkgs_dir = join(prefix, 'pkgs')
