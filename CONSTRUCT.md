@@ -661,6 +661,18 @@ This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
 
+## `temp_extra_files`
+
+_required:_ no<br/>
+_type:_ list<br/>
+Temporary files that could be referenced in the installation process (i.e. customized
+ `welcome_file` and `conclusion_file` (see above)) . Should be a list of
+file paths, relative to the directory where `construct.yaml` is. In Windows, these
+files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
+install process (Windows only).
+
+Supports the same values as `extra_files`.
+
 ## `build_outputs`
 
 _required:_ no<br/>
@@ -677,19 +689,6 @@ Allowed keys are:
     - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
       license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors' 
       argument is valid. See https://docs.python.org/3/library/functions.html#open.
-
-## `temp_extra_files`
-
-_required:_ no<br/>
-_type:_ list<br/>
-Temporary files that could be referenced in the installation process (i.e. customized
- `welcome_file` and `conclusion_file` (see above)) . Should be a list of
-filepaths, relative to the directory where `construct.yaml` is. In Windows, these
-files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
-install process (Windows only).
-This setting can be passed as a list of:
-- `str`: each found file will be copied to the root prefix
-- `Mapping[str, str]`: map of path in disk to path in prefix.
 
 
 ## Available selectors
