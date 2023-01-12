@@ -133,9 +133,9 @@ def ensure_transmuted_ext(info, url):
     and they were only created locally.
     """
     if (
-        info.get("transmute_file_type") == ".conda" 
+        info.get("transmute_file_type") == ".conda"
         and "micromamba" in basename(info.get("_conda_exe", ""))
-    ):  
+    ):
         if url.lower().endswith(".tar.bz2"):
             url = url[:-8] + ".conda"
     return url
