@@ -17,4 +17,3 @@
 ### Other:
 
 * <news item>
-

@@ -18,4 +18,3 @@
 
 * Improve documentation for local channels on Windows (#483 via #564)
 * Ensure `CONSTRUCT.md` is up-to-date with `construct.py` (#564)
-

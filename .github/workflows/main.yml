@@ -104,7 +104,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: cmd
         run: |
-          set "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}\certificate.pfx" 
+          set "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}\certificate.pfx"
           set "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234"
           powershell scripts\create_self_signed_certificate.ps1
           copy /Y "%CONSTRUCTOR_SIGNING_CERTIFICATE%" examples\signing\certificate.pfx

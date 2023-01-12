@@ -247,8 +247,8 @@ def _precs_from_environment(environment, download_dir, user_conda):
     return list(dict.fromkeys(PrefixGraph(precs).graph))
 
 
-def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
-                 exclude=(), menu_packages=(), environment=None, environment_file=None,
+def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(),
+                 specs=(), exclude=(), menu_packages=(), environment=None, environment_file=None,
                  verbose=True, conda_exe="conda.exe", extra_env=False):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
@@ -303,15 +303,14 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         # the records are already returned in topological sort
         precs = list(solver.solve_final_state())
 
-
     python_prec = next((prec for prec in precs if prec.name == "python"), None)
     if python_prec:
         precs.remove(python_prec)
         precs.insert(0, python_prec)
     elif not extra_env:
         # the base environment must always have python; this has been addressed
-        # at the beginning of _main() but we can still get here through the
-        # environment_file option
+        # at the beginning of _main() but we can still get here through the
+        # environment_file option
         sys.exit("python MUST be part of the base environment")
 
     warn_menu_packages_missing(precs, menu_packages)
@@ -355,8 +354,11 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
                 if os.path.exists(new_file_name):
                     continue
                 print("transmuting %s" % dist)
-                conda_package_handling.api.transmute(os.path.join(download_dir, dist),
-                    transmute_file_type, out_folder=download_dir)
+                conda_package_handling.api.transmute(
+                    os.path.join(download_dir, dist),
+                    transmute_file_type,
+                    out_folder=download_dir,
+                )
             else:
                 new_dists.append(dist)
         dists = new_dists
@@ -424,7 +426,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         print("Info: Skipping duplicate files checks because `extra_envs` in use")
         duplicate_files = "skip"
 
-    all_pc_recs = list({rec: None for rec in all_pc_recs}) # deduplicate
+    all_pc_recs = list({rec: None for rec in all_pc_recs})  # deduplicate
     approx_tarballs_size, approx_pkgs_size = check_duplicates_files(
         pc_recs, platform, duplicate_files=duplicate_files
     )
@@ -438,6 +440,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         has_conda,
         extra_envs_data
     )
+
 
 def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
@@ -459,9 +462,9 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     if not channel_urls and not channels_remap:
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
 
-    # We need to preserve the configuration for proxy servers and ssl, otherwise if constructor is running
-    # in a host that sits behind proxy (usually in a company / corporate environment) it will have this
-    # settings reset with the call to conda_replace_context_default
+    # We need to preserve the configuration for proxy servers and ssl, otherwise if constructor is
+    # running in a host that sits behind proxy (usually in a company / corporate environment) it
+    # will have this settings reset with the call to conda_replace_context_default
     # See: https://github.com/conda/constructor/issues/304
     proxy_servers = conda_context.proxy_servers
     ssl_verify = conda_context.ssl_verify
@@ -473,12 +476,34 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         conda_context.proxy_servers = proxy_servers
         conda_context.ssl_verify = ssl_verify
 
-        (pkg_records, _urls, dists, approx_tarballs_size, approx_pkgs_size,
-        has_conda, extra_envs_info) = _main(
-            name, version, download_dir, platform, channel_urls, channels_remap, specs,
-            exclude, menu_packages, ignore_duplicate_files, environment, environment_file,
-            verbose, dry_run, conda_exe, transmute_file_type, extra_envs, check_path_spaces
-        )
+        (
+            pkg_records,
+            _urls,
+            dists,
+            approx_tarballs_size,
+            approx_pkgs_size,
+            has_conda,
+            extra_envs_info,
+        ) = _main(
+            name,
+            version,
+            download_dir,
+            platform,
+            channel_urls,
+            channels_remap,
+            specs,
+            exclude,
+            menu_packages,
+            ignore_duplicate_files,
+            environment,
+            environment_file,
+            verbose,
+            dry_run,
+            conda_exe,
+            transmute_file_type,
+            extra_envs,
+            check_path_spaces,
+            )
 
     info["_all_pkg_records"] = pkg_records  # full PackageRecord objects
     info["_urls"] = _urls  # needed to mock the repodata cache

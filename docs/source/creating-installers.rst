@@ -18,7 +18,7 @@ You can install constructor using conda:
 
     conda install constructor
     constructor -h
- 
+
 The constructor command takes an installer specification directory
 as its argument. This directory needs to contain a ``construct.yaml`` file,
 which specifies the name of the installer, the conda channels to pull packages
@@ -30,7 +30,7 @@ and image files for the Windows installer.
 
 An example construct.yaml file
 ==============================
- 
+
 In this example you will see a few of the common keys such as
 name, version, channels, specs, and a few others like the key
 for ``license_file`` and ``welcome_image``. You will also
@@ -94,7 +94,7 @@ platforms:
 
    installer_type: pkg                   [osx]
 
- 
+
 Some additional considerations
 ==============================
 * All conda packages must be available for the platform you are
