@@ -2,6 +2,7 @@
 
 set -exo pipefail
 
+# shellcheck disable=SC1091
 source "$PREFIX/etc/profile.d/conda.sh"
 conda activate "$PREFIX"
 conda install -yq jq
