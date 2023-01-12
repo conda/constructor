@@ -1,3 +1,6 @@
+# disable autofixing PRs, commenting "pre-commit.ci autofix" on a pull request triggers a autofix
+ci:
+    autofix_prs: false
 exclude: ^(versioneer.py|constructor/_version.py|CONSTRUCT.md)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
