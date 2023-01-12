@@ -14,3 +14,8 @@ specs:
   - conda 4.10.1
   - pip
   - miniforge_console_shortcut 1.*  # [win]
+
+# Added for extra testing
+installer_type: all
+post_install: test_install.sh  # [unix]
+post_install: test_install.bat  # [win]
