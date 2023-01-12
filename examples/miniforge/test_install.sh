@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -exo pipefail
 
 source "$PREFIX/etc/profile.d/conda.sh"
 conda activate "$PREFIX"
