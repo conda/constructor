@@ -121,4 +121,3 @@ Copyright FAQ
       supplied local.conf file, which chooses the family Bitstream Vera for
       "sans", "serif" and "monospace".  Other software (e.g., the XFree86
       core server) has other mechanisms for font substitution.
-

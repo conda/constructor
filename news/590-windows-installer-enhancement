@@ -1,0 +1,3 @@
+### Enhancements
+
+* Windows GUI installer enhancement to allow for additional custom pages. These new pages can be added after the welcome page and before the conclusion. These extra pages can display text, links, and images. Such pages can be useful in providing additional instructions, guidance, or promotional materials for end-users before they begin using the application they just installed. (#590)

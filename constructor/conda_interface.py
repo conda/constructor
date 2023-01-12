@@ -9,6 +9,8 @@ from itertools import chain
 from os.path import join
 import datetime
 
+from conda.gateways.disk import mkdir_p_sudo_safe
+
 from constructor.utils import hash_files
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
@@ -75,7 +77,7 @@ if conda_interface_type == 'conda':
     distro = None
     if sys.platform.startswith('linux'):
         try:
-            from conda._vendor import distro
+            from conda._vendor import distro  # noqa
         except ImportError:
             pass
 
@@ -93,7 +95,8 @@ if conda_interface_type == 'conda':
         else:
             raise NotImplementedError("unsupported version of conda: %s" % CONDA_INTERFACE_VERSION)
 
-        # noarch-only repos are valid. In this case, the architecture specific channel will return None
+        # noarch-only repos are valid. In this case, the architecture specific channel will
+        # return None
         if raw_repodata_str is None:
             full_repodata = {
                 '_url': url,
@@ -159,8 +162,9 @@ if conda_interface_type == 'conda':
             fh.write(repodata)
 
         # set the modification time to mod_time. needed for mamba
-        mod_time_datetime = datetime.datetime.strptime(mod_time,
-            "%a, %d %b %Y %H:%M:%S %Z")
+        mod_time_datetime = datetime.datetime.strptime(
+            mod_time, "%a, %d %b %Y %H:%M:%S %Z"
+        )
         mod_time_s = int(mod_time_datetime.timestamp())
         os.utime(repodata_filepath, times=(mod_time_s, mod_time_s))
 

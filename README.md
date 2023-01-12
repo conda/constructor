@@ -1,5 +1,7 @@
 # (conda) Constructor
 
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/conda/constructor/main.svg)](https://results.pre-commit.ci/latest/github/conda/constructor/main)
+
 ## Description
 
 Constructor is a tool which allows constructing an installer
