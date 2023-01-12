@@ -29,10 +29,15 @@ BLACKLIST = []
 WITH_SPACES = {"extra_files", "noconda", "signing", "scripts"}
 
 
-def _execute(cmd):
+def _execute(cmd, **env_vars):
     print(' '.join(cmd))
     t0 = time.time()
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if env_vars:
+        env = os.environ.copy()
+        env.update(env_vars)
+    else:
+        env = None
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
     try:
         stdout, stderr = p.communicate(timeout=420)
         errored = p.returncode != 0
@@ -42,7 +47,7 @@ def _execute(cmd):
         print('--- TEST TIMEOUT ---')
         errored = True
     t1 = time.time()
-    if errored:
+    if errored or "CONDA_VERBOSITY" in env_vars:
         if stdout:
             print('--- STDOUT ---')
             print(stdout)
@@ -53,7 +58,7 @@ def _execute(cmd):
     return errored
 
 
-def run_examples(keep_artifacts=None, conda_exe=None):
+def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
     """Run examples bundled with the repository.
 
     Parameters
@@ -107,6 +112,8 @@ def run_examples(keep_artifacts=None, conda_exe=None):
         cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
         if conda_exe:
             cmd += ['--conda-exe', conda_exe]
+        if debug:
+            cmd.append("--debug")
         creation_errored = _execute(cmd)
         errored += creation_errored
         for fpath in os.listdir(output_dir):
@@ -142,7 +149,8 @@ def run_examples(keep_artifacts=None, conda_exe=None):
                 # the point is to just have spaces in the installation path -- one would be enough too :)
                 # This is why we have this weird .split() thingy down here:
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
-            test_errored = _execute(cmd)
+            env = {"CONDA_VERBOSITY": "3"} if debug else {}
+            test_errored = _execute(cmd, **env)
             # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
             # which are only written if a special NSIS build is used
             win_error_lines = []
@@ -216,6 +224,9 @@ def run_examples(keep_artifacts=None, conda_exe=None):
                     which_errored.setdefault(example_path, []).append("Could not find uninstaller!")
 
             if keep_artifacts:
+                dest = os.path.join(keep_artifacts, os.path.basename(fpath))
+                if os.path.isfile(dest):
+                    os.unlink(dest)
                 shutil.move(fpath, keep_artifacts)
         if creation_errored:
             which_errored.setdefault(example_path, []).append("Could not create installer!")
@@ -228,7 +239,7 @@ def run_examples(keep_artifacts=None, conda_exe=None):
             print(f"+ {os.path.basename(installer)}")
             for reason in reasons:
                 print(f"---> {reason}")
-        print('Assets saved in: ', parent_output)
+        print('Assets saved in:', keep_artifacts or parent_output)
     else:
         print('All examples ran successfully!')
         shutil.rmtree(parent_output)
@@ -239,6 +250,7 @@ def cli():
     p = argparse.ArgumentParser()
     p.add_argument("--keep-artifacts")
     p.add_argument("--conda-exe")
+    p.add_argument("--debug", action="store_true", default=False)
     return p.parse_args()
 
 
@@ -246,5 +258,9 @@ if __name__ == '__main__':
     args = cli()
     if args.conda_exe:
         assert os.path.isfile(args.conda_exe)
-    n_errors = run_examples(keep_artifacts=args.keep_artifacts, conda_exe=args.conda_exe)
+    n_errors = run_examples(
+        keep_artifacts=args.keep_artifacts,
+        conda_exe=args.conda_exe,
+        debug=args.debug
+    )
     sys.exit(n_errors)
