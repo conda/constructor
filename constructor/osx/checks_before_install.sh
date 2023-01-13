@@ -7,6 +7,7 @@
 # to run some code that can harm your computer!). Interestingly, preinstall.sh is not
 # affected by those restrictions, but it's only executed once the installer has begun
 # so the only way to prevent an action is to abort and start again from the beginning.
+set -euo pipefail
 
 PREFIX="$2/__NAME_LOWER__"
 echo "PREFIX=$PREFIX"

@@ -4,6 +4,8 @@
 
 # COMMON UTILS
 # If you update this block, please propagate changes to the other scripts using it
+set -euo pipefail
+
 notify() {
 if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
 osascript <<EOF

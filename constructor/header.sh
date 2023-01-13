@@ -5,6 +5,8 @@
 # PLAT:  __PLAT__
 # MD5:   __MD5__
 
+set -eu
+
 #if osx
 unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH
 #else
