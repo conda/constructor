@@ -4,15 +4,15 @@ installer_type: all
 channels:
   - http://repo.anaconda.com/pkgs/main/
 specs:
-  - python=3.7
+  - python=3.9
   - conda # conda is required for extra_envs
   - console_shortcut # [win]
 exclude:  # [unix]
   - tk  # [unix]
 extra_envs:
-  py38:
+  py310:
     specs:
-      - python=3.8
+      - python=3.10
       - pip
     channels:
       - conda-forge
@@ -23,3 +23,11 @@ extra_envs:
 
 post_install: test_install.sh  # [unix]
 post_install: test_install.bat  # [win]
+build_outputs:
+  - info.json
+  - pkgs_list
+  - pkgs_list:
+      env: py310
+  - licenses:
+      include_text: True
+      text_errors: replace

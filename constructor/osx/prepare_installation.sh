@@ -25,8 +25,8 @@ CONDA_EXEC="$PREFIX/conda.exe"
 chmod +x "$CONDA_EXEC"
 
 # Create a blank history file so conda thinks this is an existing env
-mkdir -p $PREFIX/conda-meta
-touch $PREFIX/conda-meta/history
+mkdir -p "$PREFIX/conda-meta"
+touch "$PREFIX/conda-meta/history"
 
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place

@@ -1,0 +1,11 @@
+name: CustomizedWelcomeConclusion
+version: X
+installer_type: all
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+specs:
+  - python
+conclusion_file: custom_conclusion.nsi  # [win]
+welcome_file: custom_welcome.nsi  # [win]
+temp_extra_files:
+  - ExtraPagesExampleImg.bmp

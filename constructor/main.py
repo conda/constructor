@@ -7,11 +7,12 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-from os.path import abspath, basename, expanduser, isdir, join
+from os.path import abspath, expanduser, isdir, join
 import sys
 import argparse
 from textwrap import dedent, indent
 
+from .build_outputs import process_build_outputs
 from .conda_interface import cc_platform
 from .construct import parse as construct_parse, verify as construct_verify, \
     generate_key_info_list, ns_platform
@@ -76,6 +77,8 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     construct_path = join(dir_path, 'construct.yaml')
     info = construct_parse(construct_path, platform)
     construct_verify(info)
+    info['_input_dir'] = dir_path
+    info['_output_dir'] = output_dir
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
     info['_conda_exe'] = abspath(conda_exe)
@@ -106,18 +109,19 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     # normalize paths to be copied; if they are relative, they must be to
     # construct.yaml's parent (dir_path)
-    extra_files = info.get("extra_files", ())
-    new_extra_files = []
-    for path in extra_files:
-        if isinstance(path, str):
-            new_extra_files.append(abspath(join(dir_path, path)))
-        elif isinstance(path, dict):
-            assert len(path) == 1
-            orig, dest = next(iter(path.items()))
-            orig = abspath(join(dir_path, orig))
-            new_extra_files.append({orig: dest})
-    info["extra_files"] = new_extra_files
-
+    extras_types = ['extra_files', 'temp_extra_files']
+    for extra_type in extras_types:
+        extras = info.get(extra_type, ())
+        new_extras = []
+        for path in extras:
+            if isinstance(path, str):
+                new_extras.append(abspath(join(dir_path, path)))
+            elif isinstance(path, dict):
+                assert len(path) == 1
+                orig, dest = next(iter(path.items()))
+                orig = abspath(join(dir_path, orig))
+                new_extras.append({orig: dest})
+        info[extra_type] = new_extras
 
     for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
         if key in info:
@@ -139,7 +143,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
-        print("Dry run, no installer created.")
+        print("Dry run, no installers or build outputs created.")
         return
 
     # info has keys
@@ -165,16 +169,8 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
         print("Successfully created '%(_outpath)s'." % info)
-    if 0:
-        with open(join(output_dir, 'pkg-list.txt'), 'w') as fo:
-            fo.write('# installer: %s\n' % basename(info['_outpath']))
-            for dist in info['_dists']:
-                fo.write('%s\n' % dist)
-            for env_name, env_info in info["_extra_envs_info"].items():
-                fo.write(f"# extra_env: {env_name}\n")
-                for dist_ in env_info["_dists"]:
-                    fo.write('%s\n' % dist_)
 
+    process_build_outputs(info)
 
 
 class _HelpConstructAction(argparse.Action):
@@ -248,11 +244,11 @@ class _HelpConstructAction(argparse.Action):
             available_selectors="\n".join(available_selectors_list),
         )
 
-    
+
 def main():
     p = argparse.ArgumentParser(
         description="build an installer from <DIRECTORY>/construct.yaml")
-    
+
     p.add_argument("--help-construct", action=_HelpConstructAction)
 
     p.add_argument('--debug',

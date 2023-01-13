@@ -59,6 +59,10 @@ included in a `conda create --file` command. Packages may also be specified
 by an exact URL; e.g.,
 `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
 This key can also take a `str` pointing to a requirements file with the same syntax.
+
+The specs will be solved with the solver configured for your `base` conda installation,
+if any. Starting with conda 22.11, this behavior can be overriden with the
+`CONDA_SOLVER` environment variable.
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
@@ -109,12 +113,14 @@ create a temporary environment, constructor will build and installer from
 that, and the temporary environment will be removed. This ensures that
 constructor is using the precise local conda configuration to discover
 and install the packages. The created environment MUST include `python`.
+
+Read notes about the solver in the `specs` field.
 '''),
 
     ('transmute_file_type', False, str, '''
 File type extension for the files to be transmuted into. Currently supports
 only '.conda'. See conda-package-handling for supported extension names.
-If left empty, no transumating is done.
+If left empty, no transmuting is done.
 '''),
 
     ('conda_default_channels', False, list, '''
@@ -170,10 +176,10 @@ The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
 as `sh` on Linux and `exe` on Windows.
 
-Notes for silent mode `/S` on Windows EXEs: 
+Notes for silent mode `/S` on Windows EXEs:
 - NSIS Silent mode will not print any error message, but will silently abort the installation.
-  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which can be 
-  searched for `::error::` strings. Pre- and post- install scripts will only throw an error
+  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which
+  can be searched for `::error::` strings. Pre- and post- install scripts will only throw an error
   if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
 - The `/D` flag can be used to specify the target location. It must be the last argument in
   the command and should NEVER be quoted, even if it contains spaces. For example:
@@ -290,7 +296,7 @@ Path to a post-install script. Some notes:
   available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`
   environment variables. `${INSTALLER_TYPE}` is set to `SH`.
 - For PKG installers, the shebang line is respected if present;
-  otherwise, `bash` is used. The same variables mentioned for `sh` 
+  otherwise, `bash` is used. The same variables mentioned for `sh`
   installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
@@ -315,9 +321,9 @@ This option has no effect on `SH` installers.
 
     ('pre_uninstall',          False, str, '''
 Path to a pre uninstall script. This is only supported for on Windows,
-and must be a `.bat` file. Installation path is available as `%PREFIX%`. 
+and must be a `.bat` file. Installation path is available as `%PREFIX%`.
 Metadata about the installer can be found in the `%INSTALLER_NAME%`,
-`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. 
+`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
 `%INSTALLER_TYPE%` is set to `EXE`.
 '''),
 
@@ -326,20 +332,20 @@ Set default install prefix. On Linux, if not provided, the default prefix is
 `${HOME}/${NAME}`. On windows, this is used only for "Just Me" installation;
 for "All Users" installation, use the `default_prefix_all_users` key.
 If not provided, the default prefix is `${USERPROFILE}\${NAME}`.
-'''),
+'''),  # noqa
 
     ('default_prefix_domain_user', False, str, '''
 Set default installation prefix for domain user. If not provided, the
 installation prefix for domain user will be `${LOCALAPPDATA}\${NAME}`.
 By default, it is different from the `default_prefix` value to avoid installing
 the distribution in the roaming profile. Windows only.
-'''),
+'''),  # noqa
 
     ('default_prefix_all_users', False, str, '''
 Set default installation prefix for All Users installation. If not provided,
 the installation prefix for all users installation will be
 `${ALLUSERSPROFILE}\${NAME}`. Windows only.
-'''),
+'''),  # noqa
 
     ('default_location_pkg', False, str, '''
 Default installation subdirectory in the chosen volume. In PKG installers,
@@ -375,8 +381,8 @@ available and set to the destination causing the error. Defaults to:
 Whether to show UI notifications on PKG installers. On large installations,
 the progress bar reaches ~90% very quickly and stays there for a long time.
 This might look like the installer froze. This option enables UI notifications
-so the user receives updates after each command executed by the installer.   
-(macOS only) 
+so the user receives updates after each command executed by the installer.
+(macOS only)
 '''),
 
     ('welcome_image',          False, str, '''
@@ -445,8 +451,11 @@ Read notes about the particularities of Windows silent mode `/S` in the
 '''),
 
     ('check_path_spaces',     False, bool, '''
-Check if the path where the distribution is installed contains spaces and show a warning
-if any spaces are found. Default is True. (Windows only).
+Check if the path where the distribution is installed contains spaces. Default is True.
+To allow installations with spaces, change to False. Note that:
+
+- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.
+- `conda` cannot be present in the `base` environment
 
 Read notes about the particularities of Windows silent mode `/S` in the
 `installer_type` documentation.
@@ -464,6 +473,10 @@ shown before the license information, right after the introduction.
 File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
 both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
 (MacOS only).
+
+If the installer is for windows and welcome file type is nsi,
+it will use the nsi script to add in extra pages before the installer
+begins the installation process.
 '''),
 
     ('welcome_text', False, str, '''
@@ -497,6 +510,10 @@ shown at the end of the installer upon success. File can be
 plain text (.txt), rich text (.rtf) or HTML (.html). If both
 `conclusion_file` and `conclusion_text` are provided,
 `conclusion_file` takes precedence. (MacOS only).
+
+If the installer is for windows and conclusion file type is nsi,
+it will use the nsi script to add in extra pages and the conclusion file
+at the end of the installer.
 '''),
 
     ('conclusion_text', False, str, '''
@@ -509,12 +526,37 @@ The behaviour is slightly different across installer types:
 (macOS PKG and Windows only).
 '''),
 
-    ('extra_files', False, (list), '''
+    ('extra_files', False, list, '''
 Extra, non-packaged files that should be added to the installer. If provided as relative
 paths, they will be considered relative to the directory where `construct.yaml` is.
 This setting can be passed as a list of:
 - `str`: each found file will be copied to the root prefix
 - `Mapping[str, str]`: map of path in disk to path in prefix.
+'''),
+
+    ('temp_extra_files', False, list, '''
+Temporary files that could be referenced in the installation process (i.e. customized
+ `welcome_file` and `conclusion_file` (see above)) . Should be a list of
+file paths, relative to the directory where `construct.yaml` is. In Windows, these
+files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
+install process (Windows only).
+
+Supports the same values as `extra_files`.
+'''),
+
+    ('build_outputs', False, list, '''
+Additional artifacts to be produced after building the installer.
+It expects either a list of strings or single-key dictionaries:
+Allowed keys are:
+- `info.json`: The internal `info` object, serialized to JSON. Takes no options.
+- `pkgs_list`: The list of packages contained in a given environment. Options:
+    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
+- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
+    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
+      If false, only the path will be included.
+    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
+      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors'
+      argument is valid. See https://docs.python.org/3/library/functions.html#open.
 '''),
 ]
 
@@ -572,10 +614,12 @@ def ns_platform(platform):
         win64=bool(p == 'win-64'),
     )
 
+
 # This regex is taken from https://github.com/conda/conda_build/metadata.py
 # The following function "select_lines" is also a slightly modified version of
 # the function of the same name from conda_build/metadata.py
 sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$')
+
 
 def select_lines(data, namespace):
     lines = []

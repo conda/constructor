@@ -29,15 +29,22 @@ EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
 PY3 = sys.version_info[0] == 3
 WHITELIST = ['grin', 'jetsonconda', 'miniconda', 'newchan']
 BLACKLIST = []
+WITH_SPACES = {"extra_files", "noconda", "signing", "scripts"}
 
 
 def _execute(cmd):
     print(' '.join(cmd))
     t0 = time.time()
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    stdout, stderr = p.communicate()
+    try:
+        stdout, stderr = p.communicate(timeout=420)
+        errored = p.returncode != 0
+    except subprocess.TimeoutExpired:
+        p.kill()
+        stdout, stderr = p.communicate()
+        print('--- TEST TIMEOUT ---')
+        errored = True
     t1 = time.time()
-    errored = p.returncode != 0
     if errored:
         if stdout:
             print('--- STDOUT ---')
@@ -87,7 +94,7 @@ def run_examples(keep_artifacts=None):
 
     # NSIS won't error out when running scripts unless we set this custom environment variable
     os.environ["NSIS_SCRIPTS_RAISE_ERRORS"] = "1"
-    
+
     parent_output = tempfile.mkdtemp()
     tested_files = set()
     which_errored = {}
@@ -97,6 +104,8 @@ def run_examples(keep_artifacts=None):
         output_dir = tempfile.mkdtemp(dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
+        example_name = Path(example_path).parent.name
+        test_with_spaces = example_name in WITH_SPACES
         cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
         creation_errored = _execute(cmd)
         errored += creation_errored
@@ -105,12 +114,13 @@ def run_examples(keep_artifacts=None):
             if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
                 continue
             tested_files.add(fpath)
-            env_dir = tempfile.mkdtemp(dir=output_dir)
+            test_suffix = "s p a c e s" if test_with_spaces else None
+            env_dir = tempfile.mkdtemp(suffix=test_suffix, dir=output_dir)
             rm_rf(env_dir)
             print('--- Testing %s' % fpath)
             fpath = os.path.join(output_dir, fpath)
             if ext == 'sh':
-                cmd = ['bash', fpath, '-b', '-p', env_dir]
+                cmd = ['/bin/sh', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
                 if os.environ.get("CI"):
                     # We want to run it in an arbitrary directory, but the options
@@ -123,18 +133,19 @@ def run_examples(keep_artifacts=None):
                     cmd = ['pkgutil', '--expand', fpath, env_dir]
             elif ext == 'exe':
                 # NSIS manual:
-                # > /D sets the default installation directory ($INSTDIR), overriding InstallDir and
-                # > InstallDirRegKey. It must be the last parameter used in the command line and must
-                # > not contain any quotes, even if the path contains spaces. Only absolute paths are
-                # > supported.
-                # Since subprocess.Popen WILL escape the spaces with quotes, we need to provide them
-                # as separate arguments. We don't care about multiple spaces collapsing into one, since
-                # the point is to just have spaces in the installation path -- one would be enough too :)
+                # > /D sets the default installation directory ($INSTDIR), overriding InstallDir
+                # > and InstallDirRegKey. It must be the last parameter used in the command line
+                # > and must not contain any quotes, even if the path contains spaces. Only
+                # > absolute paths are supported.
+                # Since subprocess.Popen WILL escape the spaces with quotes, we need to provide
+                # them as separate arguments. We don't care about multiple spaces collapsing into
+                # one, since the point is to just have spaces in the installation path -- one
+                # would be enough too :)
                 # This is why we have this weird .split() thingy down here:
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
             test_errored = _execute(cmd)
             # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
-            # which are only written if a special NSIS build is used
+            # which are only written if a special NSIS build is used
             win_error_lines = []
             if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
@@ -169,28 +180,37 @@ def run_examples(keep_artifacts=None):
                     print('---  LOGS  ---')
                     print("Tip: Debug locally and check the full logs in the Installer UI")
                     print("     or check /var/log/install.log if run from the CLI.")
-            elif ext == "exe":
+            elif ext == "exe" and not test_with_spaces:
                 # The installer succeeded, test the uninstaller on Windows
-                uninstaller = next((p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None)
+                # The un-installers are only tested when testing without spaces, as they hang during
+                # testing but work in UI mode.
+                uninstaller = next(
+                    (p for p in os.listdir(env_dir) if p.startswith("Uninstall-")), None
+                )
                 if uninstaller:
                     cmd = [
-                        'cmd.exe', '/c', 'start', '/wait', 
-                        os.path.join(env_dir, uninstaller), 
-                        # We need silent mode + "uninstaller location" (_?=...) so the command can be
-                        # waited; otherwise, since the uninstaller copies itself to a different location
-                        # so it can be auto-deleted, it returns immediately and it gives us problems with
-                        # the tempdir cleanup later
+                        'cmd.exe', '/c', 'start', '/wait',
+                        os.path.join(env_dir, uninstaller),
+                        # We need silent mode + "uninstaller location" (_?=...) so the command can
+                        # be waited; otherwise, since the uninstaller copies itself to a different
+                        # location so it can be auto-deleted, it returns immediately and it gives
+                        # us problems with the tempdir cleanup later
                         f"/S _?={env_dir}"
                     ]
-                    _execute(cmd)
+                    test_errored = _execute(cmd)
+                    errored += test_errored
+                    if test_errored:
+                        which_errored.setdefault(example_path, []).append(
+                            "Wrong uninstall exit code or timeout."
+                        )
                     paths_after_uninstall = os.listdir(env_dir)
                     if len(paths_after_uninstall) > 2:
                         # The debug installer writes to install.log too, which will only
                         # be deleted _after_ a reboot. Finding some files is ok, but more
                         # than two usually means a problem with the uninstaller.
-                        # Note this is is not exhaustive, because we are not checking 
+                        # Note this is is not exhaustive, because we are not checking
                         # whether the registry was restored, menu items were deleted, etc.
-                        # TODO :)
+                        # TODO :)
                         which_errored.setdefault(example_path, []).append(
                             "Uninstaller left too many files behind!\n - "
                             "\n - ".join(paths_after_uninstall)
@@ -219,7 +239,7 @@ def run_examples(keep_artifacts=None):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) >=2 and sys.argv[1].startswith('--keep-artifacts='):
+    if len(sys.argv) >= 2 and sys.argv[1].startswith('--keep-artifacts='):
         keep_artifacts = sys.argv[1].split("=")[1]
     else:
         keep_artifacts = None

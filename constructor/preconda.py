@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 import shutil
 from textwrap import dedent
+from typing import List, Union, Mapping
 
 from .utils import filename_dist, get_final_url
 
@@ -245,8 +246,21 @@ def write_channels_txt(info, dst_dir, env_config):
         f.write(",".join(get_final_channels(env_config)))
 
 
-def copy_extra_files(info, workdir):
-    extra_files = info.get('extra_files')
+def copy_extra_files(
+    extra_files: List[Union[os.PathLike, Mapping]], workdir: os.PathLike
+) -> List[os.PathLike]:
+    """Copy list of extra files to a working directory
+
+    Args:
+        extra_files (List[Union[os.PathLike, Mapping]]): A path or a mapping
+        workdir (os.PathLike): Path to where extra files will be copied to.
+
+    Raises:
+        FileNotFoundError: Raises when the file isn't found.
+
+    Returns:
+        List[os.PathLike]: List of normalized paths of copied locations.
+    """
     if not extra_files:
         return []
     copied = []
@@ -258,7 +272,7 @@ def copy_extra_files(info, workdir):
             origin, destination = next(iter(path.items()))
             orig_path = Path(origin)
             if not orig_path.exists():
-                raise ValueError(f"File {origin} does not exist")
+                raise FileNotFoundError(f"File {origin} does not exist.")
             dest_path = Path(workdir) / destination
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             copied.append(shutil.copy(orig_path, dest_path))

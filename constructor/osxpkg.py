@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 from os.path import isdir, abspath, dirname, exists, join
 from subprocess import check_call
@@ -6,11 +7,18 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
-from textwrap import dedent
 
-import constructor.preconda as preconda
-from constructor.imaging import write_images
-from constructor.utils import add_condarc, get_final_channels, rm_rf, approx_size_kb
+from . import preconda
+from .construct import ns_platform
+from .imaging import write_images
+from .utils import (
+    add_condarc,
+    get_final_channels,
+    rm_rf,
+    approx_size_kb,
+    preprocess,
+    fill_template,
+)
 
 
 OSX_DIR = join(dirname(__file__), "osx")
@@ -71,7 +79,7 @@ def modify_xml(xml_path, info):
                                                   'No license'))
     root.append(license)
 
-    ### BACKGROUND ###
+    # -- BACKGROUND -- #
     # Default setting for the background was using Anaconda's logo
     # located at ./osx/MacInstaller.png. If `welcome_image` or
     # `welcome_image_text` are not provided, this will still happen.
@@ -99,8 +107,10 @@ def modify_xml(xml_path, info):
                                     alignment='center')
             root.append(background)
 
-    ### WELCOME ###
-    if "welcome_file" in info:
+    # -- WELCOME -- #
+    # The endswith .nsi is for windows specifically.  The nsi script will add in
+    # welcome pages if added.
+    if "welcome_file" in info and not info["welcome_file"].endswith(".nsi"):
         welcome_path = info["welcome_file"]
     elif "welcome_text" in info and info["welcome_text"]:
         welcome_path = join(PACKAGES_DIR, "welcome.txt")
@@ -108,6 +118,9 @@ def modify_xml(xml_path, info):
             f.write(info["welcome_text"])
     else:
         welcome_path = None
+        if info.get("welcome_file", "").endswith(".nsi"):
+            print(f"Warning: NSI welcome_file, {info['welcome_file'].endswith('.nsi')}, "
+                  "is ignored.")
 
     if welcome_path:
         welcome = ET.Element(
@@ -116,8 +129,10 @@ def modify_xml(xml_path, info):
         )
         root.append(welcome)
 
-    ### CONCLUSION ###
-    if "conclusion_file" in info:
+    # -- CONCLUSION -- #
+    # The endswith .nsi is for windows specifically.  The nsi script will add in
+    # conclusion pages if added.
+    if "conclusion_file" in info and not info["conclusion_file"].endswith(".nsi"):
         conclusion_path = info["conclusion_file"]
     elif "conclusion_text" in info:
         if not info["conclusion_text"]:
@@ -128,7 +143,9 @@ def modify_xml(xml_path, info):
                 f.write(info["conclusion_text"])
     else:
         conclusion_path = join(OSX_DIR, 'acloud.rtf')
-
+        if info.get("conclusion_file", "").endswith(".nsi"):
+            print(f"Warning: NSI conclusion_file, {info['conclusion_file'].endswith('.nsi')}, "
+                  "is ignored.")
     if conclusion_path:
         conclusion = ET.Element(
             'conclusion', file=conclusion_path,
@@ -137,7 +154,7 @@ def modify_xml(xml_path, info):
         root.append(conclusion)
     # when not provided, conclusion defaults to a system message
 
-    ### README ###
+    # -- README -- #
     if "readme_file" in info:
         readme_path = info["readme_file"]
     elif "readme_text" in info:
@@ -181,7 +198,7 @@ def modify_xml(xml_path, info):
             path_choice.set('title', 'Install {}'.format(info['name']))
             path_choice.set('enabled', 'false')
         elif ident.endswith('run_installation'):
-            # We leave this one out on purpose! The user does not need to
+            # We leave this one out on purpose! The user does not need to
             # know we separated the installation in two steps to accommodate
             # for the pre-install scripts optionality
             path_choice.set('visible', 'false')
@@ -246,24 +263,16 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     Fill template scripts checks_before_install.sh, prepare_installation.sh and others,
     and move them to the installer workspace.
     """
+    assert user_script_type in (None, "pre_install", "post_install")
     with open(src) as fi:
         data = fi.read()
 
+    # ppd hosts the conditions for the #if/#else/#endif preprocessors on scripts
+    ppd = ns_platform(info['_platform'])
+    ppd['check_path_spaces'] = bool(info.get("check_path_spaces", True))
+
     # This is necessary for when installing on case-sensitive macOS filesystems.
     pkg_name_lower = info.get("pkg_name", info['name']).lower()
-    data = data.replace('__NAME_LOWER__', pkg_name_lower)
-    data = data.replace('__VERSION__', info['version'])
-    data = data.replace('__NAME__', info['name'])
-    data = data.replace('__CHANNELS__', ','.join(get_final_channels(info)))
-    data = data.replace('__WRITE_CONDARC__', '\n'.join(add_condarc(info)))
-    data = data.replace('__PLAT__', info['_platform'])
-    data = data.replace('__PROGRESS_NOTIFICATIONS__', str(info.get('progress_notifications')))
-    # Is this a user-provided script?
-    if user_script_type == "pre_install":
-        data = data.replace('__PRE_OR_POST__', "pre_install")
-    elif user_script_type == "post_install":
-        data = data.replace('__PRE_OR_POST__', "post_install")
-
     default_path_exists_error_text = (
         "'{CHOSEN_PATH}' already exists. Please, relaunch the installer and "
         "choose another location in the Destination Select step."
@@ -271,7 +280,19 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     path_exists_error_text = info.get(
         "install_path_exists_error_text", default_path_exists_error_text
     ).format(CHOSEN_PATH=f"$2/{pkg_name_lower}")
-    data = data.replace('__PATH_EXISTS_ERROR_TEXT__', path_exists_error_text)
+    replace = {
+        'NAME': info['name'],
+        'NAME_LOWER': pkg_name_lower,
+        'VERSION': info['version'],
+        'PLAT': info['_platform'],
+        'CHANNELS': ','.join(get_final_channels(info)),
+        'WRITE_CONDARC': '\n'.join(add_condarc(info)),
+        'PATH_EXISTS_ERROR_TEXT': path_exists_error_text,
+        'PROGRESS_NOTIFICATIONS': str(info.get('progress_notifications', False)),
+        'PRE_OR_POST': user_script_type or '__PRE_OR_POST__',
+    }
+    data = preprocess(data, ppd)
+    data = fill_template(data, replace)
 
     with open(dst, 'w') as fo:
         if (
@@ -281,7 +302,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         ):
             # Shell scripts provided by the user require a shebang, otherwise it
             # will fail to start with error posix_spawn 8
-            # We only handle shell scripts this way
+            # We only handle shell scripts this way
             fo.write("#!/bin/bash\n")
         fo.write(data)
     os.chmod(dst, 0o755)
@@ -359,6 +380,16 @@ def pkgbuild_script(name, info, src, dst='postinstall', **kwargs):
 
 
 def create(info, verbose=False):
+    # Do some configuration checks
+    if info.get("check_path_spaces", True) is True:
+        for key in "default_location_pkg", "pkg_name":
+            if " " in info.get(key, ""):
+                sys.exit(
+                    f"ERROR: 'check_path_spaces' is enabled, but '{key}' "
+                    "contains spaces. This will always result in a failed "
+                    "installation! Aborting!"
+                )
+
     global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR, SCRIPTS_DIR
 
     CACHE_DIR = info['_download_dir']
@@ -378,13 +409,13 @@ def create(info, verbose=False):
     # The 'prepare_installation' package contains the prepopulated package cache, the modified
     # conda-meta metadata staged into pkgs/conda-meta, conda.exe,
     # Optionally, extra files and the user-provided scripts.
-    # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
+    # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
     fresh_dir(SCRIPTS_DIR)
     pkgs_dir = join(prefix, 'pkgs')
     os.makedirs(pkgs_dir)
     preconda.write_files(info, pkgs_dir)
-    preconda.copy_extra_files(info, prefix)
+    preconda.copy_extra_files(info.get("extra_files", []), prefix)
     # These are the user-provided scripts, maybe patched to have a shebang
     # They will be called by a wrapping script added later, if present
     if info.get('pre_install'):
