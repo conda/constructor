@@ -7,6 +7,7 @@
 set -euo pipefail
 
 notify() {
+# shellcheck disable=SC2050
 if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
@@ -26,12 +27,11 @@ CONDA_EXEC="$PREFIX/conda.exe"
 
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
-CONDA_SAFETY_CHECKS=disabled \
+if ! CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
-if (( $? )); then
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX"; then
     echo "ERROR: could not complete the conda install"
     exit 1
 fi
@@ -78,8 +78,7 @@ find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
 __WRITE_CONDARC__
 
-"$PREFIX/bin/python" -V
-if (( $? )); then
+if ! "$PREFIX/bin/python" -V; then
     echo "ERROR running Python"
     exit 1
 fi

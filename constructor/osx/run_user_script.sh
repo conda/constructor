@@ -7,6 +7,7 @@
 set -euo pipefail
 
 notify() {
+# shellcheck disable=SC2050
 if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
@@ -35,8 +36,7 @@ export PRE_OR_POST="__PRE_OR_POST__"
 if [ -f "$PREFIX/pkgs/user_${PRE_OR_POST}" ]; then
     notify "Running ${PRE_OR_POST} scripts..."
     chmod +x "$PREFIX/pkgs/user_${PRE_OR_POST}"
-    "$PREFIX/pkgs/user_${PRE_OR_POST}"
-    if (( $? )); then
+    if ! "$PREFIX/pkgs/user_${PRE_OR_POST}"; then
         echo "ERROR: could not run user-provided ${PRE_OR_POST} script!"
         exit 1
     fi
