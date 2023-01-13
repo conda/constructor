@@ -6,7 +6,6 @@
 """
 fcp (fetch conda packages) module
 """
-from __future__ import absolute_import, division, print_function
 
 from collections import defaultdict
 import json
@@ -39,7 +38,7 @@ def getsize(filename):
 
 
 def warn_menu_packages_missing(precs, menu_packages):
-    all_names = set(prec.name for prec in precs)
+    all_names = {prec.name for prec in precs}
     for name in menu_packages:
         if name not in all_names:
             print("WARNING: no such package (in menu_packages): %s" % name)
@@ -183,9 +182,9 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             msg_str = "File '%s' found in multiple packages: %s" % (
                     member, ', '.join(fns))
             if duplicate_files == "warn":
-                print('Warning: {}'.format(msg_str))
+                print(f'Warning: {msg_str}')
             else:
-                sys.exit('Error: {}'.format(msg_str))
+                sys.exit(f'Error: {msg_str}')
 
     for member in map_members_icase:
         # Some filesystems are not case sensitive by default (e.g HFS)
@@ -198,9 +197,9 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             msg_str = "Files %s found in the package(s): %s" % (
                 str(files)[1:-1], ', '.join(fns))
             if duplicate_files == "warn" or platform.startswith('linux'):
-                print('Warning: {}'.format(msg_str))
+                print(f'Warning: {msg_str}')
             else:
-                sys.exit('Error: {}'.format(msg_str))
+                sys.exit(f'Error: {msg_str}')
 
     return total_tarball_size, total_extracted_pkgs_size
 
@@ -217,7 +216,7 @@ def _precs_from_environment(environment, download_dir, user_conda):
     # creating a tuple of dist_name, URL, MD5, filename (fn)
     explicit = check_output([user_conda, "list", list_flag, environment,
                              "--explicit", "--json", "--md5"],
-                            universal_newlines=True)
+                            text=True)
     ordering = []
     for line in explicit.splitlines():
         if not line or line.startswith("#") or line.startswith("@"):

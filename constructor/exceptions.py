@@ -13,7 +13,7 @@ class YamlParsingError(Exception):
 
 class UnableToParse(YamlParsingError):
     def __init__(self, original, *args, **kwargs):
-        super(UnableToParse, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.original = original
 
     def error_msg(self):
@@ -31,13 +31,13 @@ class UnableToParse(YamlParsingError):
     def indented_exception(self):
         orig = str(self.original)
         def indent(s): return s.replace("\n", "\n--> ")
-        return "Error Message:\n--> {}\n\n".format(indent(orig))
+        return f"Error Message:\n--> {indent(orig)}\n\n"
 
 
 class UnableToParseMissingJinja2(UnableToParse):
     def error_body(self):
         return "\n".join([
-            super(UnableToParseMissingJinja2, self).error_body(),
+            super().error_body(),
             indent("""\
                 It appears you are missing jinja2.  Please install that
                 package, then attempt to build.
