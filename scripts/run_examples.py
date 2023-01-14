@@ -48,6 +48,7 @@ def _execute(cmd, **env_vars):
         errored = True
     t1 = time.time()
     if errored or "CONDA_VERBOSITY" in env_vars:
+        print(f'--- RETURNCODE: {p.returncode} ---')
         if stdout:
             print('--- STDOUT ---')
             print(stdout)
