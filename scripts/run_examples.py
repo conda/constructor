@@ -95,7 +95,8 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
             if os.path.exists(os.path.join(fpath, 'construct.yaml')):
                 example_paths.append(fpath)
 
-    # NSIS won't error out when running scripts unless we set this custom environment variable
+    # NSIS won't error out when running scripts unless 
+    # we set this custom environment variable
     os.environ["NSIS_SCRIPTS_RAISE_ERRORS"] = "1"
 
     parent_output = tempfile.mkdtemp()
@@ -106,7 +107,17 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
         test_with_spaces = example_name in WITH_SPACES
         print(example_name)
         print('-' * len(example_name))
-
+        if (
+            sys.platform.startswith("win") 
+            and conda_exe 
+            and "micromamba" in os.path.basename(conda_exe).lower()
+            and "menu_packages" in (Path(example_path) / "construct.yaml").read_text()
+        ):
+            print(
+                f"Skipping {example_name}... 'menu_shortcuts' "
+                "not supported with micromamba."
+            )
+            continue
         output_dir = tempfile.mkdtemp(prefix=f"{example_name}-", dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
