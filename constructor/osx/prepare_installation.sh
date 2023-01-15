@@ -4,7 +4,10 @@
 
 # COMMON UTILS
 # If you update this block, please propagate changes to the other scripts using it
+set -euo pipefail
+
 notify() {
+# shellcheck disable=SC2050
 if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
@@ -31,8 +34,7 @@ touch "$PREFIX/conda-meta/history"
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place
 notify "Preparing packages..."
-"$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs
-if (( $? )); then
+if ! "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs; then
     echo "ERROR: could not extract the conda packages"
     exit 1
 fi
