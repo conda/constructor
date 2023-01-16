@@ -16,6 +16,12 @@ repos:
       - id: mixed-line-ending
       - id: end-of-file-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+      - id: pyupgrade
+        args: ["--py37-plus", "--keep-percent-format"]
+        exclude: ^(constructor/nsis/.*py)
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:

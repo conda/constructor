@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* Officially require Python>=3.7 via setup.py. Older Python versions are EOL and not part of the test matrix since #479. (#606)
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>

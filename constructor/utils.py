@@ -184,7 +184,7 @@ def rm_rf(path):
             unlink(path)
         elif isdir(path):
             rmtree(path)
-    except (OSError, IOError):
+    except OSError:
         pass
 
 

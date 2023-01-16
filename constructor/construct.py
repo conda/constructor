@@ -326,21 +326,21 @@ Metadata about the installer can be found in the `%INSTALLER_NAME%`,
 `%INSTALLER_TYPE%` is set to `EXE`.
 '''),
 
-    ('default_prefix',         False, str, '''
+    ('default_prefix',         False, str, r'''
 Set default install prefix. On Linux, if not provided, the default prefix is
 `${HOME}/${NAME}`. On windows, this is used only for "Just Me" installation;
 for "All Users" installation, use the `default_prefix_all_users` key.
 If not provided, the default prefix is `${USERPROFILE}\${NAME}`.
 '''),  # noqa
 
-    ('default_prefix_domain_user', False, str, '''
+    ('default_prefix_domain_user', False, str, r'''
 Set default installation prefix for domain user. If not provided, the
 installation prefix for domain user will be `${LOCALAPPDATA}\${NAME}`.
 By default, it is different from the `default_prefix` value to avoid installing
 the distribution in the roaming profile. Windows only.
 '''),  # noqa
 
-    ('default_prefix_all_users', False, str, '''
+    ('default_prefix_all_users', False, str, r'''
 Set default installation prefix for All Users installation. If not provided,
 the installation prefix for all users installation will be
 `${ALLUSERSPROFILE}\${NAME}`. Windows only.
@@ -672,7 +672,7 @@ def parse(path, platform):
     try:
         with open(path) as fi:
             data = fi.read()
-    except IOError:
+    except OSError:
         sys.exit("Error: could not open '%s' for reading" % path)
     directory = dirname(path)
     content_filter = partial(select_lines, namespace=ns_platform(platform))
