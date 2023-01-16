@@ -4,7 +4,6 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from __future__ import absolute_import, division, print_function
 
 import os
 from os.path import abspath, dirname, isfile, join
@@ -93,7 +92,7 @@ def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
 
 
 def setup_envs_commands(info, dir_path):
-    template = """
+    template = r"""
         # Set up {name} env
         SetDetailsPrint TextOnly
         DetailPrint "Setting up the {name} environment ..."
@@ -407,7 +406,7 @@ def create(info, verbose=False):
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
     print('Calling: %s' % args)
-    process = run(args, stdout=PIPE, stderr=PIPE, text=True)
+    process = run(args, capture_output=True, text=True)
     if verbose:
         print("makensis stdout:", process.stdout, sep="\n")
         print("makensis stderr:", process.stderr, sep="\n")

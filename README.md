@@ -46,7 +46,7 @@ the script directly with ``python scripts/make_docs.py``.
 
 ## Build status
 
-| [![Build status](https://github.com/conda/constructor/workflows/Build%20and%20test%20the%20package/badge.svg)](https://github.com/conda/constructor/actions) [![codecov](https://codecov.io/gh/conda/constructor/branch/main/graph/badge.svg)](https://codecov.io/gh/conda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/latest_release_date.svg)](https://anaconda.org/ctools/constructor) |
+| [![Build status](https://github.com/conda/constructor/actions/workflows/main.yml/badge.svg)](https://github.com/conda/constructor/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/conda/constructor/branch/main/graph/badge.svg)](https://codecov.io/gh/conda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/latest_release_date.svg)](https://anaconda.org/ctools/constructor) |
 | --- | :-: |
 | [`conda install ctools/label/dev::constructor`](https://anaconda.org/ctools/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/version.svg)](https://anaconda.org/ctools/constructor) |
 | [`conda install defaults::constructor`](https://anaconda.org/anaconda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/anaconda/constructor/badges/version.svg)](https://anaconda.org/anaconda/constructor) |

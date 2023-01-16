@@ -204,7 +204,7 @@ def write_repodata_record(info, dst_dir):
         record_file = join(_dist, 'info', 'repodata_record.json')
         record_file_src = join(info['_download_dir'], record_file)
 
-        with open(record_file_src, 'r') as rf:
+        with open(record_file_src) as rf:
             rr_json = json.load(rf)
 
         rr_json['url'] = get_final_url(info, rr_json['url'])

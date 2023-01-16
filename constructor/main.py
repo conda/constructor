@@ -4,7 +4,6 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from __future__ import absolute_import, division, print_function
 
 import os
 from os.path import abspath, expanduser, isdir, join
@@ -293,7 +292,7 @@ def main():
     p.add_argument('-V', '--version',
                    help="display the version being used and exit",
                    action="version",
-                   version='%(prog)s {version}'.format(version=__version__))
+                   version=f'%(prog)s {__version__}')
 
     p.add_argument('--conda-exe',
                    help="path to conda executable (conda-standalone, micromamba)",
