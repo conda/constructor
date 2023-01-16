@@ -111,10 +111,9 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
             sys.platform.startswith("win")
             and conda_exe
             and "micromamba" in os.path.basename(conda_exe).lower()
-            and "menu_packages" in (Path(example_path) / "construct.yaml").read_text()
         ):
             print(
-                f"Skipping {example_name}... 'menu_shortcuts' "
+                f"! Skipping {example_name}... Shortcut creation on Windows is "
                 "not supported with micromamba."
             )
             continue

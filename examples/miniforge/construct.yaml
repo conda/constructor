@@ -19,5 +19,3 @@ specs:
 installer_type: all
 post_install: test_install.sh  # [unix]
 post_install: test_install.bat  # [win]
-menu_packages:  # [win]
-  - miniforge_console_shortcut  # [win]
