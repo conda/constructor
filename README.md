@@ -1,6 +1,6 @@
 # (conda) Constructor
 
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/conda/constructor/main.svg)](https://results.pre-commit.ci/latest/github/conda/constructor/main)
+Constructor is a tool which allows constructing an installer for a collection of conda packages. 
 
 ## Description
 
@@ -46,8 +46,8 @@ the script directly with ``python scripts/make_docs.py``.
 
 ## Build status
 
-| [![Build status](https://github.com/conda/constructor/actions/workflows/main.yml/badge.svg)](https://github.com/conda/constructor/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/conda/constructor/branch/main/graph/badge.svg)](https://codecov.io/gh/conda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/latest_release_date.svg)](https://anaconda.org/ctools/constructor) |
+| [![Build status](https://github.com/conda/constructor/actions/workflows/main.yml/badge.svg)](https://github.com/conda/constructor/actions/workflows/main.yml) [![Docs status](https://github.com/conda/constructor/actions/workflows/docs.yml/badge.svg)](https://github.com/conda/constructor/actions/workflows/docs.yml) [![codecov](https://codecov.io/gh/conda/constructor/branch/main/graph/badge.svg)](https://codecov.io/gh/conda/constructor) [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/conda/constructor/main.svg)](https://results.pre-commit.ci/latest/github/conda/constructor/main)  | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/latest_release_date.svg)](https://anaconda.org/ctools/constructor) |
 | --- | :-: |
-| [`conda install ctools/label/dev::constructor`](https://anaconda.org/ctools/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/version.svg)](https://anaconda.org/ctools/constructor) |
 | [`conda install defaults::constructor`](https://anaconda.org/anaconda/constructor) | [![Anaconda-Server Badge](https://anaconda.org/anaconda/constructor/badges/version.svg)](https://anaconda.org/anaconda/constructor) |
 | [`conda install conda-forge::constructor`](https://anaconda.org/conda-forge/constructor) | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/constructor/badges/version.svg)](https://anaconda.org/conda-forge/constructor) |
+| [`conda install ctools/label/dev::constructor`](https://anaconda.org/ctools/constructor) | [![Anaconda-Server Badge](https://anaconda.org/ctools/constructor/badges/version.svg)](https://anaconda.org/ctools/constructor) |
