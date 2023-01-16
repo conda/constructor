@@ -1,0 +1,15 @@
+html {
+    --pst-font-size-base: 14px;
+}
+
+html[data-theme="light"] {
+    --pst-color-primary: #025C02;
+    --pst-color-secondary: #3EB049;
+    --pst-color-link-hover: #3EB049;
+}
+
+html[data-theme="dark"] {
+    --pst-color-primary: #3EB049;
+    --pst-color-secondary: #025C02;
+    --pst-color-link-hover: #025C02;
+}

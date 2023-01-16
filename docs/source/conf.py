@@ -1,55 +1,85 @@
+# Copyright (C) 2022 Anaconda, Inc
+# SPDX-License-Identifier: BSD-3-Clause
 # Configuration file for the Sphinx documentation builder.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
+# For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
-
 # -- Project information -----------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'constructor'
-copyright = '2019, Anaconda'
-author = 'Anaconda'
-
+project = html_title = "constructor"
+copyright = "2022, constructor contributors"
+author = "constructor contributors"
 
 # -- General configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
 extensions = [
+    "myst_parser",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.graphviz",
+    "sphinx.ext.ifconfig",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.viewcode",
+    "sphinxcontrib.mermaid",
+    "sphinx_sitemap",
+    "sphinx_design",
+    "sphinx_copybutton",
 ]
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+myst_heading_anchors = 3
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_admonition",
+    "html_image",
+    "linkify",
+    "replacements",
+    "smartquotes",
+    "substitution",
+    "tasklist",
+]
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
 
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'alabaster'
+html_theme = "pydata_sphinx_theme"
+html_static_path = ["_static"]
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_css_files = [
+    "css/custom.css",
+]
 
-# Using the index file instead of contents.rst as the master doc
-master_doc = 'index'
+# Serving the robots.txt since we want to point to the sitemap.xml file
+html_extra_path = ["robots.txt"]
+
+html_theme_options = {
+    "github_url": "https://github.com/conda/constructor",
+    "collapse_navigation": True,
+    "navigation_depth": 1,
+    "use_edit_page_button": True,
+    "show_toc_level": 1,
+    "navbar_align": "left",
+    "header_links_before_dropdown": 1,
+    # "announcement": "<p>This is the documentation for constructor!</p>",
+}
+
+html_context = {
+    "github_user": "conda",
+    "github_repo": "constructor",
+    "github_version": "main",
+    "doc_path": "docs",
+}
+
+# We don't have a locale set, so we can safely ignore that for the sitemaps.
+sitemap_locales = [None]
+# We're hard-coding stable here since that's what we want Google to point to.
+sitemap_url_scheme = "{link}"
