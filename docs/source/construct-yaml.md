@@ -125,8 +125,8 @@ is contained as a result of resolving the specs for `python 2.7`.
 _required:_ no<br/>
 _type:_ list<br/>
 
-A list of packages with menu items to be instsalled. The packages must have
-necessary metadata in "Menu/<package name>.json").  Menu items are currently
+A list of packages with menu items to be installed. The packages must have
+necessary metadata in `Menu/<package name>.json`). Menu items are currently
 only supported on Windows. By default, all menu items will be installed;
 supplying this list allows a subset to be selected instead.
 

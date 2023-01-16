@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -euxo pipefail
 
 # tests
 # base environment uses python 3.9 and excludes tk
