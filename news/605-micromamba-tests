@@ -1,0 +1,20 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* Add tests for `--conda-exe=<micromamba>` and fix found issues on Linux and macOS.
+  Not supported on Windows yet. (#503, #605)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
