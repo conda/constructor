@@ -8,5 +8,6 @@
 :maxdepth: 2
 
 getting-started
+howto
 construct-yaml
 ```

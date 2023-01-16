@@ -78,25 +78,6 @@ $ constructor .
 Your installer will be created inside of the directory with
 this naming scheme: `name-version-yourPlatform.{sh|exe|pkg}`.
 
-
-### Controlling which kind of installer gets generated
-
-Constructor is currently limited to generating installers for the platform on
-which it is running. In other words, if you run constructor on a Windows
-computer, you can only generate Windows installers. This is largely because
-OS-native tools are needed to generate the Windows .exe files and MacOS .pkg
-files.  There is a key in `construct.yaml`, `installer_type`, which dictates
-the type of installer that gets generated. This is primarily only useful for
-MacOS, where you can generate either `.pkg` or `.sh` installers. When not set in
-`construct.yaml`, this value defaults to `.sh` on Unix platforms, and `.exe` on
-Windows. Using this key is generally done with selectors.  For example, to
-build a `.pkg` installer on MacOS, but fall back to default behavior on other
-platforms:
-
-```yaml
-installer_type: pkg  #[osx]
-```
-
 ## Some additional considerations
 
 * All conda packages must be available for the platform you are

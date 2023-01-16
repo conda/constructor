@@ -43,16 +43,20 @@ is available as the `jinja2` variable `environ`. As an example, setting the
 environment variables available in `meta.yaml` when running `conda-build`
 are not available here.
 
+> Note: This content is also available in the CLI as `constructor --help-construct`
+
 ## Available keys
 
 {%- for key_info in keys %}
 ### `{{key_info[0]}}`
 
 _required:_ {{key_info[1]}}<br/>
-_type{{key_info[4]}}:_ {{key_info[2]}}<br/>{{key_info[3]}}
+_type{{key_info[4]}}:_ {{key_info[2]}}<br/>
+{{key_info[3]}}
 {%- endfor %}
 
 ## Available selectors
+
 {%- for key, val in platforms|dictsort %}
 - `{{key}}`
 {%- endfor %}
@@ -65,4 +69,7 @@ output = jinja2.Template(template).render(
     keys=key_info_list)
 
 with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:
+    f.write(output)
+
+with open(join(REPO_ROOT, 'docs', 'source', 'construct-yaml.md'), 'w') as f:
     f.write(output)
