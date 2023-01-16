@@ -44,7 +44,7 @@ In the case of macOS, users might get similar warnings for PKGs if the installer
 `constructor` offers some configuration options to help you in this process:
 
 - For Windows, you will need to provide the path to your code signing certificate (PFX format) in [`signing_certificate`](construct-yaml.md#signing_certificate).
-- For macOS, you will need to provide two identity names. One for the PKG signature (via [`signing_identity_name`](construct-yaml.md#signing_identity_name)), and one to pass the notarization (via [`notarization_identity_name`](construct-yaml.md#notarization_identity_name)). These can be obtained in the [Apple Developer portal](https://developer.apple.com/account/). 
+- For macOS, you will need to provide two identity names. One for the PKG signature (via [`signing_identity_name`](construct-yaml.md#signing_identity_name)), and one to pass the notarization (via [`notarization_identity_name`](construct-yaml.md#notarization_identity_name)). These can be obtained in the [Apple Developer portal](https://developer.apple.com/account/).
 Once signed, you can notarize your PKG with Apple's `notarytool`.
 
 ```{seealso}
