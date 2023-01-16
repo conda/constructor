@@ -52,3 +52,12 @@ Example of a CI pipeline implementing:
 - [Signing on Windows](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L349)
 - [Signing](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L390) and [notarization](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L459) on macOS
 ```
+
+## Create shortcuts
+
+On Windows, `conda` supports `menuinst 1.x` shortcuts. If a package provides a certain JSON file
+under `$PREFIX/Menu`, `conda` will process it to create the specified menu items.
+This happens by default for _all packages_. If you only want this to happen for certain packages,
+use the [`menu_packages`](construct-yaml.md#menu_packages) key.
+
+To learn more about `menuinst`, visit [`conda/menuinst`](https://github.com/conda/menuinst).
