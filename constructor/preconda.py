@@ -20,7 +20,7 @@ from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
                               PrefixData, write_repodata, get_repodata, all_channel_urls)
 from .conda_interface import distro as conda_distro
-from .utils import get_final_channels
+from .utils import get_final_channels, ensure_transmuted_ext
 
 try:
     import json
@@ -127,6 +127,7 @@ def write_files(info, dst_dir):
 
     with open(join(dst_dir, 'urls'), 'w') as fo:
         for url, md5 in all_final_urls_md5s:
+            url = ensure_transmuted_ext(info, url)
             fo.write('%s#%s\n' % (url, md5))
 
     with open(join(dst_dir, 'urls.txt'), 'w') as fo:
