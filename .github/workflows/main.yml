@@ -37,9 +37,10 @@ jobs:
           - os: macos
             pyver: "3.10"
             micromamba: true
-          - os: windows
-            pyver: "3.8"
-            micromamba: true
+          # Re-enable once micromamba supports menu creation
+          # - os: windows
+          #   pyver: "3.8"
+          #   micromamba: true
     env:
       PYTHONUNBUFFERED: True
     steps:

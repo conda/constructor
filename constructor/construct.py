@@ -84,10 +84,6 @@ A list of packages with menu items to be installed. The packages must have
 necessary metadata in `Menu/<package name>.json`). Menu items are currently
 only supported on Windows. By default, all menu items will be installed;
 supplying this list allows a subset to be selected instead.
-
-Note: `micromamba` does not support shortcut creation. Installers
-that use `menu_packages` will fail the menu item creation steps
-if you use `--conda-exe=<micromamba>`.
 '''),
 
     ('ignore_duplicate_files',  False, bool, '''
