@@ -59,7 +59,7 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 
 {%- for key, val in platforms|dictsort %}
 - `{{key}}`
-{%- endfor %}
+{% endfor %}
 """ # noqa
 
 key_info_list = construct.generate_key_info_list()

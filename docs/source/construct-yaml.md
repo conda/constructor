@@ -774,17 +774,31 @@ Allowed keys are:
 
 ## Available selectors
 - `aarch64`
+
 - `arm64`
+
 - `armv7l`
+
 - `linux`
+
 - `linux32`
+
 - `linux64`
+
 - `osx`
+
 - `ppc64le`
+
 - `s390x`
+
 - `unix`
+
 - `win`
+
 - `win32`
+
 - `win64`
+
 - `x86`
+
 - `x86_64`
