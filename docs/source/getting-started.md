@@ -33,13 +33,13 @@ and image files for the Windows installer.
 
 In order to create your custom installer, create a directory
 with your `construct.yaml` file inside as well as any other
-necessary files (`EULA.txt`, `photo.png`, etc). 
+necessary files (`EULA.txt`, `photo.png`, etc).
 
-All the configuration options are listed in {doc}`construct-yaml`, 
+All the configuration options are listed in {doc}`construct-yaml`,
 but here is a short example to get you started:
 
 ````{admonition} Example construct.yaml
- 
+
 In this example you will see a few of the common keys such as
 name, version, channels, specs, and a few others like the key
 for `license_file` and `welcome_image`. You will also
@@ -96,7 +96,7 @@ platforms:
 ```yaml
 installer_type: pkg  #[osx]
 ```
- 
+
 ## Some additional considerations
 
 * All conda packages must be available for the platform you are
