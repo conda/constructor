@@ -8,7 +8,7 @@
 
 ### Deprecations
 
-* Officially require Python>=3.7 via setup.py. Older Python versions are EOL and not part of the test matrix since #479. (#606)
+* Officially require Python>=3.7 via setup.py. Older Python versions are EOL and not part of the test matrix since #479. (#606 and #610)
 
 ### Docs
 
