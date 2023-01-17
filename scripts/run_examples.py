@@ -188,10 +188,19 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                         "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
                         )
             for script_prefix in "pre", "post", "test":
-                script_ext = "bat" if ext == "exe" else "sh"
+                install_location = Path(env_dir)
+                if ext == "exe":
+                    script_ext = "bat"
+                elif ext == "sh":
+                    script_ext = "sh"
+                elif example_name == "osxpkg":  # we only test one pkg example
+                    script_ext = "sh"
+                    install_location = os.path.expanduser("~/Library/osx-pkg-test")
+                else:
+                    continue
                 if (
                     (Path(example_path) / f"{script_prefix}_install.{script_ext}").exists()
-                    and not (Path(env_dir) / f"{script_prefix}_install_sentinel.txt").exists()
+                    and not (install_location / f"{script_prefix}_install_sentinel.txt").exists()
                 ):
                     # All pre/post scripts need to write a sentinel file so we can tell they did run
                     test_errored += 1
