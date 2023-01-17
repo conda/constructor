@@ -5,4 +5,4 @@ SetLocal EnableDelayedExpansion
 call "%PREFIX%\Scripts\activate.bat
 conda info || exit 1
 conda config --show-sources || exit 1
-python -c "from conda.base.context import context as c; assert len(c.channels) == 1 and c.channels[0] == 'conda-forge', c.channels"
+conda config --show --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert info['channels'] == ['conda-forge'], info"
