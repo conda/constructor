@@ -1,5 +1,443 @@
 [//]: # (current developments)
 
+## 2023-01-17   3.4.0:
+### Enhancements
+
+:
+
+* Installers support spaces in `PREFIX` now.
+  Old behaviour (reject chosen path if it contained spaces) is still default.
+  Opt-in by setting `check_path_spaces` to `False`. (#449)
+:
+
+* Windows (un)installers can be signed using the new `signing_certificate` option (#475)
+:
+
+* Users can now add arbitrary files to the installer using the ``extra_files`` keyword. (#465 via #500)
+:
+
+* Added two new keys, `initialize_conda` and `register_python`, to control whether these options
+  should be offered in the installer or not. (#507)
+:
+
+* Add support for multi-environment installs via ``extra_envs`` keyword (#359 via #509, #553, #599)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Enable alternative solvers by obeying `CONDA_SOLVER` if set and available. (#531, #597)
+:
+
+* <news item>
+:
+
+* PKG installers now default to the macOS logging system to log messages.
+  UI notifications can be enabled with `progress_notifications`
+  (off by default). (#535)
+:
+
+* The graphical macOS installer now also displays the version number of the software in the window title. (#536)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Enable ``conclusion_text`` on Windows ``.exe`` and Unix ``.sh`` installers (#443 via #547 and #550).
+:
+
+* <news item>
+:
+
+* All installers support pre- and post-install scripts and expose the same environment variables:
+  `PREFIX`, `INSTALLER_NAME`, `INSTALLER_VER`, `INSTALLER_PLAT`, `INSTALLER_TYPE`.
+  The `pre_install_desc` key is now available, fulfilling the same role as `post_install_desc` (#556 via #558)
+:
+
+* Bypass the solver by using an `@EXPLICIT` input file for `conda install` commands. (#541 via #559)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+* cache files have correct creation and modification timestamps for
+  mamba which looks at the timestamp instead of the _mod value in the
+  cache json (#579).
+* Windows GUI installer enhancement to allow for additional custom pages. These new pages can be added after the welcome page and before the conclusion. These extra pages can display text, links, and images. Such pages can be useful in providing additional instructions, guidance, or promotional materials for end-users before they begin using the application they just installed. (#590)
+* A new key `build_outputs` allows to generate extra artifacts besides the installer,
+  like JSON metadata files, solved environments lock files, or licensing reports (#595, #602).
+* Improve and publish the documentation to `conda.github.io`. (#437, #598)
+* header.sh and osx scripts hardening by adding `set -eu` (sh) / `set -euo pipefail` (bash) and fixing all shellcheck findings. Shell scripts don't stop per default when commands finish with an error causing masked errors and undefined behaviours. `set -e` changes that behaviour by stoping in all cases where errors happen enabling better error reports on the actual error. If an error should be ignored then a command can be run via `$cmd || true`. Two test cases running shellcheck ensure that future changes get tested.
+
+### Bug fixes
+
+:
+
+* <news item>
+:
+
+* Check `makensis.exe` exit code in verbose mode too (#453 via #475)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Fix constructor failures when the repo/subchannel only has ``noarch`` packages. (#512)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Fix logging error that would make ``constructor`` crash if ``verbose`` mode was enabled. (#534)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Hardcode paths to Apple tools (``productbuild``, ``productsign``, ``codesign``) to avoid using other tools with the same name in PATH. (#543)
+:
+
+* Prevent ``pre_uninstall.bat`` script from being deleted accidentally on cache clearing. (#514)
+:
+
+* Shortcuts will be removed in installations that do not require ``conda`` (#461)
+:
+
+* Freshly created download directories are now guaranteed to be writable (#411)
+:
+
+* <news item>
+:
+
+* Windows CI now correctly detects installation problems (#551 and #560)
+:
+
+* <news item>
+:
+
+* Restore the ability to use `exclude` without solving issues. (#319 via #559)
+* Restore the ability to use force reinstall without solving issues. (#456 via #559)
+* Fix env.txt indendation to be parsable by mamba again. (#592)
+:
+
+* Fix compatibility with NSIS 3.08 (#526 via #563)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Make sure `cmd` calls in the Windows uninstaller use `/D` for added resilience against Registry issues (#566)
+* Fix tests that check for the presence of the `tk` package in a given environment (#570)
+* (For Windows only) Fix for [CVE-2022-26526](https://nvd.nist.gov/vuln/detail/CVE-2022-26526). Installations for "All Users" will not be allowed the option to modify the system PATH environment variable during installation. Installations for "Just Me" will still be allowed the option to add the installation to their PATH environment variable. Additionally, when installing with Administrator privileges, non-admin system Users will no longer have “Write” permissions. (#584)
+* Ensure shell installers are POSIX compliant. (#596 via #599)
+* Add tests for `--conda-exe=<micromamba>` and fix found issues on Linux and macOS.
+  Not supported on Windows yet. (#503, #605)
+
+### Deprecations
+
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+* Officially require Python>=3.7 via setup.py. Older Python versions are EOL and not part of the test matrix since #479. (#606 and #610)
+
+### Docs
+
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Improved documentation for ``post_install`` scripts (#537)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+
+### Other
+
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Removes the usage of ``conda._vendor.toolz`` (#525)
+:
+
+* Removed Maxiconda constructor example and updated Miniconda and Jetsonconda READMEs (and several scripts) to not contain references to Maxiconda anymore. (#470)
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* <news item>
+:
+
+* Improve documentation for local channels on Windows (#483 via #564)
+* Ensure `CONSTRUCT.md` is up-to-date with `construct.py` (#564)
+:
+
+* Remove fragile and unnecessary cleanup steps from CI pipeline (#565)
+:
+
+* <news item>
+* Run Windows uninstallers as part of the examples CI (#569)
+
+* Ensure shell installers are POSIX compliant
+
+### Contributors
+
+* @AndrewVallette
+* @bryan-hunt
+* @dbast
+* @isuruf
+* @jaimergp
+* @jezdez
+* @kathatherine
+* @kenodegard
+* @nsoranzo
+* @pseudoyim
+* @hoechenberger
+* @ryanskeith
+* @travishathaway
+* @conda-bot
+* @guimondmm
+
+
+
 ## 2022-03-14   3.3.1:
 
 ### Bug fixes:
