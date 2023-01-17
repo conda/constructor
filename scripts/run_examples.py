@@ -195,7 +195,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                     script_ext = "sh"
                 elif example_name == "osxpkg":  # we only test one pkg example
                     script_ext = "sh"
-                    install_location = os.path.expanduser("~/Library/osx-pkg-test")
+                    install_location = Path("~/Library/osx-pkg-test").expanduser()
                 else:
                     continue
                 if (
