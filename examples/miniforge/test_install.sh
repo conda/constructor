@@ -3,8 +3,8 @@
 set -eo pipefail
 echo "Added by test-install script" > "$PREFIX/test_install_sentinel.txt"
 
-# shellcheck disable=SC1091
 echo "sourcing..."
+# shellcheck disable=SC1091
 source "$PREFIX/etc/profile.d/conda.sh"
 
 conda activate "$PREFIX"
