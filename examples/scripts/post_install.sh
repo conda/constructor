@@ -21,3 +21,4 @@ else  # macOS
     fi
 fi
 test -f "${PREFIX}/pre_install_sentinel.txt"
+echo "Added by post-install script" > "$PREFIX/post_install_sentinel.txt"

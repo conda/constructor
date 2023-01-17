@@ -1,3 +1,5 @@
+echo Added by post-install script > "%PREFIX%\post_install_sentinel.txt"
+
 @ECHO ON
 call "%PREFIX%\Scripts\activate.bat
 conda install -yq jq || exit 1

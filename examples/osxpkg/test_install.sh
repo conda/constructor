@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eux
 
-echo '## Hello from Post_install script ' > "$HOME/postinstall.txt"
-printenv >> "$HOME/postinstall.txt"
+echo "Added by post-install script" > "$PREFIX/post_install_sentinel.txt"
+printenv >> "$PREFIX/post_install_sentinel.txt"
 
 # Some tests
 # default_location_pkg

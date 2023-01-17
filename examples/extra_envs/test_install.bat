@@ -1,3 +1,5 @@
+echo Added by post-install script > "%PREFIX%\post_install_sentinel.txt"
+
 :: base env has python 3.9
 if not exist "%PREFIX%\conda-meta\history" exit 1
 "%PREFIX%\python.exe" -c "from sys import version_info; assert version_info[:2] == (3, 9)" || goto :error

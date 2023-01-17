@@ -187,6 +187,16 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                         "Possible causes: permissions, non-supported characters, long paths...\n"
                         "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
                         )
+            for script_prefix in "pre", "post", "test":
+                scripts = Path(example_path).glob(f"{script_prefix}_install.*") 
+                print(scripts)  # DEBUG
+                if (
+                    scripts
+                    and not (Path(env_dir) / f"{script_prefix}_install_sentinel.txt").exists()
+                ):
+                    # All pre/post scripts need to write a sentinel file so we can tell they did run
+                    test_errored += 1
+                    which_errored.setdefault(example_path, []).append("Did not run test_install scripts")
             errored += test_errored
             if test_errored:
                 which_errored.setdefault(example_path, []).append(fpath)
