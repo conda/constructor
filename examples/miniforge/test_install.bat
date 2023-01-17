@@ -3,8 +3,6 @@ SetLocal EnableDelayedExpansion
 
 @ECHO ON
 call "%PREFIX%\Scripts\activate.bat
-conda install -yq jq || exit 1
+conda info || exit 1
 conda config --show-sources || exit 1
-conda config --json --show | jq -r ".channels[0]" > temp.txt
-set /p OUTPUT=<temp.txt
-if not "!OUTPUT!" == "conda-forge" exit 1
+python -c "from conda.base.context import context as c; assert len(c.channels) == 1 and c.channels[0] == 'conda-forge', c.channels"
