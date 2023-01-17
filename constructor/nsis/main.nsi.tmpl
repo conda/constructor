@@ -650,11 +650,11 @@ Function .onInit
 #if pre_install_exists is False
     StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
 #endif
-#if pre_install_exists is True
-    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
+#if post_install_exists is True
+    StrCpy $Ana_PostInstall_State ${BST_CHECKED}
 #endif
-#if pre_install_exists is False
-    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
+#if post_install_exists is False
+    StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
 #endif
 
     Call OnInit_Release
