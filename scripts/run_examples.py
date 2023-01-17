@@ -189,7 +189,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                         )
             for script_prefix in "pre", "post", "test":
                 script_ext = "bat" if ext == "exe" else "sh"
-                scripts = Path(example_path).glob(f"{script_prefix}_install.{script_ext}") 
+                scripts = Path(example_path).glob(f"{script_prefix}_install.{script_ext}")
                 print(scripts)  # DEBUG
                 if (
                     scripts
@@ -197,7 +197,9 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                 ):
                     # All pre/post scripts need to write a sentinel file so we can tell they did run
                     test_errored += 1
-                    which_errored.setdefault(example_path, []).append("Did not run test_install scripts")
+                    which_errored.setdefault(example_path, []).append(
+                        f"Did not find {script_prefix} sentinel!"
+                    )
             errored += test_errored
             if test_errored:
                 which_errored.setdefault(example_path, []).append(fpath)
