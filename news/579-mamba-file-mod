@@ -1,5 +1,0 @@
-### Enhancements
-
-* cache files have correct creation and modification timestamps for
-  mamba which looks at the timestamp instead of the _mod value in the
-  cache json (#579).

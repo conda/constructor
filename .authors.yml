@@ -231,13 +231,14 @@
   first_commit: 2021-03-24 12:38:03
 - name: Isuru Fernando
   email: isuruf@gmail.com
-  num_commits: 22
+  num_commits: 23
   first_commit: 2020-02-08 00:55:25
   github: isuruf
 - name: Jannis Leidel
   email: jannis@leidel.info
-  num_commits: 1
+  num_commits: 3
   first_commit: 2021-08-26 05:18:15
+  github: jezdez
 - name: Wolf Vollprecht
   email: w.vollprecht@gmail.com
   num_commits: 1
@@ -253,13 +254,16 @@
   first_commit: 2021-05-24 08:52:40
 - name: conda-bot
   email: ad-team+condabot@anaconda.com
-  num_commits: 4
+  num_commits: 15
   first_commit: 2022-01-25 21:38:28
+  alternate_emails:
+  - 18747875+conda-bot@users.noreply.github.com
+  github: conda-bot
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
   aliases:
   - Jaime RGP
-  num_commits: 6
+  num_commits: 39
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören
@@ -267,3 +271,58 @@
   num_commits: 1
   first_commit: 2020-07-19 18:44:03
   github: nerohmot
+- name: Bryan Hunt
+  email: bryan-hunt@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2022-07-28 10:14:07
+  github: bryan-hunt
+- name: Katherine Kinnaman
+  email: kkinnaman@anaconda.com
+  num_commits: 1
+  first_commit: 2022-07-21 22:45:07
+  github: kathatherine
+- name: Nicola Soranzo
+  email: nicola.soranzo@gmail.com
+  num_commits: 1
+  first_commit: 2023-01-10 17:57:57
+  github: nsoranzo
+- name: Ryan
+  email: rkeith@anaconda.com
+  num_commits: 1
+  first_commit: 2023-01-11 19:12:08
+  github: ryanskeith
+- name: Andrew Vallette
+  email: andrewvallette@gmail.com
+  num_commits: 1
+  first_commit: 2022-12-13 10:04:11
+  github: AndrewVallette
+- name: Richard Höchenberger
+  email: richard.hoechenberger@gmail.com
+  num_commits: 2
+  first_commit: 2022-07-28 05:31:42
+  github: hoechenberger
+- name: Travis Hathaway
+  email: travis.j.hathaway@gmail.com
+  num_commits: 1
+  first_commit: 2022-07-26 15:48:54
+  github: travishathaway
+- name: Paul Yim
+  email: pseudoyim@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2022-12-13 16:40:27
+  github: pseudoyim
+- name: Ken Odegard
+  email: kodegard@anaconda.com
+  num_commits: 2
+  first_commit: 2022-06-15 21:15:16
+  github: kenodegard
+- name: guimondmm
+  email: guimondmm@gmail.com
+  num_commits: 1
+  first_commit: 2022-09-05 10:57:49
+  github: guimondmm
+- name: Daniel Bast
+  email: 2790401+dbast@users.noreply.github.com
+  num_commits: 11
+  first_commit: 2022-12-08 12:49:40
+  github: dbast
