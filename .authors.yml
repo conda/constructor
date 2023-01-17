@@ -255,6 +255,8 @@
   email: ad-team+condabot@anaconda.com
   num_commits: 4
   first_commit: 2022-01-25 21:38:28
+  alternate_emails:
+  - 18747875+conda-bot@users.noreply.github.com
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
   aliases:
