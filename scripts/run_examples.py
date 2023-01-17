@@ -188,7 +188,8 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                         "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
                         )
             for script_prefix in "pre", "post", "test":
-                scripts = Path(example_path).glob(f"{script_prefix}_install.*") 
+                script_ext = "bat" if ext == "exe" else "sh"
+                scripts = Path(example_path).glob(f"{script_prefix}_install.{script_ext}") 
                 print(scripts)  # DEBUG
                 if (
                     scripts
