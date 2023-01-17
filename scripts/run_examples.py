@@ -104,8 +104,6 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
     which_errored = {}
     for example_path in sorted(example_paths):
         example_name = Path(example_path).name
-        if example_name != "miniforge":
-            continue
         test_with_spaces = example_name in WITH_SPACES
         print(example_name)
         print('-' * len(example_name))
