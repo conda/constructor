@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euxo pipefail
 
-echo "Added by post-install script" > "$PREFIX/post_install_sentinel.txt"
+echo "Added by test-install script" > "$PREFIX/test_install_sentinel.txt"
 
 # tests
 # base environment uses python 3.9 and excludes tk

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -exo pipefail
-echo "Added by post-install script" > "$PREFIX/post_install_sentinel.txt"
+echo "Added by test-install script" > "$PREFIX/test_install_sentinel.txt"
 
 # shellcheck disable=SC1091
 source "$PREFIX/etc/profile.d/conda.sh"

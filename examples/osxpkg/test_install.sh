@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eux
 
-echo "Added by post-install script" > "$PREFIX/post_install_sentinel.txt"
+echo "Added by test-install script" > "$PREFIX/test_install_sentinel.txt"
 printenv >> "$PREFIX/post_install_sentinel.txt"
 
 # Some tests

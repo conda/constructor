@@ -1,4 +1,4 @@
-echo Added by post-install script > "%PREFIX%\post_install_sentinel.txt"
+echo Added by test-install script > "%PREFIX%\test_install_sentinel.txt"
 
 :: base env has python 3.9
 if not exist "%PREFIX%\conda-meta\history" exit 1
