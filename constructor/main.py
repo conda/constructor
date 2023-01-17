@@ -142,12 +142,12 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
 
-    # Installers will provide shortcut options and features only if the user 
+    # Installers will provide shortcut options and features only if the user
     # didn't opt-out by setting every `menu_packages` item to an empty list
-    info['_enable_shortcuts'] =  bool(
-        info.get("menu_packages", True) 
+    info['_enable_shortcuts'] = bool(
+        info.get("menu_packages", True)
         or any(
-            env.get("menu_packages", True) 
+            env.get("menu_packages", True)
             for env in info.get("_extra_envs_info", {}).values()
         )
     )

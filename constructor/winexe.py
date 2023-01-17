@@ -97,18 +97,18 @@ def setup_envs_commands(info, dir_path):
         SetDetailsPrint both
         DetailPrint "Setting up the {name} environment ..."
         SetDetailsPrint listonly
-        
+
         # List of packages to install
         SetOutPath "{env_txt_dir}"
         File "{env_txt_abspath}"
-        
+
         # A conda-meta\history file is required for a valid conda prefix
         SetOutPath "{conda_meta}"
         File "{history_abspath}"
-        
+
         # Set channels
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
-        
+
         # Run conda install
         ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
             DetailPrint "Installing packages for {name}, creating shortcuts if necessary..."
@@ -126,7 +126,7 @@ def setup_envs_commands(info, dir_path):
         # Cleanup {name} env.txt
         SetOutPath "$INSTDIR"
         Delete "{env_txt}"
-        
+
         # Restore shipped conda-meta\history for remapped
         # channels and retain only the first transaction
         SetOutPath "{conda_meta}"

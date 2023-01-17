@@ -82,8 +82,8 @@ is contained as a result of resolving the specs for `python 2.7`.
 
     ('menu_packages',           False, list, '''
 A list of packages with menu items to be installed. The packages must have
-necessary metadata in `Menu/<package name>.json`). By default, all menu items 
-found in the installation will be created; supplying this list allows a 
+necessary metadata in `Menu/<package name>.json`). By default, all menu items
+found in the installation will be created; supplying this list allows a
 subset to be selected instead. If an empty list is supplied, no shortcuts will
 be created.
 

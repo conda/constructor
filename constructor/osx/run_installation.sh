@@ -36,7 +36,7 @@ fi
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
 if ! \
-CONDA_ROOT_PREFIX="$PREFIX" \ 
+CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
