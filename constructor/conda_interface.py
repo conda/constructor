@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import json
 import os
 import sys
@@ -8,6 +5,8 @@ from copy import deepcopy
 from itertools import chain
 from os.path import join
 import datetime
+
+from conda.gateways.disk import mkdir_p_sudo_safe
 
 from constructor.utils import hash_files
 
@@ -51,9 +50,9 @@ if conda_interface_type == 'conda':
     except ImportError:
         from conda.models.package_cache_record import PackageCacheRecord as _PackageCacheRecord
     try:
-        from conda.core.solve import _get_solver_class
-        _Solver = _get_solver_class()
-    except ImportError:
+        from conda.base.context import context
+        _Solver = context.plugin_manager.get_cached_solver_backend()
+    except (ImportError, AttributeError):
         from conda.core.solve import Solver as _Solver
 
     # used by fcp.py
@@ -75,7 +74,7 @@ if conda_interface_type == 'conda':
     distro = None
     if sys.platform.startswith('linux'):
         try:
-            from conda._vendor import distro
+            from conda._vendor import distro  # noqa
         except ImportError:
             pass
 
@@ -93,7 +92,8 @@ if conda_interface_type == 'conda':
         else:
             raise NotImplementedError("unsupported version of conda: %s" % CONDA_INTERFACE_VERSION)
 
-        # noarch-only repos are valid. In this case, the architecture specific channel will return None
+        # noarch-only repos are valid. In this case, the architecture specific channel will
+        # return None
         if raw_repodata_str is None:
             full_repodata = {
                 '_url': url,
@@ -159,8 +159,9 @@ if conda_interface_type == 'conda':
             fh.write(repodata)
 
         # set the modification time to mod_time. needed for mamba
-        mod_time_datetime = datetime.datetime.strptime(mod_time,
-            "%a, %d %b %Y %H:%M:%S %Z")
+        mod_time_datetime = datetime.datetime.strptime(
+            mod_time, "%a, %d %b %Y %H:%M:%S %Z"
+        )
         mod_time_s = int(mod_time_datetime.timestamp())
         os.utime(repodata_filepath, times=(mod_time_s, mod_time_s))
 

@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 import shutil
 from textwrap import dedent
+from typing import List, Union, Mapping
 
 from .utils import filename_dist, get_final_url, shortcuts_flags
 
@@ -19,7 +20,7 @@ from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
                               PrefixData, write_repodata, get_repodata, all_channel_urls)
 from .conda_interface import distro as conda_distro
-from .utils import get_final_channels
+from .utils import get_final_channels, ensure_transmuted_ext
 
 try:
     import json
@@ -126,6 +127,7 @@ def write_files(info, dst_dir):
 
     with open(join(dst_dir, 'urls'), 'w') as fo:
         for url, md5 in all_final_urls_md5s:
+            url = ensure_transmuted_ext(info, url)
             fo.write('%s#%s\n' % (url, md5))
 
     with open(join(dst_dir, 'urls.txt'), 'w') as fo:
@@ -204,7 +206,7 @@ def write_repodata_record(info, dst_dir):
         record_file = join(_dist, 'info', 'repodata_record.json')
         record_file_src = join(info['_download_dir'], record_file)
 
-        with open(record_file_src, 'r') as rf:
+        with open(record_file_src) as rf:
             rr_json = json.load(rf)
 
         rr_json['url'] = get_final_url(info, rr_json['url'])
@@ -256,8 +258,21 @@ def write_shortcuts_txt(info, dst_dir, env_config):
         f.write(contents)
 
 
-def copy_extra_files(info, workdir):
-    extra_files = info.get('extra_files')
+def copy_extra_files(
+    extra_files: List[Union[os.PathLike, Mapping]], workdir: os.PathLike
+) -> List[os.PathLike]:
+    """Copy list of extra files to a working directory
+
+    Args:
+        extra_files (List[Union[os.PathLike, Mapping]]): A path or a mapping
+        workdir (os.PathLike): Path to where extra files will be copied to.
+
+    Raises:
+        FileNotFoundError: Raises when the file isn't found.
+
+    Returns:
+        List[os.PathLike]: List of normalized paths of copied locations.
+    """
     if not extra_files:
         return []
     copied = []
@@ -269,7 +284,7 @@ def copy_extra_files(info, workdir):
             origin, destination = next(iter(path.items()))
             orig_path = Path(origin)
             if not orig_path.exists():
-                raise ValueError(f"File {origin} does not exist")
+                raise FileNotFoundError(f"File {origin} does not exist.")
             dest_path = Path(workdir) / destination
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             copied.append(shutil.copy(orig_path, dest_path))

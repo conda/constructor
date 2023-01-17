@@ -31,5 +31,6 @@ setuptools.setup(
     # far more trouble than it is worth
     package_data={
         "constructor": ['header.sh', 'nsis/*', 'osx/*', 'ttf/*']
-    }
+    },
+    python_requires=">=3.7",
 )

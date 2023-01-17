@@ -4,7 +4,6 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from __future__ import absolute_import, division, print_function
 
 import os
 from os.path import basename, dirname, getsize, isdir, join, relpath
@@ -15,7 +14,7 @@ import tempfile
 
 from .construct import ns_platform
 from .preconda import files as preconda_files, write_files as preconda_write_files, \
-    copy_extra_files 
+    copy_extra_files
 from .utils import add_condarc, filename_dist, fill_template, hash_files, preprocess, \
     read_ascii_only, get_final_channels, shortcuts_flags
 
@@ -138,13 +137,13 @@ def create(info, verbose=False):
         pre_t.add(record_file_src, record_file_dest)
     pre_t.addfile(tarinfo=tarfile.TarInfo("conda-meta/history"))
     post_t.add(join(tmp_dir, 'conda-meta', 'history'), 'conda-meta/history')
-    
+
     for env_name in info.get("_extra_envs_info", {}):
         pre_t.addfile(tarinfo=tarfile.TarInfo(f"envs/{env_name}/conda-meta/history"))
         post_t.add(join(tmp_dir, 'envs', env_name, 'conda-meta', 'history'),
                    f"envs/{env_name}/conda-meta/history")
 
-    extra_files = copy_extra_files(info, tmp_dir)
+    extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     for path in extra_files:
         post_t.add(path, relpath(path, tmp_dir))
 

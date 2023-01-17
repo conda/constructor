@@ -23,12 +23,26 @@ defaults:
     shell: bash
 jobs:
   package:
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}, Python ${{ matrix.pyver }}, ${{ matrix.micromamba && 'micromamba' || 'conda-standalone' }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos, ubuntu, windows]
         pyver: ["3.7", "3.8", "3.9", "3.10"]
+        include:
+          - os: ubuntu
+            pyver: "3.9"
+            micromamba: true
+          - os: macos
+            pyver: "3.10"
+            micromamba: true
+          # Re-enable once micromamba supports menu creation
+          # - os: windows
+          #   pyver: "3.8"
+          #   micromamba: true
+    env:
+      PYTHONUNBUFFERED: True
     steps:
       - name: Print github context
         run: |
@@ -59,7 +73,6 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           PYTHONIOENCODING: utf-8
-          PYTHONUNBUFFERED: True
           # Uncomment to run within conda build
           # RUN_EXAMPLES: "1"
         run: |
@@ -103,7 +116,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: cmd
         run: |
-          set "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}\certificate.pfx" 
+          set "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}\certificate.pfx"
           set "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234"
           powershell scripts\create_self_signed_certificate.ps1
           copy /Y "%CONSTRUCTOR_SIGNING_CERTIFICATE%" examples\signing\certificate.pfx
@@ -111,12 +124,35 @@ jobs:
           :: Careful with the trailing spaces before the >> redirect!
           echo CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234>> %GITHUB_ENV%
           echo CONSTRUCTOR_SIGNTOOL_PATH=C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe>> %GITHUB_ENV%
+      - name: Set up conda executable
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          if [[ "${{ matrix.micromamba }}" != "" ]]; then
+            conda create -yqp ./micromamba -c conda-forge micromamba
+            if [[ ${{ matrix.os }} == "windows" ]]; then
+              echo "CONSTRUCTOR_CONDA_EXE=./micromamba/Library/bin/micromamba.exe" >> $GITHUB_ENV
+            else
+              echo "CONSTRUCTOR_CONDA_EXE=./micromamba/bin/micromamba" >> $GITHUB_ENV
+            fi
+          else
+            conda activate constructor
+            echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
+          fi
       - name: Run examples and prepare artifacts
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate constructor
           mkdir -p examples_artifacts/
-          python -u scripts/run_examples.py --keep-artifacts=examples_artifacts/
+          python scripts/run_examples.py \
+            --keep-artifacts=examples_artifacts/ \
+            --conda-exe="${CONSTRUCTOR_CONDA_EXE}"
+      - name: Test with conda-libmamba-solver
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate constructor
+          conda install -yq conda-libmamba-solver
+          conda list
+          CONDA_SOLVER=libmamba CONDA_VERBOSITY=1 constructor examples/noconda/ --output-dir=examples_artifacts/
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
         uses: actions/upload-artifact@v3

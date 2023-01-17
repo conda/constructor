@@ -1,52 +1,63 @@
 All of the people who have made at least one contribution to constructor.
-Authors are sorted by number of commits.
+Authors are sorted alphabetically.
 
-* Ilan Schnell
-* Nehal J Wani
-* Michael C. Grant
-* Ray Donnelly
-* Michael Sarahan
-* Eric Prestat
-* Isuru Fernando
-* Marcel Bargull
-* Kale Franz
-* Sophia Castellarin
-* Mark Harfouche
-* Chris Burr
-* Faustin Carter
-* Jonathan J. Helmus
-* Forrest Waters
+* Aaron Stevens
+* Andrew Vallette
 * Angela Gloyna
 * Anthony Scopatz
-* Jaime Rodríguez-Guerra
-* Martin Durant
-* Aaron Stevens
-* Thomas Holder
-* Eric Dill
-* conda-bot
-* Tobias Megies
-* Matthew Newville
-* Jean-Luc Stevens
-* Wolfgang Ulmer
-* Mathew Topper
-* Thomas Antony
-* Phil Elson
-* Rachel Rigdon
-* Gonzalo Pena-Castellanos
-* y2kbugger
-* bkreider
-* Ian Henriksen
-* Travis E. Oliphant
-* Thomas Robitaille
-* John Kirkham
-* Trent Nelson
-* Gabriel Reis
-* Mariana Meireles
-* astaric
-* Pradipta Ghosh
-* Connor Martin
-* Jannis Leidel
-* Wolf Vollprecht
-* XuehaiPan
-* Tom Hören
+* Bryan Hunt
 * Cheng H. Lee
+* Chris Burr
+* Connor Martin
+* Daniel Bast
+* Eric Dill
+* Eric Prestat
+* Faustin Carter
+* Forrest Waters
+* Gabriel Reis
+* Gonzalo Pena-Castellanos
+* Ian Henriksen
+* Ilan Schnell
+* Isuru Fernando
+* Jaime Rodríguez-Guerra
+* Jannis Leidel
+* Jean-Luc Stevens
+* John Kirkham
+* Jonathan J. Helmus
+* Kale Franz
+* Katherine Kinnaman
+* Ken Odegard
+* Marcel Bargull
+* Mariana Meireles
+* Mark Harfouche
+* Martin Durant
+* Mathew Topper
+* Matthew Newville
+* Michael C. Grant
+* Michael Sarahan
+* Nehal J Wani
+* Nicola Soranzo
+* Paul Yim
+* Phil Elson
+* Pradipta Ghosh
+* Rachel Rigdon
+* Ray Donnelly
+* Richard Höchenberger
+* Ryan
+* Sophia Castellarin
+* Thomas Antony
+* Thomas Holder
+* Thomas Robitaille
+* Tobias Megies
+* Tom Hören
+* Travis E. Oliphant
+* Travis Hathaway
+* Trent Nelson
+* Wolf Vollprecht
+* Wolfgang Ulmer
+* XuehaiPan
+* astaric
+* bkreider
+* conda-bot
+* guimondmm
+* y2kbugger

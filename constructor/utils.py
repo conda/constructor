@@ -8,7 +8,7 @@ import re
 import sys
 import hashlib
 import math
-from os.path import normpath, islink, isfile, isdir
+from os.path import normpath, islink, isfile, isdir, basename
 from os import sep, unlink
 from shutil import rmtree
 
@@ -123,6 +123,24 @@ def add_condarc(info):
         yield 'EOF'
 
 
+def ensure_transmuted_ext(info, url):
+    """
+    If transmuting, micromamba won't find the dist in the preconda tarball
+    unless it has the (correct and transmuted) extension. Otherwise, the command
+    `micromamba constructor --extract-tarballs` fails.
+    Unfortunately this means the `urls` file might end up containing
+    fake URLs, since those .conda archives might not really exist online,
+    and they were only created locally.
+    """
+    if (
+        info.get("transmute_file_type") == ".conda"
+        and "micromamba" in basename(info.get("_conda_exe", ""))
+    ):
+        if url.lower().endswith(".tar.bz2"):
+            url = url[:-8] + ".conda"
+    return url
+
+
 def get_final_url(info, url):
     mapping = info.get('channels_remap', [])
     for entry in mapping:
@@ -166,7 +184,7 @@ def rm_rf(path):
             unlink(path)
         elif isdir(path):
             rmtree(path)
-    except (OSError, IOError):
+    except OSError:
         pass
 
 

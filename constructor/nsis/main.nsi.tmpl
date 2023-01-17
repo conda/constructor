@@ -135,8 +135,13 @@ BrandingText /TRIMLEFT "${COMPANY}"
 
 # Pages
 #!define MUI_PAGE_CUSTOMFUNCTION_SHOW OnStartup
+#if custom_welcome
+# Custom welcome file(s)
+@CUSTOM_WELCOME_FILE@
+#else
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !insertmacro MUI_PAGE_WELCOME
+#endif
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !insertmacro MUI_PAGE_LICENSE __LICENSEFILE__
 Page Custom InstModePage_Create InstModePage_Leave
@@ -151,6 +156,10 @@ Page Custom mui_AnaCustomOptions_Show
 !define MUI_FINISHPAGE_TITLE_3LINES
 !define MUI_FINISHPAGE_TEXT __CONCLUSION_TEXT__
 #endif
+
+# Custom conclusion file(s)
+@CUSTOM_CONCLUSION_FILE@
+
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
@@ -471,7 +480,7 @@ Function .onInit
     Push $R2
 
     InitPluginsDir
-
+    @TEMP_EXTRA_FILES@
     !insertmacro ParseCommandLineArgs
 
     # Select the correct registry to look at, depending
