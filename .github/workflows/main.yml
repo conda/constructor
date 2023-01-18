@@ -31,12 +31,6 @@ jobs:
         os: [windows]
         pyver: ["3.10"]
         include:
-          - os: ubuntu
-            pyver: "3.9"
-            micromamba: true
-          - os: macos
-            pyver: "3.10"
-            micromamba: true
           # Re-enable once micromamba supports menu creation
           # - os: windows
           #   pyver: "3.8"
