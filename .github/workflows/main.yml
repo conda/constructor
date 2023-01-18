@@ -82,7 +82,7 @@ jobs:
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda build conda.recipe --python=${{ matrix.pyver }}
       - name: Upload the packages as artifact
-        # if: github.event_name == 'push'
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v3
         with:
           # By uploading to the same artifact we can download all of the packages
