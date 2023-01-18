@@ -23,6 +23,8 @@ requirements:
   host:
     - python
     - pip
+    # broken, see https://github.com/AnacondaRecipes/xz-feedstock/pull/11#issuecomment-1386915492
+    - xz !=5.2.10
   run:
     - conda >=4.6
     - python
