@@ -95,6 +95,7 @@ jobs:
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda create -n constructor -c local --strict-channel-priority constructor
           conda activate constructor
+          set -x
           installed_channel=$(conda list constructor --json | jq -r '.[].channel')
           if [[ "$installed_channel" != "conda-bld" ]]; then
             echo $(conda list constructor --json)

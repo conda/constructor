@@ -1,10 +1,20 @@
 #!/bin/bash
 
-set -exo pipefail
+set -eo pipefail
+echo "Added by test-install script" > "$PREFIX/test_install_sentinel.txt"
 
+echo "sourcing..."
 # shellcheck disable=SC1091
 source "$PREFIX/etc/profile.d/conda.sh"
+
 conda activate "$PREFIX"
-conda install -yq jq
+
+echo "+ conda info"
+conda info -v
+
+echo "+ conda config"
 conda config --show-sources
-test "$(conda config --json --show | jq -r '.channels[0]')" = "conda-forge"
+
+echo "+ Testing channels"
+conda config --show --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert info['channels'] == ['conda-forge'], info"
+echo "  OK"
