@@ -61,7 +61,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          conda create -p ../conda conda-build "python=>3.9" conda-verify
+          conda create -p ../conda conda-build "xz!=5.2.10" conda-verify
       - name: Build the package
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -86,7 +86,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
-            conda create -n constructor -c local --strict-channel-priority constructor
+            conda create -n constructor -c local --strict-channel-priority constructor "xz!=5.2.10"
           conda activate constructor
           installed_channel=$(conda list constructor --json | jq -r '.[].channel')
           if [[ "$installed_channel" != "conda-bld" ]]; then
