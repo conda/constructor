@@ -30,7 +30,6 @@ jobs:
       matrix:
         os: [windows]
         pyver: ["3.10"]
-        include:
           # Re-enable once micromamba supports menu creation
           # - os: windows
           #   pyver: "3.8"
@@ -62,7 +61,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          conda create -p ../conda conda-build conda-verify
+          conda create -p ../conda conda-build "python=>3.9" conda-verify
       - name: Build the package
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
