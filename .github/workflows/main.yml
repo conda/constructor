@@ -61,7 +61,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          conda create -p ../conda conda-build "xz!=5.2.10" conda-verify
+          conda create -p ../conda conda-build conda-verify
       - name: Build the package
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

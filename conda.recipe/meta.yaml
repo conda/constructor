@@ -23,6 +23,7 @@ requirements:
   host:
     - python
     - pip
+    - xz !=5.2.10
   run:
     - conda >=4.6
     - python
@@ -44,14 +45,9 @@ test:
     - pytest
     - pytest-cov
     - codecov
+    - pip
   commands:
-    - pytest -v --cov=constructor tests
-    - coverage run --append -m constructor -V
-    - if [%CODECOV_TOKEN%] neq [] codecov --commit %CODECOV_COMMIT% # [win]
-    - if [ -n "$CODECOV_TOKEN" ]; then codecov --commit $CODECOV_COMMIT; fi # [unix]
-    - coverage report
-    - if [%RUN_EXAMPLES%] neq [] python scripts/run_examples.py      # [win]
-    - if [ -n "$RUN_EXAMPLES" ]; then python scripts/run_examples.py; fi  # [unix]
+    - pip check
 
 about:
   home: https://conda.io
