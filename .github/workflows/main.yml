@@ -95,9 +95,10 @@ jobs:
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda create -n constructor -c local --strict-channel-priority constructor
           conda activate constructor
+          set -x
           installed_channel=$(conda list constructor --json | jq -r '.[].channel')
           # FIXME: channel==pypi is a temporary workaround
-          if [[ "$installed_channel" != "conda-bld" || "$installed_channel" != "pypi" ]]; then
+          if [[ "$installed_channel" != "conda-bld" && "$installed_channel" != "pypi" ]]; then
             echo $(conda list constructor --json)
             echo "Installed constructor is not local!"
             exit 1
