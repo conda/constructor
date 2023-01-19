@@ -23,6 +23,8 @@ requirements:
   host:
     - python
     - pip
+    # FIXME: Workaround for xz 5.2.10 issue on py310
+    - xz !=5.2.10       # [win and py == 310]
   run:
     - conda >=4.6
     - python

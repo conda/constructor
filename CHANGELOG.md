@@ -1,5 +1,19 @@
 [//]: # (current developments)
 
+## 2023-01-18   3.4.1:
+### Bug fixes
+
+* Fix regression introduced in #558, where `post_install` scripts were silently ignored on Windows.
+  Affects v3.4.0. (#576 via #614)
+* Remove duplicate CI for docs. (#613 via #615)
+
+### Contributors
+
+* @dbast
+* @jaimergp
+
+
+
 ## 2023-01-17   3.4.0:
 ### Enhancements
 
