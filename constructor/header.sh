@@ -82,7 +82,11 @@ Installs __NAME__ __VERSION__
 # However getopt is not standardized and the version on Mac has different
 # behaviour. getopts is good enough for what we need :)
 # More info: https://unix.stackexchange.com/questions/62950/
+#if enable_shortcuts
+while getopts "bifhkp:smut" x; do
+#else
 while getopts "bifhkp:sut" x; do
+#endif
     case "$x" in
         h)
             printf "%s\\n" "$USAGE"
@@ -459,6 +463,7 @@ fi
 shortcuts="--no-shortcuts"
 #endif
 
+# shellcheck disable=SC2086
 CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
@@ -486,7 +491,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     fi
 #endif
 #if has_conda and enable_shortcuts
-    if [[ "$SKIP_SHORTCUTS" = "1" ]]; then
+    if [ "$SKIP_SHORTCUTS" = "1" ]; then
         env_shortcuts="--no-shortcuts"
     else
         # This file is guaranteed to exist, even if empty
@@ -498,6 +503,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
 #endif
 #if has_conda
     # TODO: custom shortcuts per env?
+    # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
@@ -653,4 +659,5 @@ fi
 #endif
 
 exit 0
+# shellcheck disable=SC2317
 @@END_HEADER@@

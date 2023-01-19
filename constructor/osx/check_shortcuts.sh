@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -x
+set -eux
 
 # $2 is the install location, which is ~ by default
 # but which the user can change.

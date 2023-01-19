@@ -35,13 +35,14 @@ fi
 
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
+# shellcheck disable=SC2086
 if ! \
 CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX"; then
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts; then
     echo "ERROR: could not complete the conda install"
     exit 1
 fi
@@ -78,6 +79,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
         env_shortcuts="--no-shortcuts"
     fi
     # TODO: custom shortcuts per env?
+    # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
