@@ -16,6 +16,6 @@ specs:
   - miniforge_console_shortcut 1.*  # [win]
 
 # Added for extra testing
-installer_type: all
+installer_type: sh  # TODO: revert back to all
 post_install: test_install.sh  # [unix]
 post_install: test_install.bat  # [win]
