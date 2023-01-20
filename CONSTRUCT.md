@@ -802,3 +802,10 @@ Allowed keys are:
 - `x86`
 
 - `x86_64`
+
+
+## Available Platforms
+Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `platform-architecture`
+- Platforms: ['win', 'unknown', 'osx', 'linux', 'zos']
+- Architectures: ['aarch64', 'ppc64le', 'ppc64', 'armv7l', 'armv6l', 'arm64', 's390x', '32', '64', 'z (only used for zos platforms)']
+> Only `osx` machines may specify `osx` as the target platform.

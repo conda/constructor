@@ -70,7 +70,7 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `platform-architecture`
 - Platforms: {{conda_platforms}}
 - Architectures: {{conda_architectures}}
-> Only `osx` machines can specify `osx` as the target platform.
+> Only `osx` machines may specify `osx` as the target platform.
 """ # noqa
 
 key_info_list = construct.generate_key_info_list()
