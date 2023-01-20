@@ -2,13 +2,19 @@ from constructor import construct
 import jinja2
 import sys
 from os.path import join, dirname
+from conda.base import from conda.base import context
 
 REPO_ROOT = dirname(dirname(__file__))
 
 sys.path.insert(0, REPO_ROOT)
 
 
-valid_platforms = construct.ns_platform(sys.platform)
+valid_selectors = construct.ns_platform(sys.platform)
+conda_platforms = set(list(context._platform_map.values()) + ['unknown'])
+conda_platforms.remove("zos")
+conda_platforms = list(conda_platforms)
+conda_architectures = list(context.non_x86_machines) + ['xx (bits. typically 32 or 64)']
+                                                          
 
 template = """
 <!--
@@ -57,16 +63,23 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 
 ## Available selectors
 
-{%- for key, val in platforms|dictsort %}
+{%- for key, val in selectors|dictsort %}
 - `{{key}}`
 {% endfor %}
+
+## Available Platforms
+You can specify which platform to build for via the `--platform` argument. Available options are `zos-z` and any combination of `platform-architecture`
+where `platform` is one of `{{conda_platforms}}`, and `architecture` is one of `{{conda_architectures}}`
 """ # noqa
 
 key_info_list = construct.generate_key_info_list()
 
 output = jinja2.Template(template).render(
-    platforms=valid_platforms,
-    keys=key_info_list)
+    selectors=valid_selectors,
+    keys=key_info_list,
+    conda_platforms = conda_platforms,
+    conda_architectures = conda_architectures,
+)
 
 with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:
     f.write(output)
