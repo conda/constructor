@@ -2,7 +2,7 @@ from constructor import construct
 import jinja2
 import sys
 from os.path import join, dirname
-from conda.base import from conda.base import context
+from conda.base import context
 
 REPO_ROOT = dirname(dirname(__file__))
 
@@ -11,9 +11,8 @@ sys.path.insert(0, REPO_ROOT)
 
 valid_selectors = construct.ns_platform(sys.platform)
 conda_platforms = set(list(context._platform_map.values()) + ['unknown'])
-conda_platforms.remove("zos")
 conda_platforms = list(conda_platforms)
-conda_architectures = list(context.non_x86_machines) + ['xx (bits. typically 32 or 64)']
+conda_architectures = list(context.non_x86_machines) + ['32', '64', 'z (only used for zos platforms)']
                                                           
 
 template = """
@@ -68,8 +67,10 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 {% endfor %}
 
 ## Available Platforms
-You can specify which platform to build for via the `--platform` argument. Available options are `zos-z` and any combination of `platform-architecture`
-where `platform` is one of `{{conda_platforms}}`, and `architecture` is one of `{{conda_architectures}}`
+Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `platform-architecture`
+- Platforms: {{conda_platforms}}
+- Architectures: {{conda_architectures}}
+> Only `osx` machines can specify `osx` as the target platform.
 """ # noqa
 
 key_info_list = construct.generate_key_info_list()
