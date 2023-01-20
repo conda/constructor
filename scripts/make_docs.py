@@ -77,8 +77,8 @@ key_info_list = construct.generate_key_info_list()
 output = jinja2.Template(template).render(
     selectors=valid_selectors,
     keys=key_info_list,
-    conda_platforms = conda_platforms,
-    conda_architectures = conda_architectures,
+    conda_platforms=conda_platforms,
+    conda_architectures=conda_architectures,
 )
 
 with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:
