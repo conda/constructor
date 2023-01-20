@@ -12,7 +12,6 @@ sys.path.insert(0, REPO_ROOT)
 valid_selectors = construct.ns_platform(sys.platform)
 conda_platforms = list(set(context._platform_map.values()))
 conda_architectures = list(context.non_x86_machines) + ['32', '64', 'z']
-                                                          
 
 template = """
 <!--
