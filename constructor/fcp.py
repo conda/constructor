@@ -257,9 +257,9 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
     if not extra_env:
         specs = (*specs, "python")
     if environment:
-        logger.debug(f"specs: <from existing environment '{environment}'>")
+        logger.debug("specs: <from existing environment '%s'>", environment)
     elif environment_file:
-        logger.debug(f"specs: <from environment file '{environment_file}'>")
+        logger.debug("specs: <from environment file '%s'>", environment_file)
     else:
         logger.debug("specs: %s", specs)
 

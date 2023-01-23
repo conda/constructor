@@ -344,7 +344,7 @@ def verify_signtool_is_available(info):
     if not info.get("signing_certificate"):
         return
     signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-    logger.info(f"Checking for '{signtool}'...")
+    logger.info("Checking for '%s'...", signtool)
     check_call([signtool, "/?"], stdout=PIPE, stderr=PIPE)
 
 
@@ -362,8 +362,8 @@ def verify_installer_signature(path):
     elif p.returncode:
         # we had errors but maybe not critical ones
         logger.error(
-            f"!!! SignTool could find a signature in {path} but detected errors. "
-            "Please check your certificate!",
+            "!!! SignTool could find a signature in %s but detected errors. "
+            "Please check your certificate!", path
         )
 
 

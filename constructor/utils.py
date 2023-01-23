@@ -152,8 +152,8 @@ def get_final_url(info, url):
         if url.startswith(src):
             new_url = url.replace(src, dst)
             if url.endswith(".tar.bz2"):
-                logger.warning("You need to make the package {} available "
-                               "at {}".format(url.rsplit('/', 1)[1], new_url))
+                logger.warning("You need to make the package %s available "
+                               "at %s", url.rsplit('/', 1)[1], new_url)
             return new_url
     return url
 
@@ -163,8 +163,8 @@ def get_final_channels(info):
     for channel in info.get('channels', []):
         url = get_final_url(info, channel)
         if url.startswith("file://"):
-            logger.warning(f"local channel {url} does not have a remap. "
-                           "It will not be included in the installer")
+            logger.warning("local channel %s does not have a remap. "
+                           "It will not be included in the installer", url)
             continue
         mapped_channels.append(url)
     return mapped_channels

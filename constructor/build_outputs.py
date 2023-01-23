@@ -33,7 +33,7 @@ def process_build_outputs(info):
                 f"Available keys: {tuple(OUTPUT_HANDLERS.keys())}"
             )
         outpath = handler(info, **config)
-        logger.info(f"build_outputs: '{name}' created '{os.path.abspath(outpath)}'.")
+        logger.info("build_outputs: '%s' created '%s'.", name, os.path.abspath(outpath))
 
 
 def dump_info(info):
