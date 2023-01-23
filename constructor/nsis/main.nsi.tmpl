@@ -1003,7 +1003,9 @@ Section "Install"
     SetOutPath "$INSTDIR\pkgs"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
+#if pre_install_exists is True
     File __PRE_INSTALL__
+#endif
     File __POST_INSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
