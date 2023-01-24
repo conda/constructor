@@ -146,8 +146,7 @@ def modify_xml(xml_path, info):
     else:
         conclusion_path = join(OSX_DIR, 'acloud.rtf')
         if info.get("conclusion_file", "").endswith(".nsi"):
-            logger.info("Warning: NSI conclusion_file, "
-                        "%s, is ignored.", info['conclusion_file'])
+            logger.warning("NSI conclusion_file '%s' is ignored.", info['conclusion_file'])
     if conclusion_path:
         conclusion = ET.Element(
             'conclusion', file=conclusion_path,
