@@ -384,11 +384,9 @@ def create(info, verbose=False):
     shutil.copyfile(info['_conda_exe'], join(tmp_dir, '_conda.exe'))
 
     pre_dst = join(tmp_dir, 'pre_install.bat')
-    try:
-        shutil.copy(info['pre_install'], pre_dst)
-    except KeyError:
-        with open(pre_dst, 'w') as fo:
-            fo.write(":: this is an empty pre install .bat script\n")
+    pre_install_script = info.get("pre_install")
+    if pre_install_script:
+        shutil.copy(pre_install_script, pre_dst)
 
     post_dst = join(tmp_dir, 'post_install.bat')
     try:
