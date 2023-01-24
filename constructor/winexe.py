@@ -408,8 +408,8 @@ def create(info, verbose=False):
     args = [MAKENSIS_EXE, verbosity, nsi]
     logger.info('Calling: %s', args)
     process = run(args, capture_output=True, text=True)
-    logger.debug("makensis stdout: '%s'", process.stdout)
-    logger.debug("makensis stderr: '%s'", process.stderr)
+    logger.debug("makensis stdout:\n'%s'", process.stdout)
+    logger.debug("makensis stderr:\n'%s'", process.stderr)
     process.check_returncode()
 
     if info.get("signing_certificate"):
