@@ -791,7 +791,6 @@ Allowed keys are:
 
 ## Available Platforms
 Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
-> Only `osx` machines may specify `osx` as the target platform.
 - `linux-32`
 - `linux-64`
 - `linux-aarch64`

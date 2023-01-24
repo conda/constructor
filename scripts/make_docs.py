@@ -60,13 +60,14 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 ## Available selectors
 
 {%- for key, val in selectors|dictsort %}
-- `{{key}}`{% endfor %}
+- `{{key}}`
+{%- endfor %}
 
 ## Available Platforms
 Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
-> Only `osx` machines may specify `osx` as the target platform.
 {%- for platform in valid_platforms %}
-- `{{platform}}`{% endfor %}
+- `{{platform}}`
+{%- endfor %}
 """ # noqa
 
 key_info_list = construct.generate_key_info_list()
