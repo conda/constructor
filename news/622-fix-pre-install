@@ -1,0 +1,22 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* Approach `pre_install` scripts more carefully on Windows.
+  Dummy scripts will not be included unless specified by the installer creator.
+  NSIS will try to find `cmd.exe` in some expected locations before blindly relying on `PATH`.
+  (#621 via #622)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
