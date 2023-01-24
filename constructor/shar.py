@@ -70,6 +70,7 @@ def get_header(conda_exec, tarball, info):
     install_lines = list(add_condarc(info))
     # Needs to happen first -- can be templated
     replace = {
+        'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
         'NAME': name,
         'name': name.lower(),
         'VERSION': info['version'],
