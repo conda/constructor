@@ -2,11 +2,11 @@
 """Run examples bundled with this repo."""
 import argparse
 import os
+import platform
+import shutil
 import subprocess
 import sys
 import tempfile
-import platform
-import shutil
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -14,7 +14,7 @@ from pathlib import Path
 from constructor.utils import rm_rf
 
 try:
-    import coverage # noqa
+    import coverage  # noqa
     COV_CMD = ['coverage', 'run', '--append', '-m']
 except ImportError:
     COV_CMD = []

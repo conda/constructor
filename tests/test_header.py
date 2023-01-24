@@ -1,9 +1,9 @@
 import itertools
+import subprocess
+import tempfile
 from functools import lru_cache
 from pathlib import Path
-import subprocess
 from shutil import which
-import tempfile
 
 import pytest
 

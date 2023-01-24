@@ -4,14 +4,14 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from functools import partial
-from os.path import dirname
 import re
 import sys
-from .utils import yaml
+from functools import partial
+from os.path import dirname
 
-from constructor.exceptions import (UnableToParse, UnableToParseMissingJinja2,
-                                    YamlParsingError)
+from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
+
+from .utils import yaml
 
 # list of tuples (key name, required, type, description)
 KEYS = [

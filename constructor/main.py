@@ -5,20 +5,20 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 
-import os
-from os.path import abspath, expanduser, isdir, join
-import sys
 import argparse
+import os
+import sys
+from os.path import abspath, expanduser, isdir, join
 from textwrap import dedent, indent
 
+from . import __version__
 from .build_outputs import process_build_outputs
 from .conda_interface import cc_platform
-from .construct import parse as construct_parse, verify as construct_verify, \
-    generate_key_info_list, ns_platform
+from .construct import generate_key_info_list, ns_platform
+from .construct import parse as construct_parse
+from .construct import verify as construct_verify
 from .fcp import main as fcp_main
 from .utils import normalize_path, yield_lines
-
-from . import __version__
 
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 

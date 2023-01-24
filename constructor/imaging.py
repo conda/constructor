@@ -10,7 +10,6 @@ from random import randint
 
 from PIL import Image, ImageDraw, ImageFont
 
-
 ttf_path = join(dirname(__file__), 'ttf', 'Vera.ttf')
 white = 0xff, 0xff, 0xff
 # These are for Windows
