@@ -16,4 +16,4 @@
 
 ### Other
 
-* Switching from print statements to logging. Log levels, filtering, custom formatting strings etc. allow much more verbose and frequent messaging to follow the programm flow in case of regular usage and also debugging and development. (#609)
+* Switching from print statements to logging. Log levels, filtering, custom formatting strings etc. allow much more verbose and frequent messaging to follow the program flow in case of regular usage and also debugging and development. (#609)
