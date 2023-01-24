@@ -1,5 +1,6 @@
-from jinja2 import BaseLoader, Environment, FileSystemLoader, TemplateError
 import os
+
+from jinja2 import BaseLoader, Environment, FileSystemLoader, TemplateError
 
 from constructor.exceptions import UnableToParse
 
