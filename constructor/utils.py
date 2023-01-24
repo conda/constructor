@@ -4,13 +4,13 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
+import hashlib
 import logging
+import math
 import re
 import sys
-import hashlib
-import math
-from os.path import normpath, islink, isfile, isdir, basename
 from os import sep, unlink
+from os.path import basename, isdir, isfile, islink, normpath
 from shutil import rmtree
 
 try:

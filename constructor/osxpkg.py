@@ -1,26 +1,18 @@
+import logging
 import os
-import sys
 import shutil
-from os.path import isdir, abspath, dirname, exists, join
-from subprocess import check_call
+import sys
 import xml.etree.ElementTree as ET
+from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
+from subprocess import check_call
 from tempfile import NamedTemporaryFile
-import logging
 
 from . import preconda
 from .construct import ns_platform
 from .imaging import write_images
-from .utils import (
-    add_condarc,
-    get_final_channels,
-    rm_rf,
-    approx_size_kb,
-    preprocess,
-    fill_template,
-)
-
+from .utils import add_condarc, approx_size_kb, fill_template, get_final_channels, preprocess, rm_rf
 
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None

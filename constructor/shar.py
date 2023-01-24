@@ -6,17 +6,25 @@
 
 import logging
 import os
-from os.path import basename, dirname, getsize, isdir, join, relpath
 import shutil
 import stat
 import tarfile
 import tempfile
+from os.path import basename, dirname, getsize, isdir, join, relpath
 
 from .construct import ns_platform
-from .preconda import files as preconda_files, write_files as preconda_write_files, \
-    copy_extra_files
-from .utils import add_condarc, filename_dist, fill_template, hash_files, preprocess, \
-    read_ascii_only, get_final_channels
+from .preconda import copy_extra_files
+from .preconda import files as preconda_files
+from .preconda import write_files as preconda_write_files
+from .utils import (
+    add_condarc,
+    filename_dist,
+    fill_template,
+    get_final_channels,
+    hash_files,
+    preprocess,
+    read_ascii_only,
+)
 
 THIS_DIR = dirname(__file__)
 

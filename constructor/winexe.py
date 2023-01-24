@@ -6,19 +6,27 @@
 
 import logging
 import os
-from os.path import abspath, dirname, isfile, join
 import shutil
-from subprocess import PIPE, check_call, check_output, run, STDOUT
 import sys
 import tempfile
+from os.path import abspath, dirname, isfile, join
 from pathlib import Path
+from subprocess import PIPE, STDOUT, check_call, check_output, run
 from typing import List
 
 from .construct import ns_platform
 from .imaging import write_images
-from .preconda import copy_extra_files, write_files as preconda_write_files
-from .utils import (approx_size_kb, filename_dist, fill_template, make_VIProductVersion,
-                    preprocess, add_condarc, get_final_channels)
+from .preconda import copy_extra_files
+from .preconda import write_files as preconda_write_files
+from .utils import (
+    add_condarc,
+    approx_size_kb,
+    filename_dist,
+    fill_template,
+    get_final_channels,
+    make_VIProductVersion,
+    preprocess,
+)
 
 NSIS_DIR = join(abspath(dirname(__file__)), 'nsis')
 MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))

@@ -7,21 +7,32 @@
 fcp (fetch conda packages) module
 """
 
-from collections import defaultdict
 import json
 import logging
 import os
-from os.path import isdir, isfile, join, splitext
-from itertools import groupby
-
 import sys
 import tempfile
+from collections import defaultdict
+from itertools import groupby
+from os.path import isdir, isfile, join, splitext
 
-from constructor.utils import hash_files, filename_dist
-from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
-                              VersionOrder, conda_context, conda_replace_context_default,
-                              download, env_vars, read_paths_json, all_channel_urls,
-                              cc_platform, PrefixGraph)
+from constructor.utils import filename_dist, hash_files
+
+from .conda_interface import (
+    PackageCacheData,
+    PackageCacheRecord,
+    PrefixGraph,
+    Solver,
+    SubdirData,
+    VersionOrder,
+    all_channel_urls,
+    cc_platform,
+    conda_context,
+    conda_replace_context_default,
+    download,
+    env_vars,
+    read_paths_json,
+)
 
 logger = logging.getLogger(__name__)
 
