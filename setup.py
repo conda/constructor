@@ -5,6 +5,7 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import setuptools
+
 import versioneer
 
 setuptools.setup(
