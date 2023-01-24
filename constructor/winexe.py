@@ -362,7 +362,7 @@ def verify_installer_signature(path):
     elif p.returncode:
         # we had errors but maybe not critical ones
         logger.error(
-            "!!! SignTool could find a signature in %s but detected errors. "
+            "SignTool could find a signature in %s but detected errors. "
             "Please check your certificate!", path
         )
 
