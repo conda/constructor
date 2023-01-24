@@ -92,7 +92,7 @@ def test_linux_template_processing():
                 errors.append(f"Found '{template_string}' after "
                               f"processing header.sh with '{params}'.")
 
-    assert errors == []
+    assert not errors
 
 
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
