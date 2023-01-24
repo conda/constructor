@@ -11,6 +11,8 @@ import sys
 import argparse
 from textwrap import dedent, indent
 
+from conda.base.constants import KNOWN_SUBDIRS
+
 from .build_outputs import process_build_outputs
 from .conda_interface import cc_platform
 from .construct import parse as construct_parse, verify as construct_verify, \
@@ -21,6 +23,7 @@ from .utils import normalize_path, yield_lines
 from . import __version__
 
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
+VALID_PLATFORMS = [x for x in sorted(KNOWN_SUBDIRS) if x != "noarch"]
 
 
 def get_installer_type(info):
@@ -279,7 +282,7 @@ def main():
                    action="store",
                    default=cc_platform,
                    help="the platform for which installer is for, "
-                   "defaults to '{}'".format(cc_platform))
+                   "defaults to '{}'.  Options: {} ".format(cc_platform, VALID_PLATFORMS))
 
     p.add_argument('--dry-run',
                    help="solve package specs but do not create installer",

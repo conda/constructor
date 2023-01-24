@@ -774,38 +774,34 @@ Allowed keys are:
 
 ## Available selectors
 - `aarch64`
-
 - `arm64`
-
 - `armv7l`
-
 - `linux`
-
 - `linux32`
-
 - `linux64`
-
 - `osx`
-
 - `ppc64le`
-
 - `s390x`
-
 - `unix`
-
 - `win`
-
 - `win32`
-
 - `win64`
-
 - `x86`
-
 - `x86_64`
 
-
 ## Available Platforms
-Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `platform-architecture`
-- Platforms: ['linux', 'zos', 'osx', 'win']
-- Architectures: ['ppc64le', 'armv6l', 'armv7l', 'aarch64', 'arm64', 'ppc64', 's390x', '32', '64', 'z']
-> Only `osx` machines may specify `osx` as the target platform.
+Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
+- `linux-32`
+- `linux-64`
+- `linux-aarch64`
+- `linux-armv6l`
+- `linux-armv7l`
+- `linux-ppc64`
+- `linux-ppc64le`
+- `linux-s390x`
+- `osx-64`
+- `osx-arm64`
+- `win-32`
+- `win-64`
+- `win-arm64`
+- `zos-z`

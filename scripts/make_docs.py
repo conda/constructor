@@ -2,7 +2,7 @@ from constructor import construct
 import jinja2
 import sys
 from os.path import join, dirname
-from conda.base import context
+from conda.base.constants import KNOWN_SUBDIRS
 
 REPO_ROOT = dirname(dirname(__file__))
 
@@ -10,8 +10,7 @@ sys.path.insert(0, REPO_ROOT)
 
 
 valid_selectors = construct.ns_platform(sys.platform)
-conda_platforms = list(set(context._platform_map.values()))
-conda_architectures = list(context.non_x86_machines) + ['32', '64', 'z']
+valid_platforms = [x for x in sorted(KNOWN_SUBDIRS) if x != "noarch"]
 
 template = """
 <!--
@@ -61,14 +60,13 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 ## Available selectors
 
 {%- for key, val in selectors|dictsort %}
-- `{{key}}`
-{% endfor %}
+- `{{key}}`{% endfor %}
 
 ## Available Platforms
-Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `platform-architecture`
-- Platforms: {{conda_platforms}}
-- Architectures: {{conda_architectures}}
+Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
 > Only `osx` machines may specify `osx` as the target platform.
+{%- for platform in valid_platforms %}
+- `{{platform}}`{% endfor %}
 """ # noqa
 
 key_info_list = construct.generate_key_info_list()
@@ -76,8 +74,7 @@ key_info_list = construct.generate_key_info_list()
 output = jinja2.Template(template).render(
     selectors=valid_selectors,
     keys=key_info_list,
-    conda_platforms=conda_platforms,
-    conda_architectures=conda_architectures,
+    valid_platforms=valid_platforms,
 )
 
 with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:
