@@ -26,7 +26,7 @@ requirements:
     # FIXME: Workaround for xz 5.2.10 issue on py310
     - xz !=5.2.10       # [win and py == 310]
   run:
-    - conda >=4.6
+    - conda >=4.6,<23.1.0
     - python
     - ruamel_yaml >=0.11.14,<0.16
     - conda-standalone
@@ -42,11 +42,13 @@ test:
     - examples
     - .coveragerc
   requires:
+    - pip
     - pillow >=3.1
     - pytest
     - pytest-cov
     - codecov
   commands:
+    - pip check
     - pytest -v --cov=constructor tests
     - coverage run --append -m constructor -V
     - if [%CODECOV_TOKEN%] neq [] codecov --commit %CODECOV_COMMIT% # [win]
