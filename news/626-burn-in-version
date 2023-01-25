@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Burn-in constructor version into installers to be able to better support faulty uninstallers. (#626)
+* Burn-in constructor version into installers to be able to better support faulty uninstallers. (#604 via #626)
 
 ### Bug fixes
 
