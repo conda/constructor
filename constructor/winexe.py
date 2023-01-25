@@ -231,6 +231,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
         'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
         'OUTFILE': info['_outpath'],
         'VIPV': make_VIProductVersion(info['version']),
+        'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
         'ICONFILE': '@icon.ico',
         'HEADERIMAGE': '@header.bmp',
         'WELCOMEIMAGE': '@welcome.bmp',

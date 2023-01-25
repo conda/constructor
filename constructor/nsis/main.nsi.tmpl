@@ -47,6 +47,7 @@ Unicode "true"
 !define COMPANY __COMPANY__
 !define ARCH __ARCH__
 !define PLATFORM __PLATFORM__
+!define CONSTRUCTOR_VERSION __CONSTRUCTOR_VERSION__
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
@@ -117,6 +118,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "CompanyName" "${COMPANY}"
 VIAddVersionKey "LegalCopyright" "(c) ${COMPANY}"
 VIAddVersionKey "FileDescription" "${NAME} Installer"
+VIAddVersionKey "Comments" "Created by constructor ${CONSTRUCTOR_VERSION}"
 VIProductVersion __VIPV__
 BrandingText /TRIMLEFT "${COMPANY}"
 

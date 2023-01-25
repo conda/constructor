@@ -2,6 +2,8 @@
 # Copyright (c) 2017 Anaconda, Inc.
 # All rights reserved.
 
+# Created by constructor __CONSTRUCTOR_VERSION__
+
 # COMMON UTILS
 # If you update this block, please propagate changes to the other scripts using it
 set -euo pipefail

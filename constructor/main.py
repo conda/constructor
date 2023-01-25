@@ -79,6 +79,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     construct_path = join(dir_path, 'construct.yaml')
     info = construct_parse(construct_path, platform)
     construct_verify(info)
+    info['CONSTRUCTOR_VERSION'] = __version__
     info['_input_dir'] = dir_path
     info['_output_dir'] = output_dir
     info['_platform'] = platform

@@ -1,5 +1,7 @@
 #!/bin/sh
 #
+# Created by constructor __CONSTRUCTOR_VERSION__
+#
 # NAME:  __NAME__
 # VER:   __VERSION__
 # PLAT:  __PLAT__

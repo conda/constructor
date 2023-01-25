@@ -283,6 +283,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'PATH_EXISTS_ERROR_TEXT': path_exists_error_text,
         'PROGRESS_NOTIFICATIONS': str(info.get('progress_notifications', False)),
         'PRE_OR_POST': user_script_type or '__PRE_OR_POST__',
+        'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
     }
     data = preprocess(data, ppd)
     data = fill_template(data, replace)
