@@ -3,7 +3,7 @@
 ## 2023-01-25   3.4.2:
 ### Enhancements
 
-* Burn-in constructor version into installers to be able to better support faulty uninstallers. (#604 via #626)
+* Burn-in constructor version into installers to be able to better support faulty installers. (#604 via #626)
 
 ### Bug fixes
 
