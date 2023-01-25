@@ -16,4 +16,4 @@
 
 ### Other
 
-* Add upper conda version bound as with conda >=23.1.0 the local repodata format has changed and `write_repodata()` has to be update. See #628 for details. (#627)
+* Add upper conda version bound as with conda >=23.1.0 the local repodata format has changed and `write_repodata()` has to be updated. See #628 for details. (#627)
