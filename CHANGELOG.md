@@ -1,5 +1,31 @@
 [//]: # (current developments)
 
+## 2023-01-25   3.4.2:
+### Enhancements
+
+* Burn-in constructor version into installers to be able to better support faulty uninstallers. (#604 via #626)
+
+### Bug fixes
+
+* Approach `pre_install` scripts more carefully on Windows.
+  Dummy scripts will not be included unless specified by the installer creator.
+  NSIS will try to find `cmd.exe` in some expected locations before blindly relying on `PATH`.
+  (#621 via #622)
+
+### Other
+
+* Switching from print statements to logging. Log levels, filtering, custom formatting strings etc. allow much more verbose and frequent messaging to follow the program flow in case of regular usage and also debugging and development. (#609)
+* Add + apply isort via pre-commit (#619)
+* Speedup unit tests by factor 5. (#625)
+* Add upper conda version bound as with conda >=23.1.0 the local repodata format has changed and `write_repodata()` has to be updated. See #628 for details. (#627)
+
+### Contributors
+
+* @dbast
+* @jaimergp
+
+
+
 ## 2023-01-18   3.4.1:
 ### Bug fixes
 
