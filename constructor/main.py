@@ -6,6 +6,7 @@
 
 
 import argparse
+import logging
 import os
 import sys
 from os.path import abspath, expanduser, isdir, join
@@ -21,6 +22,8 @@ from .fcp import main as fcp_main
 from .utils import normalize_path, yield_lines
 
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
+
+logger = logging.getLogger(__name__)
 
 
 def get_installer_type(info):
@@ -64,7 +67,7 @@ def get_output_filename(info):
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
                dry_run=False, conda_exe="conda.exe"):
-    print('platform: %s' % platform)
+    logger.info('platform: %s', platform)
     if not os.path.isfile(conda_exe):
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
     cache_dir = abspath(expanduser(cache_dir))
@@ -89,8 +92,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         # TODO: Remove when shortcut creation is implemented on micromamba
         sys.exit("Error: micromamba is not supported on Windows installers.")
 
-    if verbose:
-        print('conda packages download: %s' % info['_download_dir'])
+    logger.debug('conda packages download: %s', info['_download_dir'])
 
     for key in ('welcome_image_text', 'header_image_text'):
         if key not in info:
@@ -145,7 +147,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
-        print("Dry run, no installers or build outputs created.")
+        logger.info("Dry run, no installers or build outputs created.")
         return
 
     # info has keys
@@ -170,7 +172,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         info['installer_type'] = itype
         info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
-        print("Successfully created '%(_outpath)s'." % info)
+        logger.info("Successfully created '%(_outpath)s'.", info)
 
     process_build_outputs(info)
 
@@ -248,6 +250,7 @@ class _HelpConstructAction(argparse.Action):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     p = argparse.ArgumentParser(
         description="build an installer from <DIRECTORY>/construct.yaml")
 
@@ -307,18 +310,18 @@ def main():
                    metavar='DIRECTORY')
 
     args = p.parse_args()
+    logger.info("Got the following cli arguments: '%s'", args)
+
+    if args.verbose or args.debug:
+        logger.setLevel(logging.DEBUG)
 
     if args.clean:
         import shutil
         cache_dir = abspath(expanduser(args.cache_dir))
-        print("cleaning cache: '%s'" % cache_dir)
+        logger.info("cleaning cache: '%s'", cache_dir)
         if isdir(cache_dir):
             shutil.rmtree(cache_dir)
         return
-
-    if args.debug:
-        import logging
-        logging.basicConfig(level=logging.DEBUG)
 
     dir_path = args.dir_path
     if not isdir(dir_path):

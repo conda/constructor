@@ -4,9 +4,12 @@ Additional artifacts to be produced after building the installer.
 Update documentation in `construct.py` if any changes are made.
 """
 import json
+import logging
 import os
 from collections import defaultdict
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def _validate_output(output):
@@ -30,7 +33,7 @@ def process_build_outputs(info):
                 f"Available keys: {tuple(OUTPUT_HANDLERS.keys())}"
             )
         outpath = handler(info, **config)
-        print(f"build_outputs: '{name}' created '{os.path.abspath(outpath)}'.")
+        logger.info("build_outputs: '%s' created '%s'.", name, os.path.abspath(outpath))
 
 
 def dump_info(info):
