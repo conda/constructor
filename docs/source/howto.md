@@ -61,3 +61,13 @@ This happens by default for _all packages_. If you only want this to happen for 
 use the [`menu_packages`](construct-yaml.md#menu_packages) key.
 
 To learn more about `menuinst`, visit [`conda/menuinst`](https://github.com/conda/menuinst).
+
+## Find out the used constructor version
+
+Recent constructor versions (>=3.4.2) burn-in their version into created installers in order to be able to trace back bugs in created installers to the constructor code base.
+
+The burned-in version can be retrieved in different ways depending on the installer type:
+
+- For `.sh` intallers (via cli): `head $installer.sh | grep "Created by constructor"`
+- For `.exe` installers (via Windows Explorer): `$installer.exe` → Properties → Details → Comments
+- For `.pkg` installers (via cli on macOS): `xar -xf $installer.pkg -n run_installation.pkg/Scripts; zgrep run_installation.pkg/Scripts "Created by constructor"`
