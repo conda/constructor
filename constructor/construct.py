@@ -714,7 +714,7 @@ def verify(info):
         elt = info[key]
         if key in obsolete_keys:
             logger.warning("key '%s' is obsolete."
-                           " Its value '%s' is being ignored.", (key, elt))
+                           " Its value '%s' is being ignored.", key, elt)
         types = types_key[key]
         if not isinstance(elt, types):
             sys.exit("Error: key '%s' points to %s,\n"

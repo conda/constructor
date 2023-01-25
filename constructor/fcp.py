@@ -111,7 +111,7 @@ platform: %(platform)s""", dict(
     for prec in precs:
         more_recent_version = more_recent_versions.get(prec.name, None)
         if more_recent_version:
-            logger.debug('    %s (latest: %s)', (prec.fn, more_recent_version))
+            logger.debug('    %s (latest: %s)', prec.fn, more_recent_version)
         else:
             logger.debug('    %s', prec.fn)
 
