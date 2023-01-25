@@ -42,11 +42,13 @@ test:
     - examples
     - .coveragerc
   requires:
+    - pip
     - pillow >=3.1
     - pytest
     - pytest-cov
     - codecov
   commands:
+    - pip check
     - pytest -v --cov=constructor tests
     - coverage run --append -m constructor -V
     - if [%CODECOV_TOKEN%] neq [] codecov --commit %CODECOV_COMMIT% # [win]
