@@ -264,7 +264,7 @@
   aliases:
   - Jaime RGP
   - jaimergp
-  num_commits: 41
+  num_commits: 1
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören
@@ -324,6 +324,6 @@
   github: guimondmm
 - name: Daniel Bast
   email: 2790401+dbast@users.noreply.github.com
-  num_commits: 10
+  num_commits: 16
   first_commit: 2022-12-08 12:49:40
   github: dbast
