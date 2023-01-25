@@ -3,7 +3,7 @@
 ## 2023-01-25   3.4.2:
 ### Enhancements
 
-* Burn-in constructor version into installers to be able to better support faulty installers. (#604 via #626, #628)
+* Burn-in constructor version into installers to be able to better support faulty installers. (#604 via #626, #630)
 
 ### Bug fixes
 
@@ -14,7 +14,7 @@
 
 ### Other
 
-* Switching from print statements to logging. Log levels, filtering, custom formatting strings etc. allow much more verbose and frequent messaging to follow the program flow in case of regular usage and also debugging and development. (#609, #628)
+* Switching from print statements to logging. Log levels, filtering, custom formatting strings etc. allow much more verbose and frequent messaging to follow the program flow in case of regular usage and also debugging and development. (#609, #630)
 * Add + apply isort via pre-commit (#619)
 * Speedup unit tests by factor 5. (#625)
 * Add upper conda version bound as with conda >=23.1.0 the local repodata format has changed and `write_repodata()` has to be updated. See #628 for details. (#627)
