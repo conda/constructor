@@ -5,6 +5,7 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import hashlib
+import logging
 import math
 import re
 import sys
@@ -16,6 +17,8 @@ try:
     import yaml
 except ImportError:
     import ruamel_yaml as yaml
+
+logger = logging.getLogger(__name__)
 
 
 def filename_dist(dist):
@@ -149,8 +152,8 @@ def get_final_url(info, url):
         if url.startswith(src):
             new_url = url.replace(src, dst)
             if url.endswith(".tar.bz2"):
-                print("WARNING: You need to make the package {} available "
-                      "at {}".format(url.rsplit('/', 1)[1], new_url))
+                logger.warning("You need to make the package %s available "
+                               "at %s", url.rsplit('/', 1)[1], new_url)
             return new_url
     return url
 
@@ -160,8 +163,8 @@ def get_final_channels(info):
     for channel in info.get('channels', []):
         url = get_final_url(info, channel)
         if url.startswith("file://"):
-            print("WARNING: local channel {} does not have a remap. "
-                  "It will not be included in the installer".format(url))
+            logger.warning("local channel %s does not have a remap. "
+                           "It will not be included in the installer", url)
             continue
         mapped_channels.append(url)
     return mapped_channels

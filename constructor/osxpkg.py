@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -15,6 +16,8 @@ from .utils import add_condarc, approx_size_kb, fill_template, get_final_channel
 
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
+
+logger = logging.getLogger(__name__)
 
 
 def write_readme(dst, info):
@@ -91,7 +94,7 @@ def modify_xml(xml_path, info):
         background_path = join(OSX_DIR, 'MacInstaller.png')
 
     if background_path:
-        print("Using background image", background_path)
+        logger.info("Using background image", background_path)
         for key in ("background", "background-darkAqua"):
             background = ET.Element(key,
                                     file=background_path,
@@ -111,8 +114,7 @@ def modify_xml(xml_path, info):
     else:
         welcome_path = None
         if info.get("welcome_file", "").endswith(".nsi"):
-            print(f"Warning: NSI welcome_file, {info['welcome_file'].endswith('.nsi')}, "
-                  "is ignored.")
+            logger.info("Warning: NSI welcome_file, %s, is ignored.", info['welcome_file'])
 
     if welcome_path:
         welcome = ET.Element(
@@ -136,8 +138,7 @@ def modify_xml(xml_path, info):
     else:
         conclusion_path = join(OSX_DIR, 'acloud.rtf')
         if info.get("conclusion_file", "").endswith(".nsi"):
-            print(f"Warning: NSI conclusion_file, {info['conclusion_file'].endswith('.nsi')}, "
-                  "is ignored.")
+            logger.warning("NSI conclusion_file '%s' is ignored.", info['conclusion_file'])
     if conclusion_path:
         conclusion = ET.Element(
             'conclusion', file=conclusion_path,
@@ -528,4 +529,4 @@ def create(info, verbose=False):
         ])
         os.unlink("tmp.pkg")
 
-    print("done")
+    logger.info("done")

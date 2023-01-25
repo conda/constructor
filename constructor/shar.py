@@ -4,7 +4,7 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-
+import logging
 import os
 import shutil
 import stat
@@ -28,6 +28,8 @@ from .utils import (
 
 THIS_DIR = dirname(__file__)
 
+logger = logging.getLogger(__name__)
+
 
 def has_shebang(filename):
     with open(filename, "rb") as fp:
@@ -41,7 +43,7 @@ def make_executable(tarinfo):
 
 def read_header_template():
     path = join(THIS_DIR, 'header.sh')
-    print('Reading: %s' % path)
+    logger.info('Reading: %s', path)
     with open(path) as fi:
         return fi.read()
 

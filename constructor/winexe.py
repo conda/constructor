@@ -4,7 +4,7 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-
+import logging
 import os
 import shutil
 import sys
@@ -31,6 +31,8 @@ from .utils import (
 NSIS_DIR = join(abspath(dirname(__file__)), 'nsis')
 MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 
+logger = logging.getLogger(__name__)
+
 
 def str_esc(s, newlines=True):
     maps = [('$', '$$'), ('"', '$\\"'), ('\t', '$\\t')]
@@ -43,7 +45,7 @@ def str_esc(s, newlines=True):
 
 def read_nsi_tmpl(info) -> str:
     path = abspath(info.get('nsis_template', join(NSIS_DIR, 'main.nsi.tmpl')))
-    print('Reading: %s' % path)
+    logger.info('Reading: %s', path)
     with open(path) as fi:
         return fi.read()
 
@@ -320,12 +322,12 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
             shutil.copy(join(NSIS_DIR, fn),
                         join(dir_path, fn))
 
-    print('Created %s file' % nsi_path)
+    logger.info('Created %s file', nsi_path)
     return nsi_path
 
 
 def verify_nsis_install():
-    print("Checking for '%s'" % MAKENSIS_EXE)
+    logger.info("Checking for '%s'", MAKENSIS_EXE)
     if not isfile(MAKENSIS_EXE):
         sys.exit("""
 Error: no file %s
@@ -337,7 +339,7 @@ Error: no file %s
     else:
         out = check_output([MAKENSIS_EXE, '-VERSION'])
     out = out.decode('utf-8').strip()
-    print("NSIS version: %s" % out)
+    logger.info("NSIS version: %s", out)
     for dn in 'x86-unicode', 'x86-ansi', '.':
         untgz_dll = abspath(join(sys.prefix, 'NSIS',
                                  'Plugins', dn, 'untgz.dll'))
@@ -351,7 +353,7 @@ def verify_signtool_is_available(info):
     if not info.get("signing_certificate"):
         return
     signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-    print(f"Checking for '{signtool}'...")
+    logger.info("Checking for '%s'...", signtool)
     check_call([signtool, "/?"], stdout=PIPE, stderr=PIPE)
 
 
@@ -362,16 +364,15 @@ def verify_installer_signature(path):
     """
     signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
     p = run([signtool, "verify", "/v", path], stdout=PIPE, stderr=STDOUT, text=True)
-    print(p.stdout)
+    logger.info(p.stdout)
     if "SignTool Error: No signature found" in p.stdout:
         # This is a signing error!
         p.check_returncode()
     elif p.returncode:
         # we had errors but maybe not critical ones
-        print(
-            f"!!! SignTool could find a signature in {path} but detected errors. "
-            "Please check your certificate!",
-            file=sys.stderr
+        logger.error(
+            "SignTool could find a signature in %s but detected errors. "
+            "Please check your certificate!", path
         )
 
 
@@ -412,11 +413,10 @@ def create(info, verbose=False):
     )
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
-    print('Calling: %s' % args)
+    logger.info('Calling: %s', args)
     process = run(args, capture_output=True, text=True)
-    if verbose:
-        print("makensis stdout:", process.stdout, sep="\n")
-        print("makensis stderr:", process.stderr, sep="\n")
+    logger.debug("makensis stdout:\n'%s'", process.stdout)
+    logger.debug("makensis stderr:\n'%s'", process.stderr)
     process.check_returncode()
 
     if info.get("signing_certificate"):
