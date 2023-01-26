@@ -69,5 +69,5 @@ Recent constructor versions (>=3.4.2) burn-in their version into created install
 The burned-in version can be retrieved in different ways depending on the installer type:
 
 - For `.sh` intallers (via cli): `head $installer.sh | grep "Created by constructor"`
-- For `.exe` installers (via Windows Explorer): `$installer.exe` → Properties → Details → Comments
-- For `.pkg` installers (via cli on macOS): `xar -xf $installer.pkg -n run_installation.pkg/Scripts; zgrep run_installation.pkg/Scripts "Created by constructor"`
+- For `.exe` installers (via Windows Explorer): `$installer.exe` → Properties → Details → Comments, or (via cli) `exiftool $installer.exe`
+- For `.pkg` installers (via cli on macOS): `xar -xf $installer.pkg -n run_installation.pkg/Scripts; zgrep -a "Created by constructor" run_installation.pkg/Scripts` or `pkgutil --expand $installer.pkg extracted; grep "Created by constructor" extracted/run_installation.pkg/Scripts/postinstall`
