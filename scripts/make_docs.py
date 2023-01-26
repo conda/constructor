@@ -1,7 +1,9 @@
-from constructor import construct
-import jinja2
 import sys
-from os.path import join, dirname
+from os.path import dirname, join
+
+import jinja2
+
+from constructor import construct
 
 REPO_ROOT = dirname(dirname(__file__))
 

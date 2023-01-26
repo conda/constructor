@@ -7,20 +7,34 @@
 fcp (fetch conda packages) module
 """
 
-from collections import defaultdict
 import json
+import logging
 import os
-from os.path import isdir, isfile, join, splitext
-from itertools import groupby
-
 import sys
 import tempfile
+from collections import defaultdict
+from itertools import groupby
+from os.path import isdir, isfile, join, splitext
 
-from constructor.utils import hash_files, filename_dist
-from .conda_interface import (PackageCacheData, PackageCacheRecord, Solver, SubdirData,
-                              VersionOrder, conda_context, conda_replace_context_default,
-                              download, env_vars, read_paths_json, all_channel_urls,
-                              cc_platform, PrefixGraph)
+from constructor.utils import filename_dist, hash_files
+
+from .conda_interface import (
+    PackageCacheData,
+    PackageCacheRecord,
+    PrefixGraph,
+    Solver,
+    SubdirData,
+    VersionOrder,
+    all_channel_urls,
+    cc_platform,
+    conda_context,
+    conda_replace_context_default,
+    download,
+    env_vars,
+    read_paths_json,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def getsize(filename):
@@ -41,7 +55,7 @@ def warn_menu_packages_missing(precs, menu_packages):
     all_names = {prec.name for prec in precs}
     for name in menu_packages:
         if name not in all_names:
-            print("WARNING: no such package (in menu_packages): %s" % name)
+            logger.warning("no such package (in menu_packages): %s", name)
 
 
 def check_duplicates(precs):
@@ -83,24 +97,23 @@ def _find_out_of_date_precs(precs, channel_urls, platform):
 
 
 def _show(name, version, platform, download_dir, precs, more_recent_versions={}):
-    print("""
+    logger.debug("""
 name: %(name)s
 version: %(version)s
 cache download location: %(download_dir)s
-platform: %(platform)s""" % dict(
+platform: %(platform)s""", dict(
         name=name,
         version=version,
         platform=platform,
         download_dir=download_dir,
     ))
-    print("number of packages: %d" % len(precs))
+    logger.debug("number of packages: %d", len(precs))
     for prec in precs:
         more_recent_version = more_recent_versions.get(prec.name, None)
         if more_recent_version:
-            print('    %s (latest: %s)' % (prec.fn, more_recent_version))
+            logger.debug('    %s (latest: %s)', prec.fn, more_recent_version)
         else:
-            print('    %s' % prec.fn)
-    print()
+            logger.debug('    %s', prec.fn)
 
 
 def _fetch(download_dir, precs):
@@ -118,7 +131,7 @@ def _fetch(download_dir, precs):
 
         if not (isfile(package_tarball_full_path)
                 and hash_files([package_tarball_full_path]) == prec.md5):
-            print('fetching: %s' % prec.fn)
+            logger.info('fetching: %s', prec.fn)
             download(prec.url, join(download_dir, prec.fn))
 
         if not isdir(extracted_package_dir):
@@ -175,14 +188,14 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     if duplicate_files == "skip":
         return total_tarball_size, total_extracted_pkgs_size
 
-    print('Checking for duplicate files ...')
+    logger.info('Checking for duplicate files ...')
     for member in map_members_scase:
         fns = map_members_scase[member]
         if len(fns) > 1:
             msg_str = "File '%s' found in multiple packages: %s" % (
                     member, ', '.join(fns))
             if duplicate_files == "warn":
-                print(f'Warning: {msg_str}')
+                logger.warning(msg_str)
             else:
                 sys.exit(f'Error: {msg_str}')
 
@@ -197,7 +210,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             msg_str = "Files %s found in the package(s): %s" % (
                 str(files)[1:-1], ', '.join(fns))
             if duplicate_files == "warn" or platform.startswith('linux'):
-                print(f'Warning: {msg_str}')
+                logger.warning(msg_str)
             else:
                 sys.exit(f'Error: {msg_str}')
 
@@ -254,13 +267,12 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
     # JRG: This only applies to the `base` environment; `extra_envs` are exempt
     if not extra_env:
         specs = (*specs, "python")
-    if verbose:
-        if environment:
-            print(f"specs: <from existing environment '{environment}'>")
-        elif environment_file:
-            print(f"specs: <from environment file '{environment_file}'>")
-        else:
-            print("specs:", specs)
+    if environment:
+        logger.debug("specs: <from existing environment '%s'>", environment)
+    elif environment_file:
+        logger.debug("specs: <from environment file '%s'>", environment_file)
+    else:
+        logger.debug("specs: %s", specs)
 
     # Append channels_remap srcs to channel_urls
     channel_urls = (*channel_urls, *(x['src'] for x in channels_remap))
@@ -352,7 +364,7 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
                 new_file_name = os.path.join(download_dir, new_file_name)
                 if os.path.exists(new_file_name):
                     continue
-                print("transmuting %s" % dist)
+                logger.info("transmuting %s", dist)
                 conda_package_handling.api.transmute(
                     os.path.join(download_dir, dist),
                     transmute_file_type,
@@ -390,8 +402,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     extra_envs_precs = {}
     for env_name, env_config in extra_envs.items():
-        if verbose:
-            print("Solving extra environment:", env_name)
+        logger.debug("Solving extra environment: %s", env_name)
         extra_envs_precs[env_name] = _solve_precs(
             f"{name}/envs/{env_name}", version, download_dir, platform,
             channel_urls=env_config.get("channels", channel_urls),
@@ -422,7 +433,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     duplicate_files = "warn" if ignore_duplicate_files else "error"
     if extra_envs_data:  # this can cause false positives
-        print("Info: Skipping duplicate files checks because `extra_envs` in use")
+        logger.info("Skipping duplicate files checks because `extra_envs` in use")
         duplicate_files = "skip"
 
     all_pc_recs = list({rec: None for rec in all_pc_recs})  # deduplicate

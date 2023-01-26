@@ -11,9 +11,9 @@ import os
 import re
 import sys
 import traceback
-from os.path import isfile, join, exists, basename
 from os import environ
-from subprocess import check_output, STDOUT, CalledProcessError
+from os.path import basename, exists, isfile, join
+from subprocess import STDOUT, CalledProcessError, check_output
 
 try:
     import winreg
@@ -144,7 +144,7 @@ def mk_dirs():
 
 def get_conda_envs_from_python_api():
     try:
-        from conda.cli.python_api import run_command, Commands
+        from conda.cli.python_api import Commands, run_command
     except (ImportError, OSError):
         return
     from json import loads
@@ -252,8 +252,7 @@ PATH_SUFFIXES = ('',
 
 
 def remove_from_path(root_prefix=None):
-    from _system_path import (remove_from_system_path,
-                              broadcast_environment_settings_change)
+    from _system_path import broadcast_environment_settings_change, remove_from_system_path
 
     if root_prefix is None:
         root_prefix = ROOT_PREFIX
@@ -264,9 +263,11 @@ def remove_from_path(root_prefix=None):
 
 
 def add_to_path(pyversion, arch):
-    from _system_path import (add_to_system_path,
-                              get_previous_install_prefixes,
-                              broadcast_environment_settings_change)
+    from _system_path import (
+        add_to_system_path,
+        broadcast_environment_settings_change,
+        get_previous_install_prefixes,
+    )
 
     # If a previous Anaconda install attempt to this location left remnants,
     # remove those.
