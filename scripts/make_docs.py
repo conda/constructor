@@ -5,7 +5,7 @@ from os.path import dirname, join
 import jinja2
 
 from constructor import construct
-from constructor.conda_interface import KNOWN_SUBDIRS
+from constructor.conda_interface import SUPPORTED_PLATFORMS, VALID_PLATFORMS
 
 REPO_ROOT = dirname(dirname(__file__))
 
@@ -13,7 +13,7 @@ sys.path.insert(0, REPO_ROOT)
 
 
 valid_selectors = construct.ns_platform(sys.platform)
-valid_platforms = [x for x in sorted(KNOWN_SUBDIRS) if x != "noarch"]
+unsupported_platforms = list(set(VALID_PLATFORMS) - set(SUPPORTED_PLATFORMS))
 
 template = """
 <!--
@@ -68,7 +68,12 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 
 ## Available Platforms
 Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
-{%- for platform in valid_platforms %}
+{%- for platform in supported_platforms %}
+- `{{platform}}`
+{%- endfor %}
+
+The following options are valid but not actively tested.
+{%- for platform in unsupported_platforms %}
 - `{{platform}}`
 {%- endfor %}
 """ # noqa
@@ -78,7 +83,8 @@ key_info_list = construct.generate_key_info_list()
 output = jinja2.Template(template).render(
     selectors=valid_selectors,
     keys=key_info_list,
-    valid_platforms=valid_platforms,
+    supported_platforms=SUPPORTED_PLATFORMS,
+    unsupported_platforms=unsupported_platforms,
 )
 
 with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:

@@ -14,7 +14,7 @@ from textwrap import dedent, indent
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import cc_platform, KNOWN_SUBDIRS
+from .conda_interface import cc_platform, SUPPORTED_PLATFORMS
 from .construct import generate_key_info_list, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
@@ -22,7 +22,6 @@ from .fcp import main as fcp_main
 from .utils import normalize_path, yield_lines
 
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
-VALID_PLATFORMS = [x for x in sorted(KNOWN_SUBDIRS) if x != "noarch"]
 
 logger = logging.getLogger(__name__)
 
@@ -284,7 +283,7 @@ def main():
                    action="store",
                    default=cc_platform,
                    help="the platform for which installer is for, "
-                   f"defaults to '{cc_platform}'. Options: {VALID_PLATFORMS}")
+                   f"defaults to '{cc_platform}'. Options: {SUPPORTED_PLATFORMS}")
 
     p.add_argument('--dry-run',
                    help="solve package specs but do not create installer",
