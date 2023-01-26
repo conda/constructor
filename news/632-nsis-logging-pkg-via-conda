@@ -16,4 +16,4 @@
 
 ### Other
 
-* Improve CI reliability by installing NSIS with logging support via conda instead of getting it from sourceforge and manually extracting it. (#632)
+* Improve CI reliability by installing NSIS with logging support via conda instead of getting it from sourceforge and manually extracting it. (#631 via #632)
