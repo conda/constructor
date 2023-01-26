@@ -14,7 +14,7 @@ from textwrap import dedent, indent
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import cc_platform, SUPPORTED_PLATFORMS
+from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .construct import generate_key_info_list, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify

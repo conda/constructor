@@ -6,8 +6,8 @@ from copy import deepcopy
 from itertools import chain
 from os.path import join
 
-from conda.gateways.disk import mkdir_p_sudo_safe
 from conda.base.constants import KNOWN_SUBDIRS
+from conda.gateways.disk import mkdir_p_sudo_safe
 
 from constructor.utils import hash_files
 
