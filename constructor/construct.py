@@ -4,14 +4,15 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from functools import partial
-from os.path import dirname
+import logging
 import re
 import sys
-from .utils import yaml
+from functools import partial
+from os.path import dirname
 
-from constructor.exceptions import (UnableToParse, UnableToParseMissingJinja2,
-                                    YamlParsingError)
+from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
+
+from .utils import yaml
 
 # list of tuples (key name, required, type, description)
 KEYS = [
@@ -574,6 +575,8 @@ _EXTRA_ENVS_SCHEMA = {
     # "menu_packages": (list, tuple),
 }
 
+logger = logging.getLogger(__name__)
+
 
 def generate_key_info_list():
     key_info_list = []
@@ -587,7 +590,7 @@ def generate_key_info_list():
         required = 'yes' if key_info[1] else 'no'
 
         if key_info[3] == 'XXX':
-            print("Not including %s because the skip sentinel ('XXX') is set" % key_info[0])
+            logger.info("Not including %s because the skip sentinel ('XXX') is set", key_info[0])
             continue
 
         key_info_list.append((key_info[0], required, key_types, key_info[3], plural))
@@ -710,8 +713,8 @@ def verify(info):
             sys.exit("Error: unknown key '%s' in construct.yaml" % key)
         elt = info[key]
         if key in obsolete_keys:
-            sys.stderr.write("Warning: key '%s' is obsolete.\n"
-                             "  Its value '%s' is being ignored.\n" % (key, elt))
+            logger.warning("key '%s' is obsolete."
+                           " Its value '%s' is being ignored.", key, elt)
         types = types_key[key]
         if not isinstance(elt, types):
             sys.exit("Error: key '%s' points to %s,\n"
@@ -746,7 +749,7 @@ def verify(info):
 
 
 def generate_doc():
-    print('generate_doc() is deprecated. Use scripts/make_docs.py instead')
+    logger.error('generate_doc() is deprecated. Use scripts/make_docs.py instead')
     sys.exit(1)
 
 

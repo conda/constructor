@@ -1,8 +1,9 @@
+import itertools
+import subprocess
+import tempfile
 from functools import lru_cache
 from pathlib import Path
-import subprocess
 from shutil import which
-import tempfile
 
 import pytest
 
@@ -33,48 +34,65 @@ def run_shellcheck(script):
     return findings, p.returncode
 
 
-@pytest.mark.parametrize('osx', [False, True])
-@pytest.mark.parametrize('direct_execute_post_install', [False, True])
-@pytest.mark.parametrize('direct_execute_pre_install', [False, True])
-@pytest.mark.parametrize('batch_mode', [False, True])
-@pytest.mark.parametrize('keep_pkgs', [False, True])
-@pytest.mark.parametrize('has_conda', [False, True])
-@pytest.mark.parametrize('has_license', [False, True])
-@pytest.mark.parametrize('initialize_conda', [False, True])
-@pytest.mark.parametrize('initialize_by_default', [False, True])
-@pytest.mark.parametrize('has_post_install', [False, True])
-@pytest.mark.parametrize('has_pre_install', [False, True])
-@pytest.mark.parametrize('check_path_spaces', [False, True])
-@pytest.mark.parametrize('arch', ['x86', 'x86_64', ' ppc64le', 's390x', 'aarch64'])
-def test_linux_template_processing(
-        osx, arch, has_pre_install, has_post_install, initialize_conda,
-        initialize_by_default, has_license, has_conda, keep_pkgs, batch_mode,
-        direct_execute_pre_install, direct_execute_post_install, check_path_spaces):
+def test_linux_template_processing():
     template = read_header_template()
-    processed = preprocess(template, {
-       'has_license': has_license,
-       'osx': osx,
-       'batch_mode': batch_mode,
-       'keep_pkgs': keep_pkgs,
-       'has_conda': has_conda,
-       'x86': arch == 'x86',
-       'x86_64': arch == 'x86_64',
-       'ppc64le': arch == 'ppc64le',
-       's390x': arch == 's390x',
-       'aarch64': arch == 'aarch64',
-       'linux': not osx,
-       'has_pre_install': has_pre_install,
-       'direct_execute_pre_install': direct_execute_pre_install,
-       'has_post_install': has_post_install,
-       'direct_execute_post_install': direct_execute_post_install,
-       'initialize_conda': initialize_conda,
-       'initialize_by_default': initialize_by_default,
-       'check_path_spaces': check_path_spaces,
+    errors = []
+    for (
+        osx,
+        direct_execute_post_install,
+        direct_execute_pre_install,
+        batch_mode,
+        keep_pkgs,
+        has_conda,
+        has_license,
+        initialize_conda,
+        initialize_by_default,
+        has_post_install,
+        has_pre_install,
+        check_path_spaces,
+        arch,
+    ) in itertools.product(
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        [False, True],
+        ["x86", "x86_64", " ppc64le", "s390x", "aarch64"],
+    ):
+        params = {
+            "has_license": has_license,
+            "osx": osx,
+            "batch_mode": batch_mode,
+            "keep_pkgs": keep_pkgs,
+            "has_conda": has_conda,
+            "x86": arch == "x86",
+            "x86_64": arch == "x86_64",
+            "ppc64le": arch == "ppc64le",
+            "s390x": arch == "s390x",
+            "aarch64": arch == "aarch64",
+            "linux": not osx,
+            "has_pre_install": has_pre_install,
+            "direct_execute_pre_install": direct_execute_pre_install,
+            "has_post_install": has_post_install,
+            "direct_execute_post_install": direct_execute_post_install,
+            "initialize_conda": initialize_conda,
+            "initialize_by_default": initialize_by_default,
+            "check_path_spaces": check_path_spaces,
+        }
+        processed = preprocess(template, params)
+        for template_string in ["#if", "#else", "#endif"]:
+            if template_string in processed:
+                errors.append(f"Found '{template_string}' after "
+                              f"processing header.sh with '{params}'.")
 
-    })
-    assert '#if' not in processed
-    assert '#else' not in processed
-    assert '#endif' not in processed
+    assert not errors
 
 
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])

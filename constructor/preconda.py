@@ -5,22 +5,28 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import os
-from os.path import isdir, join, split as path_split
 import platform
+import shutil
 import sys
 import time
+from os.path import isdir, join
+from os.path import split as path_split
 from pathlib import Path
-import shutil
 from textwrap import dedent
-from typing import List, Union, Mapping
-
-from .utils import filename_dist, get_final_url
+from typing import List, Mapping, Union
 
 from . import __version__ as CONSTRUCTOR_VERSION
-from .conda_interface import (CONDA_INTERFACE_VERSION, Dist, MatchSpec, default_prefix,
-                              PrefixData, write_repodata, get_repodata, all_channel_urls)
+from .conda_interface import (
+    CONDA_INTERFACE_VERSION,
+    Dist,
+    MatchSpec,
+    PrefixData,
+    all_channel_urls,
+    default_prefix,
+)
 from .conda_interface import distro as conda_distro
-from .utils import get_final_channels, ensure_transmuted_ext
+from .conda_interface import get_repodata, write_repodata
+from .utils import ensure_transmuted_ext, filename_dist, get_final_channels, get_final_url
 
 try:
     import json

@@ -1,8 +1,11 @@
-from constructor import construct
-import jinja2
 import sys
 from os.path import join, dirname
-from conda.base.constants import KNOWN_SUBDIRS
+from os.path import dirname, join
+
+import jinja2
+
+from constructor import construct
+from constructor.conda_interface import KNOWN_SUBDIRS
 
 REPO_ROOT = dirname(dirname(__file__))
 

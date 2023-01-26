@@ -1,6 +1,6 @@
-from constructor.utils import make_VIProductVersion, fill_template, preprocess, normalize_path
-
 from os import sep
+
+from constructor.utils import fill_template, make_VIProductVersion, normalize_path, preprocess
 
 
 def test_make_VIProductVersion():

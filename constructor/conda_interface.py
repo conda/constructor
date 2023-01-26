@@ -1,12 +1,13 @@
+import datetime
 import json
 import os
 import sys
 from copy import deepcopy
 from itertools import chain
 from os.path import join
-import datetime
 
 from conda.gateways.disk import mkdir_p_sudo_safe
+from conda.base.constants import KNOWN_SUBDIRS
 
 from constructor.utils import hash_files
 
@@ -28,23 +29,20 @@ if conda_interface_type == 'conda':
     # Flatten VersionOrder.version, skip epoch, and keep only major and minor
     CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
-    from conda.api import SubdirData # noqa
-    from conda.base.context import (
-        context as _conda_context, replace_context_default as _conda_replace_context_default,
-    )
+    from conda.api import SubdirData  # noqa
+    from conda.base.context import context as _conda_context
+    from conda.base.context import replace_context_default as _conda_replace_context_default
     from conda.common.io import env_vars as _env_vars
-    from conda.core.package_cache_data import (
-        PackageCacheData as _PackageCacheData,
-    )
+    from conda.core.package_cache_data import PackageCacheData as _PackageCacheData
     from conda.core.prefix_data import PrefixData as _PrefixData
-    from conda.exports import default_prefix as _default_prefix
-    from conda.models.channel import all_channel_urls as _all_channel_urls
-    from conda.gateways.disk.read import read_paths_json as _read_paths_json
-    from conda.models.dist import Dist as _Dist
     from conda.exports import MatchSpec as _MatchSpec
+    from conda.exports import default_prefix as _default_prefix
     from conda.exports import download as _download
-    from conda.models.version import VersionOrder # noqa
+    from conda.gateways.disk.read import read_paths_json as _read_paths_json
+    from conda.models.channel import all_channel_urls as _all_channel_urls
+    from conda.models.dist import Dist as _Dist
     from conda.models.prefix_graph import PrefixGraph as _PrefixGraph
+    from conda.models.version import VersionOrder  # noqa
     try:
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
     except ImportError:

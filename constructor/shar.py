@@ -4,21 +4,31 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-
+import logging
 import os
-from os.path import basename, dirname, getsize, isdir, join, relpath
 import shutil
 import stat
 import tarfile
 import tempfile
+from os.path import basename, dirname, getsize, isdir, join, relpath
 
 from .construct import ns_platform
-from .preconda import files as preconda_files, write_files as preconda_write_files, \
-    copy_extra_files
-from .utils import add_condarc, filename_dist, fill_template, hash_files, preprocess, \
-    read_ascii_only, get_final_channels
+from .preconda import copy_extra_files
+from .preconda import files as preconda_files
+from .preconda import write_files as preconda_write_files
+from .utils import (
+    add_condarc,
+    filename_dist,
+    fill_template,
+    get_final_channels,
+    hash_files,
+    preprocess,
+    read_ascii_only,
+)
 
 THIS_DIR = dirname(__file__)
+
+logger = logging.getLogger(__name__)
 
 
 def has_shebang(filename):
@@ -33,7 +43,7 @@ def make_executable(tarinfo):
 
 def read_header_template():
     path = join(THIS_DIR, 'header.sh')
-    print('Reading: %s' % path)
+    logger.info('Reading: %s', path)
     with open(path) as fi:
         return fi.read()
 
@@ -62,6 +72,7 @@ def get_header(conda_exec, tarball, info):
     install_lines = list(add_condarc(info))
     # Needs to happen first -- can be templated
     replace = {
+        'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
         'NAME': name,
         'name': name.lower(),
         'VERSION': info['version'],

@@ -47,6 +47,7 @@ Unicode "true"
 !define COMPANY __COMPANY__
 !define ARCH __ARCH__
 !define PLATFORM __PLATFORM__
+!define CONSTRUCTOR_VERSION __CONSTRUCTOR_VERSION__
 !define PY_VER __PY_VER__
 !define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
 !define PYVERSION __PYVERSION__
@@ -117,6 +118,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 VIAddVersionKey "CompanyName" "${COMPANY}"
 VIAddVersionKey "LegalCopyright" "(c) ${COMPANY}"
 VIAddVersionKey "FileDescription" "${NAME} Installer"
+VIAddVersionKey "Comments" "Created by constructor ${CONSTRUCTOR_VERSION}"
 VIProductVersion __VIPV__
 BrandingText /TRIMLEFT "${COMPANY}"
 
@@ -1003,7 +1005,9 @@ Section "Install"
     SetOutPath "$INSTDIR\pkgs"
     File __URLS_FILE__
     File __URLS_TXT_FILE__
+#if pre_install_exists is True
     File __PRE_INSTALL__
+#endif
     File __POST_INSTALL__
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
@@ -1035,10 +1039,17 @@ Section "Install"
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
         DetailPrint "Running pre_install scripts..."
-        # At this point we don't have Python available yet, so we can't use the cmd wrapper
-        # _nsis.py as we do with post_install and pre_uninstall. We'll have to trust the
-        # system is well configured (CMD in patch, COMSPEC defined, etc.)
-        push '"$INSTDIR\pkgs\pre_install.bat"'
+        ReadEnvStr $5 SystemRoot
+        ReadEnvStr $6 windir
+        # This 'FileExists' also returns True for directories
+        ${If} ${FileExists} "$5"
+            push '"$5\System32\cmd.exe" /D /C "$INSTDIR\pkgs\pre_install.bat"'
+        ${ElseIf} ${FileExists} "$6"
+            push '"$6\System32\cmd.exe" /D /C "$INSTDIR\pkgs\pre_install.bat"'
+        ${Else}
+            # Cross our fingers CMD is in PATH
+            push 'cmd.exe /D /C "$INSTDIR\pkgs\pre_install.bat"'
+        ${EndIf}
         push "Failed to run pre_install"
         push 'WithLog'
         call AbortRetryNSExecWait
