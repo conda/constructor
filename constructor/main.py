@@ -284,7 +284,7 @@ def main():
                    action="store",
                    default=cc_platform,
                    help="the platform for which installer is for, "
-                   "defaults to '{}'.  Options: {} ".format(cc_platform, VALID_PLATFORMS))
+                   f"defaults to '{cc_platform}'. Options: {VALID_PLATFORMS}")
 
     p.add_argument('--dry-run',
                    help="solve package specs but do not create installer",
