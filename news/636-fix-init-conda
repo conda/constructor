@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix interactive installation in Linux and MacOX by ensuring user default is initialized.
+* Fix interactive installation in Linux and MacOX by ensuring user default is initialized. (fixes #635 via #636)
 
 ### Deprecations
 
