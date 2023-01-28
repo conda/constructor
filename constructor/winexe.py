@@ -263,7 +263,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
     data = read_nsi_tmpl(info)
     ppd = ns_platform(info['_platform'])
     ppd['initialize_conda'] = info.get('initialize_conda', True)
-    ppd['initialize_by_default'] = info.get('initialize_by_default', False)
+    ppd['initialize_by_default'] = info.get('initialize_by_default', None)
     ppd['register_python'] = info.get('register_python', True)
     ppd['register_python_default'] = info.get('register_python_default', None)
     ppd['check_path_length'] = info.get('check_path_length', None)
