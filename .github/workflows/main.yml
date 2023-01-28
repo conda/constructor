@@ -104,14 +104,12 @@ jobs:
           fi
           constructor --version
           constructor --help-construct
-      - name: Patch NSIS to use logging builds on Windows
+      - name: Update to NSIS logging builds on Windows
         if: startsWith(matrix.os, 'windows')
         run: |
           source $CONDA/etc/profile.d/conda.sh
           conda activate constructor
-          nsis_version=$(conda list nsis --json | jq -r ".[].version")
-          curl -sL "https://sourceforge.net/projects/nsis/files/NSIS%203/${nsis_version}/nsis-${nsis_version}-log.zip/download" -o "nsis-${nsis_version}-log.zip"
-          7z x "nsis-${nsis_version}-log.zip" -aoa -o"$CONDA_PREFIX/NSIS/"
+          conda install -y "conda-forge::nsis=*=*_log_*"
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
       - name: Generate self-signed certificate (Windows)
         if: startsWith(matrix.os, 'windows')
