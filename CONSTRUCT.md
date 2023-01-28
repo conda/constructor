@@ -792,7 +792,7 @@ Allowed keys are:
 ## Available Platforms
 Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
 - `linux-64`
-- `linux-arch64`
+- `linux-aarch64`
 - `linux-ppc64le`
 - `linux-s390x`
 - `win-64`

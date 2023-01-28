@@ -16,7 +16,7 @@ NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
 VALID_PLATFORMS = [x for x in sorted(KNOWN_SUBDIRS) if x != "noarch"]
 SUPPORTED_PLATFORMS = [
     'linux-64',
-    'linux-arch64',
+    'linux-aarch64',
     'linux-ppc64le',
     'linux-s390x',
     'win-64',
