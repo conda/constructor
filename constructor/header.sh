@@ -531,13 +531,11 @@ if [ "${PYTHONPATH:-}" != "" ]; then
 fi
 
 if [ "$BATCH" = "0" ]; then
+    DEFAULT=no
 #if initialize_conda is True and initialize_by_default is True
     DEFAULT=yes
 #endif
 #if initialize_conda is True and initialize_by_default is False
-    DEFAULT=no
-#endif
-#if initialize_conda is False
     DEFAULT=no
 #endif
 
