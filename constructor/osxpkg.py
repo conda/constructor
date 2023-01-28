@@ -94,7 +94,7 @@ def modify_xml(xml_path, info):
         background_path = join(OSX_DIR, 'MacInstaller.png')
 
     if background_path:
-        logger.info("Using background image", background_path)
+        logger.info("Using background image: %s", background_path)
         for key in ("background", "background-darkAqua"):
             background = ET.Element(key,
                                     file=background_path,
