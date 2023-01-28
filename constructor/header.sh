@@ -537,6 +537,9 @@ if [ "$BATCH" = "0" ]; then
 #if initialize_conda is True and initialize_by_default is False
     DEFAULT=no
 #endif
+#if initialize_conda is False
+    DEFAULT=no
+#endif
 
 #if has_conda and initialize_conda is True
     # Interactive mode.
