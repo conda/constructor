@@ -6,14 +6,12 @@ from copy import deepcopy
 from itertools import chain
 from os.path import join
 
-from conda.base.constants import KNOWN_SUBDIRS
 from conda.gateways.disk import mkdir_p_sudo_safe
 
 from constructor.utils import hash_files
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
             'orange3', 'qtconsole', 'rstudio', 'spyder', 'vscode']
-VALID_PLATFORMS = [x for x in sorted(KNOWN_SUBDIRS) if x != "noarch"]
 SUPPORTED_PLATFORMS = [
     'linux-64',
     'linux-aarch64',
