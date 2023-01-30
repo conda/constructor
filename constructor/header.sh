@@ -261,7 +261,7 @@ then
     if command -v "more" > /dev/null 2>&1; then
       pager="more"
     fi
-    "$pager" <<EOF
+    "$pager" <<'EOF'
 __LICENSE__
 EOF
     printf "\\n"
@@ -517,7 +517,7 @@ else
     find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
-cat <<EOF
+cat <<'EOF'
 __CONCLUSION_TEXT__
 EOF
 
