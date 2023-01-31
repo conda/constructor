@@ -774,31 +774,27 @@ Allowed keys are:
 
 ## Available selectors
 - `aarch64`
-
 - `arm64`
-
 - `armv7l`
-
 - `linux`
-
 - `linux32`
-
 - `linux64`
-
 - `osx`
-
 - `ppc64le`
-
 - `s390x`
-
 - `unix`
-
 - `win`
-
 - `win32`
-
 - `win64`
-
 - `x86`
-
 - `x86_64`
+
+## Available Platforms
+Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
+- `linux-64`
+- `linux-aarch64`
+- `linux-ppc64le`
+- `linux-s390x`
+- `win-64`
+- `osx-64`
+- `osx-arm64`

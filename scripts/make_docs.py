@@ -4,13 +4,14 @@ from os.path import dirname, join
 import jinja2
 
 from constructor import construct
+from constructor.conda_interface import SUPPORTED_PLATFORMS
 
 REPO_ROOT = dirname(dirname(__file__))
 
 sys.path.insert(0, REPO_ROOT)
 
 
-valid_platforms = construct.ns_platform(sys.platform)
+valid_selectors = construct.ns_platform(sys.platform)
 
 template = """
 <!--
@@ -59,16 +60,24 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 
 ## Available selectors
 
-{%- for key, val in platforms|dictsort %}
+{%- for key, val in selectors|dictsort %}
 - `{{key}}`
-{% endfor %}
+{%- endfor %}
+
+## Available Platforms
+Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
+{%- for platform in supported_platforms %}
+- `{{platform}}`
+{%- endfor %}
 """ # noqa
 
 key_info_list = construct.generate_key_info_list()
 
 output = jinja2.Template(template).render(
-    platforms=valid_platforms,
-    keys=key_info_list)
+    selectors=valid_selectors,
+    keys=key_info_list,
+    supported_platforms=SUPPORTED_PLATFORMS,
+)
 
 with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:
     f.write(output)

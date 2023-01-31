@@ -14,7 +14,7 @@ from textwrap import dedent, indent
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import cc_platform
+from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .construct import generate_key_info_list, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
@@ -283,7 +283,7 @@ def main():
                    action="store",
                    default=cc_platform,
                    help="the platform for which installer is for, "
-                   "defaults to '{}'".format(cc_platform))
+                   f"defaults to '{cc_platform}'. Options, e.g.: {SUPPORTED_PLATFORMS}")
 
     p.add_argument('--dry-run',
                    help="solve package specs but do not create installer",
