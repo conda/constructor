@@ -65,7 +65,7 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 {%- endfor %}
 
 ## Available Platforms
-Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
+Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
 {%- for platform in supported_platforms %}
 - `{{platform}}`
 {%- endfor %}
