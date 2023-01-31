@@ -790,7 +790,7 @@ Allowed keys are:
 - `x86_64`
 
 ## Available Platforms
-Specify which platform to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`
+Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
 - `linux-64`
 - `linux-aarch64`
 - `linux-ppc64le`
