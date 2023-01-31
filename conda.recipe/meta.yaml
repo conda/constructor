@@ -51,8 +51,8 @@ test:
     - pip check
     - pytest -v --cov=constructor tests
     - coverage run --append -m constructor -V
-    - if [%CODECOV_TOKEN%] neq [] codecov --commit %CODECOV_COMMIT% # [win]
-    - if [ -n "$CODECOV_TOKEN" ]; then codecov --commit $CODECOV_COMMIT; fi # [unix]
+    - if [%CODECOV_TOKEN%] neq [] codecov --flags unit --commit %CODECOV_COMMIT% # [win]
+    - if [ -n "$CODECOV_TOKEN" ]; then codecov --flags unit --commit $CODECOV_COMMIT; fi # [unix]
     - coverage report
     - if [%RUN_EXAMPLES%] neq [] python scripts/run_examples.py      # [win]
     - if [ -n "$RUN_EXAMPLES" ]; then python scripts/run_examples.py; fi  # [unix]

@@ -93,7 +93,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
-            conda create -n constructor -c local --strict-channel-priority constructor
+            conda create -n constructor -c local --strict-channel-priority constructor codecov
           conda activate constructor
           set -x
           installed_channel=$(conda list constructor --json | jq -r '.[].channel')
@@ -145,6 +145,7 @@ jobs:
           python scripts/run_examples.py \
             --keep-artifacts=examples_artifacts/ \
             --conda-exe="${CONSTRUCTOR_CONDA_EXE}"
+          coverage json
       - name: Test with conda-libmamba-solver
         run: |
           source $CONDA/etc/profile.d/conda.sh
@@ -152,6 +153,9 @@ jobs:
           conda install -yq conda-libmamba-solver
           conda list
           CONDA_SOLVER=libmamba CONDA_VERBOSITY=1 constructor examples/noconda/ --output-dir=examples_artifacts/
+      - uses: codecov/codecov-action@v3
+        with:
+          flags: integration
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
         uses: actions/upload-artifact@v3
