@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Prevent pager code in .sh installers to do variable substitution for the LICENSE/CONCLUSION text. This allows `$` signs as part of the license/conclusion text without causing unexpected `$1: unbound variable` errors. (#635 via #638)
+* Protect all user setable variables in .sh installers against variable substitution. This allows `$` signs as part of the license/conclusion/name/version text without causing unexpected `$1: unbound variable` errors. (#635 via #638)
 
 ### Deprecations
 
