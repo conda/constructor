@@ -12,7 +12,7 @@
 
 ### Docs
 
-* Add documentation for `--platform` argument, listing out available options.
+* Add documentation for `--platform` argument, listing out available options. (#620)
 
 ### Other
 
