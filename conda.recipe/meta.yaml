@@ -47,8 +47,8 @@ test:
     - pytest-cov
   commands:
     - pip check
-    - pytest -v --cov=constructor tests
-    - coverage run --append -m constructor -V
+    - pytest -v --cov-branch --cov=constructor tests
+    - coverage run --branch --append -m constructor -V
     - coverage json
     - if [%CODECOV_FOLDER%] neq [] copy coverage.json "%CODECOV_FOLDER%" # [win]
     - if [ -n "$CODECOV_FOLDER" ]; then cp coverage.json "$CODECOV_FOLDER"; fi # [unix]
