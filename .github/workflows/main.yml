@@ -79,8 +79,12 @@ jobs:
           source $CONDA/etc/profile.d/conda.sh
           conda activate ../conda
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
+          CODECOV_FOLDER=${PWD} \
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
             conda build conda.recipe --python=${{ matrix.pyver }}
+      - uses: codecov/codecov-action@v3
+        with:
+          flags: unit
       - name: Upload the packages as artifact
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v3
@@ -139,6 +143,7 @@ jobs:
           fi
       - name: Run examples and prepare artifacts
         run: |
+          rm -rf coverage.json
           source $CONDA/etc/profile.d/conda.sh
           conda activate constructor
           mkdir -p examples_artifacts/

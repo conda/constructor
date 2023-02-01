@@ -15,8 +15,7 @@ build:
   entry_points:
     - constructor = constructor.main:main
   script_env:
-    - CODECOV_TOKEN
-    - CODECOV_COMMIT
+    - CODECOV_FOLDER
     - RUN_EXAMPLES
 
 requirements:
@@ -46,13 +45,13 @@ test:
     - pillow >=3.1
     - pytest
     - pytest-cov
-    - codecov
   commands:
     - pip check
     - pytest -v --cov=constructor tests
     - coverage run --append -m constructor -V
-    - if [%CODECOV_TOKEN%] neq [] codecov --flags unit --commit %CODECOV_COMMIT% # [win]
-    - if [ -n "$CODECOV_TOKEN" ]; then codecov --flags unit --commit $CODECOV_COMMIT; fi # [unix]
+    - coverage json
+    - if [%CODECOV_FOLDER%] neq [] copy coverage.json "%CODECOV_FOLDER%" # [win]
+    - if [ -n "$CODECOV_FOLDER" ]; then cp coverage.json "$CODECOV_FOLDER"; fi # [unix]
     - coverage report
     - if [%RUN_EXAMPLES%] neq [] python scripts/run_examples.py      # [win]
     - if [ -n "$RUN_EXAMPLES" ]; then python scripts/run_examples.py; fi  # [unix]
