@@ -97,7 +97,7 @@ jobs:
         run: |
           source $CONDA/etc/profile.d/conda.sh
           CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
-            conda create -n constructor -c local --strict-channel-priority constructor codecov
+            conda create -n constructor -c local --strict-channel-priority constructor coverage
           conda activate constructor
           set -x
           installed_channel=$(conda list constructor --json | jq -r '.[].channel')
