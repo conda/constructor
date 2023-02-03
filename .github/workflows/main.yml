@@ -71,7 +71,6 @@ jobs:
           conda create -p ../conda conda-build conda-verify
       - name: Build the package
         env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           PYTHONIOENCODING: utf-8
           # Uncomment to run within conda build
           # RUN_EXAMPLES: "1"
@@ -84,6 +83,7 @@ jobs:
             conda build conda.recipe --python=${{ matrix.pyver }}
       - uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
       - name: Upload the packages as artifact
         if: github.event_name == 'push'
@@ -160,6 +160,7 @@ jobs:
           CONDA_SOLVER=libmamba CONDA_VERBOSITY=1 constructor examples/noconda/ --output-dir=examples_artifacts/
       - uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
