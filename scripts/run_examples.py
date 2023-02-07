@@ -15,7 +15,7 @@ from constructor.utils import rm_rf
 
 try:
     import coverage  # noqa
-    COV_CMD = ['coverage', 'run', '--append', '-m']
+    COV_CMD = ['coverage', 'run', '--branch', '--append', '-m']
 except ImportError:
     COV_CMD = []
 
