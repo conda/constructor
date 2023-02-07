@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* Protect all user setable variables in .sh installers against variable substitution. This allows `$` signs as part of the license/conclusion/name/version text without causing unexpected `$1: unbound variable` errors. (#635 via #638)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* Test some .sh installers in interactive mode to test the interactive code path of the header.sh. (#637 via #638)

@@ -23,9 +23,9 @@ fi
 
 # Export variables to make installer metadata available to pre/post install scripts
 # NOTE: If more vars are added, make sure to update the examples/scripts tests too
-export INSTALLER_NAME="__NAME__"
-export INSTALLER_VER="__VERSION__"
-export INSTALLER_PLAT="__PLAT__"
+export INSTALLER_NAME='__NAME__'
+export INSTALLER_VER='__VERSION__'
+export INSTALLER_PLAT='__PLAT__'
 export INSTALLER_TYPE="SH"
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
@@ -49,7 +49,7 @@ REINSTALL=0
 USAGE="
 usage: $0 [options]
 
-Installs __NAME__ __VERSION__
+Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 
 #if batch_mode
 -i           run install in interactive mode
@@ -130,9 +130,9 @@ then
     if [ "$(uname -m)" = "x86_64" ]; then
         printf "WARNING:\\n"
         printf "    Your system is x86_64, but you are trying to install an x86 (32-bit)\\n"
-        printf "    version of __NAME__.  Unless you have the necessary 32-bit libraries\\n"
-        printf "    installed, __NAME__ will not work.\\n"
-        printf "    We STRONGLY recommend installing the x86_64 version of __NAME__ on\\n"
+        printf "    version of %s.  Unless you have the necessary 32-bit libraries\\n" "${INSTALLER_NAME}"
+        printf "    installed, %s will not work.\\n" "${INSTALLER_NAME}"
+        printf "    We STRONGLY recommend installing the x86_64 version of %s on\\n" "${INSTALLER_NAME}"
         printf "    an x86_64 system.\\n"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
@@ -150,7 +150,7 @@ then
     if [ "$(uname -m)" != "x86_64" ]; then
         printf "WARNING:\\n"
         printf "    Your operating system appears not to be 64-bit, but you are trying to\\n"
-        printf "    install a 64-bit version of __NAME__.\\n"
+        printf "    install a 64-bit version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
@@ -167,7 +167,7 @@ then
     if [ "$(uname -m)" != "ppc64le" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be Power8 (little endian), \\n"
-        printf "    but you are trying to install a ppc64le version of __NAME__.\\n"
+        printf "    but you are trying to install a ppc64le version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
@@ -184,7 +184,7 @@ then
     if [ "$(uname -m)" != "s390x" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be s390x (big endian), \\n"
-        printf "    but you are trying to install a s390x version of __NAME__.\\n"
+        printf "    but you are trying to install a s390x version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
@@ -201,7 +201,7 @@ then
     if [ "$(uname -m)" != "aarch64" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be aarch64, \\n"
-        printf "    but you are trying to install a aarch64 version of __NAME__.\\n"
+        printf "    but you are trying to install a aarch64 version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
@@ -218,7 +218,7 @@ then
     if [ "$(uname)" != "Darwin" ]; then
         printf "WARNING:\\n"
         printf "    Your operating system does not appear to be macOS, \\n"
-        printf "    but you are trying to install a macOS version of __NAME__.\\n"
+        printf "    but you are trying to install a macOS version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
@@ -235,7 +235,7 @@ then
     if [ "$(uname)" != "Linux" ]; then
         printf "WARNING:\\n"
         printf "    Your operating system does not appear to be Linux, \\n"
-        printf "    but you are trying to install a Linux version of __NAME__.\\n"
+        printf "    but you are trying to install a Linux version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
@@ -249,7 +249,7 @@ then
 #endif
 
     printf "\\n"
-    printf "Welcome to __NAME__ __VERSION__\\n"
+    printf "Welcome to %s %s\\n" "${INSTALLER_NAME}" "${INSTALLER_VER}"
 #if has_license
     printf "\\n"
     printf "In order to continue the installation process, please review the license\\n"
@@ -261,7 +261,7 @@ then
     if command -v "more" > /dev/null 2>&1; then
       pager="more"
     fi
-    "$pager" <<EOF
+    "$pager" <<'EOF'
 __LICENSE__
 EOF
     printf "\\n"
@@ -283,7 +283,7 @@ EOF
 #endif
 
     printf "\\n"
-    printf "__NAME__ will now be installed into this location:\\n"
+    printf "%s will now be installed into this location:\\n" "${INSTALLER_NAME}"
     printf "%s\\n" "$PREFIX"
     printf "\\n"
     printf "  - Press ENTER to confirm the location\\n"
@@ -517,17 +517,17 @@ else
     find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 fi
 
-cat <<EOF
+cat <<'EOF'
 __CONCLUSION_TEXT__
 EOF
 
 if [ "${PYTHONPATH:-}" != "" ]; then
     printf "WARNING:\\n"
     printf "    You currently have a PYTHONPATH environment variable set. This may cause\\n"
-    printf "    unexpected behavior when running the Python interpreter in __NAME__.\\n"
+    printf "    unexpected behavior when running the Python interpreter in %s.\\n" "${INSTALLER_NAME}"
     printf "    For best results, please verify that your PYTHONPATH only points to\\n"
     printf "    directories of packages that are compatible with the Python interpreter\\n"
-    printf "    in __NAME__: %s\\n" "$PREFIX"
+    printf "    in %s: %s\\n" "${INSTALLER_NAME}" "$PREFIX"
 fi
 
 if [ "$BATCH" = "0" ]; then
@@ -541,7 +541,7 @@ if [ "$BATCH" = "0" ]; then
 #if has_conda and initialize_conda is True
     # Interactive mode.
 
-    printf "Do you wish the installer to initialize __NAME__\\n"
+    printf "Do you wish the installer to initialize %s\\n" "${INSTALLER_NAME}"
     printf "by running conda init? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
     read -r ans
@@ -582,7 +582,7 @@ if [ "$BATCH" = "0" ]; then
     printf "\\n"
 #endif
 
-    printf "Thank you for installing __NAME__!\\n"
+    printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"
 fi # !BATCH
 
 
@@ -593,16 +593,16 @@ if [ "$TEST" = "1" ]; then
     (# shellcheck disable=SC1091
      . "$PREFIX"/bin/activate
      which conda-build > /dev/null 2>&1 || conda install -y conda-build
-     if [ ! -d "$PREFIX"/conda-bld/__PLAT__ ]; then
-         mkdir -p "$PREFIX"/conda-bld/__PLAT__
+     if [ ! -d "$PREFIX/conda-bld/${INSTALLER_PLAT}" ]; then
+         mkdir -p "$PREFIX/conda-bld/${INSTALLER_PLAT}"
      fi
-     cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX"/conda-bld/__PLAT__/
-     cp -f "$PREFIX"/pkgs/*.conda "$PREFIX"/conda-bld/__PLAT__/
+     cp -f "$PREFIX"/pkgs/*.tar.bz2 "$PREFIX/conda-bld/${INSTALLER_PLAT}/"
+     cp -f "$PREFIX"/pkgs/*.conda "$PREFIX/conda-bld/${INSTALLER_PLAT}/"
      if [ "$CLEAR_AFTER_TEST" = "1" ]; then
          rm -rf "$PREFIX/pkgs"
      fi
-     conda index "$PREFIX"/conda-bld/__PLAT__/
-     conda-build --override-channels --channel local --test --keep-going "$PREFIX"/conda-bld/__PLAT__/*.tar.bz2
+     conda index "$PREFIX/conda-bld/${INSTALLER_PLAT}/"
+     conda-build --override-channels --channel local --test --keep-going "$PREFIX/conda-bld/${INSTALLER_PLAT}/"*.tar.bz2
     ) || NFAILS=$?
     if [ "$NFAILS" != "0" ]; then
         if [ "$NFAILS" = "1" ]; then
