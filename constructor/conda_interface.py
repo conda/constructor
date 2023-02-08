@@ -12,6 +12,15 @@ from constructor.utils import hash_files
 
 NAV_APPS = ['glueviz', 'jupyterlab', 'notebook',
             'orange3', 'qtconsole', 'rstudio', 'spyder', 'vscode']
+SUPPORTED_PLATFORMS = [
+    'linux-64',
+    'linux-aarch64',
+    'linux-ppc64le',
+    'linux-s390x',
+    'win-64',
+    'osx-64',
+    'osx-arm64',
+]
 
 try:
     from conda import __version__ as CONDA_INTERFACE_VERSION

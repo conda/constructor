@@ -23,7 +23,7 @@ repos:
         args: ["--py37-plus", "--keep-percent-format"]
         exclude: ^(constructor/nsis/.*py)
   - repo: https://github.com/PyCQA/isort
-    rev: 5.11.4
+    rev: 5.12.0
     hooks:
     -   id: isort
   - repo: https://github.com/PyCQA/flake8

@@ -67,7 +67,7 @@ def get_header(conda_exec, tarball, info):
         if key in info:
             ppd['direct_execute_%s' % key] = has_shebang(info[key])
     ppd['initialize_conda'] = info.get('initialize_conda', True)
-    ppd['initialize_by_default'] = info.get('initialize_by_default', None)
+    ppd['initialize_by_default'] = info.get('initialize_by_default', False)
     ppd['has_conda'] = info['_has_conda']
     ppd['enable_shortcuts'] = info['_enable_shortcuts']
     ppd['check_path_spaces'] = info.get("check_path_spaces", True)

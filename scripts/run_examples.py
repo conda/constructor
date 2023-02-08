@@ -15,7 +15,7 @@ from constructor.utils import rm_rf
 
 try:
     import coverage  # noqa
-    COV_CMD = ['coverage', 'run', '--append', '-m']
+    COV_CMD = ['coverage', 'run', '--branch', '--append', '-m']
 except ImportError:
     COV_CMD = []
 
@@ -28,8 +28,14 @@ WHITELIST = ['grin', 'jetsonconda', 'miniconda', 'newchan']
 BLACKLIST = []
 WITH_SPACES = {"extra_files", "noconda", "signing", "scripts"}
 
+# .sh installers to also test in interactiv mode
+# (require all to a have License = have same interactive input steps)
+INTERACTIVE_TESTS = ['miniforge']
+# Test runs with even Python version are done in interactive mode, odd in batch mode
+INTERACTIVE_TESTING = (sys.version_info.minor % 2) == 0
 
-def _execute(cmd, **env_vars):
+
+def _execute(cmd, installer_input=None, **env_vars):
     print(' '.join(cmd))
     t0 = time.time()
     if env_vars:
@@ -37,9 +43,16 @@ def _execute(cmd, **env_vars):
         env.update(env_vars)
     else:
         env = None
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+    p = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE if installer_input else None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=env,
+    )
     try:
-        stdout, stderr = p.communicate(timeout=420)
+        stdout, stderr = p.communicate(input=installer_input, timeout=420)
         errored = p.returncode != 0
     except subprocess.TimeoutExpired:
         p.kill()
@@ -137,8 +150,14 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
             rm_rf(env_dir)
             fpath = os.path.join(output_dir, fpath)
             print('--- Testing', os.path.basename(fpath))
+            installer_input = None
             if ext == 'sh':
-                cmd = ['/bin/sh', fpath, '-b', '-p', env_dir]
+                if INTERACTIVE_TESTING and example_name in INTERACTIVE_TESTS:
+                    cmd = ['/bin/sh', fpath]
+                    # Input: Enter, yes to the license, installation folder, no to initialize shells
+                    installer_input = f"\nyes\n{env_dir}\nno\n"
+                else:
+                    cmd = ['/bin/sh', fpath, '-b', '-p', env_dir]
             elif ext == 'pkg':
                 if os.environ.get("CI"):
                     # We want to run it in an arbitrary directory, but the options
@@ -162,7 +181,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                 # This is why we have this weird .split() thingy down here:
                 cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
             env = {"CONDA_VERBOSITY": "3"} if debug else {}
-            test_errored = _execute(cmd, **env)
+            test_errored = _execute(cmd, installer_input=installer_input, **env)
             # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
             # which are only written if a special NSIS build is used
             win_error_lines = []
