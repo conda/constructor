@@ -1,5 +1,29 @@
 [//]: # (current developments)
 
+## 2023-02-07   3.4.3:
+### Bug fixes
+
+* Fix interactive installation in Linux and macOS by ensuring user default is initialized. (#635 via #636)
+* Protect all user setable variables in .sh installers against variable substitution. This allows `$` signs as part of the license/conclusion/name/version text without causing unexpected `$1: unbound variable` errors. (#635 via #638)
+
+### Docs
+
+* Add documentation for `--platform` argument, listing out available options. (#620)
+
+### Other
+
+* Improve CI reliability by installing NSIS with logging support via conda instead of getting it from sourceforge and manually extracting it. (#631 via #632)
+* Test some .sh installers in interactive mode to test the interactive code path of the header.sh. (#637 via #638)
+* Report example runs as integration coverage. (#639)
+
+### Contributors
+
+* @dbast
+* @JoelStansbury
+* @hmaarrfk
+
+
+
 ## 2023-01-25   3.4.2:
 ### Enhancements
 
