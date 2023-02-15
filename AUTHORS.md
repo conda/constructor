@@ -22,6 +22,7 @@ Authors are sorted alphabetically.
 * Jaime Rodríguez-Guerra
 * Jannis Leidel
 * Jean-Luc Stevens
+* JoelStansbury
 * John Kirkham
 * Jonathan J. Helmus
 * Kale Franz
