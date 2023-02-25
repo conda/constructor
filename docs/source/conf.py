@@ -76,7 +76,7 @@ html_context = {
     "github_user": "conda",
     "github_repo": "constructor",
     "github_version": "main",
-    "doc_path": "docs",
+    "doc_path": "docs/source",
 }
 
 # We don't have a locale set, so we can safely ignore that for the sitemaps.
