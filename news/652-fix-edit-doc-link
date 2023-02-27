@@ -12,7 +12,7 @@
 
 ### Docs
 
-* To fix the Edit Source Link in the existing documentation, Previously we were referring to the https://github.com/conda/constructor/edit/main/docs/... expected: https://github.com/conda/constructor/edit/main/docs/source/...
+* To fix the "Edit Source Link". https://github.com/conda/constructor/edit/main/docs/... to https://github.com/conda/constructor/edit/main/docs/source/...
 * minor doc fixes
 
 ### Other
