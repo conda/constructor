@@ -12,8 +12,7 @@
 
 ### Docs
 
-* To fix the "Edit Source Link". https://github.com/conda/constructor/edit/main/docs/... to https://github.com/conda/constructor/edit/main/docs/source/...
-* minor doc fixes
+* Fix "Edit Source Link" references and other minor corrections. (#652)
 
 ### Other
 
