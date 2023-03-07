@@ -23,4 +23,5 @@ channels_remap:
 
 specs:
   - python
+  - conda
   - bitvector
