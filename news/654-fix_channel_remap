@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* urls in generated envs.txt must use url given in channel_remap (was installer-build time url before) 
+* urls in generated envs.txt must use url given in channel_remap (was installer-build time url before)
 
 ### Deprecations
 
