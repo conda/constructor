@@ -11,7 +11,7 @@ channels:
 
 channels_remap:
   - src: http://repo.anaconda.com/pkgs/main/
-    dest: file:///usr/local/share/private_repo
+    dest: file:///usr/local/share/private_repo/
 
 specs:
   - python
