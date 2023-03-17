@@ -1,27 +1,20 @@
-name: myinstaller
+name: use_channel_remap
 
 version: 0.0.1
 
 # after install the folder <prefix>/pkgs will not be deleted, for diagnostics
 keep_pkgs: True
 
-# prepare private channel first:
-# (1) create folder for channel: mkdir -p /tmp/mychannel/linux-64
-# (2) copy a private package into channel:
-# (2.1) simulate with package from conda-forge: wget https://anaconda.org/conda-forge/bitvector/3.5.0/download/noarch/bitvector-3.5.0-pyhd8ed1ab_0.conda
-# (2.2) cp bitvector-3.5.0-pyhd8ed1ab_0.conda /tmp/mychannel/linux-64/
-# (2.3) Create index (required for usage): conda index /tmp/mychannel
-# (3) Now create installer: constructor examples/use_channel_remap/
-
+# we just remap the main conda channel, to show the idea of remap
 channels:
-  - file:///tmp/mychannel
-  - conda-forge
+  - http://repo.anaconda.com/pkgs/main/
 
 channels_remap:
-  - src: file:///tmp/mychannel
+  - src: http://repo.anaconda.com/pkgs/main/
     dest: file:///usr/local/share/private_repo
 
 specs:
   - python
   - conda
-  - bitvector
+
+license_file: eula.txt
