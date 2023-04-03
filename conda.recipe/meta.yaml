@@ -27,7 +27,7 @@ requirements:
   run:
     - conda >=4.6,<23.1.0
     - python
-    - ruamel_yaml >=0.11.14,<0.16
+    - ruamel.yaml >=0.11.14,<0.18
     - conda-standalone
     - pillow >=3.1     # [win or osx]
     - nsis >=3.08      # [win]

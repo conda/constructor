@@ -10,9 +10,10 @@ import sys
 from functools import partial
 from os.path import dirname
 
+from ruamel import yaml
+
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
 
-from .utils import yaml
 
 # list of tuples (key name, required, type, description)
 KEYS = [
