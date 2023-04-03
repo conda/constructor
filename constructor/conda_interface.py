@@ -146,17 +146,17 @@ if conda_interface_type == 'conda':
                 data["md5"] = hash_files([pkg_fn])
                 used_repodata[key][package] = data
 
-        # The first line of the JSON should contain cache metadata
+        # In conda <23.1, the first line of the JSON should contain cache metadata
         # Choose an arbitrary old, expired date, so that conda will want to
         # immediately update it when not being run in offline mode
-        url = used_repodata.pop('_url').rstrip("/")
+        repodata_url = used_repodata.pop('_url', url).rstrip("/")
         used_repodata.pop("_mod", None)
         repodata = json.dumps(used_repodata, indent=2)
         mod_time = "Mon, 07 Jan 2019 15:22:15 GMT"
         repodata_header = json.dumps(
             {
                 "_mod": mod_time,
-                "_url": url,
+                "_url": repodata_url,
             }
         )
         repodata = repodata_header[:-1] + "," + repodata[1:]
@@ -170,6 +170,9 @@ if conda_interface_type == 'conda':
         )
         mod_time_s = int(mod_time_datetime.timestamp())
         os.utime(repodata_filepath, times=(mod_time_s, mod_time_s))
+
+        # TODO: write the state.json file, for conda >23.1
+        # Maybe it's not needed anymore.
 
     def write_cache_dir():
         cache_dir = join(PackageCacheData.first_writable().pkgs_dir, 'cache')
