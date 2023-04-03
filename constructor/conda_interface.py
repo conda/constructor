@@ -160,7 +160,7 @@ if conda_interface_type == 'conda':
             }
         )
         repodata = repodata_header[:-1] + "," + repodata[1:]
-        repodata_filepath = join(cache_dir, _cache_fn_url(url))
+        repodata_filepath = join(cache_dir, _cache_fn_url(repodata_url))
         with open(repodata_filepath, 'w') as fh:
             fh.write(repodata)
 
