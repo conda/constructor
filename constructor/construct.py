@@ -14,7 +14,6 @@ from ruamel import yaml
 
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
 
-
 # list of tuples (key name, required, type, description)
 KEYS = [
     ('name',                   True,  str, '''
