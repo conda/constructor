@@ -844,8 +844,9 @@ Function OnDirectoryLeave
              Please consider removing the space$R1." \
             /SD IDOK
         ${If} ${Silent}
-            DetailPrint "::error:: 'Destination folder' contains $R0 space$R1."
-            abort
+            DetailPrint "::warning:: 'Destination Folder' contains $R0 space$R1. \
+             This can cause problems with several Conda packages. \
+             Please consider removing the space$R1."
         ${EndIf}
     NoSpaces:
 #endif
