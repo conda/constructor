@@ -269,7 +269,7 @@ EOF
     printf "[no] >>> "
     read -r ans
     ans=$(echo ${ans} | tr '[a-z]' '[A-Z]')
-    while [ "$ans" != "YES" ] && [ "$ans" != "NO" ] && [ "$ans" != ""]
+    while [ "$ans" != "YES" ] && [ "$ans" != "NO" ] && [ "$ans" != "" ]
     do
         printf "Please answer 'yes' or 'no':'\\n"
         printf ">>> "
