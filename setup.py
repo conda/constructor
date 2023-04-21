@@ -24,7 +24,7 @@ setuptools.setup(
     },
     install_requires=[
         "conda >=4.6,<23.1.0",
-        "ruamel_yaml",
+        "ruamel.yaml",
         "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
         # non-python dependency: "nsis >=3.01 ; platform_system=='Windows'",
     ],
