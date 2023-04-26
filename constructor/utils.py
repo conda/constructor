@@ -13,10 +13,7 @@ from os import sep, unlink
 from os.path import basename, isdir, isfile, islink, normpath
 from shutil import rmtree
 
-try:
-    import yaml
-except ImportError:
-    import ruamel_yaml as yaml
+from ruamel import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +108,7 @@ def add_condarc(info):
         if channel_alias:
             condarc['channel_alias'] = channel_alias
     if isinstance(condarc, dict):
-        condarc = yaml.dump(condarc)
+        condarc = yaml.dump(condarc, default_flow_style=False)
     yield '# ----- add condarc'
     if info['_platform'].startswith('win'):
         yield 'Var /Global CONDARC'
