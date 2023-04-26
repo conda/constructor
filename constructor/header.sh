@@ -137,7 +137,7 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
         if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
@@ -154,7 +154,7 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
         if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
@@ -171,7 +171,7 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
         if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
@@ -188,7 +188,7 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
         if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
@@ -205,7 +205,7 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
         if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
@@ -222,7 +222,7 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
         if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
@@ -239,7 +239,7 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
         if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
@@ -268,13 +268,13 @@ EOF
     printf "Do you accept the license terms? [yes|no]\\n"
     printf "[no] >>> "
     read -r ans
-    ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+    ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
     while [ "$ans" != "YES" ] && [ "$ans" != "NO" ] && [ "$ans" != "" ]
     do
         printf "Please answer 'yes' or 'no':'\\n"
         printf ">>> "
         read -r ans
-        ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
     done
     if [ "$ans" != "YES" ]
     then
@@ -549,7 +549,7 @@ if [ "$BATCH" = "0" ]; then
     if [ "$ans" = "" ]; then
         ans=$DEFAULT
     fi
-    ans=$(echo "${ans}" | tr '{:lower:]' '[:upper:]')
+    ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
     if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
     then
         printf "\\n"
