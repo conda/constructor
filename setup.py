@@ -23,10 +23,10 @@ setuptools.setup(
         "console_scripts": ["constructor = constructor.main:main"],
     },
     install_requires=[
-        "conda >=4.6,<23.1.0",
-        "ruamel_yaml",
+        "conda >=4.6",
+        "ruamel.yaml",
         "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
-        # non-python dependency: "nsis >=3.01 ; platform_system=='Windows'",
+        # non-python dependency: "nsis >=3.08 ; platform_system=='Windows'",
     ],
     # We could differentiate between operating systems here but that is
     # far more trouble than it is worth
