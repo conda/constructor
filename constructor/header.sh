@@ -436,7 +436,7 @@ export FORCE
 # https://github.com/ContinuumIO/anaconda-issues/issues/11148
 # First try to fix it (this apparently didn't work; QA reported the issue again)
 # https://github.com/conda/conda/pull/9073
-mkdir -p ~/.conda > /dev/null 2>&1
+test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda || mkdir ~/.conda
 
 printf "\nInstalling base environment...\n\n"
 
