@@ -4,14 +4,15 @@
 
 We have the following CLI options available for MacOS and Linux:
 
-- If the installer is running in a batch, `-i` is used to run it in an interactive mode. Otherwise, the installer runs in batch mode without manual intervention by `-b`. 
-- `f` returns no error is the prefix already exists.
+- `-b` helps to run the installer in batch mode through manual intervention.
+- `f` returns no error if the prefix already exists.
 - `h` allows us to display this help message and exit.
-- You may use `-k` to keep the package cache after installation.
-- You can use `-p PREFIX` to install a prefix. Kindly note that the path should not contain any spaces.
-- If you wish to skip running `pre/post-link/install`scripts, you may use `-s`.
+- `-i` is used to run it in an interactive mode if the installer is running in a batch. Otherwise, the installer runs in batch mode without manual intervention by . 
+- `-k` keeps the package cache after installation.
+- `-p PREFIX` installs a prefix. Kindly note that the path should not contain any spaces.
+- `-s` skips running `pre/post-link/install`scripts.
+- `-t` can be used to run package tests after installation (it may install conda-build), if conda is installed.
 - `-u` is used to update an existing installation.
-- Considering you have conda installed, `-t` can be used to run package tests after installation (it may install conda-build).
 
 ## Windows installers
 
