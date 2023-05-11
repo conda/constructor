@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Improve parsing of yes/no prompts
+* Improve parsing of `yes/no` prompts in SH installers. (#664)
 
 ### Deprecations
 
