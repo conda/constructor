@@ -59,7 +59,7 @@ jobs:
           python-version: ${{ matrix.pyver }}
       - name: Supply extra dependencies and install constructor
         run: |
-          files=(--file "tests/requirements-${{ matrix.os }}.txt")
+          files=(--file "tests/requirements.txt")
           test -f dev/extra-requirements-${{ matrix.os }}.txt \
             && files+=(--file "dev/extra-requirements-${{ matrix.os }}.txt")
           conda install ${files[@]} -y
