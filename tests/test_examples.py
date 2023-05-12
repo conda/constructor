@@ -1,7 +1,7 @@
 import os
+import subprocess
 import sys
 import time
-import subprocess
 import warnings
 from datetime import timedelta
 from pathlib import Path
@@ -178,7 +178,7 @@ def _sentinel_file_checks(example_path, install_dir):
             raise AssertionError(f"Sentinel file for {script_prefix}_install not found!")
 
 
-def create_installer(tmp_path: Path, _example_path, conda_exe=CONSTRUCTOR_CONDA_EXE, debug=False):
+def create_installer(tmp_path: Path, example_dir, conda_exe=CONSTRUCTOR_CONDA_EXE, debug=False):
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
         pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
 
@@ -187,7 +187,8 @@ def create_installer(tmp_path: Path, _example_path, conda_exe=CONSTRUCTOR_CONDA_
         *COV_CMD,
         "constructor",
         "-v",
-        _example_path,
+        "--debug",
+        example_dir,
         "--output-dir",
         str(output_dir),
     ]
