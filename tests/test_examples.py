@@ -185,8 +185,7 @@ def create_installer(tmp_path: Path, _example_path, conda_exe=CONSTRUCTOR_CONDA_
     output_dir = tmp_path / "installer"
     cmd = [
         *COV_CMD,
-        sys.executable,
-        "-mconstructor",
+        "constructor",
         "-v",
         _example_path,
         "--output-dir",
