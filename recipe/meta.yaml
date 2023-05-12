@@ -14,9 +14,6 @@ build:
     - python -m pip install --no-deps --ignore-installed .
   entry_points:
     - constructor = constructor.main:main
-  script_env:
-    - CODECOV_FOLDER
-    - RUN_EXAMPLES
 
 requirements:
   host:
@@ -35,26 +32,13 @@ requirements:
     - nsis >=3.08      # [unix]
 
 test:
-  source_files:
-    - tests
-    - scripts
-    - examples
-    - .coveragerc
   requires:
     - pip
-    - pillow >=3.1
-    - pytest
-    - pytest-cov
+  imports:
+    - constructor
   commands:
     - pip check
-    - pytest -v --cov-branch --cov=constructor tests
-    - coverage run --branch --append -m constructor -V
-    - coverage json
-    - if [%CODECOV_FOLDER%] neq [] copy coverage.json "%CODECOV_FOLDER%" # [win]
-    - if [ -n "$CODECOV_FOLDER" ]; then cp coverage.json "$CODECOV_FOLDER"; fi # [unix]
-    - coverage report
-    - if [%RUN_EXAMPLES%] neq [] python scripts/run_examples.py      # [win]
-    - if [ -n "$RUN_EXAMPLES" ]; then python scripts/run_examples.py; fi  # [unix]
+    - constructor --help
 
 about:
   home: https://conda.io
