@@ -436,6 +436,8 @@ export FORCE
 # https://github.com/ContinuumIO/anaconda-issues/issues/11148
 # First try to fix it (this apparently didn't work; QA reported the issue again)
 # https://github.com/conda/conda/pull/9073
+# Avoid silent errors when $HOME is not writable
+# https://github.com/conda/constructor/pull/669
 test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda || mkdir ~/.conda
 
 printf "\nInstalling base environment...\n\n"
