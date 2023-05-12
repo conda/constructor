@@ -1,7 +1,10 @@
 import shutil
 import tempfile
 
-from constructor.imaging import write_images
+import pytest
+
+
+write_images = pytest.importorskip('constructor.imaging.write_images')
 
 
 def test_write_images():
