@@ -178,7 +178,13 @@ def _sentinel_file_checks(example_path, install_dir):
             raise AssertionError(f"Sentinel file for {script_prefix}_install not found!")
 
 
-def create_installer(tmp_path: Path, example_dir, conda_exe=CONSTRUCTOR_CONDA_EXE, debug=False):
+def create_installer(
+    tmp_path: Path,
+    example_dir,
+    conda_exe=CONSTRUCTOR_CONDA_EXE,
+    debug=False,
+    with_spaces=False,
+):
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
         pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
 
@@ -189,7 +195,7 @@ def create_installer(tmp_path: Path, example_dir, conda_exe=CONSTRUCTOR_CONDA_EX
         "constructor",
         "-v",
         "--debug",
-        example_dir,
+        str(example_dir),
         "--output-dir",
         str(output_dir),
     ]
@@ -200,9 +206,10 @@ def create_installer(tmp_path: Path, example_dir, conda_exe=CONSTRUCTOR_CONDA_EX
 
     _execute(cmd)
 
+    install_dir_prefix = "i n s t a l l" if with_spaces else "install"
     for installer in tmp_path.iterdir():
         if installer.suffix in (".exe", ".sh", ".pkg"):
-            yield installer, tmp_path / f"install-{installer.stem}"
+            yield installer, tmp_path / f"{install_dir_prefix}-{installer.stem}"
 
 
 def _example_path(example_name):
@@ -236,8 +243,8 @@ def test_example_extra_envs(tmp_path):
 
 def test_example_extra_files(tmp_path):
     path = _example_path("extra_files")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir + " s p a c e s")
+    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
+        _run_installer(installer, install_dir)
         _sentinel_file_checks(path, install_dir)
 
 
@@ -250,8 +257,8 @@ def test_example_miniforge(tmp_path):
 
 def test_example_noconda(tmp_path):
     path = _example_path("noconda")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir + " s p a c e s")
+    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
+        _run_installer(installer, install_dir)
         _sentinel_file_checks(path, install_dir)
 
 
@@ -265,8 +272,8 @@ def test_example_osxpkg(tmp_path):
 
 def test_example_scripts(tmp_path):
     path = _example_path("scripts")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir + " s p a c e s")
+    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
+        _run_installer(installer, install_dir)
         _sentinel_file_checks(path, install_dir)
 
 
@@ -279,8 +286,8 @@ def test_example_shortcuts(tmp_path):
 
 def test_example_signing(tmp_path):
     path = _example_path("signing")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir + " s p a c e s")
+    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
+        _run_installer(installer, install_dir)
         _sentinel_file_checks(path, install_dir)
 
 
