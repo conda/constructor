@@ -6,3 +6,4 @@ dependencies:
   - conda >=4.6
   - ruamel.yaml >=0.11.14,<0.18
   - conda-standalone <23.1.0  # https://github.com/conda/constructor/issues/628
+  - pillow >=3.1  # [osx or win]
