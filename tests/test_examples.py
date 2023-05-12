@@ -183,6 +183,7 @@ def create_installer(tmp_path: Path, example_dir, conda_exe=CONSTRUCTOR_CONDA_EX
         pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
 
     output_dir = tmp_path / "installer"
+    output_dir.mkdir(parents=True, exist_ok=True)
     cmd = [
         *COV_CMD,
         "constructor",
