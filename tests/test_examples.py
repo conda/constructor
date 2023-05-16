@@ -5,6 +5,7 @@ import sys
 import time
 import warnings
 from datetime import timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
@@ -34,7 +35,7 @@ def _execute(
     t0 = time.time()
     if env_vars:
         env = os.environ.copy()
-        env.update(env_vars)
+        env.update({k: v for (k, v) in env_vars.items() if v is not None})
     else:
         env = None
     p = subprocess.Popen(
@@ -206,6 +207,7 @@ def create_installer(
     conda_exe=CONSTRUCTOR_CONDA_EXE,
     debug=CONSTRUCTOR_DEBUG,
     with_spaces=False,
+    **env_vars,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
         pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
@@ -225,7 +227,7 @@ def create_installer(
     if debug:
         cmd.append("--debug")
 
-    _execute(cmd)
+    _execute(cmd, **env_vars)
 
     install_dir_prefix = "i n s t a l l" if with_spaces else "install"
     for installer in output_dir.iterdir():
@@ -233,6 +235,20 @@ def create_installer(
             yield installer, workspace / f"{install_dir_prefix}-{installer.stem}"
             if KEEP_ARTIFACTS_PATH:
                 shutil.move(installer, KEEP_ARTIFACTS_PATH)
+
+
+@lru_cache(maxsize=None)
+def _self_signed_certificate(path: str, password: str = None):
+    if not sys.platform.startswith("win"):
+        return
+    return _execute(
+        [
+            "powershell.exe", 
+            str(Path(__file__) / "../scripts/create_self_signed_certificate.ps1")
+        ],
+        CONSTRUCTOR_SIGNING_CERTIFICATE=path,
+        CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=password,
+    )
 
 
 def _example_path(example_name):
@@ -308,7 +324,17 @@ def test_example_shortcuts(tmp_path):
 
 def test_example_signing(tmp_path):
     input_path = _example_path("signing")
-    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
+    cert_path = tmp_path / "self-signed-cert.pfx"
+    cert_pwd = "1234"
+    _self_signed_certificate(path=cert_path, password=cert_pwd)
+    assert cert_path.exists()
+    for installer, install_dir in create_installer(
+        input_path,
+        tmp_path,
+        with_spaces=True,
+        CONSTRUCTOR_SIGNING_CERTIFICATE=cert_path,
+        CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=cert_pwd,
+    ):
         _run_installer(input_path, installer, install_dir)
 
 

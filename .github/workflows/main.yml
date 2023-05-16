@@ -23,30 +23,30 @@ defaults:
     shell: bash -el {0}
 jobs:
   tests:
-    name: ${{ matrix.os }}, Python ${{ matrix.pyver }}, ${{ matrix.micromamba && 'micromamba' || 'conda-standalone' }}
+    name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, ${{ matrix.micromamba && 'micromamba' || 'conda-standalone' }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
-        pyver: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         check-docs: [false]
         include:
           - os: ubuntu
-            pyver: "3.9"
+            python-version: "3.9"
             micromamba: true
             check-docs: true
           - os: macos
-            pyver: "3.10"
+            python-version: "3.10"
             micromamba: true
             check-docs: false
           # Re-enable once micromamba supports menu creation
           # - os: windows
-          #   pyver: "3.8"
+          #   python-version: "3.8"
           #   micromamba: true
           #   check-docs: false
     env:
-      PYTHONUNBUFFERED: True
+      PYTHONUNBUFFERED: "1"
     steps:
       - name: Retrieve the source code
         uses: actions/checkout@v3
@@ -56,7 +56,7 @@ jobs:
         with:
           activate-environment: constructor-dev
           environment-file: dev/environment.yml
-          python-version: ${{ matrix.pyver }}
+          python-version: ${{ matrix.python-version }}
       - name: Supply extra dependencies and install constructor
         run: |
           files=(--file "tests/requirements.txt")
@@ -65,18 +65,6 @@ jobs:
           conda install ${files[@]} -y
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
           pip install -e . --no-deps --no-build-isolation
-      - name: Generate self-signed certificate (Windows)
-        if: startsWith(matrix.os, 'windows')
-        shell: cmd
-        run: |
-          set "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}\certificate.pfx"
-          set "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234"
-          powershell scripts\create_self_signed_certificate.ps1
-          copy /Y "%CONSTRUCTOR_SIGNING_CERTIFICATE%" examples\signing\certificate.pfx
-
-          :: Careful with the trailing spaces before the >> redirect!
-          echo CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234>> %GITHUB_ENV%
-          echo CONSTRUCTOR_SIGNTOOL_PATH=C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe>> %GITHUB_ENV%
       - name: Set up conda executable
         run: |
           if [[ "${{ matrix.micromamba }}" != "" ]]; then
@@ -101,7 +89,9 @@ jobs:
           flags: unit
       - name: Run examples
         env:
-          CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "examples_artifacts"
+          CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
+          # signtool only exists on Windows, but doesn't cause errors on unix when absent
+          CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
@@ -120,13 +110,12 @@ jobs:
         run: |
           python scripts/make_docs.py
           git diff --exit-code
-
       - name: Upload the example installers as artifacts
-        if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
+        if: github.event_name == 'pull_request' && matrix.python-version == '3.9'
         uses: actions/upload-artifact@v3
         with:
           name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
-          path: examples_artifacts/
+          path: "${{ runner.temp }}/examples_artifacts"
           retention-days: 7
 
   build:
