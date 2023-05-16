@@ -20,6 +20,7 @@ except ImportError:
 
 pytestmark = pytest.mark.examples
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
+CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH = Path(artifacts_path)
     KEEP_ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
@@ -203,7 +204,7 @@ def create_installer(
     input_dir: Path,
     workspace: Path,
     conda_exe=CONSTRUCTOR_CONDA_EXE,
-    debug=True,
+    debug=CONSTRUCTOR_DEBUG,
     with_spaces=False,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
