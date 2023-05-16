@@ -6,7 +6,7 @@ import time
 import warnings
 from datetime import timedelta
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 import pytest
 
@@ -171,17 +171,6 @@ def _run_installer_pkg(installer, install_dir, installer_input=None):
     return _execute(cmd)
 
 
-def _run_installer(installer, install_dir, installer_input=None):
-    if installer.suffix == ".exe":
-        return _run_installer_exe(installer, install_dir, installer_input=installer_input)
-    elif installer.suffix == ".sh":
-        return _run_installer_sh(installer, install_dir, installer_input=installer_input)
-    elif installer.suffix == ".pkg":
-        return _run_installer_pkg(installer, install_dir, installer_input=installer_input)
-    else:
-        raise ValueError(f"Unknown installer type: {installer.suffix}")
-
-
 def _sentinel_file_checks(example_path, install_dir):
     script_ext = "bat" if sys.platform.startswith("win") else "sh"
     for script_prefix in "pre", "post", "test":
@@ -191,9 +180,28 @@ def _sentinel_file_checks(example_path, install_dir):
             raise AssertionError(f"Sentinel file for {script_prefix}_install not found!")
 
 
+def _run_installer(
+    example_path: Path,
+    installer: Path,
+    install_dir: Path,
+    installer_input: Optional[str] = None,
+    check_sentinels=True,
+):
+    if installer.suffix == ".exe":
+        _run_installer_exe(installer, install_dir, installer_input=installer_input)
+    elif installer.suffix == ".sh":
+        _run_installer_sh(installer, install_dir, installer_input=installer_input)
+    elif installer.suffix == ".pkg":
+        _run_installer_pkg(installer, install_dir, installer_input=installer_input)
+    else:
+        raise ValueError(f"Unknown installer type: {installer.suffix}")
+    if check_sentinels:
+        _sentinel_file_checks(example_path, install_dir)
+
+
 def create_installer(
-    tmp_path: Path,
-    example_dir,
+    input_dir: Path,
+    workspace: Path,
     conda_exe=CONSTRUCTOR_CONDA_EXE,
     debug=False,
     with_spaces=False,
@@ -201,14 +209,14 @@ def create_installer(
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
         pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
 
-    output_dir = tmp_path / "installer"
+    output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)
     cmd = [
         *COV_CMD,
         "constructor",
         "-v",
         "--debug",
-        str(example_dir),
+        str(input_dir),
         "--output-dir",
         str(output_dir),
     ]
@@ -220,9 +228,9 @@ def create_installer(
     _execute(cmd)
 
     install_dir_prefix = "i n s t a l l" if with_spaces else "install"
-    for installer in tmp_path.iterdir():
+    for installer in output_dir.iterdir():
         if installer.suffix in (".exe", ".sh", ".pkg"):
-            yield installer, tmp_path / f"{install_dir_prefix}-{installer.stem}"
+            yield installer, workspace / f"{install_dir_prefix}-{installer.stem}"
             if KEEP_ARTIFACTS_PATH:
                 shutil.move(installer, KEEP_ARTIFACTS_PATH)
 
@@ -236,36 +244,32 @@ def _is_micromamba(path):
 
 
 def test_example_customize_controls(tmp_path):
-    path = _example_path("customize_controls")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("customize_controls")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_customized_welcome_conclusion(tmp_path):
-    path = _example_path("customized_welcome_conclusion")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("customized_welcome_conclusion")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_extra_envs(tmp_path):
-    path = _example_path("extra_envs")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("extra_envs")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_extra_files(tmp_path):
-    path = _example_path("extra_files")
-    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("extra_files")
+    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_miniforge(tmp_path):
-    path = _example_path("miniforge")
-    for installer, install_dir in create_installer(tmp_path, path):
+    input_path = _example_path("miniforge")
+    for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             # try both batch and interactive installations
             installer_inputs = None, f"\nyes\n{install_dir}\nno\n"
@@ -275,47 +279,40 @@ def test_example_miniforge(tmp_path):
             install_dirs = (install_dir,)
         for installer_input, install_dir in zip(installer_inputs, install_dirs):
             _run_installer(installer, install_dir, installer_input=installer_input)
-            _sentinel_file_checks(path, install_dir)
 
 
 def test_example_noconda(tmp_path):
-    path = _example_path("noconda")
-    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("noconda")
+    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
+        _run_installer(input_path, installer, install_dir)
 
 
 @pytest.mark.skipif(sys.platform != "Darwin", reason="macOS only")
 def test_example_osxpkg(tmp_path):
-    path = _example_path("osxpkg")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("osxpkg")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_scripts(tmp_path):
-    path = _example_path("scripts")
-    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("scripts")
+    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_shortcuts(tmp_path):
-    path = _example_path("shortcuts")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("shortcuts")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_signing(tmp_path):
-    path = _example_path("signing")
-    for installer, install_dir in create_installer(tmp_path, path, with_spaces=True):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("signing")
+    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
+        _run_installer(input_path, installer, install_dir)
 
 
 def test_example_use_channel_remap(tmp_path):
-    path = _example_path("use_channel_remap")
-    for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir)
-        _sentinel_file_checks(path, install_dir)
+    input_path = _example_path("use_channel_remap")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir)
