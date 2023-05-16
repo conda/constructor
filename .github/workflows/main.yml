@@ -80,11 +80,11 @@ jobs:
       - name: Set up conda executable
         run: |
           if [[ "${{ matrix.micromamba }}" != "" ]]; then
-            conda create -yqp ./micromamba -c conda-forge micromamba
+            conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge micromamba
             if [[ ${{ matrix.os }} == "windows" ]]; then
-              echo "CONSTRUCTOR_CONDA_EXE=./micromamba/Library/bin/micromamba.exe" >> $GITHUB_ENV
+              echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/Library/bin/micromamba.exe" >> $GITHUB_ENV
             else
-              echo "CONSTRUCTOR_CONDA_EXE=./micromamba/bin/micromamba" >> $GITHUB_ENV
+              echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/bin/micromamba" >> $GITHUB_ENV
             fi
           else
             conda activate constructor-dev
@@ -100,6 +100,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
       - name: Run examples
+        env:
+          CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "examples_artifacts"
         run: |
           rm -rf coverage.json
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
@@ -119,13 +121,13 @@ jobs:
           python scripts/make_docs.py
           git diff --exit-code
 
-      # - name: Upload the example installers as artifacts
-      #   if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
-      #     path: examples_artifacts/
-      #     retention-days: 7
+      - name: Upload the example installers as artifacts
+        if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
+        uses: actions/upload-artifact@v3
+        with:
+          name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+          path: examples_artifacts/
+          retention-days: 7
 
   build:
     name: Canary Build

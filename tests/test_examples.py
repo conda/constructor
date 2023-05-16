@@ -1,5 +1,6 @@
 import os
 import subprocess
+import shutil
 import sys
 import time
 import warnings
@@ -19,6 +20,11 @@ except ImportError:
 
 pytestmark = pytest.mark.examples
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
+if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
+    KEEP_ARTIFACTS_PATH = Path(artifacts_path)
+    KEEP_ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
+else:
+    KEEP_ARTIFACTS_PATH = None
 
 
 def _execute(
@@ -210,6 +216,8 @@ def create_installer(
     for installer in tmp_path.iterdir():
         if installer.suffix in (".exe", ".sh", ".pkg"):
             yield installer, tmp_path / f"{install_dir_prefix}-{installer.stem}"
+            if KEEP_ARTIFACTS_PATH:
+                shutil.move(installer, KEEP_ARTIFACTS_PATH)
 
 
 def _example_path(example_name):
