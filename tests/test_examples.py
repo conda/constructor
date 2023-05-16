@@ -203,7 +203,7 @@ def create_installer(
     input_dir: Path,
     workspace: Path,
     conda_exe=CONSTRUCTOR_CONDA_EXE,
-    debug=False,
+    debug=True,
     with_spaces=False,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
@@ -215,7 +215,6 @@ def create_installer(
         *COV_CMD,
         "constructor",
         "-v",
-        "--debug",
         str(input_dir),
         "--output-dir",
         str(output_dir),
