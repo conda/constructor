@@ -6,7 +6,7 @@ import time
 import warnings
 from datetime import timedelta
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Tuple
 
 import pytest
 
@@ -190,7 +190,7 @@ def create_installer(
     conda_exe=CONSTRUCTOR_CONDA_EXE,
     debug=False,
     with_spaces=False,
-):
+) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
         pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
 
@@ -259,8 +259,16 @@ def test_example_extra_files(tmp_path):
 def test_example_miniforge(tmp_path):
     path = _example_path("miniforge")
     for installer, install_dir in create_installer(tmp_path, path):
-        _run_installer(installer, install_dir, installer_input=f"\nyes\n{install_dir}\nno\n")
-        _sentinel_file_checks(path, install_dir)
+        if installer.suffix == ".sh":
+            # try both batch and interactive installations
+            installer_inputs = None, f"\nyes\n{install_dir}\nno\n"
+            install_dirs = install_dir / "batch", install_dir / "interactive"
+        else:
+            installer_inputs = None,
+            install_dirs = install_dir,
+        for installer_input, install_dir in zip(installer_inputs, install_dirs):
+            _run_installer(installer, install_dir, installer_input=installer_input)
+            _sentinel_file_checks(path, install_dir)
 
 
 def test_example_noconda(tmp_path):
