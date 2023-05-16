@@ -85,7 +85,14 @@ if conda_interface_type == 'conda':
             pass
 
     def get_repodata(url):
-        if CONDA_MAJOR_MINOR >= (4, 5):
+        if CONDA_MAJOR_MINOR >= (23, 3):
+            from conda.core.subdir_data import SubdirData
+            from conda.core.channel import Channel
+            subdir_data = SubdirData(Channel(url))
+            json_path, _ = subdir_data.repo_fetch.fetch_latest_path()
+            with open(json_path) as f:
+                raw_repodata_str = f.read()
+        elif CONDA_MAJOR_MINOR >= (4, 5):
             from conda.core.subdir_data import fetch_repodata_remote_request
             raw_repodata_str = fetch_repodata_remote_request(url, None, None)
         elif CONDA_MAJOR_MINOR >= (4, 4):
