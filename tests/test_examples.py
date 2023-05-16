@@ -153,7 +153,14 @@ def _run_installer_pkg(installer, install_dir, installer_input=None):
         # We want to run it in an arbitrary directory, but the options
         # are limited here... We can only install to $HOME :shrug:
         # but that will pollute ~, so we only do it if we are running on CI
-        cmd = ["installer", "-pkg", installer, "-dumplog", "-target", "CurrentUserHomeDirectory"]
+        cmd = [
+            "installer",
+            "-pkg",
+            installer,
+            "-dumplog",
+            "-target",
+            "CurrentUserHomeDirectory",
+        ]
     else:
         # This command only expands the PKG, but does not install
         warnings.warn(
@@ -264,8 +271,8 @@ def test_example_miniforge(tmp_path):
             installer_inputs = None, f"\nyes\n{install_dir}\nno\n"
             install_dirs = install_dir / "batch", install_dir / "interactive"
         else:
-            installer_inputs = None,
-            install_dirs = install_dir,
+            installer_inputs = (None,)
+            install_dirs = (install_dir,)
         for installer_input, install_dir in zip(installer_inputs, install_dirs):
             _run_installer(installer, install_dir, installer_input=installer_input)
             _sentinel_file_checks(path, install_dir)
