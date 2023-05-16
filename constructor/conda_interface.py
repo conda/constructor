@@ -92,18 +92,9 @@ if conda_interface_type == 'conda':
             json_path, _ = subdir_data.repo_fetch.fetch_latest_path()
             with open(json_path) as f:
                 raw_repodata_str = f.read()
-        elif CONDA_MAJOR_MINOR >= (4, 5):
+        else: # meta.yaml requires conda 4.6+
             from conda.core.subdir_data import fetch_repodata_remote_request
             raw_repodata_str = fetch_repodata_remote_request(url, None, None)
-        elif CONDA_MAJOR_MINOR >= (4, 4):
-            from conda.core.repodata import fetch_repodata_remote_request
-            raw_repodata_str = fetch_repodata_remote_request(url, None, None)
-        elif CONDA_MAJOR_MINOR >= (4, 3):
-            from conda.core.repodata import fetch_repodata_remote_request
-            repodata_obj = fetch_repodata_remote_request(None, url, None, None)
-            raw_repodata_str = json.dumps(repodata_obj)
-        else:
-            raise NotImplementedError("unsupported version of conda: %s" % CONDA_INTERFACE_VERSION)
 
         # noarch-only repos are valid. In this case, the architecture specific channel will
         # return None
