@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos, ubuntu, windows]
-        pyver: ["3.7", "3.8", "3.9", "3.10"]
+        pyver: ["3.8", "3.9", "3.10", "3.11"]
         check-docs: [false]
         include:
           - os: ubuntu
