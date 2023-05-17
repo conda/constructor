@@ -85,24 +85,24 @@ if conda_interface_type == 'conda':
             pass
 
     def get_repodata(url):
-        if CONDA_MAJOR_MINOR >= (23, 3):
+        if CONDA_MAJOR_MINOR >= (23, 5):
             from conda.core.subdir_data import SubdirData
-            from conda.core.channel import Channel
+            from conda.models.channel import Channel
             subdir_data = SubdirData(Channel(url))
-            json_path, _ = subdir_data.repo_fetch.fetch_latest_path()
-            with open(json_path) as f:
-                raw_repodata_str = f.read()
-        else: # meta.yaml requires conda 4.6+
+            raw_repodata_str, _ = subdir_data.repo_fetch.fetch_latest()
+        else:
+            # Backwards compatibility: for conda 4.6+
             from conda.core.subdir_data import fetch_repodata_remote_request
             raw_repodata_str = fetch_repodata_remote_request(url, None, None)
 
-        # noarch-only repos are valid. In this case, the architecture specific channel will
-        # return None
-        if raw_repodata_str is None:
+        # noarch-only repos are valid. if the native subdir is not present,
+        # we might get an empty repodata back. In that case, we need to add the minimal
+        # info to make it valid for the rest of constructor.
+        if not raw_repodata_str or raw_repodata_str == r'{}':
             full_repodata = {
                 '_url': url,
                 'info': {
-                    'subdir': cc_platform
+                    'subdir': url.rstrip('/').split('/')[-1]
                 },
                 'packages': {},
                 'packages.conda': {},
