@@ -76,7 +76,7 @@ def _run_installer_exe(installer, install_dir, installer_input=None):
     them as separate arguments. We don't care about multiple spaces collapsing into
     one, since the point is to just have spaces in the installation path -- one
     would be enough too :)
-    This is why we have this weird .split() thingy down here:
+    This is why we have this weird .split() thingy down there in `/D=...`.
     """
     if not sys.platform.startswith("win"):
         raise ValueError("Can only run .exe installers on Windows")
