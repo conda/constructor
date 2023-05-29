@@ -137,8 +137,8 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
             exit 2
@@ -154,8 +154,8 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
             exit 2
@@ -171,8 +171,8 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
             exit 2
@@ -188,8 +188,8 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
             exit 2
@@ -205,8 +205,8 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
             exit 2
@@ -222,8 +222,8 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
             exit 2
@@ -239,8 +239,8 @@ then
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
-        if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-           [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
         then
             printf "Aborting installation\\n"
             exit 2
@@ -268,14 +268,15 @@ EOF
     printf "Do you accept the license terms? [yes|no]\\n"
     printf "[no] >>> "
     read -r ans
-    while [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-          [ "$ans" != "no" ]  && [ "$ans" != "No" ]  && [ "$ans" != "NO" ]
+    ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+    while [ "$ans" != "YES" ] && [ "$ans" != "NO" ] && [ "$ans" != "" ]
     do
         printf "Please answer 'yes' or 'no':'\\n"
         printf ">>> "
         read -r ans
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
     done
-    if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ]
+    if [ "$ans" != "YES" ]
     then
         printf "The license agreement wasn't approved, aborting installation.\\n"
         exit 2
@@ -550,8 +551,8 @@ if [ "$BATCH" = "0" ]; then
     if [ "$ans" = "" ]; then
         ans=$DEFAULT
     fi
-    if [ "$ans" != "yes" ] && [ "$ans" != "Yes" ] && [ "$ans" != "YES" ] && \
-       [ "$ans" != "y" ]   && [ "$ans" != "Y" ]
+    ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+    if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
     then
         printf "\\n"
         printf "You have chosen to not have conda modify your shell scripts at all.\\n"
