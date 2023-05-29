@@ -331,7 +331,7 @@ def test_example_signing(tmp_path):
         input_path,
         tmp_path,
         with_spaces=True,
-        CONSTRUCTOR_SIGNING_CERTIFICATE=cert_path,
+        CONSTRUCTOR_SIGNING_CERTIFICATE=str(cert_path),
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=cert_pwd,
     ):
         _run_installer(input_path, installer, install_dir)
