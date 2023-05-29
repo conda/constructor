@@ -286,11 +286,11 @@ def test_example_miniforge(tmp_path):
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             # try both batch and interactive installations
-            installer_inputs = None, f"\nyes\n{install_dir}\nno\n"
             install_dirs = install_dir / "batch", install_dir / "interactive"
+            installer_inputs = None, f"\nyes\n{install_dir / 'interactive'}\nno\n"
         else:
-            installer_inputs = (None,)
             install_dirs = (install_dir,)
+            installer_inputs = (None,)
         for installer_input, install_dir in zip(installer_inputs, install_dirs):
             _run_installer(input_path, installer, install_dir, installer_input=installer_input)
 
