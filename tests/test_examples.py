@@ -234,7 +234,7 @@ def create_installer(
         if installer.suffix in (".exe", ".sh", ".pkg"):
             yield installer, workspace / f"{install_dir_prefix}-{installer.stem}"
             if KEEP_ARTIFACTS_PATH:
-                shutil.move(installer, KEEP_ARTIFACTS_PATH)
+                shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
 
 
 @lru_cache(maxsize=None)
