@@ -86,9 +86,9 @@ if conda_interface_type == 'conda':
 
     def get_repodata(url):
         if CONDA_MAJOR_MINOR >= (23, 5):
-            from conda.core.subdir_data import SubdirData
+            from conda.core.subdir_data import SubdirData as _SubdirData
             from conda.models.channel import Channel
-            subdir_data = SubdirData(Channel(url))
+            subdir_data = _SubdirData(Channel(url))
             raw_repodata_str, _ = subdir_data.repo_fetch.fetch_latest()
         else:
             # Backwards compatibility: for conda 4.6+
