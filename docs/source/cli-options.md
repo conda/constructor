@@ -71,7 +71,7 @@ Run the installer in silent mode:
 
 Run the installer in silent mode and install to a custom path:
 
-```cmd 
+```cmd
 > cmd.exe /c start /wait my_installer.exe /InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app
 ```
 
