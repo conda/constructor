@@ -319,6 +319,7 @@ def test_example_shortcuts(tmp_path):
         _run_installer(input_path, installer, install_dir)
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_example_signing(tmp_path):
     input_path = _example_path("signing")
     cert_path = tmp_path / "self-signed-cert.pfx"
