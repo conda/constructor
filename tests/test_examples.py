@@ -1,6 +1,6 @@
 import os
-import subprocess
 import shutil
+import subprocess
 import sys
 import time
 import warnings
@@ -242,10 +242,7 @@ def _self_signed_certificate(path: str, password: str = None):
     if not sys.platform.startswith("win"):
         return
     return _execute(
-        [
-            "powershell.exe", 
-            str(Path(__file__) / "../scripts/create_self_signed_certificate.ps1")
-        ],
+        ["powershell.exe", str(Path(__file__) / "../scripts/create_self_signed_certificate.ps1")],
         CONSTRUCTOR_SIGNING_CERTIFICATE=path,
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=password,
     )
@@ -294,7 +291,7 @@ def test_example_miniforge(tmp_path):
             installer_inputs = (None,)
             install_dirs = (install_dir,)
         for installer_input, install_dir in zip(installer_inputs, install_dirs):
-            _run_installer(installer, install_dir, installer_input=installer_input)
+            _run_installer(input_path, installer, install_dir, installer_input=installer_input)
 
 
 def test_example_noconda(tmp_path):
