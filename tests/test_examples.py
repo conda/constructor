@@ -248,7 +248,7 @@ def create_installer(
     _execute(cmd, **env_vars)
 
     install_dir_prefix = "i n s t a l l" if with_spaces else "install"
-    
+
     def _sort_by_extension(path):
         "Return shell installers first so they are run before the GUI ones"
         return {"sh": 1, "pkg": 2, "exe": 3}[path.suffix[1:]], path
@@ -256,9 +256,13 @@ def create_installer(
     installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".sh", ".pkg"))
     for installer in sorted(installers, key=_sort_by_extension):
         if installer.suffix == ".pkg" and ON_CI:
-            install_dir = Path("~").expanduser() / calculate_install_dir(input_dir / "construct.yaml")
+            install_dir = (
+                Path("~").expanduser() / calculate_install_dir(input_dir / "construct.yaml")
+            )
         else:
-            install_dir = workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
+            install_dir = (
+                workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
+            )
         yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
             shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
@@ -329,7 +333,7 @@ def test_example_miniforge(tmp_path, request):
             )
             if installer.suffix == ".pkg" and ON_CI:
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
-    
+
 
 def test_example_noconda(tmp_path, request):
     input_path = _example_path("noconda")
