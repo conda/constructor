@@ -246,11 +246,16 @@ def create_installer(
     _execute(cmd, **env_vars)
 
     install_dir_prefix = "i n s t a l l" if with_spaces else "install"
-    for installer in output_dir.iterdir():
-        if installer.suffix in (".exe", ".sh", ".pkg"):
-            yield installer, workspace / f"{install_dir_prefix}-{installer.stem}"
-            if KEEP_ARTIFACTS_PATH:
-                shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
+    
+    def _sort_by_extension(path):
+        "Return shell installers first so they are run before the GUI ones"
+        return {"sh": 1, "pkg": 2, "exe": 3}[path.suffix[1:]], path
+
+    installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".sh", ".pkg"))
+    for installer in sorted(installers, key=_sort_by_extension):
+        yield installer, workspace / f"{install_dir_prefix}-{installer.stem}"
+        if KEEP_ARTIFACTS_PATH:
+            shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
 
 
 @lru_cache(maxsize=None)
