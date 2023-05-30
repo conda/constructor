@@ -247,7 +247,7 @@ def _self_signed_certificate(path: str, password: str = None):
         return
     return _execute(
         ["powershell.exe", str(Path(__file__) / "../scripts/create_self_signed_certificate.ps1")],
-        CONSTRUCTOR_SIGNING_CERTIFICATE=path,
+        CONSTRUCTOR_SIGNING_CERTIFICATE=str(path),
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=password,
     )
 
