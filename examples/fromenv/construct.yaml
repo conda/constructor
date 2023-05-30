@@ -1,6 +1,6 @@
 name: MinicondaX
 version: X
 installer_type: all
-environment: ./tmp
+environment: ./tmp_prefix_fromenv
 channels:
   - http://repo.anaconda.com/pkgs/main/
