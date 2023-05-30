@@ -11,6 +11,8 @@ from typing import Iterable, Optional, Tuple
 
 import pytest
 
+from constructor.osxpkg import calculate_install_dir
+
 try:
     import coverage  # noqa
 
@@ -155,7 +157,7 @@ def _run_installer_sh(installer, install_dir, installer_input=None):
     return _execute(cmd, installer_input=installer_input)
 
 
-def _run_installer_pkg(installer, install_dir, installer_input=None):
+def _run_installer_pkg(installer, install_dir, example_path=None):
     if os.environ.get("CI"):
         # We want to run it in an arbitrary directory, but the options
         # are limited here... We can only install to $HOME :shrug:
@@ -168,6 +170,9 @@ def _run_installer_pkg(installer, install_dir, installer_input=None):
             "-target",
             "CurrentUserHomeDirectory",
         ]
+        if example_path:
+            install_dir = calculate_install_dir(example_path / "construct.yaml")
+            install_dir = Path(os.environ["HOME"]) / install_dir
     else:
         # This command only expands the PKG, but does not install
         warnings.warn(
@@ -175,7 +180,7 @@ def _run_installer_pkg(installer, install_dir, installer_input=None):
             "Export CI=1 to run it, but it will pollute your $HOME."
         )
         cmd = ["pkgutil", "--expand", installer, install_dir]
-    return _execute(cmd)
+    return _execute(cmd), install_dir
 
 
 def _sentinel_file_checks(example_path, install_dir):
@@ -196,23 +201,20 @@ def _run_installer(
     install_dir: Path,
     installer_input: Optional[str] = None,
     check_sentinels=True,
+    request=None,
 ):
     if installer.suffix == ".exe":
         _run_installer_exe(installer, install_dir, installer_input=installer_input)
     elif installer.suffix == ".sh":
         _run_installer_sh(installer, install_dir, installer_input=installer_input)
     elif installer.suffix == ".pkg":
-        _run_installer_pkg(installer, install_dir, installer_input=installer_input)
+        if request and ON_CI:
+            request.addfinalizer(lambda: shutil.rmtree(str(install_dir)))
+        _run_installer_pkg(installer, install_dir, example_path=example_path)
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
-        if installer.suffix == ".pkg":
-            warnings.warn(
-                "PKG installers cannot be installed to arbitrary locations. "
-                "Skipping sentinel file checks."
-            )
-        else:
-            _sentinel_file_checks(example_path, install_dir)
+        _sentinel_file_checks(example_path, install_dir)
     if installer.suffix == ".exe":
         _run_uninstaller_exe(install_dir)
 
@@ -253,7 +255,11 @@ def create_installer(
 
     installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".sh", ".pkg"))
     for installer in sorted(installers, key=_sort_by_extension):
-        yield installer, workspace / f"{install_dir_prefix}-{installer.stem}"
+        if installer.suffix == ".pkg" and ON_CI:
+            install_dir = Path("~").expanduser() / calculate_install_dir(input_dir / "construct.yaml")
+        else:
+            install_dir = workspace / f"{install_dir_prefix}-{installer.stem}"
+        yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
             shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
 
@@ -277,31 +283,31 @@ def _is_micromamba(path):
     return "micromamba" in Path(path).stem
 
 
-def test_example_customize_controls(tmp_path):
+def test_example_customize_controls(tmp_path, request):
     input_path = _example_path("customize_controls")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_customized_welcome_conclusion(tmp_path):
+def test_example_customized_welcome_conclusion(tmp_path, request):
     input_path = _example_path("customized_welcome_conclusion")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_extra_envs(tmp_path):
+def test_example_extra_envs(tmp_path, request):
     input_path = _example_path("extra_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_extra_files(tmp_path):
+def test_example_extra_files(tmp_path, request):
     input_path = _example_path("extra_files")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_miniforge(tmp_path):
+def test_example_miniforge(tmp_path, request):
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
@@ -323,33 +329,31 @@ def test_example_miniforge(tmp_path):
             )
             if installer.suffix == ".pkg" and ON_CI:
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
+    
 
-
-def test_example_noconda(tmp_path):
+def test_example_noconda(tmp_path, request):
     input_path = _example_path("noconda")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
 @pytest.mark.skipif(sys.platform != "Darwin", reason="macOS only")
-def test_example_osxpkg(tmp_path):
+def test_example_osxpkg(tmp_path, request):
     input_path = _example_path("osxpkg")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_scripts(tmp_path):
+def test_example_scripts(tmp_path, request):
     input_path = _example_path("scripts")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
-        _run_installer(input_path, installer, install_dir)
-        if installer.suffix == ".pkg" and ON_CI:
-            _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Scripts")
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_shortcuts(tmp_path):
+def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
@@ -369,10 +373,10 @@ def test_example_signing(tmp_path, request):
         CONSTRUCTOR_SIGNING_CERTIFICATE=str(cert_path),
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=cert_pwd,
     ):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_use_channel_remap(tmp_path):
+def test_example_use_channel_remap(tmp_path, request):
     input_path = _example_path("use_channel_remap")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir)
+        _run_installer(input_path, installer, install_dir, request=request)
