@@ -258,7 +258,7 @@ def create_installer(
         if installer.suffix == ".pkg" and ON_CI:
             install_dir = Path("~").expanduser() / calculate_install_dir(input_dir / "construct.yaml")
         else:
-            install_dir = workspace / f"{install_dir_prefix}-{installer.stem}"
+            install_dir = workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
         yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
             shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
