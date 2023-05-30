@@ -353,12 +353,15 @@ def test_example_shortcuts(tmp_path):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_example_signing(tmp_path):
+def test_example_signing(tmp_path, request):
     input_path = _example_path("signing")
     cert_path = tmp_path / "self-signed-cert.pfx"
     cert_pwd = "1234"
     _self_signed_certificate(path=cert_path, password=cert_pwd)
     assert cert_path.exists()
+    certificate_in_input_dir = input_path / "certificate.pfx"
+    shutil.copy(str(cert_path), str(certificate_in_input_dir))
+    request.addfinalizer(lambda: certificate_in_input_dir.unlink())
     for installer, install_dir in create_installer(
         input_path,
         tmp_path,
