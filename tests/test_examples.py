@@ -111,6 +111,8 @@ def _run_installer_exe(installer, install_dir, installer_input=None):
     if error_lines:
         raise AssertionError("\n".join(error_lines))
 
+
+def _run_uninstaller_exe(install_dir):
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
@@ -203,6 +205,8 @@ def _run_installer(
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
         _sentinel_file_checks(example_path, install_dir)
+    if installer.suffix == ".exe":
+        _run_uninstaller_exe(install_dir)
 
 
 def create_installer(
