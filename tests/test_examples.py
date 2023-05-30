@@ -20,6 +20,7 @@ except ImportError:
 
 
 pytestmark = pytest.mark.examples
+REPO_DIR = Path(__file__).parent.parent
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
 CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
@@ -250,14 +251,14 @@ def _self_signed_certificate(path: str, password: str = None):
     if not sys.platform.startswith("win"):
         return
     return _execute(
-        ["powershell.exe", str(Path(__file__) / "../scripts/create_self_signed_certificate.ps1")],
+        ["powershell.exe", REPO_DIR / "scripts/create_self_signed_certificate.ps1"],
         CONSTRUCTOR_SIGNING_CERTIFICATE=str(path),
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=password,
     )
 
 
 def _example_path(example_name):
-    return Path(__file__).parents[1] / "examples" / example_name
+    return REPO_DIR / "examples" / example_name
 
 
 def _is_micromamba(path):
