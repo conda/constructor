@@ -182,7 +182,7 @@ def _sentinel_file_checks(example_path, install_dir):
         if (example_path / script).exists() and not (install_dir / sentinel).exists():
             raise AssertionError(
                 f"Sentinel file for {script_prefix}_install not found! "
-                f"Directory contents:\n" + "\n".join(sorted(install_dir.iterdir()))
+                f"{install_dir} contents:\n" + "\n".join(sorted(install_dir.iterdir()))
             )
 
 
