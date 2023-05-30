@@ -72,7 +72,8 @@ if conda_interface_type == 'conda':
     conda_context, env_vars = _conda_context, _env_vars
     conda_replace_context_default = _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
-
+    locate_prefix_by_name = _locate_prefix_by_name
+    
     # used by preconda.py
     Dist, MatchSpec, PrefixData, default_prefix = _Dist, _MatchSpec, _PrefixData, _default_prefix
 

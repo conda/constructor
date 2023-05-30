@@ -219,13 +219,13 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _precs_from_environment(environment, dir_path):
+def _precs_from_environment(environment, input_dir):
     if not isdir(environment) and ('/' in environment or '\\' in environment):
-        env2 = join(dir_path, environment)
+        env2 = join(input_dir, environment)
         if isdir(env2):
             environment = env2
     if isdir(environment):
-        environment = abspath(join(dir_path, expanduser(environment)))
+        environment = abspath(join(input_dir, expanduser(environment)))
     else:
         environment = locate_prefix_by_name(environment)
     pdata = PrefixData(environment)
@@ -235,7 +235,7 @@ def _precs_from_environment(environment, dir_path):
 
 def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(),
                  specs=(), exclude=(), menu_packages=(), environment=None, environment_file=None,
-                 verbose=True, conda_exe="conda.exe", extra_env=False, dir_path=""):
+                 verbose=True, conda_exe="conda.exe", extra_env=False, input_dir=""):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     # JRG: This only applies to the `base` environment; `extra_envs` are exempt
@@ -279,7 +279,7 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
 
     # obtain the package records
     if environment:
-        precs = _precs_from_environment(environment, dir_path)
+        precs = _precs_from_environment(environment, input_dir)
     else:
         solver = Solver(
             # The Solver class doesn't do well with `None` as a prefix right now
@@ -357,12 +357,13 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(), ignore_duplicate_files=True, environment=None,
           environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
-          transmute_file_type='', extra_envs=None, check_path_spaces=True):
+          transmute_file_type='', extra_envs=None, check_path_spaces=True, input_dir=""):
     precs = _solve_precs(
         name, version, download_dir, platform, channel_urls=channel_urls,
         channels_remap=channels_remap, specs=specs, exclude=exclude,
         menu_packages=menu_packages, environment=environment,
-        environment_file=environment_file, verbose=verbose, conda_exe=conda_exe
+        environment_file=environment_file, verbose=verbose, conda_exe=conda_exe,
+        input_dir=input_dir,
     )
     extra_envs = extra_envs or {}
     conda_in_base: PackageCacheRecord = next((prec for prec in precs if prec.name == "conda"), None)
@@ -392,6 +393,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             verbose=verbose,
             conda_exe=conda_exe,
             extra_env=True,
+            input_dir=input_dir,
         )
     if dry_run:
         return None, None, None, None, None, None, None
@@ -431,7 +433,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
 def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
-    dir_path = info["_path"]
+    input_dir = info["_input_dir"]
     version = info["version"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
@@ -491,7 +493,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             transmute_file_type,
             extra_envs,
             check_path_spaces,
-            dir_path,
+            input_dir,
         )
 
     info["_all_pkg_records"] = pkg_records  # full PackageRecord objects
