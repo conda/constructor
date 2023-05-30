@@ -4,20 +4,26 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
-from __future__ import absolute_import, division, print_function
 
+import argparse
+import logging
 import os
-from os.path import abspath, basename, expanduser, isdir, join
 import sys
+from os.path import abspath, expanduser, isdir, join
+from textwrap import dedent, indent
 
-from .conda_interface import cc_platform
-from .construct import parse as construct_parse, verify as construct_verify
+from . import __version__
+from .build_outputs import process_build_outputs
+from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
+from .construct import generate_key_info_list, ns_platform
+from .construct import parse as construct_parse
+from .construct import verify as construct_verify
 from .fcp import main as fcp_main
 from .utils import normalize_path, yield_lines
 
-from . import __version__
-
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
+
+logger = logging.getLogger(__name__)
 
 
 def get_installer_type(info):
@@ -61,7 +67,7 @@ def get_output_filename(info):
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
                dry_run=False, conda_exe="conda.exe"):
-    print('platform: %s' % platform)
+    logger.info('platform: %s', platform)
     if not os.path.isfile(conda_exe):
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
     cache_dir = abspath(expanduser(cache_dir))
@@ -73,7 +79,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     construct_path = join(dir_path, 'construct.yaml')
     info = construct_parse(construct_path, platform)
     construct_verify(info)
-    info['_path'] = abspath(dir_path)
+    info['CONSTRUCTOR_VERSION'] = __version__
+    info['_input_dir'] = dir_path
+    info['_output_dir'] = output_dir
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
     info['_conda_exe'] = abspath(conda_exe)
@@ -81,9 +89,11 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     if platform != cc_platform and 'pkg' in itypes and not cc_platform.startswith('osx-'):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
+    if osname == "win" and "micromamba" in os.path.basename(info['_conda_exe']):
+        # TODO: Remove when shortcut creation is implemented on micromamba
+        sys.exit("Error: micromamba is not supported on Windows installers.")
 
-    if verbose:
-        print('conda packages download: %s' % info['_download_dir'])
+    logger.debug('conda packages download: %s', info['_download_dir'])
 
     for key in ('welcome_image_text', 'header_image_text'):
         if key not in info:
@@ -91,8 +101,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     for key in ('license_file', 'welcome_image', 'header_image', 'icon_image',
                 'pre_install', 'post_install', 'pre_uninstall', 'environment_file',
-                'nsis_template'):
-        if key in info:
+                'nsis_template', 'welcome_file', 'readme_file', 'conclusion_file',
+                'signing_certificate'):
+        if info.get(key):  # only join if there's a truthy value set
             info[key] = abspath(join(dir_path, info[key]))
 
     for key in 'specs', 'packages':
@@ -100,6 +111,22 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             continue
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
+
+    # normalize paths to be copied; if they are relative, they must be to
+    # construct.yaml's parent (dir_path)
+    extras_types = ['extra_files', 'temp_extra_files']
+    for extra_type in extras_types:
+        extras = info.get(extra_type, ())
+        new_extras = []
+        for path in extras:
+            if isinstance(path, str):
+                new_extras.append(abspath(join(dir_path, path)))
+            elif isinstance(path, dict):
+                assert len(path) == 1
+                orig, dest = next(iter(path.items()))
+                orig = abspath(join(dir_path, orig))
+                new_extras.append({orig: dest})
+        info[extra_type] = new_extras
 
     for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
         if key in info:
@@ -109,10 +136,19 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if any((not s) for s in info[key]):
                 sys.exit("Error: found empty element in '%s:'" % key)
 
+    for env_name, env_config in info.get("extra_envs", {}).items():
+        if env_name in ("base", "root"):
+            raise ValueError(f"Environment name '{env_name}' cannot be used")
+        for config_key, value in env_config.copy().items():
+            if isinstance(value, (list, tuple)):
+                env_config[config_key] = [val.strip() for val in value]
+            if config_key == "environment_file":
+                env_config[config_key] = abspath(join(dir_path, value))
+
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
-        print("Dry run, no installer created.")
+        logger.info("Dry run, no installers or build outputs created.")
         return
 
     # info has keys
@@ -120,7 +156,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     # '_platform', '_download_dir', '_outpath'
     # 'specs': ['python 3.5*', 'conda', 'nomkl', 'numpy', 'scipy', 'pandas',
     #           'notebook', 'matplotlib', 'lighttpd']
-    # 'license_file': '/Users/kfranz/continuum/constructor/examples/maxiconda/EULA.txt'
+    # 'license_file': '/Users/kfranz/continuum/constructor/examples/miniconda/EULA.txt'
     # '_dists': List[Dist]
     # '_urls': List[Tuple[url, md5]]
 
@@ -137,19 +173,89 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         info['installer_type'] = itype
         info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
-        print("Successfully created '%(_outpath)s'." % info)
-    if 0:
-        with open(join(output_dir, 'pkg-list.txt'), 'w') as fo:
-            fo.write('# installer: %s\n' % basename(info['_outpath']))
-            for dist in info['_dists']:
-                fo.write('%s\n' % dist)
+        logger.info("Successfully created '%(_outpath)s'.", info)
+
+    process_build_outputs(info)
+
+
+class _HelpConstructAction(argparse.Action):
+    def __init__(
+        self,
+        option_strings,
+        dest=argparse.SUPPRESS,
+        default=argparse.SUPPRESS,
+        help="describe available configuration options for construct.yaml files and exit",
+    ):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+
+        parser._print_message(self._build_message(), sys.stdout)
+        parser.exit()
+
+    def _build_message(self):
+        msg = dedent(
+            """
+            The 'construct.yaml' specification
+            ==================================
+
+            constructor version {version}
+
+            The `construct.yaml` file is the primary mechanism for controlling
+            the output of the Constructor package. The file contains a list of
+            key/value pairs in the standard YAML format.
+
+            Available keys
+            --------------
+
+            {available_keys}
+
+            Available selectors
+            -------------------
+
+            Constructor can use the same Selector enhancement of the YAML format
+            used in conda-build ('# [selector]'). Available keywords are:
+
+            {available_selectors}
+            """
+        )
+        available_keys_list = []
+        for key, required, key_types, help_msg, plural in generate_key_info_list():
+            available_keys_list.append(
+                "\n".join(
+                    [
+                        key,
+                        "·" * len(key),
+                        indent(
+                            f"Required: {required}, type{plural}: {key_types}", "    "
+                        ),
+                        indent(help_msg.strip(), "    "),
+                        "",
+                    ]
+                )
+            )
+        available_selectors_list = [
+            f"- {sel}" for sel in sorted(ns_platform(sys.platform).keys())
+        ]
+        return msg.format(
+            version=__version__,
+            available_keys="\n".join(available_keys_list),
+            available_selectors="\n".join(available_selectors_list),
+        )
 
 
 def main():
-    import argparse
-
+    logging.basicConfig(level=logging.INFO)
     p = argparse.ArgumentParser(
         description="build an installer from <DIRECTORY>/construct.yaml")
+
+    p.add_argument("--help-construct", action=_HelpConstructAction)
 
     p.add_argument('--debug',
                    action="store_true")
@@ -177,7 +283,7 @@ def main():
                    action="store",
                    default=cc_platform,
                    help="the platform for which installer is for, "
-                   "defaults to '{}'".format(cc_platform))
+                   f"defaults to '{cc_platform}'. Options, e.g.: {SUPPORTED_PLATFORMS}")
 
     p.add_argument('--dry-run',
                    help="solve package specs but do not create installer",
@@ -190,10 +296,10 @@ def main():
     p.add_argument('-V', '--version',
                    help="display the version being used and exit",
                    action="version",
-                   version='%(prog)s {version}'.format(version=__version__))
+                   version=f'%(prog)s {__version__}')
 
     p.add_argument('--conda-exe',
-                   help="path to conda executable",
+                   help="path to conda executable (conda-standalone, micromamba)",
                    action="store",
                    metavar="CONDA_EXE")
 
@@ -205,18 +311,18 @@ def main():
                    metavar='DIRECTORY')
 
     args = p.parse_args()
+    logger.info("Got the following cli arguments: '%s'", args)
+
+    if args.verbose or args.debug:
+        logger.setLevel(logging.DEBUG)
 
     if args.clean:
         import shutil
         cache_dir = abspath(expanduser(args.cache_dir))
-        print("cleaning cache: '%s'" % cache_dir)
+        logger.info("cleaning cache: '%s'", cache_dir)
         if isdir(cache_dir):
             shutil.rmtree(cache_dir)
         return
-
-    if args.debug:
-        import logging
-        logging.basicConfig(level=logging.DEBUG)
 
     dir_path = args.dir_path
     if not isdir(dir_path):

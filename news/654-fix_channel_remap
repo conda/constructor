@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* URLs in generated `envs.txt` will now use the correct URL given in `channel_remap`, instead of the incorrect, installer-build-time only value. (#654 via #656)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>

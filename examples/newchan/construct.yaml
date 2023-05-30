@@ -13,3 +13,5 @@ specs:
 
 license_file: eula.txt
 
+check_path_spaces: False
+check_path_length: False

@@ -9,48 +9,67 @@
 # This file is up-to-date if the command git log --format="%aN <%aE>" | sort -u
 # gives no duplicates.
 
-Ilan Schnell <ilanschnell@gmail.com> Ilan Schnell <ilan@continuum.io>
-Nehal J Wani <nehaljw.kkd1@gmail.com>
-Michael C. Grant <mgrant@anaconda.com> Michael C. Grant <mcg@cvxr.com>
-Ray Donnelly <mingw.android@gmail.com>
-Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@continuum.io>
-Isuru Fernando <isuruf@gmail.com>
+Aaron Stevens <bheklilr2@gmail.com>
+Andrew Vallette <andrewvallette@gmail.com>
+Angela Gloyna <angela.gloyna@gmail.com>
+Anthony Scopatz <scopatz@gmail.com>
+Bryan Hunt <bryan-hunt@users.noreply.github.com>
+Cheng H. Lee <chenghlee@users.noreply.github.com>
+Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
+Connor Martin <connormartin7@gmail.com>
+Daniel Bast <2790401+dbast@users.noreply.github.com>
+Eric Dill <thedizzle@gmail.com>
 Eric Prestat <eric.prestat@gmail.com>
-Marcel Bargull <marcel.bargull@udo.edu>
-Kale Franz <kfranz@continuum.io> Kale Franz <kalefranz@users.noreply.github.com>
+Faustin Carter <faustin.carter@gmail.com> Faustin Carter <fwcarter@hrl.com>
 Forrest Waters <forrestwaters65@gmail.com> Forrest Waters <fwaters@0609.local>
 Forrest Waters <forrestwaters65@gmail.com> Forrest Waters <person@example.com>
 Forrest Waters <forrestwaters65@gmail.com> Forrest Waters <fwaters@anaconda.com>
-Angela Gloyna <angela.gloyna@gmail.com>
-Chris Burr <christopher.burr@cern.ch>
-Anthony Scopatz <scopatz@gmail.com>
-Faustin Carter <faustin.carter@gmail.com> Faustin Carter <fwcarter@hrl.com>
+Gabriel Reis <gabrielcnr@gmail.com>
+Gonzalo Pena-Castellanos <goanpeca@gmail.com>
+Ian Henriksen <insertinterestingnamehere@gmail.com>
+Ilan Schnell <ilanschnell@gmail.com> Ilan Schnell <ilan@continuum.io>
+Isuru Fernando <isuruf@gmail.com>
+Jaime Rodríguez-Guerra <jaimergp@users.noreply.github.com> Jaime RGP <jaimergp@users.noreply.github.com>
+Jaime Rodríguez-Guerra <jaimergp@users.noreply.github.com> jaimergp <jaimergp@users.noreply.github.com>
+Jannis Leidel <jannis@leidel.info>
+Jean-Luc Stevens <jlstevens@ed.ac.uk> jlstevens <jlrstevens@gmail.com>
+JoelStansbury <48299585+JoelStansbury@users.noreply.github.com>
+John Kirkham <kirkhamj@janelia.hhmi.org>
+Jonathan J. Helmus <jjhelmus@gmail.com> Jonathan Helmus <jjhelmus@gmail.com>
+Kale Franz <kfranz@continuum.io> Kale Franz <kalefranz@users.noreply.github.com>
+Katherine Kinnaman <kkinnaman@anaconda.com>
+Ken Odegard <kodegard@anaconda.com>
+Marcel Bargull <marcel.bargull@udo.edu>
+Mariana Meireles <marian.meireles@gmail.com>
 Mark Harfouche <mark.harfouche@gmail.com>
 Martin Durant <martin.durant@utoronto.ca>
-Aaron Stevens <bheklilr2@gmail.com>
-Thomas Holder <thomas.holder@schrodinger.com>
-Eric Dill <thedizzle@gmail.com>
-Jonathan J. Helmus <jjhelmus@gmail.com> Jonathan Helmus <jjhelmus@gmail.com>
-Tobias Megies <megies@geophysik.uni-muenchen.de>
-Sophia Castellarin <scastellarin@anaconda.com> soapy1 <scastellarin@anaconda.com>
-Matthew Newville <newville@cars.uchicago.edu>
-Jean-Luc Stevens <jlstevens@ed.ac.uk> jlstevens <jlrstevens@gmail.com>
-Wolfgang Ulmer <wulmer@web.de> Ulmer Wolfgang (CR/AEE3) <wolfgang.Ulmer@de.bosch.com>
 Mathew Topper <damm_horse@yahoo.co.uk>
-Thomas Antony <tantony@purdue.edu>
+Matthew Newville <newville@cars.uchicago.edu>
+Michael C. Grant <mgrant@anaconda.com> Michael C. Grant <mcg@cvxr.com>
+Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@continuum.io>
+Nehal J Wani <nehaljw.kkd1@gmail.com>
+Nicola Soranzo <nicola.soranzo@gmail.com>
+Paul Yim <pseudoyim@users.noreply.github.com>
 Phil Elson <philip.elson@cern.ch>
-Rachel Rigdon <rrigdon@anaconda.com> rrigdon <45607889+rrigdon@users.noreply.github.com>
-Gonzalo Pena-Castellanos <goanpeca@gmail.com>
-y2kbugger <git@y2kbugger.com>
-bkreider <github-bk@drrr.net>
-Ian Henriksen <insertinterestingnamehere@gmail.com>
-Travis E. Oliphant <travis@continuum.io>
-Thomas Robitaille <thomas.robitaille@gmail.com>
-John Kirkham <kirkhamj@janelia.hhmi.org>
-Trent Nelson <trent@trent.me>
-Gabriel Reis <gabrielcnr@gmail.com>
-Mariana Meireles <marian.meireles@gmail.com>
-astaric <anze.staric@gmail.com>
 Pradipta Ghosh <pradghos@in.ibm.com>
-Connor Martin <connormartin7@gmail.com>
+Rachel Rigdon <rrigdon@anaconda.com> rrigdon <45607889+rrigdon@users.noreply.github.com>
+Ray Donnelly <mingw.android@gmail.com>
+Richard Höchenberger <richard.hoechenberger@gmail.com>
+Ryan <rkeith@anaconda.com>
+Sophia Castellarin <scastellarin@anaconda.com> soapy1 <scastellarin@anaconda.com>
+Thomas Antony <tantony@purdue.edu>
+Thomas Holder <thomas.holder@schrodinger.com>
+Thomas Robitaille <thomas.robitaille@gmail.com>
+Tobias Megies <megies@geophysik.uni-muenchen.de>
 Tom Hören <horen.tom@gmail.com>
+Travis E. Oliphant <travis@continuum.io>
+Travis Hathaway <travis.j.hathaway@gmail.com>
+Trent Nelson <trent@trent.me>
+Wolf Vollprecht <w.vollprecht@gmail.com>
+Wolfgang Ulmer <wulmer@web.de> Ulmer Wolfgang (CR/AEE3) <wolfgang.Ulmer@de.bosch.com>
+XuehaiPan <XuehaiPan@pku.edu.cn>
+astaric <anze.staric@gmail.com>
+bkreider <github-bk@drrr.net>
+conda-bot <ad-team+condabot@anaconda.com> conda-bot <18747875+conda-bot@users.noreply.github.com>
+guimondmm <guimondmm@gmail.com>
+y2kbugger <git@y2kbugger.com>

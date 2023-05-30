@@ -1,0 +1,11 @@
+name: Signed
+version: X
+installer_type: all
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+specs:
+  - python
+# This certificate is generated an copied over on the spot during CI
+# See scripts/create_self_signed_certificate.ps1 for more info
+signing_certificate: certificate.pfx # [win]
+check_path_spaces: False

@@ -4,17 +4,18 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
+import hashlib
+import logging
+import math
 import re
 import sys
-import hashlib
-from os.path import normpath, islink, isfile, isdir
 from os import sep, unlink
+from os.path import basename, isdir, isfile, islink, normpath
 from shutil import rmtree
 
-try:
-    import yaml
-except ImportError:
-    import ruamel_yaml as yaml
+from ruamel import yaml
+
+logger = logging.getLogger(__name__)
 
 
 def filename_dist(dist):
@@ -35,8 +36,8 @@ def fill_template(data, d):
     return pat.sub(replace, data)
 
 
-def md5_files(paths):
-    h = hashlib.new('md5')
+def hash_files(paths, algorithm='md5'):
+    h = hashlib.new(algorithm)
     for path in paths:
         with open(path, 'rb') as fi:
             while True:
@@ -107,7 +108,7 @@ def add_condarc(info):
         if channel_alias:
             condarc['channel_alias'] = channel_alias
     if isinstance(condarc, dict):
-        condarc = yaml.dump(condarc)
+        condarc = yaml.dump(condarc, default_flow_style=False)
     yield '# ----- add condarc'
     if info['_platform'].startswith('win'):
         yield 'Var /Global CONDARC'
@@ -116,10 +117,28 @@ def add_condarc(info):
             yield 'FileWrite $CONDARC "%s$\\r$\\n"' % line
         yield 'FileClose $CONDARC'
     else:
-        yield 'cat <<EOF >$PREFIX/.condarc'
+        yield 'cat <<EOF >"$PREFIX/.condarc"'
         for line in condarc.splitlines():
             yield line
         yield 'EOF'
+
+
+def ensure_transmuted_ext(info, url):
+    """
+    If transmuting, micromamba won't find the dist in the preconda tarball
+    unless it has the (correct and transmuted) extension. Otherwise, the command
+    `micromamba constructor --extract-tarballs` fails.
+    Unfortunately this means the `urls` file might end up containing
+    fake URLs, since those .conda archives might not really exist online,
+    and they were only created locally.
+    """
+    if (
+        info.get("transmute_file_type") == ".conda"
+        and "micromamba" in basename(info.get("_conda_exe", ""))
+    ):
+        if url.lower().endswith(".tar.bz2"):
+            url = url[:-8] + ".conda"
+    return url
 
 
 def get_final_url(info, url):
@@ -130,8 +149,8 @@ def get_final_url(info, url):
         if url.startswith(src):
             new_url = url.replace(src, dst)
             if url.endswith(".tar.bz2"):
-                print("WARNING: You need to make the package {} available "
-                      "at {}".format(url.rsplit('/', 1)[1], new_url))
+                logger.warning("You need to make the package %s available "
+                               "at %s", url.rsplit('/', 1)[1], new_url)
             return new_url
     return url
 
@@ -141,8 +160,8 @@ def get_final_channels(info):
     for channel in info.get('channels', []):
         url = get_final_url(info, channel)
         if url.startswith("file://"):
-            print("WARNING: local channel {} does not have a remap. "
-                  "It will not be included in the installer".format(url))
+            logger.warning("local channel %s does not have a remap. "
+                           "It will not be included in the installer", url)
             continue
         mapped_channels.append(url)
     return mapped_channels
@@ -165,7 +184,7 @@ def rm_rf(path):
             unlink(path)
         elif isdir(path):
             rmtree(path)
-    except (OSError, IOError):
+    except OSError:
         pass
 
 
@@ -175,3 +194,19 @@ def yield_lines(path):
         if not line or line.startswith('#'):
             continue
         yield line
+
+
+def approx_size_kb(info, which="pkgs"):
+    valid = ("pkgs", "tarballs", "total")
+    assert which in valid, f"'which' must be one of {valid}"
+    size_pkgs = info.get('_approx_pkgs_size', 0)
+    size_tarballs = info.get('_approx_tarballs_size', 0)
+    if which == "pkgs":
+        size_bytes = size_pkgs
+    elif which == "tarballs":
+        size_bytes = size_tarballs
+    else:
+        size_bytes = size_pkgs + size_tarballs
+
+    # division by 10^3 instead of 2^10 is deliberate here. gives us more room
+    return int(math.ceil(size_bytes/1000))

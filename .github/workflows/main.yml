@@ -2,98 +2,227 @@ name: Build
 on:
   push:
     branches:
-      - master
+      - main
     tags:
-      - '*'
+      - "*"
   pull_request:
-    branches:
-      - master
+    paths:
+      - ".github/workflows/main.yml"
+      - "conda.recipe/**"
+      - "constructor/**"
+      - "examples/**"
+      - "scripts/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "setup.cfg"
+      - "setup.py"
+
+concurrency:
+  # Concurrency group that uses the workflow name and PR number if available
+  # or commit SHA as a fallback. If a new build is triggered under that
+  # concurrency group while a previous build is running it will be canceled.
+  # Repeated pushes to a PR will cancel all previous builds, while multiple
+  # merges to main will not cancel.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 jobs:
   package:
-    defaults:
-      run:
-        shell: bash
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}, Python ${{ matrix.pyver }}, ${{ matrix.micromamba && 'micromamba' || 'conda-standalone' }}
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest,ubuntu-latest,windows-latest]
-        pyver: [2.7,3.6,3.7,3.8]
+        os: [macos, ubuntu, windows]
+        pyver: ["3.7", "3.8", "3.9", "3.10"]
+        include:
+          - os: ubuntu
+            pyver: "3.9"
+            micromamba: true
+          - os: macos
+            pyver: "3.10"
+            micromamba: true
+          # Re-enable once micromamba supports menu creation
+          # - os: windows
+          #   pyver: "3.8"
+          #   micromamba: true
+    env:
+      PYTHONUNBUFFERED: True
     steps:
-    - name: Print github context
-      run: |
-        echo "EVENT_NAME:" "$GITHUB_EVENT_NAME"
-        echo "       REF:" "$GITHUB_REF"
-        echo "  HEAD_REF:" "$GITHUB_HEAD_REF"
-        echo "  BASE_REF:" "$GITHUB_BASE_REF"
-        echo "       SHA:" "$GITHUB_SHA"
-    - name: Retrieve the source code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.sha }}
-    - name: Build the build environment
-      run: |
-          [ $RUNNER_OS = 'Windows' ] && CONDA_EXE=$CONDA/Scripts/conda.exe
+      - name: Print github context
+        run: |
+          echo "EVENT_NAME:" "$GITHUB_EVENT_NAME"
+          echo "       REF:" "$GITHUB_REF"
+          echo "  HEAD_REF:" "$GITHUB_HEAD_REF"
+          echo "  BASE_REF:" "$GITHUB_BASE_REF"
+          echo "       SHA:" "$GITHUB_SHA"
+      - name: Set temp dirs correctly
+        if: startsWith(matrix.os, 'windows')
+        # https://github.com/actions/virtual-environments/issues/712
+        shell: powershell
+        run: |
+          echo "TMPDIR=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+          echo "TEMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+          echo "TMP=$env:USERPROFILE\AppData\Local\Temp" >> $env:GITHUB_ENV
+      - name: Retrieve the source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Build the build environment
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
           [ $RUNNER_OS == macOS ] && export CONDA_PKGS_DIRS=~/.pkgs
-          ${CONDA_EXE:-conda} create -p ../conda conda conda-build conda-verify
-    - name: Build the package
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        PYTHONIOENCODING: utf-8
-        PYTHONUNBUFFERED: True
-      run: |
-          source ../conda/etc/profile.d/conda.sh
+          conda create -p ../conda conda-build conda-verify
+      - name: Build the package
+        env:
+          PYTHONIOENCODING: utf-8
+          # Uncomment to run within conda build
+          # RUN_EXAMPLES: "1"
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate ../conda
           export CODECOV_COMMIT=$(git rev-parse --verify HEAD)
-          conda build conda.recipe --python=${{ matrix.pyver }}
-          mv ../conda/conda-bld .
-    - name: Upload the build artifact
-      if: github.event_name == 'push'
-      uses: actions/upload-artifact@v2
-      with:
-        # By uploading to the same artifact we can download all of the packages
-        # and upload them all to anaconda.org in a single job
-        name: package-${{ github.sha }}
-        path: conda-bld/*/*.tar.bz2
+          CODECOV_FOLDER=${PWD} \
+          CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
+            conda build conda.recipe --python=${{ matrix.pyver }}
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unit
+      - name: Upload the packages as artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v3
+        with:
+          # By uploading to the same artifact we can download all of the packages
+          # and upload them all to anaconda.org in a single job
+          name: package-${{ github.sha }}
+          path: ${{ runner.temp }}/conda-bld/*/*.tar.bz2
+      - name: Install local constructor
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          CONDA_BLD_PATH="${{ runner.temp }}/conda-bld" \
+            conda create -n constructor -c local --strict-channel-priority constructor coverage
+          conda activate constructor
+          set -x
+          installed_channel=$(conda list constructor --json | jq -r '.[].channel')
+          if [[ "$installed_channel" != "conda-bld" ]]; then
+            echo $(conda list constructor --json)
+            echo "Installed constructor is not local!"
+            exit 1
+          fi
+          constructor --version
+          constructor --help-construct
+      - name: Update to NSIS logging builds on Windows
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate constructor
+          conda install -y "conda-forge::nsis=*=*_log_*"
+          echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
+      - name: Generate self-signed certificate (Windows)
+        if: startsWith(matrix.os, 'windows')
+        shell: cmd
+        run: |
+          set "CONSTRUCTOR_SIGNING_CERTIFICATE=${{ runner.temp }}\certificate.pfx"
+          set "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234"
+          powershell scripts\create_self_signed_certificate.ps1
+          copy /Y "%CONSTRUCTOR_SIGNING_CERTIFICATE%" examples\signing\certificate.pfx
+
+          :: Careful with the trailing spaces before the >> redirect!
+          echo CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=1234>> %GITHUB_ENV%
+          echo CONSTRUCTOR_SIGNTOOL_PATH=C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x86\signtool.exe>> %GITHUB_ENV%
+      - name: Set up conda executable
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          if [[ "${{ matrix.micromamba }}" != "" ]]; then
+            conda create -yqp ./micromamba -c conda-forge micromamba
+            if [[ ${{ matrix.os }} == "windows" ]]; then
+              echo "CONSTRUCTOR_CONDA_EXE=./micromamba/Library/bin/micromamba.exe" >> $GITHUB_ENV
+            else
+              echo "CONSTRUCTOR_CONDA_EXE=./micromamba/bin/micromamba" >> $GITHUB_ENV
+            fi
+          else
+            conda activate constructor
+            echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
+          fi
+      - name: Run examples and prepare artifacts
+        run: |
+          rm -rf coverage.json
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate constructor
+          mkdir -p examples_artifacts/
+          python scripts/run_examples.py \
+            --keep-artifacts=examples_artifacts/ \
+            --conda-exe="${CONSTRUCTOR_CONDA_EXE}"
+          coverage json
+      - name: Test with conda-libmamba-solver
+        run: |
+          source $CONDA/etc/profile.d/conda.sh
+          conda activate constructor
+          conda install -yq conda-libmamba-solver
+          conda list
+          CONDA_SOLVER=libmamba CONDA_VERBOSITY=1 constructor examples/noconda/ --output-dir=examples_artifacts/
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: integration
+      - name: Upload the example installers as artifacts
+        if: github.event_name == 'pull_request' && matrix.pyver == '3.9'
+        uses: actions/upload-artifact@v3
+        with:
+          name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+          path: examples_artifacts/
+          retention-days: 7
+
   upload:
     needs: package
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
-    - name: Retrieve the source code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - name: Download the build artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: package-${{ github.sha }}
-        path: conda-bld
-    - name: Install conda packages
-      run: |
-        source $CONDA/bin/activate
-        conda install -y sphinx anaconda-client
-    - name: Build the documentation for deployment
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        source $CONDA/bin/activate
-        cd docs
-        make html
-    - name: Deploy the documentation
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/build/html
-    - name: Upload to anaconda.org
-      env:
-        ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        GITHUB_REF: ${{ github.ref }}
-      run: |
-        source $CONDA/bin/activate
-        [[ "$GITHUB_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev"
-        anaconda --verbose --token $ANACONDA_TOKEN upload --user ctools $LABEL conda-bld/*/*.tar.bz2 --force
-    - name: Clean up older artifacts
-      uses: glassechidna/artifact-cleaner@master
-      with:
-        minimumAge: 86400
+      - name: Retrieve the source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Download the build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: package-${{ github.sha }}
+          path: conda-bld
+      - name: Install conda packages
+        run: |
+          source $CONDA/bin/activate
+          conda install -y sphinx anaconda-client
+      - name: Upload to anaconda.org
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          source $CONDA/bin/activate
+          [[ "$GITHUB_REF" =~ ^refs/tags/ ]] || export LABEL="--label dev"
+          anaconda --verbose --token $ANACONDA_TOKEN upload --user ctools $LABEL conda-bld/*/*.tar.bz2 --force
+
+  docs:
+    name: Check docs are up-to-date
+    runs-on: ubuntu-latest
+    steps:
+      - name: Retrieve the source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install local constructor
+        run: |
+          source $CONDA/bin/activate
+          conda create -n constructor constructor jinja2
+          conda activate constructor
+          pip install -U . --no-deps
+      - name: Build docs
+        run: |
+          source $CONDA/bin/activate
+          conda activate constructor
+          set -ex
+          python scripts/make_docs.py
+          git diff --exit-code

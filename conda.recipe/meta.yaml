@@ -15,20 +15,24 @@ build:
   entry_points:
     - constructor = constructor.main:main
   script_env:
-    - CODECOV_TOKEN
-    - CODECOV_COMMIT
+    - CODECOV_FOLDER
+    - RUN_EXAMPLES
 
 requirements:
   host:
     - python
     - pip
+    # FIXME: Workaround for xz 5.2.10 issue on py310
+    - xz !=5.2.10       # [win and py == 310]
   run:
     - conda >=4.6
     - python
-    - ruamel_yaml >=0.11.14,<0.16
-    - conda-standalone
-    - pillow >=3.1     # [win]
-    - nsis >=3.01      # [win]
+    - ruamel.yaml >=0.11.14,<0.18
+    - conda-standalone <23.1.0  # https://github.com/conda/constructor/issues/628
+    - pillow >=3.1     # [win or osx]
+    - nsis >=3.08      # [win]
+  run_constrained:     # [unix]
+    - nsis >=3.08      # [unix]
 
 test:
   source_files:
@@ -37,17 +41,20 @@ test:
     - examples
     - .coveragerc
   requires:
+    - pip
     - pillow >=3.1
     - pytest
     - pytest-cov
-    - codecov
   commands:
-    - pytest -v --cov=constructor tests
-    - coverage run --append -m constructor -V
-    - python scripts/run_examples.py
-    - if [%CODECOV_TOKEN%] neq [] codecov --commit %CODECOV_COMMIT% # [win]
-    - if ["$CODECOV_TOKEN"]; then codecov --commit $CODECOV_COMMIT; fi # [unix]
+    - pip check
+    - pytest -v --cov-branch --cov=constructor tests
+    - coverage run --branch --append -m constructor -V
+    - coverage json
+    - if [%CODECOV_FOLDER%] neq [] copy coverage.json "%CODECOV_FOLDER%" # [win]
+    - if [ -n "$CODECOV_FOLDER" ]; then cp coverage.json "$CODECOV_FOLDER"; fi # [unix]
     - coverage report
+    - if [%RUN_EXAMPLES%] neq [] python scripts/run_examples.py      # [win]
+    - if [ -n "$RUN_EXAMPLES" ]; then python scripts/run_examples.py; fi  # [unix]
 
 about:
   home: https://conda.io

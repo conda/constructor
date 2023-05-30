@@ -5,6 +5,7 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import setuptools
+
 import versioneer
 
 setuptools.setup(
@@ -23,13 +24,14 @@ setuptools.setup(
     },
     install_requires=[
         "conda >=4.6",
-        "ruamel_yaml",
-        "pillow >=3.1 ; platform_system=='Windows'",
-        # non-python dependency: "nsis >=3.01 ; platform_system=='Windows'",
+        "ruamel.yaml",
+        "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
+        # non-python dependency: "nsis >=3.08 ; platform_system=='Windows'",
     ],
     # We could differentiate between operating systems here but that is
     # far more trouble than it is worth
     package_data={
         "constructor": ['header.sh', 'nsis/*', 'osx/*', 'ttf/*']
-    }
+    },
+    python_requires=">=3.7",
 )

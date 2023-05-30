@@ -8,12 +8,13 @@
 __all__ = ['remove_from_system_path', 'add_to_system_path',
            'broadcast_environment_settings_change']
 
-import sys
-import os
 import ctypes
+import os
 import re
-from os import path
+import sys
 from ctypes import wintypes
+from os import path
+
 if sys.version_info[0] >= 3:
     import winreg as reg
 else:
