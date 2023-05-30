@@ -21,6 +21,7 @@ except ImportError:
 
 pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
+ON_CI = os.environ.get("CI")
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
 CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
@@ -205,7 +206,13 @@ def _run_installer(
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
-        _sentinel_file_checks(example_path, install_dir)
+        if installer.suffix == ".pkg":
+            warnings.warn(
+                "PKG installers cannot be installed to arbitrary locations. "
+                "Skipping sentinel file checks."
+            )
+        else:
+            _sentinel_file_checks(example_path, install_dir)
     if installer.suffix == ".exe":
         _run_uninstaller_exe(install_dir)
 
@@ -300,7 +307,17 @@ def test_example_miniforge(tmp_path):
             install_dirs = (install_dir,)
             installer_inputs = (None,)
         for installer_input, install_dir in zip(installer_inputs, install_dirs):
-            _run_installer(input_path, installer, install_dir, installer_input=installer_input)
+            _run_installer(
+                input_path,
+                installer,
+                install_dir,
+                installer_input=installer_input,
+                # PKG installers use their own install path, so we can't check sentinels
+                # via `install_dir`
+                check_sentinels=installer.suffix != ".pkg",
+            )
+            if installer.suffix == ".pkg" and ON_CI:
+                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
 
 
 def test_example_noconda(tmp_path):
@@ -320,6 +337,8 @@ def test_example_scripts(tmp_path):
     input_path = _example_path("scripts")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
         _run_installer(input_path, installer, install_dir)
+        if installer.suffix == ".pkg" and ON_CI:
+            _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Scripts")
 
 
 def test_example_shortcuts(tmp_path):
