@@ -37,6 +37,9 @@ Unicode "true"
 !insertmacro GetParameters
 !insertmacro GetOptions
 
+!include "StrFunc.nsh"
+${StrCase}
+
 !include "UAC.nsh"
 !include "nsDialogs.nsh"
 
@@ -827,7 +830,6 @@ Function OnDirectoryLeave
     Call CheckForSpaces
     Pop $R0 # The function returns the number of spaces found in the input string.
 
-#if check_path_spaces is True
     # Check if any spaces exist in $INSTDIR.
     StrCmp $R0 0 NoSpaces
 
@@ -837,19 +839,31 @@ Function OnDirectoryLeave
         Goto +2
           StrCpy $R1 "s"
 
-        # Show message box then take the user back to the Directory page.
-        MessageBox MB_OK|MB_ICONINFORMATION \
-            "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
-             This can cause problems with several Conda packages.$\n \
-             Please consider removing the space$R1." \
-            /SD IDOK
         ${If} ${Silent}
-            DetailPrint "::warning:: 'Destination Folder' contains $R0 space$R1. \
-             This can cause problems with several Conda packages. \
-             Please consider removing the space$R1."
+          StrCpy $R7 " "
+        ${Else}
+          StrCpy $R7 "$\n"
         ${EndIf}
-    NoSpaces:
+        StrCpy $R8 "'Destination Folder' contains $R0 space$R1.$R7This can cause problems with several conda packages.$R7"
+#if check_path_spaces is True
+            StrCpy $R8 "$R8 Please remove the space$R1 from the destination folder."
+            StrCpy $R9 "error"
+#else
+            StrCpy $R8 "$R8 Please consider removing the space$R1."
+            StrCpy $R9 "warning"
 #endif
+        # Show message box then take the user back to the Directory page.
+        ${If} ${Silent}
+            ${StrCase} $R9 $R9 "L"
+            DetailPrint "::$R9:: $R8"
+        ${Else}
+            ${StrCase} $R9 $R9 "S"
+            MessageBox MB_OK|MB_ICONINFORMATION "$R9: $R8" /SD IDOK
+        ${EndIf}
+#if check_path_spaces is True
+            abort
+#endif
+    NoSpaces:
 
     # List of characters not allowed anywhere in $INSTDIR
     Push "^%!=,"
