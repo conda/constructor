@@ -16,4 +16,4 @@
 
 ### Other
 
-* Windows: Change error to warning when attempting to install silently into a path with spaces
+* Windows: Always warn when installing into a path with spaces (#665)
