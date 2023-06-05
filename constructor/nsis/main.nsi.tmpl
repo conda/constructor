@@ -846,10 +846,10 @@ Function OnDirectoryLeave
         ${EndIf}
         StrCpy $R8 "'Destination Folder' contains $R0 space$R1.$R7This can cause problems with several conda packages.$R7"
 #if check_path_spaces is True
-            StrCpy $R8 "$R8 Please remove the space$R1 from the destination folder."
+            StrCpy $R8 "$R8Please remove the space$R1 from the destination folder."
             StrCpy $R9 "error"
 #else
-            StrCpy $R8 "$R8 Please consider removing the space$R1."
+            StrCpy $R8 "$R8Please consider removing the space$R1."
             StrCpy $R9 "warning"
 #endif
         # Show message box then take the user back to the Directory page.
