@@ -120,6 +120,10 @@ def _run_uninstaller_exe(install_dir):
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
+        warnings.warn(
+            f"Skipping uninstaller tests for '{install_dir}' due to spaces in path. "
+            "This is a known issue with our setup, to be fixed."
+        )
         return
 
     uninstaller = next(install_dir.glob("Uninstall-*.exe"), None)
