@@ -37,11 +37,6 @@ Unicode "true"
 !insertmacro GetParameters
 !insertmacro GetOptions
 
-# All commands used from StrFunc.nsh need to be called before they can be used.
-# https://nsis.sourceforge.io/StrFunc#3.1_How_To_Use_Commands_In_Install_Sections_and_Functions
-!include "StrFunc.nsh"
-${StrCase}
-
 !include "UAC.nsh"
 !include "nsDialogs.nsh"
 
@@ -852,18 +847,15 @@ Function OnDirectoryLeave
         StrCpy $R8 "'Destination Folder' contains $R0 space$R1.$R7This can cause problems with several conda packages.$R7"
 #if check_path_spaces is True
             StrCpy $R8 "$R8Please remove the space$R1 from the destination folder."
-            StrCpy $R9 "error"
+            StrCpy $R9 "Error"
 #else
             StrCpy $R8 "$R8Please consider removing the space$R1."
-            StrCpy $R9 "warning"
+            StrCpy $R9 "Warning"
 #endif
         # Show message box then take the user back to the Directory page.
         ${If} ${Silent}
-            # The error/warning strings must be lower case so that tests can catch them
-            ${StrCase} $R9 $R9 "L"
             DetailPrint "::$R9:: $R8"
         ${Else}
-            ${StrCase} $R9 $R9 "S"
             MessageBox MB_OK|MB_ICONINFORMATION "$R9: $R8" /SD IDOK
         ${EndIf}
 #if check_path_spaces is True
