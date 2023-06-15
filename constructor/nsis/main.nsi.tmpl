@@ -1250,7 +1250,6 @@ Section "Uninstall"
         IntOp $0 $0 + 1
         goto loop_py
     endloop_py:
-    ${EndIf}
 SectionEnd
 
 !if '@SIGNTOOL_COMMAND@' != ''
