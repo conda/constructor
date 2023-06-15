@@ -66,6 +66,8 @@ Unicode "true"
                    \Uninstall\${UNINSTALL_NAME}"
 
 var /global INSTDIR_JUSTME
+var /global INSTALLER_VERSION
+var /global INSTALLER_NAME_FULL
 
 # UAC shield overlay
 !ifndef BCM_SETSHIELD
@@ -1185,10 +1187,36 @@ Section "Uninstall"
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
+    # Read variables the uninstaller needs from the registry
+    StrCpy $R0 "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+    StrLen $R1 "Uninstall-${NAME}.exe"
+    IntOp $R1 $R1 + 3
+    StrCpy $0 0
+    loop_path:
+        EnumRegKey $1 SHCTX $R0 $0
+        StrCmp $1 "" endloop_path
+        StrCpy $2 "$R0\$1"
+        ReadRegStr $4 SHCTX $2 "UninstallString"
+        StrLen $5 $4
+        IntOp $5 $5 - $R1
+        StrCpy $4 $4 $5 1
+        ${If} $4 == $INSTDIR
+            StrCpy $INSTALLER_NAME_FULL $1
+            ReadRegStr $INSTALLER_VERSION SHCTX $2 "DisplayVersion"
+            goto endloop_path
+        ${EndIf}
+        IntOp $0 $0 + 1
+        goto loop_path
+    endloop_path:
+
     # Extra info for pre_uninstall scripts
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    StrCpy $0 ${VERSION}
+    ${If} $INSTALLER_VERSION != ""
+	StrCpy $0 $INSTALLER_VERSION
+    ${EndIf}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "$0").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
@@ -1202,12 +1230,26 @@ Section "Uninstall"
     # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
 
-    DeleteRegKey SHCTX "${UNINSTREG}"
+    ${If} $INSTALLER_NAME_FULL != ""
+        DeleteRegKey SHCTX "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTALLER_NAME_FULL"
+    ${EndIf}
+
     # If Anaconda was registered as the official Python for this version,
     # remove it from the registry
-    ReadRegStr $0 SHCTX "Software\Python\PythonCore\${PY_VER}\InstallPath" ""
-    ${If} $0 == "$INSTDIR"
-        DeleteRegKey SHCTX "Software\Python\PythonCore\${PY_VER}"
+    StrCpy $R0 "SOFTWARE\Python\PythonCore"
+    StrCpy $0 0
+    loop_py:
+        EnumRegKey $1 SHCTX $R0 $0
+        StrCmp $1 "" endloop_py
+        ReadRegStr $2 SHCTX "$R0\$1\InstallPath" ""
+        ${If} $2 == $INSTDIR
+            StrCpy $R1 $1
+            DeleteRegKey SHCTX "$R0\$1"
+            goto endloop_py
+        ${EndIf}
+        IntOp $0 $0 + 1
+        goto loop_py
+    endloop_py:
     ${EndIf}
 SectionEnd
 
