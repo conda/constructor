@@ -200,7 +200,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                     with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
                         for line in f:
                             log_is_empty = False
-                            if ":error:" in line:
+                            if ":error:" in line.lower():
                                 win_error_lines.append(line)
                                 test_errored = 1
                     if log_is_empty:

@@ -457,10 +457,11 @@ Metadata about the installer can be found in the `%INSTALLER_NAME%`,
 _required:_ no<br/>
 _type:_ string<br/>
 
-Set default install prefix. On Linux, if not provided, the default prefix is
-`${HOME}/${NAME}`. On windows, this is used only for "Just Me" installation;
-for "All Users" installation, use the `default_prefix_all_users` key.
-If not provided, the default prefix is `${USERPROFILE}\${NAME}`.
+Set default install prefix. On Linux, if not provided, the default prefix
+is `${HOME}/${NAME}` (or, if `HOME` is not set, `/opt/${NAME}`). On Windows,
+this is used only for "Just Me" installation; for "All Users" installation,
+use the `default_prefix_all_users` key. If not provided, the default prefix
+is `${USERPROFILE}\${NAME}`.
 
 ### `default_prefix_domain_user`
 

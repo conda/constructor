@@ -6,8 +6,16 @@ on:
     tags:
       - "*"
   pull_request:
-    branches:
-      - main
+    paths:
+      - ".github/workflows/main.yml"
+      - "conda.recipe/**"
+      - "constructor/**"
+      - "examples/**"
+      - "scripts/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "setup.cfg"
+      - "setup.py"
 
 concurrency:
   # Concurrency group that uses the workflow name and PR number if available
