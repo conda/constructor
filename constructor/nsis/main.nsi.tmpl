@@ -827,7 +827,9 @@ Function OnDirectoryLeave
     Call CheckForSpaces
     Pop $R0 # The function returns the number of spaces found in the input string.
 
-#if check_path_spaces is True
+    Push $R7
+    Push $R8
+    Push $R9
     # Check if any spaces exist in $INSTDIR.
     StrCmp $R0 0 NoSpaces
 
@@ -837,18 +839,32 @@ Function OnDirectoryLeave
         Goto +2
           StrCpy $R1 "s"
 
-        # Show message box then take the user back to the Directory page.
-        MessageBox MB_OK|MB_ICONINFORMATION \
-            "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
-             This can cause problems with several Conda packages.$\n \
-             Please consider removing the space$R1." \
-            /SD IDOK
         ${If} ${Silent}
-            DetailPrint "::error:: 'Destination folder' contains $R0 space$R1."
-            abort
+          StrCpy $R7 " "
+        ${Else}
+          StrCpy $R7 "$\n"
         ${EndIf}
-    NoSpaces:
+        StrCpy $R8 "'Destination Folder' contains $R0 space$R1.$R7This can cause problems with several conda packages.$R7"
+#if check_path_spaces is True
+            StrCpy $R8 "$R8Please remove the space$R1 from the destination folder."
+            StrCpy $R9 "Error"
+#else
+            StrCpy $R8 "$R8Please consider removing the space$R1."
+            StrCpy $R9 "Warning"
 #endif
+        # Show message box then take the user back to the Directory page.
+        ${If} ${Silent}
+            DetailPrint "::$R9:: $R8"
+        ${Else}
+            MessageBox MB_OK|MB_ICONINFORMATION "$R9: $R8" /SD IDOK
+        ${EndIf}
+#if check_path_spaces is True
+            abort
+#endif
+    NoSpaces:
+    Pop $R7
+    Pop $R8
+    Pop $R9
 
     # List of characters not allowed anywhere in $INSTDIR
     Push "^%!=,"
