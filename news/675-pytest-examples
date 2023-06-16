@@ -17,3 +17,4 @@
 ### Other
 
 * Refactor `run_examples.py` as `test/test_examples.py` so it uses `pytest`. (#641 via #675)
+* Nightly builds will be uploaded to the `conda-canary` channel. (#612 via #675)
