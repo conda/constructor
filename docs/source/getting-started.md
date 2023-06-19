@@ -4,7 +4,7 @@ Constructor is a tool which allows constructing an installer
 for a collection of conda packages. It solves needed packages using user-provided
 specifications, and bundles those packages.  It can currently create 3 kinds of
 installers, which are best thought of as delivery vehicles for the bundled packages.
-There are shell installers (`.sh`), MacOS `.pkg` installers, and Windows .exe installers.
+There are shell installers (`.sh`), MacOS `.pkg` installers, and Windows `.exe` installers.
 Each of these will create an environment on the end user's system that contains the specs
 you provided, along with any necessary dependencies.  These installers are similar
 to the Anaconda and Miniconda installers, and indeed constructor is used to create
@@ -75,7 +75,7 @@ containing your desired `construct.yaml`. From there, run this command:
 $ constructor .
 ```
 
-Your installer will be created inside of the directory with
+Your installer will be created inside the directory with
 this naming scheme: `name-version-yourPlatform.{sh|exe|pkg}`.
 
 ## Some additional considerations

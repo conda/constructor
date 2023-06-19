@@ -1,0 +1,20 @@
+name: use_channel_remap
+
+version: 0.0.1
+
+# after install the folder <prefix>/pkgs will not be deleted, for diagnostics
+keep_pkgs: True
+
+# we just remap the main conda channel, to show the idea of remap
+channels:
+  - http://repo.anaconda.com/pkgs/main/
+
+channels_remap:
+  - src: http://repo.anaconda.com/pkgs/main/
+    dest: file:///usr/local/share/private_repo/
+
+specs:
+  - python
+  - conda
+
+license_file: eula.txt

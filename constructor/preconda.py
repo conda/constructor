@@ -160,7 +160,7 @@ def write_files(info, dst_dir):
 
     # base environment file used with conda install --file
     # (list of specs/dists to install)
-    write_env_txt(info, dst_dir, info["_urls"])
+    write_env_txt(info, dst_dir, final_urls_md5s)
 
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
@@ -173,7 +173,7 @@ def write_files(info, dst_dir):
         user_requested_specs = env_config.get('user_requested_specs', env_config.get('specs', ()))
         write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
         # environment installation list
-        write_env_txt(info, env_dst_dir, env_info["_urls"])
+        write_env_txt(info, env_dst_dir, env_urls_md5)
         # channels
         write_channels_txt(info, env_dst_dir, env_config)
         # shortcuts

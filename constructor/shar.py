@@ -80,7 +80,7 @@ def get_header(conda_exec, tarball, info):
         'VERSION': info['version'],
         'PLAT': info['_platform'],
         'DEFAULT_PREFIX': info.get('default_prefix',
-                                   '$HOME/%s' % name.lower()),
+                                   '${HOME:-/opt}/%s' % name.lower()),
         'MD5': hash_files([conda_exec, tarball]),
         'FIRST_PAYLOAD_SIZE': str(getsize(conda_exec)),
         'SECOND_PAYLOAD_SIZE': str(getsize(tarball)),
