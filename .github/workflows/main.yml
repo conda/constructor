@@ -73,6 +73,10 @@ jobs:
           conda install ${files[@]} -y
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
           pip install -e . --no-deps --no-build-isolation
+          set -x
+          conda info
+          conda list -n base
+          conda list -n constructor-dev
       - name: Set up conda executable
         run: |
           if [[ "${{ matrix.micromamba }}" != "" ]]; then
