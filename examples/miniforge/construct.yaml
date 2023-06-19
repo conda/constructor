@@ -20,3 +20,5 @@ specs:
 installer_type: all
 post_install: test_install.sh  # [unix]
 post_install: test_install.bat  # [win]
+initialize_by_default: false
+register_python: False

@@ -314,7 +314,7 @@ def main():
     logger.info("Got the following cli arguments: '%s'", args)
 
     if args.verbose or args.debug:
-        logger.setLevel(logging.DEBUG)
+        logging.getLogger("constructor").setLevel(logging.DEBUG)
 
     if args.clean:
         import shutil

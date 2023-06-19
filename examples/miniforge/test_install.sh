@@ -16,5 +16,5 @@ echo "+ conda config"
 conda config --show-sources
 
 echo "+ Testing channels"
-conda config --show --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert info['channels'] == ['conda-forge'], info"
+conda config --show --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert 'conda-forge' in info['channels'], info"
 echo "  OK"

@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import warnings
 from datetime import timedelta
 from pathlib import Path
 
@@ -18,6 +19,13 @@ try:
     COV_CMD = ['coverage', 'run', '--branch', '--append', '-m']
 except ImportError:
     COV_CMD = []
+
+
+warnings.warn(
+    "This script is now deprecated and will be removed soon. "
+    "Please use tests/test_examples.py with pytest.",
+    DeprecationWarning
+)
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
