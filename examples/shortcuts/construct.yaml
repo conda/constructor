@@ -9,3 +9,6 @@ specs:
   - python
   - conda
   - console_shortcut # [win]
+
+initialize_by_default: false
+register_python: False
