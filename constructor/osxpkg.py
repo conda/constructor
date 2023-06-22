@@ -10,7 +10,8 @@ from subprocess import check_call
 from tempfile import NamedTemporaryFile
 
 from . import preconda
-from .construct import ns_platform
+from .conda_interface import conda_context
+from .construct import ns_platform, parse
 from .imaging import write_images
 from .utils import (
     add_condarc,
@@ -26,6 +27,17 @@ OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
 
 logger = logging.getLogger(__name__)
+
+
+def calculate_install_dir(yaml_file, subdir=None):
+    contents = parse(yaml_file, subdir or conda_context.subdir)
+    if contents.get("installer_type") == "sh":
+        return contents["name"]
+    name = contents.get("pkg_name") or contents["name"]
+    location = contents.get("default_location_pkg")
+    if location:
+        return f"{location}/{name}"
+    return name
 
 
 def write_readme(dst, info):
