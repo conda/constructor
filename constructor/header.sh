@@ -412,6 +412,11 @@ export TMP_BACKUP="${TMP:-}"
 export TMP="$PREFIX/install_tmp"
 mkdir -p "$TMP"
 
+# Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
+if [ "$(id -u)" -ne 0 ]; then
+    touch "$PREFIX/.nonadmin"
+fi
+
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
 extract_range $boundary1 $boundary2 | \

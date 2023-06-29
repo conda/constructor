@@ -31,6 +31,11 @@ chmod +x "$CONDA_EXEC"
 mkdir -p "$PREFIX/conda-meta"
 touch "$PREFIX/conda-meta/history"
 
+# Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
+if [ "$(id -u)" -ne 0 ]; then
+    touch "$PREFIX/.nonadmin"
+fi
+
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place
 notify "Preparing packages..."
