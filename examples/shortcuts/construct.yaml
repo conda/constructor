@@ -3,12 +3,14 @@ version: X
 installer_type: all
 
 channels:
+  - jaimergp/label/menuinst-tests
   - http://repo.anaconda.com/pkgs/main/
 
 specs:
   - python
   - conda
-  - console_shortcut # [win]
+  - console_shortcut  # [win]
+  - package_1
 
 initialize_by_default: false
 register_python: False

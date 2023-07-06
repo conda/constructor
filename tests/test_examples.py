@@ -25,6 +25,7 @@ pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
 ON_CI = os.environ.get("CI")
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
+CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2 = os.environ.get("CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2")
 CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH = Path(artifacts_path)
@@ -360,8 +361,30 @@ def test_example_scripts(tmp_path, request):
 
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
-    for installer, install_dir in create_installer(input_path, tmp_path):
+    assert CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2 is not None
+    assert Path(CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2).exists()
+    for installer, install_dir in create_installer(
+        input_path, 
+        tmp_path, 
+        conda_exe=CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2,
+    ):
         _run_installer(input_path, installer, install_dir, request=request)
+        if sys.platform == "win32":
+            # check that the shortcut is created
+            start_menu = (
+                Path(os.environ["USERPROFILE"]) 
+                / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs"
+            )
+            print(sorted((start_menu).glob("**/*.lnk")))
+            assert (start_menu / "menuinst-test/menuinst-test.lnk")
+        elif sys.platform == "darwin":
+            applications = Path("~/Applications").expanduser()
+            print(sorted(applications.glob("**/*.app")))
+            assert (applications / "menuinst-test.app").exists()
+        elif sys.platform == "linux":
+            applications = Path("~/.local/share/applications").expanduser()
+            print(sorted(applications.glob("**/*.desktop")))
+            assert (applications / "menuinst-test.desktop").exists()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
