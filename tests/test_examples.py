@@ -315,10 +315,6 @@ def test_example_extra_files(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(
-    sys.platform == "Darwin" and CONSTRUCTOR_CONDA_EXE.endswith("micromamba"),
-    reason="Known to fail. See https://github.com/conda/constructor/issues/674."
-)
 def test_example_miniforge(tmp_path, request):
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
