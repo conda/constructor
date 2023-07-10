@@ -100,8 +100,10 @@ def _run_installer_exe(installer, install_dir, installer_input=None):
     try:
         log_is_empty = True
         with open(os.path.join(install_dir, "install.log"), encoding="utf-16-le") as f:
+            print("Installer log:", file=sys.stderr)
             for line in f:
                 log_is_empty = False
+                print(line, end="", file=sys.stderr)
                 if ":error:" in line.lower():
                     error_lines.append(line)
         if log_is_empty:
@@ -359,6 +361,10 @@ def test_example_scripts(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
+@pytest.mark.skipif(
+    Path(CONSTRUCTOR_CONDA_EXE).name.startswith("micromamba"),
+    reason="Micromamba does not implement shortcuts (yet)",
+)
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
     assert CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2 is not None
@@ -371,14 +377,14 @@ def test_example_shortcuts(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         # check that the shortcuts are created
         if sys.platform == "win32":
-            if os.environ.get("CI"):  # GHA runs as admin
-                prefix_path = Path(os.environ["ProgramData"])
+            for key in ("ProgramData", "AppData"):
+                pkg_1 = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs/Package 1"
+                if pkg_1.exists():
+                    assert (pkg_1 / "A.lnk").exists()
+                    assert (pkg_1 / "B.lnk").exists()
+                    break
             else:
-                prefix_path = Path(os.environ["AppData"])
-            start_menu = prefix_path / "Microsoft/Windows/Start Menu/Programs"
-            print("Shortcuts found:", sorted((start_menu).glob("**/*.lnk")))
-            assert (start_menu / "Package 1/A.lnk").exists()
-            assert (start_menu / "Package 1/B.lnk").exists()
+                raise AssertionError("No shortcuts found!")
         elif sys.platform == "darwin":
             applications = Path("~/Applications").expanduser()
             print("Shortcuts found:", sorted(applications.glob("**/*.app")))
