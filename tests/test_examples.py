@@ -375,15 +375,15 @@ def test_example_shortcuts(tmp_path, request):
                 Path(os.environ["USERPROFILE"]) 
                 / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs"
             )
-            print(sorted((start_menu).glob("**/*.lnk")))
-            assert (start_menu / "menuinst-test/menuinst-test.lnk")
+            print("Shortcuts found:", sorted((start_menu).glob("**/*.lnk")))
+            assert (start_menu / "menuinst-test/menuinst-test.lnk").exists()
         elif sys.platform == "darwin":
             applications = Path("~/Applications").expanduser()
-            print(sorted(applications.glob("**/*.app")))
+            print("Shortcuts found:", sorted(applications.glob("**/*.app")))
             assert (applications / "menuinst-test.app").exists()
         elif sys.platform == "linux":
             applications = Path("~/.local/share/applications").expanduser()
-            print(sorted(applications.glob("**/*.desktop")))
+            print("Shortcuts found:", sorted(applications.glob("**/*.desktop")))
             assert (applications / "menuinst-test.desktop").exists()
 
 
