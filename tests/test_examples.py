@@ -209,6 +209,7 @@ def _run_installer(
     installer_input: Optional[str] = None,
     check_sentinels=True,
     request=None,
+    uninstall=True,
 ):
     if installer.suffix == ".exe":
         _run_installer_exe(installer, install_dir, installer_input=installer_input)
@@ -222,7 +223,7 @@ def _run_installer(
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
         _sentinel_file_checks(example_path, install_dir)
-    if installer.suffix == ".exe":
+    if uninstall and installer.suffix == ".exe":
         _run_uninstaller_exe(install_dir)
 
 
@@ -374,7 +375,7 @@ def test_example_shortcuts(tmp_path, request):
         tmp_path,
         conda_exe=CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2,
     ):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         # check that the shortcuts are created
         if sys.platform == "win32":
             for key in ("ProgramData", "AppData"):
@@ -385,6 +386,9 @@ def test_example_shortcuts(tmp_path, request):
                     break
             else:
                 raise AssertionError("No shortcuts found!")
+            _run_uninstaller_exe(install_dir)
+            assert not (pkg_1 / "A.lnk").exists()
+            assert not (pkg_1 / "B.lnk").exists()
         elif sys.platform == "darwin":
             applications = Path("~/Applications").expanduser()
             print("Shortcuts found:", sorted(applications.glob("**/*.app")))
