@@ -104,13 +104,23 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
       - name: Run examples
+        if: matrix.os != 'windows'
         env:
           CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
-          # signtool only exists on Windows, but doesn't cause errors on unix when absent
-          CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
+          coverage run --branch --append -m constructor -V
+          coverage json
+      - name: Run examples
+        if: matrix.os == 'windows'
+        shell: cmd /C CALL {0}
+        env:
+          CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
+          CONSTRUCTOR_SIGNTOOL_PATH: "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17763.0\\x86\\signtool.exe"
+        run: |
+          del /Q /F coverage.json
+          pytest -vv --cov=constructor --cov-branch tests\test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@v3
