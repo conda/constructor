@@ -364,27 +364,31 @@ def test_example_shortcuts(tmp_path, request):
     assert CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2 is not None
     assert Path(CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2).exists()
     for installer, install_dir in create_installer(
-        input_path, 
-        tmp_path, 
+        input_path,
+        tmp_path,
         conda_exe=CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2,
     ):
         _run_installer(input_path, installer, install_dir, request=request)
+        # check that the shortcuts are created
         if sys.platform == "win32":
-            # check that the shortcut is created
-            start_menu = (
-                Path(os.environ["USERPROFILE"]) 
-                / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs"
-            )
+            if os.environ.get("CI"):  # GHA runs as admin
+                prefix_path = Path(os.environ["ProgramData"])
+            else:
+                prefix_path = Path(os.environ["AppData"])
+            start_menu = prefix_path / "Microsoft/Windows/Start Menu/Programs"
             print("Shortcuts found:", sorted((start_menu).glob("**/*.lnk")))
-            assert (start_menu / "menuinst-test/menuinst-test.lnk").exists()
+            assert (start_menu / "Package 1/A.lnk").exists()
+            assert (start_menu / "Package 1/B.lnk").exists()
         elif sys.platform == "darwin":
             applications = Path("~/Applications").expanduser()
             print("Shortcuts found:", sorted(applications.glob("**/*.app")))
-            assert (applications / "menuinst-test.app").exists()
+            assert (applications / "A.app").exists()
+            assert (applications / "B.app").exists()
         elif sys.platform == "linux":
             applications = Path("~/.local/share/applications").expanduser()
             print("Shortcuts found:", sorted(applications.glob("**/*.desktop")))
-            assert (applications / "menuinst-test.desktop").exists()
+            assert (applications / "package-1_a.desktop").exists()
+            assert (applications / "package-1_b.desktop").exists()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
