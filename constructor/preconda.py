@@ -133,8 +133,11 @@ def write_files(info, dst_dir):
 
     with open(join(dst_dir, 'urls'), 'w') as fo:
         for url, md5 in all_final_urls_md5s:
-            url = ensure_transmuted_ext(info, url)
-            fo.write('%s#%s\n' % (url, md5))
+            maybe_different_url = ensure_transmuted_ext(info, url)
+            if maybe_different_url != url:  # transmuted, no md5
+                fo.write(f"{maybe_different_url}\n")
+            else:
+                fo.write(f"{url}#{md5}\n")
 
     with open(join(dst_dir, 'urls.txt'), 'w') as fo:
         for url, _ in all_final_urls_md5s:
@@ -239,7 +242,12 @@ def write_env_txt(info, dst_dir, urls):
     ).lstrip()
     with open(join(dst_dir, "env.txt"), "w") as envf:
         envf.write(header)
-        envf.write('\n'.join([f"{url}#{md5}" for url, md5 in urls]))
+        for url, md5 in urls:
+            maybe_different_url = ensure_transmuted_ext(info, url)
+            if maybe_different_url != url:  # transmuted, no md5
+                envf.write(f"{maybe_different_url}\n")
+            else:
+                envf.write(f"{url}#{md5}\n")
 
 
 def write_channels_txt(info, dst_dir, env_config):
