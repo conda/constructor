@@ -113,7 +113,6 @@ jobs:
           flags: integration
       - name: Test with conda-libmamba-solver
         run: |
-          conda activate constructor-dev
           conda install -yq conda-libmamba-solver
           CONDA_SOLVER=libmamba CONDA_VERBOSITY=1 pytest -vv tests/test_examples.py -k noconda
       - name: Check docs are up-to-date
