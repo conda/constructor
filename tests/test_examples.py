@@ -363,12 +363,16 @@ def test_example_scripts(tmp_path, request):
 
 
 @pytest.mark.skipif(
-    Path(CONSTRUCTOR_CONDA_EXE).name.startswith("micromamba"),
+    Path(CONSTRUCTOR_CONDA_EXE or "").name.startswith("micromamba"),
     reason="Micromamba does not implement shortcuts (yet)",
+)
+@pytest.mark.skipif(
+    not CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2,
+    reason="Patched conda-standalone not provided; "
+    "please export CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2=<path>",
 )
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
-    assert CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2 is not None
     assert Path(CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2).exists()
     for installer, install_dir in create_installer(
         input_path,
