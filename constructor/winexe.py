@@ -247,6 +247,25 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
         'INDEX_CACHE': '@cache',
         'REPODATA_RECORD': '@repodata_record.json',
     }
+
+    # These are NSIS predefines and must not be replaced
+    # https://nsis.sourceforge.io/Docs/Chapter5.html#precounter
+    nsis_predefines = [
+        "COUNTER",
+        "DATE",
+        "FILE",
+        "FILEDIR",
+        "FUNCTION",
+        "GLOBAL",
+        "LINE",
+        "MACRO",
+        "PAGEEX",
+        "SECTION",
+        "TIME",
+        "TIMESTAMP",
+        "UNINSTALL",
+    ]
+
     conclusion_text = info.get("conclusion_text", "")
     if conclusion_text:
         conclusion_lines = conclusion_text.strip().splitlines()
@@ -277,7 +296,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
     ppd["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
     ppd["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     data = preprocess(data, ppd)
-    data = fill_template(data, replace)
+    data = fill_template(data, replace, exceptions=nsis_predefines)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
         # Branding /TRIM commannd is unsupported on non win platform
         data_lines = data.split("\n")
