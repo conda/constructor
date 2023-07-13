@@ -42,7 +42,7 @@
 * @conda-bot
 * @pre-commit-ci[bot]
 
-## New Contributors
+### New Contributors
 
 * @RahulARanger made their first contribution in https://github.com/conda/constructor/pull/652
 * @EisW made their first contribution in https://github.com/conda/constructor/pull/656
