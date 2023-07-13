@@ -10,6 +10,8 @@ Authors are sorted alphabetically.
 * Chris Burr
 * Connor Martin
 * Daniel Bast
+* Darryl Miles
+* Deepesha Burse
 * Eric Dill
 * Eric Prestat
 * Faustin Carter
@@ -29,6 +31,7 @@ Authors are sorted alphabetically.
 * Katherine Kinnaman
 * Ken Odegard
 * Marcel Bargull
+* Marco Esters
 * Mariana Meireles
 * Mark Harfouche
 * Martin Durant
@@ -45,10 +48,12 @@ Authors are sorted alphabetically.
 * Ray Donnelly
 * Richard Höchenberger
 * Ryan
+* Sai Hanuma Rahul
 * Sophia Castellarin
 * Thomas Antony
 * Thomas Holder
 * Thomas Robitaille
+* Tino Winkler
 * Tobias Megies
 * Tom Hören
 * Travis E. Oliphant
@@ -61,4 +66,5 @@ Authors are sorted alphabetically.
 * bkreider
 * conda-bot
 * guimondmm
+* pre-commit-ci[bot]
 * y2kbugger
