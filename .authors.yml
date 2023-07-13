@@ -236,7 +236,7 @@
   github: isuruf
 - name: Jannis Leidel
   email: jannis@leidel.info
-  num_commits: 3
+  num_commits: 4
   first_commit: 2021-08-26 05:18:15
   github: jezdez
 - name: Wolf Vollprecht
@@ -254,17 +254,20 @@
   first_commit: 2021-05-24 08:52:40
 - name: conda-bot
   email: ad-team+condabot@anaconda.com
-  num_commits: 15
+  num_commits: 22
   first_commit: 2022-01-25 21:38:28
   alternate_emails:
   - 18747875+conda-bot@users.noreply.github.com
   github: conda-bot
+  aliases:
+  - Conda Bot
+  - conda bot
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
   aliases:
   - Jaime RGP
   - jaimergp
-  num_commits: 42
+  num_commits: 50
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören
@@ -332,3 +335,27 @@
   num_commits: 1
   first_commit: 2023-01-31 11:23:34
   github: JoelStansbury
+- name: Tino Winkler
+  email: tino.winkler@gmx.de
+  num_commits: 1
+  first_commit: 2023-03-23 09:42:34
+- name: Sai Hanuma Rahul
+  email: saihanumarahul66@gmail.com
+  num_commits: 1
+  first_commit: 2023-02-28 16:59:22
+- name: Marco Esters
+  email: mesters@anaconda.com
+  num_commits: 3
+  first_commit: 2023-05-12 11:44:12
+- name: Darryl Miles
+  email: darryl.miles@darrylmiles.org
+  num_commits: 1
+  first_commit: 2023-05-29 17:24:28
+- name: Deepesha Burse
+  email: 87636253+deepeshaburse@users.noreply.github.com
+  num_commits: 1
+  first_commit: 2023-05-29 16:29:15
+- name: pre-commit-ci[bot]
+  email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
+  num_commits: 6
+  first_commit: 2023-05-02 12:01:43
