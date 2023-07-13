@@ -929,7 +929,7 @@ Function OnDirectoryLeave
     Pop $R9
 
     # List of characters not allowed anywhere in $INSTDIR
-    Push "^%!=,"
+    Push "^%!=,()"
     Push $INSTDIR
     Call StrCSpn
     Pop $R0
