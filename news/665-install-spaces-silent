@@ -16,4 +16,4 @@
 
 ### Other
 
-* Windows: Always warn when installing into a path with spaces (#665)
+* Windows: Always warn when installing into a path with spaces. (#665)

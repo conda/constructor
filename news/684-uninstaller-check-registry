@@ -1,6 +1,6 @@
 ### Enhancements
 
-* The Windows uninstaller will check the registry for `$INSTDIR` before deleting hardcoded registry keys (#684)
+* The Windows uninstaller will check the registry for `$INSTDIR` before deleting hardcoded registry keys. (#684)
 
 ### Bug fixes
 
