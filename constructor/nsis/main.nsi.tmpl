@@ -167,6 +167,7 @@ Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.OnDirectoryLeave
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
@@ -490,9 +491,9 @@ Function .onInit
     # If we're a 64-bit installer, make sure it's 64-bit Windows
     ${IfNot} ${RunningX64}
         MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "This installer is for a 64-bit version for @NAME@$\n\
+            "This installer is for a 64-bit version for ${NAME}$\n\
             but your system is 32-bit. Please use the 32-bit Windows$\n\
-            @NAME@ installer." \
+            ${NAME} installer." \
             /SD IDOK
         Abort
     ${EndIf}
@@ -671,6 +672,60 @@ Function .onInit
 FunctionEnd
 
 Function un.onInit
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+
+    # Resolve INSTDIR
+    GetFullPathName $0 $INSTDIR
+    # If the directory does not exist or cannot be resolved, $0 will be empty
+    StrCmp $0 "" invalid_dir
+    StrCpy $INSTDIR $0
+
+    # Never run the uninstaller when $INSTDIR points at system-critical directories
+
+    StrLen $InstDirLen $INSTDIR
+    # INSTDIR is a full path and has no trailing backslash,
+    # so if its length is 2, it is pointed at a system root
+    StrCmp $InstdirLen 2 invalid_dir
+
+    # Never delete anything inside Windows
+    StrCpy $0 $INSTDIR 7 3
+    StrCmp $0 "Windows" invalid_dir
+
+    StrCpy $0 "ALLUSERSPROFILE APPDATA LOCALAPPDATA PROGRAMDATA PROGRAMFILES PROGRAMFILES(x86) PUBLIC SYSTEMDRIVE SYSTEMROOT USERPROFILE"
+    StrCpy $1 1
+    loop_critical:
+        ${WordFind} $0 " " "E+$1" $2
+        IfErrors endloop_critical
+        ReadEnvStr $3 $2
+        StrCmp $3 $INSTDIR invalid_dir
+        IntOp $1 $1 + 1
+        goto loop_critical
+    endloop_critical:
+
+    # Primitive check to see that $INSTDIR points to a conda directory
+    StrCpy $0 "_conda.exe conda-meta\history"
+    StrCpy $1 1
+    loop_conda:
+        ${WordFind} $0 " " "E+$1" $2
+        IfErrors endloop_conda
+        IfFileExists $INSTDIR\$2 0 invalid_dir
+        IntOp $1 $1 + 1
+        goto loop_conda
+    endloop_conda:
+
+    # All checks have passed
+    goto valid_dir
+
+    invalid_dir:
+        MessageBox MB_OK|MB_ICONSTOP \
+            "Error: $INSTDIR is not a valid conda directory. Please run the uninstaller from a conda directory." \
+            /SD IDABORT
+        abort
+    valid_dir:
+
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
     SetRegView @BITS@
@@ -691,6 +746,11 @@ Function un.onInit
     ${Else}
         SetShellVarContext All
     ${EndIf}
+
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
 FunctionEnd
 
 # http://nsis.sourceforge.net/Check_for_spaces_in_a_directory_path
@@ -940,6 +1000,17 @@ Function .onVerifyInstDir
     PathGood:
 FunctionEnd
 
+Function un.OnDirectoryLeave
+    MessageBox MB_YESNO \
+	    "Are you sure you want to remove '$INSTDIR' and all of its contents?" \
+	    /SD IDYES \
+	    IDYES confirmed_yes IDNO confirmed_no
+    confirmed_no:
+        MessageBox MB_OK|MB_ICONSTOP "Uninstallation aborted by user." /SD IDOK
+	Quit
+    confirmed_yes:
+FunctionEnd
+
 # Make function available for both installer and uninstaller
 # Uninstaller functions need an `un.` prefix, so we use a macro to do both
 # see https://nsis.sourceforge.io/Sharing_functions_between_Installer_and_Uninstaller
@@ -995,6 +1066,15 @@ Section "Install"
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
     File "@NSIS_DIR@\_system_path.py"
+
+    # Resolve INSTDIR so that paths and registry keys do not contain '..' or similar strings.
+    # $0 is empty if the directory doesn't exist, but the File commands should have created it already.
+    GetFullPathName $0 $INSTDIR
+    ${If} $0 == ""
+	MessageBox MB_ICONSTOP "Error resolving installation directory." /SD IDABORT
+	Quit
+    ${EndIf}
+    StrCpy $INSTDIR $0
 
     ReadEnvStr $0 SystemRoot
     # set PATH for the installer process, so that MSVC runtimes get found OK

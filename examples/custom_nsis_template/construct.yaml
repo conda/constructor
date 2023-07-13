@@ -1,0 +1,12 @@
+name: custom
+version: X
+ignore_duplicate_files: True
+installer_filename: {{ name }}-installer.exe
+installer_type: exe
+license_file: EULA.txt
+
+nsis_template: custom.nsi.tmpl
+
+# This is required, even if we include no specs in this installer.
+channels:
+  - https://repo.anaconda.com/pkgs/main
