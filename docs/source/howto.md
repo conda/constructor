@@ -80,7 +80,7 @@ Many `constructor` installers ship `conda` (Miniconda, Miniforge, etc), and offe
 
 ```bash
 $ conda init --reverse --all
-``` 
+```
 
 Use the `--dry-run` flag if you want to check what things will be reverted before actually doing it.
 :::
