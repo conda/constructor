@@ -706,7 +706,7 @@ Function un.onInit
     endloop_critical:
 
     # Primitive check to see that $INSTDIR points to a conda directory
-    StrCpy $0 "_conda.exe conda-meta\history Scripts\activate.bat"
+    StrCpy $0 "_conda.exe conda-meta\history"
     StrCpy $1 1
     loop_conda:
         ${WordFind} $0 " " "E+$1" $2
