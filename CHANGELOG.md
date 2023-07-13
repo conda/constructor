@@ -42,7 +42,14 @@
 * @conda-bot
 * @pre-commit-ci[bot]
 
+## New Contributors
 
+* @RahulARanger made their first contribution in https://github.com/conda/constructor/pull/652
+* @EisW made their first contribution in https://github.com/conda/constructor/pull/656
+* @pre-commit-ci made their first contribution in https://github.com/conda/constructor/pull/667
+* @marcoesters made their first contribution in https://github.com/conda/constructor/pull/664
+* @deepeshaburse made their first contribution in https://github.com/conda/constructor/pull/663
+* @dlmiles made their first contribution in https://github.com/conda/constructor/pull/669
 
 ## 2023-02-07   3.4.3:
 ### Bug fixes
