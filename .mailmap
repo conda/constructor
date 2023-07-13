@@ -18,6 +18,8 @@ Cheng H. Lee <chenghlee@users.noreply.github.com>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Connor Martin <connormartin7@gmail.com>
 Daniel Bast <2790401+dbast@users.noreply.github.com>
+Darryl Miles <darryl.miles@darrylmiles.org>
+Deepesha Burse <87636253+deepeshaburse@users.noreply.github.com>
 Eric Dill <thedizzle@gmail.com>
 Eric Prestat <eric.prestat@gmail.com>
 Faustin Carter <faustin.carter@gmail.com> Faustin Carter <fwcarter@hrl.com>
@@ -40,6 +42,7 @@ Kale Franz <kfranz@continuum.io> Kale Franz <kalefranz@users.noreply.github.com>
 Katherine Kinnaman <kkinnaman@anaconda.com>
 Ken Odegard <kodegard@anaconda.com>
 Marcel Bargull <marcel.bargull@udo.edu>
+Marco Esters <mesters@anaconda.com>
 Mariana Meireles <marian.meireles@gmail.com>
 Mark Harfouche <mark.harfouche@gmail.com>
 Martin Durant <martin.durant@utoronto.ca>
@@ -56,10 +59,12 @@ Rachel Rigdon <rrigdon@anaconda.com> rrigdon <45607889+rrigdon@users.noreply.git
 Ray Donnelly <mingw.android@gmail.com>
 Richard Höchenberger <richard.hoechenberger@gmail.com>
 Ryan <rkeith@anaconda.com>
+Sai Hanuma Rahul <saihanumarahul66@gmail.com>
 Sophia Castellarin <scastellarin@anaconda.com> soapy1 <scastellarin@anaconda.com>
 Thomas Antony <tantony@purdue.edu>
 Thomas Holder <thomas.holder@schrodinger.com>
 Thomas Robitaille <thomas.robitaille@gmail.com>
+Tino Winkler <tino.winkler@gmx.de>
 Tobias Megies <megies@geophysik.uni-muenchen.de>
 Tom Hören <horen.tom@gmail.com>
 Travis E. Oliphant <travis@continuum.io>
@@ -70,6 +75,8 @@ Wolfgang Ulmer <wulmer@web.de> Ulmer Wolfgang (CR/AEE3) <wolfgang.Ulmer@de.bosch
 XuehaiPan <XuehaiPan@pku.edu.cn>
 astaric <anze.staric@gmail.com>
 bkreider <github-bk@drrr.net>
-conda-bot <ad-team+condabot@anaconda.com> conda-bot <18747875+conda-bot@users.noreply.github.com>
+conda-bot <ad-team+condabot@anaconda.com> Conda Bot <18747875+conda-bot@users.noreply.github.com>
+conda-bot <ad-team+condabot@anaconda.com> conda bot <18747875+conda-bot@users.noreply.github.com>
 guimondmm <guimondmm@gmail.com>
+pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 y2kbugger <git@y2kbugger.com>

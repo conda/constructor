@@ -26,12 +26,12 @@ def filename_dist(dist):
         return dist
 
 
-def fill_template(data, d):
+def fill_template(data, d, exceptions=[]):
     pat = re.compile(r'__(\w+)__')
 
     def replace(match):
         key = match.group(1)
-        return d[key]
+        return key if key in exceptions else d[key]
 
     return pat.sub(replace, data)
 
