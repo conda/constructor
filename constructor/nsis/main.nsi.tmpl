@@ -161,10 +161,13 @@ Page Custom mui_AnaCustomOptions_Show
 !define MUI_FINISHPAGE_TEXT __CONCLUSION_TEXT__
 #endif
 
+#if custom_conclusion
 # Custom conclusion file(s)
 @CUSTOM_CONCLUSION_FILE@
-
+#else
 !insertmacro MUI_PAGE_FINISH
+#endif
+
 
 !insertmacro MUI_UNPAGE_WELCOME
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.OnDirectoryLeave
