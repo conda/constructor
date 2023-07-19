@@ -230,7 +230,7 @@ def _precs_from_environment(environment, input_dir):
         environment = locate_prefix_by_name(environment)
     pdata = PrefixData(environment)
     pdata.load()
-    return list(pdata.iter_records())
+    return list(pdata.iter_records_sorted())
 
 
 def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(),
