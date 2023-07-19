@@ -10,11 +10,13 @@ fcp (fetch conda packages) module
 import json
 import logging
 import os
+import shutil
 import sys
 import tempfile
 from collections import defaultdict
 from itertools import groupby
 from os.path import abspath, expanduser, isdir, isfile, join
+from subprocess import check_call
 
 from constructor.utils import filename_dist, hash_files
 
@@ -268,7 +270,6 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
                 sys.exit("CONDA_EXE env variable is empty. Need to activate a conda env.")
     # make the environment, if needed
     if environment_file:
-        from subprocess import check_call
         environment = tempfile.mkdtemp()
         new_env = os.environ.copy()
         new_env["CONDA_SUBDIR"] = platform
@@ -325,9 +326,9 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         _show(name, version, platform, download_dir, precs, more_recent_versions)
 
     if environment_file:
-        import shutil
-
-        shutil.rmtree(environment)
+        # Windows has issues with deleting some stuff if still in use;
+        # since this is a temporary directory, it's okay-ish to ignore errors
+        shutil.rmtree(environment, ignore_errors=True)
 
     return precs
 
