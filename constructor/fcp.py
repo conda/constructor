@@ -274,15 +274,20 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         new_env = os.environ.copy()
         new_env["CONDA_SUBDIR"] = platform
         # use conda env for yaml, and standard conda create otherwise
-        which = (
+        subcommand = (
             ["env", "create"]
             if environment_file.endswith(('.yml', '.yaml'))
             else ["create", "--yes"]
         )
+        if channel_urls:
+            logger.warning(
+                "Channels passed in construct.yaml won't be used "
+                "during environment creation."
+            )
         check_call(
             [
                 user_conda,
-                *which,
+                *subcommand,
                 "--file",
                 environment_file,
                 "--prefix",
