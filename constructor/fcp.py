@@ -14,13 +14,14 @@ import sys
 import tempfile
 from collections import defaultdict
 from itertools import groupby
-from os.path import isdir, isfile, join, splitext, abspath, expanduser
+from os.path import abspath, expanduser, isdir, isfile, join
 
 from constructor.utils import filename_dist, hash_files
 
 from .conda_interface import (
     PackageCacheData,
     PackageCacheRecord,
+    PrefixData,
     PrefixGraph,
     Solver,
     SubdirData,
@@ -31,9 +32,8 @@ from .conda_interface import (
     conda_replace_context_default,
     download,
     env_vars,
+    locate_prefix_by_name,
     read_paths_json,
-    locate_prefix_by_name, 
-    PrefixData,
 )
 
 logger = logging.getLogger(__name__)
@@ -273,9 +273,24 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         new_env = os.environ.copy()
         new_env["CONDA_SUBDIR"] = platform
         # use conda env for yaml, and standard conda create otherwise
-        which = ["env", "create"] if environment_file.endswith(('.yml', '.yaml')) else ["create", "--yes"]
-        check_call([user_conda, *which, "--file", environment_file,
-                    "--prefix", environment, "--quiet"], universal_newlines=True, env=new_env)
+        which = (
+            ["env", "create"]
+            if environment_file.endswith(('.yml', '.yaml'))
+            else ["create", "--yes"]
+        )
+        check_call(
+            [
+                user_conda,
+                *which,
+                "--file",
+                environment_file,
+                "--prefix",
+                environment,
+                "--quiet",
+            ],
+            universal_newlines=True,
+            env=new_env,
+        )
 
     # obtain the package records
     if environment:

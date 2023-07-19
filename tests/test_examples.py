@@ -12,6 +12,7 @@ from typing import Iterable, Optional, Tuple
 
 import pytest
 from conda.base.context import context
+
 from constructor.osxpkg import calculate_install_dir
 
 try:
@@ -440,7 +441,7 @@ def test_example_from_explicit(tmp_path, request):
         if installer.suffix == ".pkg" and not ON_CI:
             return
         out = subprocess.check_output(
-            ["conda", "list", "-p", install_dir, "--explicit", "--md5"], 
+            ["conda", "list", "-p", install_dir, "--explicit", "--md5"],
             text=True,
         )
         assert out == (input_path / "explicit_linux-64.txt").read_text()
