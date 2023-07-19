@@ -1,5 +1,56 @@
 [//]: # (current developments)
 
+## 2023-07-13   3.4.4:
+### Enhancements
+
+* Add compatibility for the new repodata interface in conda 23.5. (#676)
+* The Windows uninstaller will check the registry for `$INSTDIR` before deleting hardcoded registry keys. (#684)
+
+### Bug fixes
+
+* URLs in generated `envs.txt` will now use the correct URL given in `channel_remap`, instead of the incorrect, installer-build-time only value. (#654 via #656)
+* Fix conda 23.1 incompatibilities when _writing_ repodata.json files.
+  This doesn't guarantee compatibility with `conda-standalone 23.x`, though.
+  (#628 via #659).
+* Improve parsing of `yes/no` prompts in SH installers. (#664)
+* Ensure error mesage is emitted when `$HOME` is not writable in shell installers. (#669)
+* In `.sh` installers, use `/opt/NAME` as the default prefix when `$HOME` is not set. (#677 via #678)
+* Adjust `@EXPLICIT` input file so that `micromamba` correctly finds the cache entries of transmuted packages. (#674 via #692)
+* Prevent Windows uninstallers from deleting directories that do not correspond to the installation directory. (#696)
+
+### Docs
+
+* Fix "Edit Source Link" references and other minor corrections. (#652)
+* Document the CLI flags used by the installers generated with `constructor`. (#663)
+
+### Other
+
+* Drop `ruamel_yaml` and use `ruamel.yaml` instead. (#633 via #660)
+* Windows: Always warn when installing into a path with spaces. (#665)
+* Refactor `run_examples.py` as `test/test_examples.py` so it uses `pytest`. (#641 via #675)
+* Nightly builds will be uploaded to the `conda-canary` channel. (#612 via #675)
+
+### Contributors
+
+* @dlmiles
+* @deepeshaburse
+* @jaimergp
+* @jezdez
+* @marcoesters
+* @RahulARanger
+* @EisW
+* @conda-bot
+* @pre-commit-ci[bot]
+
+### New Contributors
+
+* @RahulARanger made their first contribution in https://github.com/conda/constructor/pull/652
+* @EisW made their first contribution in https://github.com/conda/constructor/pull/656
+* @pre-commit-ci made their first contribution in https://github.com/conda/constructor/pull/667
+* @marcoesters made their first contribution in https://github.com/conda/constructor/pull/664
+* @deepeshaburse made their first contribution in https://github.com/conda/constructor/pull/663
+* @dlmiles made their first contribution in https://github.com/conda/constructor/pull/669
+
 ## 2023-02-07   3.4.3:
 ### Bug fixes
 

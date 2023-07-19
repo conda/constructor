@@ -89,26 +89,24 @@ if conda_interface_type == 'conda':
             pass
 
     def get_repodata(url):
-        if CONDA_MAJOR_MINOR >= (4, 5):
+        if CONDA_MAJOR_MINOR >= (23, 5):
+            from conda.core.subdir_data import SubdirData as _SubdirData
+            from conda.models.channel import Channel
+            subdir_data = _SubdirData(Channel(url))
+            raw_repodata_str, _ = subdir_data.repo_fetch.fetch_latest()
+        else:
+            # Backwards compatibility: for conda 4.6+
             from conda.core.subdir_data import fetch_repodata_remote_request
             raw_repodata_str = fetch_repodata_remote_request(url, None, None)
-        elif CONDA_MAJOR_MINOR >= (4, 4):
-            from conda.core.repodata import fetch_repodata_remote_request
-            raw_repodata_str = fetch_repodata_remote_request(url, None, None)
-        elif CONDA_MAJOR_MINOR >= (4, 3):
-            from conda.core.repodata import fetch_repodata_remote_request
-            repodata_obj = fetch_repodata_remote_request(None, url, None, None)
-            raw_repodata_str = json.dumps(repodata_obj)
-        else:
-            raise NotImplementedError("unsupported version of conda: %s" % CONDA_INTERFACE_VERSION)
 
-        # noarch-only repos are valid. In this case, the architecture specific channel will
-        # return None
-        if raw_repodata_str is None:
+        # noarch-only repos are valid. if the native subdir is not present,
+        # we might get an empty repodata back. In that case, we need to add the minimal
+        # info to make it valid for the rest of constructor.
+        if not raw_repodata_str or raw_repodata_str == r'{}':
             full_repodata = {
                 '_url': url,
                 'info': {
-                    'subdir': cc_platform
+                    'subdir': url.rstrip('/').split('/')[-1]
                 },
                 'packages': {},
                 'packages.conda': {},

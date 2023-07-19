@@ -66,6 +66,8 @@ Unicode "true"
                    \Uninstall\${UNINSTALL_NAME}"
 
 var /global INSTDIR_JUSTME
+var /global INSTALLER_VERSION
+var /global INSTALLER_NAME_FULL
 
 # UAC shield overlay
 !ifndef BCM_SETSHIELD
@@ -165,6 +167,7 @@ Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_WELCOME
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.OnDirectoryLeave
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
@@ -488,9 +491,9 @@ Function .onInit
     # If we're a 64-bit installer, make sure it's 64-bit Windows
     ${IfNot} ${RunningX64}
         MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "This installer is for a 64-bit version for @NAME@$\n\
+            "This installer is for a 64-bit version for ${NAME}$\n\
             but your system is 32-bit. Please use the 32-bit Windows$\n\
-            @NAME@ installer." \
+            ${NAME} installer." \
             /SD IDOK
         Abort
     ${EndIf}
@@ -669,6 +672,60 @@ Function .onInit
 FunctionEnd
 
 Function un.onInit
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+
+    # Resolve INSTDIR
+    GetFullPathName $0 $INSTDIR
+    # If the directory does not exist or cannot be resolved, $0 will be empty
+    StrCmp $0 "" invalid_dir
+    StrCpy $INSTDIR $0
+
+    # Never run the uninstaller when $INSTDIR points at system-critical directories
+
+    StrLen $InstDirLen $INSTDIR
+    # INSTDIR is a full path and has no trailing backslash,
+    # so if its length is 2, it is pointed at a system root
+    StrCmp $InstdirLen 2 invalid_dir
+
+    # Never delete anything inside Windows
+    StrCpy $0 $INSTDIR 7 3
+    StrCmp $0 "Windows" invalid_dir
+
+    StrCpy $0 "ALLUSERSPROFILE APPDATA LOCALAPPDATA PROGRAMDATA PROGRAMFILES PROGRAMFILES(x86) PUBLIC SYSTEMDRIVE SYSTEMROOT USERPROFILE"
+    StrCpy $1 1
+    loop_critical:
+        ${WordFind} $0 " " "E+$1" $2
+        IfErrors endloop_critical
+        ReadEnvStr $3 $2
+        StrCmp $3 $INSTDIR invalid_dir
+        IntOp $1 $1 + 1
+        goto loop_critical
+    endloop_critical:
+
+    # Primitive check to see that $INSTDIR points to a conda directory
+    StrCpy $0 "_conda.exe conda-meta\history"
+    StrCpy $1 1
+    loop_conda:
+        ${WordFind} $0 " " "E+$1" $2
+        IfErrors endloop_conda
+        IfFileExists $INSTDIR\$2 0 invalid_dir
+        IntOp $1 $1 + 1
+        goto loop_conda
+    endloop_conda:
+
+    # All checks have passed
+    goto valid_dir
+
+    invalid_dir:
+        MessageBox MB_OK|MB_ICONSTOP \
+            "Error: $INSTDIR is not a valid conda directory. Please run the uninstaller from a conda directory." \
+            /SD IDABORT
+        abort
+    valid_dir:
+
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
     SetRegView @BITS@
@@ -689,6 +746,11 @@ Function un.onInit
     ${Else}
         SetShellVarContext All
     ${EndIf}
+
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
 FunctionEnd
 
 # http://nsis.sourceforge.net/Check_for_spaces_in_a_directory_path
@@ -827,7 +889,9 @@ Function OnDirectoryLeave
     Call CheckForSpaces
     Pop $R0 # The function returns the number of spaces found in the input string.
 
-#if check_path_spaces is True
+    Push $R7
+    Push $R8
+    Push $R9
     # Check if any spaces exist in $INSTDIR.
     StrCmp $R0 0 NoSpaces
 
@@ -837,21 +901,35 @@ Function OnDirectoryLeave
         Goto +2
           StrCpy $R1 "s"
 
-        # Show message box then take the user back to the Directory page.
-        MessageBox MB_OK|MB_ICONINFORMATION \
-            "Warning: 'Destination Folder' contains $R0 space$R1.$\n \
-             This can cause problems with several Conda packages.$\n \
-             Please consider removing the space$R1." \
-            /SD IDOK
         ${If} ${Silent}
-            DetailPrint "::error:: 'Destination folder' contains $R0 space$R1."
-            abort
+          StrCpy $R7 " "
+        ${Else}
+          StrCpy $R7 "$\n"
         ${EndIf}
-    NoSpaces:
+        StrCpy $R8 "'Destination Folder' contains $R0 space$R1.$R7This can cause problems with several conda packages.$R7"
+#if check_path_spaces is True
+            StrCpy $R8 "$R8Please remove the space$R1 from the destination folder."
+            StrCpy $R9 "Error"
+#else
+            StrCpy $R8 "$R8Please consider removing the space$R1."
+            StrCpy $R9 "Warning"
 #endif
+        # Show message box then take the user back to the Directory page.
+        ${If} ${Silent}
+            DetailPrint "::$R9:: $R8"
+        ${Else}
+            MessageBox MB_OK|MB_ICONINFORMATION "$R9: $R8" /SD IDOK
+        ${EndIf}
+#if check_path_spaces is True
+            abort
+#endif
+    NoSpaces:
+    Pop $R7
+    Pop $R8
+    Pop $R9
 
     # List of characters not allowed anywhere in $INSTDIR
-    Push "^%!=,"
+    Push "^%!=,()"
     Push $INSTDIR
     Call StrCSpn
     Pop $R0
@@ -922,6 +1000,17 @@ Function .onVerifyInstDir
     PathGood:
 FunctionEnd
 
+Function un.OnDirectoryLeave
+    MessageBox MB_YESNO \
+	    "Are you sure you want to remove '$INSTDIR' and all of its contents?" \
+	    /SD IDYES \
+	    IDYES confirmed_yes IDNO confirmed_no
+    confirmed_no:
+        MessageBox MB_OK|MB_ICONSTOP "Uninstallation aborted by user." /SD IDOK
+	Quit
+    confirmed_yes:
+FunctionEnd
+
 # Make function available for both installer and uninstaller
 # Uninstaller functions need an `un.` prefix, so we use a macro to do both
 # see https://nsis.sourceforge.io/Sharing_functions_between_Installer_and_Uninstaller
@@ -977,6 +1066,15 @@ Section "Install"
     SetOutPath "$INSTDIR\Lib"
     File "@NSIS_DIR@\_nsis.py"
     File "@NSIS_DIR@\_system_path.py"
+
+    # Resolve INSTDIR so that paths and registry keys do not contain '..' or similar strings.
+    # $0 is empty if the directory doesn't exist, but the File commands should have created it already.
+    GetFullPathName $0 $INSTDIR
+    ${If} $0 == ""
+	MessageBox MB_ICONSTOP "Error resolving installation directory." /SD IDABORT
+	Quit
+    ${EndIf}
+    StrCpy $INSTDIR $0
 
     ReadEnvStr $0 SystemRoot
     # set PATH for the installer process, so that MSVC runtimes get found OK
@@ -1185,10 +1283,36 @@ Section "Uninstall"
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
 
+    # Read variables the uninstaller needs from the registry
+    StrCpy $R0 "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+    StrLen $R1 "Uninstall-${NAME}.exe"
+    IntOp $R1 $R1 + 3
+    StrCpy $0 0
+    loop_path:
+        EnumRegKey $1 SHCTX $R0 $0
+        StrCmp $1 "" endloop_path
+        StrCpy $2 "$R0\$1"
+        ReadRegStr $4 SHCTX $2 "UninstallString"
+        StrLen $5 $4
+        IntOp $5 $5 - $R1
+        StrCpy $4 $4 $5 1
+        ${If} $4 == $INSTDIR
+            StrCpy $INSTALLER_NAME_FULL $1
+            ReadRegStr $INSTALLER_VERSION SHCTX $2 "DisplayVersion"
+            goto endloop_path
+        ${EndIf}
+        IntOp $0 $0 + 1
+        goto loop_path
+    endloop_path:
+
     # Extra info for pre_uninstall scripts
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
+    StrCpy $0 ${VERSION}
+    ${If} $INSTALLER_VERSION != ""
+	StrCpy $0 $INSTALLER_VERSION
+    ${EndIf}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "$0").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
@@ -1202,13 +1326,26 @@ Section "Uninstall"
     # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
 
-    DeleteRegKey SHCTX "${UNINSTREG}"
+    ${If} $INSTALLER_NAME_FULL != ""
+        DeleteRegKey SHCTX "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTALLER_NAME_FULL"
+    ${EndIf}
+
     # If Anaconda was registered as the official Python for this version,
     # remove it from the registry
-    ReadRegStr $0 SHCTX "Software\Python\PythonCore\${PY_VER}\InstallPath" ""
-    ${If} $0 == "$INSTDIR"
-        DeleteRegKey SHCTX "Software\Python\PythonCore\${PY_VER}"
-    ${EndIf}
+    StrCpy $R0 "SOFTWARE\Python\PythonCore"
+    StrCpy $0 0
+    loop_py:
+        EnumRegKey $1 SHCTX $R0 $0
+        StrCmp $1 "" endloop_py
+        ReadRegStr $2 SHCTX "$R0\$1\InstallPath" ""
+        ${If} $2 == $INSTDIR
+            StrCpy $R1 $1
+            DeleteRegKey SHCTX "$R0\$1"
+            goto endloop_py
+        ${EndIf}
+        IntOp $0 $0 + 1
+        goto loop_py
+    endloop_py:
 SectionEnd
 
 !if '@SIGNTOOL_COMMAND@' != ''

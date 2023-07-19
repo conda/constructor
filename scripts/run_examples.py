@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import warnings
 from datetime import timedelta
 from pathlib import Path
 
@@ -18,6 +19,13 @@ try:
     COV_CMD = ['coverage', 'run', '--branch', '--append', '-m']
 except ImportError:
     COV_CMD = []
+
+
+warnings.warn(
+    "This script is now deprecated and will be removed soon. "
+    "Please use tests/test_examples.py with pytest.",
+    DeprecationWarning
+)
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -200,7 +208,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                     with open(os.path.join(env_dir, "install.log"), encoding="utf-16-le") as f:
                         for line in f:
                             log_is_empty = False
-                            if ":error:" in line:
+                            if ":error:" in line.lower():
                                 win_error_lines.append(line)
                                 test_errored = 1
                     if log_is_empty:

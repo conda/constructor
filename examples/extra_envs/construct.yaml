@@ -31,3 +31,5 @@ build_outputs:
   - licenses:
       include_text: True
       text_errors: replace
+initialize_by_default: false
+register_python: False

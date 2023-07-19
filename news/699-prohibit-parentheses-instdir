@@ -16,4 +16,4 @@
 
 ### Other
 
-* Drop `ruamel_yaml` and use `ruamel.yaml` instead. (#633 via #660)
+* Prohibit parentheses in $INSTDIR (#699)
