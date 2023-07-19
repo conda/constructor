@@ -97,6 +97,9 @@ If you want to perform the uninstallation steps manually, you can:
 2. In some installations, remove the entries added to the registry. System installs will use `HKEY_LOCAL_MACHINE` as the top level key; user installs will use `HKEY_CURRENT_USER`. You might find these items:
     - Uninstaller information: `TOP_LEVEL_KEY\Software\Microsoft\Windows\CurrentVersion\Uninstall\<INSTALLATION_NAME>`.
     - Python information: `TOP_LEVEL_KEY\Software\Python\PythonCore\<PYTHON_VERSION>`. Verify that these entries correspond to the installation directory you removed in step 1.
+    - PATH modifications. You'll need to remove the entries corresponding to the installation directory, but leave the other locations intact. This is better handled via the UI available in the Control Panel (follow [these instructions](https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html)). The actual registry keys (in case you are curious) are located in:
+        - System install: `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\PATH`.
+        - User install: `HKEY_CURRENT_USER\Environment\PATH`
 3. In some installations, remove the associated shortcuts under `%APPDATA%\Microsoft\Windows\Start Menu\Programs\` (user installs) or `%PROGRAMDATA%\Microsoft\Windows\Start Menu\Programs\` (system installs). You can enter these paths directly in the Windows Explorer address bar to open them.
 
 ### macOS and Linux
