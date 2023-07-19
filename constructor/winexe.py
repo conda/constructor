@@ -274,6 +274,15 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
         # for the newlines business
         replace['CONCLUSION_TEXT'] = "\r\n".join(conclusion_lines[1:])
 
+    for key in ['welcome_file', 'conclusion_file']:
+        value = info.get(key, "")
+        if not value.endswith(".nsi"):
+            logger.warning(
+                "On Windows, %s must be a .nsi file; %s will be ignored.",
+                key,
+                value,
+            )
+
     for key, value in replace.items():
         if value.startswith('@'):
             value = join(dir_path, value[1:])
