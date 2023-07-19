@@ -2,3 +2,5 @@ name: EnvironmentYAML
 version: X
 installer_type: all
 environment_file: env.yaml
+initialize_by_default: false
+register_python: False
