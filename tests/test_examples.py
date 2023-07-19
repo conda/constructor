@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import pytest
-
+from conda.base.context import context
 from constructor.osxpkg import calculate_install_dir
 
 try:
@@ -430,3 +430,17 @@ def test_example_from_env_yaml(tmp_path, request):
         data = json.loads(out)
         for pkg in data:
             assert pkg["channel"] != "pypi"
+
+
+@pytest.mark.skipif(context.subdir != "linux-64", reason="Linux x64 only")
+def test_example_from_explicit(tmp_path, request):
+    input_path = _example_path("from_explicit")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        out = subprocess.check_output(
+            ["conda", "list", "-p", install_dir, "--explicit", "--md5"], 
+            text=True,
+        )
+        assert out == (input_path / "explicit_linux-64.txt").read_text()

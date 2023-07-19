@@ -1,0 +1,4 @@
+name: Explicit
+version: X
+installer_type: all
+environment_file: explicit_linux-64.txt
