@@ -1,6 +1,6 @@
 name: MinicondaX
 version: X
 installer_type: all
-environment: ./tmp_prefix_fromenv
+environment: {{ os.environ.get("CONSTRUCTOR_TEST_EXISTING_ENV", os.environ["CONDA_PREFIX"]) }}
 channels:
   - http://repo.anaconda.com/pkgs/main/
