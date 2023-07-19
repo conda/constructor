@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import subprocess
@@ -12,6 +11,7 @@ from typing import Iterable, Optional, Tuple
 
 import pytest
 from conda.base.context import context
+from conda.core.prefix_data import PrefixData
 
 from constructor.osxpkg import calculate_install_dir
 
@@ -394,7 +394,9 @@ def test_example_use_channel_remap(tmp_path, request):
 
 def test_example_from_existing_env(tmp_path, request):
     input_path = _example_path("from_existing_env")
-    subprocess.check_call(["conda", "create", "-p", tmp_path / "env", "-y", "python"])
+    subprocess.check_call(
+        [sys.executable, "-mconda", "create", "-p", tmp_path / "env", "-y", "python"]
+    )
     for installer, install_dir in create_installer(
         input_path,
         tmp_path,
@@ -403,9 +405,7 @@ def test_example_from_existing_env(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         if installer.suffix == ".pkg" and not ON_CI:
             return
-        out = subprocess.check_output(["conda", "list", "-p", install_dir, "--json"], text=True)
-        data = json.loads(out)
-        for pkg in data:
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
             assert pkg["channel"] != "pypi"
 
 
@@ -415,9 +415,7 @@ def test_example_from_env_txt(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         if installer.suffix == ".pkg" and not ON_CI:
             return
-        out = subprocess.check_output(["conda", "list", "-p", install_dir, "--json"], text=True)
-        data = json.loads(out)
-        for pkg in data:
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
             assert pkg["channel"] != "pypi"
 
 
@@ -427,9 +425,7 @@ def test_example_from_env_yaml(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         if installer.suffix == ".pkg" and not ON_CI:
             return
-        out = subprocess.check_output(["conda", "list", "-p", install_dir, "--json"], text=True)
-        data = json.loads(out)
-        for pkg in data:
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
             assert pkg["channel"] != "pypi"
 
 
@@ -441,7 +437,7 @@ def test_example_from_explicit(tmp_path, request):
         if installer.suffix == ".pkg" and not ON_CI:
             return
         out = subprocess.check_output(
-            ["conda", "list", "-p", install_dir, "--explicit", "--md5"],
+            [sys.executable, "-mconda", "list", "-p", install_dir, "--explicit", "--md5"],
             text=True,
         )
         assert out == (input_path / "explicit_linux-64.txt").read_text()
