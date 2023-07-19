@@ -1,4 +1,4 @@
-name: MinicondaX
+name: Existing
 version: X
 installer_type: all
 environment: {{ os.environ.get("CONSTRUCTOR_TEST_EXISTING_ENV", os.environ["CONDA_PREFIX"]) }}

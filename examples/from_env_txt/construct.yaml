@@ -1,4 +1,4 @@
-name: MinicondaX
+name: EnvironmentTXT
 version: X
 installer_type: all
 environment_file: env.txt

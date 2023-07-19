@@ -1,4 +1,4 @@
-name: MinicondaX
+name: EnvironmentYAML
 version: X
 installer_type: all
 environment_file: env.yaml
