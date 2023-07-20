@@ -276,7 +276,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
 
     for key in ['welcome_file', 'conclusion_file']:
         value = info.get(key, "")
-        if not value.endswith(".nsi"):
+        if value and not value.endswith(".nsi"):
             logger.warning(
                 "On Windows, %s must be a .nsi file; %s will be ignored.",
                 key,
