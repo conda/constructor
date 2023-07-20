@@ -1,7 +1,8 @@
-import pytest
 import shutil
 import sys
 import tempfile
+
+import pytest
 
 from constructor.imaging import write_images
 
