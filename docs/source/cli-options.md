@@ -65,19 +65,19 @@ You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapt
 
 Run the installer in silent mode:
 
-```cmd
+```batch
 > cmd.exe /c start /wait my_installer.exe /S
 ```
 
 Run the installer in silent mode and install to a custom path:
 
-```cmd
+```batch
 > cmd.exe /c start /wait my_installer.exe /InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app
 ```
 
 Run the uninstaller in silent mode from its original location:
 
-```
+```batch
 > cmd.exe /c start /wait "C:\Program Files\my_app\uninstaller.exe" /S _?=C:\Program Files\my_app
 ```
 
