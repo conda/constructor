@@ -4,7 +4,8 @@ import tempfile
 
 import pytest
 
-from constructor.imaging import write_images
+if sys.platform == "win32" or sys.platform == "darwin":
+    from constructor.imaging import write_images
 
 
 @pytest.mark.skipif(
