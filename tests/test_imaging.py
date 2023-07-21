@@ -10,7 +10,7 @@ if sys.platform == "win32" or sys.platform == "darwin":
 
 @pytest.mark.skipif(
     sys.platform != 'win32' and sys.platform != 'darwin',
-    reason='imaging not available on Linux'
+    reason='imaging only available on Windows and MacOS'
 )
 def test_write_images():
     tmp_dir = tempfile.mkdtemp()
