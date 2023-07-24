@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import pytest
+from conda.base.context import context
+from conda.core.prefix_data import PrefixData
 
 from constructor.osxpkg import calculate_install_dir
 
@@ -260,8 +262,8 @@ def create_installer(
     installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".sh", ".pkg"))
     for installer in sorted(installers, key=_sort_by_extension):
         if installer.suffix == ".pkg" and ON_CI:
-            install_dir = (
-                Path("~").expanduser() / calculate_install_dir(input_dir / "construct.yaml")
+            install_dir = Path("~").expanduser() / calculate_install_dir(
+                input_dir / "construct.yaml"
             )
         else:
             install_dir = (
@@ -388,3 +390,54 @@ def test_example_use_channel_remap(tmp_path, request):
     input_path = _example_path("use_channel_remap")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request)
+
+
+def test_example_from_existing_env(tmp_path, request):
+    input_path = _example_path("from_existing_env")
+    subprocess.check_call(
+        [sys.executable, "-mconda", "create", "-p", tmp_path / "env", "-y", "python"]
+    )
+    for installer, install_dir in create_installer(
+        input_path,
+        tmp_path,
+        CONSTRUCTOR_TEST_EXISTING_ENV=str(tmp_path / "env"),
+    ):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+            assert pkg["channel"] != "pypi"
+
+
+def test_example_from_env_txt(tmp_path, request):
+    input_path = _example_path("from_env_txt")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+            assert pkg["channel"] != "pypi"
+
+
+def test_example_from_env_yaml(tmp_path, request):
+    input_path = _example_path("from_env_yaml")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+            assert pkg["channel"] != "pypi"
+
+
+@pytest.mark.skipif(context.subdir != "linux-64", reason="Linux x64 only")
+def test_example_from_explicit(tmp_path, request):
+    input_path = _example_path("from_explicit")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        out = subprocess.check_output(
+            [sys.executable, "-mconda", "list", "-p", install_dir, "--explicit", "--md5"],
+            text=True,
+        )
+        assert out == (input_path / "explicit_linux-64.txt").read_text()

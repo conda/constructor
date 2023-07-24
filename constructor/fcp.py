@@ -10,17 +10,20 @@ fcp (fetch conda packages) module
 import json
 import logging
 import os
+import shutil
 import sys
 import tempfile
 from collections import defaultdict
 from itertools import groupby
-from os.path import isdir, isfile, join, splitext
+from os.path import abspath, expanduser, isdir, isfile, join
+from subprocess import check_call
 
 from constructor.utils import filename_dist, hash_files
 
 from .conda_interface import (
     PackageCacheData,
     PackageCacheRecord,
+    PrefixData,
     PrefixGraph,
     Solver,
     SubdirData,
@@ -31,6 +34,7 @@ from .conda_interface import (
     conda_replace_context_default,
     download,
     env_vars,
+    locate_prefix_by_name,
     read_paths_json,
 )
 
@@ -217,51 +221,23 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _precs_from_environment(environment, download_dir, user_conda):
-    from subprocess import check_output
-
-    # get basic data about the environment's packages
-    list_flag = "--prefix" if isdir(environment) else "--name"
-    json_listing = check_output([user_conda, "list", list_flag, environment, "--json"])
-    listing = json.loads(json_listing)
-    packages = {p["dist_name"]: p for p in listing}
-    # get the package install order and MD5 sums,
-    # creating a tuple of dist_name, URL, MD5, filename (fn)
-    explicit = check_output([user_conda, "list", list_flag, environment,
-                             "--explicit", "--json", "--md5"],
-                            text=True)
-    ordering = []
-    for line in explicit.splitlines():
-        if not line or line.startswith("#") or line.startswith("@"):
-            continue
-        url, _, md5 = line.rpartition("#")
-        _, _, fn = url.rpartition("/")
-        if fn.endswith(".tar.bz2"):
-            dist_name = fn[:-8]
-        else:
-            dist_name, _ = splitext(fn)
-        ordering.append((dist_name, url, md5, fn))
-
-    # now, create PackageCacheRecords
-    precs = []
-    for dist_name, url, md5, fn in ordering:
-        package = packages[dist_name]
-        package_tarball_full_path = join(download_dir, fn)
-        extracted_package_dir = join(download_dir, dist_name)
-        if 'platform' in package:
-            package['subdir'] = package['platform']
-            del package['platform']
-        precs.append(PackageCacheRecord(url=url, md5=md5, fn=fn,
-                                        package_tarball_full_path=package_tarball_full_path,
-                                        extracted_package_dir=extracted_package_dir,
-                                        **package))
-    # topological sort + deduplication
-    return list(dict.fromkeys(PrefixGraph(precs).graph))
+def _precs_from_environment(environment, input_dir):
+    if not isdir(environment) and ('/' in environment or '\\' in environment):
+        env2 = join(input_dir, environment)
+        if isdir(env2):
+            environment = env2
+    if isdir(environment):
+        environment = abspath(join(input_dir, expanduser(environment)))
+    else:
+        environment = locate_prefix_by_name(environment)
+    pdata = PrefixData(environment)
+    pdata.load()
+    return list(pdata.iter_records_sorted())
 
 
 def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(),
                  specs=(), exclude=(), menu_packages=(), environment=None, environment_file=None,
-                 verbose=True, conda_exe="conda.exe", extra_env=False):
+                 verbose=True, conda_exe="conda.exe", extra_env=False, input_dir=""):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     # JRG: This only applies to the `base` environment; `extra_envs` are exempt
@@ -294,15 +270,37 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
                 sys.exit("CONDA_EXE env variable is empty. Need to activate a conda env.")
     # make the environment, if needed
     if environment_file:
-        from subprocess import check_call
         environment = tempfile.mkdtemp()
         new_env = os.environ.copy()
         new_env["CONDA_SUBDIR"] = platform
-        check_call([user_conda, "env", "create", "--file", environment_file,
-                    "--prefix", environment, "--quiet"], universal_newlines=True, env=new_env)
+        # use conda env for yaml, and standard conda create otherwise
+        subcommand = (
+            ["env", "create"]
+            if environment_file.endswith(('.yml', '.yaml'))
+            else ["create", "--yes"]
+        )
+        if channel_urls:
+            logger.warning(
+                "Channels passed in construct.yaml won't be used "
+                "during environment creation."
+            )
+        check_call(
+            [
+                user_conda,
+                *subcommand,
+                "--file",
+                environment_file,
+                "--prefix",
+                environment,
+                "--quiet",
+            ],
+            universal_newlines=True,
+            env=new_env,
+        )
+
     # obtain the package records
     if environment:
-        precs = _precs_from_environment(environment, download_dir, user_conda)
+        precs = _precs_from_environment(environment, input_dir)
     else:
         solver = Solver(
             # The Solver class doesn't do well with `None` as a prefix right now
@@ -333,9 +331,9 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         _show(name, version, platform, download_dir, precs, more_recent_versions)
 
     if environment_file:
-        import shutil
-
-        shutil.rmtree(environment)
+        # Windows has issues with deleting some stuff if still in use;
+        # since this is a temporary directory, it's okay-ish to ignore errors
+        shutil.rmtree(environment, ignore_errors=True)
 
     return precs
 
@@ -361,7 +359,7 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
                 dist = filename_dist(dist)
                 new_file_name = "%s%s" % (dist[:-8], transmute_file_type)
                 new_dists.append(new_file_name)
-                new_file_name = os.path.join(download_dir, new_file_name)
+                new_file_name = join(download_dir, new_file_name)
                 if os.path.exists(new_file_name):
                     continue
                 logger.info("transmuting %s", dist)
@@ -380,12 +378,13 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
           exclude=(), menu_packages=(), ignore_duplicate_files=True, environment=None,
           environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
-          transmute_file_type='', extra_envs=None, check_path_spaces=True):
+          transmute_file_type='', extra_envs=None, check_path_spaces=True, input_dir=""):
     precs = _solve_precs(
         name, version, download_dir, platform, channel_urls=channel_urls,
         channels_remap=channels_remap, specs=specs, exclude=exclude,
         menu_packages=menu_packages, environment=environment,
-        environment_file=environment_file, verbose=verbose, conda_exe=conda_exe
+        environment_file=environment_file, verbose=verbose, conda_exe=conda_exe,
+        input_dir=input_dir,
     )
     extra_envs = extra_envs or {}
     conda_in_base: PackageCacheRecord = next((prec for prec in precs if prec.name == "conda"), None)
@@ -415,6 +414,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             verbose=verbose,
             conda_exe=conda_exe,
             extra_env=True,
+            input_dir=input_dir,
         )
     if dry_run:
         return None, None, None, None, None, None, None
@@ -454,6 +454,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
 def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
+    input_dir = info["_input_dir"]
     version = info["version"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
@@ -469,7 +470,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     extra_envs = info.get("extra_envs", {})
     check_path_spaces = info.get("check_path_spaces", True)
 
-    if not channel_urls and not channels_remap:
+    if not channel_urls and not channels_remap and not (environment or environment_file):
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
 
     # We need to preserve the configuration for proxy servers and ssl, otherwise if constructor is
@@ -513,7 +514,8 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             transmute_file_type,
             extra_envs,
             check_path_spaces,
-            )
+            input_dir,
+        )
 
     info["_all_pkg_records"] = pkg_records  # full PackageRecord objects
     info["_urls"] = _urls  # needed to mock the repodata cache

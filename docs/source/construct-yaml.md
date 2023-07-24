@@ -163,12 +163,13 @@ reproduced.
 _required:_ no<br/>
 _type:_ string<br/>
 
-Path to an environment file to construct from. If this option is present, the
-`specs` argument will be ignored. Instead, constructor will call conda to
-create a temporary environment, constructor will build and installer from
-that, and the temporary environment will be removed. This ensures that
-constructor is using the precise local conda configuration to discover
-and install the packages. The created environment MUST include `python`.
+Path to an environment file (TXT or YAML) to construct from. If this option
+is present, the `specs` argument will be ignored. Instead, constructor will
+call conda to create a temporary environment, constructor will build and
+installer from that, and the temporary environment will be removed.
+This ensures that constructor is using the precise local conda configuration
+to discover and install the packages. The created environment MUST include
+`python`.
 
 Read notes about the solver in the `specs` field.
 

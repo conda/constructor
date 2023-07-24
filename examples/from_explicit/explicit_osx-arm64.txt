@@ -1,0 +1,19 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: osx-arm64
+@EXPLICIT
+https://conda.anaconda.org/conda-forge/osx-arm64/ca-certificates-2021.5.30-h4653dfc_0.tar.bz2#21b35f488f8ccf40c7d3ae05303e24e5
+https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.2-h9aa5885_4.tar.bz2#8a4aa25a5741e65f2338204f8a45d8d8
+https://conda.anaconda.org/conda-forge/noarch/tzdata-2021a-he74cb21_0.tar.bz2#6f36861f102249fc54861ff9343c3fdd
+https://conda.anaconda.org/conda-forge/osx-arm64/xz-5.2.5-h642e427_1.tar.bz2#9ab2316785cb81c464ab9a99512dae71
+https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.2.11-h31e879b_1009.tar.bz2#96796f31644a5e13e12dc194284f7681
+https://conda.anaconda.org/conda-forge/osx-arm64/openssl-1.1.1k-h27ca646_0.tar.bz2#e056be01e85706eeb056d7b979b4a30d
+https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.1-hfbdcbf2_0.tar.bz2#c9b0df52c6942e7c7066667fb4ec7404
+https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.10-hf7e6567_1.tar.bz2#42c39bbf010ef4fa5839c61a19535980
+https://conda.anaconda.org/conda-forge/osx-arm64/sqlite-3.35.5-hc49ca36_0.tar.bz2#f7357f92c4a3799f14763cad1d605e64
+https://conda.anaconda.org/conda-forge/osx-arm64/python-3.9.4-h5b20da3_0_cpython.tar.bz2#eee24d5270bca46d9f003f7be5f07de6
+https://conda.anaconda.org/conda-forge/osx-arm64/python_abi-3.9-1_cp39.tar.bz2#06e5b68ca789e3b7910c3f09cdffda7c
+https://conda.anaconda.org/conda-forge/noarch/wheel-0.36.2-pyhd3deb0d_0.tar.bz2#768bfbe026426d0e76b377997d1f2b98
+https://conda.anaconda.org/conda-forge/osx-arm64/certifi-2021.5.30-py39h2804cbe_0.tar.bz2#402804274647d0b524c3de7e46b6162a
+https://conda.anaconda.org/conda-forge/osx-arm64/setuptools-49.6.0-py39h2804cbe_3.tar.bz2#b2268b9c73391e6199dc6936da31cddf
+https://conda.anaconda.org/conda-forge/noarch/pip-21.1.2-pyhd8ed1ab_0.tar.bz2#dbd830edaffe5fc9ae6c1d425db2b5f2
