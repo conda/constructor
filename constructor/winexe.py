@@ -274,6 +274,15 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
         # for the newlines business
         replace['CONCLUSION_TEXT'] = "\r\n".join(conclusion_lines[1:])
 
+    for key in ['welcome_file', 'conclusion_file']:
+        value = info.get(key, "")
+        if value and not value.endswith(".nsi"):
+            logger.warning(
+                "On Windows, %s must be a .nsi file; %s will be ignored.",
+                key,
+                value,
+            )
+
     for key, value in replace.items():
         if value.startswith('@'):
             value = join(dir_path, value[1:])
@@ -323,9 +332,19 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
-        ('@CUSTOM_WELCOME_FILE@', custom_nsi_insert_from_file(info.get('welcome_file', ''))),
-        ('@CUSTOM_CONCLUSION_FILE@', custom_nsi_insert_from_file(info.get('conclusion_file', ''))),
-        ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files)))
+        (
+            '@CUSTOM_WELCOME_FILE@',
+            custom_nsi_insert_from_file(info.get('welcome_file', ''))
+            if ppd['custom_welcome']
+            else ''
+        ),
+        (
+            '@CUSTOM_CONCLUSION_FILE@',
+            custom_nsi_insert_from_file(info.get('conclusion_file', ''))
+            if ppd['custom_conclusion']
+            else ''
+        ),
+        ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files))),
     ]:
         data = data.replace(key, value)
 
