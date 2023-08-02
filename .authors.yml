@@ -148,9 +148,9 @@
   email: mgrant@anaconda.com
   alternate_emails:
   - mcg@cvxr.com
-  num_commits: 59
+  num_commits: 60
   first_commit: 2016-06-13 12:15:26
-  github: schrodinger
+  github: mcg1969
 - name: Forrest Waters
   email: forrestwaters65@gmail.com
   alternate_emails:
@@ -171,6 +171,7 @@
   first_commit: 2020-08-31 13:41:03
   alternate_emails:
   - chrisburr@users.noreply.github.com
+  github: chrisburr
 - name: Mariana Meireles
   email: marian.meireles@gmail.com
   num_commits: 1
@@ -248,6 +249,7 @@
   email: XuehaiPan@pku.edu.cn
   num_commits: 1
   first_commit: 2021-10-28 00:49:35
+  github: XuehaiPan
 - name: Cheng H. Lee
   email: chenghlee@users.noreply.github.com
   num_commits: 0
@@ -268,7 +270,7 @@
   aliases:
   - Jaime RGP
   - jaimergp
-  num_commits: 53
+  num_commits: 54
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören
@@ -348,7 +350,7 @@
   github: RahulARanger
 - name: Marco Esters
   email: mesters@anaconda.com
-  num_commits: 3
+  num_commits: 6
   first_commit: 2023-05-12 11:44:12
   github: marcoesters
 - name: Darryl Miles
@@ -363,6 +365,6 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 6
+  num_commits: 7
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
