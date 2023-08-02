@@ -28,29 +28,6 @@
 * @pre-commit-ci[bot]
 
 
-
-## 2023-08-02   3.4.5:
-### Enhancements
-
-* Support both `.yaml` and `.txt` files in the `environment_file` key. This enables support for explicit lockfiles (`.txt`). (#477)
-
-### Bug fixes
-
-* Ensure conda metadata is accurate when installers are created from existing environments. (#477)
-* On Windows installers, only insert `conclusion_file` if the extension is `.nsi`. Ignore otherwise. Also prevents a double final page. (#700 via #701)
-* Skip imaging tests if not Windows or MacOS to avoid import errors. (#702)
-
-### Docs
-
-* Document generic uninstall mechanisms for all operating systems. (#698)
-
-### Other
-
-* Prohibit parentheses in `$INSTDIR`. (#699)
-* Ensure requirements are in sync across different sources (`setup.py`, conda recipe, feedstocks). (#703)
-
-
-
 ## 2023-07-13   3.4.4:
 ### Enhancements
 
