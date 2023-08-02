@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Skip imaging tests if not Windows or MacOS to avoid import errors (#702)
+* Skip imaging tests if not Windows or MacOS to avoid import errors. (#702)
 
 ### Deprecations
 

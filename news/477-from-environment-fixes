@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Support both .yaml and .txt files in the `environment_file` key. (#477)
+* Support both `.yaml` and `.txt` files in the `environment_file` key. This enables support for explicit lockfiles (`.txt`). (#477)
 
 ### Bug fixes
 

@@ -16,4 +16,4 @@
 
 ### Other
 
-* Ensure requirements are in sync across different sources (setup.py, conda recipe, feedstocks). (#703)
+* Ensure requirements are in sync across different sources (`setup.py`, conda recipe, feedstocks). (#703)

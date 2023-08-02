@@ -16,4 +16,4 @@
 
 ### Other
 
-* Prohibit parentheses in $INSTDIR (#699)
+* Prohibit parentheses in `$INSTDIR`. (#699)
