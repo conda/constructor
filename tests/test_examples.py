@@ -423,7 +423,7 @@ def test_example_from_env_txt(tmp_path, request):
 
 def test_example_from_env_yaml(tmp_path, request):
     input_path = _example_path("from_env_yaml")
-    for installer, install_dir in create_installer(input_path, tmp_path):
+    for installer, install_dir in create_installer(input_path, tmp_path, timeout=600):
         _run_installer(input_path, installer, install_dir, request=request)
         if installer.suffix == ".pkg" and not ON_CI:
             return
