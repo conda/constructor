@@ -11,6 +11,7 @@ import pytest
 if sys.platform == "darwin":
     from constructor.osxpkg import OSX_DIR
 else:
+    # Tests with OSX_DIR are skipped, but a placeholder is needed for pytest
     OSX_DIR = ""
 from constructor.shar import read_header_template
 from constructor.utils import preprocess
