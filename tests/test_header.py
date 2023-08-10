@@ -1,5 +1,6 @@
 import itertools
 import subprocess
+import sys
 import tempfile
 from functools import lru_cache
 from pathlib import Path
