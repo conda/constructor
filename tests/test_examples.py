@@ -13,7 +13,8 @@ import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 
-from constructor.osxpkg import calculate_install_dir
+if sys.platform == "darwin":
+    from constructor.osxpkg import calculate_install_dir
 
 try:
     import coverage  # noqa
