@@ -10,6 +10,8 @@ import pytest
 
 if sys.platform == "darwin":
     from constructor.osxpkg import OSX_DIR
+else:
+    OSX_DIR = ""
 from constructor.shar import read_header_template
 from constructor.utils import preprocess
 
