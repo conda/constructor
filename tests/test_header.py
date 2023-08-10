@@ -7,7 +7,8 @@ from shutil import which
 
 import pytest
 
-from constructor.osxpkg import OSX_DIR
+if sys.platform == "darwin":
+    from constructor.osxpkg import OSX_DIR
 from constructor.shar import read_header_template
 from constructor.utils import preprocess
 
