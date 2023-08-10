@@ -97,6 +97,7 @@ def test_linux_template_processing():
     assert not errors
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="Only on MacOS")
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])
 @pytest.mark.parametrize("script", sorted(Path(OSX_DIR).glob("*.sh")))
@@ -109,6 +110,7 @@ def test_osxpkg_scripts_template_processing(arch, check_path_spaces, script):
     assert "#endif" not in processed
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="Only on MacOS")
 @pytest.mark.skipif(available_command("shellcheck") is False, reason="requires shellcheck")
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])
