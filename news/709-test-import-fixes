@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix imports and skips for constructor tests
+* Fix imports and skips for constructor tests. (#709)
 
 ### Deprecations
 
