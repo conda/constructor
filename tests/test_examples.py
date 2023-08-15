@@ -13,7 +13,8 @@ import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 
-from constructor.osxpkg import calculate_install_dir
+if sys.platform == "darwin":
+    from constructor.osxpkg import calculate_install_dir
 
 try:
     import coverage  # noqa
@@ -349,7 +350,7 @@ def test_example_noconda(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(sys.platform != "Darwin", reason="macOS only")
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 def test_example_osxpkg(tmp_path, request):
     input_path = _example_path("osxpkg")
     for installer, install_dir in create_installer(input_path, tmp_path):
