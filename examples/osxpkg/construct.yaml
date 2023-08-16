@@ -10,6 +10,7 @@ channels:
   - http://repo.anaconda.com/pkgs/main/
 
 attempt_hardlinks: True
+initialize_by_default: false
 
 specs:
   - python

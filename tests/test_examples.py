@@ -10,8 +10,11 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 import pytest
+from conda.base.context import context
+from conda.core.prefix_data import PrefixData
 
-from constructor.osxpkg import calculate_install_dir
+if sys.platform == "darwin":
+    from constructor.osxpkg import calculate_install_dir
 
 try:
     import coverage  # noqa
@@ -35,7 +38,7 @@ else:
 
 
 def _execute(
-    cmd: Iterable[str], installer_input=None, check=True, **env_vars
+    cmd: Iterable[str], installer_input=None, check=True, timeout=420, **env_vars
 ) -> subprocess.CompletedProcess:
     t0 = time.time()
     if env_vars:
@@ -53,7 +56,7 @@ def _execute(
     )
     stdout, stderr = None, None
     try:
-        stdout, stderr = p.communicate(input=installer_input, timeout=420)
+        stdout, stderr = p.communicate(input=installer_input, timeout=timeout)
         retcode = p.poll()
         if check and retcode:
             raise subprocess.CalledProcessError(retcode, cmd, output=stdout, stderr=stderr)
@@ -70,7 +73,7 @@ def _execute(
         print("Took", timedelta(seconds=time.time() - t0))
 
 
-def _run_installer_exe(installer, install_dir, installer_input=None):
+def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420):
     """
     NSIS manual:
     > /D sets the default installation directory ($INSTDIR), overriding InstallDir
@@ -93,7 +96,7 @@ def _run_installer_exe(installer, install_dir, installer_input=None):
             "after completion."
         )
     cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
-    _execute(cmd)
+    _execute(cmd, installer_input=installer_input, timeout=timeout)
 
     # Windows installers won't raise exit codes so we need to check the log file
     error_lines = []
@@ -119,7 +122,7 @@ def _run_installer_exe(installer, install_dir, installer_input=None):
         raise AssertionError("\n".join(error_lines))
 
 
-def _run_uninstaller_exe(install_dir):
+def _run_uninstaller_exe(install_dir, timeout=420):
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
@@ -144,7 +147,7 @@ def _run_uninstaller_exe(install_dir):
         # us problems with the tempdir cleanup later
         f"/S _?={install_dir}",
     ]
-    _execute(cmd)
+    _execute(cmd, timeout=timeout)
     remaining_files = list(install_dir.iterdir())
     if len(remaining_files) > 2:
         # The debug installer writes to install.log too, which will only
@@ -156,15 +159,15 @@ def _run_uninstaller_exe(install_dir):
         raise AssertionError(f"Uninstaller left too many files: {remaining_files}")
 
 
-def _run_installer_sh(installer, install_dir, installer_input=None):
+def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420):
     if installer_input:
         cmd = ["/bin/sh", installer]
     else:
         cmd = ["/bin/sh", installer, "-b", "-p", install_dir]
-    return _execute(cmd, installer_input=installer_input)
+    return _execute(cmd, installer_input=installer_input, timeout=timeout)
 
 
-def _run_installer_pkg(installer, install_dir, example_path=None):
+def _run_installer_pkg(installer, install_dir, example_path=None, timeout=420):
     if os.environ.get("CI"):
         # We want to run it in an arbitrary directory, but the options
         # are limited here... We can only install to $HOME :shrug:
@@ -187,7 +190,7 @@ def _run_installer_pkg(installer, install_dir, example_path=None):
             "Export CI=1 to run it, but it will pollute your $HOME."
         )
         cmd = ["pkgutil", "--expand", installer, install_dir]
-    return _execute(cmd), install_dir
+    return _execute(cmd, timeout=timeout), install_dir
 
 
 def _sentinel_file_checks(example_path, install_dir):
@@ -210,21 +213,22 @@ def _run_installer(
     check_sentinels=True,
     request=None,
     uninstall=True,
+    timeout=420,
 ):
     if installer.suffix == ".exe":
-        _run_installer_exe(installer, install_dir, installer_input=installer_input)
+        _run_installer_exe(installer, install_dir, installer_input=installer_input, timeout=timeout)
     elif installer.suffix == ".sh":
-        _run_installer_sh(installer, install_dir, installer_input=installer_input)
+        _run_installer_sh(installer, install_dir, installer_input=installer_input, timeout=timeout)
     elif installer.suffix == ".pkg":
         if request and ON_CI:
             request.addfinalizer(lambda: shutil.rmtree(str(install_dir)))
-        _run_installer_pkg(installer, install_dir, example_path=example_path)
+        _run_installer_pkg(installer, install_dir, example_path=example_path, timeout=timeout)
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
         _sentinel_file_checks(example_path, install_dir)
     if uninstall and installer.suffix == ".exe":
-        _run_uninstaller_exe(install_dir)
+        _run_uninstaller_exe(install_dir, timeout=timeout)
 
 
 def create_installer(
@@ -233,6 +237,7 @@ def create_installer(
     conda_exe=CONSTRUCTOR_CONDA_EXE,
     debug=CONSTRUCTOR_DEBUG,
     with_spaces=False,
+    timeout=420,
     **env_vars,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
@@ -253,7 +258,7 @@ def create_installer(
     if debug:
         cmd.append("--debug")
 
-    _execute(cmd, **env_vars)
+    _execute(cmd, timeout=timeout, **env_vars)
 
     install_dir_prefix = "i n s t a l l" if with_spaces else "install"
 
@@ -264,8 +269,8 @@ def create_installer(
     installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".sh", ".pkg"))
     for installer in sorted(installers, key=_sort_by_extension):
         if installer.suffix == ".pkg" and ON_CI:
-            install_dir = (
-                Path("~").expanduser() / calculate_install_dir(input_dir / "construct.yaml")
+            install_dir = Path("~").expanduser() / calculate_install_dir(
+                input_dir / "construct.yaml"
             )
         else:
             install_dir = (
@@ -429,3 +434,54 @@ def test_example_use_channel_remap(tmp_path, request):
     input_path = _example_path("use_channel_remap")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request)
+
+
+def test_example_from_existing_env(tmp_path, request):
+    input_path = _example_path("from_existing_env")
+    subprocess.check_call(
+        [sys.executable, "-mconda", "create", "-p", tmp_path / "env", "-y", "python"]
+    )
+    for installer, install_dir in create_installer(
+        input_path,
+        tmp_path,
+        CONSTRUCTOR_TEST_EXISTING_ENV=str(tmp_path / "env"),
+    ):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+            assert pkg["channel"] != "pypi"
+
+
+def test_example_from_env_txt(tmp_path, request):
+    input_path = _example_path("from_env_txt")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+            assert pkg["channel"] != "pypi"
+
+
+def test_example_from_env_yaml(tmp_path, request):
+    input_path = _example_path("from_env_yaml")
+    for installer, install_dir in create_installer(input_path, tmp_path, timeout=600):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+            assert pkg["channel"] != "pypi"
+
+
+@pytest.mark.skipif(context.subdir != "linux-64", reason="Linux x64 only")
+def test_example_from_explicit(tmp_path, request):
+    input_path = _example_path("from_explicit")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+        if installer.suffix == ".pkg" and not ON_CI:
+            return
+        out = subprocess.check_output(
+            [sys.executable, "-mconda", "list", "-p", install_dir, "--explicit", "--md5"],
+            text=True,
+        )
+        assert out == (input_path / "explicit_linux-64.txt").read_text()

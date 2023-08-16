@@ -141,12 +141,20 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
         output_dir = tempfile.mkdtemp(prefix=f"{example_name}-", dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
+        is_fromenv = os.path.basename(example_path) == 'fromenv'
+        if is_fromenv:
+            env_file = os.path.join(example_path, 'environment.txt')
+            test_prefix = os.path.join(example_path, 'tmp_prefix_fromenv')
+            cmd = ['conda', 'create', '--prefix', test_prefix, '--file', env_file, '--yes']
+            errored += _execute(cmd)
         cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
         if conda_exe:
             cmd += ['--conda-exe', conda_exe]
         if debug:
             cmd.append("--debug")
         creation_errored = _execute(cmd)
+        if is_fromenv:
+            rm_rf(test_prefix)
         errored += creation_errored
         for fpath in os.listdir(output_dir):
             ext = fpath.rsplit('.', 1)[-1]

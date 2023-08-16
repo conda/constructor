@@ -1,9 +1,17 @@
 import shutil
+import sys
 import tempfile
 
-from constructor.imaging import write_images
+import pytest
+
+if sys.platform == "win32" or sys.platform == "darwin":
+    from constructor.imaging import write_images
 
 
+@pytest.mark.skipif(
+    sys.platform != 'win32' and sys.platform != 'darwin',
+    reason='imaging only available on Windows and MacOS'
+)
 def test_write_images():
     tmp_dir = tempfile.mkdtemp()
 

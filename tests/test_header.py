@@ -1,5 +1,6 @@
 import itertools
 import subprocess
+import sys
 import tempfile
 from functools import lru_cache
 from pathlib import Path
@@ -7,7 +8,11 @@ from shutil import which
 
 import pytest
 
-from constructor.osxpkg import OSX_DIR
+if sys.platform == "darwin":
+    from constructor.osxpkg import OSX_DIR
+else:
+    # Tests with OSX_DIR are skipped, but a placeholder is needed for pytest
+    OSX_DIR = ""
 from constructor.shar import read_header_template
 from constructor.utils import preprocess
 
@@ -98,6 +103,7 @@ def test_linux_template_processing():
     assert not errors
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="Only on MacOS")
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])
 @pytest.mark.parametrize("script", sorted(Path(OSX_DIR).glob("*.sh")))
@@ -110,6 +116,7 @@ def test_osxpkg_scripts_template_processing(arch, check_path_spaces, script):
     assert "#endif" not in processed
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="Only on MacOS")
 @pytest.mark.skipif(available_command("shellcheck") is False, reason="requires shellcheck")
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])

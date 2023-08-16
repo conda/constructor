@@ -38,7 +38,8 @@ if conda_interface_type == 'conda':
     CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
     from conda.api import SubdirData  # noqa
-    from conda.base.context import context as _conda_context
+    from conda.base.context import context as _conda_context  # noqa
+    from conda.base.context import locate_prefix_by_name as _locate_prefix_by_name
     from conda.base.context import replace_context_default as _conda_replace_context_default
     from conda.common.io import env_vars as _env_vars
     from conda.core.package_cache_data import PackageCacheData as _PackageCacheData
@@ -69,6 +70,7 @@ if conda_interface_type == 'conda':
     conda_context, env_vars = _conda_context, _env_vars
     conda_replace_context_default = _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
+    locate_prefix_by_name = _locate_prefix_by_name
 
     # used by preconda.py
     Dist, MatchSpec, PrefixData, default_prefix = _Dist, _MatchSpec, _PrefixData, _default_prefix

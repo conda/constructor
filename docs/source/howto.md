@@ -71,3 +71,37 @@ The burned-in version can be retrieved in different ways depending on the instal
 - For `.sh` intallers (via cli): `head $installer.sh | grep "Created by constructor"`
 - For `.exe` installers (via Windows Explorer): `$installer.exe` → Properties → Details → Comments, or (via cli) `exiftool $installer.exe`
 - For `.pkg` installers (via cli on macOS): `xar -xf $installer.pkg -n run_installation.pkg/Scripts; zgrep -a "Created by constructor" run_installation.pkg/Scripts` or `pkgutil --expand $installer.pkg extracted; grep "Created by constructor" extracted/run_installation.pkg/Scripts/postinstall`
+
+## Uninstall `constructor`-generated installations
+
+:::{note}
+
+Many `constructor` installers ship `conda` (Miniconda, Miniforge, etc), and offer the user to _initialize_ the installation. This adds further changes to the system configuration. These changes won't be reverted by simply deleting the installation directory. If you want to revert these changes, you can execute this command _before_ deleting the installation directory.
+
+```bash
+$ conda init --reverse --all
+```
+
+Use the `--dry-run` flag if you want to check what things will be reverted before actually doing it.
+:::
+
+### Windows
+
+On Windows, `constructor`-generated installations include an uninstaller executable, which is also exposed in the Control Panel menu "Add or remove programs". The uninstaller executable is located in the installation directory, and is named `Uninstall-<INSTALLATION_NAME>.exe`.
+
+Once opened, the uninstaller will guide the user through the uninstallation process. It will also remove the installation directory, and the uninstaller executable itself. In certain cases, some dangling files might be left behind, but these will be removed in the next reboot.
+
+If you want to perform the uninstallation steps manually, you can:
+
+1. Remove the installation directory. Usually this is a directory in your user's home directory (user installs), or under `C:\Program Files` for system-wide installations.
+2. In some installations, remove the entries added to the registry. System installs will use `HKEY_LOCAL_MACHINE` as the top level key; user installs will use `HKEY_CURRENT_USER`. You might find these items:
+    - Uninstaller information: `TOP_LEVEL_KEY\Software\Microsoft\Windows\CurrentVersion\Uninstall\<INSTALLATION_NAME>`.
+    - Python information: `TOP_LEVEL_KEY\Software\Python\PythonCore\<PYTHON_VERSION>`. Verify that these entries correspond to the installation directory you removed in step 1.
+    - PATH modifications. You'll need to remove the entries corresponding to the installation directory, but leave the other locations intact. This is better handled via the UI available in the Control Panel (follow [these instructions](https://docs.oracle.com/en/database/oracle/machine-learning/oml4r/1.5.1/oread/creating-and-modifying-environment-variables-on-windows.html)). The actual registry keys (in case you are curious) are located in:
+        - System install: `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Environment\PATH`.
+        - User install: `HKEY_CURRENT_USER\Environment\PATH`
+3. In some installations, remove the associated shortcuts under `%APPDATA%\Microsoft\Windows\Start Menu\Programs\` (user installs) or `%PROGRAMDATA%\Microsoft\Windows\Start Menu\Programs\` (system installs). You can enter these paths directly in the Windows Explorer address bar to open them.
+
+### macOS and Linux
+
+Remove the installation directory. Usually this is a directory in your user's home directory (user installs), or under `/opt` for system-wide installations.
