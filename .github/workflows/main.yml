@@ -40,41 +40,41 @@ jobs:
         include:
           # UBUNTU
           - os: ubuntu
-            python-version: 3.8
+            python-version: "3.8"
             conda-standalone: conda-standalone
             check-docs: true
           - os: ubuntu
-            python-version: 3.9
+            python-version: "3.9"
             conda-standalone: conda-standalone
             check-docs: true
           - os: ubuntu
-            python-version: 3.10
+            python-version: "3.10"
             conda-standalone: conda-standalone-nightly
           - os: ubuntu
-            python-version: 3.11
+            python-version: "3.11"
             conda-standalone: micromamba
           # MACOS
           - os: macos
-            python-version: 3.9
+            python-version: "3.9"
             conda-standalone: conda-standalone-nightly
           - os: macos
-            python-version: 3.10
+            python-version: "3.10"
             conda-standalone: micromamba
           - os: macos
-            python-version: 3.11
+            python-version: "3.11"
             conda-standalone: conda-standalone
           # WINDOWS
           - os: windows
-            python-version: 3.8
+            python-version: "3.8"
             conda-standalone: conda-standalone
           - os: windows
-            python-version: 3.9
+            python-version: "3.9"
             conda-standalone: conda-standalone-nightly
           - os: windows
-            python-version: 3.10
+            python-version: "3.10"
             conda-standalone: conda-standalone
           - os: windows
-            python-version: 3.11
+            python-version: "3.11"
             conda-standalone: conda-standalone-nightly
           # Micromamba doesn't support Windows yet (menuinst features missing)
           # - os: windows
