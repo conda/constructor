@@ -11,3 +11,4 @@ specs:
 
 register_python: False
 initialize_conda: False
+initialize_by_default: false
