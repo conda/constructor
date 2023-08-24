@@ -224,10 +224,13 @@ def modify_xml(xml_path, info):
                 'initialize_by_default', True) else 'false')
             path_choice.set('title', "Add conda initialization to the shell")
             path_description = """
-            If this box is checked, "conda init" will be executed to ensure that
-            conda is available in your preferred shell upon startup. If unchecked,
-            you must this initialization yourself or activate the environment
-            manually for each shell in which you wish to use it."""
+            If this box is checked, conda will be automatically activated in your
+            preferred shell on startup. This will change the command prompt when
+            activated. If your prefer that conda's base environment not be activated
+            on startup, run `conda config --set auto_activate_base false`. You can
+            undo this by running `conda init --reverse ${SHELL}`.
+            If unchecked, you must this initialization yourself or activate the
+            environment manually for each shell in which you wish to use it."""
             path_choice.set('description', ' '.join(path_description.split()))
         elif ident.endswith('cacheclean'):
             path_choice.set('visible', 'true')
