@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
-from subprocess import _check_call
+from subprocess import check_call as _check_call
 from tempfile import NamedTemporaryFile
 
 from . import preconda
