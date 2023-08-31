@@ -163,6 +163,11 @@ Notes:
   To override the global `exclude` value, use an empty list `[]`.
 '''),
 
+    ('register_envs', True, bool, '''
+Whether to register the environments created by the installer (both `base` and `extra_envs`)
+in `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9.
+'''),
+
     ('installer_filename',     False, str, '''
 The filename of the installer being created. If not supplied, a reasonable
 default will determined by the `name`, `version`, platform, and installer type.

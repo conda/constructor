@@ -443,6 +443,7 @@ test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda
 
 printf "\nInstalling base environment...\n\n"
 
+CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="__CHANNELS__" \
@@ -468,6 +469,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     fi
 
     # TODO: custom shortcuts per env?
+    CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
