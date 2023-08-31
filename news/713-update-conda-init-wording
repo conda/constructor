@@ -16,4 +16,4 @@
 
 ### Other
 
-* Clarify consequences for when conda init is run during the installation. (#713)
+* Clarify consequences for when `conda init` is run during the installation. (#713)
