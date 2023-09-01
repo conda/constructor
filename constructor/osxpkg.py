@@ -6,27 +6,19 @@ import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
-from subprocess import check_call
 from tempfile import NamedTemporaryFile
 
 from . import preconda
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
-from .utils import add_condarc, approx_size_kb, fill_template, get_final_channels, preprocess, rm_rf
+from .utils import add_condarc, approx_size_kb, fill_template, get_final_channels, preprocess, rm_rf, explained_check_call
 
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
 
 logger = logging.getLogger(__name__)
 
-
-def explained_check_call(args):
-    """
-    Execute a system process and debug the invocation
-    """
-    logger.debug(f"Executing: {' '.join(args)}")
-    return check_call(args)
 
 def calculate_install_dir(yaml_file, subdir=None):
     contents = parse(yaml_file, subdir or conda_context.subdir)
