@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
-from subprocess import check_call as _check_call
+from subprocess import check_call
 from tempfile import NamedTemporaryFile
 
 from . import preconda
@@ -21,12 +21,12 @@ CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
 logger = logging.getLogger(__name__)
 
 
-def check_call(args):
+def explained_check_call(args):
     """
     Execute a system process and debug the invocation
     """
     logger.debug(f"Executing: {' '.join(args)}")
-    return _check_call(args)
+    return check_call(args)
 
 def calculate_install_dir(yaml_file, subdir=None):
     contents = parse(yaml_file, subdir or conda_context.subdir)
@@ -346,7 +346,7 @@ def pkgbuild(name, identifier=None, version=None, install_location=None):
         args += ["--install-location", install_location]
     output = os.path.join(PACKAGES_DIR, f"{name}.pkg")
     args += [output]
-    check_call(args)
+    explained_check_call(args)
     return output
 
 
@@ -366,7 +366,7 @@ def pkgbuild_prepare_installation(info):
     # set to the sum of the compressed tarballs, which is not representative
     try:
         # expand to apply patches
-        check_call(["pkgutil", "--expand", pkg, f"{pkg}.expanded"])
+        explained_check_call(["pkgutil", "--expand", pkg, f"{pkg}.expanded"])
         payload_xml = os.path.join(f"{pkg}.expanded", "PackageInfo")
         tree = ET.parse(payload_xml)
         root = tree.getroot()
