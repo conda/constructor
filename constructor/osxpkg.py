@@ -6,14 +6,21 @@ import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
-from subprocess import check_call
 from tempfile import NamedTemporaryFile
 
 from . import preconda
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
-from .utils import add_condarc, approx_size_kb, fill_template, get_final_channels, preprocess, rm_rf
+from .utils import (
+    add_condarc,
+    approx_size_kb,
+    explained_check_call,
+    fill_template,
+    get_final_channels,
+    preprocess,
+    rm_rf,
+)
 
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
@@ -342,7 +349,7 @@ def pkgbuild(name, identifier=None, version=None, install_location=None):
         args += ["--install-location", install_location]
     output = os.path.join(PACKAGES_DIR, f"{name}.pkg")
     args += [output]
-    check_call(args)
+    explained_check_call(args)
     return output
 
 
@@ -362,7 +369,7 @@ def pkgbuild_prepare_installation(info):
     # set to the sum of the compressed tarballs, which is not representative
     try:
         # expand to apply patches
-        check_call(["pkgutil", "--expand", pkg, f"{pkg}.expanded"])
+        explained_check_call(["pkgutil", "--expand", pkg, f"{pkg}.expanded"])
         payload_xml = os.path.join(f"{pkg}.expanded", "PackageInfo")
         tree = ET.parse(payload_xml)
         root = tree.getroot()
@@ -370,7 +377,7 @@ def pkgbuild_prepare_installation(info):
         payload.set("installKBytes", str(approx_pkgs_size_kb))
         tree.write(payload_xml)
         # repack
-        check_call(["pkgutil", "--flatten", f"{pkg}.expanded", pkg])
+        explained_check_call(["pkgutil", "--flatten", f"{pkg}.expanded", pkg])
         return pkg
     finally:
         shutil.rmtree(f"{pkg}.expanded")
@@ -463,7 +470,7 @@ def create(info, verbose=False):
                 "com.apple.security.cs.allow-dyld-environment-variables": True,
             }
             plist_dump(plist, f)
-        check_call(
+        explained_check_call(
             [
                 # hardcode to system location to avoid accidental clobber in PATH
                 "/usr/bin/codesign",
@@ -524,11 +531,11 @@ def create(info, verbose=False):
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
-    check_call(args)
+    explained_check_call(args)
     modify_xml(xml_path, info)
 
     identity_name = info.get('signing_identity_name')
-    check_call([
+    explained_check_call([
         "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
@@ -536,7 +543,7 @@ def create(info, verbose=False):
         "tmp.pkg" if identity_name else info['_outpath']
     ])
     if identity_name:
-        check_call([
+        explained_check_call([
             # hardcode to system location to avoid accidental clobber in PATH
             '/usr/bin/productsign', '--sign', identity_name,
             "tmp.pkg",
