@@ -366,7 +366,7 @@ def pkgbuild_prepare_installation(info):
         payload.set("installKBytes", str(approx_pkgs_size_kb))
         tree.write(payload_xml)
         # repack
-        check_call(["pkgutil", "--flatten", f"{pkg}.expanded", pkg])
+        explained_check_call(["pkgutil", "--flatten", f"{pkg}.expanded", pkg])
         return pkg
     finally:
         shutil.rmtree(f"{pkg}.expanded")
@@ -459,7 +459,7 @@ def create(info, verbose=False):
                 "com.apple.security.cs.allow-dyld-environment-variables": True,
             }
             plist_dump(plist, f)
-        check_call(
+        explained_check_call(
             [
                 # hardcode to system location to avoid accidental clobber in PATH
                 "/usr/bin/codesign",
@@ -520,11 +520,11 @@ def create(info, verbose=False):
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
-    check_call(args)
+    explained_check_call(args)
     modify_xml(xml_path, info)
 
     identity_name = info.get('signing_identity_name')
-    check_call([
+    explained_check_call([
         "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
@@ -532,7 +532,7 @@ def create(info, verbose=False):
         "tmp.pkg" if identity_name else info['_outpath']
     ])
     if identity_name:
-        check_call([
+        explained_check_call([
             # hardcode to system location to avoid accidental clobber in PATH
             '/usr/bin/productsign', '--sign', identity_name,
             "tmp.pkg",
