@@ -12,7 +12,15 @@ from . import preconda
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
-from .utils import add_condarc, approx_size_kb, fill_template, get_final_channels, preprocess, rm_rf, explained_check_call
+from .utils import (
+    add_condarc,
+    approx_size_kb,
+    explained_check_call,
+    fill_template,
+    get_final_channels,
+    preprocess,
+    rm_rf,
+)
 
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None

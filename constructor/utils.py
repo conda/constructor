@@ -23,8 +23,9 @@ def explained_check_call(args):
     """
     Execute a system process and debug the invocation
     """
-    logger.debug(f"Executing: {' '.join(args)}")
+    logger.debug("Executing: %s", " ".join(args))
     return check_call(args)
+
 
 def filename_dist(dist):
     """ Return the filename of a distribution. """
