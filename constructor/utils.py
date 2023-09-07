@@ -12,10 +12,19 @@ import sys
 from os import sep, unlink
 from os.path import basename, isdir, isfile, islink, normpath
 from shutil import rmtree
+from subprocess import check_call
 
 from ruamel import yaml
 
 logger = logging.getLogger(__name__)
+
+
+def explained_check_call(args):
+    """
+    Execute a system process and debug the invocation
+    """
+    logger.debug("Executing: %s", " ".join(args))
+    return check_call(args)
 
 
 def filename_dist(dist):
