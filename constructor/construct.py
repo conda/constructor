@@ -270,7 +270,8 @@ provided, it will default to `io.continuum`. (MacOS only)
 Application name in the Windows "Programs and Features" control panel.
 Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 '''),
-('extra_env_variables',           False, list, '''
+
+    ('extra_env_variables',           False, list, '''
 List of additional environment variables to be made available to the
 pre_install and post_install scripts, in the form of VAR=VALUE
 pairs. These environment variables are in addition to those in the
