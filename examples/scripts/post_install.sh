@@ -9,10 +9,15 @@ echo "INSTALLER_NAME=${INSTALLER_NAME}"
 echo "INSTALLER_VER=${INSTALLER_VER}"
 echo "INSTALLER_PLAT=${INSTALLER_PLAT}"
 echo "INSTALLER_TYPE=${INSTALLER_TYPE}"
+echo "CUSTOM_VARIABLE_1=${CUSTOM_VARIABLE_1}"
+echo "CUSTOM_VARIABLE_2=${CUSTOM_VARIABLE_2}"
 echo "PREFIX=${PREFIX}"
 
 test "${INSTALLER_NAME}" = "Scripts"
 test "${INSTALLER_VER}" = "X"
+test "${CUSTOM_VARIABLE_1}" = "CUSTOM1"
+test "${CUSTOM_VARIABLE_2}" = "CUSTOM2"
+
 if [[ $(uname -s) == Linux ]]; then
     if [[ ${INSTALLER_PLAT} != linux-* ]]; then
         exit 1

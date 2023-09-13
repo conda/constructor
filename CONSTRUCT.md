@@ -442,6 +442,18 @@ is compulsory and the option to disable it will not be offered.
 
 This option has no effect on `SH` installers.
 
+
+### `extra_env_variables`
+
+_required:_ no<br/>
+_type:_ list<br/>
+
+List of additional environment variables to be made available to the
+pre_install and post_install scripts, in the form of VAR=VALUE
+pairs. These environment variables are in addition to those in the
+`post_install` section above and take precedence in the case of name
+collisions.  Unix only.
+
 ### `pre_uninstall`
 
 _required:_ no<br/>
