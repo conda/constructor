@@ -86,6 +86,23 @@ def insert_tempfiles_commands(paths: os.PathLike) -> List[str]:
         lines.append(f"File {path}")
     return lines
 
+def setup_extra_env_variables(info) -> List[str]:
+    """Helper function to insert extra environment variables into nsis template.
+
+    Args:
+        info: Dictionary of information parsed from construct.yaml
+
+    Returns:
+        List[str]: Commands to be inserted into nsi template
+    """
+    lines = []
+    for variable in info.get('extra_env_variables',[]):
+        split = variable.split('=')
+        if len(split)==2:
+            (name, val) = split
+        lines.append(f"""System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{name}", "{val}").r0'""")
+
+    return lines
 
 def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
     """Insert NSI script commands from file.
@@ -332,6 +349,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
+        ('@EXTRA_ENV_VARIABLES@', '\n    '.join(setup_extra_env_variables(info))),
         (
             '@CUSTOM_WELCOME_FILE@',
             custom_nsi_insert_from_file(info.get('welcome_file', ''))
