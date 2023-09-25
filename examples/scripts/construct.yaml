@@ -7,8 +7,8 @@ specs:
   - python
 
 script_env_variables:
-  CUSTOM_VARIABLE_1: FIR$T CUSTOM STRING WITH SPACES AND @*#! "CHARACTERS"
-  CUSTOM_VARIABLE_2: $ECOND CUSTOM STRING WITH SPACES AND @*#! "CHARACTERS"
+  CUSTOM_VARIABLE_1: FIR$T CUSTOM '\''STRING'\'' WITH SPACES AND @*#! "CHARACTERS"
+  CUSTOM_VARIABLE_2: $ECOND CUSTOM '\''STRING'\'' WITH SPACES AND @*#! "CHARACTERS"
 
 pre_install: pre_install.sh   # [unix]
 pre_install: pre_install.bat  # [win]

@@ -458,7 +458,9 @@ On Unix the variable values are automatically single quoted, allowing
 you to supply strings with spaces, without needing to worry about
 escaping. As a consequence, string interpolation is disabled: if you
 need string interpolation, you can apply it in the
-pre_install/post_install script(s).
+pre_install/post_install script(s). If you need to include single quotes
+in your value, you can escape them by replacing each single quote with
+`'\''`.
 
 ### `pre_uninstall`
 

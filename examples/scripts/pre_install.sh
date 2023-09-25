@@ -12,8 +12,8 @@ echo "PREFIX=${PREFIX}"
 
 test "${INSTALLER_NAME}" = "Scripts"
 test "${INSTALLER_VER}" = "X"
-test "${CUSTOM_VARIABLE_1}" = 'FIR$T CUSTOM STRING WITH SPACES AND @*#! "CHARACTERS"'
-test "${CUSTOM_VARIABLE_2}" = '$ECOND CUSTOM STRING WITH SPACES AND @*#! "CHARACTERS"'
+test "${CUSTOM_VARIABLE_1}" = 'FIR$T CUSTOM '\''STRING'\'' WITH SPACES AND @*#! "CHARACTERS"'
+test "${CUSTOM_VARIABLE_2}" = '$ECOND CUSTOM '\''STRING'\'' WITH SPACES AND @*#! "CHARACTERS"'
 
 if [[ $(uname -s) == Linux ]]; then
     if [[ ${INSTALLER_PLAT} != linux-* ]]; then
