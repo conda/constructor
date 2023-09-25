@@ -446,13 +446,19 @@ This option has no effect on `SH` installers.
 ### `script_env_variables`
 
 _required:_ no<br/>
-_type:_ list<br/>
+_type:_ dictionary<br/>
 
-List of additional environment variables to be made available to the
-pre_install and post_install scripts, in the form of VAR=VALUE
+Dictionary of additional environment variables to be made available to the
+pre_install and post_install scripts, in the form of VAR:VALUE
 pairs. These environment variables are in addition to those in the
 `post_install` section above and take precedence in the case of name
-collisions.  Unix only.
+collisions.
+
+On Unix the variable values are automatically single quoted, allowing
+you to supply strings with spaces, without needing to worry about
+escaping. As a consequence, string interpolation is disabled: if you
+need string interpolation, you can apply it in the
+pre_install/post_install script(s).
 
 ### `pre_uninstall`
 
