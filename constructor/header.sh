@@ -24,7 +24,7 @@ fi
 # Export variables to make installer metadata available to pre/post install scripts
 # NOTE: If more vars are added, make sure to update the examples/scripts tests too
 
-_EXTRA_ENV_VARIABLES_=''  # Templated extra environment variable(s)
+_SCRIPT_ENV_VARIABLES_=''  # Templated extra environment variable(s)
 export INSTALLER_NAME='__NAME__'
 export INSTALLER_VER='__VERSION__'
 export INSTALLER_PLAT='__PLAT__'

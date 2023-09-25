@@ -31,7 +31,7 @@ export INSTALLER_VER="__VERSION__"
 export INSTALLER_PLAT="__PLAT__"
 export INSTALLER_TYPE="PKG"
 export PRE_OR_POST="__PRE_OR_POST__"
-_EXTRA_ENV_VARIABLES_=''  # Templated extra environment variable(s) 
+_SCRIPT_ENV_VARIABLES_=''  # Templated extra environment variable(s) 
 
 # Run user-provided script
 if [ -f "$PREFIX/pkgs/user_${PRE_OR_POST}" ]; then

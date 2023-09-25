@@ -271,7 +271,7 @@ Application name in the Windows "Programs and Features" control panel.
 Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 '''),
 
-    ('extra_env_variables',           False, (dict,), '''
+    ('script_env_variables',           False, (dict,), '''
 List of additional environment variables to be made available to the
 pre_install and post_install scripts, in the form of VAR=VALUE
 pairs. These environment variables are in addition to those in the

@@ -443,7 +443,7 @@ is compulsory and the option to disable it will not be offered.
 This option has no effect on `SH` installers.
 
 
-### `extra_env_variables`
+### `script_env_variables`
 
 _required:_ no<br/>
 _type:_ list<br/>

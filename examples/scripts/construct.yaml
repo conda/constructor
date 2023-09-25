@@ -6,7 +6,7 @@ channels:
 specs:
   - python
 
-extra_env_variables:
+script_env_variables:
   CUSTOM_VARIABLE_1: CUSTOM1
   CUSTOM_VARIABLE_2: CUSTOM2
 

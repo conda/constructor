@@ -1113,7 +1113,7 @@ Section "Install"
     File /nonfatal /r __INDEX_CACHE__
     File /r __REPODATA_RECORD__
 
-    @EXTRA_ENV_VARIABLES@
+    @SCRIPT_ENV_VARIABLES@
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
