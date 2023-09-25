@@ -96,7 +96,7 @@ def get_header(conda_exec, tarball, info):
     data = fill_template(data, replace)
 
     data = data.replace("_SCRIPT_ENV_VARIABLES_=''", '\n'.join(
-        [f'export {key}={value}' for key, value in custom_variables.items()]))
+        [f"export {key}='{value}'" for key, value in custom_variables.items()]))
     return data
 
 
