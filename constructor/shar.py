@@ -92,11 +92,11 @@ def get_header(conda_exec, tarball, info):
 
     data = read_header_template()
     data = preprocess(data, ppd)
-    custom_variables = info.get('extra_env_variables', [])
+    custom_variables = info.get('extra_env_variables', {})
     data = fill_template(data, replace)
 
     data = data.replace("_EXTRA_ENV_VARIABLES_=''", '\n'.join(
-        [f'export {var}' for var in custom_variables]))
+        [f'export {key}={value}' for key, value in custom_variables.items()]))
     return data
 
 

@@ -96,11 +96,8 @@ def setup_extra_env_variables(info) -> List[str]:
         List[str]: Commands to be inserted into nsi template
     """
     lines = []
-    for variable in info.get('extra_env_variables',[]):
-        split = variable.split('=')
-        if len(split)==2:
-            (name, val) = split
-        lines.append(f"""System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{name}", "{val}").r0'""")
+    for name, value in info.get('extra_env_variables', {}).items():
+        lines.append(f"""System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{name}", {str_esc(value)}).r0'""")
 
     return lines
 

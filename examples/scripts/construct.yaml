@@ -7,8 +7,8 @@ specs:
   - python
 
 extra_env_variables:
-  - CUSTOM_VARIABLE_1=CUSTOM1
-  - CUSTOM_VARIABLE_2=CUSTOM2
+  CUSTOM_VARIABLE_1: CUSTOM1
+  CUSTOM_VARIABLE_2: CUSTOM2
 
 pre_install: pre_install.sh   # [unix]
 pre_install: pre_install.bat  # [win]
