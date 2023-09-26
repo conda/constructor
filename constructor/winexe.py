@@ -97,8 +97,9 @@ def setup_script_env_variables(info) -> List[str]:
     """
     lines = []
     for name, value in info.get('script_env_variables', {}).items():
-        lines.append(f"""System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{name}", {str_esc(value)}).r0'""")
-
+        lines.append(
+            f"""System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{name}", {str_esc(value)}).r0'"""
+        )
     return lines
 
 def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
