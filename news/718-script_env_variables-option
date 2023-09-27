@@ -1,0 +1,21 @@
+### Enhancements
+
+* Added support for `script_env_variables` allowing specification of
+  environment variables in the `construct.yaml` for use by pre- and
+  post-install scripts.
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
