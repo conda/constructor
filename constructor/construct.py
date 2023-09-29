@@ -271,6 +271,26 @@ Application name in the Windows "Programs and Features" control panel.
 Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
 '''),
 
+    ('script_env_variables',           False, (dict,), '''
+Dictionary of additional environment variables to be made available to
+the pre_install and post_install scripts, in the form of VAR:VALUE
+pairs. These environment variables are in addition to those in the
+`post_install` section above and take precedence in the case of name
+collisions.
+
+On Unix the variable values are automatically single quoted, allowing
+you to supply strings with spaces, without needing to worry about
+escaping. As a consequence, string interpolation is disabled: if you
+need string interpolation, you can apply it in the
+pre_install/post_install script(s). If you need to include single quotes
+in your value, you can escape them by replacing each single quote with
+`'\''`.
+
+On Windows, single quotes and double quotes are not supported.
+
+Note that the # (hash) character cannot be used as it denotes yaml
+comments for all platforms.
+'''),
     ('pre_install',            False, str, '''
 Path to a pre-install script, run after the package cache has been set, but
 before the files are linked to their final locations. As a result, you should
