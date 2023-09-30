@@ -268,10 +268,10 @@ __LICENSE__
 EOF
     printf "\\n"
     printf "Do you accept the license terms? [yes|no]\\n"
-    printf "[no] >>> "
+    printf ">>> "
     read -r ans
     ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
-    while [ "$ans" != "YES" ] && [ "$ans" != "NO" ] && [ "$ans" != "" ]
+    while [ "$ans" != "YES" ] && [ "$ans" != "NO" ]
     do
         printf "Please answer 'yes' or 'no':'\\n"
         printf ">>> "
