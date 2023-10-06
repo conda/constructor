@@ -6,14 +6,21 @@ import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
-from subprocess import check_call
 from tempfile import NamedTemporaryFile
 
 from . import preconda
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
-from .utils import add_condarc, approx_size_kb, fill_template, get_final_channels, preprocess, rm_rf
+from .utils import (
+    add_condarc,
+    approx_size_kb,
+    explained_check_call,
+    fill_template,
+    get_final_channels,
+    preprocess,
+    rm_rf,
+)
 
 OSX_DIR = join(dirname(__file__), "osx")
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
@@ -224,10 +231,13 @@ def modify_xml(xml_path, info):
                 'initialize_by_default', True) else 'false')
             path_choice.set('title', "Add conda initialization to the shell")
             path_description = """
-            If this box is checked, "conda init" will be executed to ensure that
-            conda is available in your preferred shell upon startup. If unchecked,
-            you must this initialization yourself or activate the environment
-            manually for each shell in which you wish to use it."""
+            If this box is checked, conda will be automatically activated in your
+            preferred shell on startup. This will change the command prompt when
+            activated. If your prefer that conda's base environment not be activated
+            on startup, run `conda config --set auto_activate_base false`. You can
+            undo this by running `conda init --reverse ${SHELL}`.
+            If unchecked, you must this initialization yourself or activate the
+            environment manually for each shell in which you wish to use it."""
             path_choice.set('description', ' '.join(path_description.split()))
         elif ident.endswith('cacheclean'):
             path_choice.set('visible', 'true')
@@ -299,7 +309,11 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
     }
     data = preprocess(data, ppd)
+    custom_variables = info.get('script_env_variables', {})
     data = fill_template(data, replace)
+
+    data = data.replace("_SCRIPT_ENV_VARIABLES_=''", '\n'.join(
+        [f"export {key}='{value}'" for key, value in custom_variables.items()]))
 
     with open(dst, 'w') as fo:
         if (
@@ -340,7 +354,7 @@ def pkgbuild(name, identifier=None, version=None, install_location=None):
         args += ["--install-location", install_location]
     output = os.path.join(PACKAGES_DIR, f"{name}.pkg")
     args += [output]
-    check_call(args)
+    explained_check_call(args)
     return output
 
 
@@ -360,7 +374,7 @@ def pkgbuild_prepare_installation(info):
     # set to the sum of the compressed tarballs, which is not representative
     try:
         # expand to apply patches
-        check_call(["pkgutil", "--expand", pkg, f"{pkg}.expanded"])
+        explained_check_call(["pkgutil", "--expand", pkg, f"{pkg}.expanded"])
         payload_xml = os.path.join(f"{pkg}.expanded", "PackageInfo")
         tree = ET.parse(payload_xml)
         root = tree.getroot()
@@ -368,7 +382,7 @@ def pkgbuild_prepare_installation(info):
         payload.set("installKBytes", str(approx_pkgs_size_kb))
         tree.write(payload_xml)
         # repack
-        check_call(["pkgutil", "--flatten", f"{pkg}.expanded", pkg])
+        explained_check_call(["pkgutil", "--flatten", f"{pkg}.expanded", pkg])
         return pkg
     finally:
         shutil.rmtree(f"{pkg}.expanded")
@@ -461,7 +475,7 @@ def create(info, verbose=False):
                 "com.apple.security.cs.allow-dyld-environment-variables": True,
             }
             plist_dump(plist, f)
-        check_call(
+        explained_check_call(
             [
                 # hardcode to system location to avoid accidental clobber in PATH
                 "/usr/bin/codesign",
@@ -522,11 +536,11 @@ def create(info, verbose=False):
     for name in names:
         args.extend(['--package', join(PACKAGES_DIR, "%s.pkg" % name)])
     args.append(xml_path)
-    check_call(args)
+    explained_check_call(args)
     modify_xml(xml_path, info)
 
     identity_name = info.get('signing_identity_name')
-    check_call([
+    explained_check_call([
         "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
@@ -534,7 +548,7 @@ def create(info, verbose=False):
         "tmp.pkg" if identity_name else info['_outpath']
     ])
     if identity_name:
-        check_call([
+        explained_check_call([
             # hardcode to system location to avoid accidental clobber in PATH
             '/usr/bin/productsign', '--sign', identity_name,
             "tmp.pkg",
