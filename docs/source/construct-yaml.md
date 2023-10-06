@@ -163,12 +163,13 @@ reproduced.
 _required:_ no<br/>
 _type:_ string<br/>
 
-Path to an environment file to construct from. If this option is present, the
-`specs` argument will be ignored. Instead, constructor will call conda to
-create a temporary environment, constructor will build and installer from
-that, and the temporary environment will be removed. This ensures that
-constructor is using the precise local conda configuration to discover
-and install the packages. The created environment MUST include `python`.
+Path to an environment file (TXT or YAML) to construct from. If this option
+is present, the `specs` argument will be ignored. Instead, constructor will
+call conda to create a temporary environment, constructor will build and
+installer from that, and the temporary environment will be removed.
+This ensures that constructor is using the precise local conda configuration
+to discover and install the packages. The created environment MUST include
+`python`.
 
 Read notes about the solver in the `specs` field.
 
@@ -228,6 +229,14 @@ Notes:
   extra environments will have it either. Unlike the global option, an error will not be
   thrown if the excluded package is not found in the packages required by the extra environment.
   To override the global `exclude` value, use an empty list `[]`.
+
+### `register_envs`
+
+_required:_ no<br/>
+_type:_ boolean<br/>
+
+Whether to register the environments created by the installer (both `base` and `extra_envs`)
+in `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9. Defaults to `True`.
 
 ### `installer_filename`
 
@@ -457,10 +466,11 @@ Metadata about the installer can be found in the `%INSTALLER_NAME%`,
 _required:_ no<br/>
 _type:_ string<br/>
 
-Set default install prefix. On Linux, if not provided, the default prefix is
-`${HOME}/${NAME}`. On windows, this is used only for "Just Me" installation;
-for "All Users" installation, use the `default_prefix_all_users` key.
-If not provided, the default prefix is `${USERPROFILE}\${NAME}`.
+Set default install prefix. On Linux, if not provided, the default prefix
+is `${HOME}/${NAME}` (or, if `HOME` is not set, `/opt/${NAME}`). On Windows,
+this is used only for "Just Me" installation; for "All Users" installation,
+use the `default_prefix_all_users` key. If not provided, the default prefix
+is `${USERPROFILE}\${NAME}`.
 
 ### `default_prefix_domain_user`
 
