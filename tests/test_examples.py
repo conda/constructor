@@ -444,3 +444,11 @@ def test_example_from_explicit(tmp_path, request):
             text=True,
         )
         assert out == (input_path / "explicit_linux-64.txt").read_text()
+
+
+def test_register_envs(tmp_path, request):
+    input_path = _example_path("register_envs")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+        environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
+        assert str(install_dir) not in environments_txt

@@ -29,7 +29,8 @@ CONDA_EXEC="$PREFIX/conda.exe"
 
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
-if ! CONDA_SAFETY_CHECKS=disabled \
+if ! CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
+CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
@@ -64,6 +65,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     fi
     # TODO: custom channels per env?
     # TODO: custom shortcuts per env?
+    CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \

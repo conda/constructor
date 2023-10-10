@@ -230,6 +230,14 @@ Notes:
   thrown if the excluded package is not found in the packages required by the extra environment.
   To override the global `exclude` value, use an empty list `[]`.
 
+### `register_envs`
+
+_required:_ no<br/>
+_type:_ boolean<br/>
+
+Whether to register the environments created by the installer (both `base` and `extra_envs`)
+in `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9. Defaults to `True`.
+
 ### `installer_filename`
 
 _required:_ no<br/>

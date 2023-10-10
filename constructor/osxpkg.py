@@ -306,6 +306,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'PROGRESS_NOTIFICATIONS': str(info.get('progress_notifications', False)),
         'PRE_OR_POST': user_script_type or '__PRE_OR_POST__',
         'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
+        'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
     }
     data = preprocess(data, ppd)
     custom_variables = info.get('script_env_variables', {})

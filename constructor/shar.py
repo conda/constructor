@@ -86,6 +86,7 @@ def get_header(conda_exec, tarball, info):
         'CHANNELS': ','.join(get_final_channels(info)),
         'CONCLUSION_TEXT': info.get("conclusion_text", "installation finished."),
         'pycache': '__pycache__',
+        'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])

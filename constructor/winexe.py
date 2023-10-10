@@ -132,6 +132,8 @@ def setup_envs_commands(info, dir_path):
         File "{history_abspath}"
         # Set channels
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
+        # Set register_envs
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_REGISTER_ENVS", "{register_envs}").r0'
         # Run conda
         SetDetailsPrint TextOnly
         nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
@@ -160,7 +162,8 @@ def setup_envs_commands(info, dir_path):
         conda_meta=r"$INSTDIR\conda-meta",
         history_abspath=join(dir_path, "conda-meta", "history"),
         channels=','.join(get_final_channels(info)),
-        shortcuts="--no-shortcuts"
+        shortcuts="--no-shortcuts",
+        register_envs=str(info.get("register_envs", True)).lower(),
     ).splitlines()
     # now we generate one more block per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
@@ -180,6 +183,7 @@ def setup_envs_commands(info, dir_path):
             history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
             channels=",".join(get_final_channels(channel_info)),
             shortcuts="",
+            register_envs=str(info.get("register_envs", True)).lower(),
         ).splitlines()
 
     return [line.strip() for line in lines]
