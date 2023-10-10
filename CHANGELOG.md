@@ -17,6 +17,7 @@
 
 * Test `conda-standalone` canaries in CI. (#711)
 * Clarify consequences for when `conda init` is run during the installation. (#713)
+* Log which subprocesses are run in `osxpkg`. (#715)
 
 ### Contributors
 
@@ -25,6 +26,9 @@
 * @marcoesters
 * @m-kuhn
 
+### New contributors
+
+* @m-kuhn made their first contribution in https://github.com/conda/constructor/pull/710
 
 ## 2023-08-02   3.4.5:
 ### Enhancements
