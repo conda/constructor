@@ -69,16 +69,18 @@
   - ilan@continuum.io
   num_commits: 351
   first_commit: 2016-02-12 00:50:29
+  github: ilanschnell
 - name: Jean-Luc Stevens
   email: jlstevens@ed.ac.uk
   alternate_emails:
   - jlrstevens@gmail.com
   aliases:
   - jlstevens
-  num_commits: 2
+  num_commits: 3
   first_commit: 2016-12-13 15:56:37
   github: jlstevens
 - name: bkreider
+  github: bkreider
   email: github-bk@drrr.net
   num_commits: 1
   first_commit: 2016-02-29 18:59:14
@@ -97,6 +99,7 @@
   first_commit: 2017-01-18 15:21:20
   github: wulmer
 - name: Martin Durant
+  github: martindurant
   email: martin.durant@utoronto.ca
   num_commits: 5
   first_commit: 2017-11-09 08:53:20
@@ -143,6 +146,7 @@
 - name: Trent Nelson
   email: trent@trent.me
   num_commits: 1
+  github: tpn
   first_commit: 2017-09-15 15:04:51
 - name: Michael C. Grant
   email: mgrant@anaconda.com
@@ -178,12 +182,14 @@
   first_commit: 2020-09-02 02:28:26
   github: marimeireles
 - name: astaric
+  github: astaric
   email: anze.staric@gmail.com
   num_commits: 1
   first_commit: 2019-08-28 05:42:13
 - name: Angela Gloyna
   email: angela.gloyna@gmail.com
   num_commits: 8
+  github: angloyna
   first_commit: 2020-05-04 20:34:58
 - name: Eric Prestat
   email: eric.prestat@gmail.com
@@ -227,6 +233,7 @@
   first_commit: 2020-10-21 10:45:10
   github: FaustinCarter
 - name: Connor Martin
+  github: cjmartian
   email: connormartin7@gmail.com
   num_commits: 1
   first_commit: 2021-03-24 12:38:03
@@ -257,7 +264,7 @@
   github: chenghlee
 - name: conda-bot
   email: ad-team+condabot@anaconda.com
-  num_commits: 25
+  num_commits: 28
   first_commit: 2022-01-25 21:38:28
   alternate_emails:
   - 18747875+conda-bot@users.noreply.github.com
@@ -270,7 +277,7 @@
   aliases:
   - Jaime RGP
   - jaimergp
-  num_commits: 54
+  num_commits: 60
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören
@@ -350,7 +357,7 @@
   github: RahulARanger
 - name: Marco Esters
   email: mesters@anaconda.com
-  num_commits: 6
+  num_commits: 8
   first_commit: 2023-05-12 11:44:12
   github: marcoesters
 - name: Darryl Miles
@@ -365,6 +372,11 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 7
+  num_commits: 10
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
+- name: Matthias Kuhn
+  email: matthias@opengis.ch
+  num_commits: 2
+  first_commit: 2023-08-24 09:31:48
+  github: m-kuhn
