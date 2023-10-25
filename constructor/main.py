@@ -66,7 +66,8 @@ def get_output_filename(info):
 
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
-               dry_run=False, conda_exe="conda.exe"):
+               dry_run=False, conda_exe="conda.exe",
+               construct_yaml_path="construct.yaml"):
     logger.info('platform: %s', platform)
     if not os.path.isfile(conda_exe):
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
@@ -76,7 +77,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     except ValueError:
         sys.exit("Error: invalid platform string '%s'" % platform)
 
-    construct_path = join(dir_path, 'construct.yaml')
+    construct_path = construct_yaml_path
     info = construct_parse(construct_path, platform)
     construct_verify(info)
     info['CONSTRUCTOR_VERSION'] = __version__
@@ -307,7 +308,8 @@ def main():
                    help="path to construct YAML file ready by constructor",
                    action="store",
                    metavar="CONSTRUCT_YAML_PATH",
-                   default="construct.yaml")
+                   default=join(os.getcwd(), 'construct.yaml')
+)
 
     p.add_argument('dir_path',
                    help="directory containing construct.yaml",
@@ -317,6 +319,7 @@ def main():
                    metavar='DIRECTORY')
 
     args = p.parse_args()
+
     logger.info("Got the following cli arguments: '%s'", args)
 
     if args.verbose or args.debug:
@@ -356,7 +359,8 @@ downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/""".lstrip())
     out_dir = normalize_path(args.output_dir)
     main_build(dir_path, output_dir=out_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
-               dry_run=args.dry_run, conda_exe=conda_exe)
+               dry_run=args.dry_run, conda_exe=conda_exe,
+               construct_yaml_path=normalize_path(args.construct_yaml_path))
 
 
 if __name__ == '__main__':
