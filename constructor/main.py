@@ -303,6 +303,12 @@ def main():
                    action="store",
                    metavar="CONDA_EXE")
 
+    p.add_argument('--construct-yaml-path',
+                   help="path to construct YAML file ready by constructor",
+                   action="store",
+                   metavar="CONSTRUCT_YAML_PATH",
+                   default="construct.yaml")
+
     p.add_argument('dir_path',
                    help="directory containing construct.yaml",
                    action="store",
