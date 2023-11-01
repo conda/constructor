@@ -307,7 +307,8 @@ def main():
     p.add_argument('--construct-yaml-fn',
                    help="path to construct YAML file ready by constructor",
                    action="store",
-                   metavar="CONSTRUCT_YAML_PATH",
+                   metavar="FILENAME",
+                   dest="construct_yaml_filename",
                    default="construct.yaml",
 )
 
