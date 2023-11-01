@@ -77,7 +77,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     except ValueError:
         sys.exit("Error: invalid platform string '%s'" % platform)
 
-    construct_path = construct_yaml_path
+    construct_path = join(dir_path, construct_yaml_filename)
     info = construct_parse(construct_path, platform)
     construct_verify(info)
     info['CONSTRUCTOR_VERSION'] = __version__
