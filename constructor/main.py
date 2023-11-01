@@ -308,7 +308,7 @@ def main():
                    help="path to construct YAML file ready by constructor",
                    action="store",
                    metavar="CONSTRUCT_YAML_PATH",
-                   default=join(os.getcwd(), 'construct.yaml')
+                   default="construct.yaml",
 )
 
     p.add_argument('dir_path',
