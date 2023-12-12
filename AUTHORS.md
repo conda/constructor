@@ -37,6 +37,7 @@ Authors are sorted alphabetically.
 * Martin Durant
 * Mathew Topper
 * Matthew Newville
+* Matthias Kuhn
 * Michael C. Grant
 * Michael Sarahan
 * Nehal J Wani

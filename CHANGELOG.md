@@ -1,5 +1,35 @@
 [//]: # (current developments)
 
+## 2023-10-10   3.5.0:
+### Enhancements
+
+* Add support for the `register_envs` option. (#705 via #716)
+* Add new option `script_env_variables`. Allows defining
+  environment variables in `construct.yaml` for use by pre- and
+  post-install scripts. (#718)
+
+### Bug fixes
+
+* Fix imports and skips for constructor tests. (#709)
+* Fix a regression in the license prompt on SH installers to require a explicit answer instead of defaulting to `no` on Enter. (#721 via #722)
+
+### Other
+
+* Test `conda-standalone` canaries in CI. (#711)
+* Clarify consequences for when `conda init` is run during the installation. (#713)
+* Log which subprocesses are run in `osxpkg`. (#715)
+
+### Contributors
+
+* @jaimergp
+* @jlstevens
+* @marcoesters
+* @m-kuhn
+
+### New contributors
+
+* @m-kuhn made their first contribution in https://github.com/conda/constructor/pull/710
+
 ## 2023-08-02   3.4.5:
 ### Enhancements
 

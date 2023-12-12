@@ -89,14 +89,18 @@ def get_header(conda_exec, tarball, info):
         'CONCLUSION_TEXT': info.get("conclusion_text", "installation finished."),
         'pycache': '__pycache__',
         'SHORTCUTS': shortcuts_flags(info),
+        'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
 
     data = read_header_template()
     data = preprocess(data, ppd)
+    custom_variables = info.get('script_env_variables', {})
     data = fill_template(data, replace)
 
+    data = data.replace("_SCRIPT_ENV_VARIABLES_=''", '\n'.join(
+        [f"export {key}='{value}'" for key, value in custom_variables.items()]))
     return data
 
 

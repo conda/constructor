@@ -5,6 +5,14 @@ channels:
   - http://repo.anaconda.com/pkgs/main/
 specs:
   - python
+
+script_env_variables:
+  CUSTOM_VARIABLE_1: FIR$T-CUSTOM_'\''STRING'\'' WITH SPACES AND @*! "CHARACTERS"  # [not win]
+  CUSTOM_VARIABLE_2: $ECOND-CUSTOM_'\''STRING'\'' WITH SPACES AND @*! "CHARACTERS" # [not win]
+  CUSTOM_VARIABLE_1: FIR$T-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS             # [win]
+  CUSTOM_VARIABLE_2: $ECOND-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS            # [win]
+
+
 pre_install: pre_install.sh   # [unix]
 pre_install: pre_install.bat  # [win]
 pre_install_desc: "Adding this description makes the script selectable in the UI"

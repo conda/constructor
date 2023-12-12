@@ -23,6 +23,8 @@ fi
 
 # Export variables to make installer metadata available to pre/post install scripts
 # NOTE: If more vars are added, make sure to update the examples/scripts tests too
+
+_SCRIPT_ENV_VARIABLES_=''  # Templated extra environment variable(s)
 export INSTALLER_NAME='__NAME__'
 export INSTALLER_VER='__VERSION__'
 export INSTALLER_PLAT='__PLAT__'
@@ -281,10 +283,10 @@ __LICENSE__
 EOF
     printf "\\n"
     printf "Do you accept the license terms? [yes|no]\\n"
-    printf "[no] >>> "
+    printf ">>> "
     read -r ans
     ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
-    while [ "$ans" != "YES" ] && [ "$ans" != "NO" ] && [ "$ans" != "" ]
+    while [ "$ans" != "YES" ] && [ "$ans" != "NO" ]
     do
         printf "Please answer 'yes' or 'no':'\\n"
         printf ">>> "
@@ -475,6 +477,7 @@ shortcuts="--no-shortcuts"
 
 # shellcheck disable=SC2086
 CONDA_ROOT_PREFIX="$PREFIX" \
+CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="__CHANNELS__" \
@@ -515,6 +518,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     # TODO: custom shortcuts per env?
     # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
+    CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
@@ -588,8 +592,14 @@ if [ "$BATCH" = "0" ]; then
 #if has_conda and initialize_conda is True
     # Interactive mode.
 
-    printf "Do you wish the installer to initialize %s\\n" "${INSTALLER_NAME}"
-    printf "by running conda init? [yes|no]\\n"
+    printf "Do you wish to update your shell profile to automatically initialize conda?\\n"
+    printf "This will activate conda on startup and change the command prompt when activated.\\n"
+    printf "If you'd prefer that conda's base environment not be activated on startup,\\n"
+    printf "   run the following command when conda is activated:\\n"
+    printf "\\n"
+    printf "conda config --set auto_activate_base false\\n"
+    printf "\\n"
+    printf "You can undo this by running \`conda init --reverse \$SHELL\`? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
     read -r ans
     if [ "$ans" = "" ]; then
@@ -622,11 +632,6 @@ if [ "$BATCH" = "0" ]; then
             esac
         fi
     fi
-    printf "If you'd prefer that conda's base environment not be activated on startup, \\n"
-    printf "   set the auto_activate_base parameter to false: \\n"
-    printf "\\n"
-    printf "conda config --set auto_activate_base false\\n"
-    printf "\\n"
 #endif
 
     printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"

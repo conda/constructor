@@ -88,6 +88,23 @@ def insert_tempfiles_commands(paths: os.PathLike) -> List[str]:
     return lines
 
 
+def setup_script_env_variables(info) -> List[str]:
+    """Helper function to insert extra environment variables into nsis template.
+
+    Args:
+        info: Dictionary of information parsed from construct.yaml
+
+    Returns:
+        List[str]: Commands to be inserted into nsi template
+    """
+    lines = []
+    for name, value in info.get('script_env_variables', {}).items():
+        lines.append(
+            "System::Call 'kernel32::SetEnvironmentVariable(t,t)i"
+            + f"""("{name}", {str_esc(value)}).r0'""")
+    return lines
+
+
 def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
     """Insert NSI script commands from file.
 
@@ -119,14 +136,17 @@ def setup_envs_commands(info, dir_path):
 
         # Set channels
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
+        # Set register_envs
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_REGISTER_ENVS", "{register_envs}").r0'
 
-        # Run conda install
-        ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
-            DetailPrint "Installing packages for {name}, creating shortcuts if necessary..."
-            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
-        ${{Else}}
-            DetailPrint "Installing packages for {name}..."
-            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
+        # Run conda
+        SetDetailsPrint TextOnly
+        nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
+        Pop $0
+        ${{If}} $0 != "0"
+            DetailPrint "::error:: Failed to link extracted packages to {prefix}!"
+            MessageBox MB_OK|MB_ICONSTOP "Failed to link extracted packages to {prefix}. Please check logs." /SD IDOK
+            Abort
         ${{EndIf}}
         push 'Failed to link extracted packages to {prefix}!'
         push 'WithLog'
@@ -154,6 +174,7 @@ def setup_envs_commands(info, dir_path):
         history_abspath=join(dir_path, "conda-meta", "history"),
         channels=','.join(get_final_channels(info)),
         shortcuts=shortcuts_flags(info),
+        register_envs=str(info.get("register_envs", True)).lower(),
     ).splitlines()
     # now we generate one more block per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
@@ -173,6 +194,7 @@ def setup_envs_commands(info, dir_path):
             history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
             channels=",".join(get_final_channels(channel_info)),
             shortcuts=shortcuts_flags(env_info),
+            register_envs=str(info.get("register_envs", True)).lower(),
         ).splitlines()
 
     return [line.strip() for line in lines]
@@ -341,6 +363,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
+        ('@SCRIPT_ENV_VARIABLES@', '\n    '.join(setup_script_env_variables(info))),
         (
             '@CUSTOM_WELCOME_FILE@',
             custom_nsi_insert_from_file(info.get('welcome_file', ''))

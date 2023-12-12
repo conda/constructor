@@ -12,10 +12,19 @@ import sys
 from os import sep, unlink
 from os.path import basename, isdir, isfile, islink, normpath
 from shutil import rmtree
+from subprocess import check_call
 
 from ruamel import yaml
 
 logger = logging.getLogger(__name__)
+
+
+def explained_check_call(args):
+    """
+    Execute a system process and debug the invocation
+    """
+    logger.debug("Executing: %s", " ".join(args))
+    return check_call(args)
 
 
 def filename_dist(dist):
@@ -203,7 +212,7 @@ def shortcuts_flags(info):
         return ""
     if menu_packages:
         # set and populated: we only create shortcuts for some
-        # NOTE: This syntax requires conda xx.y or above
+        # NOTE: This syntax requires conda 23.11 or above
         return " ".join([f"--shortcuts-only={pkg.strip()}" for pkg in menu_packages])
     # set but empty: disable all shortcuts
     return "--no-shortcuts"
