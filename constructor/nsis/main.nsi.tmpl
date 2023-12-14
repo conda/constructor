@@ -475,6 +475,68 @@ Function InstModePage_Leave
     Pop $0
 FunctionEnd
 
+Function CheckInstdirValidity
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+
+    # Resolve INSTDIR
+    GetFullPathName $0 $INSTDIR
+    # If the directory does not exist or cannot be resolved, $0 will be empty
+    StrCmp $0 "" invalid_dir
+    StrCpy $INSTDIR $0
+
+    # Never run the un/installer when $INSTDIR points at system-critical directories
+
+    StrLen $InstDirLen $INSTDIR
+    # INSTDIR is a full path and has no trailing backslash,
+    # so if its length is 2, it is pointed at a system root
+    StrCmp $InstdirLen 2 invalid_dir
+
+    # Never delete anything inside Windows
+    StrCpy $0 $INSTDIR 7 3
+    StrCmp $0 "Windows" invalid_dir
+
+    StrCpy $0 "ALLUSERSPROFILE APPDATA LOCALAPPDATA PROGRAMDATA PROGRAMFILES PROGRAMFILES(x86) PUBLIC SYSTEMDRIVE SYSTEMROOT USERPROFILE"
+    StrCpy $1 1
+    loop_critical:
+        ${WordFind} $0 " " "E+$1" $2
+        IfErrors endloop_critical
+        ReadEnvStr $3 $2
+        StrCmp $3 $INSTDIR invalid_dir
+        IntOp $1 $1 + 1
+        goto loop_critical
+    endloop_critical:
+
+    # Primitive check to see that $INSTDIR points to the right conda directory
+    StrCpy $0 "_conda.exe conda-meta\history Uninstall-${NAME}"
+    StrCpy $1 1
+    loop_conda:
+        ${WordFind} $0 " " "E+$1" $2
+        IfErrors endloop_conda
+        IfFileExists $INSTDIR\$2 0 invalid_dir
+        IntOp $1 $1 + 1
+        goto loop_conda
+    endloop_conda: 
+
+    # All checks have passed
+    goto valid_dir
+
+    invalid_dir:
+        MessageBox MB_OK|MB_ICONSTOP \
+            "Error: $INSTDIR is not a valid conda directory or another conda directory.$\n\
+             Please run the installer from a conda directory." \
+            /SD IDABORT
+        abort
+    valid_dir:
+
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
+FunctionEnd
+
 Function .onInit
     ${LogSet} on
     Push $0
@@ -717,7 +779,7 @@ Function un.onInit
         IfFileExists $INSTDIR\$2 0 invalid_dir
         IntOp $1 $1 + 1
         goto loop_conda
-    endloop_conda:
+    endloop_conda: 
 
     # All checks have passed
     goto valid_dir
@@ -845,6 +907,7 @@ Function OnDirectoryLeave
     ${LogSet} on
     ${If} ${IsNonEmptyDirectory} "$InstDir"
         DetailPrint "::error:: Directory '$INSTDIR' is not empty."
+
         MessageBox MB_YESNO \
             "Directory '$INSTDIR' is not empty,$\n\
              do you want to update the installation ?" \        
@@ -855,6 +918,7 @@ Function OnDirectoryLeave
                 SetOverwrite "off"
             Abort      
         confirmed_yes:
+                call CheckInstdirValidity
                 SetOverwrite "ifdiff" 
     ${EndIf}
 
