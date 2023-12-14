@@ -510,7 +510,7 @@ Function CheckInstdirValidity
     endloop_critical:
 
     # Primitive check to see that $INSTDIR points to the right conda directory
-    StrCpy $0 "_conda.exe conda-meta\history Uninstall-${NAME}"
+    StrCpy $0 "_conda.exe conda-meta\history Uninstall-${NAME}.exe"
     StrCpy $1 1
     loop_conda:
         ${WordFind} $0 " " "E+$1" $2
