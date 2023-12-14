@@ -847,11 +847,12 @@ Function OnDirectoryLeave
         DetailPrint "::error:: Directory '$INSTDIR' is not empty."
         MessageBox MB_YESNO \
             "Directory '$INSTDIR' is not empty,$\n\
-             do you want to upgrade the installation ?" \        
+             do you want to update the installation ?" \        
             /SD IDYES \
             IDYES confirmed_yes IDNO confirmed_no
         confirmed_no:
             MessageBox MB_OK|MB_ICONSTOP "Choose another directory." /SD IDOK 
+                SetOverwrite "off"
             Abort      
         confirmed_yes:
                 SetOverwrite "ifdiff" 
