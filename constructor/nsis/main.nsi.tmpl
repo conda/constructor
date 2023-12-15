@@ -518,7 +518,7 @@ Function CheckInstdirValidity
         IfFileExists $INSTDIR\$2 0 invalid_dir
         IntOp $1 $1 + 1
         goto loop_conda
-    endloop_conda: 
+    endloop_conda:
 
     # All checks have passed
     goto valid_dir
@@ -779,7 +779,7 @@ Function un.onInit
         IfFileExists $INSTDIR\$2 0 invalid_dir
         IntOp $1 $1 + 1
         goto loop_conda
-    endloop_conda: 
+    endloop_conda:
 
     # All checks have passed
     goto valid_dir
@@ -910,16 +910,16 @@ Function OnDirectoryLeave
 
         MessageBox MB_YESNO \
             "Directory '$INSTDIR' is not empty,$\n\
-             do you want to update the installation ?" \        
+             do you want to update the installation ?" \
             /SD IDYES \
             IDYES confirmed_yes IDNO confirmed_no
         confirmed_no:
-            MessageBox MB_OK|MB_ICONSTOP "Choose another directory." /SD IDOK 
+            MessageBox MB_OK|MB_ICONSTOP "Choose another directory." /SD IDOK
                 SetOverwrite "off"
-            Abort      
+            Abort
         confirmed_yes:
                 call CheckInstdirValidity
-                SetOverwrite "ifdiff" 
+                SetOverwrite "ifdiff"
     ${EndIf}
 
     ReadRegStr $LongPathsEnabled HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled"
