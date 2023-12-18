@@ -60,8 +60,8 @@ under `$PREFIX/Menu`, `conda` will process it to create the specified menu items
 This happens by default for _all packages_. If you only want this to happen for certain packages,
 use the [`menu_packages`](construct-yaml.md#menu_packages) key.
 
-Starting with `conda` 23.11, `menuinst 2.x` is supported, which means you can create shortcuts in all platforms (Linux, macOS and Windows). 
-The JSON document format is slightly different, so make sure to check the [menuinst documentation](https://conda.github.io/menuinst/). 
+Starting with `conda` 23.11, `menuinst 2.x` is supported, which means you can create shortcuts in all platforms (Linux, macOS and Windows).
+The JSON document format is slightly different, so make sure to check the [menuinst documentation](https://conda.github.io/menuinst/).
 Your installer will need to be created with `conda-standalone 23.11` or above.
 `micromamba` does not currently support `menuinst 2.x` style shortcuts (only `1.x` on Windows).
 
