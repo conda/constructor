@@ -368,7 +368,7 @@ def test_example_scripts(tmp_path, request):
 
 
 @pytest.mark.skipif(
-    Path(CONSTRUCTOR_CONDA_EXE or "").name.startswith("micromamba"),
+    "micromamba" in Path(CONSTRUCTOR_CONDA_EXE or "").name.lower() and sys.platform != "win32",
     reason="Micromamba does not implement shortcuts (yet)",
 )
 @pytest.mark.skipif(
