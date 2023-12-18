@@ -199,6 +199,18 @@ def setup_envs_commands(info, dir_path):
     return [line.strip() for line in lines]
 
 
+def uninstall_menus_commands(info):
+    tmpl = r"""
+        DetailPrint "Deleting menus from {name}..."
+        nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
+    """
+    lines = [tmpl.format(name="base", path="$INSTDIR").splitlines()]
+    for env_name in info.get("_extra_envs_info", {}):
+        path = join("$INSTDIR", "envs", env_name)
+        lines.append(tmpl.format(name=env_name, path=path).splitlines())
+    return [line.strip() for line in lines]
+
+
 def signtool_command(info):
     "Generates a signtool command to be used in the NSIS template"
     pfx_certificate = info.get("signing_certificate")
@@ -361,6 +373,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
+        ('@UNINSTALL_MENUS@', '\n    '.join(uninstall_menus_commands(info))),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
         ('@SCRIPT_ENV_VARIABLES@', '\n    '.join(setup_script_env_variables(info))),
         (

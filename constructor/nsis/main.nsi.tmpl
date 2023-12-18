@@ -1272,8 +1272,7 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 
     # Remove menu items, path entries
-    DetailPrint "Deleting @NAME@ menus..."
-    nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --rm-menus'
+    @UNINSTALL_MENUS@
 
     # ensure that MSVC runtime DLLs are on PATH during uninstallation
     ReadEnvStr $0 PATH
