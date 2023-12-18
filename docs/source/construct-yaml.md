@@ -133,8 +133,8 @@ be created.
 
 If all environments (`extra_envs` included) set `menu_packages` to an empty list,
 no UI options about shortcuts will be offered to the user.
-     
-Note: This option is not fully implemented when `micromamba` is used as 
+
+Note: This option is not fully implemented when `micromamba` is used as
 the `--conda-exe` binary. The only accepted value is an empty list (`[]`).
 
 ### `ignore_duplicate_files`
