@@ -240,6 +240,9 @@ def create_installer(
     timeout=420,
     **env_vars,
 ) -> Tuple[Path, Path]:
+    if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
+        pytest.skip("Micromamba is not supported on Windows yet.")
+
     output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)
     cmd = [

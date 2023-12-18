@@ -79,7 +79,8 @@ jobs:
             conda-standalone: conda-standalone
           - os: windows
             python-version: "3.11"
-            conda-standalone: micromamba
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-nightly
 
     env:
       PYTHONUNBUFFERED: "1"

@@ -89,6 +89,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     if platform != cc_platform and 'pkg' in itypes and not cc_platform.startswith('osx-'):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
+    if osname == "win" and "micromamba" in os.path.basename(info['_conda_exe']):
+        # TODO: Investigate errors on Windows and re-enable
+        sys.exit("Error: micromamba is not supported on Windows installers.")
 
     logger.debug('conda packages download: %s', info['_download_dir'])
 
