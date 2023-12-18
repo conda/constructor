@@ -204,7 +204,7 @@ def uninstall_menus_commands(info):
         DetailPrint "Deleting menus from {name}..."
         nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
     """
-    lines = [tmpl.format(name="base", path="$INSTDIR").splitlines()]
+    lines = tmpl.format(name="base", path="$INSTDIR").splitlines()
     for env_name in info.get("_extra_envs_info", {}):
         path = join("$INSTDIR", "envs", env_name)
         lines += tmpl.format(name=env_name, path=path).splitlines()
