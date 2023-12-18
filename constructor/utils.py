@@ -208,11 +208,6 @@ def yield_lines(path):
 def shortcuts_flags(info):
     menu_packages = info.get("menu_packages")
     is_micromamba = "micromamba" in basename(info.get("_conda_exe", "")).lower()
-    platform = info["_platform"]
-    if is_micromamba and not platform.startswith("win"):
-        # micromamba does not support shortcuts
-        logger.warning("Micromamba only supports v1-style menuinst shortcuts.")
-        return ""
     if menu_packages is None:
         # not set: we create all shortcuts (default behaviour)
         return ""
@@ -220,7 +215,7 @@ def shortcuts_flags(info):
         if is_micromamba:
             logger.warning(
                 "Micromamba does not support '--shortcuts-only'. "
-                "Adding all shortcuts."
+                "Will install all shortcuts."
             )
             return ""
         # set and populated: we only create shortcuts for some

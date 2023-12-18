@@ -9,7 +9,7 @@ import argparse
 import logging
 import os
 import sys
-from os.path import abspath, expanduser, isdir, join
+from os.path import abspath, basename, expanduser, isdir, join
 from textwrap import dedent, indent
 
 from . import __version__
@@ -142,15 +142,20 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
 
-    # Installers will provide shortcut options and features only if the user
-    # didn't opt-out by setting every `menu_packages` item to an empty list
-    info['_enable_shortcuts'] = bool(
-        info.get("menu_packages", True)
-        or any(
-            env.get("menu_packages", True)
-            for env in info.get("_extra_envs_info", {}).values()
+    if "micromamba" in basename(info.get("_conda_exe", "")).lower() and sys.platform != "win32":
+        # micromamba does not support shortcuts on Unix (yet)
+        logger.warning("Micromamba only supports shortcuts on Windows. Disabling shortcuts.")
+        info['_enable_shortcuts'] = False
+    else:
+        # Installers will provide shortcut options and features only if the user
+        # didn't opt-out by setting every `menu_packages` item to an empty list
+        info['_enable_shortcuts'] = bool(
+            info.get("menu_packages", True)
+            or any(
+                env.get("menu_packages", True)
+                for env in info.get("_extra_envs_info", {}).values()
+            )
         )
-    )
 
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
