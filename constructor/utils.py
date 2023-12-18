@@ -14,9 +14,12 @@ from os.path import basename, isdir, isfile, islink, normpath
 from shutil import rmtree
 from subprocess import check_call
 
-from ruamel import yaml
+from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
+yaml = YAML(typ="rt")
+yaml.default_flow_style = False
+yaml.indent(mapping=2, sequence=4, offset=2)
 
 
 def explained_check_call(args):
@@ -117,7 +120,7 @@ def add_condarc(info):
         if channel_alias:
             condarc['channel_alias'] = channel_alias
     if isinstance(condarc, dict):
-        condarc = yaml.dump(condarc, default_flow_style=False)
+        condarc = yaml.dump(condarc)
     yield '# ----- add condarc'
     if info['_platform'].startswith('win'):
         yield 'Var /Global CONDARC'
