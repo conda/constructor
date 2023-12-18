@@ -79,11 +79,7 @@ jobs:
             conda-standalone: conda-standalone
           - os: windows
             python-version: "3.11"
-            conda-standalone: conda-standalone-nightly
-          # Micromamba doesn't support Windows yet (menuinst features missing)
-          # - os: windows
-          #   python-version: 3.11
-          #   conda-standalone: micromamba
+            conda-standalone: micromamba
 
     env:
       PYTHONUNBUFFERED: "1"
