@@ -17,7 +17,7 @@ from subprocess import check_call
 from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
-yaml = YAML(typ="rt")
+yaml = YAML(typ=["rt", "string"])
 yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
 
@@ -120,7 +120,7 @@ def add_condarc(info):
         if channel_alias:
             condarc['channel_alias'] = channel_alias
     if isinstance(condarc, dict):
-        condarc = yaml.dump(condarc)
+        condarc = yaml.dump_to_string(condarc)
     yield '# ----- add condarc'
     if info['_platform'].startswith('win'):
         yield 'Var /Global CONDARC'
