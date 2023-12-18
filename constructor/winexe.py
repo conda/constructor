@@ -207,7 +207,7 @@ def uninstall_menus_commands(info):
     lines = [tmpl.format(name="base", path="$INSTDIR").splitlines()]
     for env_name in info.get("_extra_envs_info", {}):
         path = join("$INSTDIR", "envs", env_name)
-        lines.append(tmpl.format(name=env_name, path=path).splitlines())
+        lines += tmpl.format(name=env_name, path=path).splitlines()
     return [line.strip() for line in lines]
 
 
