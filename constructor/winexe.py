@@ -201,7 +201,7 @@ def setup_envs_commands(info, dir_path):
 
 def uninstall_menus_commands(info):
     tmpl = r"""
-        SetDetailsPrint
+        SetDetailsPrint both
         DetailPrint "Deleting @NAME@ menus in {name}..."
         SetDetailsPrint listonly
         push '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
