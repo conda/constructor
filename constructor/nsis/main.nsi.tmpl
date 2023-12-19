@@ -1269,9 +1269,8 @@ SectionEnd
 !macroend
 
 Section "Uninstall"
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
-
     # Remove menu items, path entries
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
     SetDetailsPrint both
     @UNINSTALL_MENUS@
 

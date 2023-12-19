@@ -201,9 +201,15 @@ def setup_envs_commands(info, dir_path):
 
 def uninstall_menus_commands(info):
     tmpl = r"""
-        DetailPrint "Deleting menus from {name}..."
-        nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
-    """
+        SetDetailsPrint
+        DetailPrint "Deleting @NAME@ menus in {name}..."
+        SetDetailsPrint listonly
+        push '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
+        push 'Failed to delete menus in {name}'
+        push 'WithLog'
+        call un.AbortRetryNSExecWait
+        SetDetailsPrint both
+        """
     lines = tmpl.format(name="base", path="$INSTDIR").splitlines()
     for env_name in info.get("_extra_envs_info", {}):
         path = join("$INSTDIR", "envs", env_name)
