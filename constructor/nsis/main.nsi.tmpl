@@ -1272,6 +1272,7 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 
     # Remove menu items, path entries
+    SetDetailsPrint both
     @UNINSTALL_MENUS@
 
     # ensure that MSVC runtime DLLs are on PATH during uninstallation

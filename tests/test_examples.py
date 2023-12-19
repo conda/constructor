@@ -72,31 +72,7 @@ def _execute(
         print("Took", timedelta(seconds=time.time() - t0))
 
 
-def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420):
-    """
-    NSIS manual:
-    > /D sets the default installation directory ($INSTDIR), overriding InstallDir
-    > and InstallDirRegKey. It must be the last parameter used in the command line
-    > and must not contain any quotes, even if the path contains spaces. Only
-    > absolute paths are supported.
-    Since subprocess.Popen WILL escape the spaces with quotes, we need to provide
-    them as separate arguments. We don't care about multiple spaces collapsing into
-    one, since the point is to just have spaces in the installation path -- one
-    would be enough too :)
-    This is why we have this weird .split() thingy down there in `/D=...`.
-    """
-    if not sys.platform.startswith("win"):
-        raise ValueError("Can only run .exe installers on Windows")
-    if "NSIS_USING_LOG_BUILD" not in os.environ:
-        warnings.warn(
-            "Windows installers are tested with NSIS in silent mode, which does "
-            "not report errors on exit. You should use logging-enabled NSIS builds "
-            "to generate an 'install.log' file this script will search for errors "
-            "after completion."
-        )
-    cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
-    _execute(cmd, installer_input=installer_input, timeout=timeout)
-
+def _check_installer_log(install_dir):
     # Windows installers won't raise exit codes so we need to check the log file
     error_lines = []
     try:
@@ -121,6 +97,33 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
         raise AssertionError("\n".join(error_lines))
 
 
+def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420):
+    """
+    NSIS manual:
+    > /D sets the default installation directory ($INSTDIR), overriding InstallDir
+    > and InstallDirRegKey. It must be the last parameter used in the command line
+    > and must not contain any quotes, even if the path contains spaces. Only
+    > absolute paths are supported.
+    Since subprocess.Popen WILL escape the spaces with quotes, we need to provide
+    them as separate arguments. We don't care about multiple spaces collapsing into
+    one, since the point is to just have spaces in the installation path -- one
+    would be enough too :)
+    This is why we have this weird .split() thingy down there in `/D=...`.
+    """
+    if not sys.platform.startswith("win"):
+        raise ValueError("Can only run .exe installers on Windows")
+    if "NSIS_USING_LOG_BUILD" not in os.environ:
+        warnings.warn(
+            "Windows installers are tested with NSIS in silent mode, which does "
+            "not report errors on exit. You should use logging-enabled NSIS builds "
+            "to generate an 'install.log' file this script will search for errors "
+            "after completion."
+        )
+    cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
+    _execute(cmd, installer_input=installer_input, timeout=timeout)
+    _check_installer_log(install_dir)
+
+
 def _run_uninstaller_exe(install_dir, timeout=420):
     # Now test the uninstallers
     if " " in str(install_dir):
@@ -130,6 +133,10 @@ def _run_uninstaller_exe(install_dir, timeout=420):
             "This is a known issue with our setup, to be fixed."
         )
         return
+    # Rename install.log
+    install_log = install_dir / "install.log"
+    if install_log.exists():
+        install_log.rename(install_dir / "install.log.bak")
 
     uninstaller = next(install_dir.glob("Uninstall-*.exe"), None)
     if not uninstaller:
@@ -147,8 +154,9 @@ def _run_uninstaller_exe(install_dir, timeout=420):
         f"/S _?={install_dir}",
     ]
     _execute(cmd, timeout=timeout)
+    _check_installer_log(install_dir)
     remaining_files = list(install_dir.iterdir())
-    if len(remaining_files) > 2:
+    if len(remaining_files) > 3:
         # The debug installer writes to install.log too, which will only
         # be deleted _after_ a reboot. Finding some files is ok, but more
         # than two usually means a problem with the uninstaller.
@@ -353,12 +361,12 @@ def test_example_miniforge(tmp_path, request):
                         "Microsoft/Windows/Start Menu/Programs/Miniforge3",
                     )
                     if start_menu_dir.is_dir():
-                        assert (start_menu_dir / "Miniforge Prompt.lnk").is_file()
+                        assert list(start_menu_dir.glob("Miniforge*.lnk"))
                         break
                 else:
                     raise AssertionError("Could not find Start Menu folder for miniforge")
                 _run_uninstaller_exe(install_dir)
-                assert not (start_menu_dir / "Miniforge Prompt.lnk").is_file()
+                assert not list(start_menu_dir.glob("Miniforge*.lnk"))
 
 
 def test_example_noconda(tmp_path, request):
