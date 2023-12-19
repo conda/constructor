@@ -342,9 +342,25 @@ def test_example_miniforge(tmp_path, request):
                 # PKG installers use their own install path, so we can't check sentinels
                 # via `install_dir`
                 check_sentinels=installer.suffix != ".pkg",
+                uninstall=False,
             )
             if installer.suffix == ".pkg" and ON_CI:
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
+            if installer.suffix == ".exe":
+                for key in ("ProgramData", "AppData"):
+                    start_menu_dir = Path(
+                        os.environ[key], 
+                        "Microsoft/Windows/Start Menu/Programs", 
+                        install_dir.name,
+                    )
+                    if start_menu_dir.is_dir():
+                        assert (start_menu_dir / f"{install_dir.name} Prompt.lnk").is_file()
+                        break
+                else:
+                    raise AssertionError("Could not find Start Menu folder for miniforge")
+                _run_uninstaller_exe(install_dir)
+                assert not (start_menu_dir / f"{install_dir.name} Prompt.lnk").is_file()
+
 
 
 def test_example_noconda(tmp_path, request):
