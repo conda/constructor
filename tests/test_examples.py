@@ -72,6 +72,31 @@ def _execute(
         print("Took", timedelta(seconds=time.time() - t0))
 
 
+def _check_installer_log(install_dir):
+    # Windows installers won't raise exit codes so we need to check the log file
+    error_lines = []
+    try:
+        log_is_empty = True
+        with open(os.path.join(install_dir, "install.log"), encoding="utf-16-le") as f:
+            print("Installer log:", file=sys.stderr)
+            for line in f:
+                log_is_empty = False
+                print(line, end="", file=sys.stderr)
+                if ":error:" in line.lower():
+                    error_lines.append(line)
+        if log_is_empty:
+            error_lines.append("Logfile was unexpectedly empty!")
+    except Exception as exc:
+        error_lines.append(
+            f"Could not read logs! {exc.__class__.__name__}: {exc}\n"
+            "This usually means that the destination folder could not be created.\n"
+            "Possible causes: permissions, non-supported characters, long paths...\n"
+            "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
+        )
+    if error_lines:
+        raise AssertionError("\n".join(error_lines))
+
+
 def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420):
     """
     NSIS manual:
@@ -96,27 +121,7 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
         )
     cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
     _execute(cmd, installer_input=installer_input, timeout=timeout)
-
-    # Windows installers won't raise exit codes so we need to check the log file
-    error_lines = []
-    try:
-        log_is_empty = True
-        with open(os.path.join(install_dir, "install.log"), encoding="utf-16-le") as f:
-            for line in f:
-                log_is_empty = False
-                if ":error:" in line.lower():
-                    error_lines.append(line)
-        if log_is_empty:
-            error_lines.append("Logfile was unexpectedly empty!")
-    except Exception as exc:
-        error_lines.append(
-            f"Could not read logs! {exc.__class__.__name__}: {exc}\n"
-            "This usually means that the destination folder could not be created.\n"
-            "Possible causes: permissions, non-supported characters, long paths...\n"
-            "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
-        )
-    if error_lines:
-        raise AssertionError("\n".join(error_lines))
+    _check_installer_log(install_dir)
 
 
 def _run_uninstaller_exe(install_dir, timeout=420):
@@ -128,6 +133,10 @@ def _run_uninstaller_exe(install_dir, timeout=420):
             "This is a known issue with our setup, to be fixed."
         )
         return
+    # Rename install.log
+    install_log = install_dir / "install.log"
+    if install_log.exists():
+        install_log.rename(install_dir / "install.log.bak")
 
     uninstaller = next(install_dir.glob("Uninstall-*.exe"), None)
     if not uninstaller:
@@ -145,8 +154,9 @@ def _run_uninstaller_exe(install_dir, timeout=420):
         f"/S _?={install_dir}",
     ]
     _execute(cmd, timeout=timeout)
+    _check_installer_log(install_dir)
     remaining_files = list(install_dir.iterdir())
-    if len(remaining_files) > 2:
+    if len(remaining_files) > 3:
         # The debug installer writes to install.log too, which will only
         # be deleted _after_ a reboot. Finding some files is ok, but more
         # than two usually means a problem with the uninstaller.
@@ -209,6 +219,7 @@ def _run_installer(
     installer_input: Optional[str] = None,
     check_sentinels=True,
     request=None,
+    uninstall=True,
     timeout=420,
 ):
     if installer.suffix == ".exe":
@@ -223,7 +234,7 @@ def _run_installer(
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
         _sentinel_file_checks(example_path, install_dir)
-    if installer.suffix == ".exe":
+    if uninstall and installer.suffix == ".exe":
         _run_uninstaller_exe(install_dir, timeout=timeout)
 
 
@@ -237,7 +248,7 @@ def create_installer(
     **env_vars,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
-        pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
+        pytest.skip("Micromamba is not supported on Windows yet.")
 
     output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -339,9 +350,23 @@ def test_example_miniforge(tmp_path, request):
                 # PKG installers use their own install path, so we can't check sentinels
                 # via `install_dir`
                 check_sentinels=installer.suffix != ".pkg",
+                uninstall=False,
             )
             if installer.suffix == ".pkg" and ON_CI:
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
+            if installer.suffix == ".exe":
+                for key in ("ProgramData", "AppData"):
+                    start_menu_dir = Path(
+                        os.environ[key],
+                        "Microsoft/Windows/Start Menu/Programs/Miniforge3",
+                    )
+                    if start_menu_dir.is_dir():
+                        assert list(start_menu_dir.glob("Miniforge*.lnk"))
+                        break
+                else:
+                    raise AssertionError("Could not find Start Menu folder for miniforge")
+                _run_uninstaller_exe(install_dir)
+                assert not list(start_menu_dir.glob("Miniforge*.lnk"))
 
 
 def test_example_noconda(tmp_path, request):
