@@ -28,7 +28,6 @@ pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
 ON_CI = os.environ.get("CI")
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
-CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2 = os.environ.get("CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2")
 CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH = Path(artifacts_path)
@@ -368,22 +367,12 @@ def test_example_scripts(tmp_path, request):
 
 
 @pytest.mark.skipif(
-    "micromamba" in Path(CONSTRUCTOR_CONDA_EXE or "").name.lower() and sys.platform != "win32",
-    reason="Micromamba does not implement shortcuts (yet)",
-)
-@pytest.mark.skipif(
-    not CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2,
-    reason="Patched conda-standalone not provided; "
-    "please export CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2=<path>",
+    "micromamba" in Path(CONSTRUCTOR_CONDA_EXE or "").name.lower(),
+    reason="Micromamba only supports v1 shortcuts.",
 )
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
-    assert Path(CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2).exists()
-    for installer, install_dir in create_installer(
-        input_path,
-        tmp_path,
-        conda_exe=CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2,
-    ):
+    for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         # check that the shortcuts are created
         if sys.platform == "win32":

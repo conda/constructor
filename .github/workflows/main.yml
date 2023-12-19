@@ -118,9 +118,6 @@ jobs:
             conda activate constructor-dev
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
           fi
-          # TEMPORARY
-          conda create -yqp "${{ runner.temp }}/conda-standalone-menuinst" -c napari/label/bundle_tools_3 conda-standalone
-          echo "CONSTRUCTOR_CONDA_EXE_WITH_MENUINST_V2=${{ runner.temp }}/conda-standalone-menuinst/standalone_conda/conda.exe" >> $GITHUB_ENV
       - name: Run unit tests
         run: |
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
