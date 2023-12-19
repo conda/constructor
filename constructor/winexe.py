@@ -202,18 +202,18 @@ def setup_envs_commands(info, dir_path):
 def uninstall_menus_commands(info):
     tmpl = r"""
         SetDetailsPrint both
-        DetailPrint "Deleting @NAME@ menus in {name}..."
+        DetailPrint "Deleting {name} menus in {env_name}..."
         SetDetailsPrint listonly
         push '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
-        push 'Failed to delete menus in {name}'
+        push 'Failed to delete menus in {env_name}'
         push 'WithLog'
         call un.AbortRetryNSExecWait
         SetDetailsPrint both
         """
-    lines = tmpl.format(name="base", path="$INSTDIR").splitlines()
+    lines = tmpl.format(name=info["name"], env_name="base", path="$INSTDIR").splitlines()
     for env_name in info.get("_extra_envs_info", {}):
         path = join("$INSTDIR", "envs", env_name)
-        lines += tmpl.format(name=env_name, path=path).splitlines()
+        lines += tmpl.format(name=info["name"], env_name=env_name, path=path).splitlines()
     return [line.strip() for line in lines]
 
 
