@@ -12,7 +12,9 @@ from typing import Iterable, Optional, Tuple
 import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
+from conda.models.version import VersionOrder as Version
 
+from constructor.utils import identify_conda_exe
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
 
@@ -28,13 +30,13 @@ pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
 ON_CI = os.environ.get("CI")
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
+CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH = Path(artifacts_path)
     KEEP_ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
 else:
     KEEP_ARTIFACTS_PATH = None
-
 
 def _execute(
     cmd: Iterable[str], installer_input=None, check=True, timeout=420, **env_vars
@@ -331,6 +333,10 @@ def test_example_extra_files(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
+@pytest.mark.xfail(
+    CONDA_EXE == "conda-standalone" and Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
+)
 def test_example_miniforge(tmp_path, request):
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
@@ -389,8 +395,8 @@ def test_example_scripts(tmp_path, request):
 
 
 @pytest.mark.skipif(
-    "micromamba" in Path(CONSTRUCTOR_CONDA_EXE or "").name.lower(),
-    reason="Micromamba only supports v1 shortcuts.",
+    CONDA_EXE == "micromamba" or Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
 )
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")

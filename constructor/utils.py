@@ -10,9 +10,9 @@ import math
 import re
 import sys
 from os import sep, unlink
-from os.path import basename, isdir, isfile, islink, normpath
+from os.path import basename, isdir, isfile, islink, join, normpath
 from shutil import rmtree
-from subprocess import check_call
+from subprocess import check_call, check_output
 
 from ruamel import yaml
 
@@ -239,3 +239,18 @@ def approx_size_kb(info, which="pkgs"):
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
     return int(math.ceil(size_bytes/1000))
+
+
+def identify_conda_exe(conda_exe=None):
+    if conda_exe is None:
+        conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
+    output = check_output([conda_exe, "--version"], text=True)
+    output = output.strip()
+    fields = output.split()
+    if "conda" in fields:
+        name = "conda-standalone"
+        version = fields[1]
+    else:
+        name = "micromamba"
+        version = output.strip()
+    return name, version
