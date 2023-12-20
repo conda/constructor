@@ -29,9 +29,10 @@ CONDA_EXEC="$PREFIX/conda.exe"
 
 # Check whether the user wants shortcuts or not
 # See check_shortcuts.sh script for details
+ENABLE_SHORTCUTS="__ENABLE_SHORTCUTS__"
 if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then  # this implies ENABLE_SHORTCUTS==true
     shortcuts="__SHORTCUTS__"
-elif [[ "__ENABLE_SHORTCUTS__" == "incompatible" ]]; then
+elif [[ "$ENABLE_SHORTCUTS" == "incompatible" ]]; then
     shortcuts=""
 else
     shortcuts="--no-shortcuts"
