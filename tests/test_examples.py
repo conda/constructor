@@ -15,6 +15,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 
 from constructor.utils import identify_conda_exe
+
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
 
@@ -37,6 +38,7 @@ if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
 else:
     KEEP_ARTIFACTS_PATH = None
+
 
 def _execute(
     cmd: Iterable[str], installer_input=None, check=True, timeout=420, **env_vars
@@ -411,7 +413,7 @@ def test_example_shortcuts(tmp_path, request):
                 if package_1.is_dir() and anaconda.is_dir():
                     assert (package_1 / "A.lnk").is_file()
                     assert (package_1 / "B.lnk").is_file()
-                    # The shortcut created from the 'base' env 
+                    # The shortcut created from the 'base' env
                     # should not exist because we filtered it out in the YAML
                     # We do expect one shortcut from 'another_env'
                     assert not (anaconda / "Anaconda Prompt.lnk").is_file()
