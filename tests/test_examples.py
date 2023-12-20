@@ -407,15 +407,15 @@ def test_example_shortcuts(tmp_path, request):
             for key in ("ProgramData", "AppData"):
                 start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
                 package_1 = start_menu / "Package 1"
-                miniconda = start_menu / "Miniconda3"
-                if package_1.is_dir() and miniconda.is_dir():
+                anaconda = start_menu / "Anaconda3 (64-bit)"
+                if package_1.is_dir() and anaconda.is_dir():
                     assert (package_1 / "A.lnk").is_file()
                     assert (package_1 / "B.lnk").is_file()
                     # The shortcut created from the 'base' env 
                     # should not exist because we filtered it out in the YAML
                     # We do expect one shortcut from 'another_env'
-                    assert not (miniconda / "Anaconda Prompt.lnk").is_file()
-                    assert (miniconda / "Anaconda Prompt (another_env).lnk").is_file()
+                    assert not (anaconda / "Anaconda Prompt.lnk").is_file()
+                    assert (anaconda / "Anaconda Prompt (another_env).lnk").is_file()
                     break
             else:
                 raise AssertionError("No shortcuts found!")
