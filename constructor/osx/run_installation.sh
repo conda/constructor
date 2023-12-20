@@ -77,14 +77,16 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     else
         env_channels="__CHANNELS__"
     fi
-    if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then
+    if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then  # this implies ENABLE_SHORTCUTS==true
         # This file is guaranteed to exist, even if empty
         env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
         rm -f "${env_pkgs}shortcuts.txt"
+    elif [[ "$ENABLE_SHORTCUTS" == "incompatible" ]]; then
+        env_shortcuts=""
     else
         env_shortcuts="--no-shortcuts"
     fi
-    # TODO: custom shortcuts per env?
+
     # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \

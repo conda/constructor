@@ -507,7 +507,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
         env_channels="__CHANNELS__"
     fi
 #endif
-#if has_conda and enable_shortcuts
+#if has_conda and enable_shortcuts == "true"
     if [ "$SKIP_SHORTCUTS" = "1" ]; then
         env_shortcuts="--no-shortcuts"
     else
@@ -515,11 +515,14 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
         env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
         rm -f "${env_pkgs}shortcuts.txt"
     fi
-#else
+#endif
+#if has_conda and enable_shortcuts == "false"
     env_shortcuts="--no-shortcuts"
 #endif
+#if has_conda and enable_shortcuts == "incompatible"
+    env_shortcuts=""
+#endif
 #if has_conda
-    # TODO: custom shortcuts per env?
     # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
