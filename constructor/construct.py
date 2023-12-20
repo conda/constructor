@@ -165,8 +165,6 @@ name) to a dictionary of options:
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
 - `conda` needs to be present in the `base` environment (via `specs`)
-- support for `menu_packages` is planned, but not possible right now. For now, all packages
-  in an `extra_envs` config will be allowed to create their shortcuts.
 - If a global `exclude` option is used, it will have an effect on the environments created
   by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
   extra environments will have it either. Unlike the global option, an error will not be
@@ -608,9 +606,7 @@ _EXTRA_ENVS_SCHEMA = {
     "channels_remap": (list, tuple),
     "user_requested_specs": (list, tuple),
     "exclude": (list, tuple),
-    # TODO: we can't support menu_packages for extra envs yet
-    # will implement when the PR for new menuinst lands
-    # "menu_packages": (list, tuple),
+    "menu_packages": (list, tuple),
 }
 
 logger = logging.getLogger(__name__)

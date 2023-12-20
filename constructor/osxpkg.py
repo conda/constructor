@@ -202,7 +202,6 @@ def modify_xml(xml_path, info):
         choices_outline.extend(list(child))
         choices_outline.remove(child)
 
-    menu_packages = info.get('menu_packages', True)
     for path_choice in root.findall('choice'):
         ident = path_choice.get('id')
         if ident == 'default':
@@ -218,7 +217,7 @@ def modify_xml(xml_path, info):
             path_choice.set('visible', 'false')
             path_choice.set('title', 'Apply {}'.format(info['name']))
             path_choice.set('enabled', 'false')
-        elif ident.endswith('shortcuts') and menu_packages:
+        elif ident.endswith('shortcuts') and info["_enable_shortcuts"]:
             # Show this option if menu_packages was set to a non-empty value
             # or if the option was not set at all. We don't show the option
             # menu_packages was set to an empty list!
@@ -227,7 +226,11 @@ def modify_xml(xml_path, info):
             path_choice.set('enabled', 'true')
             descr = "Create shortcuts for compatible packages"
             menu_packages = info.get("menu_packages")
-            if isinstance(menu_packages, (list, tuple)):
+            if menu_packages is None:
+                menu_packages = []
+            for extra_env in info.get("_extra_envs_info", {}).values():
+                menu_packages += extra_env.get("menu_packages", [])
+            if menu_packages:
                 descr += f" ({', '.join(menu_packages)})"
             path_choice.set('description', descr)
         elif ident.endswith('user_pre_install') and info.get('pre_install_desc'):

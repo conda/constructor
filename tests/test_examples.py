@@ -405,16 +405,23 @@ def test_example_shortcuts(tmp_path, request):
         # check that the shortcuts are created
         if sys.platform == "win32":
             for key in ("ProgramData", "AppData"):
-                pkg_1 = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs/Package 1"
-                if pkg_1.exists():
-                    assert (pkg_1 / "A.lnk").exists()
-                    assert (pkg_1 / "B.lnk").exists()
+                start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
+                package_1 = start_menu / "Package 1"
+                miniconda = start_menu / "Miniconda3"
+                if package_1.is_dir() and miniconda.is_dir():
+                    assert (package_1 / "A.lnk").is_file()
+                    assert (package_1 / "B.lnk").is_file()
+                    # The shortcut created from the 'base' env 
+                    # should not exist because we filtered it out in the YAML
+                    # We do expect one shortcut from 'another_env'
+                    assert not (miniconda / "Anaconda Prompt.lnk").is_file()
+                    assert (miniconda / "Anaconda Prompt (another_env).lnk").is_file()
                     break
             else:
                 raise AssertionError("No shortcuts found!")
             _run_uninstaller_exe(install_dir)
-            assert not (pkg_1 / "A.lnk").exists()
-            assert not (pkg_1 / "B.lnk").exists()
+            assert not (package_1 / "A.lnk").is_file()
+            assert not (package_1 / "B.lnk").is_file()
         elif sys.platform == "darwin":
             applications = Path("~/Applications").expanduser()
             print("Shortcuts found:", sorted(applications.glob("**/*.app")))
