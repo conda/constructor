@@ -61,9 +61,11 @@ by an exact URL; e.g.,
 `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
 This key can also take a `str` pointing to a requirements file with the same syntax.
 
-The specs will be solved with the solver configured for your `base` conda installation,
-if any. Starting with conda 22.11, this behavior can be overriden with the
-`CONDA_SOLVER` environment variable.
+Note: `constructor` relies on `conda`'s Python API to solve the passed
+specifications. You can still set the `CONDA_SOLVER` environment variable
+to override system-wide settings for `constructor`. If you are using
+`constructor` from a non-`base` environment, make sure the
+configured solver plugin is also installed in that environment.
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
