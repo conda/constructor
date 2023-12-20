@@ -152,7 +152,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         exe_name == "micromamba" or Version(exe_version) < Version("23.11.0")
     ):
         logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
-        info['_enable_shortcuts'] = False
+        info['_enable_shortcuts'] = "incompatible"
     else:
         # Installers will provide shortcut options and features only if the user
         # didn't opt-out by setting every `menu_packages` item to an empty list
@@ -160,7 +160,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             info.get("menu_packages", True)
             or any(
                 env.get("menu_packages", True)
-                for env in info.get("_extra_envs_info", {}).values()
+                for env in info.get("extra_envs", {}).values()
             )
         )
 

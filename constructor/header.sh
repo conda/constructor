@@ -465,14 +465,18 @@ test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda
 
 printf "\nInstalling base environment...\n\n"
 
-#if enable_shortcuts
+#if enable_shortcuts == "true"
 if [ "$SKIP_SHORTCUTS" = "1" ]; then
     shortcuts="--no-shortcuts"
 else
     shortcuts="__SHORTCUTS__"
 fi
-#else
+#endif
+#if enable_shortcuts == "false"
 shortcuts="--no-shortcuts"
+#endif
+#if enable_shortcuts == "incompatible"
+shortcuts=""
 #endif
 
 # shellcheck disable=SC2086

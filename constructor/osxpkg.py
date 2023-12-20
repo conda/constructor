@@ -217,7 +217,7 @@ def modify_xml(xml_path, info):
             path_choice.set('visible', 'false')
             path_choice.set('title', 'Apply {}'.format(info['name']))
             path_choice.set('enabled', 'false')
-        elif ident.endswith('shortcuts') and info["_enable_shortcuts"]:
+        elif ident.endswith('shortcuts'):
             # Show this option if menu_packages was set to a non-empty value
             # or if the option was not set at all. We don't show the option
             # menu_packages was set to an empty list!
@@ -228,7 +228,7 @@ def modify_xml(xml_path, info):
             menu_packages = info.get("menu_packages")
             if menu_packages is None:
                 menu_packages = []
-            for extra_env in info.get("_extra_envs_info", {}).values():
+            for extra_env in info.get("extra_envs", {}).values():
                 menu_packages += extra_env.get("menu_packages", [])
             if menu_packages:
                 descr += f" ({', '.join(menu_packages)})"
@@ -324,6 +324,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'PRE_OR_POST': user_script_type or '__PRE_OR_POST__',
         'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
         'SHORTCUTS': shortcuts_flags(info),
+        'ENABLE_SHORTCUTS': str(info['_enable_shortcuts']).lower(),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
     }
     data = preprocess(data, ppd)
@@ -525,7 +526,7 @@ def create(info, verbose=False):
         names.append('user_pre_install')
 
     # pre-3. Enable or disable shortcuts creation
-    if info['_enable_shortcuts']:
+    if info['_enable_shortcuts'] is True:
         pkgbuild_script('shortcuts', info, 'check_shortcuts.sh')
         names.append('shortcuts')
 

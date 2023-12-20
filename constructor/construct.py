@@ -771,7 +771,7 @@ def verify(info):
             sys.exit(
                 f"Environment names (keys in 'extra_envs') cannot contain any of {disallowed}. "
                 f"You tried to use: {env_name}"
-                )
+            )
         for key, value in env_data.items():
             if key not in _EXTRA_ENVS_SCHEMA:
                 sys.exit(f"Key '{key}' not supported in 'extra_envs'.")

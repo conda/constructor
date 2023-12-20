@@ -192,7 +192,7 @@ def setup_envs_commands(info, dir_path):
             conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
             history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
             channels=",".join(get_final_channels(channel_info)),
-            shortcuts=shortcuts_flags(env_info),
+            shortcuts=shortcuts_flags(env_info, conda_exe=info.get("_conda_exe")),
             register_envs=str(info.get("register_envs", True)).lower(),
         ).splitlines()
 
@@ -275,7 +275,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
                                              join('%ALLUSERSPROFILE%', name.lower())),
         'PRE_INSTALL_DESC': info['pre_install_desc'],
         'POST_INSTALL_DESC': info['post_install_desc'],
-        'ENABLE_SHORTCUTS': "yes" if info['_enable_shortcuts'] else "no",
+        'ENABLE_SHORTCUTS': "yes" if info['_enable_shortcuts'] is True else "no",
         'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
         'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
         'OUTFILE': info['_outpath'],

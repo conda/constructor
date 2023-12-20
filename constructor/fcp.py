@@ -57,7 +57,7 @@ def getsize(filename):
 
 def warn_menu_packages_missing(precs, menu_packages):
     all_names = {prec.name for prec in precs}
-    for name in menu_packages:
+    for name in (menu_packages or ()):
         if name not in all_names:
             logger.warning("no such package (in menu_packages): %s", name)
 
@@ -236,7 +236,7 @@ def _precs_from_environment(environment, input_dir):
 
 
 def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(),
-                 specs=(), exclude=(), menu_packages=(), environment=None, environment_file=None,
+                 specs=(), exclude=(), menu_packages=None, environment=None, environment_file=None,
                  verbose=True, conda_exe="conda.exe", extra_env=False, input_dir=""):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
@@ -376,7 +376,7 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
 
 
 def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
-          exclude=(), menu_packages=(), ignore_duplicate_files=True, environment=None,
+          exclude=(), menu_packages=None, ignore_duplicate_files=True, environment=None,
           environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
           transmute_file_type='', extra_envs=None, check_path_spaces=True, input_dir=""):
     precs = _solve_precs(
@@ -408,7 +408,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
             channels_remap=env_config.get("channels_remap", channels_remap),
             specs=env_config.get("specs", ()),
             exclude=env_config.get("exclude", exclude),
-            menu_packages=env_config.get("menu_packages", ()),
+            menu_packages=env_config.get("menu_packages"),
             environment=env_config.get("environment"),
             environment_file=env_config.get("environment_file"),
             verbose=verbose,
@@ -462,7 +462,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     channels_remap = info.get('channels_remap', ())
     specs = info.get("specs", ())
     exclude = info.get("exclude", ())
-    menu_packages = info.get("menu_packages", ())
+    menu_packages = info.get("menu_packages")
     ignore_duplicate_files = info.get("ignore_duplicate_files", True)
     environment = info.get("environment", None)
     environment_file = info.get("environment_file", None)
