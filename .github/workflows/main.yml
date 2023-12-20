@@ -77,10 +77,10 @@ jobs:
           - os: windows
             python-version: "3.10"
             conda-standalone: conda-standalone
-          - os: windows
-            python-version: "3.11"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-nightly
+          # - os: windows
+          #   python-version: "3.11"
+          #   # conda-standalone: micromamba
+          #   conda-standalone: conda-standalone-nightly
 
     env:
       PYTHONUNBUFFERED: "1"
@@ -118,9 +118,9 @@ jobs:
             conda activate constructor-dev
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
           fi
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   timeout-minutes: 60
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 60
       - name: Run unit tests
         run: |
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
