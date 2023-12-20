@@ -205,9 +205,10 @@ def yield_lines(path):
         yield line
 
 
-def shortcuts_flags(info):
+def shortcuts_flags(info, conda_exe=None):
     menu_packages = info.get("menu_packages")
-    is_micromamba = "micromamba" in basename(info.get("_conda_exe", "")).lower()
+    conda_exe = conda_exe or info.get("_conda_exe", "")
+    is_micromamba = "micromamba" in basename(conda_exe).lower()
     if menu_packages is None:
         # not set: we create all shortcuts (default behaviour)
         return ""
