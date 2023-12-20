@@ -776,7 +776,7 @@ def verify(info):
             if key not in _EXTRA_ENVS_SCHEMA:
                 sys.exit(f"Key '{key}' not supported in 'extra_envs'.")
             types = _EXTRA_ENVS_SCHEMA[key]
-            if not isinstance(value, types):
+            if value is not None and not isinstance(value, types):
                 types_str = " or ".join([type_.__name__ for type_ in types])
                 sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
                          f"must be an instance of {types_str}")
