@@ -9,17 +9,17 @@ import argparse
 import logging
 import os
 import sys
-from os.path import abspath, basename, expanduser, isdir, join
+from os.path import abspath, expanduser, isdir, join
 from textwrap import dedent, indent
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
+from .conda_interface import SUPPORTED_PLATFORMS, cc_platform, VersionOrder as Version
 from .construct import generate_key_info_list, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
-from .utils import normalize_path, yield_lines
+from .utils import identify_conda_exe, normalize_path, yield_lines
 
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 
@@ -145,9 +145,11 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
 
-    if "micromamba" in basename(info.get("_conda_exe", "")).lower() and sys.platform != "win32":
-        # micromamba does not support shortcuts on Unix (yet)
-        logger.warning("Micromamba only supports shortcuts on Windows. Disabling shortcuts.")
+    exe_name, exe_version = identify_conda_exe(info.get("_conda_exe"))
+    if sys.platform != "win32" and (
+        exe_name == "micromamba" or Version(exe_version) < Version("23.11.0")
+    ):
+        logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
         info['_enable_shortcuts'] = False
     else:
         # Installers will provide shortcut options and features only if the user
