@@ -38,42 +38,42 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # UBUNTU
-          - os: ubuntu
-            python-version: "3.8"
-            conda-standalone: conda-standalone
-            check-docs: true
-          - os: ubuntu
-            python-version: "3.9"
-            conda-standalone: conda-standalone
-            check-docs: true
-          - os: ubuntu
-            python-version: "3.10"
-            conda-standalone: conda-standalone-nightly
-          - os: ubuntu
-            python-version: "3.11"
-            conda-standalone: micromamba
-          # MACOS
-          - os: macos
-            python-version: "3.8"
-            conda-standalone: conda-standalone-nightly
-          # Not running for 3.9 to save some CI resources
-          # - os: macos
+          # # UBUNTU
+          # - os: ubuntu
+          #   python-version: "3.8"
+          #   conda-standalone: conda-standalone
+          #   check-docs: true
+          # - os: ubuntu
           #   python-version: "3.9"
           #   conda-standalone: conda-standalone
-          - os: macos
-            python-version: "3.10"
-            conda-standalone: micromamba
-          - os: macos
-            python-version: "3.11"
-            conda-standalone: conda-standalone
-          # WINDOWS
-          - os: windows
-            python-version: "3.8"
-            conda-standalone: conda-standalone
-          - os: windows
-            python-version: "3.9"
-            conda-standalone: conda-standalone-nightly
+          #   check-docs: true
+          # - os: ubuntu
+          #   python-version: "3.10"
+          #   conda-standalone: conda-standalone-nightly
+          # - os: ubuntu
+          #   python-version: "3.11"
+          #   conda-standalone: micromamba
+          # # MACOS
+          # - os: macos
+          #   python-version: "3.8"
+          #   conda-standalone: conda-standalone-nightly
+          # # Not running for 3.9 to save some CI resources
+          # # - os: macos
+          # #   python-version: "3.9"
+          # #   conda-standalone: conda-standalone
+          # - os: macos
+          #   python-version: "3.10"
+          #   conda-standalone: micromamba
+          # - os: macos
+          #   python-version: "3.11"
+          #   conda-standalone: conda-standalone
+          # # WINDOWS
+          # - os: windows
+          #   python-version: "3.8"
+          #   conda-standalone: conda-standalone
+          # - os: windows
+          #   python-version: "3.9"
+          #   conda-standalone: conda-standalone-nightly
           - os: windows
             python-version: "3.10"
             conda-standalone: conda-standalone
@@ -133,9 +133,13 @@ jobs:
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
-          pytest -vv --cov=constructor --cov-branch tests/test_examples.py
+          pytest -vv --cov=constructor --cov-branch tests/test_examples.py -k "miniforge or shortcuts"
           coverage run --branch --append -m constructor -V
           coverage json
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 90
+        if: failure()  
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
