@@ -140,10 +140,6 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
-      - name: Test with conda-libmamba-solver
-        run: |
-          conda install -yq conda-libmamba-solver
-          CONDA_SOLVER=libmamba CONDA_VERBOSITY=1 pytest -vv tests/test_examples.py -k noconda
       - name: Check docs are up-to-date
         if: matrix.check-docs
         run: |
