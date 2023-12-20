@@ -5,5 +5,5 @@ dependencies:
   - python
   - conda >=4.6
   - ruamel.yaml >=0.11.14,<0.18
-  - conda-standalone
+  - conda-standalone >=23.11.0
   - pillow >=3.1  # [osx or win]

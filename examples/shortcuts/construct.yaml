@@ -3,7 +3,7 @@ version: X
 installer_type: all
 
 channels:
-  - jaimergp/label/menuinst-tests
+  - conda-test/label/menuinst-tests
   - http://repo.anaconda.com/pkgs/main/
 
 specs:
