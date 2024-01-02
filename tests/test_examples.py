@@ -234,6 +234,7 @@ def create_installer(
     debug=CONSTRUCTOR_DEBUG,
     with_spaces=False,
     timeout=420,
+    construct_yaml_filename="construct.yaml",
     **env_vars,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
@@ -248,6 +249,8 @@ def create_installer(
         str(input_dir),
         "--output-dir",
         str(output_dir),
+        "--construct-yaml-fn",
+        construct_yaml_filename,
     ]
     if conda_exe:
         cmd.extend(["--conda-exe", conda_exe])
@@ -346,7 +349,9 @@ def test_example_miniforge(tmp_path, request):
 
 def test_example_noconda(tmp_path, request):
     input_path = _example_path("noconda")
-    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
+    for installer, install_dir in create_installer(
+        input_path, tmp_path, construct_yaml_filename="constructor_input.yaml", with_spaces=True
+    ):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
