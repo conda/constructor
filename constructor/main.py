@@ -309,8 +309,7 @@ def main():
                    action="store",
                    metavar="FILENAME",
                    dest="construct_yaml_filename",
-                   default="construct.yaml",
-)
+                   default="construct.yaml")
 
     p.add_argument('dir_path',
                    help="directory containing construct.yaml",
@@ -320,7 +319,6 @@ def main():
                    metavar='DIRECTORY')
 
     args = p.parse_args()
-
     logger.info("Got the following cli arguments: '%s'", args)
 
     if args.verbose or args.debug:
@@ -361,7 +359,7 @@ downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/""".lstrip())
     main_build(dir_path, output_dir=out_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
                dry_run=args.dry_run, conda_exe=conda_exe,
-               construct_yaml_path=args.construct_yaml_path
+               construct_yaml_filename=args.construct_yaml_path)
 
 
 if __name__ == '__main__':
