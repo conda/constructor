@@ -447,7 +447,7 @@ def create(info, verbose=False):
 
     # 1. Prepare installation
     # The 'prepare_installation' package contains the prepopulated package cache, the modified
-    # conda-meta metadata staged into pkgs/conda-meta, conda.exe,
+    # conda-meta metadata staged into pkgs/conda-meta, _conda (conda-standalone),
     # Optionally, extra files and the user-provided scripts.
     # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
@@ -480,7 +480,7 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    shutil.copyfile(info['_conda_exe'], join(prefix, "conda.exe"))
+    shutil.copyfile(info['_conda_exe'], join(prefix, "_conda"))
 
     # Sign conda-standalone so it can pass notarization
     notarization_identity_name = info.get('notarization_identity_name')
@@ -504,7 +504,7 @@ def create(info, verbose=False):
                 "--options", "runtime",
                 "--force",
                 "--entitlements", f.name,
-                join(prefix, "conda.exe"),
+                join(prefix, "_conda"),
             ]
         )
         os.unlink(f.name)

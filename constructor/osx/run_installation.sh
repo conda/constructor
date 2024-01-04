@@ -24,7 +24,7 @@ PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-CONDA_EXEC="$PREFIX/conda.exe"
+CONDA_EXEC="$PREFIX/_conda"
 # /COMMON UTILS
 
 # Check whether the user wants shortcuts or not
