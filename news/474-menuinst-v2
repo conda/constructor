@@ -18,4 +18,3 @@
 
 * Unix installers now bundle conda-standalone (or micromamba) as `_conda`, instead of `conda.exe`.
   (#741 via #474)
-
