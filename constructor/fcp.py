@@ -56,8 +56,10 @@ def getsize(filename):
 
 
 def warn_menu_packages_missing(precs, menu_packages):
+    if not menu_packages:
+        return
     all_names = {prec.name for prec in precs}
-    for name in (menu_packages or ()):
+    for name in menu_packages:
         if name not in all_names:
             logger.warning("no such package (in menu_packages): %s", name)
 
