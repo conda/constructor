@@ -164,6 +164,25 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             )
         )
 
+    if 'pkg' in itypes:
+        if (domains := info.get('pkg_domains')) is not None:
+            domains = {key: str(val).lower() for key, val in domains.items()}
+            allowed_fields = ['enable_anywhere', 'enable_currentUserHome', 'enable_localSystem']
+            if any(key not in allowed_fields for key in domains.keys()):
+                sys.exit(
+                    'Error: unrecognized field name(s) for pkg_domains.'
+                    f' Allowed fields are {", ".join(allowed_fields)}'
+                )
+            if any(val != 'true' and val != 'false' for val in domains.values()):
+                sys.exit('Error: values for pkg_domains must be boolean.')
+            info['pkg_domains'] = domains
+        else:
+            info['pkg_domains'] = {
+                'enable_anywhere': 'true',
+                'enable_currentUserHome': 'true',
+            }
+
+
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
