@@ -182,7 +182,6 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 'enable_currentUserHome': 'true',
             }
 
-
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
     if dry_run:
