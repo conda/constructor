@@ -26,7 +26,13 @@ from .conda_interface import (
 )
 from .conda_interface import distro as conda_distro
 from .conda_interface import get_repodata, write_repodata
-from .utils import ensure_transmuted_ext, filename_dist, get_final_channels, get_final_url
+from .utils import (
+    ensure_transmuted_ext,
+    filename_dist,
+    get_final_channels,
+    get_final_url,
+    shortcuts_flags,
+)
 
 try:
     import json
@@ -173,6 +179,8 @@ def write_files(info, dst_dir):
         write_env_txt(info, env_dst_dir, env_urls_md5)
         # channels
         write_channels_txt(info, env_dst_dir, env_config)
+        # shortcuts
+        write_shortcuts_txt(info, env_dst_dir, env_config)
 
 
 def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
@@ -259,6 +267,15 @@ def write_channels_txt(info, dst_dir, env_config):
 
     with open(join(dst_dir, "channels.txt"), "w") as f:
         f.write(",".join(get_final_channels(env_config)))
+
+
+def write_shortcuts_txt(info, dst_dir, env_config):
+    if "menu_packages" in env_config:
+        contents = shortcuts_flags(env_config)
+    else:
+        contents = shortcuts_flags(info)
+    with open(join(dst_dir, "shortcuts.txt"), "w") as f:
+        f.write(contents)
 
 
 def copy_extra_files(

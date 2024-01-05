@@ -128,9 +128,16 @@ _required:_ no<br/>
 _type:_ list<br/>
 
 A list of packages with menu items to be installed. The packages must have
-necessary metadata in `Menu/<package name>.json`). Menu items are currently
-only supported on Windows. By default, all menu items will be installed;
-supplying this list allows a subset to be selected instead.
+necessary metadata in `Menu/<package name>.json`). By default, all menu items
+found in the installation will be created; supplying this list allows a
+subset to be selected instead. If an empty list is supplied, no shortcuts will
+be created.
+
+If all environments (`extra_envs` included) set `menu_packages` to an empty list,
+no UI options about shortcuts will be offered to the user.
+
+Note: This option is not fully implemented when `micromamba` is used as
+the `--conda-exe` binary. The only accepted value is an empty list (`[]`).
 
 ### `ignore_duplicate_files`
 
@@ -220,12 +227,12 @@ name) to a dictionary of options:
   an empty list.
 - `user_requested_specs` (list of str): same as the global option, but for this env;
   if not provided, global value is _not_ used
+- `menu_packages` (list of str): same as the global option, for this env;
+  if not provided, the global value is _not_ used.
 
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
 - `conda` needs to be present in the `base` environment (via `specs`)
-- support for `menu_packages` is planned, but not possible right now. For now, all packages
-  in an `extra_envs` config will be allowed to create their shortcuts.
 - If a global `exclude` option is used, it will have an effect on the environments created
   by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
   extra environments will have it either. Unlike the global option, an error will not be

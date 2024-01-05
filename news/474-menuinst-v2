@@ -1,0 +1,20 @@
+### Enhancements
+
+* Add support for `menuinst` v2, which extends shortcut (menu items) creation from Windows to Linux and macOS. See [`menuinst` documentation](https://conda.github.io/menuinst/) for more information. Note that this feature requires `conda-standalone 23.11.0` or later. `micromamba` doesn't support v2-style menu items yet. (#474)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* Unix installers now bundle conda-standalone (or micromamba) as `_conda`, instead of `conda.exe`.
+  (#741 via #474)

@@ -6,6 +6,9 @@ target-version = ['py37', 'py38', 'py39', 'py310']
 profile = "black"
 line_length = 100
 
+[tool.ruff]
+line-length = 100
+
 [tool.pytest.ini_options]
 markers = [
     "examples",

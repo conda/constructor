@@ -24,6 +24,7 @@ from .utils import (
     hash_files,
     preprocess,
     read_ascii_only,
+    shortcuts_flags,
 )
 
 THIS_DIR = dirname(__file__)
@@ -68,6 +69,7 @@ def get_header(conda_exec, tarball, info):
     ppd['initialize_conda'] = info.get('initialize_conda', True)
     ppd['initialize_by_default'] = info.get('initialize_by_default', False)
     ppd['has_conda'] = info['_has_conda']
+    ppd['enable_shortcuts'] = str(info['_enable_shortcuts']).lower()
     ppd['check_path_spaces'] = info.get("check_path_spaces", True)
     install_lines = list(add_condarc(info))
     # Needs to happen first -- can be templated
@@ -86,6 +88,7 @@ def get_header(conda_exec, tarball, info):
         'CHANNELS': ','.join(get_final_channels(info)),
         'CONCLUSION_TEXT': info.get("conclusion_text", "installation finished."),
         'pycache': '__pycache__',
+        'SHORTCUTS': shortcuts_flags(info),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
     }
     if has_license:
@@ -121,6 +124,8 @@ def create(info, verbose=False):
     for env_name in info.get("_extra_envs_info", ()):
         pre_t.add(join(tmp_dir, "envs", env_name, "env.txt"),
                   f"pkgs/envs/{env_name}/env.txt")
+        pre_t.add(join(tmp_dir, "envs", env_name, "shortcuts.txt"),
+                  f"pkgs/envs/{env_name}/shortcuts.txt")
 
     for key in 'pre_install', 'post_install':
         if key in info:
