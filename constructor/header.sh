@@ -46,7 +46,7 @@ KEEP_PKGS=1
 KEEP_PKGS=0
 #endif
 SKIP_SCRIPTS=0
-#if enable_shortcuts
+#if enable_shortcuts == "true"
 SKIP_SHORTCUTS=0
 #endif
 TEST=0
@@ -73,7 +73,7 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 -p PREFIX    install prefix, defaults to $PREFIX
 #endif
 -s           skip running pre/post-link/install scripts
-#if enable_shortcuts
+#if enable_shortcuts == 'true'
 -m           disable the creation of menu items / shortcuts
 #endif
 -u           update an existing installation
@@ -86,7 +86,7 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 # However getopt is not standardized and the version on Mac has different
 # behaviour. getopts is good enough for what we need :)
 # More info: https://unix.stackexchange.com/questions/62950/
-#if enable_shortcuts
+#if enable_shortcuts == "true"
 while getopts "bifhkp:smut" x; do
 #else
 while getopts "bifhkp:sut" x; do
@@ -114,7 +114,7 @@ while getopts "bifhkp:sut" x; do
         s)
             SKIP_SCRIPTS=1
             ;;
-#if enable_shortcuts
+#if enable_shortcuts == "true"
         m)
             SKIP_SHORTCUTS=1
             ;;
