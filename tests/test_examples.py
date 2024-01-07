@@ -527,4 +527,24 @@ def test_register_envs(tmp_path, request):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 def test_cross_osx_building(tmp_path):
     input_path = _example_path("noconda")
-    create_installer(input_path, tmp_path, extra_constructor_args=["--platform", "osx-arm64"])
+    tmp_env = tmp_path / "env"
+    subprocess.check_call(
+        [
+            sys.executable,
+            "-mconda",
+            "create",
+            "-p",
+            tmp_env,
+            "-y",
+            "micromamba",
+            "--platform",
+            "osx-arm64",
+        ],
+    )
+    micromamba_arm64 = tmp_env / "bin" / "micromamba"
+    create_installer(
+        input_path,
+        tmp_path,
+        conda_exe=micromamba_arm64,
+        extra_constructor_args=["--platform", "osx-arm64"],
+    )
