@@ -10,7 +10,6 @@ channels:
   - http://repo.anaconda.com/pkgs/main/
 
 attempt_hardlinks: True
-initialize_by_default: false
 
 specs:
   - python
@@ -70,3 +69,6 @@ conclusion_text: |
 install_path_exists_error_text: >
   {CHOSEN_PATH} exists! Please update using our in-app mechanisms or
   relaunch the installer and choose a different location.
+
+initialize_by_default: false
+register_python: False

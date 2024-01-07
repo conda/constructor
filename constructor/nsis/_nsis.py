@@ -105,6 +105,10 @@ class NSISReg:
 
 
 def mk_menus(remove=False, prefix=None, pkg_names=None, root_prefix=None):
+    err(
+        "Deprecation warning: mk_menus is deprecated and will be removed in the future."
+        " Please use menuinst v2 directly or via conda-standalone 23.XXXX+ instead.\n"
+    )
     try:
         import menuinst
     except (ImportError, OSError):
@@ -157,6 +161,10 @@ get_conda_envs = get_conda_envs_from_python_api
 
 
 def rm_menus(prefix=None, root_prefix=None):
+    err(
+        "Deprecation warning: rm_menus is deprecated and will be removed in the future."
+        " Please use menuinst v2 directly or via conda-standalone 23.XXXX+ instead.\n"
+    )
     try:
         import menuinst  # noqa
         from conda.base.context import context

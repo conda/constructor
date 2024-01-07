@@ -14,12 +14,14 @@ from textwrap import dedent, indent
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
+from .conda_interface import SUPPORTED_PLATFORMS
+from .conda_interface import VersionOrder as Version
+from .conda_interface import cc_platform
 from .construct import generate_key_info_list, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
-from .utils import normalize_path, yield_lines
+from .utils import identify_conda_exe, normalize_path, yield_lines
 
 DEFAULT_CACHE_DIR = os.getenv('CONSTRUCTOR_CACHE', '~/.conda/constructor')
 
@@ -90,7 +92,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     if platform != cc_platform and 'pkg' in itypes and not cc_platform.startswith('osx-'):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
     if osname == "win" and "micromamba" in os.path.basename(info['_conda_exe']):
-        # TODO: Remove when shortcut creation is implemented on micromamba
+        # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
 
     logger.debug('conda packages download: %s', info['_download_dir'])
@@ -144,6 +146,23 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 env_config[config_key] = [val.strip() for val in value]
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
+
+    exe_name, exe_version = identify_conda_exe(info.get("_conda_exe"))
+    if sys.platform != "win32" and (
+        exe_name == "micromamba" or Version(exe_version) < Version("23.11.0")
+    ):
+        logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
+        info['_enable_shortcuts'] = "incompatible"
+    else:
+        # Installers will provide shortcut options and features only if the user
+        # didn't opt-out by setting every `menu_packages` item to an empty list
+        info['_enable_shortcuts'] = bool(
+            info.get("menu_packages", True)
+            or any(
+                env.get("menu_packages", True)
+                for env in info.get("extra_envs", {}).values()
+            )
+        )
 
     info['installer_type'] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)

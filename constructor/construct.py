@@ -62,9 +62,11 @@ by an exact URL; e.g.,
 `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
 This key can also take a `str` pointing to a requirements file with the same syntax.
 
-The specs will be solved with the solver configured for your `base` conda installation,
-if any. Starting with conda 22.11, this behavior can be overriden with the
-`CONDA_SOLVER` environment variable.
+Note: `constructor` relies on `conda`'s Python API to solve the passed
+specifications. You can still set the `CONDA_SOLVER` environment variable
+to override system-wide settings for `constructor`. If you are using
+`constructor` from a non-`base` environment, make sure the
+configured solver plugin is also installed in that environment.
 '''),
 
     ('user_requested_specs',                  False, (list, str), '''
@@ -82,11 +84,18 @@ For example, you can say that `readline` should be excluded, even though it
 is contained as a result of resolving the specs for `python 2.7`.
 '''),
 
-    ('menu_packages',          False, list, '''
+    ('menu_packages',           False, list, '''
 A list of packages with menu items to be installed. The packages must have
-necessary metadata in `Menu/<package name>.json`). Menu items are currently
-only supported on Windows. By default, all menu items will be installed;
-supplying this list allows a subset to be selected instead.
+necessary metadata in `Menu/<package name>.json`). By default, all menu items
+found in the installation will be created; supplying this list allows a
+subset to be selected instead. If an empty list is supplied, no shortcuts will
+be created.
+
+If all environments (`extra_envs` included) set `menu_packages` to an empty list,
+no UI options about shortcuts will be offered to the user.
+
+Note: This option is not fully implemented when `micromamba` is used as
+the `--conda-exe` binary. The only accepted value is an empty list (`[]`).
 '''),
 
     ('ignore_duplicate_files',  False, bool, '''
@@ -151,12 +160,12 @@ name) to a dictionary of options:
   an empty list.
 - `user_requested_specs` (list of str): same as the global option, but for this env;
   if not provided, global value is _not_ used
+- `menu_packages` (list of str): same as the global option, for this env;
+  if not provided, the global value is _not_ used.
 
 Notes:
 - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
 - `conda` needs to be present in the `base` environment (via `specs`)
-- support for `menu_packages` is planned, but not possible right now. For now, all packages
-  in an `extra_envs` config will be allowed to create their shortcuts.
 - If a global `exclude` option is used, it will have an effect on the environments created
   by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
   extra environments will have it either. Unlike the global option, an error will not be
@@ -598,9 +607,7 @@ _EXTRA_ENVS_SCHEMA = {
     "channels_remap": (list, tuple),
     "user_requested_specs": (list, tuple),
     "exclude": (list, tuple),
-    # TODO: we can't support menu_packages for extra envs yet
-    # will implement when the PR for new menuinst lands
-    # "menu_packages": (list, tuple),
+    "menu_packages": (list, tuple),
 }
 
 logger = logging.getLogger(__name__)
@@ -765,7 +772,7 @@ def verify(info):
             sys.exit(
                 f"Environment names (keys in 'extra_envs') cannot contain any of {disallowed}. "
                 f"You tried to use: {env_name}"
-                )
+            )
         for key, value in env_data.items():
             if key not in _EXTRA_ENVS_SCHEMA:
                 sys.exit(f"Key '{key}' not supported in 'extra_envs'.")

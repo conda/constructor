@@ -26,6 +26,7 @@ from .utils import (
     get_final_channels,
     make_VIProductVersion,
     preprocess,
+    shortcuts_flags,
 )
 
 NSIS_DIR = join(abspath(dirname(__file__)), 'nsis')
@@ -121,32 +122,41 @@ def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
 def setup_envs_commands(info, dir_path):
     template = r"""
         # Set up {name} env
-        SetDetailsPrint TextOnly
-        DetailPrint "Setting up the {name} environment ..."
         SetDetailsPrint both
+        DetailPrint "Setting up the {name} environment ..."
+        SetDetailsPrint listonly
+
         # List of packages to install
         SetOutPath "{env_txt_dir}"
         File "{env_txt_abspath}"
+
         # A conda-meta\history file is required for a valid conda prefix
         SetOutPath "{conda_meta}"
         File "{history_abspath}"
+
         # Set channels
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
         # Set register_envs
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_REGISTER_ENVS", "{register_envs}").r0'
-        # Run conda
-        SetDetailsPrint TextOnly
-        nsExec::ExecToLog '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
-        Pop $0
-        ${{If}} $0 != "0"
-            DetailPrint "::error:: Failed to link extracted packages to {prefix}!"
-            MessageBox MB_OK|MB_ICONSTOP "Failed to link extracted packages to {prefix}. Please check logs." /SD IDOK
-            Abort
+
+        # Run conda install
+        ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
+            DetailPrint "Installing packages for {name}, creating shortcuts if necessary..."
+            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
+        ${{Else}}
+            DetailPrint "Installing packages for {name}..."
+            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
         ${{EndIf}}
+        push 'Failed to link extracted packages to {prefix}!'
+        push 'WithLog'
+        SetDetailsPrint listonly
+        call AbortRetryNSExecWait
         SetDetailsPrint both
+
         # Cleanup {name} env.txt
         SetOutPath "$INSTDIR"
         Delete "{env_txt}"
+
         # Restore shipped conda-meta\history for remapped
         # channels and retain only the first transaction
         SetOutPath "{conda_meta}"
@@ -162,7 +172,7 @@ def setup_envs_commands(info, dir_path):
         conda_meta=r"$INSTDIR\conda-meta",
         history_abspath=join(dir_path, "conda-meta", "history"),
         channels=','.join(get_final_channels(info)),
-        shortcuts="--no-shortcuts",
+        shortcuts=shortcuts_flags(info),
         register_envs=str(info.get("register_envs", True)).lower(),
     ).splitlines()
     # now we generate one more block per extra env, if present
@@ -182,10 +192,28 @@ def setup_envs_commands(info, dir_path):
             conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
             history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
             channels=",".join(get_final_channels(channel_info)),
-            shortcuts="",
+            shortcuts=shortcuts_flags(env_info, conda_exe=info.get("_conda_exe")),
             register_envs=str(info.get("register_envs", True)).lower(),
         ).splitlines()
 
+    return [line.strip() for line in lines]
+
+
+def uninstall_menus_commands(info):
+    tmpl = r"""
+        SetDetailsPrint both
+        DetailPrint "Deleting {name} menus in {env_name}..."
+        SetDetailsPrint listonly
+        push '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
+        push 'Failed to delete menus in {env_name}'
+        push 'WithLog'
+        call un.AbortRetryNSExecWait
+        SetDetailsPrint both
+        """
+    lines = tmpl.format(name=info["name"], env_name="base", path="$INSTDIR").splitlines()
+    for env_name in info.get("_extra_envs_info", {}):
+        path = join("$INSTDIR", "envs", env_name)
+        lines += tmpl.format(name=info["name"], env_name=env_name, path=path).splitlines()
     return [line.strip() for line in lines]
 
 
@@ -230,7 +258,6 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
     info['pre_install_desc'] = info.get('pre_install_desc', "")
     info['post_install_desc'] = info.get('post_install_desc', "")
 
-    # these appear as __<key>__ in the template, and get escaped
     replace = {
         'NAME': name,
         'VERSION': info['version'],
@@ -248,6 +275,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
                                              join('%ALLUSERSPROFILE%', name.lower())),
         'PRE_INSTALL_DESC': info['pre_install_desc'],
         'POST_INSTALL_DESC': info['post_install_desc'],
+        'ENABLE_SHORTCUTS': "yes" if info['_enable_shortcuts'] is True else "no",
         'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
         'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
         'OUTFILE': info['_outpath'],
@@ -347,11 +375,11 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
         ('@SIGNTOOL_COMMAND@', signtool_command(info)),
         ('@SETUP_ENVS@', '\n    '.join(setup_envs_commands(info, dir_path))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
-        ('@MENU_PKGS@', ' '.join(info.get('menu_packages', []))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
+        ('@UNINSTALL_MENUS@', '\n    '.join(uninstall_menus_commands(info))),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
         ('@SCRIPT_ENV_VARIABLES@', '\n    '.join(setup_script_env_variables(info))),
         (

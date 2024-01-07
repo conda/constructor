@@ -22,7 +22,7 @@ PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-CONDA_EXEC="$PREFIX/conda.exe"
+CONDA_EXEC="$PREFIX/_conda"
 # /COMMON UTILS
 
 chmod +x "$CONDA_EXEC"
@@ -30,6 +30,11 @@ chmod +x "$CONDA_EXEC"
 # Create a blank history file so conda thinks this is an existing env
 mkdir -p "$PREFIX/conda-meta"
 touch "$PREFIX/conda-meta/history"
+
+# Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
+if [ "$(id -u)" -ne 0 ]; then
+    touch "$PREFIX/.nonadmin"
+fi
 
 # Extract the conda packages but avoiding the overwriting of the
 # custom metadata we have already put in place
