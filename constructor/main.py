@@ -146,13 +146,13 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 env_config[config_key] = [val.strip() for val in value]
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
-    
+
     try:
         exe_name, exe_version = identify_conda_exe(info.get("_conda_exe"))
     except OSError as exc:
         logger.warning(
             "Could not identify conda-standalone / micromamba version (%s). "
-            "Will assume it is compatible with shortcuts.", 
+            "Will assume it is compatible with shortcuts.",
             exc,
          )
         exe_name, exe_version = None, None
