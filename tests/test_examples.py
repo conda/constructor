@@ -249,6 +249,7 @@ def create_installer(
     debug=CONSTRUCTOR_DEBUG,
     with_spaces=False,
     timeout=420,
+    extra_constructor_args: Iterable[str] = None,
     **env_vars,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
@@ -268,6 +269,8 @@ def create_installer(
         cmd.extend(["--conda-exe", conda_exe])
     if debug:
         cmd.append("--debug")
+    if extra_constructor_args:
+        cmd.extend(extra_constructor_args)
 
     _execute(cmd, timeout=timeout, **env_vars)
 
@@ -519,3 +522,9 @@ def test_register_envs(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
         assert str(install_dir) not in environments_txt
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_cross_osx_building(tmp_path):
+    input_path = _example_path("noconda")
+    create_installer(input_path, tmp_path, extra_constructor_args=["--platform", "osx-arm64"])
