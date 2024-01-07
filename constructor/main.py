@@ -151,7 +151,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         exe_name, exe_version = identify_conda_exe(info.get("_conda_exe"))
     except OSError as exc:
         logger.warning(
-            "Could not identify conda-standalone version (%s). "
+            "Could not identify conda-standalone / micromamba version (%s). "
             "Will assume it is compatible with shortcuts.", 
             exc,
          )
