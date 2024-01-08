@@ -250,6 +250,7 @@ def create_installer(
     debug=CONSTRUCTOR_DEBUG,
     with_spaces=False,
     timeout=420,
+    extra_constructor_args: Iterable[str] = None,
     **env_vars,
 ) -> Tuple[Path, Path]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
@@ -269,6 +270,8 @@ def create_installer(
         cmd.extend(["--conda-exe", conda_exe])
     if debug:
         cmd.append("--debug")
+    if extra_constructor_args:
+        cmd.extend(extra_constructor_args)
 
     _execute(cmd, timeout=timeout, **env_vars)
 
@@ -541,3 +544,29 @@ def test_pkg_distribution_domains(tmp_path, domains):
     defaults = {'enable_anywhere': 'true', 'enable_currentUserHome': 'true'}
     expected = {key: str(val).lower() for key, val in domains.items()} if donmains else defaults
     assert expected == found
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_cross_osx_building(tmp_path):
+    input_path = _example_path("noconda")
+    tmp_env = tmp_path / "env"
+    subprocess.check_call(
+        [
+            sys.executable,
+            "-mconda",
+            "create",
+            "-p",
+            tmp_env,
+            "-y",
+            "micromamba",
+            "--platform",
+            "osx-arm64",
+        ],
+    )
+    micromamba_arm64 = tmp_env / "bin" / "micromamba"
+    create_installer(
+        input_path,
+        tmp_path,
+        conda_exe=micromamba_arm64,
+        extra_constructor_args=["--platform", "osx-arm64"],
+    )

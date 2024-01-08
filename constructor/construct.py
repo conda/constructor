@@ -10,9 +10,10 @@ import sys
 from functools import partial
 from os.path import dirname
 
-from ruamel import yaml
+from ruamel.yaml import YAMLError
 
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
+from constructor.utils import yaml
 
 # list of tuples (key name, required, type, description)
 KEYS = [
@@ -702,8 +703,8 @@ exception:
 def yamlize(data, directory, content_filter):
     data = content_filter(data)
     try:
-        return yaml.safe_load(data)
-    except yaml.error.YAMLError as e:
+        return yaml.load(data)
+    except YAMLError as e:
         if ('{{' not in data) and ('{%' not in data):
             raise UnableToParse(original=e)
         try:
@@ -711,7 +712,7 @@ def yamlize(data, directory, content_filter):
         except ImportError as ex:
             raise UnableToParseMissingJinja2(original=ex)
         data = render_jinja(data, directory, content_filter)
-        return yaml.load(data, Loader=yaml.SafeLoader)
+        return yaml.load(data)
 
 
 def parse(path, platform):
