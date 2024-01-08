@@ -147,8 +147,16 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
 
-    exe_name, exe_version = identify_conda_exe(info.get("_conda_exe"))
-    if sys.platform != "win32" and (
+    try:
+        exe_name, exe_version = identify_conda_exe(info.get("_conda_exe"))
+    except OSError as exc:
+        logger.warning(
+            "Could not identify conda-standalone / micromamba version (%s). "
+            "Will assume it is compatible with shortcuts.",
+            exc,
+         )
+        exe_name, exe_version = None, None
+    if sys.platform != "win32" and exe_name is not None and (
         exe_name == "micromamba" or Version(exe_version) < Version("23.11.0")
     ):
         logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
