@@ -4,6 +4,7 @@ import subprocess
 import sys
 import time
 import warnings
+import xml.etree.ElementTree as ET
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
@@ -519,3 +520,24 @@ def test_register_envs(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
         assert str(install_dir) not in environments_txt
+
+
+@pytest.mark.skipif(sys.platform != 'Darwin', reason='MacOS only')
+@pytest.mark.parametrize('domains', ({}, {'enable_anywhere': 'false', 'enable_localSystem': True}))
+def test_pkg_distribution_domains(tmp_path, domains):
+    recipe_path = _example_path('osxpkg')
+    input_path = tmp_path / "input"
+    output_path = tmp_path / "output"
+    shutil.copytree(str(recipe_path), str(input_path))
+
+    installer, install_dir = create_installer(input_path, output_path)
+    cmd = ["pkgutil", "--expand", installer, install_dir]
+    _execute(cmd)
+    domains_file = install_dir / "Domains"
+    assert domains_file.exists()
+
+    tree = ET.parse(domains_file)
+    found = {key: val for key, val in tree.find("domains").items()}
+    defaults = {'enable_anywhere': 'true', 'enable_currentUserHome': 'true'}
+    expected = {key: str(val).lower() for key, val in domains.items()} if donmains else defaults
+    assert expected == found
