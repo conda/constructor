@@ -539,9 +539,9 @@ def test_pkg_distribution_domains(tmp_path, domains):
                 cyml.write(f"  {key}: {val}\n")
 
     installer, install_dir = next(create_installer(input_path, output_path))
-    cmd = ['pkgutil', '--expand', installer, install_dir]
+    cmd = ['pkgutil', '--expand', installer, output_path / "expanded"]
     _execute(cmd)
-    domains_file = install_dir / 'Distribution'
+    domains_file = output_path / "expanded" / 'Distribution'
     assert domains_file.exists()
 
     tree = ET.parse(domains_file)
