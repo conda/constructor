@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Allow customization of the domains attribute in pkg installers (#744)
+* Add `pkg_domains` setting to allow customization of the `domains` attribute in `PKG` installers. (#731 via #744)
 
 ### Bug fixes
 
