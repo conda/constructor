@@ -183,6 +183,15 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 )
             if any(val != 'true' and val != 'false' for val in domains.values()):
                 sys.exit('Error: values for pkg_domains must be boolean.')
+            if (
+                str(domains.get('enable_localSystem', '')).lower() == 'true'
+                and not info.get('default_location_pkg')
+            ):
+                logger.warning(
+                    'enable_localSystem should not be enabled without setting'
+                    ' `default_location_pkg` to avoid installing directly '
+                    ' into the root directory.'
+                )
             info['pkg_domains'] = domains
         else:
             info['pkg_domains'] = {
