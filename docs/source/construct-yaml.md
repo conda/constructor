@@ -540,6 +540,17 @@ to `/Library` in a "Just me" installation will give you `~/Library/<PKG_NAME>`.
 Internally, this is passed to `pkgbuild --install-location`.
 macOS only.
 
+### `pkg_domains`
+
+_required:_ no<br/>
+_type:_ dictionary<br/>
+
+The domains the package can be installed into. For a detailed explanation, see:
+https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
+constructor defaults to `enable_anywhere=true` and `enable_currentUserHome=true`.
+`enable_localSystem` should not be set to true unless `default_location_pkg` is set as well.
+macOS only.
+
 ### `pkg_name`
 
 _required:_ no<br/>

@@ -398,6 +398,14 @@ Internally, this is passed to `pkgbuild --install-location`.
 macOS only.
 '''),
 
+    ('pkg_domains', False, dict, '''
+The domains the package can be installed into. For a detailed explanation, see:
+https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
+constructor defaults to `enable_anywhere=true` and `enable_currentUserHome=true`.
+`enable_localSystem` should not be set to true unless `default_location_pkg` is set as well.
+macOS only.
+'''),
+
     ('pkg_name', False, str, '''
 Internal identifier for the installer. This is used in the build prefix and will
 determine part of the default location path. Combine with `default_location_pkg`

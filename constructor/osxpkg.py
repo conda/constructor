@@ -276,16 +276,17 @@ def modify_xml(xml_path, info):
     # - Install on a specific disk: /<custom_root>/<name>
     # On modern Mac systems, installing in root is not allowed. So
     # we remove this option by not supplying enable_localSystem
-    # below. Alternatively, we could have chosen not to set the
+    # in the default value for pkg_domains. enable_localSystem
+    # should only be set to true if default_location_pkg is supplied
+    # in the construct.yaml file.
+    # Alternatively, we could have chosen not to set the
     # value of customLocation and we would have obtained this:
     # - Install for all users: /Applications/<name>
     # - Install for this user: /Users/<username>/Applications/<name>
     # - Install on a specific disk: /<custom_root>/<name>
     # We have chosen not to do this so that this installer
-    # produces the same results as a shell install.
-    domains = ET.Element('domains',
-                         enable_anywhere='true',
-                         enable_currentUserHome='true')
+    # can produce the same results as a shell install.
+    domains = ET.Element('domains', **info['pkg_domains'])
     root.append(domains)
     tree.write(xml_path)
 
