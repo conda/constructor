@@ -1,5 +1,26 @@
 [//]: # (current developments)
 
+## 2024-01-12   3.6.0:
+### Enhancements
+
+* Add support for `menuinst` v2, which extends shortcut (menu items) creation from Windows to Linux and macOS. See [`menuinst` documentation](https://conda.github.io/menuinst/) for more information. Note that this feature requires `conda-standalone 23.11.0` or later. `micromamba` doesn't support v2-style menu items yet. (#474, #743)
+* Add support for `ruamel.yaml` 0.18 API. (#729 via #739)
+* Add `pkg_domains` setting to allow customization of the `domains` attribute in `PKG` installers. (#731 via #744)
+
+### Other
+
+* Unix installers now bundle conda-standalone (or micromamba) as `_conda`, instead of `conda.exe`.
+  (#741 via #474)
+
+### Contributors
+
+* @jaimergp
+* @marcoesters
+* @conda-bot
+* @pre-commit-ci[bot]
+
+
+
 ## 2023-10-10   3.5.0:
 ### Enhancements
 
