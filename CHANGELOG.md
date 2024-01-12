@@ -16,8 +16,6 @@
 
 * @jaimergp
 * @marcoesters
-* @conda-bot
-* @pre-commit-ci[bot]
 
 
 
