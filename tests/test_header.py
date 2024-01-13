@@ -17,7 +17,7 @@ from constructor.shar import read_header_template
 from constructor.utils import preprocess
 
 
-@lru_cache()
+@lru_cache
 def available_command(cmd):
     return which(cmd) is not None
 

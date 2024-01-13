@@ -20,7 +20,7 @@ repos:
     rev: v3.15.0
     hooks:
       - id: pyupgrade
-        args: ["--py37-plus", "--keep-percent-format"]
+        args: ["--py38-plus", "--keep-percent-format"]
         exclude: ^(constructor/nsis/.*py)
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
