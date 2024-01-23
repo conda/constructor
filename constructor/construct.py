@@ -377,7 +377,7 @@ installation time.
 Set default installation prefix for domain user. If not provided, the
 installation prefix for domain user will be `%LOCALAPPDATA%\<NAME>`.
 By default, it is different from the `default_prefix` value to avoid installing
-the distribution in the roaming profile. Environment variables will be expanded 
+the distribution in the roaming profile. Environment variables will be expanded
 at installation time. Windows only.
 '''),  # noqa
 
