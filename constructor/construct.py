@@ -366,23 +366,26 @@ Metadata about the installer can be found in the `%INSTALLER_NAME%`,
 
     ('default_prefix',         False, str, r'''
 Set default install prefix. On Linux, if not provided, the default prefix
-is `${HOME}/${NAME}` (or, if `HOME` is not set, `/opt/${NAME}`). On Windows,
+is `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows,
 this is used only for "Just Me" installation; for "All Users" installation,
 use the `default_prefix_all_users` key. If not provided, the default prefix
-is `${USERPROFILE}\${NAME}`.
+is `%USERPROFILE%\<NAME>`. Environment variables will be expanded at
+installation time.
 '''),  # noqa
 
     ('default_prefix_domain_user', False, str, r'''
 Set default installation prefix for domain user. If not provided, the
-installation prefix for domain user will be `${LOCALAPPDATA}\${NAME}`.
+installation prefix for domain user will be `%LOCALAPPDATA%\<NAME>`.
 By default, it is different from the `default_prefix` value to avoid installing
-the distribution in the roaming profile. Windows only.
+the distribution in the roaming profile. Environment variables will be expanded 
+at installation time. Windows only.
 '''),  # noqa
 
     ('default_prefix_all_users', False, str, r'''
 Set default installation prefix for All Users installation. If not provided,
 the installation prefix for all users installation will be
-`${ALLUSERSPROFILE}\${NAME}`. Windows only.
+`%ALLUSERSPROFILE%\<NAME>`. Environment variables will be expanded at installation
+time. Windows only.
 '''),  # noqa
 
     ('default_location_pkg', False, str, '''
