@@ -18,6 +18,7 @@ from .preconda import files as preconda_files
 from .preconda import write_files as preconda_write_files
 from .utils import (
     add_condarc,
+    approx_size_kb,
     filename_dist,
     fill_template,
     get_final_channels,
@@ -90,6 +91,7 @@ def get_header(conda_exec, tarball, info):
         'pycache': '__pycache__',
         'SHORTCUTS': shortcuts_flags(info),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
+        'TOTAL_INSTALLATION_SIZE': approx_size_kb(info, "total")
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
