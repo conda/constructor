@@ -91,7 +91,7 @@ def get_header(conda_exec, tarball, info):
         'pycache': '__pycache__',
         'SHORTCUTS': shortcuts_flags(info),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
-        'TOTAL_INSTALLATION_SIZE': str(approx_size_kb(info, "total")),
+        'TOTAL_INSTALLATION_SIZE_KB': str(approx_size_kb(info, "total")),
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
