@@ -20,9 +20,9 @@ Whether it's while running `constructor` to build an installer, or while the ins
 The shell installers are "just" a shell script that invokes `conda` in certain events. This means you can enable `bash` verbosity via the `-x` flag:
 
 ```bash
-bash -x ./Miniconda.sh
+$ bash -x ./Miniconda.sh
 # or with verbose conda:
-CONDA_VERBOSITY=3 bash -x ./Miniconda.sh
+$ CONDA_VERBOSITY=3 bash -x ./Miniconda.sh
 ```
 
 ## Verbose PKG installers
@@ -32,7 +32,7 @@ PKG installers are usually invoked graphically. You can check the native logs vi
 In order to get more verbosity out of conda, you now know you need the `CONDA_VERBOSITY` variable. However, it needs to be set up _before_ running the installer. One way from the command line would be:
 
 ```bash
-CONDA_VERBOSITY=3 installer -pkg ./path/to/installer.pkg -target LocalSystem
+$ CONDA_VERBOSITY=3 installer -pkg ./path/to/installer.pkg -target LocalSystem
 ```
 
 See `man installer` for more details.
@@ -44,8 +44,8 @@ Windows installers do not have a verbose mode. By default, the graphical logs ar
 If you want `conda` to print more details, then, run it from the CMD prompt like this:
 
 ```batch
-set "CONDA_VERBOSITY=3"
-start /wait your-installer.exe
+> set "CONDA_VERBOSITY=3"
+> cmd.exe /c start /wait your-installer.exe
 ```
 
 ### Building logging-enabled EXE installers
@@ -53,14 +53,14 @@ start /wait your-installer.exe
 There's a way of building EXE installers that do write logs to a file. For this, you need a special `nsis` package configured to do so:
 
 ```batch
-conda install "nsis=*=*log*"
+> conda install "nsis=*=*log*"
 ```
 
 Then, you can invoke `constructor` normally, but setting a special environment variable:
 
 ```batch
-set "NSIS_USING_LOG_BUILD=1"
-constructor .
+> set "NSIS_USING_LOG_BUILD=1"
+> cmd.exe /c start /wait constructor .
 ```
 
 The resulting EXE installer will always generate an `install.log` file in the target directory.

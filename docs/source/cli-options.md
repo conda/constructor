@@ -38,16 +38,19 @@ $ bash my_installer.sh -b -p /opt/my_app
 Windows installers have the following CLI options available:
 
 - `/InstallationType=[JustMe|AllUsers]`: This flag sets the installation type. The default is
-`JustMe`. `AllUsers` might require elevated privileges. - `/AddToPath=[0|1]`: Whether to add the
-installation directory to the `PATH` environment variable. The default is `0`. This is NOT
-recommended. - `/CheckPathLength=[0|1]`: Check whether the installation path is too long (>46
-characters). The default depends on how the installer was created. - `/KeepPkgCache=[0|1]`: Whether
-to keep the package cache or not. Defaults to `1`. - `/NoRegistry=[0|1]`: Whether to prevent
-registry modification or not. Defaults to `0`. - `/NoScripts=[0|1]`: If set to `1`, the installer
-will not run any post-install scripts. Defaults to `0`. - `/NoShortcuts=[0|1]`: If set to `1`, the
-installer will not create any shortcuts. Defaults to `0`. - `/RegisterPython=[0|1]`: Whether to
-register Python as default in the Windows registry. Defaults to `1`. This is preferred to
-`AddToPath`.
+  `JustMe`. `AllUsers` might require elevated privileges.
+- `/AddToPath=[0|1]`: Whether to add the installation directory to the `PATH` environment
+  variable. The default is `0`. This is NOT recommended.
+- `/CheckPathLength=[0|1]`: Check whether the installation path is too long (>46
+  characters). The default depends on how the installer was created.
+- `/KeepPkgCache=[0|1]`: Whether to keep the package cache or not. Defaults to `1`.
+- `/NoRegistry=[0|1]`: Whether to prevent registry modification or not. Defaults to `0`.
+- `/NoScripts=[0|1]`: If set to `1`, the installer will not run any post-install scripts. Defaults
+  to `0`.
+- `/NoShortcuts=[0|1]`: If set to `1`, the installer will not create any shortcuts. Defaults to
+  `0`.
+- `/RegisterPython=[0|1]`: Whether toregister Python as default in the Windows registry. Defaults
+  to `1`. This is preferred to `AddToPath`.
 
 You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage), but only _after_ the ones mentioned above:
 
