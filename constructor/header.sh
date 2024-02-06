@@ -349,6 +349,15 @@ if ! mkdir -p "$PREFIX"; then
     exit 1
 fi
 
+total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
+free_disk_space_bytes="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
+free_disk_space_kb="$((free_disk_space_bytes / 1024))"
+free_disk_space_kb_with_buffer="$((free_disk_space_bytes - 100 * 1024))"  # add 100MB of buffer
+if [ "$free_disk_space_kb_with_buffer" -lt "$total_installation_size_kb" ]; then
+    printf "ERROR: Not enough free disk space: %s < %s\\n" "$free_disk_space_kb_with_buffer" "$total_installation_size_kb" >&2
+    exit 1
+fi
+
 # pwd does not convert two leading slashes to one
 # https://github.com/conda/constructor/issues/284
 PREFIX=$(cd "$PREFIX"; pwd | sed 's@//@/@')
