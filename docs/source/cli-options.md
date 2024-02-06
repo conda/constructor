@@ -106,13 +106,13 @@ Run the uninstaller in silent mode from its original location:
 
 Windows installers do not have a verbose mode. By default, the graphical logs are only available in the "progress bar" dialog, by clicking on "Show details". This text box is right-clickable, which will allow you to copy the contents to the clipboard (and then paste them in a text file, presumably).
 
-There's a way of building EXE installers that do write logs to a file. For this, you need a special `nsis` package configured to do so:
+There's a way of building EXE installers that can write logs to a file; for this, you need a special `nsis` package configured to do so:
 
 ```batch
 > conda install "nsis=*=*log*"
 ```
 
-Then, you can invoke `constructor` normally, but setting a special environment variable:
+Then, you can invoke `constructor` normally after setting a special environment variable:
 
 ```batch
 > set "NSIS_USING_LOG_BUILD=1"
