@@ -66,7 +66,7 @@ Windows installers have the following CLI options available:
   to `0`.
 - `/NoShortcuts=[0|1]`: If set to `1`, the installer will not create any shortcuts. Defaults to
   `0`.
-- `/RegisterPython=[0|1]`: Whether toregister Python as default in the Windows registry. Defaults
+- `/RegisterPython=[0|1]`: Whether to register Python as default in the Windows registry. Defaults
   to `1`. This is preferred to `AddToPath`.
 
 You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage), but only _after_ the ones mentioned above:
