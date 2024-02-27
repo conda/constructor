@@ -3,12 +3,25 @@ version: X
 installer_type: all
 
 channels:
+  - conda-test/label/menuinst-tests
   - http://repo.anaconda.com/pkgs/main/
 
 specs:
   - python
   - conda
-  - console_shortcut # [win]
+  - console_shortcut  # [win]
+  - package_1
+
+menu_packages:
+  - package_1
+
+extra_envs:
+  another_env:
+    specs:
+      - package_1
+      - console_shortcut  # [win]
+    menu_packages:  # [win]
+      - console_shortcut  # [win]
 
 initialize_by_default: false
 register_python: False

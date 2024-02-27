@@ -20,6 +20,7 @@ from .utils import (
     get_final_channels,
     preprocess,
     rm_rf,
+    shortcuts_flags,
 )
 
 OSX_DIR = join(dirname(__file__), "osx")
@@ -216,6 +217,22 @@ def modify_xml(xml_path, info):
             path_choice.set('visible', 'false')
             path_choice.set('title', 'Apply {}'.format(info['name']))
             path_choice.set('enabled', 'false')
+        elif ident.endswith('shortcuts'):
+            # Show this option if menu_packages was set to a non-empty value
+            # or if the option was not set at all. We don't show the option
+            # menu_packages was set to an empty list!
+            path_choice.set('visible', 'true')
+            path_choice.set('title', "Create shortcuts")
+            path_choice.set('enabled', 'true')
+            descr = "Create shortcuts for compatible packages"
+            menu_packages = info.get("menu_packages")
+            if menu_packages is None:
+                menu_packages = []
+            for extra_env in info.get("extra_envs", {}).values():
+                menu_packages += extra_env.get("menu_packages", [])
+            if menu_packages:
+                descr += f" ({', '.join(menu_packages)})"
+            path_choice.set('description', descr)
         elif ident.endswith('user_pre_install') and info.get('pre_install_desc'):
             path_choice.set('visible', 'true')
             path_choice.set('title', "Run the pre-install script")
@@ -259,16 +276,17 @@ def modify_xml(xml_path, info):
     # - Install on a specific disk: /<custom_root>/<name>
     # On modern Mac systems, installing in root is not allowed. So
     # we remove this option by not supplying enable_localSystem
-    # below. Alternatively, we could have chosen not to set the
+    # in the default value for pkg_domains. enable_localSystem
+    # should only be set to true if default_location_pkg is supplied
+    # in the construct.yaml file.
+    # Alternatively, we could have chosen not to set the
     # value of customLocation and we would have obtained this:
     # - Install for all users: /Applications/<name>
     # - Install for this user: /Users/<username>/Applications/<name>
     # - Install on a specific disk: /<custom_root>/<name>
     # We have chosen not to do this so that this installer
-    # produces the same results as a shell install.
-    domains = ET.Element('domains',
-                         enable_anywhere='true',
-                         enable_currentUserHome='true')
+    # can produce the same results as a shell install.
+    domains = ET.Element('domains', **info['pkg_domains'])
     root.append(domains)
     tree.write(xml_path)
 
@@ -306,6 +324,8 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'PROGRESS_NOTIFICATIONS': str(info.get('progress_notifications', False)),
         'PRE_OR_POST': user_script_type or '__PRE_OR_POST__',
         'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
+        'SHORTCUTS': shortcuts_flags(info),
+        'ENABLE_SHORTCUTS': str(info['_enable_shortcuts']).lower(),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
     }
     data = preprocess(data, ppd)
@@ -428,7 +448,7 @@ def create(info, verbose=False):
 
     # 1. Prepare installation
     # The 'prepare_installation' package contains the prepopulated package cache, the modified
-    # conda-meta metadata staged into pkgs/conda-meta, conda.exe,
+    # conda-meta metadata staged into pkgs/conda-meta, _conda (conda-standalone),
     # Optionally, extra files and the user-provided scripts.
     # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
@@ -461,7 +481,7 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    shutil.copyfile(info['_conda_exe'], join(prefix, "conda.exe"))
+    shutil.copyfile(info['_conda_exe'], join(prefix, "_conda"))
 
     # Sign conda-standalone so it can pass notarization
     notarization_identity_name = info.get('notarization_identity_name')
@@ -485,7 +505,7 @@ def create(info, verbose=False):
                 "--options", "runtime",
                 "--force",
                 "--entitlements", f.name,
-                join(prefix, "conda.exe"),
+                join(prefix, "_conda"),
             ]
         )
         os.unlink(f.name)
@@ -505,6 +525,11 @@ def create(info, verbose=False):
             'user_pre_install', info, 'run_user_script.sh', user_script_type='pre_install'
         )
         names.append('user_pre_install')
+
+    # pre-3. Enable or disable shortcuts creation
+    if info['_enable_shortcuts'] is True:
+        pkgbuild_script('shortcuts', info, 'check_shortcuts.sh')
+        names.append('shortcuts')
 
     # 3. Run the installation
     # This script-only package will run conda to link and install the packages

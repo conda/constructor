@@ -4,14 +4,18 @@ import subprocess
 import sys
 import time
 import warnings
+import xml.etree.ElementTree as ET
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable, Optional, Tuple
+from typing import Generator, Iterable, Optional, Tuple
 
 import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
+from conda.models.version import VersionOrder as Version
+
+from constructor.utils import identify_conda_exe
 
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
@@ -28,6 +32,7 @@ pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
 ON_CI = os.environ.get("CI")
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
+CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH = Path(artifacts_path)
@@ -72,6 +77,31 @@ def _execute(
         print("Took", timedelta(seconds=time.time() - t0))
 
 
+def _check_installer_log(install_dir):
+    # Windows installers won't raise exit codes so we need to check the log file
+    error_lines = []
+    try:
+        log_is_empty = True
+        with open(os.path.join(install_dir, "install.log"), encoding="utf-16-le") as f:
+            print("Installer log:", file=sys.stderr)
+            for line in f:
+                log_is_empty = False
+                print(line, end="", file=sys.stderr)
+                if ":error:" in line.lower():
+                    error_lines.append(line)
+        if log_is_empty:
+            error_lines.append("Logfile was unexpectedly empty!")
+    except Exception as exc:
+        error_lines.append(
+            f"Could not read logs! {exc.__class__.__name__}: {exc}\n"
+            "This usually means that the destination folder could not be created.\n"
+            "Possible causes: permissions, non-supported characters, long paths...\n"
+            "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
+        )
+    if error_lines:
+        raise AssertionError("\n".join(error_lines))
+
+
 def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420):
     """
     NSIS manual:
@@ -96,27 +126,7 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
         )
     cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
     _execute(cmd, installer_input=installer_input, timeout=timeout)
-
-    # Windows installers won't raise exit codes so we need to check the log file
-    error_lines = []
-    try:
-        log_is_empty = True
-        with open(os.path.join(install_dir, "install.log"), encoding="utf-16-le") as f:
-            for line in f:
-                log_is_empty = False
-                if ":error:" in line.lower():
-                    error_lines.append(line)
-        if log_is_empty:
-            error_lines.append("Logfile was unexpectedly empty!")
-    except Exception as exc:
-        error_lines.append(
-            f"Could not read logs! {exc.__class__.__name__}: {exc}\n"
-            "This usually means that the destination folder could not be created.\n"
-            "Possible causes: permissions, non-supported characters, long paths...\n"
-            "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
-        )
-    if error_lines:
-        raise AssertionError("\n".join(error_lines))
+    _check_installer_log(install_dir)
 
 
 def _run_uninstaller_exe(install_dir, timeout=420):
@@ -128,6 +138,10 @@ def _run_uninstaller_exe(install_dir, timeout=420):
             "This is a known issue with our setup, to be fixed."
         )
         return
+    # Rename install.log
+    install_log = install_dir / "install.log"
+    if install_log.exists():
+        install_log.rename(install_dir / "install.log.bak")
 
     uninstaller = next(install_dir.glob("Uninstall-*.exe"), None)
     if not uninstaller:
@@ -145,8 +159,9 @@ def _run_uninstaller_exe(install_dir, timeout=420):
         f"/S _?={install_dir}",
     ]
     _execute(cmd, timeout=timeout)
+    _check_installer_log(install_dir)
     remaining_files = list(install_dir.iterdir())
-    if len(remaining_files) > 2:
+    if len(remaining_files) > 3:
         # The debug installer writes to install.log too, which will only
         # be deleted _after_ a reboot. Finding some files is ok, but more
         # than two usually means a problem with the uninstaller.
@@ -209,6 +224,7 @@ def _run_installer(
     installer_input: Optional[str] = None,
     check_sentinels=True,
     request=None,
+    uninstall=True,
     timeout=420,
 ):
     if installer.suffix == ".exe":
@@ -223,7 +239,7 @@ def _run_installer(
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
         _sentinel_file_checks(example_path, install_dir)
-    if installer.suffix == ".exe":
+    if uninstall and installer.suffix == ".exe":
         _run_uninstaller_exe(install_dir, timeout=timeout)
 
 
@@ -235,10 +251,11 @@ def create_installer(
     with_spaces=False,
     timeout=420,
     construct_yaml_filename="construct.yaml",
+    extra_constructor_args: Iterable[str] = None,
     **env_vars,
-) -> Tuple[Path, Path]:
+) -> Generator[Tuple[Path, Path], None, None]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
-        pytest.skip("Micromamba is not supported on Windows yet (shortcut creation).")
+        pytest.skip("Micromamba is not supported on Windows yet.")
 
     output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -256,6 +273,8 @@ def create_installer(
         cmd.extend(["--conda-exe", conda_exe])
     if debug:
         cmd.append("--debug")
+    if extra_constructor_args:
+        cmd.extend(extra_constructor_args)
 
     _execute(cmd, timeout=timeout, **env_vars)
 
@@ -323,6 +342,10 @@ def test_example_extra_files(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
+@pytest.mark.xfail(
+    CONDA_EXE == "conda-standalone" and Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
+)
 def test_example_miniforge(tmp_path, request):
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
@@ -342,9 +365,23 @@ def test_example_miniforge(tmp_path, request):
                 # PKG installers use their own install path, so we can't check sentinels
                 # via `install_dir`
                 check_sentinels=installer.suffix != ".pkg",
+                uninstall=False,
             )
             if installer.suffix == ".pkg" and ON_CI:
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
+            if installer.suffix == ".exe":
+                for key in ("ProgramData", "AppData"):
+                    start_menu_dir = Path(
+                        os.environ[key],
+                        "Microsoft/Windows/Start Menu/Programs/Miniforge3",
+                    )
+                    if start_menu_dir.is_dir():
+                        assert list(start_menu_dir.glob("Miniforge*.lnk"))
+                        break
+                else:
+                    raise AssertionError("Could not find Start Menu folder for miniforge")
+                _run_uninstaller_exe(install_dir)
+                assert not list(start_menu_dir.glob("Miniforge*.lnk"))
 
 
 def test_example_noconda(tmp_path, request):
@@ -368,10 +405,44 @@ def test_example_scripts(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
+@pytest.mark.skipif(
+    CONDA_EXE == "micromamba" or Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
+)
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+        # check that the shortcuts are created
+        if sys.platform == "win32":
+            for key in ("ProgramData", "AppData"):
+                start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
+                package_1 = start_menu / "Package 1"
+                anaconda = start_menu / "Anaconda3 (64-bit)"
+                if package_1.is_dir() and anaconda.is_dir():
+                    assert (package_1 / "A.lnk").is_file()
+                    assert (package_1 / "B.lnk").is_file()
+                    # The shortcut created from the 'base' env
+                    # should not exist because we filtered it out in the YAML
+                    # We do expect one shortcut from 'another_env'
+                    assert not (anaconda / "Anaconda Prompt.lnk").is_file()
+                    assert (anaconda / "Anaconda Prompt (another_env).lnk").is_file()
+                    break
+            else:
+                raise AssertionError("No shortcuts found!")
+            _run_uninstaller_exe(install_dir)
+            assert not (package_1 / "A.lnk").is_file()
+            assert not (package_1 / "B.lnk").is_file()
+        elif sys.platform == "darwin":
+            applications = Path("~/Applications").expanduser()
+            print("Shortcuts found:", sorted(applications.glob("**/*.app")))
+            assert (applications / "A.app").exists()
+            assert (applications / "B.app").exists()
+        elif sys.platform == "linux":
+            applications = Path("~/.local/share/applications").expanduser()
+            print("Shortcuts found:", sorted(applications.glob("**/*.desktop")))
+            assert (applications / "package-1_a.desktop").exists()
+            assert (applications / "package-1_b.desktop").exists()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
@@ -457,3 +528,55 @@ def test_register_envs(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
         assert str(install_dir) not in environments_txt
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='MacOS only')
+@pytest.mark.parametrize('domains', ({}, {'enable_anywhere': 'false', 'enable_localSystem': True}))
+def test_pkg_distribution_domains(tmp_path, domains):
+    recipe_path = _example_path('osxpkg')
+    input_path = tmp_path / 'input'
+    output_path = tmp_path / 'output'
+    shutil.copytree(str(recipe_path), str(input_path))
+    if domains:
+        with open(input_path / "construct.yaml", "a") as cyml:
+            cyml.write('pkg_domains:\n')
+            for key, val in domains.items():
+                cyml.write(f"  {key}: {val}\n")
+
+    installer, install_dir = next(create_installer(input_path, output_path))
+    cmd = ['pkgutil', '--expand', installer, output_path / "expanded"]
+    _execute(cmd)
+    domains_file = output_path / "expanded" / 'Distribution'
+    assert domains_file.exists()
+
+    tree = ET.parse(domains_file)
+    found = {key: val for key, val in tree.find('domains').items()}
+    defaults = {'enable_anywhere': 'true', 'enable_currentUserHome': 'true'}
+    expected = {key: str(val).lower() for key, val in domains.items()} if domains else defaults
+    assert expected == found
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+def test_cross_osx_building(tmp_path):
+    input_path = _example_path("noconda")
+    tmp_env = tmp_path / "env"
+    subprocess.check_call(
+        [
+            sys.executable,
+            "-mconda",
+            "create",
+            "-p",
+            tmp_env,
+            "-y",
+            "micromamba",
+            "--platform",
+            "osx-arm64",
+        ],
+    )
+    micromamba_arm64 = tmp_env / "bin" / "micromamba"
+    create_installer(
+        input_path,
+        tmp_path,
+        conda_exe=micromamba_arm64,
+        extra_constructor_args=["--platform", "osx-arm64"],
+    )

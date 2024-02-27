@@ -46,6 +46,9 @@ KEEP_PKGS=1
 KEEP_PKGS=0
 #endif
 SKIP_SCRIPTS=0
+#if enable_shortcuts == "true"
+SKIP_SHORTCUTS=0
+#endif
 TEST=0
 REINSTALL=0
 USAGE="
@@ -70,6 +73,9 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 -p PREFIX    install prefix, defaults to $PREFIX
 #endif
 -s           skip running pre/post-link/install scripts
+#if enable_shortcuts == 'true'
+-m           disable the creation of menu items / shortcuts
+#endif
 -u           update an existing installation
 #if has_conda
 -t           run package tests after installation (may install conda-build)
@@ -80,7 +86,11 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 # However getopt is not standardized and the version on Mac has different
 # behaviour. getopts is good enough for what we need :)
 # More info: https://unix.stackexchange.com/questions/62950/
+#if enable_shortcuts == "true"
+while getopts "bifhkp:smut" x; do
+#else
 while getopts "bifhkp:sut" x; do
+#endif
     case "$x" in
         h)
             printf "%s\\n" "$USAGE"
@@ -104,6 +114,11 @@ while getopts "bifhkp:sut" x; do
         s)
             SKIP_SCRIPTS=1
             ;;
+#if enable_shortcuts == "true"
+        m)
+            SKIP_SHORTCUTS=1
+            ;;
+#endif
         u)
             FORCE=1
             ;;
@@ -334,6 +349,15 @@ if ! mkdir -p "$PREFIX"; then
     exit 1
 fi
 
+total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
+free_disk_space_bytes="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
+free_disk_space_kb="$((free_disk_space_bytes / 1024))"
+free_disk_space_kb_with_buffer="$((free_disk_space_bytes - 100 * 1024))"  # add 100MB of buffer
+if [ "$free_disk_space_kb_with_buffer" -lt "$total_installation_size_kb" ]; then
+    printf "ERROR: Not enough free disk space: %s < %s\\n" "$free_disk_space_kb_with_buffer" "$total_installation_size_kb" >&2
+    exit 1
+fi
+
 # pwd does not convert two leading slashes to one
 # https://github.com/conda/constructor/issues/284
 PREFIX=$(cd "$PREFIX"; pwd | sed 's@//@/@')
@@ -391,13 +415,18 @@ cd "$PREFIX"
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
 # the first binary payload: the standalone conda executable
-CONDA_EXEC="$PREFIX/conda.exe"
+CONDA_EXEC="$PREFIX/_conda"
 extract_range "${boundary0}" "${boundary1}" > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 
 export TMP_BACKUP="${TMP:-}"
 export TMP="$PREFIX/install_tmp"
 mkdir -p "$TMP"
+
+# Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
+if [ "$(id -u)" -ne 0 ]; then
+    touch "$PREFIX/.nonadmin"
+fi
 
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
@@ -445,14 +474,31 @@ test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda
 
 printf "\nInstalling base environment...\n\n"
 
+#if enable_shortcuts == "true"
+if [ "$SKIP_SHORTCUTS" = "1" ]; then
+    shortcuts="--no-shortcuts"
+else
+    shortcuts="__SHORTCUTS__"
+fi
+#endif
+#if enable_shortcuts == "false"
+shortcuts="--no-shortcuts"
+#endif
+#if enable_shortcuts == "incompatible"
+shortcuts=""
+#endif
+
+# shellcheck disable=SC2086
+CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" || exit 1
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
+#The templating doesn't support nested if statements
 #if has_conda
 mkdir -p "$PREFIX/envs"
 for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
@@ -469,14 +515,31 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     else
         env_channels="__CHANNELS__"
     fi
-
-    # TODO: custom shortcuts per env?
+#endif
+#if has_conda and enable_shortcuts == "true"
+    if [ "$SKIP_SHORTCUTS" = "1" ]; then
+        env_shortcuts="--no-shortcuts"
+    else
+        # This file is guaranteed to exist, even if empty
+        env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
+        rm -f "${env_pkgs}shortcuts.txt"
+    fi
+#endif
+#if has_conda and enable_shortcuts == "false"
+    env_shortcuts="--no-shortcuts"
+#endif
+#if has_conda and enable_shortcuts == "incompatible"
+    env_shortcuts=""
+#endif
+#if has_conda
+    # shellcheck disable=SC2086
+    CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
     rm -f "${env_pkgs}env.txt"
 done
 #endif
@@ -486,9 +549,6 @@ __INSTALL_COMMANDS__
 POSTCONDA="$PREFIX/postconda.tar.bz2"
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
-
-rm -f "$CONDA_EXEC"
-
 rm -rf "$PREFIX/install_tmp"
 export TMP="$TMP_BACKUP"
 
@@ -630,4 +690,5 @@ fi
 #endif
 
 exit 0
+# shellcheck disable=SC2317
 @@END_HEADER@@

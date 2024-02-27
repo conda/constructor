@@ -19,3 +19,4 @@ specs:
 
 license_file: eula.txt
 initialize_by_default: false
+register_python: false

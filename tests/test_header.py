@@ -17,7 +17,7 @@ from constructor.shar import read_header_template
 from constructor.utils import preprocess
 
 
-@lru_cache()
+@lru_cache
 def available_command(cmd):
     return which(cmd) is not None
 
@@ -54,9 +54,11 @@ def test_linux_template_processing():
         initialize_by_default,
         has_post_install,
         has_pre_install,
+        enable_shortcuts,
         check_path_spaces,
         arch,
     ) in itertools.product(
+        [False, True],
         [False, True],
         [False, True],
         [False, True],
@@ -89,13 +91,15 @@ def test_linux_template_processing():
             "direct_execute_post_install": direct_execute_post_install,
             "initialize_conda": initialize_conda,
             "initialize_by_default": initialize_by_default,
+            "enable_shortcuts": enable_shortcuts,
             "check_path_spaces": check_path_spaces,
         }
         processed = preprocess(template, params)
         for template_string in ["#if", "#else", "#endif"]:
             if template_string in processed:
-                errors.append(f"Found '{template_string}' after "
-                              f"processing header.sh with '{params}'.")
+                errors.append(
+                    f"Found '{template_string}' after " f"processing header.sh with '{params}'."
+                )
 
     assert not errors
 
@@ -117,13 +121,22 @@ def test_osxpkg_scripts_template_processing(arch, check_path_spaces, script):
 @pytest.mark.skipif(available_command("shellcheck") is False, reason="requires shellcheck")
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])
-@pytest.mark.parametrize("script", sorted(Path(OSX_DIR).glob("*.sh")))
+@pytest.mark.parametrize(
+    "script", [pytest.param(path, id=str(path)) for path in sorted(Path(OSX_DIR).glob("*.sh"))]
+)
 def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
     with script.open() as f:
         data = f.read()
-    processed = preprocess(data, {"arch": arch, "check_path_spaces": check_path_spaces})
+    processed = preprocess(
+        data,
+        {
+            "arch": arch,
+            "check_path_spaces": check_path_spaces,
+        },
+    )
 
     findings, returncode = run_shellcheck(processed)
+    print(*findings, sep="\n")
     assert findings == []
     assert returncode == 0
 
@@ -142,6 +155,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("has_pre_install", [False])
 @pytest.mark.parametrize("arch", ["x86_64", "aarch64"])
 @pytest.mark.parametrize("check_path_spaces", [True])
+@pytest.mark.parametrize("enable_shortcuts", ["true"])
 def test_template_shellcheck(
     osx,
     arch,
@@ -156,6 +170,7 @@ def test_template_shellcheck(
     direct_execute_pre_install,
     direct_execute_post_install,
     check_path_spaces,
+    enable_shortcuts,
 ):
     template = read_header_template()
     processed = preprocess(
@@ -179,6 +194,7 @@ def test_template_shellcheck(
             "initialize_conda": initialize_conda,
             "initialize_by_default": initialize_by_default,
             "check_path_spaces": check_path_spaces,
+            "enable_shortcuts": enable_shortcuts,
         },
     )
 

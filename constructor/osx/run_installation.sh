@@ -24,17 +24,31 @@ PREFIX="$2/__NAME_LOWER__"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-CONDA_EXEC="$PREFIX/conda.exe"
+CONDA_EXEC="$PREFIX/_conda"
 # /COMMON UTILS
+
+# Check whether the user wants shortcuts or not
+# See check_shortcuts.sh script for details
+ENABLE_SHORTCUTS="__ENABLE_SHORTCUTS__"
+if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then  # this implies ENABLE_SHORTCUTS==true
+    shortcuts="__SHORTCUTS__"
+elif [[ "$ENABLE_SHORTCUTS" == "incompatible" ]]; then
+    shortcuts=""
+else
+    shortcuts="--no-shortcuts"
+fi
 
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
-if ! CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
+# shellcheck disable=SC2086
+if ! \
+CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
+CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX"; then
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts; then
     echo "ERROR: could not complete the conda install"
     exit 1
 fi
@@ -63,21 +77,30 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     else
         env_channels="__CHANNELS__"
     fi
-    # TODO: custom channels per env?
-    # TODO: custom shortcuts per env?
+    if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then  # this implies ENABLE_SHORTCUTS==true
+        # This file is guaranteed to exist, even if empty
+        env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
+        rm -f "${env_pkgs}shortcuts.txt"
+    elif [[ "$ENABLE_SHORTCUTS" == "incompatible" ]]; then
+        env_shortcuts=""
+    else
+        env_shortcuts="--no-shortcuts"
+    fi
+
+    # shellcheck disable=SC2086
+    CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
     # Move the prepackaged history file into place
     mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
     rm -f "${env_pkgs}env.txt"
 done
 
 # Cleanup!
-rm -f "$CONDA_EXEC"
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
 __WRITE_CONDARC__
