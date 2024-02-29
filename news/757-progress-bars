@@ -1,0 +1,19 @@
+### Enhancements
+
+* Do not render progress bars when SH installers are run with `-b` (batch). (#756 via #757)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>

@@ -431,12 +431,14 @@ fi
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
 extract_range $boundary1 $boundary2 | \
-    "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
+    CONDA_QUIET="$BATCH" "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
 PRECONDA="$PREFIX/preconda.tar.bz2"
+CONDA_QUIET="$BATCH" \
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$PRECONDA" || exit 1
 rm -f "$PRECONDA"
 
+CONDA_QUIET="$BATCH" \
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
 #The templating doesn't support nested if statements
@@ -495,6 +497,7 @@ CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+CONDA_QUIET="$BATCH" \
 "$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
@@ -539,6 +542,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+    CONDA_QUIET="$BATCH" \
     "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
     rm -f "${env_pkgs}env.txt"
 done
@@ -547,6 +551,7 @@ done
 __INSTALL_COMMANDS__
 
 POSTCONDA="$PREFIX/postconda.tar.bz2"
+CONDA_QUIET="$BATCH" \
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1
 rm -f "$POSTCONDA"
 rm -rf "$PREFIX/install_tmp"
