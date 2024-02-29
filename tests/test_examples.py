@@ -250,7 +250,7 @@ def create_installer(
     debug=CONSTRUCTOR_DEBUG,
     with_spaces=False,
     timeout=420,
-    construct_yaml_filename="construct.yaml",
+    config_filename="construct.yaml",
     extra_constructor_args: Iterable[str] = None,
     **env_vars,
 ) -> Generator[Tuple[Path, Path], None, None]:
@@ -267,7 +267,7 @@ def create_installer(
         "--output-dir",
         str(output_dir),
         "--construct-yaml-fn",
-        construct_yaml_filename,
+        config_filename,
     ]
     if conda_exe:
         cmd.extend(["--conda-exe", conda_exe])
@@ -387,7 +387,7 @@ def test_example_miniforge(tmp_path, request):
 def test_example_noconda(tmp_path, request):
     input_path = _example_path("noconda")
     for installer, install_dir in create_installer(
-        input_path, tmp_path, construct_yaml_filename="constructor_input.yaml", with_spaces=True
+        input_path, tmp_path, config_filename="constructor_input.yaml", with_spaces=True
     ):
         _run_installer(input_path, installer, install_dir, request=request)
 

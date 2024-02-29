@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add a new `--construct-yaml-fn` argument to specify an input file not named `construct.yaml`. (#727 via #758)
+* Add a new `--config-filename` argument to specify an input file not named `construct.yaml`. (#727 via #758)
 
 ### Bug fixes
 
