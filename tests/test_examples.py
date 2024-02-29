@@ -179,7 +179,13 @@ def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420)
     return _execute(cmd, installer_input=installer_input, timeout=timeout)
 
 
-def _run_installer_pkg(installer, install_dir, example_path=None, timeout=420):
+def _run_installer_pkg(
+    installer,
+    install_dir,
+    example_path=None,
+    config_filename="construct.yaml",
+    timeout=420,
+):
     if os.environ.get("CI"):
         # We want to run it in an arbitrary directory, but the options
         # are limited here... We can only install to $HOME :shrug:
@@ -193,7 +199,7 @@ def _run_installer_pkg(installer, install_dir, example_path=None, timeout=420):
             "CurrentUserHomeDirectory",
         ]
         if example_path:
-            install_dir = calculate_install_dir(example_path / "construct.yaml")
+            install_dir = calculate_install_dir(example_path / config_filename)
             install_dir = Path(os.environ["HOME"]) / install_dir
     else:
         # This command only expands the PKG, but does not install
@@ -222,6 +228,7 @@ def _run_installer(
     installer: Path,
     install_dir: Path,
     installer_input: Optional[str] = None,
+    config_filename="construct.yaml",
     check_sentinels=True,
     request=None,
     uninstall=True,
@@ -234,7 +241,13 @@ def _run_installer(
     elif installer.suffix == ".pkg":
         if request and ON_CI:
             request.addfinalizer(lambda: shutil.rmtree(str(install_dir)))
-        _run_installer_pkg(installer, install_dir, example_path=example_path, timeout=timeout)
+        _run_installer_pkg(
+            installer,
+            install_dir,
+            example_path=example_path,
+            config_filename=config_filename,
+            timeout=timeout,
+        )
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
@@ -266,7 +279,7 @@ def create_installer(
         str(input_dir),
         "--output-dir",
         str(output_dir),
-        "--construct-yaml-fn",
+        "--config-filename",
         config_filename,
     ]
     if conda_exe:
@@ -288,7 +301,7 @@ def create_installer(
     for installer in sorted(installers, key=_sort_by_extension):
         if installer.suffix == ".pkg" and ON_CI:
             install_dir = Path("~").expanduser() / calculate_install_dir(
-                input_dir / "construct.yaml"
+                input_dir / config_filename
             )
         else:
             install_dir = (
@@ -389,7 +402,13 @@ def test_example_noconda(tmp_path, request):
     for installer, install_dir in create_installer(
         input_path, tmp_path, config_filename="constructor_input.yaml", with_spaces=True
     ):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            config_filename="constructor_input.yaml",
+            request=request,
+        )
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
@@ -530,28 +549,28 @@ def test_register_envs(tmp_path, request):
         assert str(install_dir) not in environments_txt
 
 
-@pytest.mark.skipif(sys.platform != 'darwin', reason='MacOS only')
-@pytest.mark.parametrize('domains', ({}, {'enable_anywhere': 'false', 'enable_localSystem': True}))
+@pytest.mark.skipif(sys.platform != "darwin", reason="MacOS only")
+@pytest.mark.parametrize("domains", ({}, {"enable_anywhere": "false", "enable_localSystem": True}))
 def test_pkg_distribution_domains(tmp_path, domains):
-    recipe_path = _example_path('osxpkg')
-    input_path = tmp_path / 'input'
-    output_path = tmp_path / 'output'
+    recipe_path = _example_path("osxpkg")
+    input_path = tmp_path / "input"
+    output_path = tmp_path / "output"
     shutil.copytree(str(recipe_path), str(input_path))
     if domains:
         with open(input_path / "construct.yaml", "a") as cyml:
-            cyml.write('pkg_domains:\n')
+            cyml.write("pkg_domains:\n")
             for key, val in domains.items():
                 cyml.write(f"  {key}: {val}\n")
 
     installer, install_dir = next(create_installer(input_path, output_path))
-    cmd = ['pkgutil', '--expand', installer, output_path / "expanded"]
+    cmd = ["pkgutil", "--expand", installer, output_path / "expanded"]
     _execute(cmd)
-    domains_file = output_path / "expanded" / 'Distribution'
+    domains_file = output_path / "expanded" / "Distribution"
     assert domains_file.exists()
 
     tree = ET.parse(domains_file)
-    found = {key: val for key, val in tree.find('domains').items()}
-    defaults = {'enable_anywhere': 'true', 'enable_currentUserHome': 'true'}
+    found = {key: val for key, val in tree.find("domains").items()}
+    defaults = {"enable_anywhere": "true", "enable_currentUserHome": "true"}
     expected = {key: str(val).lower() for key, val in domains.items()} if domains else defaults
     assert expected == found
 
@@ -579,4 +598,5 @@ def test_cross_osx_building(tmp_path):
         tmp_path,
         conda_exe=micromamba_arm64,
         extra_constructor_args=["--platform", "osx-arm64"],
+        config_filename="constructor_input.yaml",
     )
