@@ -68,7 +68,8 @@ def get_output_filename(info):
 
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
-               dry_run=False, conda_exe="conda.exe"):
+               dry_run=False, conda_exe="conda.exe",
+               config_filename="construct.yaml"):
     logger.info('platform: %s', platform)
     if not os.path.isfile(conda_exe):
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
@@ -78,7 +79,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     except ValueError:
         sys.exit("Error: invalid platform string '%s'" % platform)
 
-    construct_path = join(dir_path, 'construct.yaml')
+    construct_path = join(dir_path, config_filename)
     info = construct_parse(construct_path, platform)
     construct_verify(info)
     info['CONSTRUCTOR_VERSION'] = __version__
@@ -357,6 +358,13 @@ def main():
                    action="store",
                    metavar="CONDA_EXE")
 
+    p.add_argument('--config-filename',
+                   help="path to construct YAML file ready by constructor",
+                   action="store",
+                   metavar="FILENAME",
+                   dest="config_filename",
+                   default="construct.yaml")
+
     p.add_argument('dir_path',
                    help="directory containing construct.yaml",
                    action="store",
@@ -381,6 +389,11 @@ def main():
     dir_path = args.dir_path
     if not isdir(dir_path):
         p.error("no such directory: %s" % dir_path)
+    if os.sep in args.config_filename:
+        p.error("--config-filename can only be a filename, not a path")
+    full_config_path = os.path.join(dir_path, args.config_filename)
+    if not os.path.isfile(full_config_path):
+        p.error("no such file: %s" % full_config_path)
 
     conda_exe = args.conda_exe
     conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
@@ -404,7 +417,8 @@ downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/""".lstrip())
     out_dir = normalize_path(args.output_dir)
     main_build(dir_path, output_dir=out_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
-               dry_run=args.dry_run, conda_exe=conda_exe)
+               dry_run=args.dry_run, conda_exe=conda_exe,
+               config_filename=args.config_filename)
 
 
 if __name__ == '__main__':
