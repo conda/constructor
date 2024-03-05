@@ -1,5 +1,23 @@
 [//]: # (current developments)
 
+## 2024-03-05   3.7.0:
+### Enhancements
+
+* In SH installers, error early if available disk space for chosen installation path is insufficient. (#749 via #751)
+* Do not render progress bars when SH installers are run with `-b` (batch). (#756 via #757)
+* Add a new `--config-filename` argument to specify an input file not named `construct.yaml`. (#727 via #758)
+
+### Docs
+
+* Clarify environment variables role in `default_prefix` and friends on Windows. (#748 via #750)
+* Add some tips for debugging the creation and execution of `constructor`-made installers. (#752)
+
+### Other
+
+* Adjust metadata to require Python 3.8 or above, as needed by 3.6.0. (#747)
+
+
+
 ## 2024-01-12   3.6.0:
 ### Enhancements
 
