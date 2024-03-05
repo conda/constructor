@@ -16,6 +16,11 @@
 
 * Adjust metadata to require Python 3.8 or above, as needed by 3.6.0. (#747)
 
+### Contributors
+
+* @jaimergp
+* @millsks
+
 
 
 ## 2024-01-12   3.6.0:
