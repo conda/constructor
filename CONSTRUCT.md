@@ -332,13 +332,23 @@ to sign `conda.exe`. For this, you need an "Application certificate" (different 
 "Installer certificate" mentioned above). Common values for this option follow the format
 `Developer ID Application: Name of the owner (XXXXXX)`.
 
+### `windows_signing_tool`
+
+_required:_ no<br/>
+_type:_ string<br/>
+
+The tool used to sign Windows installers. Must be one of: signtool.
+Some tools require `signing_certificate` to be set.
+Defaults to `signtool` if `signing_certificate` is set.
+
 ### `signing_certificate`
 
 _required:_ no<br/>
 _type:_ string<br/>
 
-On Windows only, set this key to the path of a PFX certificate to be used with `signtool`.
-Additional environment variables can be used to configure this step, namely:
+On Windows only, set this key to the path of the certificate file to be used
+with the `windows_signing_tool`. Additional environment variables may need to
+be used to configure signing, namely:
 
 - `CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD` (password to unlock the certificate, if needed)
 - `CONSTRUCTOR_SIGNTOOL_PATH` (absolute path to `signtool.exe`, in case is not in `PATH`)

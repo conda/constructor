@@ -438,7 +438,7 @@ Error: no file %s
 
 
 def verify_signtool_is_available(info):
-    if not info.get("signing_certificate"):
+    if not info.get("windows_signing_tool"):
         return
     signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
     logger.info("Checking for '%s'...", signtool)
@@ -507,7 +507,7 @@ def create(info, verbose=False):
     logger.debug("makensis stderr:\n'%s'", process.stderr)
     process.check_returncode()
 
-    if info.get("signing_certificate"):
+    if info.get("windows_signing_tool"):
         verify_installer_signature(info['_outpath'])
 
     shutil.rmtree(tmp_dir)

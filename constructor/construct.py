@@ -15,6 +15,10 @@ from ruamel.yaml import YAMLError
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
 from constructor.utils import yaml
 
+WIN_SIGNTOOLS = [
+    "signtool",
+]
+
 # list of tuples (key name, required, type, description)
 KEYS = [
     ('name',                   True,  str, '''
@@ -242,9 +246,16 @@ to sign `conda.exe`. For this, you need an "Application certificate" (different 
 `Developer ID Application: Name of the owner (XXXXXX)`.
 '''),
 
+    ('windows_signing_tool', False, str, f'''
+The tool used to sign Windows installers. Must be one of: {", ".join(WIN_SIGNTOOLS)}.
+Some tools require `signing_certificate` to be set.
+Defaults to `signtool` if `signing_certificate` is set.
+'''),
+
     ('signing_certificate',  False, str, '''
-On Windows only, set this key to the path of a PFX certificate to be used with `signtool`.
-Additional environment variables can be used to configure this step, namely:
+On Windows only, set this key to the path of the certificate file to be used
+with the `windows_signing_tool`. Additional environment variables may need to
+be used to configure signing, namely:
 
 - `CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD` (password to unlock the certificate, if needed)
 - `CONSTRUCTOR_SIGNTOOL_PATH` (absolute path to `signtool.exe`, in case is not in `PATH`)
@@ -792,6 +803,14 @@ def verify(info):
                 types_str = " or ".join([type_.__name__ for type_ in types])
                 sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
                          f"must be an instance of {types_str}")
+    if signtool := info.get("windows_signing_tool"):
+        if signtool not in WIN_SIGNTOOLS:
+            sys.exit("Value for 'windows_signing_tool' must be one of: "
+                f"{', '.join(WIN_SIGNTOOL)}. You tried to use: {signtool}."
+            )
+        need_cert_file = ["signtool"]
+        if signtool in need_cert_file and not info.get("signing_certificate"):
+            sys.exit(f"The signing tool {signtool} requires 'signing_certificate' to be set.")
 
 
 def generate_doc():
