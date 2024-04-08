@@ -265,3 +265,12 @@ def identify_conda_exe(conda_exe=None):
         name = "micromamba"
         version = output.strip()
     return name, version
+
+
+def win_str_esc(s, newlines=True):
+    maps = [('$', '$$'), ('"', '$\\"'), ('\t', '$\\t')]
+    if newlines:
+        maps.extend([('\n', '$\\n'), ('\r', '$\\r')])
+    for a, b in maps:
+        s = s.replace(a, b)
+    return '"%s"' % s

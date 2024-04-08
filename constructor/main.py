@@ -109,7 +109,10 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         if info.get(key):  # only join if there's a truthy value set
             info[key] = abspath(join(dir_path, info[key]))
 
-    if info.get("signing_certificate") and not info.get("windows_signing_tool"):
+    # Normalize name and set default value
+    if info.get("windows_signing_tool"):
+        info["windows_signing_tool"] = info["windows_signing_tool"].lower().replace(".exe", "")
+    elif info.get("signing_certificate"):
         info["windows_signing_tool"] = "signtool"
 
     for key in 'specs', 'packages':

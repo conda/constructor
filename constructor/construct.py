@@ -805,8 +805,9 @@ def verify(info):
                          f"must be an instance of {types_str}")
     if signtool := info.get("windows_signing_tool"):
         if signtool not in WIN_SIGNTOOLS:
-            sys.exit("Value for 'windows_signing_tool' must be one of: "
-                f"{', '.join(WIN_SIGNTOOL)}. You tried to use: {signtool}."
+            sys.exit(
+                "Value for 'windows_signing_tool' must be one of: "
+                f"{', '.join(WIN_SIGNTOOLS)}. You tried to use: {signtool}."
             )
         need_cert_file = ["signtool"]
         if signtool in need_cert_file and not info.get("signing_certificate"):
