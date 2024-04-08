@@ -251,17 +251,14 @@ to sign `conda.exe`. For this, you need an "Application certificate" (different 
 The tool used to sign Windows installers. Must be one of: {", ".join(WIN_SIGNTOOLS)}.
 Some tools require `signing_certificate` to be set.
 Defaults to `signtool` if `signing_certificate` is set.
+Additional environment variables may need to be used to configure signing.
+See the documentation for details:
+https://conda.github.io/constructor/howto/#signing-exe-installers
 '''),
 
     ('signing_certificate',  False, str, '''
 On Windows only, set this key to the path of the certificate file to be used
-with the `windows_signing_tool`. Additional environment variables may need to
-be used to configure signing, namely:
-
-- `CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD` (password to unlock the certificate, if needed)
-- `CONSTRUCTOR_SIGNTOOL_PATH` (absolute path to `signtool.exe`, in case is not in `PATH`)
-- `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL` (custom RFC 3161 timestamping server, default is
-http://timestamp.sectigo.com)
+with the `windows_signing_tool`.
 '''),
 
     ('attempt_hardlinks',          False, (bool, str), '''
