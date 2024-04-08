@@ -16,6 +16,7 @@ from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, Ya
 from constructor.utils import yaml
 
 WIN_SIGNTOOLS = [
+    "azuresigntool",
     "signtool",
 ]
 

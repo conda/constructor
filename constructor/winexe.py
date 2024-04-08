@@ -18,7 +18,7 @@ from .construct import ns_platform
 from .imaging import write_images
 from .preconda import copy_extra_files
 from .preconda import write_files as preconda_write_files
-from .signing import WindowsSignTool
+from .signing import AzureSignTool, WindowsSignTool
 from .utils import (
     add_condarc,
     approx_size_kb,
@@ -345,7 +345,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None, signing_to
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
-        ('@SIGNTOOL_COMMAND@', signing_tool.get_signing_command()),
+        ('@SIGNTOOL_COMMAND@', signing_tool.get_signing_command() if signing_tool else ""),
         ('@SETUP_ENVS@', '\n    '.join(setup_envs_commands(info, dir_path))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
@@ -418,6 +418,8 @@ def create(info, verbose=False):
             signing_tool = WindowsSignTool(
                 certificate_file=info.get("signing_certificate")
             )
+        elif signing_tool_name == "azuresigntool":
+            signing_tool = AzureSignTool()
         else:
             raise ValueError(f"Unknown signing tool: {signing_tool_name}")
         signing_tool.verify_signing_tool()
@@ -452,6 +454,7 @@ def create(info, verbose=False):
         tmp_dir,
         extra_files=copied_extra_files,
         temp_extra_files=copied_temp_extra_files,
+        signing_tool=signing_tool,
     )
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]

@@ -91,3 +91,110 @@ class WindowsSignTool(SigningTool):
                 "This is expected for untrusted (development) certificates. "
                 "If it is supposed to be trusted, please check your certificate!"
             )
+
+
+class AzureSignTool(SigningTool):
+    def __init__(self):
+        super().__init__(os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "AzureSignTool"))
+
+    def get_signing_command(self) -> str:
+        def _check_required_env_vars(env_vars):
+            missing_vars = {var for var in env_vars if var not in os.environ}
+            if missing_vars:
+                raise RuntimeError(
+                    f"Missing required environment variables {', '.join(missing_vars)}."
+                )
+
+        required_env_vars = (
+            "AZURE_SIGNTOOL_KEY_VAULT_URL",
+            "AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE",
+        )
+        _check_required_env_vars(required_env_vars)
+        timestamp_server = os.environ.get(
+            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
+            "http://timestamp.sectigo.com"
+        )
+        timestamp_digest = os.environ.get(
+            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST",
+            "sha256"
+        )
+        file_digest = os.environ.get(
+            "CONSTRUCTOR_SIGNTOOL_FILE_DIGEST",
+            "sha256"
+        )
+
+        command = (
+            f"{self.executable} sign -v"
+            ' -kvu %AZURE_SIGNTOOL_KEY_VAULT_URL%'
+            ' -kvc %AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE%'
+            f" -tr {timestamp_server}"
+            f" -td {timestamp_digest}"
+            f" -fd {file_digest}"
+        )
+        # There are three ways to sign:
+        #   1. Access token
+        #   2. Secret (requires tenant ID)
+        #   3. Managed identity (requires prior login to Azure)
+        if "AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN" in os.environ:
+            command += ' -kva "%AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN%"'
+        elif "AZURE_SIGNTOOL_KEY_VAULT_SECRET" in os.environ:
+            # Authentication via secret required client and tenant ID
+            required_env_vars = (
+                "AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID",
+                "AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID",
+            )
+            _check_required_env_vars(required_env_vars)
+            command += (
+                " -kvi %AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID%"
+                " -kvt %AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID%"
+                " -kvs %AZURE_SIGNTOOL_KEY_VAULT_SECRET%"
+            )
+        else:
+            # No token or secret found, assume managed identity
+            command += " -kvm"
+        return command
+
+    def verify_signing_tool(self):
+        self._verify_tool_is_available()
+        check_call([self.executable, "--help"], stdout=PIPE, stderr=PIPE)
+
+    def verify_signature(self, installer_file: Union[str, Path]):
+        """
+   `    https://learn.microsoft.com/en-us/dotnet/api/system.management.automation.signaturestatus
+        """
+        if shutil.which("powershell") is None:
+            logger.error("Could not verify signature: PowerShell not found.")
+            return
+        command = (
+            f"$sig = Get-AuthenticodeSignature -LiteralPath {installer_file};"
+            "$sig.Status.value__;"
+            "$sig.StatusMessage"
+        )
+        proc = run([
+                "powershell",
+                "-c",
+                command,
+            ],
+            capture_output=True,
+            text=True,
+        )
+        # The return code will always be 0,
+        # but stderr will be non-empty on errors
+        if proc.stderr:
+            logger.error(proc.stderr)
+            return
+        try:
+            status, status_message = proc.stdout.strip().split("\n")
+            status = int(status)
+            if status > 1:
+                # Includes missing signature
+                raise RuntimeError(f"Error signing {installer_file}: {status_message}")
+            elif status == 1:
+                logger.error(
+                    f"{installer_file} contains a signature that is either invalid or not trusted. "
+                    "This is expected with development certificates. "
+                    "If it is supposed to be trusted, please check your certificate!"
+                )
+        except ValueError:
+            # Something else is in the output
+            raise RuntimeError(f"Unexpected signature verification output: {proc.stdout}")
