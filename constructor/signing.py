@@ -11,6 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 class SigningTool:
+    """Base class to sign installers.
+
+    Attributes
+    ----------
+    executable: str | Path
+        Path to the signing tool binary.
+    certificate_file: str | Path
+        Path to the certificate file
+    """
     def __init__(
         self,
         executable: Union[str, Path],
@@ -22,6 +31,13 @@ class SigningTool:
         self.certificate_file = certificate_file
 
     def _verify_tool_is_available(self):
+        """Helper function to verify that the signing tool executable exists.
+
+        This is a minimum verification step and should be done even if other steps are performed
+        to verify the signing tool (e.g., signtool.exe /?) to receive better error messages.
+        For example, using `signtool.exe /?` when the path does not exist, results in a misleading
+        Permission Denied error.
+        """
         logger.info(f"Checking for {self.executable}...")
         if not shutil.which(self.executable):
             raise FileNotFoundError(
@@ -29,12 +45,18 @@ class SigningTool:
             )
 
     def verify_signing_tool(self):
+        """Verify that the signing tool is usable."""
         self._verify_tool_is_available()
 
     def get_signing_command(self):
+        """Get the string of the signing command to be executed.
+
+        For Windows, this command is inserted into the NSIS template.
+        """
         return self.executable
 
     def verify_signature(self):
+        """Verify the signed installer."""
         raise NotImplementedError("Signature verification not implemented for base class.")
 
 
