@@ -158,9 +158,11 @@ class AzureSignTool(SigningTool):
         #   2. Secret (requires tenant ID)
         #   3. Managed identity (requires prior login to Azure)
         if "AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN" in os.environ:
+            logger.info("AzureSignTool: signing binary using access token.")
             command += ' -kva "%AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN%"'
         elif "AZURE_SIGNTOOL_KEY_VAULT_SECRET" in os.environ:
             # Authentication via secret required client and tenant ID
+            logger.info("AzureSignTool: signing binary using secret.")
             required_env_vars = (
                 "AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID",
                 "AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID",
@@ -173,6 +175,7 @@ class AzureSignTool(SigningTool):
             )
         else:
             # No token or secret found, assume managed identity
+            logger.info("AzureSignTool: signing binary using managed identity.")
             command += " -kvm"
         return command
 
