@@ -205,8 +205,7 @@ class AzureSignTool(SigningTool):
         # The return code will always be 0,
         # but stderr will be non-empty on errors
         if proc.stderr:
-            logger.error(proc.stderr)
-            return
+            raise RuntimeError(f"Signature verification failed.\n{proc.stderr}")
         try:
             status, status_message = proc.stdout.strip().split("\n")
             status = int(status)
