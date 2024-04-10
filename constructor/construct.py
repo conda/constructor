@@ -802,7 +802,7 @@ def verify(info):
                 sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
                          f"must be an instance of {types_str}")
     if signtool := info.get("windows_signing_tool"):
-        if signtool not in WIN_SIGNTOOLS:
+        if signtool.lower().replace(".exe", "") not in WIN_SIGNTOOLS:
             sys.exit(
                 "Value for 'windows_signing_tool' must be one of: "
                 f"{', '.join(WIN_SIGNTOOLS)}. You tried to use: {signtool}."

@@ -181,7 +181,9 @@ class AzureSignTool(SigningTool):
         check_call([self.executable, "--help"], stdout=PIPE, stderr=PIPE)
 
     def verify_signature(self, installer_file: Union[str, Path]):
-        """
+        """Use Powershell to verify signature.
+
+        For available statuses, see the Microsoft documentation:
         https://learn.microsoft.com/en-us/dotnet/api/system.management.automation.signaturestatus
         """
         if shutil.which("powershell") is None:
