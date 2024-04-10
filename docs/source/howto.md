@@ -44,7 +44,7 @@ Example of a CI pipeline implementing:
 - [Signing](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L349) and [notarization](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L459) on macOS
 ```
 
-### Signing exe installers
+### Signing EXE installers
 
 Windows can trigger SmartScreen alerts for EXE installers, signed or not. It does help when they are signed, though. [Read this SO answer about SmartScreen reputation for more details](https://stackoverflow.com/questions/48946680/how-to-avoid-the-windows-defender-smartscreen-prevented-an-unrecognized-app-fro/66582477#66582477).
 
@@ -86,8 +86,8 @@ For each tool, there are environment variables that may need to be set to config
 :::{note}
 
 If neither `AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN` nor `AZURE_SIGNTOOL_KEY_VAULT_SECRET` are set, `constructor` will use a Managed Identity (`-kvm` CLI option).
-
-### Signing and notarizing pkg installers
+:::
+### Signing and notarizing PKG installers
 
 In the case of macOS, users might get warnings for PKGs if the installers are not signed _and_ notarized. However, once these two requirements are fulfilled, the warnings disappear instantly.
 `constructor` offers some configuration options to help you in this process:

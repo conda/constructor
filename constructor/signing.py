@@ -90,7 +90,7 @@ class WindowsSignTool(SigningTool):
         return command
 
     def verify_signing_tool(self):
-        self._verify_tool_is_available()
+        super()._verify_tool_is_available()
         if not Path(self.certificate_file).exists():
             raise FileNotFoundError(f"Could not find certificate file {self.certificate_file}.")
         check_call([self.executable, "/?"], stdout=PIPE, stderr=PIPE)
@@ -182,7 +182,7 @@ class AzureSignTool(SigningTool):
 
     def verify_signature(self, installer_file: Union[str, Path]):
         """
-   `    https://learn.microsoft.com/en-us/dotnet/api/system.management.automation.signaturestatus
+        https://learn.microsoft.com/en-us/dotnet/api/system.management.automation.signaturestatus
         """
         if shutil.which("powershell") is None:
             logger.error("Could not verify signature: PowerShell not found.")
