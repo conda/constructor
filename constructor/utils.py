@@ -10,7 +10,7 @@ import math
 import re
 import sys
 from io import StringIO
-from os import sep, unlink
+from os import environ, sep, unlink
 from os.path import basename, isdir, isfile, islink, join, normpath
 from shutil import rmtree
 from subprocess import check_call, check_output
@@ -274,3 +274,11 @@ def win_str_esc(s, newlines=True):
     for a, b in maps:
         s = s.replace(a, b)
     return '"%s"' % s
+
+
+def check_required_env_vars(env_vars):
+    missing_vars = {var for var in env_vars if var not in environ}
+    if missing_vars:
+        raise RuntimeError(
+            f"Missing required environment variables {', '.join(missing_vars)}."
+        )

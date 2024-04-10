@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import PIPE, STDOUT, check_call, run
 from typing import Union
 
-from .utils import win_str_esc
+from .utils import check_required_env_vars, win_str_esc
 
 logger = logging.getLogger(__name__)
 
@@ -120,18 +120,12 @@ class AzureSignTool(SigningTool):
         super().__init__(os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "AzureSignTool"))
 
     def get_signing_command(self) -> str:
-        def _check_required_env_vars(env_vars):
-            missing_vars = {var for var in env_vars if var not in os.environ}
-            if missing_vars:
-                raise RuntimeError(
-                    f"Missing required environment variables {', '.join(missing_vars)}."
-                )
 
         required_env_vars = (
             "AZURE_SIGNTOOL_KEY_VAULT_URL",
             "AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE",
         )
-        _check_required_env_vars(required_env_vars)
+        check_required_env_vars(required_env_vars)
         timestamp_server = os.environ.get(
             "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
             "http://timestamp.sectigo.com"
@@ -167,7 +161,7 @@ class AzureSignTool(SigningTool):
                 "AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID",
                 "AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID",
             )
-            _check_required_env_vars(required_env_vars)
+            check_required_env_vars(required_env_vars)
             command += (
                 " -kvi %AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID%"
                 " -kvt %AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID%"
