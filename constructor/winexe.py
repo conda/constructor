@@ -12,7 +12,7 @@ import tempfile
 from os.path import abspath, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
-from typing import List
+from typing import List, Union
 
 from .construct import ns_platform
 from .imaging import write_images
@@ -210,7 +210,13 @@ def uninstall_menus_commands(info):
     return [line.strip() for line in lines]
 
 
-def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None, signing_tool=None):
+def make_nsi(
+    info: dict,
+    dir_path: str,
+    extra_files: List = None,
+    temp_extra_files: List = None,
+    signing_tool: Union[AzureSignTool, WindowsSignTool] = None,
+):
     "Creates the tmp/main.nsi from the template file"
 
     if extra_files is None:
