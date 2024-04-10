@@ -11,4 +11,5 @@ getting-started
 howto
 construct-yaml
 cli-options
+debugging
 ```
