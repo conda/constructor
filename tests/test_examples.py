@@ -484,6 +484,41 @@ def test_example_signing(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.skipif(not shutil.which("azuresigntool"), reason="AzureSignTool not available")
+@pytest.mark.parametrize(
+        "auth_method",
+        os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
+)
+def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
+    """Test signing installers with AzureSignTool.
+
+    There are three ways to authenticate with Azure: tokens, secrets, and managed identities.
+    There is no good sentinel environment for manged identities, so an environment variable
+    is used to determine which authentication methods to test.
+    """
+    monkeypatch.delenv("CONSTRUCTOR_SIGNTOOL_PATH", raising=False)
+    if auth_method == "token":
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
+        if "AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN" not in os.environ:
+            pytest.skip("No AzureSignTool token in environment.")
+    elif auth_method == "secret":
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN", raising=False)
+        if "AZURE_SIGNTOOL_KEY_VAULT_SECRET" not in os.environ:
+            pytest.skip("No AzureSignTool secret in environment.")
+    elif auth_method == "managed":
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN", raising=False)
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
+    else:
+        pytest.skip(f"Unknown authentication method {auth_method}.")
+    input_path = _example_path("azure_signtool")
+    for installer, install_dir in create_installer(
+        input_path,
+        tmp_path,
+    ):
+        _run_installer(input_path, installer, install_dir, request=request)
+
+
 def test_example_use_channel_remap(tmp_path, request):
     input_path = _example_path("use_channel_remap")
     for installer, install_dir in create_installer(input_path, tmp_path):
