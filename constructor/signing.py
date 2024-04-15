@@ -117,7 +117,7 @@ class WindowsSignTool(SigningTool):
 
 class AzureSignTool(SigningTool):
     def __init__(self):
-        super().__init__(os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "AzureSignTool"))
+        super().__init__(os.environ.get("AZURE_SIGNTOOL_PATH", "AzureSignTool"))
 
     def get_signing_command(self) -> str:
 
@@ -127,15 +127,15 @@ class AzureSignTool(SigningTool):
         )
         check_required_env_vars(required_env_vars)
         timestamp_server = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
+            "AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL",
             "http://timestamp.sectigo.com"
         )
         timestamp_digest = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST",
+            "AZURE_SIGNTOOL_TIMESTAMP_DIGEST",
             "sha256"
         )
         file_digest = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_FILE_DIGEST",
+            "AZURE_SIGNTOOL_FILE_DIGEST",
             "sha256"
         )
 

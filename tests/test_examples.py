@@ -485,7 +485,10 @@ def test_example_signing(tmp_path, request):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-@pytest.mark.skipif(not shutil.which("azuresigntool"), reason="AzureSignTool not available")
+@pytest.mark.skipif(
+        not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
+        reason="AzureSignTool not available"
+)
 @pytest.mark.parametrize(
         "auth_method",
         os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
@@ -497,7 +500,6 @@ def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
     There is no good sentinel environment for manged identities, so an environment variable
     is used to determine which authentication methods to test.
     """
-    monkeypatch.delenv("CONSTRUCTOR_SIGNTOOL_PATH", raising=False)
     if auth_method == "token":
         monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
         if "AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN" not in os.environ:

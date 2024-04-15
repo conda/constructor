@@ -70,18 +70,18 @@ For each tool, there are environment variables that may need to be set to config
 
 #### Environment variables for AzureSignTool
 
-| Variable                                    | Description                                                                                 | CLI flag | Default                      |
-|---------------------------------------------|---------------------------------------------------------------------------------------------|----------|------------------------------|
-| `AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN`      | An access token used to authenticate to Azure.                                              | `-kva`   | Empty                        |
-| `AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE`      | The name of the certificate in the key vault.                                               | `-kvc`   | Empty                        |
-| `AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID`        | The client ID used to authenticate to Azure. Required for authentication with a secret.     | `-kvi`   | Empty                        |
-| `AZURE_SIGNTOOL_KEY_VAULT_SECRET`           | The client secret used to authenticate to Azure. Required for authentication with a secret. | `-kvs`   | Empty                        |
-| `AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID`        | The tenant ID used to authenticate to Azure. Required for authentication with a secret.     | `-kvt`   | Empty                        |
-| `AZURE_SIGNTOOL_KEY_VAULT_URL`              | The URL of the key vault with the certificate.                                              | `-kvu`   | Empty                        |
-| `CONSTRUCTOR_SIGNTOOL_PATH`                 | Path to `AzureSignTool.exe`. Needed if `azuresigntool` is not in `PATH`.                    | N/A      | `azuresigntool`              |
-| `CONSTRUCTOR_SIGNTOOL_FILE_DIGEST`          | Digest algorithm for creating the file signatures.                                          | `-fd`    | `sha256`                     |
-| `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL` | URL to the RFC 3161 timestamp server.                                                       | `-tr`    | http://timestamp.sectigo.com |
-| `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST`     | Digest algorithm for the RFC 3161 time stamp.                                               | `-td`    | `sha256`                     |
+| Variable                               | Description                                                                                 | CLI flag | Default                      |
+|----------------------------------------|---------------------------------------------------------------------------------------------|----------|------------------------------|
+| `AZURE_SIGNTOOL_FILE_DIGEST`           | Digest algorithm for creating the file signatures.                                          | `-fd`    | `sha256`                     |
+| `AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN` | An access token used to authenticate to Azure.                                              | `-kva`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE` | The name of the certificate in the key vault.                                               | `-kvc`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID`   | The client ID used to authenticate to Azure. Required for authentication with a secret.     | `-kvi`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_SECRET`      | The client secret used to authenticate to Azure. Required for authentication with a secret. | `-kvs`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID`   | The tenant ID used to authenticate to Azure. Required for authentication with a secret.     | `-kvt`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_URL`         | The URL of the key vault with the certificate.                                              | `-kvu`   | Empty                        |
+| `AZURE_SIGNTOOL_PATH`                  | Path to `AzureSignTool.exe`. Needed if `azuresigntool` is not in `PATH`.                    | N/A      | `azuresigntool`              |
+| `AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL`  | URL to the RFC 3161 timestamp server.                                                       | `-tr`    | http://timestamp.sectigo.com |
+| `AZURE_SIGNTOOL_TIMESTAMP_DIGEST`      | Digest algorithm for the RFC 3161 time stamp.                                               | `-td`    | `sha256`                     |
 
 :::{note}
 
