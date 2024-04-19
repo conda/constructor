@@ -45,6 +45,7 @@ def _execute(
     cmd: Iterable[str], installer_input=None, check=True, timeout=420, **env_vars
 ) -> subprocess.CompletedProcess:
     t0 = time.time()
+    # The environment is not copied on Windows, so copy here to get consistent behavior
     env = os.environ.copy()
     if env_vars:
         env.update({k: v for (k, v) in env_vars.items() if v is not None})
