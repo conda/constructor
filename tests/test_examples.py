@@ -45,11 +45,9 @@ def _execute(
     cmd: Iterable[str], installer_input=None, check=True, timeout=420, **env_vars
 ) -> subprocess.CompletedProcess:
     t0 = time.time()
+    env = os.environ.copy()
     if env_vars:
-        env = os.environ.copy()
         env.update({k: v for (k, v) in env_vars.items() if v is not None})
-    else:
-        env = None
     p = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE if installer_input else None,
