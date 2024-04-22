@@ -16,4 +16,4 @@
 
 ### Other
 
-* Automatically create issues when tests fail after pushing to main or creating tags (#776)
+* Automatically create issues when tests fail after pushing to main or creating tags. (#775 via #776)
