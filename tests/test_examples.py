@@ -500,13 +500,13 @@ def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
     is used to determine which authentication methods to test.
     """
     if auth_method == "token":
-        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
-        if "AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN" not in os.environ:
+        if not os.environ.get("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN"):
             pytest.skip("No AzureSignTool token in environment.")
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
     elif auth_method == "secret":
-        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN", raising=False)
-        if "AZURE_SIGNTOOL_KEY_VAULT_SECRET" not in os.environ:
+        if not os.environ.get("AZURE_SIGNTOOL_KEY_VAULT_SECRET"):
             pytest.skip("No AzureSignTool secret in environment.")
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN", raising=False)
     elif auth_method == "managed":
         monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN", raising=False)
         monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
