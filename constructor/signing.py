@@ -140,10 +140,10 @@ class AzureSignTool(SigningTool):
         )
 
         command = (
-            f"{self.executable} sign -v"
-            ' -kvu %AZURE_SIGNTOOL_KEY_VAULT_URL%'
-            ' -kvc %AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE%'
-            f" -tr {timestamp_server}"
+            f"{win_str_esc(self.executable)} sign -v"
+            ' -kvu "%AZURE_SIGNTOOL_KEY_VAULT_URL%"'
+            ' -kvc "%AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE%"'
+            f' -tr "{timestamp_server}"'
             f" -td {timestamp_digest}"
             f" -fd {file_digest}"
         )
@@ -163,9 +163,9 @@ class AzureSignTool(SigningTool):
             )
             check_required_env_vars(required_env_vars)
             command += (
-                " -kvi %AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID%"
-                " -kvt %AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID%"
-                " -kvs %AZURE_SIGNTOOL_KEY_VAULT_SECRET%"
+                ' -kvi "%AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID%"'
+                ' -kvt "%AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID%"'
+                ' -kvs "%AZURE_SIGNTOOL_KEY_VAULT_SECRET%"'
             )
         else:
             # No token or secret found, assume managed identity
