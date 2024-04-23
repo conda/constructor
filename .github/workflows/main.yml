@@ -145,8 +145,21 @@ jobs:
         run: |
           python scripts/make_docs.py
           git diff --exit-code
+      - name: Upload the example installers as artifacts
+        if: github.event_name == 'pull_request' && matrix.python-version == '3.9'
+        uses: actions/upload-artifact@v3
+        with:
+          name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
+          path: "${{ runner.temp }}/examples_artifacts"
+          retention-days: 7
+
+  report:
+    name: Report failures
+    needs: [tests]
+    if: always() && github.event_name == 'push' && needs.tests.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
       - name: Report failures
-        if: always() && github.event_name == 'push'
         uses: JasonEtco/create-an-issue@v2
         env:
           GITHUB_TOKEN: ${{ secrets.CONSTRUCTOR_ISSUES }}
@@ -155,13 +168,6 @@ jobs:
         with:
           filename: .github/TEST_FAILURE_REPORT_TEMPLATE.md
           update_existing: true
-      - name: Upload the example installers as artifacts
-        if: github.event_name == 'pull_request' && matrix.python-version == '3.9'
-        uses: actions/upload-artifact@v3
-        with:
-          name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
-          path: "${{ runner.temp }}/examples_artifacts"
-          retention-days: 7
 
   build:
     name: Canary Build
