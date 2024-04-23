@@ -33,51 +33,51 @@ defaults:
 jobs:
   tests:
     name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, ${{ matrix.conda-standalone }}
-    runs-on: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           # UBUNTU
-          - os: ubuntu
+          - os: ubuntu-latest
             python-version: "3.8"
             conda-standalone: conda-standalone
             check-docs: true
-          - os: ubuntu
+          - os: ubuntu-latest
             python-version: "3.9"
             conda-standalone: conda-standalone
             check-docs: true
-          - os: ubuntu
+          - os: ubuntu-latest
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
-          - os: ubuntu
+          - os: ubuntu-latest
             python-version: "3.11"
             conda-standalone: micromamba
           # MACOS
-          - os: macos
+          - os: macos-13
             python-version: "3.8"
             conda-standalone: conda-standalone-nightly
           # Not running for 3.9 to save some CI resources
           # - os: macos
           #   python-version: "3.9"
           #   conda-standalone: conda-standalone
-          - os: macos
+          - os: macos-13
             python-version: "3.10"
             conda-standalone: micromamba
-          - os: macos
+          - os: macos-13
             python-version: "3.11"
             conda-standalone: conda-standalone
           # WINDOWS
-          - os: windows
+          - os: windows-latest
             python-version: "3.8"
             conda-standalone: conda-standalone
-          - os: windows
+          - os: windows-latest
             python-version: "3.9"
             conda-standalone: conda-standalone-nightly
-          - os: windows
+          - os: windows-latest
             python-version: "3.10"
             conda-standalone: conda-standalone
-          - os: windows
+          - os: windows-latest
             python-version: "3.11"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-nightly
@@ -173,8 +173,10 @@ jobs:
         include:
           - runner: ubuntu-latest
             subdir: linux-64
-          - runner: macos-latest
+          - runner: macos-13
             subdir: osx-64
+          - runner: macos-14  # FUTURE: Use latest
+            subdir: osx-arm64
           - runner: windows-latest
             subdir: win-64
     runs-on: ${{ matrix.runner }}
