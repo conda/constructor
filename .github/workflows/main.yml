@@ -95,7 +95,7 @@ jobs:
           environment-file: dev/environment.yml
           python-version: ${{ matrix.python-version }}
       - name: Install AzureSignTool
-        if: ${{ matrix.os == 'windows' }}
+        if: matrix.os == 'windows'
         run: dotnet.exe tool install --global AzureSignTool
         shell: pwsh
       - name: Supply extra dependencies and install constructor
