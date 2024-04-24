@@ -97,8 +97,8 @@ jobs:
       - name: Supply extra dependencies and install constructor
         run: |
           files=(--file "tests/requirements.txt")
-          test -f dev/extra-requirements-${{ matrix.os }}.txt \
-            && files+=(--file "dev/extra-requirements-${{ matrix.os }}.txt")
+          test -f dev/extra-requirements-${{ runner.os }}.txt \
+            && files+=(--file "dev/extra-requirements-${{ runner.os }}.txt")
           conda install ${files[@]} -y
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
           pip install -e . --no-deps --no-build-isolation
@@ -106,7 +106,7 @@ jobs:
         run: |
           if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
             conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge micromamba
-            if [[ ${{ matrix.os }} == "windows" ]]; then
+            if [[ "${{ runner.os }}" == "Windows" ]]; then
               echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/Library/bin/micromamba.exe" >> $GITHUB_ENV
             else
               echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/bin/micromamba" >> $GITHUB_ENV
