@@ -18,7 +18,15 @@ INIT_FILES=$("$PREFIX/bin/python" -m conda init --all | tee)
 # have the correct owner.
 if [[ "${USER}" != "root" ]]; then
     echo "Fixing permissions..."
-    read -r -a MODIFIED_FILES <<< "$(echo "${INIT_FILES}" | grep modified | awk '{print $2}')"
+    read -r -a MODIFIED_FILES <<< "$(\
+      echo "${INIT_FILES}" |\
+      grep modified |\
+      awk '{print $2}' |\
+      # Only grab files inside $HOME or $PREFIX.
+      # All init files should be there, but that may change, and it
+      # is better to miss files than to have an infinite loop below.
+      grep -E "^(${HOME}|${PREFIX})"\
+    )"
     for file in "${MODIFIED_FILES[@]}"; do
         while [[ "${file}" != "${HOME}" ]] && [[ "${file}" != "${PREFIX}" ]]; do
             # Check just in case the file wasn't created due to flaky conda init
