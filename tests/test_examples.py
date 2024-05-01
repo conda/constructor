@@ -1,3 +1,4 @@
+import getpass
 import os
 import shutil
 import subprocess
@@ -426,7 +427,9 @@ def test_example_osxpkg(tmp_path, request):
         ".zshrc",
     ]
     ownership_test_files_home = [Path.home() / file for file in ownership_test_files_home]
-    expected_owner = os.getlogin()
+    # getpass.getuser is more reliable than os.getlogin:
+    # https://docs.python.org/3/library/os.html#os.getlogin
+    expected_owner = getpass.getuser()
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request)
         expected = {}
