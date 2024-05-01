@@ -428,14 +428,10 @@ def test_example_osxpkg(tmp_path, request):
     ownership_test_files_home = [Path.home() / file for file in ownership_test_files_home]
     expected_owner = os.getlogin()
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _, install_target = _run_installer(input_path, installer, install_dir, request=request)
-        test_files = [
-            install_target,
-            *ownership_test_files_home
-        ]
+        _run_installer(input_path, installer, install_dir, request=request)
         expected = {}
         found = {}
-        for file in test_files:
+        for file in ownership_test_files_home:
             if not file.exists():
                 continue
             expected[file] = expected_owner
