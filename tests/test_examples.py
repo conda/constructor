@@ -414,8 +414,33 @@ def test_example_noconda(tmp_path, request):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 def test_example_osxpkg(tmp_path, request):
     input_path = _example_path("osxpkg")
+    ownership_test_files_home = [
+        ".bash_profile",
+        ".config",
+        ".config/fish",
+        ".config/fish/fish.config",
+        ".config/powershell",
+        ".config/powershell/profile.ps1",
+        ".tcshrc",
+        ".xonshrc",
+        ".zshrc",
+    ]
+    ownership_test_files_home = [Path.home() / file for file in ownership_test_files_home]
+    expected_owner = os.getlogin()
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _, install_target = _run_installer(input_path, installer, install_dir, request=request)
+        test_files = [
+            install_target,
+            *ownership_test_files_home
+        ]
+        expected = {}
+        found = {}
+        for file in test_files:
+            if not file.exists():
+                continue
+            expected[file] = expected_owner
+            found[file] = file.owner()
+        assert expected == found
 
 
 def test_example_scripts(tmp_path, request):
