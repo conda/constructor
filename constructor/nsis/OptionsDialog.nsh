@@ -77,7 +77,7 @@ Function mui_AnaCustomOptions_Show
     IntOp $5 0 + 0
 
     ${If} "${ENABLE_SHORTCUTS}" == "yes"
-        ${NSD_CreateCheckbox} 0 0u 100% 11u "Create start menu shortcuts (supported packages only)."
+        ${NSD_CreateCheckbox} 0 0u 100% 11u "Create shortcuts (supported packages only)."
         IntOp $5 $5 + 11
         Pop $mui_AnaCustomOptions.CreateShortcuts
         ${NSD_SetState} $mui_AnaCustomOptions.CreateShortcuts $Ana_CreateShortcuts_State
