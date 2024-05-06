@@ -86,10 +86,10 @@ jobs:
       PYTHONUNBUFFERED: "1"
     steps:
       - name: Retrieve the source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           fetch-depth: 0
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
         with:
           activate-environment: constructor-dev
           environment-file: dev/environment.yml
@@ -123,7 +123,7 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
           coverage run --branch --append -m constructor -V
           coverage json
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@5ecb98a3c6b747ed38dc09f787459979aebb39be # v4.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
@@ -136,7 +136,7 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@5ecb98a3c6b747ed38dc09f787459979aebb39be # v4.3.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
@@ -147,7 +147,7 @@ jobs:
           git diff --exit-code
       - name: Report failures
         if: always() && github.event_name == 'push'
-        uses: JasonEtco/create-an-issue@v2
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.CONSTRUCTOR_ISSUES }}
           RUN_ID: ${{ github.run_id }}
@@ -157,7 +157,7 @@ jobs:
           update_existing: true
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.python-version == '3.9'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
           path: "${{ runner.temp }}/examples_artifacts"
@@ -193,13 +193,13 @@ jobs:
     steps:
       # Clean checkout of specific git ref needed for package metadata version
       # which needs env vars GIT_DESCRIBE_TAG and GIT_BUILD_STR:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
         with:
           ref: ${{ github.ref }}
           clean: true
           fetch-depth: 0
       - name: Create and upload canary build
-        uses: conda/actions/canary-release@v23.3.0
+        uses: conda/actions/canary-release@1e442e090ad28c9b0f85697105703a303320ffd1 # v24.4.0
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}
