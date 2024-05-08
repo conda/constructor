@@ -38,20 +38,62 @@ On Windows, you can also add extra pages to the installer. This is an advanced o
 
 ## Signing and notarization
 
-Windows can trigger SmartScreen alerts for EXE installers, signed or not. It does help when they are signed, though. [Read this SO answer about SmartScreen reputation for more details](https://stackoverflow.com/questions/48946680/how-to-avoid-the-windows-defender-smartscreen-prevented-an-unrecognized-app-fro/66582477#66582477).
-In the case of macOS, users might get similar warnings for PKGs if the installers are not signed _and_ notarized. However, once these two requirements are fulfilled, the warnings disappear instantly.
-
-`constructor` offers some configuration options to help you in this process:
-
-- For Windows, you will need to provide the path to your code signing certificate (PFX format) in [`signing_certificate`](construct-yaml.md#signing_certificate).
-- For macOS, you will need to provide two identity names. One for the PKG signature (via [`signing_identity_name`](construct-yaml.md#signing_identity_name)), and one to pass the notarization (via [`notarization_identity_name`](construct-yaml.md#notarization_identity_name)). These can be obtained in the [Apple Developer portal](https://developer.apple.com/account/).
-Once signed, you can notarize your PKG with Apple's `notarytool`.
-
 ```{seealso}
 Example of a CI pipeline implementing:
 - [Signing on Windows](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L390)
 - [Signing](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L349) and [notarization](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L459) on macOS
 ```
+
+### Signing EXE installers
+
+Windows can trigger SmartScreen alerts for EXE installers, signed or not. It does help when they are signed, though. [Read this SO answer about SmartScreen reputation for more details](https://stackoverflow.com/questions/48946680/how-to-avoid-the-windows-defender-smartscreen-prevented-an-unrecognized-app-fro/66582477#66582477).
+
+`constructor` supports the following tools to sign installers:
+
+* [SignTool](https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool)
+* [AzureSignTool](https://github.com/vcsjones/AzureSignTool)
+
+The signtool that is used can be set in the `construct.yaml` file via the [`windows_signing_tool`](construct-yaml.md#windows_signing_tool) key.
+If the [`signing_certificate`](construct-yaml.md#signing_certificate) key is set, `windows_signing_tool` defaults to `signtool`.
+
+For each tool, there are environment variables that may need to be set to configure signing.
+
+#### Environment variables for SignTool
+
+| Variable                                    | Description                                                    | CLI flag | Default                      |
+|---------------------------------------------|----------------------------------------------------------------|----------|------------------------------|
+| `CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD`      | Password for the `pfx` certificate file.                       | `/p`     | Empty                        |
+| `CONSTRUCTOR_SIGNTOOL_PATH`                 | Path to `signtool.exe`. Needed if `signtool` is not in `PATH`. | N/A      | `signtool`                   |
+| `CONSTRUCTOR_SIGNTOOL_FILE_DIGEST`          | Digest algorithm for creating the file signatures.             | `/fd`    | `sha256`                     |
+| `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL` | URL to the RFC 3161 timestamp server.                          | `/tr`    | http://timestamp.sectigo.com |
+| `CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST`     | Digest algorithm for the RFC 3161 time stamp.                  | `/td`    | `sha256`                     |
+
+#### Environment variables for AzureSignTool
+
+| Variable                               | Description                                                                                 | CLI flag | Default                      |
+|----------------------------------------|---------------------------------------------------------------------------------------------|----------|------------------------------|
+| `AZURE_SIGNTOOL_FILE_DIGEST`           | Digest algorithm for creating the file signatures.                                          | `-fd`    | `sha256`                     |
+| `AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN` | An access token used to authenticate to Azure.                                              | `-kva`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE` | The name of the certificate in the key vault.                                               | `-kvc`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID`   | The client ID used to authenticate to Azure. Required for authentication with a secret.     | `-kvi`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_SECRET`      | The client secret used to authenticate to Azure. Required for authentication with a secret. | `-kvs`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID`   | The tenant ID used to authenticate to Azure. Required for authentication with a secret.     | `-kvt`   | Empty                        |
+| `AZURE_SIGNTOOL_KEY_VAULT_URL`         | The URL of the key vault with the certificate.                                              | `-kvu`   | Empty                        |
+| `AZURE_SIGNTOOL_PATH`                  | Path to `AzureSignTool.exe`. Needed if `azuresigntool` is not in `PATH`.                    | N/A      | `azuresigntool`              |
+| `AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL`  | URL to the RFC 3161 timestamp server.                                                       | `-tr`    | http://timestamp.sectigo.com |
+| `AZURE_SIGNTOOL_TIMESTAMP_DIGEST`      | Digest algorithm for the RFC 3161 time stamp.                                               | `-td`    | `sha256`                     |
+
+:::{note}
+
+If neither `AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN` nor `AZURE_SIGNTOOL_KEY_VAULT_SECRET` are set, `constructor` will use a Managed Identity (`-kvm` CLI option).
+:::
+### Signing and notarizing PKG installers
+
+In the case of macOS, users might get warnings for PKGs if the installers are not signed _and_ notarized. However, once these two requirements are fulfilled, the warnings disappear instantly.
+`constructor` offers some configuration options to help you in this process:
+
+You will need to provide two identity names. One for the PKG signature (via [`signing_identity_name`](construct-yaml.md#signing_identity_name)), and one to pass the notarization (via [`notarization_identity_name`](construct-yaml.md#notarization_identity_name)). These can be obtained in the [Apple Developer portal](https://developer.apple.com/account/).
+Once signed, you can notarize your PKG with Apple's `notarytool`.
 
 ## Create shortcuts
 

@@ -45,11 +45,10 @@ def _execute(
     cmd: Iterable[str], installer_input=None, check=True, timeout=420, **env_vars
 ) -> subprocess.CompletedProcess:
     t0 = time.time()
+    # The environment is not copied on Windows, so copy here to get consistent behavior
+    env = os.environ.copy()
     if env_vars:
-        env = os.environ.copy()
         env.update({k: v for (k, v) in env_vars.items() if v is not None})
-    else:
-        env = None
     p = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE if installer_input else None,
@@ -480,6 +479,43 @@ def test_example_signing(tmp_path, request):
         with_spaces=True,
         CONSTRUCTOR_SIGNING_CERTIFICATE=str(cert_path),
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=cert_pwd,
+    ):
+        _run_installer(input_path, installer, install_dir, request=request)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.skipif(
+        not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
+        reason="AzureSignTool not available"
+)
+@pytest.mark.parametrize(
+        "auth_method",
+        os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
+)
+def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
+    """Test signing installers with AzureSignTool.
+
+    There are three ways to authenticate with Azure: tokens, secrets, and managed identities.
+    There is no good sentinel environment for manged identities, so an environment variable
+    is used to determine which authentication methods to test.
+    """
+    if auth_method == "token":
+        if not os.environ.get("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN"):
+            pytest.skip("No AzureSignTool token in environment.")
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
+    elif auth_method == "secret":
+        if not os.environ.get("AZURE_SIGNTOOL_KEY_VAULT_SECRET"):
+            pytest.skip("No AzureSignTool secret in environment.")
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN", raising=False)
+    elif auth_method == "managed":
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN", raising=False)
+        monkeypatch.delenv("AZURE_SIGNTOOL_KEY_VAULT_SECRET", raising=False)
+    else:
+        pytest.skip(f"Unknown authentication method {auth_method}.")
+    input_path = _example_path("azure_signtool")
+    for installer, install_dir in create_installer(
+        input_path,
+        tmp_path,
     ):
         _run_installer(input_path, installer, install_dir, request=request)
 

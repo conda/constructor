@@ -94,6 +94,10 @@ jobs:
           activate-environment: constructor-dev
           environment-file: dev/environment.yml
           python-version: ${{ matrix.python-version }}
+      - name: Install AzureSignTool
+        if: matrix.os == 'windows'
+        run: dotnet.exe tool install --global AzureSignTool
+        shell: pwsh
       - name: Supply extra dependencies and install constructor
         run: |
           files=(--file "tests/requirements.txt")
@@ -129,6 +133,11 @@ jobs:
           flags: unit
       - name: Run examples
         env:
+          AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE }}
+          AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID }}
+          AZURE_SIGNTOOL_KEY_VAULT_SECRET: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_SECRET }}
+          AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID }}
+          AZURE_SIGNTOOL_KEY_VAULT_URL: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_URL }}
           CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |

@@ -11,13 +11,14 @@ import sys
 import tempfile
 from os.path import abspath, dirname, isfile, join
 from pathlib import Path
-from subprocess import PIPE, STDOUT, check_call, check_output, run
-from typing import List
+from subprocess import check_output, run
+from typing import List, Union
 
 from .construct import ns_platform
 from .imaging import write_images
 from .preconda import copy_extra_files
 from .preconda import write_files as preconda_write_files
+from .signing import AzureSignTool, WindowsSignTool
 from .utils import (
     add_condarc,
     approx_size_kb,
@@ -27,21 +28,13 @@ from .utils import (
     make_VIProductVersion,
     preprocess,
     shortcuts_flags,
+    win_str_esc,
 )
 
 NSIS_DIR = join(abspath(dirname(__file__)), 'nsis')
 MAKENSIS_EXE = abspath(join(sys.prefix, 'NSIS', 'makensis.exe'))
 
 logger = logging.getLogger(__name__)
-
-
-def str_esc(s, newlines=True):
-    maps = [('$', '$$'), ('"', '$\\"'), ('\t', '$\\t')]
-    if newlines:
-        maps.extend([('\n', '$\\n'), ('\r', '$\\r')])
-    for a, b in maps:
-        s = s.replace(a, b)
-    return '"%s"' % s
 
 
 def read_nsi_tmpl(info) -> str:
@@ -53,7 +46,7 @@ def read_nsi_tmpl(info) -> str:
 
 def pkg_commands(download_dir, dists):
     for fn in dists:
-        yield 'File %s' % str_esc(join(download_dir, fn))
+        yield 'File %s' % win_str_esc(join(download_dir, fn))
 
 
 def extra_files_commands(paths, common_parent):
@@ -101,7 +94,7 @@ def setup_script_env_variables(info) -> List[str]:
     for name, value in info.get('script_env_variables', {}).items():
         lines.append(
             "System::Call 'kernel32::SetEnvironmentVariable(t,t)i"
-            + f"""("{name}", {str_esc(value)}).r0'""")
+            + f"""("{name}", {win_str_esc(value)}).r0'""")
     return lines
 
 
@@ -217,27 +210,13 @@ def uninstall_menus_commands(info):
     return [line.strip() for line in lines]
 
 
-def signtool_command(info):
-    "Generates a signtool command to be used in the NSIS template"
-    pfx_certificate = info.get("signing_certificate")
-    if pfx_certificate:
-        signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-        timestamp_server = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
-            "http://timestamp.sectigo.com"
-        )
-        command = (
-            f'{str_esc(signtool)} sign /f {str_esc(pfx_certificate)} '
-            f'/tr {str_esc(timestamp_server)} /td sha256 /fd sha256'
-        )
-        if "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD" in os.environ:
-            # signtool can get the password from the env var on its own
-            command += ' /p "%CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD%"'
-        return command
-    return ""
-
-
-def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
+def make_nsi(
+    info: dict,
+    dir_path: str,
+    extra_files: List = None,
+    temp_extra_files: List = None,
+    signing_tool: Union[AzureSignTool, WindowsSignTool] = None,
+):
     "Creates the tmp/main.nsi from the template file"
 
     if extra_files is None:
@@ -335,7 +314,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
     for key, value in replace.items():
         if value.startswith('@'):
             value = join(dir_path, value[1:])
-        replace[key] = str_esc(value)
+        replace[key] = win_str_esc(value)
 
     data = read_nsi_tmpl(info)
     ppd = ns_platform(info['_platform'])
@@ -372,7 +351,7 @@ def make_nsi(info, dir_path, extra_files=None, temp_extra_files=None):
         ('@NSIS_DIR@', NSIS_DIR),
         ('@BITS@', str(arch)),
         ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
-        ('@SIGNTOOL_COMMAND@', signtool_command(info)),
+        ('@SIGNTOOL_COMMAND@', signing_tool.get_signing_command() if signing_tool else ""),
         ('@SETUP_ENVS@', '\n    '.join(setup_envs_commands(info, dir_path))),
         ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
         ('@SIZE@', str(approx_pkgs_size_kb)),
@@ -437,36 +416,19 @@ Error: no file %s
         sys.exit("Error: no file untgz.dll")
 
 
-def verify_signtool_is_available(info):
-    if not info.get("signing_certificate"):
-        return
-    signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-    logger.info("Checking for '%s'...", signtool)
-    check_call([signtool, "/?"], stdout=PIPE, stderr=PIPE)
-
-
-def verify_installer_signature(path):
-    """
-    Verify installer was properly signed by NSIS
-    We'll assume that the uninstaller was handled in the same way
-    """
-    signtool = os.environ.get("CONSTRUCTOR_SIGNTOOL_PATH", "signtool")
-    p = run([signtool, "verify", "/v", path], stdout=PIPE, stderr=STDOUT, text=True)
-    logger.info(p.stdout)
-    if "SignTool Error: No signature found" in p.stdout:
-        # This is a signing error!
-        p.check_returncode()
-    elif p.returncode:
-        # we had errors but maybe not critical ones
-        logger.error(
-            "SignTool could find a signature in %s but detected errors. "
-            "Please check your certificate!", path
-        )
-
-
 def create(info, verbose=False):
     verify_nsis_install()
-    verify_signtool_is_available(info)
+    signing_tool = None
+    if signing_tool_name := info.get("windows_signing_tool"):
+        if signing_tool_name == "signtool":
+            signing_tool = WindowsSignTool(
+                certificate_file=info.get("signing_certificate")
+            )
+        elif signing_tool_name == "azuresigntool":
+            signing_tool = AzureSignTool()
+        else:
+            raise ValueError(f"Unknown signing tool: {signing_tool_name}")
+        signing_tool.verify_signing_tool()
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
@@ -498,6 +460,7 @@ def create(info, verbose=False):
         tmp_dir,
         extra_files=copied_extra_files,
         temp_extra_files=copied_temp_extra_files,
+        signing_tool=signing_tool,
     )
     verbosity = f"{'/' if sys.platform == 'win32' else '-'}V{4 if verbose else 2}"
     args = [MAKENSIS_EXE, verbosity, nsi]
@@ -507,8 +470,8 @@ def create(info, verbose=False):
     logger.debug("makensis stderr:\n'%s'", process.stderr)
     process.check_returncode()
 
-    if info.get("signing_certificate"):
-        verify_installer_signature(info['_outpath'])
+    if signing_tool:
+        signing_tool.verify_signature(info['_outpath'])
 
     shutil.rmtree(tmp_dir)
 
