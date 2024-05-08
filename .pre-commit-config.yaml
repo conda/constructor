@@ -35,3 +35,7 @@ repos:
     hooks:
       - id: shellcheck
         exclude: ^(constructor/header.sh|constructor/osx/.*sh)
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.28.2
+    hooks:
+      - id: check-github-workflows
