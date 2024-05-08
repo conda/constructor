@@ -417,6 +417,8 @@ def test_example_osxpkg(tmp_path, request):
     input_path = _example_path("osxpkg")
     ownership_test_files_home = [
         ".bash_profile",
+        ".conda",
+        ".condarc",
         ".config",
         ".config/fish",
         ".config/fish/fish.config",
