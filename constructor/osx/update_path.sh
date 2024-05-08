@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright (c) 2012-2017 Anaconda, Inc.
 # All rights reserved.
 
