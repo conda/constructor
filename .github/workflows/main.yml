@@ -156,7 +156,7 @@ jobs:
   report:
     name: Report failures
     needs: [tests]
-    if: always() && github.event_name == 'push' && needs.tests.result == 'failure'
+    if: always() && github.event_name == 'push' && github.ref_name == 'main' && needs.tests.result == 'failure'
     runs-on: ubuntu-latest
     steps:
       - name: Report failures
