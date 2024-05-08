@@ -20,8 +20,7 @@ if [[ "${USER}" != "root" ]]; then
     echo "Fixing permissions..."
     read -r -a MODIFIED_FILES <<< "$(\
       echo "${INIT_FILES}" |\
-      grep modified |\
-      awk '{print $2}' |\
+      awk '/modified/{print $2}' |\
       # Only grab files inside $HOME or $PREFIX.
       # All init files should be there, but that may change, and it
       # is better to miss files than to have an infinite loop below.
