@@ -87,6 +87,7 @@ For each tool, there are environment variables that may need to be set to config
 
 If neither `AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN` nor `AZURE_SIGNTOOL_KEY_VAULT_SECRET` are set, `constructor` will use a Managed Identity (`-kvm` CLI option).
 :::
+
 ### Signing and notarizing PKG installers
 
 In the case of macOS, users might get warnings for PKGs if the installers are not signed _and_ notarized. However, once these two requirements are fulfilled, the warnings disappear instantly.
