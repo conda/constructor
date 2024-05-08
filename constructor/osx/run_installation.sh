@@ -110,9 +110,11 @@ if ! "$PREFIX/bin/python" -V; then
     exit 1
 fi
 
-# This is unneeded for the default install to ~, but if the user changes the
+# This is not needed for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
 chown -R "$USER" "$PREFIX"
+chown -R "$USER" "${HOME}/.conda"
+test -f "${HOME}/.condarc" && chown "${USER}" "${HOME}/.condarc"
 
 notify "Done! Installation is available in $PREFIX."
 
