@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix ownership of files created by the pkg installer outside of $PREFIX. (#784)
+* Fix ownership of files created by the PKG installer outside of `$PREFIX`. (#784)
 
 ### Deprecations
 
