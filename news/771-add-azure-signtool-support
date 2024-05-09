@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add support for AzureSignTool to sign Windows installers. (#767 via #771)
+* Add support for AzureSignTool to sign Windows installers. (#767 via #771 and #792)
 
 ### Bug fixes
 
