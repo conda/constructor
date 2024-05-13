@@ -13,7 +13,7 @@
 ### Other
 
 * Automatically create issues when tests fail after pushing to main or creating tags. (#775 via #776 and #778)
-* Change wording for shortcut creation on Windows
+* Change wording for shortcut creation on Windows. (#785)
 
 ### Contributors
 
