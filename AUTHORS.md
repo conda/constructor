@@ -66,6 +66,7 @@ Authors are sorted alphabetically.
 * astaric
 * bkreider
 * conda-bot
+* dependabot[bot]
 * guimondmm
 * pre-commit-ci[bot]
 * y2kbugger
