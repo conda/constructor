@@ -4,7 +4,6 @@
 ### Enhancements
 
 * Add support for AzureSignTool to sign Windows installers. (#767 via #771 and #792)
-* Configure repository to use dependabot and update dependencies. (#786 via #787)
 
 ### Bug fixes
 
@@ -12,16 +11,14 @@
 
 ### Other
 
-* Automatically create issues when tests fail after pushing to `main` or creating tags. (#775 via #776 and #778)
 * Change wording for shortcut creation on Windows. (#785)
+* Automatically create issues when tests fail after pushing to `main` or creating tags. (#775 via #776 and #778)
+* Configure repository to use dependabot and update dependencies. (#786 via #787)
 
 ### Contributors
 
 * @jaimergp
 * @marcoesters
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
