@@ -127,7 +127,7 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
           coverage run --branch --append -m constructor -V
           coverage json
-      - uses: codecov/codecov-action@5ecb98a3c6b747ed38dc09f787459979aebb39be # v4.3.1
+      - uses: codecov/codecov-action@125fc84a9a348dbcf27191600683ec096ec9021c # v4.4.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
@@ -145,7 +145,7 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
-      - uses: codecov/codecov-action@5ecb98a3c6b747ed38dc09f787459979aebb39be # v4.3.1
+      - uses: codecov/codecov-action@125fc84a9a348dbcf27191600683ec096ec9021c # v4.4.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
