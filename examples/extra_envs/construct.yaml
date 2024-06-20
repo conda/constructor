@@ -16,6 +16,9 @@ extra_envs:
       - pip
     channels:
       - conda-forge
+    channels_remap:
+      - src: this-does-not-matter
+        dest: just-to-test-if-present
     exclude:
       - setuptools
   dav1d:
