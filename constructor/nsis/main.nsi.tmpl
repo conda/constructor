@@ -1137,7 +1137,7 @@ Section "Install"
     SetDetailsPrint TextOnly
     DetailPrint "Checking virtual specs..."
     push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR" --offline __VIRTUAL_SPECS__'
-    push 'Virtual specs checks failed'
+    push 'Failed to check virtual specs: __VIRTUAL_SPECS__'
     push 'WithLog'
     call AbortRetryNSExecWait
     SetDetailsPrint both

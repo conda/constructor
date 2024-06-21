@@ -102,7 +102,7 @@ def _check_installer_log(install_dir):
         raise AssertionError("\n".join(error_lines))
 
 
-def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420):
+def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420, check=True):
     """
     NSIS manual:
     > /D sets the default installation directory ($INSTDIR), overriding InstallDir
@@ -125,11 +125,12 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
             "after completion."
         )
     cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
-    _execute(cmd, installer_input=installer_input, timeout=timeout)
-    _check_installer_log(install_dir)
+    _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
+    if check:
+        _check_installer_log(install_dir)
 
 
-def _run_uninstaller_exe(install_dir, timeout=420):
+def _run_uninstaller_exe(install_dir, timeout=420, check=True):
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
@@ -158,7 +159,7 @@ def _run_uninstaller_exe(install_dir, timeout=420):
         # us problems with the tempdir cleanup later
         f"/S _?={install_dir}",
     ]
-    _execute(cmd, timeout=timeout)
+    _execute(cmd, timeout=timeout, check=check)
     _check_installer_log(install_dir)
     remaining_files = list(install_dir.iterdir())
     if len(remaining_files) > 3:
@@ -171,12 +172,12 @@ def _run_uninstaller_exe(install_dir, timeout=420):
         raise AssertionError(f"Uninstaller left too many files: {remaining_files}")
 
 
-def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420):
+def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420, check=True):
     if installer_input:
         cmd = ["/bin/sh", installer]
     else:
         cmd = ["/bin/sh", installer, "-b", "-p", install_dir]
-    return _execute(cmd, installer_input=installer_input, timeout=timeout)
+    return _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
 
 
 def _run_installer_pkg(
@@ -185,6 +186,7 @@ def _run_installer_pkg(
     example_path=None,
     config_filename="construct.yaml",
     timeout=420,
+    check=True,
 ):
     if os.environ.get("CI"):
         # We want to run it in an arbitrary directory, but the options
@@ -208,7 +210,7 @@ def _run_installer_pkg(
             "Export CI=1 to run it, but it will pollute your $HOME."
         )
         cmd = ["pkgutil", "--expand", installer, install_dir]
-    return _execute(cmd, timeout=timeout), install_dir
+    return _execute(cmd, timeout=timeout, check=check), install_dir
 
 
 def _sentinel_file_checks(example_path, install_dir):
@@ -230,14 +232,27 @@ def _run_installer(
     installer_input: Optional[str] = None,
     config_filename="construct.yaml",
     check_sentinels=True,
+    check_subprocess=True,
     request=None,
     uninstall=True,
     timeout=420,
 ):
     if installer.suffix == ".exe":
-        _run_installer_exe(installer, install_dir, installer_input=installer_input, timeout=timeout)
+        _run_installer_exe(
+            installer,
+            install_dir,
+            installer_input=installer_input,
+            timeout=timeout,
+            check=check_subprocess,
+        )
     elif installer.suffix == ".sh":
-        _run_installer_sh(installer, install_dir, installer_input=installer_input, timeout=timeout)
+        _run_installer_sh(
+            installer,
+            install_dir,
+            installer_input=installer_input,
+            timeout=timeout,
+            check=check_subprocess,
+        )
     elif installer.suffix == ".pkg":
         if request and ON_CI:
             request.addfinalizer(lambda: shutil.rmtree(str(install_dir)))
@@ -247,6 +262,7 @@ def _run_installer(
             example_path=example_path,
             config_filename=config_filename,
             timeout=timeout,
+            check=check_subprocess,
         )
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
@@ -511,12 +527,12 @@ def test_example_signing(tmp_path, request):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 @pytest.mark.skipif(
-        not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
-        reason="AzureSignTool not available"
+    not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
+    reason="AzureSignTool not available",
 )
 @pytest.mark.parametrize(
-        "auth_method",
-        os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
+    "auth_method",
+    os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
 )
 def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
     """Test signing installers with AzureSignTool.
@@ -667,6 +683,16 @@ def test_cross_osx_building(tmp_path):
 def test_virtual_specs(tmp_path, request):
     input_path = _example_path("virtual_specs")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        # with pytest.raises(subprocess.CalledProcessError):
-            # This example is configured to fail due to unsatisfiable virtual specs
-        _run_installer(input_path, installer, install_dir, request=request)
+        process = _run_installer(
+            input_path, installer, install_dir, request=request, check_subprocess=False
+        )
+        # This example is configured to fail due to unsatisfiable virtual specs
+        assert process.returncode != 0
+        if installer.suffix == ".exe":
+            with pytest.raises(AssertionError, match="Failed to check virtual specs"):
+                _check_installer_log(install_dir)
+        elif CONDA_EXE == "micromamba":
+            msg = "is missing on the system"
+        else:
+            msg = "PackagesNotFoundError"
+        assert msg in process.stdout + process.stderr
