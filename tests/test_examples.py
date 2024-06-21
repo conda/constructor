@@ -159,17 +159,19 @@ def _run_uninstaller_exe(install_dir, timeout=420, check=True):
         # us problems with the tempdir cleanup later
         f"/S _?={install_dir}",
     ]
-    _execute(cmd, timeout=timeout, check=check)
-    _check_installer_log(install_dir)
-    remaining_files = list(install_dir.iterdir())
-    if len(remaining_files) > 3:
-        # The debug installer writes to install.log too, which will only
-        # be deleted _after_ a reboot. Finding some files is ok, but more
-        # than two usually means a problem with the uninstaller.
-        # Note this is is not exhaustive, because we are not checking
-        # whether the registry was restored, menu items were deleted, etc.
-        # TODO :)
-        raise AssertionError(f"Uninstaller left too many files: {remaining_files}")
+    process = _execute(cmd, timeout=timeout, check=check)
+    if check:
+        _check_installer_log(install_dir)
+        remaining_files = list(install_dir.iterdir())
+        if len(remaining_files) > 3:
+            # The debug installer writes to install.log too, which will only
+            # be deleted _after_ a reboot. Finding some files is ok, but more
+            # than two usually means a problem with the uninstaller.
+            # Note this is is not exhaustive, because we are not checking
+            # whether the registry was restored, menu items were deleted, etc.
+            # TODO :)
+            raise AssertionError(f"Uninstaller left too many files: {remaining_files}")
+    return process
 
 
 def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420, check=True):
@@ -236,9 +238,9 @@ def _run_installer(
     request=None,
     uninstall=True,
     timeout=420,
-):
+) -> subprocess.CompletedProcess:
     if installer.suffix == ".exe":
-        _run_installer_exe(
+        process = _run_installer_exe(
             installer,
             install_dir,
             installer_input=installer_input,
@@ -246,7 +248,7 @@ def _run_installer(
             check=check_subprocess,
         )
     elif installer.suffix == ".sh":
-        _run_installer_sh(
+        process = _run_installer_sh(
             installer,
             install_dir,
             installer_input=installer_input,
@@ -256,7 +258,7 @@ def _run_installer(
     elif installer.suffix == ".pkg":
         if request and ON_CI:
             request.addfinalizer(lambda: shutil.rmtree(str(install_dir)))
-        _run_installer_pkg(
+        process = _run_installer_pkg(
             installer,
             install_dir,
             example_path=example_path,
@@ -269,7 +271,8 @@ def _run_installer(
     if check_sentinels:
         _sentinel_file_checks(example_path, install_dir)
     if uninstall and installer.suffix == ".exe":
-        _run_uninstaller_exe(install_dir, timeout=timeout)
+        _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
+    return process
 
 
 def create_installer(
