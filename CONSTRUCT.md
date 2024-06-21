@@ -113,6 +113,14 @@ for example, if `python=3.6` is included, then conda will always seek versions
 of packages compatible with Python 3.6. If this is option is not provided, it
 will be set equal to the value of `specs`.
 
+### `virtual_specs`
+
+_required:_ no<br/>
+_type:_ list<br/>
+
+A list of virtual packages that must be satisfied at install time.Virtual
+packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
+
 ### `exclude`
 
 _required:_ no<br/>
