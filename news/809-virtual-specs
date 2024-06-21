@@ -1,0 +1,19 @@
+### Enhancements
+
+* A new setting `virtual_specs` allows the installer to run some solver checks before the installation proceeds. Useful for checking whether certain virtual package versions can be satisfied. (#809)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
