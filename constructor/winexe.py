@@ -274,6 +274,7 @@ def make_nsi(
         'PRE_UNINSTALL': '@pre_uninstall.bat',
         'INDEX_CACHE': '@cache',
         'REPODATA_RECORD': '@repodata_record.json',
+        'VIRTUAL_SPECS': " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])
     }
 
     # These are NSIS predefines and must not be replaced

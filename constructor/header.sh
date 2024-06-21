@@ -423,6 +423,13 @@ export TMP_BACKUP="${TMP:-}"
 export TMP="$PREFIX/install_tmp"
 mkdir -p "$TMP"
 
+# Check whether the virtual specs can be satisfied
+if [ "__VIRTUAL_SPECS__" != "" ]; then
+    CONDA_QUIET="$BATCH" \
+    CONDA_SOLVER="classic" \
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX" --offline __VIRTUAL_SPECS__
+fi
+
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
 if [ "$(id -u)" -ne 0 ]; then
     touch "$PREFIX/.nonadmin"

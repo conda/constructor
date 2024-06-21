@@ -9,7 +9,7 @@ from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
 
 from . import preconda
-from .conda_interface import conda_context
+from .conda_interface import conda_context, MatchSpec
 from .construct import ns_platform, parse
 from .imaging import write_images
 from .utils import (
@@ -187,6 +187,25 @@ def modify_xml(xml_path, info):
             attrib={'mime-type': _detect_mimetype(readme_path)}
         )
         root.append(readme)
+
+    # -- __osx virtual package checks -- #
+    osx_versions = {}
+    for spec in info.get("virtual_specs", ()):
+        spec = MatchSpec(spec)
+        if spec.name != "__osx":
+            continue
+        if not spec.version:
+            continue
+        operator = spec.version.operator_func.__name__
+        if operator == "ge":
+            osx_versions["min"] = str(spec.version.matcher_vo)
+        elif operator == "le":
+            osx_versions["max"] = str(spec.version.matcher_vo)
+
+    if osx_versions:
+        allowed_os_versions = ET.Element("allowed-os-versions")
+        allowed_os_versions.append(ET.Element("os-version", osx_versions))
+        root.append(allowed_os_versions)
 
     # See below for an explanation of the consequences of this
     # customLocation value.

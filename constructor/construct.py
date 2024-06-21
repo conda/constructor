@@ -83,6 +83,11 @@ of packages compatible with Python 3.6. If this is option is not provided, it
 will be set equal to the value of `specs`.
 '''),
 
+    ('virtual_specs',          False, list, '''
+A list of virtual packages that must be satisfied at install time.Virtual
+packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
+'''),
+
     ('exclude',                False, list, '''
 A list of package names to be excluded after the `specs` have been resolved.
 For example, you can say that `readline` should be excluded, even though it

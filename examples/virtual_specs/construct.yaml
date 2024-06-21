@@ -1,0 +1,20 @@
+name: virtual_specs
+
+version: 0.0.1
+
+keep_pkgs: True
+
+channels:
+  - conda-forge
+
+specs:
+  - ca-certificates
+
+virtual_specs:
+  - __osx>=20    # [osx]
+  - __glibc>=20  # [linux]
+  - __win<0      # [win]
+
+initialize_by_default: false
+register_python: false
+installer_type: all

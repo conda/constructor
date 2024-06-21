@@ -6,6 +6,7 @@
 
 import logging
 import os
+import shlex
 import shutil
 import stat
 import tarfile
@@ -92,6 +93,7 @@ def get_header(conda_exec, tarball, info):
         'SHORTCUTS': shortcuts_flags(info),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
         'TOTAL_INSTALLATION_SIZE_KB': str(approx_size_kb(info, "total")),
+        'VIRTUAL_SPECS': shlex.join(info.get("virtual_specs", ()))
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
