@@ -2,7 +2,7 @@ name: ExtraEnvs
 version: X
 installer_type: all
 channels:
-  - http://conda.anaconda.org/conda-forge
+  - conda-forge
 specs:
   - python=3.9
   - conda # conda is required for extra_envs
@@ -17,8 +17,8 @@ extra_envs:
     channels:
       - conda-forge
     channels_remap:
-      - src: http://conda.anaconda.org/conda-forge
-        dest: http://conda.anaconda.org/conda-forge
+      - src: conda-forge
+        dest: conda-forge
     exclude:
       - setuptools
   dav1d:
