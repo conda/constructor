@@ -31,6 +31,14 @@ chmod +x "$CONDA_EXEC"
 mkdir -p "$PREFIX/conda-meta"
 touch "$PREFIX/conda-meta/history"
 
+# Check whether the virtual specs can be satisfied
+# shellcheck disable=SC2050
+if [ "__VIRTUAL_SPECS__" != "" ]; then
+    CONDA_QUIET="$BATCH" \
+    CONDA_SOLVER="classic" \
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX" --offline __VIRTUAL_SPECS__
+fi
+
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
 if [ "$(id -u)" -ne 0 ]; then
     touch "$PREFIX/.nonadmin"

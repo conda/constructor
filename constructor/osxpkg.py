@@ -1,5 +1,6 @@
 import logging
 import os
+import shlex
 import shutil
 import sys
 import xml.etree.ElementTree as ET
@@ -346,6 +347,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'SHORTCUTS': shortcuts_flags(info),
         'ENABLE_SHORTCUTS': str(info['_enable_shortcuts']).lower(),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
+        'VIRTUAL_SPECS': shlex.join(info.get("virtual_specs", ())),
     }
     data = preprocess(data, ppd)
     custom_variables = info.get('script_env_variables', {})
