@@ -6,7 +6,7 @@ channels:
 specs:
   - python=3.9
   - conda # conda is required for extra_envs
-  - console_shortcut # [win]
+  - miniforge_console_shortcut # [win]
 exclude:  # [unix]
   - tk  # [unix]
 extra_envs:
