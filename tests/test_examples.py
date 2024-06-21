@@ -219,7 +219,7 @@ def _sentinel_file_checks(example_path, install_dir):
         if (example_path / script).exists() and not (install_dir / sentinel).exists():
             raise AssertionError(
                 f"Sentinel file for {script_prefix}_install not found! "
-                f"{install_dir} contents:\n" + "\n".join(sorted(install_dir.iterdir()))
+                f"{install_dir} contents:\n" + "\n".join(sorted(map(str, install_dir.iterdir())))
             )
 
 
@@ -511,12 +511,12 @@ def test_example_signing(tmp_path, request):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 @pytest.mark.skipif(
-        not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
-        reason="AzureSignTool not available"
+    not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
+    reason="AzureSignTool not available",
 )
 @pytest.mark.parametrize(
-        "auth_method",
-        os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
+    "auth_method",
+    os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
 )
 def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
     """Test signing installers with AzureSignTool.
