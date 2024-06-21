@@ -424,7 +424,8 @@ no standalone conda executable was found. The
 easiest way to obtain one is to install the 'conda-standalone' package.
 Alternatively, you can download an executable manually and supply its
 path with the --conda-exe argument. Self-contained executables can be
-downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/""".lstrip())
+downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/ and/or
+https://github.com/conda/conda-standalone/releases""".lstrip())
 
     out_dir = normalize_path(args.output_dir)
     main_build(dir_path, output_dir=out_dir, platform=args.platform,
