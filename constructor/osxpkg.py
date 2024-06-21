@@ -206,7 +206,9 @@ def modify_xml(xml_path, info):
     if osx_versions:
         allowed_os_versions = ET.Element("allowed-os-versions")
         allowed_os_versions.append(ET.Element("os-version", osx_versions))
-        root.append(allowed_os_versions)
+        volume_check = ET.Element("volume-check")
+        volume_check.append(allowed_os_versions)
+        root.append(volume_check)
 
     # See below for an explanation of the consequences of this
     # customLocation value.

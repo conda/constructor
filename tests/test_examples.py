@@ -700,7 +700,11 @@ def test_virtual_specs(tmp_path, request):
             with pytest.raises(AssertionError, match="Failed to check virtual specs"):
                 _check_installer_log(install_dir)
             continue
-        if CONDA_EXE == "micromamba":
+        elif installer.suffix == ".pkg":
+            # The GUI does provide a better message with the min version and so on
+            # but on the CLI we fail with this one instead
+            msg = "Cannot install on volume"
+        elif CONDA_EXE == "micromamba":
             msg = "is missing on the system"
         else:
             msg = "PackagesNotFoundError"
