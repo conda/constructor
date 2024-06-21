@@ -12,8 +12,8 @@
 
 ### Docs
 
-* <news item>
+* Clarify that channels must be passed as URLs in `channels_remap`. (#808)
 
 ### Other
 
-* <news item>
+* Mention `conda/conda-standalone` repository as a source for conda-standalone downloads in relevant error messages. (#808)
