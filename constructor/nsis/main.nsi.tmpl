@@ -1132,12 +1132,12 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
-    ${If} '__VIRTUAL_SPECS__' != ''
+    ${If} '@VIRTUAL_SPECS@' != ''
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
     DetailPrint "Checking virtual specs..."
-    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR" --offline __VIRTUAL_SPECS__'
-    push 'Failed to check virtual specs: __VIRTUAL_SPECS__'
+    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR" --offline @VIRTUAL_SPECS@'
+    push 'Failed to check virtual specs: @VIRTUAL_SPECS@'
     push 'WithLog'
     call AbortRetryNSExecWait
     SetDetailsPrint both
