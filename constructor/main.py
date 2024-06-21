@@ -153,7 +153,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 env_config[config_key] = abspath(join(dir_path, value))
             elif config_key == "channels_remap":
                 env_config[config_key] = [
-                    {"src": item["src"].strip(), "dest": "dest".strip()} for item in value
+                    {"src": item["src"].strip(), "dest": item["dest"].strip()} for item in value
                 ]
             elif isinstance(value, (list, tuple)):
                 env_config[config_key] = [val.strip() for val in value]
