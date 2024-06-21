@@ -42,7 +42,7 @@ See notes in `channels_remap` for details about local channels.
 '''),
 
     ('channels_remap',         False, list, '''
-A list of `src/dest` channel pairs. When building the installer, conda will
+A list of `src/dest` channel URL pairs. When building the installer, conda will
 use the `src` channels to solve and fetch the packages. However, the resulting
 installation will see the packages as coming from the `dest` equivalent.
 This allows an installer to be built against a different set of channels than
