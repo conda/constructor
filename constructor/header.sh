@@ -424,6 +424,7 @@ export TMP="$PREFIX/install_tmp"
 mkdir -p "$TMP"
 
 # Check whether the virtual specs can be satisfied
+# shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
