@@ -18,7 +18,7 @@ extra_envs:
       - conda-forge
     channels_remap:
       - src: http://conda.anaconda.org/conda-forge
-        dest: conda-forge
+        dest: http://conda.anaconda.org/conda-forge
     exclude:
       - setuptools
   dav1d:
