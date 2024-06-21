@@ -125,9 +125,10 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
             "after completion."
         )
     cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
-    _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
+    process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
     if check:
         _check_installer_log(install_dir)
+    return process
 
 
 def _run_uninstaller_exe(install_dir, timeout=420, check=True):
@@ -687,15 +688,21 @@ def test_virtual_specs(tmp_path, request):
     input_path = _example_path("virtual_specs")
     for installer, install_dir in create_installer(input_path, tmp_path):
         process = _run_installer(
-            input_path, installer, install_dir, request=request, check_subprocess=False
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=False,
+            uninstall=False,
         )
         # This example is configured to fail due to unsatisfiable virtual specs
-        assert process.returncode != 0
         if installer.suffix == ".exe":
             with pytest.raises(AssertionError, match="Failed to check virtual specs"):
                 _check_installer_log(install_dir)
-        elif CONDA_EXE == "micromamba":
+            continue
+        if CONDA_EXE == "micromamba":
             msg = "is missing on the system"
         else:
             msg = "PackagesNotFoundError"
+        assert process.returncode != 0
         assert msg in process.stdout + process.stderr
