@@ -157,6 +157,8 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 ]
             elif isinstance(value, (list, tuple)):
                 env_config[config_key] = [val.strip() for val in value]
+            elif isinstance(value, str):
+                env_config[config_key] = value.strip()
             else:
                 env_config[config_key] = value
 
