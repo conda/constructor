@@ -149,10 +149,18 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         if env_name in ("base", "root"):
             raise ValueError(f"Environment name '{env_name}' cannot be used")
         for config_key, value in env_config.copy().items():
-            if isinstance(value, (list, tuple)):
-                env_config[config_key] = [val.strip() for val in value]
             if config_key == "environment_file":
                 env_config[config_key] = abspath(join(dir_path, value))
+            elif config_key == "channels_remap":
+                env_config[config_key] = [
+                    {"src": item["src"].strip(), "dest": item["dest"].strip()} for item in value
+                ]
+            elif isinstance(value, (list, tuple)):
+                env_config[config_key] = [val.strip() for val in value]
+            elif isinstance(value, str):
+                env_config[config_key] = value.strip()
+            else:
+                env_config[config_key] = value
 
     try:
         exe_name, exe_version = identify_conda_exe(info.get("_conda_exe"))
@@ -418,7 +426,8 @@ no standalone conda executable was found. The
 easiest way to obtain one is to install the 'conda-standalone' package.
 Alternatively, you can download an executable manually and supply its
 path with the --conda-exe argument. Self-contained executables can be
-downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/""".lstrip())
+downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/ and/or
+https://github.com/conda/conda-standalone/releases""".lstrip())
 
     out_dir = normalize_path(args.output_dir)
     main_build(dir_path, output_dir=out_dir, platform=args.platform,

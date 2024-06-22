@@ -2,11 +2,11 @@ name: ExtraEnvs
 version: X
 installer_type: all
 channels:
-  - http://repo.anaconda.com/pkgs/main/
+  - https://conda.anaconda.org/conda-forge
 specs:
   - python=3.9
   - conda # conda is required for extra_envs
-  - console_shortcut # [win]
+  - miniforge_console_shortcut # [win]
 exclude:  # [unix]
   - tk  # [unix]
 extra_envs:
@@ -16,6 +16,9 @@ extra_envs:
       - pip
     channels:
       - conda-forge
+    channels_remap:
+      - src: https://conda.anaconda.org/conda-forge
+        dest: conda-forge
     exclude:
       - setuptools
   dav1d:

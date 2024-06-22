@@ -1,4 +1,5 @@
 import getpass
+import json
 import os
 import shutil
 import subprocess
@@ -219,7 +220,7 @@ def _sentinel_file_checks(example_path, install_dir):
         if (example_path / script).exists() and not (install_dir / sentinel).exists():
             raise AssertionError(
                 f"Sentinel file for {script_prefix}_install not found! "
-                f"{install_dir} contents:\n" + "\n".join(sorted(install_dir.iterdir()))
+                f"{install_dir} contents:\n" + "\n".join(sorted(map(str, install_dir.iterdir())))
             )
 
 
@@ -511,12 +512,12 @@ def test_example_signing(tmp_path, request):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 @pytest.mark.skipif(
-        not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
-        reason="AzureSignTool not available"
+    not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
+    reason="AzureSignTool not available",
 )
 @pytest.mark.parametrize(
-        "auth_method",
-        os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
+    "auth_method",
+    os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
 )
 def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
     """Test signing installers with AzureSignTool.
@@ -549,7 +550,15 @@ def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
 def test_example_use_channel_remap(tmp_path, request):
     input_path = _example_path("use_channel_remap")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+        p = subprocess.run(
+            [sys.executable, "-m", "conda", "list", "--prefix", install_dir, "--json"],
+            capture_output=True,
+            text=True,
+        )
+        packages = json.loads(p.stdout)
+        for pkg in packages:
+            assert pkg["channel"] == "private_repo"
 
 
 def test_example_from_existing_env(tmp_path, request):
