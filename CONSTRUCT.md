@@ -118,8 +118,12 @@ will be set equal to the value of `specs`.
 _required:_ no<br/>
 _type:_ list<br/>
 
-A list of virtual packages that must be satisfied at install time.Virtual
+A list of virtual packages that must be satisfied at install time. Virtual
 packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
+These specs are dry-run solved offline by the bundled `--conda-exe` binary.
+In PKG installers, `__osx` specs can be checked natively without the solver
+being involved as long as: the version constraint is single-component and only
+uses the operator `>=` or `<=`.
 
 ### `exclude`
 
