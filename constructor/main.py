@@ -120,6 +120,13 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             continue
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
+        if key == "virtual_specs":
+            for value in info[key]:
+                if not value.starswith("__"):
+                    raise ValueError(
+                        "'virtual_specs' can only include virtual package names like '__name', "
+                        f"but you supplied: {value}."
+                    )
 
     # normalize paths to be copied; if they are relative, they must be to
     # construct.yaml's parent (dir_path)
