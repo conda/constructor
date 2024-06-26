@@ -122,7 +122,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             info[key] = list(yield_lines(join(dir_path, info[key])))
         if key == "virtual_specs":
             for value in info[key]:
-                if not value.starswith("__"):
+                if not value.startswith("__"):
                     raise ValueError(
                         "'virtual_specs' can only include virtual package names like '__name', "
                         f"but you supplied: {value}."
