@@ -31,6 +31,17 @@ chmod +x "$CONDA_EXEC"
 mkdir -p "$PREFIX/conda-meta"
 touch "$PREFIX/conda-meta/history"
 
+# Check whether the virtual specs can be satisfied
+# We need to specify CONDA_SOLVER=classic for conda-standalone
+# to work around this bug in conda-libmamba-solver:
+# https://github.com/conda/conda-libmamba-solver/issues/480
+# shellcheck disable=SC2050
+if [ "__VIRTUAL_SPECS__" != "" ]; then
+    CONDA_QUIET="$BATCH" \
+    CONDA_SOLVER="classic" \
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX" --offline __VIRTUAL_SPECS__
+fi
+
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
 if [ "$(id -u)" -ne 0 ]; then
     touch "$PREFIX/.nonadmin"

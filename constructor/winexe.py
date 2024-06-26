@@ -374,6 +374,8 @@ def make_nsi(
             else ''
         ),
         ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files))),
+        ('@VIRTUAL_SPECS@', " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])),
+
     ]:
         data = data.replace(key, value)
 
