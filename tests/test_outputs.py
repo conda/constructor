@@ -20,8 +20,10 @@ def test_hash_dump(tmp_path):
         "_output_dir": str(tmp_path),
     }
     outpath = dump_hash(info, algorithm="sha256")
-    assert outpath == str(f"{testfile}.sha256")
+    assert outpath == str(tmp_path / "hash.sha256")
     filecontent = Path(outpath).read_text()
-    filehash, filename = filecontent.split()
-    assert filehash.strip() == expected
-    assert filename.strip() == testfile.name
+    lines = filecontent.split("\n")
+    for i in range(len(lines) - 1):
+        filehash, filename = lines[i].split()
+        assert filehash.strip() == expected[i]
+        assert filename.strip() == Path(info["_outpath"][i]).name
