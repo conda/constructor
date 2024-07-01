@@ -229,6 +229,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     # '_dists': List[Dist]
     # '_urls': List[Tuple[url, md5]]
 
+    info_dicts = []
     for itype in itypes:
         if itype == 'sh':
             from .shar import create as shar_create
@@ -242,7 +243,18 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         info['installer_type'] = itype
         info['_outpath'] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
+        if len(itypes) > 1:
+            info_dicts.append(info.copy())
         logger.info("Successfully created '%(_outpath)s'.", info)
+
+    # Merge info files for each installer type
+    if len(itypes) > 1:
+        keys = set()
+        for info_dict in info_dicts:
+            keys.update(info_dict.keys())
+        for key in keys:
+            if any(info_dict.get(key) != info.get(key) for info_dict in info_dicts):
+                info[key] = [info_dict.get(key, "") for info_dict in info_dicts]
 
     process_build_outputs(info)
 

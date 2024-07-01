@@ -606,6 +606,9 @@ Supports the same values as `extra_files`.
 Additional artifacts to be produced after building the installer.
 It expects either a list of strings or single-key dictionaries:
 Allowed keys are:
+- `hash`: The hash of the installer files.
+    - `algorithm`: The hash algorithm. Must be among `hashlib`'s available algorithms:
+       https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available
 - `info.json`: The internal `info` object, serialized to JSON. Takes no options.
 - `pkgs_list`: The list of packages contained in a given environment. Options:
     - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.

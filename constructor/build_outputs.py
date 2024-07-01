@@ -3,6 +3,7 @@ Additional artifacts to be produced after building the installer.
 
 Update documentation in `construct.py` if any changes are made.
 """
+import hashlib
 import json
 import logging
 import os
@@ -34,6 +35,28 @@ def process_build_outputs(info):
             )
         outpath = handler(info, **config)
         logger.info("build_outputs: '%s' created '%s'.", name, os.path.abspath(outpath))
+
+
+def dump_hash(info, algorithm=""):
+    if algorithm not in hashlib.algorithms_available:
+        raise ValueError(f"Invalid algorithm: {', '.join(algorithm)}")
+    BUFFER_SIZE = 65536
+    if isinstance(info["_outpath"], str):
+        installers = [Path(info["_outpath"])]
+    else:
+        installers = [Path(outpath) for outpath in info["_outpath"]]
+    outpath = os.path.join(info["_output_dir"], f"hash.{algorithm}")
+    hashes = []
+    for installer in installers:
+        filehash = hashlib.new(algorithm)
+        with open(installer, "rb") as f:
+            while buffer := f.read(BUFFER_SIZE):
+                filehash.update(buffer)
+        hashes.append((filehash.hexdigest(), installer.name))
+    with open(outpath, "w") as f:
+        for hashval, filename in hashes:
+            f.write(f"{hashval}  {filename}\n")
+    return outpath
 
 
 def dump_info(info):
@@ -109,6 +132,7 @@ def dump_licenses(info, include_text=False, text_errors=None):
 
 
 OUTPUT_HANDLERS = {
+    "hash": dump_hash,
     "info.json": dump_info,
     "pkgs_list": dump_packages_list,
     "licenses": dump_licenses,
