@@ -17,6 +17,7 @@ def test_hash_dump(tmp_path):
             str(tmp_path / "test.txt"),
             str(tmp_path / "test2.txt"),
         ],
+        "_output_dir": str(tmp_path),
     }
     outpath = dump_hash(info, algorithm="sha256")
     assert outpath == str(f"{testfile}.sha256")
