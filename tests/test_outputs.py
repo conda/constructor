@@ -5,12 +5,12 @@ from constructor.build_outputs import dump_hash
 
 def test_hash_dump(tmp_path):
     testfile = tmp_path / "test.txt"
-    testfile.write_text("test string\n")
+    testfile.write_text("test string")
     testfile = tmp_path / "test2.txt"
-    testfile.write_text("another test\n")
+    testfile.write_text("another test")
     expected = (
-        "37d2046a395cbfcb2712ff5c96a727b1966876080047c56717009dbbc235f566",
-        "60fa80b948a0acc557a6ba7523f4040a7b452736723df20f118d0aacb5c1901b",
+        "d5579c46dfcc7f18207013e65b44e4cb4e2c2298f4ac457ba8f82743f31e930b",
+        "64320dd12e5c2caeac673b91454dac750c08ba333639d129671c2f58cb5d0ad1",
     )
     info = {
         "_outpath": [
