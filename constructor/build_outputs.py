@@ -58,7 +58,7 @@ def dump_hash(info, algorithm=""):
 
 def dump_info(info):
     outpath = Path(info["_output_dir"], "info.json")
-    outpath.write_text(json.dumps(info, indent=2, default=repr))
+    outpath.write_text(json.dumps(info, indent=2, default=repr) + "\n")
     return outpath.absolute()
 
 
@@ -121,7 +121,7 @@ def dump_licenses(info, include_text=False, text_errors=None):
                 license_files.append(license_file)
 
     outpath = Path(info["_output_dir"], "licenses.json")
-    outpath.write_text(json.dumps(licenses, indent=2, default=repr))
+    outpath.write_text(json.dumps(licenses, indent=2, default=repr) + "\n")
     return outpath.absolute()
 
 
