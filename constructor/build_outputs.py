@@ -34,7 +34,7 @@ def process_build_outputs(info):
                 f"Available keys: {tuple(OUTPUT_HANDLERS.keys())}"
             )
         outpath = handler(info, **config)
-        logger.info("build_outputs: '%s' created '%s'.", name, os.path.abspath(outpath))
+        logger.info("build_outputs: '%s' created '%s'.", name, outpath)
 
 
 def dump_hash(info, algorithm=""):
@@ -45,25 +45,23 @@ def dump_hash(info, algorithm=""):
         installers = [Path(info["_outpath"])]
     else:
         installers = [Path(outpath) for outpath in info["_outpath"]]
-    outpath = os.path.join(info["_output_dir"], f"hash.{algorithm}")
-    hashes = []
+    outpaths = []
     for installer in installers:
         filehash = hashlib.new(algorithm)
         with open(installer, "rb") as f:
             while buffer := f.read(BUFFER_SIZE):
                 filehash.update(buffer)
-        hashes.append((filehash.hexdigest(), installer.name))
-    with open(outpath, "w") as f:
-        for hashval, filename in hashes:
-            f.write(f"{hashval}  {filename}\n")
-    return outpath
+        outpath = Path(f"{installer}.{algorithm}")
+        outpath.write_text(f"{filehash.hexdigest()}  {installer.name}\n")
+        outpaths.append(str(outpath.absolute()))
+    return ", ".join(outpaths)
 
 
 def dump_info(info):
     outpath = os.path.join(info["_output_dir"], "info.json")
     with open(outpath, "w") as f:
         json.dump(info, f, indent=2, default=repr)
-    return outpath
+    return os.path.abspath(outpath)
 
 
 def dump_packages_list(info, env="base"):
@@ -78,7 +76,7 @@ def dump_packages_list(info, env="base"):
     with open(outpath, 'w') as fo:
         fo.write(f"# {info['name']} {info['version']}, env={env}\n")
         fo.write("\n".join(dists))
-    return outpath
+    return os.path.abspath(outpath)
 
 
 def dump_licenses(info, include_text=False, text_errors=None):
@@ -128,7 +126,7 @@ def dump_licenses(info, include_text=False, text_errors=None):
     outpath = os.path.join(info["_output_dir"], "licenses.json")
     with open(outpath, "w") as f:
         json.dump(licenses, f, indent=2, default=repr)
-    return outpath
+    return os.path.abspath(outpath)
 
 
 OUTPUT_HANDLERS = {

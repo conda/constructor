@@ -16,14 +16,12 @@ def test_hash_dump(tmp_path):
         "_outpath": [
             str(tmp_path / "test.txt"),
             str(tmp_path / "test2.txt"),
-        ],
-        "_output_dir": str(tmp_path),
+        ]
     }
-    outpath = dump_hash(info, algorithm="sha256")
-    assert outpath == str(tmp_path / "hash.sha256")
-    filecontent = Path(outpath).read_text()
-    lines = filecontent.split("\n")
-    for i in range(len(lines) - 1):
-        filehash, filename = lines[i].split()
-        assert filehash.strip() == expected[i]
-        assert filename.strip() == Path(info["_outpath"][i]).name
+    dump_hash(info, algorithm="sha256")
+    for f, file in enumerate(info["_outpath"]):
+        hashfile = Path(f"{file}.sha256")
+        assert hashfile.exists()
+        filehash, filename = hashfile.read_text().strip().split()
+        assert filehash == expected[f]
+        assert filename == Path(file).name
