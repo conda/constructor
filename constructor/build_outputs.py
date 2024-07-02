@@ -6,6 +6,7 @@ Update documentation in `construct.py` if any changes are made.
 import hashlib
 import json
 import logging
+import os
 from collections import defaultdict
 from pathlib import Path
 
@@ -57,9 +58,10 @@ def dump_hash(info, algorithm=""):
 
 
 def dump_info(info):
-    outpath = Path(info["_output_dir"], "info.json")
-    outpath.write_text(json.dumps(info, indent=2, default=repr) + "\n")
-    return outpath.absolute()
+    outpath = os.path.join(info["_output_dir"], "info.json")
+    with open(outpath, "w") as f:
+        json.dump(info, f, indent=2, default=repr)
+    return os.path.abspath(outpath)
 
 
 def dump_packages_list(info, env="base"):
@@ -70,10 +72,11 @@ def dump_packages_list(info, env="base"):
     else:
         raise ValueError(f"env='{env}' is not a valid env name.")
 
-    outpath = Path(info["_output_dir"], f'pkg-list.{env}.txt')
-    outpath.write_text(f"# {info['name']} {info['version']}, env={env}\n")
-    outpath.write_text("\n".join(dists))
-    return outpath.absolute()
+    outpath = os.path.join(info["_output_dir"], f'pkg-list.{env}.txt')
+    with open(outpath, 'w') as fo:
+        fo.write(f"# {info['name']} {info['version']}, env={env}\n")
+        fo.write("\n".join(dists))
+    return os.path.abspath(outpath)
 
 
 def dump_licenses(info, include_text=False, text_errors=None):
@@ -106,23 +109,24 @@ def dump_licenses(info, include_text=False, text_errors=None):
     licenses = defaultdict(dict)
     for pkg_record in info["_all_pkg_records"]:
         extracted_package_dir = pkg_record.extracted_package_dir
-        licenses_dir = Path(extracted_package_dir, "info", "licenses")
+        licenses_dir = os.path.join(extracted_package_dir, "info", "licenses")
         licenses[pkg_record.dist_str()]["type"] = pkg_record.license
         licenses[pkg_record.dist_str()]["files"] = license_files = []
-        if not licenses_dir.is_dir():
+        if not os.path.isdir(licenses_dir):
             continue
 
-        for directory, _, files in licenses_dir.walk():
+        for directory, _, files in os.walk(licenses_dir):
             for filepath in files:
-                license_path = directory / filepath
+                license_path = os.path.join(directory, filepath)
                 license_file = {"path": license_path, "text": None}
                 if include_text:
-                    license_file["text"] = license_path.read_text(errors=text_errors)
+                    license_file["text"] = Path(license_path).read_text(errors=text_errors)
                 license_files.append(license_file)
 
-    outpath = Path(info["_output_dir"], "licenses.json")
-    outpath.write_text(json.dumps(licenses, indent=2, default=repr) + "\n")
-    return outpath.absolute()
+    outpath = os.path.join(info["_output_dir"], "licenses.json")
+    with open(outpath, "w") as f:
+        json.dump(licenses, f, indent=2, default=repr)
+    return os.path.abspath(outpath)
 
 
 OUTPUT_HANDLERS = {
