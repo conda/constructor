@@ -37,9 +37,13 @@ def process_build_outputs(info):
         logger.info("build_outputs: '%s' created '%s'.", name, outpath)
 
 
-def dump_hash(info, algorithm=""):
-    if algorithm not in hashlib.algorithms_available:
-        raise ValueError(f"Invalid algorithm: {', '.join(algorithm)}")
+def dump_hash(info, algorithm=[]):
+    if isinstance(algorithm, str):
+        algorithm = [algorithm]
+    algorithms = set(algorithm)
+    if any(algo not in hashlib.algorithms_available for algo in algorithms):
+        invalid = algorithms.difference(set(hashlib.algorithms_available))
+        raise ValueError(f"Invalid algorithm: {', '.join(invalid)}")
     BUFFER_SIZE = 65536
     if isinstance(info["_outpath"], str):
         installers = [Path(info["_outpath"])]
@@ -47,13 +51,15 @@ def dump_hash(info, algorithm=""):
         installers = [Path(outpath) for outpath in info["_outpath"]]
     outpaths = []
     for installer in installers:
-        filehash = hashlib.new(algorithm)
+        filehashes = {algo: hashlib.new(algo) for algo in algorithms}
         with open(installer, "rb") as f:
             while buffer := f.read(BUFFER_SIZE):
-                filehash.update(buffer)
-        outpath = Path(f"{installer}.{algorithm}")
-        outpath.write_text(f"{filehash.hexdigest()}  {installer.name}\n")
-        outpaths.append(str(outpath.absolute()))
+                for algo in algorithms:
+                    filehashes[algo].update(buffer)
+        for algo, filehash in filehashes.items():
+            outpath = Path(f"{installer}.{algo}")
+            outpath.write_text(f"{filehash.hexdigest()}  {installer.name}\n")
+            outpaths.append(str(outpath.absolute()))
     return ", ".join(outpaths)
 
 
