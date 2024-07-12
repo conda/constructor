@@ -11,7 +11,7 @@ specs:
   - ca-certificates
 
 virtual_specs:
-  - __osx<=9    # [osx]
+  - __osx>=5.1,<9    # [osx]
   - __glibc>=20  # [linux]
   - __win<0      # [win]
 

@@ -190,6 +190,7 @@ def modify_xml(xml_path, info):
         root.append(readme)
 
     # -- __osx virtual package checks -- #
+    # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
     osx_versions = {}
     for spec in info.get("virtual_specs", ()):
         spec = MatchSpec(spec)
@@ -204,13 +205,16 @@ def modify_xml(xml_path, info):
             operator = version.operator_func.__name__
             if operator == "ge":
                 osx_versions["min"] = str(version.matcher_vo)
-            elif operator == "le":
-                osx_versions["max"] = str(version.matcher_vo)
+            elif operator == "lt":
+                osx_versions["before"] = str(version.matcher_vo)
             else:
                 raise ValueError(
-                    f"Invalid version operator for {spec}. Only `<=` or `>=` are supported.")
+                    f"Invalid version operator for {spec}. Only `<` or `>=` are supported."
+                )
 
     if osx_versions:
+        if "min" not in osx_versions:
+            raise ValueError("Specifying __osx requires a lower bound with `>=`")
         allowed_os_versions = ET.Element("allowed-os-versions")
         allowed_os_versions.append(ET.Element("os-version", osx_versions))
         volume_check = ET.Element("volume-check")
