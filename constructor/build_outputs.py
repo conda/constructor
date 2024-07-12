@@ -37,7 +37,8 @@ def process_build_outputs(info):
         logger.info("build_outputs: '%s' created '%s'.", name, outpath)
 
 
-def dump_hash(info, algorithm=[]):
+def dump_hash(info, algorithm=None):
+    algorithm = algorithm or []
     if isinstance(algorithm, str):
         algorithm = [algorithm]
     algorithms = set(algorithm)
