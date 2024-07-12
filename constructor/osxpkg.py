@@ -197,11 +197,18 @@ def modify_xml(xml_path, info):
             continue
         if not spec.version:
             continue
-        operator = spec.version.operator_func.__name__
-        if operator == "ge":
-            osx_versions["min"] = str(spec.version.matcher_vo)
-        elif operator == "le":
-            osx_versions["max"] = str(spec.version.matcher_vo)
+        if "|" in spec.version.spec_str:
+            raise ValueError("Can't process `|`-joined versions. Only `,` is allowed.")
+        versions = spec.version.tup if "," in spec.version.spec_str else (spec.version,)
+        for version in versions:
+            operator = version.operator_func.__name__
+            if operator == "ge":
+                osx_versions["min"] = str(version.matcher_vo)
+            elif operator == "le":
+                osx_versions["max"] = str(version.matcher_vo)
+            else:
+                raise ValueError(
+                    f"Invalid version operator for {spec}. Only `<=` or `>=` are supported.")
 
     if osx_versions:
         allowed_os_versions = ET.Element("allowed-os-versions")

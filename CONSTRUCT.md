@@ -122,8 +122,7 @@ A list of virtual packages that must be satisfied at install time. Virtual
 packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
 These specs are dry-run solved offline by the bundled `--conda-exe` binary.
 In PKG installers, `__osx` specs can be checked natively without the solver
-being involved as long as: the version constraint is single-component and only
-uses the operator `>=` or `<=`.
+being involved as long as only `>=`, `<=` or `,` are used.
 
 ### `exclude`
 
