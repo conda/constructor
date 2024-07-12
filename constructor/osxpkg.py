@@ -190,7 +190,7 @@ def modify_xml(xml_path, info):
         root.append(readme)
 
     # -- __osx virtual package checks -- #
-    # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
+    # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html  # noqa
     osx_versions = {}
     for spec in info.get("virtual_specs", ()):
         spec = MatchSpec(spec)
