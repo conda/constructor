@@ -112,8 +112,8 @@ fi
 
 # This is not needed for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
-chown -R "$USER" "$PREFIX"
-chown -R "$USER" "${HOME}/.conda"
+chown -R "${USER}" "$PREFIX"
+test -d "${HOME}/.conda" && chown -R "${USER}" "${HOME}/.conda"
 test -f "${HOME}/.condarc" && chown "${USER}" "${HOME}/.condarc"
 
 notify "Done! Installation is available in $PREFIX."
