@@ -264,7 +264,7 @@
   github: chenghlee
 - name: conda-bot
   email: ad-team+condabot@anaconda.com
-  num_commits: 38
+  num_commits: 39
   first_commit: 2022-01-25 21:38:28
   alternate_emails:
   - 18747875+conda-bot@users.noreply.github.com
@@ -277,7 +277,7 @@
   aliases:
   - Jaime RGP
   - jaimergp
-  num_commits: 71
+  num_commits: 73
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören
@@ -357,7 +357,7 @@
   github: RahulARanger
 - name: Marco Esters
   email: mesters@anaconda.com
-  num_commits: 16
+  num_commits: 17
   first_commit: 2023-05-12 11:44:12
   github: marcoesters
 - name: Darryl Miles
@@ -372,7 +372,7 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 16
+  num_commits: 20
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
 - name: Matthias Kuhn
@@ -382,6 +382,6 @@
   github: m-kuhn
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 2
+  num_commits: 8
   github: dependabot[bot]
   first_commit: 2024-05-07 10:16:05
