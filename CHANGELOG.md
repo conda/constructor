@@ -1,5 +1,21 @@
 [//]: # (current developments)
 
+## 2024-07-13   3.8.1:
+### Bug fixes
+
+* Fix `channels_remap` sanitization when included as part of an item in `extra_envs`. (#808)
+* Fix a regression in the PKG installers where the installer would fail if `~/.conda` did not exist before trying to fix the directory permissions. (#820)
+
+### Docs
+
+* Clarify that channels must be passed as URLs in `channels_remap`. (#808)
+
+### Other
+
+* Mention `conda/conda-standalone` repository as a source for conda-standalone downloads in relevant error messages. (#808)
+
+
+
 ## 2024-05-13   3.8.0:
 ### Enhancements
 
