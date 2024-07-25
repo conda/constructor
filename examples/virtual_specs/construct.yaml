@@ -11,9 +11,9 @@ specs:
   - ca-certificates
 
 virtual_specs:
-  - __osx>=5.1,<9    # [osx]
-  - __glibc>=20  # [linux]
-  - __win<0      # [win]
+  - __osx>=5.1,<9  # [osx]
+  - __glibc>=20    # [linux]
+  - __win<0        # [win]
 
 initialize_by_default: false
 register_python: false

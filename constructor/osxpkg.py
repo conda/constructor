@@ -10,7 +10,7 @@ from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
 
 from . import preconda
-from .conda_interface import MatchSpec, conda_context
+from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
 from .utils import (
@@ -19,6 +19,7 @@ from .utils import (
     explained_check_call,
     fill_template,
     get_final_channels,
+    parse_virtual_specs,
     preprocess,
     rm_rf,
     shortcuts_flags,
@@ -191,27 +192,7 @@ def modify_xml(xml_path, info):
 
     # -- __osx virtual package checks -- #
     # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html  # noqa
-    osx_versions = {}
-    for spec in info.get("virtual_specs", ()):
-        spec = MatchSpec(spec)
-        if spec.name != "__osx":
-            continue
-        if not spec.version:
-            continue
-        if "|" in spec.version.spec_str:
-            raise ValueError("Can't process `|`-joined versions. Only `,` is allowed.")
-        versions = spec.version.tup if "," in spec.version.spec_str else (spec.version,)
-        for version in versions:
-            operator = version.operator_func.__name__
-            if operator == "ge":
-                osx_versions["min"] = str(version.matcher_vo)
-            elif operator == "lt":
-                osx_versions["before"] = str(version.matcher_vo)
-            else:
-                raise ValueError(
-                    f"Invalid version operator for {spec}. Only `<` or `>=` are supported."
-                )
-
+    osx_versions = parse_virtual_specs(info)["__osx"]
     if osx_versions:
         if "min" not in osx_versions:
             raise ValueError("Specifying __osx requires a lower bound with `>=`")

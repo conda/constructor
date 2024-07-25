@@ -21,6 +21,24 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
     return 1
 fi
 
+#if osx and min_osx_version
+min_osx_version="__MIN_OSX_VERSION__"
+system_osx_version=$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)
+if (( $(printf "%02d%02d%02d" ${system_osx_version//./ }) < $(printf "%02d%02d%02d" ${min_osx_version//./ }) )); then
+    echo "Installer requires macOS >=${min_osx_version}, but system has ${system_osx_version}."
+    exit 1
+fi
+#endif
+#if linux and min_glibc_version
+min_glibc_version="__MIN_GLIBC_VERSION__"
+# ldd reports glibc in the last field of the first line
+system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
+if (( $(printf "%02d%02d%02d" ${system_glibc_version//./ }) < $(printf "%02d%02d%02d" ${min_glibc_version//./ }) )); then
+    echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
+    exit 1
+fi
+#endif
+
 # Export variables to make installer metadata available to pre/post install scripts
 # NOTE: If more vars are added, make sure to update the examples/scripts tests too
 

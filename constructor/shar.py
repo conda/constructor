@@ -24,6 +24,7 @@ from .utils import (
     fill_template,
     get_final_channels,
     hash_files,
+    parse_virtual_specs,
     preprocess,
     read_ascii_only,
     shortcuts_flags,
@@ -98,6 +99,12 @@ def get_header(conda_exec, tarball, info):
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
 
+    virtual_specs = parse_virtual_specs(info) 
+    if min_osx_version := virtual_specs["__osx"].get("min"):
+        replace['MIN_OSX_VERSION'] = ppd['min_osx_version'] = min_osx_version
+    if min_glibc_version := virtual_specs["__glibc"].get("min"):
+        replace['MIN_GLIBC_VERSION'] = ppd['min_glibc_version'] = min_glibc_version
+    
     data = read_header_template()
     data = preprocess(data, ppd)
     custom_variables = info.get('script_env_variables', {})
