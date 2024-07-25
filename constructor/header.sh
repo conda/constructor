@@ -24,7 +24,11 @@ fi
 #if osx and min_osx_version
 min_osx_version="__MIN_OSX_VERSION__"
 system_osx_version=$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)
-if (( $(printf "%02d%02d%02d" ${system_osx_version//./ }) < $(printf "%02d%02d%02d" ${min_osx_version//./ }) )); then
+# shellcheck disable=SC2183 disable=SC2046
+int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))" 
+# shellcheck disable=SC2183 disable=SC2046
+int_system_osx_version="$(printf "%02d%02d%02d" $(echo "$system_osx_version" | sed 's/\./ /g'))"
+if [  "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
     echo "Installer requires macOS >=${min_osx_version}, but system has ${system_osx_version}."
     exit 1
 fi
@@ -33,7 +37,11 @@ fi
 min_glibc_version="__MIN_GLIBC_VERSION__"
 # ldd reports glibc in the last field of the first line
 system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
-if (( $(printf "%02d%02d%02d" ${system_glibc_version//./ }) < $(printf "%02d%02d%02d" ${min_glibc_version//./ }) )); then
+# shellcheck disable=SC2183 disable=SC2046
+int_min_glibc_version="$(printf "%02d%02d%02d" $(echo "$min_glibc_version" | sed 's/\./ /g'))"
+# shellcheck disable=SC2183 disable=SC2046
+int_system_glibc_version="$(printf "%02d%02d%02d" $(echo "$system_glibc_version" | sed 's/\./ /g'))"
+if [  "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
     echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
     exit 1
 fi
