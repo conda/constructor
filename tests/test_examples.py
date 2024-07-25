@@ -704,9 +704,10 @@ def test_virtual_specs(tmp_path, request):
             # The GUI does provide a better message with the min version and so on
             # but on the CLI we fail with this one instead
             msg = "Cannot install on volume"
-        elif CONDA_EXE == "micromamba":
-            msg = "is missing on the system"
-        else:
-            msg = "PackagesNotFoundError"
+        else: 
+            # The shell installer has its own Bash code for __glibc and __osx
+            # Other virtual specs like __cuda are checked by conda-standalone/micromamba
+            # and will fail with solver errors like PackagesNotFound etc
+            msg = "Installer requires"
         assert process.returncode != 0
         assert msg in process.stdout + process.stderr
