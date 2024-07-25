@@ -25,7 +25,7 @@ fi
 min_osx_version="__MIN_OSX_VERSION__"
 system_osx_version=$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)
 # shellcheck disable=SC2183 disable=SC2046
-int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))" 
+int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))"
 # shellcheck disable=SC2183 disable=SC2046
 int_system_osx_version="$(printf "%02d%02d%02d" $(echo "$system_osx_version" | sed 's/\./ /g'))"
 if [  "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
