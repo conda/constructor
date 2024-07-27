@@ -100,9 +100,9 @@ def get_header(conda_exec, tarball, info):
         replace['LICENSE'] = read_ascii_only(info['license_file'])
 
     virtual_specs = parse_virtual_specs(info)
-    if min_osx_version := virtual_specs["__osx"].get("min"):
+    if min_osx_version := virtual_specs.get("__osx", {}).get("min"):
         replace['MIN_OSX_VERSION'] = ppd['min_osx_version'] = min_osx_version
-    if min_glibc_version := virtual_specs["__glibc"].get("min"):
+    if min_glibc_version := virtual_specs.get("__glibc", {}).get("min"):
         replace['MIN_GLIBC_VERSION'] = ppd['min_glibc_version'] = min_glibc_version
 
     data = read_header_template()
