@@ -287,7 +287,7 @@ def check_required_env_vars(env_vars):
 def parse_virtual_specs(info) -> dict:
     from .conda_interface import MatchSpec  # prevent circular import
 
-    specs = {"osx": {}, "glibc": {}}
+    specs = {"__osx": {}, "__glibc": {}}
     for spec in info.get("virtual_specs", ()):
         spec = MatchSpec(spec)
         if spec.name not in ("__osx", "__glibc"):
