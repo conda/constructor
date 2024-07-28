@@ -192,7 +192,7 @@ def modify_xml(xml_path, info):
 
     # -- __osx virtual package checks -- #
     # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html  # noqa
-    osx_versions = parse_virtual_specs(info).get("__osx", {})
+    osx_versions = parse_virtual_specs(info).get("__osx")
     if osx_versions:
         if "min" not in osx_versions:
             raise ValueError("Specifying __osx requires a lower bound with `>=`")
