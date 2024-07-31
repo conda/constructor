@@ -12,7 +12,10 @@ import sys
 from os.path import abspath, expanduser, isdir, join
 from textwrap import dedent, indent
 
-from . import __version__
+try:
+    from ._version import __version__
+except ImportError:
+    __version__ = "dev"
 from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS
 from .conda_interface import VersionOrder as Version
