@@ -38,7 +38,7 @@ min_glibc_version="__MIN_GLIBC_VERSION__"
 case "$(ldd --version 2>&1)" in
     *musl*)
         # musl ldd will report musl version; call ld.so directly
-        system_glibc_version=$($(ls -1 /lib64/ld-linux-*.so* | head -1) --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+        system_glibc_version=$($(ls -1 /lib*/ld-linux-*.so* | head -1) --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
     ;;
     *)
         # ldd reports glibc in the last field of the first line
