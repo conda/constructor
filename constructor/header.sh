@@ -35,8 +35,16 @@ fi
 #endif
 #if linux and min_glibc_version
 min_glibc_version="__MIN_GLIBC_VERSION__"
-# ldd reports glibc in the last field of the first line
-system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
+case "$(ldd --version 2>&1)" in
+    *musl*)
+        # musl ldd will report musl version; call ld.so directly
+        system_glibc_version=$($(ls -1 /lib64/ld-linux-*.so* | head -1) --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+    ;;
+    *)
+        # ldd reports glibc in the last field of the first line
+        system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
+    ;;
+esac
 # shellcheck disable=SC2183 disable=SC2046
 int_min_glibc_version="$(printf "%02d%02d%02d" $(echo "$min_glibc_version" | sed 's/\./ /g'))"
 # shellcheck disable=SC2183 disable=SC2046
