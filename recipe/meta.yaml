@@ -19,7 +19,7 @@ requirements:
   host:
     - python  # >=3.8
     - pip
-    - setuptools
+    - setuptools >=70.1
   run:
     - conda >=4.6
     - python  # >=3.8
