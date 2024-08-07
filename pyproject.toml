@@ -1,3 +1,44 @@
+[build-system]
+requires = ["setuptools>=70.1", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "constructor"
+description = "create installer from conda packages"
+readme = "README.md"
+license = {text = "BSD-3-Clause"}
+requires-python = ">=3.8"
+dynamic = [
+    "version",
+]
+dependencies = [
+    "conda >=4.6",
+    "ruamel.yaml >=0.11.14,<0.19",
+    "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
+]
+
+[project.scripts]
+constructor = "constructor.main:main"
+
+[project.urls]
+repository = "https://github.com/conda/constructor"
+
+[tool.setuptools_scm]
+write_to = "constructor/_version.py"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["constructor*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+constructor = [
+    "header.sh",
+    "nsis/*",
+    "osx/*",
+    "tff/*",
+]
+
 [tool.black]
 line-length = 100
 target-version = ['py38', 'py39', 'py310']
