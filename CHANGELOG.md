@@ -1,5 +1,23 @@
 [//]: # (current developments)
 
+## 2024-08-07   3.9.0:
+### Enhancements
+
+* A new setting `virtual_specs` allows the installer to run some checks before the installation proceeds. Useful for checking whether certain virtual package versions or system requirements can be satisfied. (#809)
+* Add option to output hashes of installer files. (#816)
+* Merge `setup.*` files into `pyproject.toml`. (#829)
+
+### Bug fixes
+
+* Add setuptools to recipe host requirements. (#829)
+
+### Contributors
+
+* @jaimergp
+* @marcoesters
+
+
+
 ## 2024-07-13   3.8.1:
 ### Bug fixes
 
@@ -13,6 +31,10 @@
 ### Other
 
 * Mention `conda/conda-standalone` repository as a source for conda-standalone downloads in relevant error messages. (#808)
+
+### Contributors
+
+* @jaimergp
 
 
 
