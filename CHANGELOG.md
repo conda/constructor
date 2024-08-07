@@ -11,6 +11,11 @@
 
 * Add setuptools to recipe host requirements. (#829)
 
+### Contributors
+
+* @jaimergp
+* @marcoesters
+
 
 
 ## 2024-07-13   3.8.1:
@@ -26,6 +31,10 @@
 ### Other
 
 * Mention `conda/conda-standalone` repository as a source for conda-standalone downloads in relevant error messages. (#808)
+
+### Contributors
+
+* @jaimergp
 
 
 
