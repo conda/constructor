@@ -282,3 +282,30 @@ def check_required_env_vars(env_vars):
         raise RuntimeError(
             f"Missing required environment variables {', '.join(missing_vars)}."
         )
+
+
+def parse_virtual_specs(info) -> dict:
+    from .conda_interface import MatchSpec  # prevent circular import
+
+    specs = {"__osx": {}, "__glibc": {}}
+    for spec in info.get("virtual_specs", ()):
+        spec = MatchSpec(spec)
+        if spec.name not in ("__osx", "__glibc"):
+            continue
+        if not spec.version:
+            continue
+        if "|" in spec.version.spec_str:
+            raise ValueError("Can't process `|`-joined versions. Only `,` is allowed.")
+        versions = spec.version.tup if "," in spec.version.spec_str else (spec.version,)
+        for version in versions:
+            operator = version.operator_func.__name__
+            if operator == "ge":
+                specs[spec.name]["min"] = str(version.matcher_vo)
+            elif operator == "lt" and spec.name == "__osx":
+                specs[spec.name]["before"] = str(version.matcher_vo)
+            else:
+                raise ValueError(
+                    f"Invalid version operator for {spec}. "
+                    "__osx only supports `<` or `>=`; __glibc only supports `>=`."
+                )
+    return specs

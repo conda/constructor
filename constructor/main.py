@@ -115,11 +115,18 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     elif info.get("signing_certificate"):
         info["windows_signing_tool"] = "signtool"
 
-    for key in 'specs', 'packages':
+    for key in 'specs', 'packages', 'virtual_specs':
         if key not in info:
             continue
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
+        if key == "virtual_specs":
+            for value in info[key]:
+                if not value.startswith("__"):
+                    raise ValueError(
+                        "'virtual_specs' can only include virtual package names like '__name', "
+                        f"but you supplied: {value}."
+                    )
 
     # normalize paths to be copied; if they are relative, they must be to
     # construct.yaml's parent (dir_path)
@@ -137,7 +144,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
                 new_extras.append({orig: dest})
         info[extra_type] = new_extras
 
-    for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages':
+    for key in 'channels', 'specs', 'exclude', 'packages', 'menu_packages', 'virtual_specs':
         if key in info:
             # ensure strings in those lists are stripped
             info[key] = [line.strip() for line in info[key]]

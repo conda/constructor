@@ -1,5 +1,6 @@
 import logging
 import os
+import shlex
 import shutil
 import sys
 import xml.etree.ElementTree as ET
@@ -18,6 +19,7 @@ from .utils import (
     explained_check_call,
     fill_template,
     get_final_channels,
+    parse_virtual_specs,
     preprocess,
     rm_rf,
     shortcuts_flags,
@@ -188,6 +190,18 @@ def modify_xml(xml_path, info):
         )
         root.append(readme)
 
+    # -- __osx virtual package checks -- #
+    # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html  # noqa
+    osx_versions = parse_virtual_specs(info).get("__osx")
+    if osx_versions:
+        if "min" not in osx_versions:
+            raise ValueError("Specifying __osx requires a lower bound with `>=`")
+        allowed_os_versions = ET.Element("allowed-os-versions")
+        allowed_os_versions.append(ET.Element("os-version", osx_versions))
+        volume_check = ET.Element("volume-check")
+        volume_check.append(allowed_os_versions)
+        root.append(volume_check)
+
     # See below for an explanation of the consequences of this
     # customLocation value.
     for options in root.findall('options'):
@@ -327,6 +341,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'SHORTCUTS': shortcuts_flags(info),
         'ENABLE_SHORTCUTS': str(info['_enable_shortcuts']).lower(),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
+        'VIRTUAL_SPECS': shlex.join(info.get("virtual_specs", ())),
     }
     data = preprocess(data, ppd)
     custom_variables = info.get('script_env_variables', {})

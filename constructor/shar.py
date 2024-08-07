@@ -6,6 +6,7 @@
 
 import logging
 import os
+import shlex
 import shutil
 import stat
 import tarfile
@@ -23,6 +24,7 @@ from .utils import (
     fill_template,
     get_final_channels,
     hash_files,
+    parse_virtual_specs,
     preprocess,
     read_ascii_only,
     shortcuts_flags,
@@ -92,9 +94,16 @@ def get_header(conda_exec, tarball, info):
         'SHORTCUTS': shortcuts_flags(info),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
         'TOTAL_INSTALLATION_SIZE_KB': str(approx_size_kb(info, "total")),
+        'VIRTUAL_SPECS': shlex.join(info.get("virtual_specs", ()))
     }
     if has_license:
         replace['LICENSE'] = read_ascii_only(info['license_file'])
+
+    virtual_specs = parse_virtual_specs(info)
+    min_osx_version = virtual_specs.get("__osx", {}).get("min") or ""
+    replace['MIN_OSX_VERSION'] = ppd['min_osx_version'] = min_osx_version
+    min_glibc_version = virtual_specs.get("__glibc", {}).get("min") or ""
+    replace['MIN_GLIBC_VERSION'] = ppd['min_glibc_version'] = min_glibc_version
 
     data = read_header_template()
     data = preprocess(data, ppd)

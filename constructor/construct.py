@@ -83,6 +83,15 @@ of packages compatible with Python 3.6. If this is option is not provided, it
 will be set equal to the value of `specs`.
 '''),
 
+    ('virtual_specs',          False, list, '''
+A list of virtual packages that must be satisfied at install time. Virtual
+packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
+These specs are dry-run solved offline by the bundled `--conda-exe` binary.
+In SH installers, `__glibc>=x.y` and `__osx>=x.y` specs can be checked with
+Bash only. In PKG installers, `__osx` specs can be checked natively without
+the solver being involved as long as only `>=`, `<` or `,` are used.
+'''),
+
     ('exclude',                False, list, '''
 A list of package names to be excluded after the `specs` have been resolved.
 For example, you can say that `readline` should be excluded, even though it
@@ -594,7 +603,7 @@ This setting can be passed as a list of:
 
     ('temp_extra_files', False, list, '''
 Temporary files that could be referenced in the installation process (i.e. customized
- `welcome_file` and `conclusion_file` (see above)) . Should be a list of
+`welcome_file` and `conclusion_file` (see above)) . Should be a list of
 file paths, relative to the directory where `construct.yaml` is. In Windows, these
 files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
 install process (Windows only).

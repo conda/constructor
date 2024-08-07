@@ -103,7 +103,7 @@ def _check_installer_log(install_dir):
         raise AssertionError("\n".join(error_lines))
 
 
-def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420):
+def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420, check=True):
     """
     NSIS manual:
     > /D sets the default installation directory ($INSTDIR), overriding InstallDir
@@ -126,11 +126,13 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
             "after completion."
         )
     cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
-    _execute(cmd, installer_input=installer_input, timeout=timeout)
-    _check_installer_log(install_dir)
+    process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
+    if check:
+        _check_installer_log(install_dir)
+    return process
 
 
-def _run_uninstaller_exe(install_dir, timeout=420):
+def _run_uninstaller_exe(install_dir, timeout=420, check=True):
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
@@ -159,25 +161,27 @@ def _run_uninstaller_exe(install_dir, timeout=420):
         # us problems with the tempdir cleanup later
         f"/S _?={install_dir}",
     ]
-    _execute(cmd, timeout=timeout)
-    _check_installer_log(install_dir)
-    remaining_files = list(install_dir.iterdir())
-    if len(remaining_files) > 3:
-        # The debug installer writes to install.log too, which will only
-        # be deleted _after_ a reboot. Finding some files is ok, but more
-        # than two usually means a problem with the uninstaller.
-        # Note this is is not exhaustive, because we are not checking
-        # whether the registry was restored, menu items were deleted, etc.
-        # TODO :)
-        raise AssertionError(f"Uninstaller left too many files: {remaining_files}")
+    process = _execute(cmd, timeout=timeout, check=check)
+    if check:
+        _check_installer_log(install_dir)
+        remaining_files = list(install_dir.iterdir())
+        if len(remaining_files) > 3:
+            # The debug installer writes to install.log too, which will only
+            # be deleted _after_ a reboot. Finding some files is ok, but more
+            # than two usually means a problem with the uninstaller.
+            # Note this is is not exhaustive, because we are not checking
+            # whether the registry was restored, menu items were deleted, etc.
+            # TODO :)
+            raise AssertionError(f"Uninstaller left too many files: {remaining_files}")
+    return process
 
 
-def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420):
+def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420, check=True):
     if installer_input:
         cmd = ["/bin/sh", installer]
     else:
         cmd = ["/bin/sh", installer, "-b", "-p", install_dir]
-    return _execute(cmd, installer_input=installer_input, timeout=timeout)
+    return _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
 
 
 def _run_installer_pkg(
@@ -186,6 +190,7 @@ def _run_installer_pkg(
     example_path=None,
     config_filename="construct.yaml",
     timeout=420,
+    check=True,
 ):
     if os.environ.get("CI"):
         # We want to run it in an arbitrary directory, but the options
@@ -209,7 +214,7 @@ def _run_installer_pkg(
             "Export CI=1 to run it, but it will pollute your $HOME."
         )
         cmd = ["pkgutil", "--expand", installer, install_dir]
-    return _execute(cmd, timeout=timeout), install_dir
+    return _execute(cmd, timeout=timeout, check=check), install_dir
 
 
 def _sentinel_file_checks(example_path, install_dir):
@@ -231,30 +236,45 @@ def _run_installer(
     installer_input: Optional[str] = None,
     config_filename="construct.yaml",
     check_sentinels=True,
+    check_subprocess=True,
     request=None,
     uninstall=True,
     timeout=420,
-):
+) -> subprocess.CompletedProcess:
     if installer.suffix == ".exe":
-        _run_installer_exe(installer, install_dir, installer_input=installer_input, timeout=timeout)
+        process = _run_installer_exe(
+            installer,
+            install_dir,
+            installer_input=installer_input,
+            timeout=timeout,
+            check=check_subprocess,
+        )
     elif installer.suffix == ".sh":
-        _run_installer_sh(installer, install_dir, installer_input=installer_input, timeout=timeout)
+        process = _run_installer_sh(
+            installer,
+            install_dir,
+            installer_input=installer_input,
+            timeout=timeout,
+            check=check_subprocess,
+        )
     elif installer.suffix == ".pkg":
         if request and ON_CI:
-            request.addfinalizer(lambda: shutil.rmtree(str(install_dir)))
-        _run_installer_pkg(
+            request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
+        process, _ = _run_installer_pkg(
             installer,
             install_dir,
             example_path=example_path,
             config_filename=config_filename,
             timeout=timeout,
+            check=check_subprocess,
         )
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
     if check_sentinels:
         _sentinel_file_checks(example_path, install_dir)
     if uninstall and installer.suffix == ".exe":
-        _run_uninstaller_exe(install_dir, timeout=timeout)
+        _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
+    return process
 
 
 def create_installer(
@@ -671,3 +691,32 @@ def test_cross_osx_building(tmp_path):
         extra_constructor_args=["--platform", "osx-arm64"],
         config_filename="constructor_input.yaml",
     )
+
+
+def test_virtual_specs(tmp_path, request):
+    input_path = _example_path("virtual_specs")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        process = _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=False,
+            uninstall=False,
+        )
+        # This example is configured to fail due to unsatisfiable virtual specs
+        if installer.suffix == ".exe":
+            with pytest.raises(AssertionError, match="Failed to check virtual specs"):
+                _check_installer_log(install_dir)
+            continue
+        elif installer.suffix == ".pkg":
+            # The GUI does provide a better message with the min version and so on
+            # but on the CLI we fail with this one instead
+            msg = "Cannot install on volume"
+        else:
+            # The shell installer has its own Bash code for __glibc and __osx
+            # Other virtual specs like __cuda are checked by conda-standalone/micromamba
+            # and will fail with solver errors like PackagesNotFound etc
+            msg = "Installer requires"
+        assert process.returncode != 0
+        assert msg in process.stdout + process.stderr

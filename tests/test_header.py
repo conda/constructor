@@ -57,6 +57,8 @@ def test_linux_template_processing():
         enable_shortcuts,
         check_path_spaces,
         arch,
+        min_glibc_version,
+        min_osx_version,
     ) in itertools.product(
         [False, True],
         [False, True],
@@ -72,6 +74,8 @@ def test_linux_template_processing():
         [False, True],
         [False, True],
         ["x86", "x86_64", " ppc64le", "s390x", "aarch64"],
+        [None, "2.17"],
+        [None, "10.13"],
     ):
         params = {
             "has_license": has_license,
@@ -93,12 +97,14 @@ def test_linux_template_processing():
             "initialize_by_default": initialize_by_default,
             "enable_shortcuts": enable_shortcuts,
             "check_path_spaces": check_path_spaces,
+            "min_glibc_version": min_glibc_version,
+            "min_osx_version": min_osx_version,
         }
         processed = preprocess(template, params)
         for template_string in ["#if", "#else", "#endif"]:
             if template_string in processed:
                 errors.append(
-                    f"Found '{template_string}' after " f"processing header.sh with '{params}'."
+                    f"Found '{template_string}' after processing header.sh with '{params}'."
                 )
 
     assert not errors
@@ -156,6 +162,8 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("arch", ["x86_64", "aarch64"])
 @pytest.mark.parametrize("check_path_spaces", [True])
 @pytest.mark.parametrize("enable_shortcuts", ["true"])
+@pytest.mark.parametrize("min_glibc_version", ["2.17"])
+@pytest.mark.parametrize("min_osx_version", ["10.13"])
 def test_template_shellcheck(
     osx,
     arch,
@@ -171,6 +179,8 @@ def test_template_shellcheck(
     direct_execute_post_install,
     check_path_spaces,
     enable_shortcuts,
+    min_glibc_version,
+    min_osx_version,
 ):
     template = read_header_template()
     processed = preprocess(
@@ -195,9 +205,12 @@ def test_template_shellcheck(
             "initialize_by_default": initialize_by_default,
             "check_path_spaces": check_path_spaces,
             "enable_shortcuts": enable_shortcuts,
+            "min_glibc_version": min_glibc_version,
+            "min_osx_version": min_osx_version,
         },
     )
 
     findings, returncode = run_shellcheck(processed)
+    print(*findings, sep="\n")
     assert findings == []
     assert returncode == 0
