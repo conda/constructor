@@ -1,5 +1,16 @@
 [//]: # (current developments)
 
+## 2024-08-09   3.9.2:
+### Bug fixes
+
+* Fix typo in pyproject.toml package data. (#839)
+
+### Contributors
+
+* @marcoesters
+
+
+
 ## 2024-08-09   3.9.1:
 ### Bug fixes
 
