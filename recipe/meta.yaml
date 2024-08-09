@@ -1,8 +1,6 @@
-{% set data = load_setup_py_data() %}
-
 package:
   name: constructor
-  version: {{ data.get('version') }}
+  version: "{{ GIT_DESCRIBE_TAG }}.{{ GIT_BUILD_STR }}"
 
 source:
   # git_url is nice in that it won't capture devenv stuff.  However, it only
