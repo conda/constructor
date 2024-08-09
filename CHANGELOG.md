@@ -5,6 +5,10 @@
 
 * Prevent error on Windows where the text-based images cannot be generated because the TrueType font cannot be loaded. (#837)
 
+### Contributors
+
+* @jaimergp
+
 
 
 ## 2024-08-07   3.9.0:
