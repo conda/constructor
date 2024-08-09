@@ -5,12 +5,15 @@
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
 import sys
+from io import BytesIO
 from os.path import dirname, join
 from random import randint
 
 from PIL import Image, ImageDraw, ImageFont
 
 ttf_path = join(dirname(__file__), 'ttf', 'Vera.ttf')
+with open(ttf_path, "rb") as f:
+    ttf_bytes = f.read()
 white = 0xff, 0xff, 0xff
 # These are for Windows
 welcome_size = 164, 314
@@ -45,7 +48,7 @@ def add_text(im, xy, text, min_lines, line_height, font, color):
 
 
 def mk_welcome_image(info):
-    font = ImageFont.truetype(ttf_path, 20)
+    font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
     im = new_background(welcome_size, info['_color'])
     text = '\n'.join([info['welcome_image_text'], info['version']])
     add_text(im, (20, 100), text, 2, 30, font, white)
@@ -53,7 +56,7 @@ def mk_welcome_image(info):
 
 
 def mk_welcome_image_osx(info):
-    font = ImageFont.truetype(ttf_path, 40)
+    font = ImageFont.truetype(BytesIO(ttf_bytes), 40)
     # Transparent background
     im = Image.new('RGBA', welcome_size_osx, color=(0, 0, 0, 0))
     text = '\n'.join([info['welcome_image_text'], info['version']])
@@ -62,7 +65,7 @@ def mk_welcome_image_osx(info):
 
 
 def mk_header_image(info):
-    font = ImageFont.truetype(ttf_path, 20)
+    font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
     im = Image.new('RGB', header_size, color=white)
     text = info['header_image_text']
     color = info['_color']
@@ -71,7 +74,7 @@ def mk_header_image(info):
 
 
 def mk_icon_image(info):
-    font = ImageFont.truetype(ttf_path, 200)
+    font = ImageFont.truetype(BytesIO(ttf_bytes), 200)
     im = new_background(icon_size, info['_color'])
     d = ImageDraw.Draw(im)
     d.text((60, 20), info['name'][0], fill=white, font=font)
