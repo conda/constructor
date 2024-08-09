@@ -1,5 +1,12 @@
 [//]: # (current developments)
 
+## 2024-08-09   3.9.1:
+### Bug fixes
+
+* Prevent error on Windows where the text-based images cannot be generated because the TrueType font cannot be loaded. (#837)
+
+
+
 ## 2024-08-07   3.9.0:
 ### Enhancements
 
