@@ -29,13 +29,18 @@ requirements:
     - nsis >=3.08      # [unix]
 
 test:
+  source_files:
+    - tests
   requires:
     - pip
+    - pytest
   imports:
     - constructor
   commands:
     - pip check
     - constructor --help
+    # Run unit tests
+    - pytest -v tests -k "not examples"
 
 about:
   home: https://conda.io
