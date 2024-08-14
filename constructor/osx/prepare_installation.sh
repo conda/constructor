@@ -37,6 +37,7 @@ touch "$PREFIX/conda-meta/history"
 # https://github.com/conda/conda-libmamba-solver/issues/480
 # shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
+    echo 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
