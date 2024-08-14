@@ -35,12 +35,14 @@ touch "$PREFIX/conda-meta/history"
 # We need to specify CONDA_SOLVER=classic for conda-standalone
 # to work around this bug in conda-libmamba-solver:
 # https://github.com/conda/conda-libmamba-solver/issues/480
+# micromamba needs an existing pkgs_dir to operate even offline,
+# but we haven't created $PREFIX/pkgs yet... give it a temp location
 # shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
     echo 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
-    CONDA_PKGS_DIRS="$PREFIX/pkgs" \
+    CONDA_PKGS_DIRS="$(mktemp -d)" \
     "$CONDA_EXEC" create --dry-run --prefix "$PREFIX" --offline __VIRTUAL_SPECS__
 fi
 
