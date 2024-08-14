@@ -693,8 +693,8 @@ def test_cross_osx_building(tmp_path):
     )
 
 
-def test_virtual_specs(tmp_path, request):
-    input_path = _example_path("virtual_specs")
+def test_virtual_specs_failed(tmp_path, request):
+    input_path = _example_path("virtual_specs_failed")
     for installer, install_dir in create_installer(input_path, tmp_path):
         process = _run_installer(
             input_path,
@@ -720,3 +720,16 @@ def test_virtual_specs(tmp_path, request):
             msg = "Installer requires"
         assert process.returncode != 0
         assert msg in process.stdout + process.stderr
+
+
+def test_virtual_specs_ok(tmp_path, request):
+    input_path = _example_path("virtual_specs_ok")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )
