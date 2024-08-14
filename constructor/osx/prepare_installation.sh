@@ -39,6 +39,7 @@ touch "$PREFIX/conda-meta/history"
 if [ "__VIRTUAL_SPECS__" != "" ]; then
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
+    CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     "$CONDA_EXEC" create --dry-run --prefix "$PREFIX" --offline __VIRTUAL_SPECS__
 fi
 
