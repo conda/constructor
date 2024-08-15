@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix a couple issues in the `virtual_specs` feature (set `CONDA_PKGS_DIRS` for `micromamba`, do not rely `$BATCH` for PKG, update the Windows example). (#843)
+* Fix a couple issues in the `virtual_specs` feature (set `CONDA_PKGS_DIRS` for `micromamba`, do not rely on `$BATCH` for PKG, update the Windows example). (#843)
 
 ### Deprecations
 
