@@ -36,13 +36,14 @@ touch "$PREFIX/conda-meta/history"
 # to work around this bug in conda-libmamba-solver:
 # https://github.com/conda/conda-libmamba-solver/issues/480
 # micromamba needs an existing pkgs_dir to operate even offline,
-# but we haven't created $PREFIX/pkgs yet... give it a temp location
+# but we haven't created $PREFIX/pkgs yet... do it now
 # shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
-    echo 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
+    notify 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
+    mkdir -p "$PREFIX/pkgs"
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
-    CONDA_PKGS_DIRS="$(mktemp -d)" \
+    CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     "$CONDA_EXEC" create --dry-run --prefix "$PREFIX" --offline __VIRTUAL_SPECS__
 fi
 
