@@ -277,7 +277,7 @@
   aliases:
   - Jaime RGP
   - jaimergp
-  num_commits: 80
+  num_commits: 81
   first_commit: 2022-01-08 14:56:53
   github: jaimergp
 - name: Tom Hören
@@ -357,7 +357,7 @@
   github: RahulARanger
 - name: Marco Esters
   email: mesters@anaconda.com
-  num_commits: 20
+  num_commits: 21
   first_commit: 2023-05-12 11:44:12
   github: marcoesters
 - name: Darryl Miles
@@ -382,6 +382,6 @@
   github: m-kuhn
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 9
+  num_commits: 11
   github: dependabot[bot]
   first_commit: 2024-05-07 10:16:05
