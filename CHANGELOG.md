@@ -1,5 +1,17 @@
 [//]: # (current developments)
 
+## 2024-08-15   3.9.3:
+### Bug fixes
+
+* Fix a couple issues in the `virtual_specs` feature (set `CONDA_PKGS_DIRS` for `micromamba`, do not rely on `$BATCH` for PKG, update the Windows example). (#843)
+
+### Contributors
+
+* @jaimergp
+* @dependabot[bot]
+
+
+
 ## 2024-08-09   3.9.2:
 ### Bug fixes
 
