@@ -8,7 +8,6 @@
 ### Contributors
 
 * @jaimergp
-* @dependabot[bot]
 
 
 
