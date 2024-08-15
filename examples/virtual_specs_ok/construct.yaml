@@ -13,7 +13,7 @@ specs:
 virtual_specs:
   - __osx>=10.9    # [osx]
   - __glibc>=2.12  # [linux]
-  - __win>0        # [win]
+  - __win>=0       # [win]
 
 initialize_by_default: false
 register_python: false
