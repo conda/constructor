@@ -469,7 +469,7 @@ if [ "__VIRTUAL_SPECS__" != "" ]; then
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
-    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX" --offline __VIRTUAL_SPECS__
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__
 fi
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
