@@ -1,0 +1,22 @@
+name: virtual_specs_ok
+
+version: 0.0.1
+
+keep_pkgs: True
+
+channels:
+  - conda-forge
+
+specs:
+  - ca-certificates
+
+virtual_specs:
+  - __osx>=10.9    # [osx]
+  - __glibc>=2.12  # [linux]
+  - __win>=0       # [win]
+
+initialize_by_default: false
+register_python: false
+check_path_spaces: false
+check_path_length: false
+installer_type: all
