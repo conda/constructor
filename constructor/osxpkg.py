@@ -424,6 +424,13 @@ def pkgbuild_prepare_installation(info):
 
 
 def create_plugins(plugins_dir: str, info: dict):
+    pages = info.get("post_install_pages")
+    if not pages:
+        return
+    elif isinstance(pages, str):
+        pages = [pages]
+
+    xcodebuild = shutil.which("xcodebuild")
 
     if notarization_identity_name := info.get('notarization_identity_name'):
         with NamedTemporaryFile(suffix=".plist", delete=False) as entitlements:
@@ -433,30 +440,61 @@ def create_plugins(plugins_dir: str, info: dict):
             }
             plist_dump(plist, entitlements)
 
-    pages = info.get("post_install_pages", [])
-    if isinstance(pages, str):
-        pages = [pages]
-
     for page in pages:
-        page_in_plugins = join(plugins_dir, os.path.basename(page))
-        shutil.copytree(page, page_in_plugins)
-        if notarization_identity_name:
-            explained_check_call(
-                [
-                    # hardcode to system location to avoid accidental clobber in PATH
-                    "/usr/bin/codesign",
-                    "--verbose",
-                    '--sign', notarization_identity_name,
-                    "--prefix", info.get("reverse_domain_identifier", info['name']),
-                    "--options", "runtime",
-                    "--force",
-                    "--entitlements", entitlements.name,
-                    page_in_plugins,
+        xcodeproj_dirs = [
+            file.resolve()
+            for file in Path(page).iterdir()
+            if file.suffix == ".xcodeproj"
+        ]
+        if xcodeproj_dirs:
+            if not xcodebuild:
+                raise RuntimeError(
+                    "Plugin directory contains an uncompiled project,"
+                    " but xcodebuild is not available."
+                )
+            for xcodeproj in xcodeproj_dirs:
+                build_cmd = [
+                    xcodebuild,
+                    "-project",
+                    str(xcodeproj),
+                    f"CONFIGURATION_BUILD_DIR={plugins_dir}",
+                    # do not create dSYM debug symbols directory
+                    "DEBUG_INFORMATION_FORMAT=",
                 ]
-            )
+                if notarization_identity_name:
+                    extra_flags = (
+                        "--verbose"
+                        "--prefix {info.get('reverse_domain_identifier', info['name'])}"
+                        "--options runtime"
+                    )
+                    build_cmd.extend([
+                        f"CODE_SIGN_IDENTITY={notarization_identity_name}",
+                        f"CODE_SIGN_ENTITLEMENTS={entitlements.name}",
+                        f"OTHER_CODE_SIGN_FLAGS=\"{' '.join(extra_flags)}\"",
+                    ])
+                explained_check_call(build_cmd)
+        else:
+            plugin_name = os.path.basename(page)
+            page_in_plugins = join(plugins_dir, plugin_name)
+            shutil.copytree(page, page_in_plugins)
+            if notarization_identity_name:
+                explained_check_call(
+                    [
+                        # hardcode to system location to avoid accidental clobber in PATH
+                        "/usr/bin/codesign",
+                        "--verbose",
+                        '--sign', notarization_identity_name,
+                        "--prefix", info.get("reverse_domain_identifier", info['name']),
+                        "--options", "runtime",
+                        "--force",
+                        "--entitlements", entitlements.name,
+                        page_in_plugins,
+                    ]
+                )
     if notarization_identity_name:
         os.unlink(entitlements.name)
 
+    plugins = [file.name for file in Path(plugins_dir).iterdir()]
     with open(join(plugins_dir, "InstallerSections.plist"), "wb") as f:
         plist = {
             "SectionOrder": [
@@ -466,7 +504,7 @@ def create_plugins(plugins_dir: str, info: dict):
                 "Target",
                 "PackageSelection",
                 "Install",
-                *[os.path.basename(page) for page in pages]
+                *plugins,
             ]
         }
         plist_dump(plist, f)

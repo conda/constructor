@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
+from plistlib import load as plist_load
 from typing import Generator, Iterable, Optional, Tuple
 
 import pytest
@@ -462,6 +463,37 @@ def test_example_osxpkg(tmp_path, request):
             expected[file] = expected_owner
             found[file] = file.owner()
         assert expected == found
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+@pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
+def test_example_osxpkg_extra_pages(tmp_path):
+    recipe_path = _example_path("osxpkg_extra_pages")
+    input_path = tmp_path / "input"
+    output_path = tmp_path / "output"
+    shutil.copytree(str(recipe_path), str(input_path))
+    installer, install_dir = next(create_installer(input_path, output_path))
+    # expand-full is an undocumented option that extracts all archives,
+    # including binary archives like the PlugIns file
+    cmd = ["pkgutil", "--expand-full", installer, output_path / "expanded"]
+    _execute(cmd)
+    installer_sections = output_path / "expanded" / "PlugIns" / "InstallerSections.plist"
+    assert installer_sections.exists()
+
+    with open(installer_sections, "rb") as f:
+        plist = plist_load(f)
+    expected = {
+        "SectionOrder": [
+            "Introduction",
+            "ReadMe",
+            "License",
+            "Target",
+            "PackageSelection",
+            "Install",
+            "ExtraPage.bundle",
+        ]
+    }
+    assert plist == expected
 
 
 def test_example_scripts(tmp_path, request):
