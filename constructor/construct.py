@@ -571,6 +571,11 @@ You can disable it altogether if you set this key to `""` (empty string).
 (MacOS only).
 '''),
 
+    ('post_install_pages', False, (list, str), '''
+Adds extra panels to the installers to be shown after installation.
+For pkg installers, these must be compiled installer plug-ins.
+'''),
+
     ('conclusion_file', False, str, '''
 If `installer_type` is `pkg` on MacOS, this message will be
 shown at the end of the installer upon success. File can be

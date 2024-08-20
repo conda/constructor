@@ -423,6 +423,55 @@ def pkgbuild_prepare_installation(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
+def create_plugins(plugins_dir: str, info: dict):
+
+    if notarization_identity_name := info.get('notarization_identity_name'):
+        with NamedTemporaryFile(suffix=".plist", delete=False) as entitlements:
+            plist = {
+                "com.apple.security.cs.allow-unsigned-executable-memory": True,
+                "com.apple.security.cs.disable-library-validation": True,
+            }
+            plist_dump(plist, entitlements)
+
+    pages = info.get("post_install_pages", [])
+    if isinstance(pages, str):
+        pages = [pages]
+
+    for page in pages:
+        page_in_plugins = join(plugins_dir, os.path.basename(page))
+        shutil.copytree(page, page_in_plugins)
+        if notarization_identity_name:
+            explained_check_call(
+                [
+                    # hardcode to system location to avoid accidental clobber in PATH
+                    "/usr/bin/codesign",
+                    "--verbose",
+                    '--sign', notarization_identity_name,
+                    "--prefix", info.get("reverse_domain_identifier", info['name']),
+                    "--options", "runtime",
+                    "--force",
+                    "--entitlements", entitlements.name,
+                    page_in_plugins,
+                ]
+            )
+    if notarization_identity_name:
+        os.unlink(entitlements.name)
+
+    with open(join(plugins_dir, "InstallerSections.plist"), "wb") as f:
+        plist = {
+            "SectionOrder": [
+                "Introduction",
+                "ReadMe",
+                "License",
+                "Target",
+                "PackageSelection",
+                "Install",
+                *[os.path.basename(page) for page in pages]
+            ]
+        }
+        plist_dump(plist, f)
+
+
 def pkgbuild_script(name, info, src, dst='postinstall', **kwargs):
     fresh_dir(SCRIPTS_DIR)
     fresh_dir(PACKAGE_ROOT)
@@ -579,14 +628,22 @@ def create(info, verbose=False):
     explained_check_call(args)
     modify_xml(xml_path, info)
 
+    if plugins := info.get("post_install_pages"):
+        plugins_dir = join(CACHE_DIR, "plugins")
+        fresh_dir(plugins_dir)
+        create_plugins(plugins_dir, info)
+
     identity_name = info.get('signing_identity_name')
-    explained_check_call([
+    build_cmd = [
         "/usr/bin/productbuild",
         "--distribution", xml_path,
         "--package-path", PACKAGES_DIR,
         "--identifier", info.get("reverse_domain_identifier", info['name']),
-        "tmp.pkg" if identity_name else info['_outpath']
-    ])
+    ]
+    if plugins:
+        build_cmd.extend(["--plugins", plugins_dir])
+    build_cmd.append("tmp.pkg" if identity_name else info['_outpath'])
+    explained_check_call(build_cmd)
     if identity_name:
         explained_check_call([
             # hardcode to system location to avoid accidental clobber in PATH
