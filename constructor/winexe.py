@@ -116,7 +116,7 @@ def setup_envs_commands(info, dir_path):
     template = r"""
         # Set up {name} env
         SetDetailsPrint both
-        DetailPrint "Setting up the {name} environment ..."
+        ${{Print}} "Setting up the {name} environment ..."
         SetDetailsPrint listonly
 
         # List of packages to install
@@ -134,10 +134,10 @@ def setup_envs_commands(info, dir_path):
 
         # Run conda install
         ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
-            DetailPrint "Installing packages for {name}, creating shortcuts if necessary..."
+            ${{Print}} "Installing packages for {name}, creating shortcuts if necessary..."
             push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
         ${{Else}}
-            DetailPrint "Installing packages for {name}..."
+            ${{Print}} "Installing packages for {name}..."
             push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
         ${{EndIf}}
         push 'Failed to link extracted packages to {prefix}!'
@@ -195,7 +195,7 @@ def setup_envs_commands(info, dir_path):
 def uninstall_menus_commands(info):
     tmpl = r"""
         SetDetailsPrint both
-        DetailPrint "Deleting {name} menus in {env_name}..."
+        ${{Print}} "Deleting {name} menus in {env_name}..."
         SetDetailsPrint listonly
         push '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
         push 'Failed to delete menus in {env_name}'

@@ -26,6 +26,30 @@ Unicode "true"
   !endif
 !macroend
 
+!define Print "!insertmacro PrintMacro"
+!macro PrintMacro INPUT_TEXT
+  DetailPrint "${INPUT_TEXT}"
+  ${If} ${Silent}
+    System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+    System::Call 'kernel32::AttachConsole(i -1)i.r1'
+    ${If} $0 = 0
+    ${OrIf} $1 = 0
+        System::Call 'kernel32::AllocConsole()'
+        System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+        FileWrite $0 "${INPUT_TEXT}$\n"
+    ${EndIf}
+  ${EndIf}
+!macroend
+
+!define CloseStdout "!insertmacro CloseStdout"
+!macro CloseStdout
+    System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+    FileClose $0
+    System::Free $0
+    System::Free $1
+    System::Call 'kernel32::FreeConsole()'
+!macroend
+
 !include "WinMessages.nsh"
 !include "WordFunc.nsh"
 !include "LogicLib.nsh"
@@ -224,9 +248,9 @@ FunctionEnd
     ${GetParameters} $ARGV
     ${GetOptions} $ARGV "/?" $ARGV_Help
     ${IfNot} ${Errors}
-        MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "Usage: $EXEFILE [options]$\n\
-             Options:$\n$\n\
+        ${Print} "$\n\
+            USAGE: $EXEFILE [options]$\n$\n\
+            OPTIONS:$\n$\n\
                 /InstallationType=AllUsers [default: JustMe]$\n$\n\
                 /AddToPath=[0|1] [default: 0]$\n$\n\
 #if keep_pkgs is True
@@ -240,18 +264,17 @@ FunctionEnd
                 /NoScripts=[0|1] [default: 0]$\n$\n\
                 /NoShortcuts=[0|1] [default: 0]$\n$\n\
                 /CheckPathLength=[0|1] [default: 1]$\n$\n\
-            Examples:$\n\
+            EXAMPLES:$\n$\n\
                 Install for all users, but don't add to PATH env var:$\n\
-                    $EXEFILE /InstallationType=AllUsers$\n$\n\
+                    > $EXEFILE /InstallationType=AllUsers$\n$\n\
                 Install for just me, add to PATH and register as system Python:$\n\
-                    $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
+                    > $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
                 Install for just me, with no registry modification (for CI):$\n\
-                    $EXEFILE /NoRegistry=1$\n$\n\
+                    > $EXEFILE /NoRegistry=1$\n$\n\
             NOTE: If you install for AllUsers, then the option to AddToPath$\n\
-                is disabled (i.e. if ./InstallationType=AllUsers, then$\n\
-                /AddToPath=1 will be ignored).$\n" \
-            /SD IDOK
-            Abort
+                is disabled (i.e. if /InstallationType=AllUsers, then$\n\
+                /AddToPath=1 will be ignored).$\n"
+        Abort
      ${EndIf}
 
     ClearErrors
@@ -848,7 +871,7 @@ Pop $0
 Function OnDirectoryLeave
     ${LogSet} on
     ${If} ${IsNonEmptyDirectory} "$InstDir"
-        DetailPrint "::error:: Directory '$INSTDIR' is not empty, please choose a different location."
+        ${Print} "::error:: Directory '$INSTDIR' is not empty, please choose a different location."
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Directory '$INSTDIR' is not empty,$\n\
              please choose a different location." \
@@ -871,7 +894,7 @@ Function OnDirectoryLeave
                 WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
             ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
             ${Else}
-                DetailPrint "::error:: The installation path should be shorter than 46 characters or \
+                ${Print} "::error:: The installation path should be shorter than 46 characters or \
                              the installation requires administrator rights to enable long \
                              path on Windows."
                 MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters or \
@@ -882,7 +905,7 @@ Function OnDirectoryLeave
             ${EndIf}
         ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
         ${Else}
-            DetailPrint "::error:: The installation path should be shorter than 46 characters. \
+            ${Print} "::error:: The installation path should be shorter than 46 characters. \
                          Please choose another location."
             MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters. \
                                           Please choose another location." \
@@ -923,7 +946,7 @@ Function OnDirectoryLeave
 #endif
         # Show message box then take the user back to the Directory page.
         ${If} ${Silent}
-            DetailPrint "::$R9:: $R8"
+            ${Print} "::$R9:: $R8"
         ${Else}
             MessageBox MB_OK|MB_ICONINFORMATION "$R9: $R8" /SD IDOK
         ${EndIf}
@@ -942,7 +965,7 @@ Function OnDirectoryLeave
     Pop $R0
 
     StrCmp $R0 "" NoInvalidCharaceters
-        DetailPrint "::error:: 'Destination Folder' contains the following invalid character: $R0"
+        ${Print} "::error:: 'Destination Folder' contains the following invalid character: $R0"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Error: 'Destination Folder' contains the following invalid character: $R0" \
             /SD IDOK
@@ -952,7 +975,7 @@ Function OnDirectoryLeave
     UnicodePathTest::SpecialCharPathTest $INSTDIR
     Pop $R1
     StrCmp $R1 "nothingspecial" nothing_special_path
-        DetailPrint "::error:: 'Destination Folder' contains the following invalid character$R1"
+        ${Print} "::error:: 'Destination Folder' contains the following invalid character$R1"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Error: 'Destination Folder' contains the following invalid character$R1" \
             /SD IDOK
@@ -970,7 +993,7 @@ Function OnDirectoryLeave
       StrCmp ${PY_VER} "2.7" not_cp_acp_capable
       StrCmp $R1 "ascii_cp_acp" valid_path
       not_cp_acp_capable:
-          DetailPrint "::error:: Due to incompatibility with several \
+          ${Print} "::error:: Due to incompatibility with several \
               Python libraries, 'Destination Folder' cannot contain non-ascii characters \
               (special characters or diacritics).  Please choose another location."
           MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
@@ -985,7 +1008,7 @@ Function OnDirectoryLeave
     ${IsWritable} $INSTDIR $R1
     IntCmp $R1 0 pathgood
     Pop $R1
-    DetailPrint "::error: Path $INSTDIR is not writable. Please check permissions or \
+    ${Print} "::error: Path $INSTDIR is not writable. Please check permissions or \
                  try respawning the installer with elevated privileges."
     MessageBox MB_OK|MB_ICONEXCLAMATION \
         "Error: Path $INSTDIR is not writable. Please check permissions or \
@@ -1039,12 +1062,12 @@ FunctionEnd
             ${ElseIf} $1 == "NoLog"
                 nsExec::Exec $3
             ${Else}
-                DetailPrint "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
+                ${Print} "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
                 Abort
             ${EndIf}
             pop $0
             ${If} $0 != "0"
-                DetailPrint "::error:: $2"
+                ${Print} "::error:: $2"
                 MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
                         $2 /SD IDIGNORE IDABORT abort IDRETRY retry
                 ; IDIGNORE: Continue anyway
@@ -1065,7 +1088,7 @@ FunctionEnd
 # Installer sections
 Section "Install"
     ${LogSet} on
-
+    ${Print} "Welcome to ${NAME} ${VERSION} installer!"
     ${If} ${Silent}
         call OnDirectoryLeave
     ${EndIf}
@@ -1089,6 +1112,8 @@ Section "Install"
     #    clashes with other stuff on PATH
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                  "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$0;$0\system32;$0\system32\Wbem").r0'
+
+    ${Print} "Setting up bootstrappers..."
 
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
@@ -1138,7 +1163,7 @@ Section "Install"
     # https://github.com/conda/conda-libmamba-solver/issues/480
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
-    DetailPrint "Checking virtual specs..."
+    ${Print} "Checking virtual specs..."
     push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@'
     push 'Failed to check virtual specs: @VIRTUAL_SPECS@'
     push 'WithLog'
@@ -1150,7 +1175,7 @@ Section "Install"
     @PKG_COMMANDS@
 
     SetDetailsPrint TextOnly
-    DetailPrint "Setting up the package cache..."
+    ${Print} "Setting up the package cache..."
     push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
     push 'Failed to extract packages'
     push 'NoLog'
@@ -1160,7 +1185,7 @@ Section "Install"
     SetDetailsPrint both
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
-        DetailPrint "Running pre_install scripts..."
+        ${Print} "Running pre_install scripts..."
         ReadEnvStr $5 SystemRoot
         ReadEnvStr $6 windir
         # This 'FileExists' also returns True for directories
@@ -1184,7 +1209,7 @@ Section "Install"
     AddSize @SIZE@
 
 #if has_conda is True
-    DetailPrint "Initializing conda directories..."
+    ${Print} "Initializing conda directories..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize conda directories'
     push 'WithLog'
@@ -1192,7 +1217,7 @@ Section "Install"
 #endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
-        DetailPrint "Running post install..."
+        ${Print} "Running post install..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
         push 'Failed to run post install script'
         push 'WithLog'
@@ -1200,7 +1225,7 @@ Section "Install"
     ${EndIf}
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
-        DetailPrint "Clearing package cache..."
+        ${Print} "Clearing package cache..."
         push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
         push 'Failed to clear package cache'
         push 'WithLog'
@@ -1208,7 +1233,7 @@ Section "Install"
     ${EndIf}
 
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-        DetailPrint "Adding to PATH..."
+        ${Print} "Adding to PATH..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
         push 'Failed to add @NAME@ to the system PATH'
         push 'WithLog'
@@ -1258,7 +1283,7 @@ Section "Install"
     #   BU - built-in (local) users
     #   DU - domain users
     ${If} ${UAC_IsAdmin}
-        DetailPrint "Setting installation directory permissions..."
+        ${Print} "Setting installation directory permissions..."
         AccessControl::DisableFileInheritance "$INSTDIR"
         AccessControl::RevokeOnFile "$INSTDIR" "(AU)" "GenericWrite"
         AccessControl::RevokeOnFile "$INSTDIR" "(DU)" "GenericWrite"
@@ -1266,11 +1291,13 @@ Section "Install"
         AccessControl::SetOnFile "$INSTDIR" "(BU)" "GenericRead + GenericExecute"
         AccessControl::SetOnFile "$INSTDIR" "(DU)" "GenericRead + GenericExecute"
     ${EndIf}
+    ${Print} "Done!"
+    ${CloseStdout}
 SectionEnd
 
 !macro AbortRetryNSExecWaitLibNsisCmd cmd
     SetDetailsPrint both
-    DetailPrint "Running ${cmd} scripts..."
+    ${Print} "Running ${cmd} scripts..."
     SetDetailsPrint listonly
     ${If} ${Silent}
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
@@ -1337,7 +1364,7 @@ Section "Uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
-    DetailPrint "Removing files and folders..."
+    ${Print} "Removing files and folders..."
     nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
 
     # In case the last command fails, run the slow method to remove leftover
