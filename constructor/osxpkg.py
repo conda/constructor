@@ -13,6 +13,7 @@ from . import preconda
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
+from .signing import CodeSign
 from .utils import (
     add_condarc,
     approx_size_kb,
@@ -423,13 +424,13 @@ def pkgbuild_prepare_installation(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
-def create_plugins(plugins_dir: str, info: dict):
-    pages = info.get("post_install_pages")
+def create_plugins(pages: list = None, codesigner: CodeSign = None):
     if not pages:
         return
     elif isinstance(pages, str):
         pages = [pages]
 
+    fresh_dir(PLUGINS_DIR)
     xcodebuild = shutil.which("xcodebuild")
 
     for page in pages:
@@ -449,17 +450,17 @@ def create_plugins(plugins_dir: str, info: dict):
                     xcodebuild,
                     "-project",
                     str(xcodeproj),
-                    f"CONFIGURATION_BUILD_DIR={plugins_dir}",
+                    f"CONFIGURATION_BUILD_DIR={PLUGINS_DIR}",
                     # do not create dSYM debug symbols directory
                     "DEBUG_INFORMATION_FORMAT=",
                 ]
                 explained_check_call(build_cmd)
         else:
             plugin_name = os.path.basename(page)
-            page_in_plugins = join(plugins_dir, plugin_name)
+            page_in_plugins = join(PLUGINS_DIR, plugin_name)
             shutil.copytree(page, page_in_plugins)
 
-    if notarization_identity_name := info.get('notarization_identity_name'):
+    if codesigner:
         with NamedTemporaryFile(suffix=".plist", delete=False) as entitlements:
             plist = {
                 "com.apple.security.cs.allow-unsigned-executable-memory": True,
@@ -467,24 +468,12 @@ def create_plugins(plugins_dir: str, info: dict):
             }
             plist_dump(plist, entitlements)
 
-        for path in Path(plugins_dir).iterdir():
-            explained_check_call(
-                [
-                    # hardcode to system location to avoid accidental clobber in PATH
-                    "/usr/bin/codesign",
-                    "--verbose",
-                    '--sign', notarization_identity_name,
-                    "--prefix", info.get("reverse_domain_identifier", info['name']),
-                    "--options", "runtime",
-                    "--force",
-                    "--entitlements", entitlements.name,
-                    str(path),
-                ]
-            )
+        for path in Path(PLUGINS_DIR).iterdir():
+            codesigner.sign_bundle(path, entitlements=entitlements.name)
         os.unlink(entitlements.name)
 
-    plugins = [file.name for file in Path(plugins_dir).iterdir()]
-    with open(join(plugins_dir, "InstallerSections.plist"), "wb") as f:
+    plugins = [file.name for file in Path(PLUGINS_DIR).iterdir()]
+    with open(join(PLUGINS_DIR, "InstallerSections.plist"), "wb") as f:
         plist = {
             "SectionOrder": [
                 "Introduction",
@@ -522,12 +511,13 @@ def create(info, verbose=False):
                     "installation! Aborting!"
                 )
 
-    global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR, SCRIPTS_DIR
+    global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR, PLUGINS_DIR, SCRIPTS_DIR
 
     CACHE_DIR = info['_download_dir']
     SCRIPTS_DIR = join(CACHE_DIR, "scripts")
     PACKAGE_ROOT = join(CACHE_DIR, "package_root")
     PACKAGES_DIR = join(CACHE_DIR, "built_pkgs")
+    PLUGINS_DIR = join(CACHE_DIR, "plugins")
 
     fresh_dir(PACKAGES_DIR)
     prefix = join(PACKAGE_ROOT, info.get("pkg_name", info['name']).lower())
@@ -575,31 +565,20 @@ def create(info, verbose=False):
     shutil.copyfile(info['_conda_exe'], join(prefix, "_conda"))
 
     # Sign conda-standalone so it can pass notarization
-    notarization_identity_name = info.get('notarization_identity_name')
-    if notarization_identity_name:
-        with NamedTemporaryFile(suffix=".plist", delete=False) as f:
-            plist = {
+    codesigner = None
+    if notarization_identity_name := info.get('notarization_identity_name'):
+        codesigner = CodeSign(
+            notarization_identity_name,
+            prefix=info.get("reverse_domain_identifier", info['name'])
+        )
+        entitlements = {
                 "com.apple.security.cs.allow-jit": True,
                 "com.apple.security.cs.allow-unsigned-executable-memory": True,
                 "com.apple.security.cs.disable-executable-page-protection": True,
                 "com.apple.security.cs.disable-library-validation": True,
                 "com.apple.security.cs.allow-dyld-environment-variables": True,
-            }
-            plist_dump(plist, f)
-        explained_check_call(
-            [
-                # hardcode to system location to avoid accidental clobber in PATH
-                "/usr/bin/codesign",
-                "--verbose",
-                '--sign', notarization_identity_name,
-                "--prefix", info.get("reverse_domain_identifier", info['name']),
-                "--options", "runtime",
-                "--force",
-                "--entitlements", f.name,
-                join(prefix, "_conda"),
-            ]
-        )
-        os.unlink(f.name)
+        }
+        codesigner.sign_bundle(join(prefix, "_conda"), entitlements=entitlements)
 
     # This script checks to see if the install location already exists and/or contains spaces
     # Not to be confused with the user-provided pre_install!
@@ -656,9 +635,7 @@ def create(info, verbose=False):
     modify_xml(xml_path, info)
 
     if plugins := info.get("post_install_pages"):
-        plugins_dir = join(CACHE_DIR, "plugins")
-        fresh_dir(plugins_dir)
-        create_plugins(plugins_dir, info)
+        create_plugins(plugins, codesigner=codesigner)
 
     identity_name = info.get('signing_identity_name')
     build_cmd = [
@@ -668,7 +645,7 @@ def create(info, verbose=False):
         "--identifier", info.get("reverse_domain_identifier", info['name']),
     ]
     if plugins:
-        build_cmd.extend(["--plugins", plugins_dir])
+        build_cmd.extend(["--plugins", PLUGINS_DIR])
     build_cmd.append("tmp.pkg" if identity_name else info['_outpath'])
     explained_check_call(build_cmd)
     if identity_name:
