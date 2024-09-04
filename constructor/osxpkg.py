@@ -432,14 +432,6 @@ def create_plugins(plugins_dir: str, info: dict):
 
     xcodebuild = shutil.which("xcodebuild")
 
-    if notarization_identity_name := info.get('notarization_identity_name'):
-        with NamedTemporaryFile(suffix=".plist", delete=False) as entitlements:
-            plist = {
-                "com.apple.security.cs.allow-unsigned-executable-memory": True,
-                "com.apple.security.cs.disable-library-validation": True,
-            }
-            plist_dump(plist, entitlements)
-
     for page in pages:
         xcodeproj_dirs = [
             file.resolve()
@@ -461,37 +453,34 @@ def create_plugins(plugins_dir: str, info: dict):
                     # do not create dSYM debug symbols directory
                     "DEBUG_INFORMATION_FORMAT=",
                 ]
-                if notarization_identity_name:
-                    extra_flags = (
-                        "--verbose"
-                        "--prefix {info.get('reverse_domain_identifier', info['name'])}"
-                        "--options runtime"
-                    )
-                    build_cmd.extend([
-                        f"CODE_SIGN_IDENTITY={notarization_identity_name}",
-                        f"CODE_SIGN_ENTITLEMENTS={entitlements.name}",
-                        f"OTHER_CODE_SIGN_FLAGS=\"{' '.join(extra_flags)}\"",
-                    ])
                 explained_check_call(build_cmd)
         else:
             plugin_name = os.path.basename(page)
             page_in_plugins = join(plugins_dir, plugin_name)
             shutil.copytree(page, page_in_plugins)
-            if notarization_identity_name:
-                explained_check_call(
-                    [
-                        # hardcode to system location to avoid accidental clobber in PATH
-                        "/usr/bin/codesign",
-                        "--verbose",
-                        '--sign', notarization_identity_name,
-                        "--prefix", info.get("reverse_domain_identifier", info['name']),
-                        "--options", "runtime",
-                        "--force",
-                        "--entitlements", entitlements.name,
-                        page_in_plugins,
-                    ]
-                )
-    if notarization_identity_name:
+
+    if notarization_identity_name := info.get('notarization_identity_name'):
+        with NamedTemporaryFile(suffix=".plist", delete=False) as entitlements:
+            plist = {
+                "com.apple.security.cs.allow-unsigned-executable-memory": True,
+                "com.apple.security.cs.disable-library-validation": True,
+            }
+            plist_dump(plist, entitlements)
+
+        for path in Path(plugins_dir).iterdir():
+            explained_check_call(
+                [
+                    # hardcode to system location to avoid accidental clobber in PATH
+                    "/usr/bin/codesign",
+                    "--verbose",
+                    '--sign', notarization_identity_name,
+                    "--prefix", info.get("reverse_domain_identifier", info['name']),
+                    "--options", "runtime",
+                    "--force",
+                    "--entitlements", entitlements.name,
+                    str(path),
+                ]
+            )
         os.unlink(entitlements.name)
 
     plugins = [file.name for file in Path(plugins_dir).iterdir()]
