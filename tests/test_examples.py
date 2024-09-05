@@ -335,7 +335,7 @@ def create_installer(
 
 
 @lru_cache(maxsize=None)
-def _self_signed_certificate(path: str, password: str = None):
+def _self_signed_certificate_windows(path: str, password: str = None):
     if not sys.platform.startswith("win"):
         return
     return _execute(
@@ -468,6 +468,10 @@ def test_example_osxpkg(tmp_path, request):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
 def test_example_osxpkg_extra_pages(tmp_path):
+    try:
+        subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("xcodebuild requires XCode to compile extra pages.")
     recipe_path = _example_path("osxpkg_extra_pages")
     input_path = tmp_path / "input"
     output_path = tmp_path / "output"
@@ -494,6 +498,74 @@ def test_example_osxpkg_extra_pages(tmp_path):
         ]
     }
     assert plist == expected
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+@pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
+@pytest.mark.skipif("TEST_MACOS_SIGNING" not in os.environ, reason="TEST_MACOS_SIGNING not set")
+def test_macos_signing(tmp_path, self_signed_certificate_macos):
+    try:
+        subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("xcodebuild requires XCode to compile extra pages.")
+    notarization_identity = self_signed_certificate_macos["notarization_identity"]
+    signing_identity = self_signed_certificate_macos["signing_identity"]
+    input_path = tmp_path / "input"
+    recipe_path = _example_path("osxpkg_extra_pages")
+    shutil.copytree(str(recipe_path), str(input_path))
+    with open(input_path / "construct.yaml", "a") as f:
+        f.write(f"notarization_identity_name: {notarization_identity['name']}\n")
+        f.write(f"signing_identity_name: {signing_identity['name']}\n")
+    output_path = tmp_path / "output"
+    installer, install_dir = next(create_installer(input_path, output_path))
+
+    # Check installer signature
+    p = subprocess.run(
+        ["pkgutil", "--check-signature", installer],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    installer_sha256 = ""
+    lines = p.stdout.split("\n")
+    nlines = len(lines)
+    assert nlines > 4
+    for i in range(nlines - 4):
+        line = lines[i].strip()
+        if signing_identity["name"] in line and "SHA256" in lines[i + 2]:
+            i += 3
+            while i < nlines and line:
+                installer_sha256 += lines[i].replace(" ", "")
+                i += 1
+            break
+    assert installer_sha256 == signing_identity["sha256"]
+
+    # Check component signatures
+    expanded_path = output_path / "expanded"
+    # expand-full is an undocumented option that extracts all archives,
+    # including binary archives like the PlugIns file
+    cmd = ["pkgutil", "--expand-full", installer, expanded_path]
+    _execute(cmd)
+    components = [
+        Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", "_conda"),
+        Path(expanded_path, "Plugins", "ExtraPage.bundle"),
+    ]
+    validated_signatures = []
+    for component in components:
+        p = subprocess.run(
+            ["/usr/bin/codesign", "--verify", str(component), "--verbose=4"],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        lines = p.stderr.split("\n")[:-1]
+        if (
+            len(lines) == 2
+            and lines[0] == f"{component}: valid on disk"
+            and lines[1] == f"{component}: satisfies its Designated Requirement"
+        ):
+            validated_signatures.append(component)
+    assert validated_signatures == components
 
 
 def test_example_scripts(tmp_path, request):
@@ -547,7 +619,7 @@ def test_example_signing(tmp_path, request):
     input_path = _example_path("signing")
     cert_path = tmp_path / "self-signed-cert.pfx"
     cert_pwd = "1234"
-    _self_signed_certificate(path=cert_path, password=cert_pwd)
+    _self_signed_certificate_windows(path=cert_path, password=cert_pwd)
     assert cert_path.exists()
     certificate_in_input_dir = input_path / "certificate.pfx"
     shutil.copy(str(cert_path), str(certificate_in_input_dir))

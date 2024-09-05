@@ -2,6 +2,7 @@ import logging
 import os
 import shlex
 import shutil
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from os.path import abspath, dirname, exists, isdir, join
@@ -431,7 +432,7 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
         pages = [pages]
 
     fresh_dir(PLUGINS_DIR)
-    xcodebuild = shutil.which("xcodebuild")
+    xcodebuild = None
 
     for page in pages:
         xcodeproj_dirs = [
@@ -441,10 +442,19 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
         ]
         if xcodeproj_dirs:
             if not xcodebuild:
-                raise RuntimeError(
-                    "Plugin directory contains an uncompiled project,"
-                    " but xcodebuild is not available."
-                )
+                xcodebuild = shutil.which("xcodebuild")
+                if not xcodebuild:
+                    raise RuntimeError(
+                        "Plugin directory contains an uncompiled project,"
+                        " but xcodebuild is not available."
+                    )
+                try:
+                    subprocess.run([xcodebuild, "--help"], check=True, capture_output=True)
+                except subprocess.CalledSubprocessError:
+                    raise RuntimeError(
+                        "Plugin directory contains an uncomplied project,"
+                        " but xcodebuild requires XCode to compile plugins."
+                    )
             for xcodeproj in xcodeproj_dirs:
                 build_cmd = [
                     xcodebuild,
