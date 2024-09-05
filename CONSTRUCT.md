@@ -777,6 +777,16 @@ If this key is missing, it defaults to a message about Anaconda Cloud.
 You can disable it altogether if you set this key to `""` (empty string).
 (MacOS only).
 
+### `post_install_pages`
+
+_required:_ no<br/>
+_types:_ list, string<br/>
+
+Adds extra panels to the installers to be shown after installation.
+For pkg installers, these can be compiled installer plug-ins or
+a directories containing an Xcode project. In the latter case,
+constructor will try and compile the project file using `xcodebuild`.
+
 ### `conclusion_file`
 
 _required:_ no<br/>

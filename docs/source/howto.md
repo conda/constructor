@@ -93,8 +93,16 @@ If neither `AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN` nor `AZURE_SIGNTOOL_KEY_VAULT_
 In the case of macOS, users might get warnings for PKGs if the installers are not signed _and_ notarized. However, once these two requirements are fulfilled, the warnings disappear instantly.
 `constructor` offers some configuration options to help you in this process:
 
-You will need to provide two identity names. One for the PKG signature (via [`signing_identity_name`](construct-yaml.md#signing_identity_name)), and one to pass the notarization (via [`notarization_identity_name`](construct-yaml.md#notarization_identity_name)). These can be obtained in the [Apple Developer portal](https://developer.apple.com/account/).
+You will need to provide two identity names:
+* the installer certificate identity (via [`signing_identity_name`](construct-yaml.md#signing_identity_name)) to sign the pkg installer,
+* the application certificate identity to pass the notarization (via [`notarization_identity_name`](construct-yaml.md#notarization_identity_name));
+  this certificate is used to sign binaries and plugins inside the pkg installer.
+These can be obtained in the [Apple Developer portal](https://developer.apple.com/account/).
 Once signed, you can notarize your PKG with Apple's `notarytool`.
+
+:::{note}
+
+To sign a pkg installer, the keychain containing the identity names must be unlocked and in the keychain search list.
 
 ## Create shortcuts
 
