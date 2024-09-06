@@ -1205,9 +1205,9 @@ Section "Install"
     # https://github.com/conda/conda-libmamba-solver/issues/480
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
-    ${Print} "Checking virtual specs compatibility: @VIRTUAL_SPECS@"
+    ${Print} "Checking virtual specs compatibility: @VIRTUAL_SPECS_DEBUG@"
     push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@'
-    push 'Failed to check virtual specs: @VIRTUAL_SPECS@'
+    push 'Failed to check virtual specs: @VIRTUAL_SPECS_DEBUG@'
     push 'WithLog'
     call AbortRetryNSExecWait
     SetDetailsPrint both
