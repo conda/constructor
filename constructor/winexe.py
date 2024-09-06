@@ -403,8 +403,6 @@ def make_nsi(
     nsi_path = join(dir_path, 'main.nsi')
     with open(nsi_path, 'w') as fo:
         fo.write(data)
-    with open("main.nsi", "w") as fo:
-        fo.write(data)
     # Uncomment to see the file for debugging
     # with open('main.nsi', 'w') as fo:
     #     fo.write(data)
