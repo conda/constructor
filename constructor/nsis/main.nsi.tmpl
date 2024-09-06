@@ -249,6 +249,8 @@ FunctionEnd
     ${GetOptions} $ARGV "/?" $ARGV_Help
     ${IfNot} ${Errors}
         ${Print} "$\n\
+            Installs ${NAME} ${VERSION}$\n$\n\
+            $\n$\n\
             USAGE: $EXEFILE [options]$\n$\n\
             OPTIONS:$\n$\n\
                 /InstallationType=AllUsers [default: JustMe]$\n$\n\
@@ -359,6 +361,7 @@ Function OnInit_Release
                 # To address CVE-2022-26526.
                 # In AllUsers install mode, do not allow AddToPath as an option.
                 MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                ${Print} "/AddToPath=1 is disabled and ignored in 'All Users' installations"
                 StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
             ${Else}
                 StrCpy $Ana_AddToPath_State ${BST_CHECKED}
@@ -694,6 +697,12 @@ Function .onInit
 
     Call OnInit_Release
 
+    ${Print} "Welcome to ${NAME} ${VERSION}"
+#if has_license
+    ${Print} "By continuing this installation you are accepting a license agreement."
+    ${Print} "Please run the installer in GUI mode to read the details."
+#endif
+
     Pop $R2
     Pop $R1
     Pop $2
@@ -750,6 +759,7 @@ Function un.onInit
     goto valid_dir
 
     invalid_dir:
+        ${Print} "::error:: $INSTDIR is not a valid conda directory. Please run the uninstaller from a conda directory."
         MessageBox MB_OK|MB_ICONSTOP \
             "Error: $INSTDIR is not a valid conda directory. Please run the uninstaller from a conda directory." \
             /SD IDABORT
@@ -1088,7 +1098,6 @@ FunctionEnd
 # Installer sections
 Section "Install"
     ${LogSet} on
-    ${Print} "Welcome to ${NAME} ${VERSION} installer!"
     ${If} ${Silent}
         call OnDirectoryLeave
     ${EndIf}
@@ -1106,6 +1115,9 @@ Section "Install"
     ${EndIf}
     StrCpy $INSTDIR $0
 
+    ${Print} "${NAME} will now be installed into this location:"
+    ${Print} "$INSTDIR"
+
     ReadEnvStr $0 SystemRoot
     # set PATH for the installer process, so that MSVC runtimes get found OK
     #    This is also isolating PATH to be just us and Windows core stuff, which hopefully avoids
@@ -1113,7 +1125,7 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                  "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$0;$0\system32;$0\system32\Wbem").r0'
 
-    ${Print} "Setting up bootstrappers..."
+    ${Print} "Unpacking payload..."
 
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
@@ -1163,7 +1175,7 @@ Section "Install"
     # https://github.com/conda/conda-libmamba-solver/issues/480
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
-    ${Print} "Checking virtual specs..."
+    ${Print} "Checking virtual specs compatibility: @VIRTUAL_SPECS@"
     push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@'
     push 'Failed to check virtual specs: @VIRTUAL_SPECS@'
     push 'WithLog'
