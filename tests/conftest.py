@@ -11,7 +11,7 @@ ON_CI = os.environ.get("CI")
 @pytest.fixture
 def self_signed_certificate_macos(tmp_path):
     p = subprocess.run(
-         ["security", "list-keychains", "-d", "user"],
+         ["security", "list-keychains"],
          capture_output=True,
          text=True,
     )
@@ -65,4 +65,4 @@ def self_signed_certificate_macos(tmp_path):
         capture_output=True,
         text=True,
     )
-    subprocess.run(["security", "list-keychains", "-d", "user", "-s", *current_keychains])
+    subprocess.run(["security", "list-keychains", "-s", *current_keychains])

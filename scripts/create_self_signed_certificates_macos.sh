@@ -26,10 +26,8 @@ INSTALLER_SIGNING_ID=${INSTALLER_SIGNING_ID:-${INSTALLER_ROOT}}
 # which is why it is unsed on the CI.
 if [[ -n "${ON_CI}" ]]; then
     KEYCHAIN_PATH="/Library/Keychains/System.keychain"
-    KEYCHAIN_DOMAIN="system"
 else
     KEYCHAIN_PATH="${ROOT_DIR}/constructor.keychain-db"
-    KEYCHAIN_DOMAIN="user"
 fi
 
 security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
@@ -88,4 +86,4 @@ done
 # Add keychain at the beginning of the keychain list
 # Must be removed at a later clean-up step
 # shellcheck disable=SC2046
-security list-keychains -d ${KEYCHAIN_DOMAIN} -s "${KEYCHAIN_PATH}" $(security list-keychains | xargs)
+security list-keychains -s "${KEYCHAIN_PATH}" $(security list-keychains | xargs)
