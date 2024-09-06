@@ -69,11 +69,12 @@ for context in ${APPLICATION_ROOT} ${INSTALLER_ROOT}; do
     # Output to verify installer signatures
     fingerprint=$(openssl x509 -in "${pemfile}" -noout -fingerprint -sha256 | cut -f2 -d'=' | sed 's/://g')
     echo "SHA256 ${commonname} = ${fingerprint}"
-    #if [[ "${context}" == "installer" ]] && [[ -z "${CI}" ]]; then
-    #    # Installer certificates must be trusted to be found in the keychain.
-    #    # In non-CI environments, users will be asked for a passkey.
-    #    security add-trusted-cert -p basic -k "${KEYCHAIN_PATH}" "${pemfile}"
-    #fi
+    if [[ "${context}" == "installer" ]]; then
+        # Installer certificates must be trusted to be found in the keychain.
+        # In non-CI environments, users will be asked for a passkey.
+        security import "${pemfile}" -k /Library/Keychains/System.keychain -A
+        security add-trusted-cert -d -p basic -k /Library/Keychains/System.keychain "${pemfile}"
+    fi
 done
 
 # Add keychain at the beginning of the keychain list
