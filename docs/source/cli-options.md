@@ -72,7 +72,10 @@ Windows installers have the following CLI options available:
 You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage), but only _after_ the ones mentioned above:
 
 - `/NCRC`: disables the CRC check.
-- `/S` (silent): runs the installer or uninstaller in silent mode.
+- `/S` (silent): runs the installer or uninstaller in headless mode. Installers created with
+  `constructor 3.10` or later will report information to the active console. Note that this
+  is not the stdout stream of the process, so stream redirection (like `>`, `>>` or `|`)
+  won't work.
 - `/D` (directory): sets the default installation directory. Note that even if the path contains
   spaces, it must be the last parameter used in the command line and must not contain any quotes.
   Only absolute paths are supported. The uninstaller uses `_?` instead of `/D`.
