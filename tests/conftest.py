@@ -37,7 +37,7 @@ def self_signed_certificate_macos(tmp_path):
         "KEYCHAIN_PASSWORD": keychain_password,
         "ROOT_DIR": str(cert_root),
     }
-    if not ON_CI:
+    if ON_CI:
         env["ON_CI"] = "1"
     p = subprocess.run(
         ["bash", REPO_DIR / "scripts" / "create_self_signed_certificates_macos.sh"],
