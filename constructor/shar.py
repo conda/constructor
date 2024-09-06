@@ -55,7 +55,7 @@ def read_header_template():
 def get_header(conda_exec, tarball, info):
     name = info['name']
 
-    has_license = bool('license_file' in info)
+    has_license = bool(info.get('license_file'))
     ppd = ns_platform(info['_platform'])
     ppd['keep_pkgs'] = bool(info.get('keep_pkgs', False))
     ppd['batch_mode'] = bool(info.get('batch_mode', False))

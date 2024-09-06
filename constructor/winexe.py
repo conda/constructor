@@ -332,10 +332,11 @@ def make_nsi(
     ppd["has_conda"] = info["_has_conda"]
     ppd["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
     ppd["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
+    ppd["has_license"] = bool(info.get('license_file'))
     data = preprocess(data, ppd)
     data = fill_template(data, replace, exceptions=nsis_predefines)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
-        # Branding /TRIM commannd is unsupported on non win platform
+        # Branding /TRIM command is unsupported on non win platform
         data_lines = data.split("\n")
         for i, line in enumerate(data_lines):
             if "/TRIM" in line:
