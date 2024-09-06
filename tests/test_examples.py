@@ -129,6 +129,8 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
     process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
     if check:
         _check_installer_log(install_dir)
+        assert install_dir in process.stdout
+        assert "Done!" in process.stdout
     return process
 
 
