@@ -783,9 +783,13 @@ _required:_ no<br/>
 _types:_ list, string<br/>
 
 Adds extra panels to the installers to be shown after installation.
+
 For pkg installers, these can be compiled installer plug-ins or
 a directories containing an Xcode project. In the latter case,
 constructor will try and compile the project file using `xcodebuild`.
+
+For Windows, the extra pages must be nsi files.
+They will be inserted as-is before the conclusion page.
 
 ### `conclusion_file`
 
@@ -798,9 +802,7 @@ plain text (.txt), rich text (.rtf) or HTML (.html). If both
 `conclusion_file` and `conclusion_text` are provided,
 `conclusion_file` takes precedence. (MacOS only).
 
-If the installer is for windows and conclusion file type is nsi,
-it will use the nsi script to add in extra pages and the conclusion file
-at the end of the installer.
+If the installer is for Windows, the file type must be nsi.
 
 ### `conclusion_text`
 

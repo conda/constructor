@@ -365,6 +365,13 @@ def test_example_customized_welcome_conclusion(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_example_extra_pages_win(tmp_path, request):
+    input_path = _example_path("exe_extra_pages")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+
+
 def test_example_extra_envs(tmp_path, request):
     input_path = _example_path("extra_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
