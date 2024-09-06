@@ -21,11 +21,14 @@ INSTALLER_ROOT="installer"
 INSTALLER_SIGNING_ID=${INSTALLER_SIGNING_ID:-${INSTALLER_ROOT}}
 
 KEYCHAIN_PATH="${KEYCHAIN_PATH:-"${ROOT_DIR}/constructor.keychain"}"
-
-if [[ ! -f "${KEYCHAIN_PATH}" ]]; then
-    security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-    security set-keychain-settings -lut 3600 "${KEYCHAIN_PATH}"
+if [[ -n "${ON_CI}" ]]; then
+    CERT_KEYCHAIN="/Library/Keychains/System.keychain"
+else
+    CERT_KEYCHAIN=${KEYCHAIN_PATH}
 fi
+
+security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+security set-keychain-settings -lut 3600 "${KEYCHAIN_PATH}"
 security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
 
 for context in ${APPLICATION_ROOT} ${INSTALLER_ROOT}; do
@@ -73,6 +76,6 @@ for context in ${APPLICATION_ROOT} ${INSTALLER_ROOT}; do
     fingerprint=$(openssl x509 -in "${pemfile}" -noout -fingerprint -sha256 | cut -f2 -d'=' | sed 's/://g')
     echo "SHA256 ${commonname} = ${fingerprint}"
     if [[ "${context}" == "installer" ]]; then
-        security add-trusted-cert -d -p basic -k "${KEYCHAIN_PATH}" "${pemfile}"
+        security add-trusted-cert -d -p basic -k "${CERT_KEYCHAIN}" "${pemfile}"
     fi
 done

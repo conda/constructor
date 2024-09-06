@@ -27,21 +27,18 @@ def self_signed_certificate_macos(tmp_path):
     # Users will be asked for authentication.
     # On GitHub runners, the system keychain does not require authentication,
     # which is why it is unsed on the CI.
-    if ON_CI:
-        keychain_path = "/Library/Keychains/System.keychain"
-        keychain_password = ""
-    else:
-        keychain_path = str(cert_root / "constructor.keychain")
-        keychain_password = "abcd"
+    keychain_path = str(cert_root / "constructor.keychain")
+    keychain_password = "abcd"
     env = {
         "APPLICATION_SIGNING_ID": notarization_identity,
         "APPLICATION_SIGNING_PASSWORD": notarization_identity_password,
         "INSTALLER_SIGNING_ID": signing_identity,
         "INSTALLER_SIGNING_PASSWORD": signing_identity_password,
         "KEYCHAIN_PASSWORD": keychain_password,
-        "KEYCHAIN_PATH": keychain_path,
         "ROOT_DIR": str(cert_root),
     }
+    if not ON_CI:
+        env["ON_CI"] = "1"
     p = subprocess.run(
         ["bash", REPO_DIR / "scripts" / "create_self_signed_certificates_macos.sh"],
         env=env,
