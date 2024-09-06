@@ -565,6 +565,7 @@ def test_macos_signing(tmp_path, self_signed_certificate_macos):
             text=True,
             capture_output=True,
         )
+        # codesign --verify outputs to stderr
         lines = p.stderr.split("\n")[:-1]
         if (
             len(lines) == 2
