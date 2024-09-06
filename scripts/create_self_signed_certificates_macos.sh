@@ -20,18 +20,12 @@ APPLICATION_SIGNING_ID=${APPLICATION_SIGNING_ID:-${APPLICATION_ROOT}}
 INSTALLER_ROOT="installer"
 INSTALLER_SIGNING_ID=${INSTALLER_SIGNING_ID:-${INSTALLER_ROOT}}
 
-# Installer certificates must be trusted to be found in the keychain.
-# Users will be asked for authentication.
-# On GitHub runners, the system keychain does not require authentication,
-# which is why it is unsed on the CI.
-if [[ -n "${ON_CI}" ]]; then
-    KEYCHAIN_PATH="/Library/Keychains/System.keychain"
-else
-    KEYCHAIN_PATH="${ROOT_DIR}/constructor.keychain-db"
-fi
+KEYCHAIN_PATH="${KEYCHAIN_PATH:-"${ROOT_DIR}/constructor.keychain"}"
 
-security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-security set-keychain-settings -lut 3600 "${KEYCHAIN_PATH}"
+if [[ ! -f "${KEYCHAIN_PATH}" ]]; then
+    security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+    security set-keychain-settings -lut 3600 "${KEYCHAIN_PATH}"
+fi
 security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
 
 for context in ${APPLICATION_ROOT} ${INSTALLER_ROOT}; do
@@ -82,8 +76,3 @@ for context in ${APPLICATION_ROOT} ${INSTALLER_ROOT}; do
         security add-trusted-cert -d -p basic -k "${KEYCHAIN_PATH}" "${pemfile}"
     fi
 done
-
-# Add keychain at the beginning of the keychain list
-# Must be removed at a later clean-up step
-# shellcheck disable=SC2046
-security list-keychains -s "${KEYCHAIN_PATH}" $(security list-keychains | xargs)
