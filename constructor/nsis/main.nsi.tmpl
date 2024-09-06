@@ -252,34 +252,56 @@ FunctionEnd
     ${GetParameters} $ARGV
     ${GetOptions} $ARGV "/?" $ARGV_Help
     ${IfNot} ${Errors}
-        ${Print} "$\n\
-            Installs ${NAME} ${VERSION}$\n$\n\
-            $\n$\n\
-            USAGE: $EXEFILE [options]$\n$\n\
-            OPTIONS:$\n$\n\
-                /InstallationType=AllUsers [default: JustMe]$\n$\n\
-                /AddToPath=[0|1] [default: 0]$\n$\n\
+        SetSilent silent
+        ${Print} "\
+            Installs ${NAME} ${VERSION}$\n\
+            $\n\
+            USAGE$\n\
+            -----$\n\
+            $\n\
+            $EXEFILE [options]$\n\
+            $\n\
+            OPTIONS$\n\
+            -------$\n\
+            $\n\
+                /InstallationType=AllUsers [default: JustMe]$\n\
+                /AddToPath=[0|1] [default: 0]$\n\
 #if keep_pkgs is True
-                /KeepPkgCache=[0|1] [default: 1]$\n$\n\
+                /KeepPkgCache=[0|1] [default: 1]$\n\
 #endif
 #if keep_pkgs is False
-                /KeepPkgCache=[0|1] [default: 0]$\n$\n\
+                /KeepPkgCache=[0|1] [default: 0]$\n\
 #endif
-                /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
-                /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
-                /NoScripts=[0|1] [default: 0]$\n$\n\
-                /NoShortcuts=[0|1] [default: 0]$\n$\n\
-                /CheckPathLength=[0|1] [default: 1]$\n$\n\
-            EXAMPLES:$\n$\n\
+                /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
+                /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
+                /NoScripts=[0|1] [default: 0]$\n\
+                /NoShortcuts=[0|1] [default: 0]$\n\
+                /CheckPathLength=[0|1] [default: 1]$\n\
+                /? (show this help message)$\n\
+                /S (run in CLI/headless mode)$\n\
+                /D=[installation directory] (must be last parameter)$\n"
+        # There seems to be a limit to how many chars per ${Print} we can pass.
+        # The message will get truncated silently, no errors.
+        # That's why we split the help message in two calls.
+        ${Print} "\
+            EXAMPLES$\n\
+            --------$\n\
+                $\n\
                 Install for all users, but don't add to PATH env var:$\n\
-                    > $EXEFILE /InstallationType=AllUsers$\n$\n\
+                    > $EXEFILE /InstallationType=AllUsers$\n\
+                $\n\
                 Install for just me, add to PATH and register as system Python:$\n\
-                    > $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
+                    > $EXEFILE /RegisterPython=1 /AddToPath=1$\n\
+                $\n\
                 Install for just me, with no registry modification (for CI):$\n\
-                    > $EXEFILE /NoRegistry=1$\n$\n\
+                    > $EXEFILE /NoRegistry=1$\n\
+                $\n\
+                Install via CLI (no GUI) into C:\${NAME}$\n\
+                    > cmd /C START /WAIT $EXEFILE /S /D=C:\${NAME}$\n\
+            $\n\
             NOTE: If you install for AllUsers, then the option to AddToPath$\n\
                 is disabled (i.e. if /InstallationType=AllUsers, then$\n\
-                /AddToPath=1 will be ignored).$\n"
+                /AddToPath=1 will be ignored)."
         Abort
      ${EndIf}
 
