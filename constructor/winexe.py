@@ -376,7 +376,7 @@ def make_nsi(
         ),
         ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files))),
         ('@VIRTUAL_SPECS@', " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])),
-        ('@LICENSEFILENAME@', basename(info.get('license_file', join(NSIS_DIR, 'placeholder_license.txt')))),
+        ('@LICENSEFILENAME@', basename(info.get('license_file', 'placeholder_license.txt'))),
     ]:
         data = data.replace(key, value)
 
