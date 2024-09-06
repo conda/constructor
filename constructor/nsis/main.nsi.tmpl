@@ -43,11 +43,13 @@ Unicode "true"
 
 !define CloseStdout "!insertmacro CloseStdout"
 !macro CloseStdout
-    System::Call 'kernel32::GetStdHandle(i -11)i.r0'
-    FileClose $0
-    System::Free $0
-    System::Free $1
-    System::Call 'kernel32::FreeConsole()'
+    ${If} ${Silent}
+        System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+        FileClose $0
+        System::Free $0
+        System::Free $1
+        System::Call 'kernel32::FreeConsole()'
+  ${EndIf}
 !macroend
 
 !include "WinMessages.nsh"
