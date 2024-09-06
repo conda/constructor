@@ -10,12 +10,13 @@ ON_CI = os.environ.get("CI")
 
 @pytest.fixture
 def self_signed_certificate_macos(tmp_path):
-    default_keychain = subprocess.run(
+    p = subprocess.run(
          ["security", "default-keychain"],
          capture_output=True,
          text=True,
          check=True,
     )
+    default_keychain = p.stdout.strip(' "\n')
     cert_root = tmp_path / "certs"
     cert_root.mkdir(parents=True, exist_ok=True)
     signing_identity = "testinstaller"
@@ -65,7 +66,12 @@ def self_signed_certificate_macos(tmp_path):
             cert_data["signing_identity"]["sha256"] = sha256.strip()
         elif notarization_identity in identifier:
             cert_data["notarization_identity"]["sha256"] = sha256.strip()
-    subprocess.run
+    subprocess.run(
+         ["security", "default-keychain", "-s", keychain_path],
+         capture_output=True,
+         text=True,
+         check=True,
+    )
     yield cert_data
     # Clean up
     subprocess.run(
