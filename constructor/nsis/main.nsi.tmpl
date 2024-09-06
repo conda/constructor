@@ -1,9 +1,11 @@
 # Installer template file for creating a Windows installer using NSIS.
 
-# Dependencies:
-#   NSIS >=3.08      conda install "nsis>=3.08"  (includes extra unicode plugins)
+!if "${NSIS_PACKEDVERSION}" < 0x3008000
+  !error "NSIS 3.08 or higher is required to build this installer!"
+  # conda install "nsis>=3.08"  (includes extra unicode plugins)
+!endif
 
-Unicode "true"
+Unicode true
 
 #if enable_debugging is True
 # Special logging build needed for ENABLE_LOGGING
