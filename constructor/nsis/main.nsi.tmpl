@@ -723,11 +723,7 @@ Function .onInit
 
     Call OnInit_Release
 
-    ${Print} "Welcome to ${NAME} ${VERSION}"
-#if has_license
-    ${Print} "By continuing this installation you are accepting a license agreement."
-    ${Print} "Please run the installer in GUI mode to read the details."
-#endif
+    ${Print} "Welcome to ${NAME} ${VERSION}$\n"
 
     Pop $R2
     Pop $R1
@@ -1141,8 +1137,16 @@ Section "Install"
     ${EndIf}
     StrCpy $INSTDIR $0
 
+#if has_license
+    SetOutPath "$INSTDIR"
+    File __LICENSEFILE__
+    ${Print} "By continuing this installation you are accepting this license agreement:"
+    ${Print} "$INSTDIR\@LICENSEFILENAME@"
+    ${Print} "Please run the installer in GUI mode to read the details.$\n"
+#endif
+
     ${Print} "${NAME} will now be installed into this location:"
-    ${Print} "$INSTDIR"
+    ${Print} "$INSTDIR$\n"
 
     ReadEnvStr $0 SystemRoot
     # set PATH for the installer process, so that MSVC runtimes get found OK
