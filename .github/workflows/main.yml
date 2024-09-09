@@ -132,6 +132,8 @@ jobs:
             conda activate constructor-dev
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
           fi
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - name: Run unit tests
         run: |
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
@@ -155,8 +157,6 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
