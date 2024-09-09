@@ -99,8 +99,6 @@ jobs:
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
         with:
           activate-environment: constructor-dev
@@ -157,6 +155,8 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
