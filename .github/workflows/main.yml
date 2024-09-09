@@ -29,7 +29,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash -l {0}
+    shell: bash -el {0}
 jobs:
   tests:
     name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, ${{ matrix.conda-standalone }}
@@ -39,23 +39,23 @@ jobs:
       matrix:
         include:
           # UBUNTU
-          #- os: ubuntu-latest
-          #  python-version: "3.8"
-          #  conda-standalone: conda-standalone
-          #  check-docs: true
-          #- os: ubuntu-latest
-          #  python-version: "3.9"
-          #  conda-standalone: conda-standalone
-          #  check-docs: true
-          #- os: ubuntu-latest
-          #  python-version: "3.10"
-          #  conda-standalone: conda-standalone-nightly
-          #- os: ubuntu-latest
-          #  python-version: "3.11"
-          #  conda-standalone: micromamba
-          #- os: ubuntu-latest
-          #  python-version: "3.12"
-          #  conda-standalone: conda-standalone
+          - os: ubuntu-latest
+            python-version: "3.8"
+            conda-standalone: conda-standalone
+            check-docs: true
+          - os: ubuntu-latest
+            python-version: "3.9"
+            conda-standalone: conda-standalone
+            check-docs: true
+          - os: ubuntu-latest
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+          - os: ubuntu-latest
+            python-version: "3.11"
+            conda-standalone: micromamba
+          - os: ubuntu-latest
+            python-version: "3.12"
+            conda-standalone: conda-standalone
           # MACOS
           - os: macos-13
             python-version: "3.8"
@@ -67,30 +67,30 @@ jobs:
           # - os: macos-13
           #   python-version: "3.10"
           #   conda-standalone: micromamba
-          #- os: macos-latest
-          #  python-version: "3.11"
-          #  conda-standalone: conda-standalone
-          #- os: macos-latest
-          #  python-version: "3.12"
-          #  conda-standalone: micromamba
-          ## WINDOWS
-          #- os: windows-latest
-          #  python-version: "3.8"
-          #  conda-standalone: conda-standalone
-          #- os: windows-latest
-          #  python-version: "3.9"
-          #  conda-standalone: conda-standalone-nightly
-          #- os: windows-latest
-          #  python-version: "3.10"
-          #  conda-standalone: conda-standalone
-          #- os: windows-latest
-          #  python-version: "3.11"
-          #  # conda-standalone: micromamba
-          #  conda-standalone: conda-standalone-nightly
-          #- os: windows-latest
-          #  python-version: "3.12"
-          #  # conda-standalone: micromamba
-          #  conda-standalone: conda-standalone
+          - os: macos-latest
+            python-version: "3.11"
+            conda-standalone: conda-standalone
+          - os: macos-latest
+            python-version: "3.12"
+            conda-standalone: micromamba
+          # WINDOWS
+          - os: windows-latest
+            python-version: "3.8"
+            conda-standalone: conda-standalone
+          - os: windows-latest
+            python-version: "3.9"
+            conda-standalone: conda-standalone-nightly
+          - os: windows-latest
+            python-version: "3.10"
+            conda-standalone: conda-standalone
+          - os: windows-latest
+            python-version: "3.11"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-nightly
+          - os: windows-latest
+            python-version: "3.12"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone
 
     env:
       PYTHONUNBUFFERED: "1"
@@ -132,8 +132,6 @@ jobs:
             conda activate constructor-dev
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
           fi
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - name: Run unit tests
         run: |
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"

@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 
@@ -19,12 +20,13 @@ def self_signed_application_certificate_macos(tmp_path):
     notarization_identity = "testapplication"
     notarization_identity_password = "5678"
     keychain_password = "abcd"
-    env = {
+    env = os.environ.copy()
+    env.update({
         "APPLICATION_SIGNING_ID": notarization_identity,
         "APPLICATION_SIGNING_PASSWORD": notarization_identity_password,
         "KEYCHAIN_PASSWORD": keychain_password,
         "ROOT_DIR": str(cert_root),
-    }
+    })
     p = subprocess.run(
         ["bash", REPO_DIR / "scripts" / "create_self_signed_certificates_macos.sh"],
         env=env,
