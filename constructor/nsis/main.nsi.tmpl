@@ -29,32 +29,25 @@ Unicode true
 !macroend
 
 var /global QuietMode # "0" = print normally, "1" = do not print
-
+var /global StdOutHandle
+var /global StdOutHandleSet
 !define Print "!insertmacro PrintMacro"
 !macro PrintMacro INPUT_TEXT
   DetailPrint "${INPUT_TEXT}"
   ${If} ${Silent}
   ${AndIf} $QuietMode != "1"
-    System::Call 'kernel32::GetStdHandle(i -11)i.r0'
-    System::Call 'kernel32::AttachConsole(i -1)i.r1'
-    ${If} $0 = 0
-    ${OrIf} $1 = 0
-      System::Call 'kernel32::AllocConsole()'
-      System::Call 'kernel32::GetStdHandle(i -11)i.r0'
-      FileWrite $0 "${INPUT_TEXT}$\n"
+    ${IfNot} $StdOutHandleSet == "1"
+        System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+        System::Call 'kernel32::AttachConsole(i -1)i.r1'
+        ${If} $0 = 0
+        ${OrIf} $1 = 0
+            System::Call 'kernel32::AllocConsole()'
+            System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+        ${EndIf}
+        StrCpy $StdOutHandle $0
+        StrCpy $StdOutHandleSet "1"
     ${EndIf}
-  ${EndIf}
-!macroend
-
-!define CloseStdout "!insertmacro CloseStdout"
-!macro CloseStdout
-  ${If} ${Silent}
-  ${AndIf} $QuietMode != "1"
-    System::Call 'kernel32::GetStdHandle(i -11)i.r0'
-    FileClose $0
-    System::Free $0
-    System::Free $1
-    System::Call 'kernel32::FreeConsole()'
+    FileWrite $StdOutHandle "${INPUT_TEXT}$\n"
   ${EndIf}
 !macroend
 
@@ -1346,7 +1339,6 @@ Section "Install"
         AccessControl::SetOnFile "$INSTDIR" "(DU)" "GenericRead + GenericExecute"
     ${EndIf}
     ${Print} "Done!"
-    ${CloseStdout}
 SectionEnd
 
 !macro AbortRetryNSExecWaitLibNsisCmd cmd

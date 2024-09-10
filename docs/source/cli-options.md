@@ -75,9 +75,7 @@ You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapt
 
 - `/NCRC`: disables the CRC check.
 - `/S` (silent): runs the installer or uninstaller in headless mode. Installers created with
-  `constructor 3.10` or later will report information to the active console. Note that this
-  is not the stdout stream of the process, so stream redirection (like `>`, `>>` or `|`)
-  won't work.
+  `constructor 3.10` or later will report information to the active console.
 - `/D` (directory): sets the default installation directory. Note that even if the path contains
   spaces, it must be the last parameter used in the command line and must not contain any quotes.
   Only absolute paths are supported. The uninstaller uses `_?` instead of `/D`.
@@ -105,6 +103,31 @@ Run the uninstaller in silent mode from its original location:
 ```batch
 > cmd.exe /c start /wait "C:\Program Files\my_app\uninstaller.exe" /S _?=C:\Program Files\my_app
 ```
+
+:::{admonition} Stream redirection in EXE installers
+:class: info
+
+When run in `/S` mode, EXE installers will output some minimal info to the console when invoked
+like this:
+
+```batch
+> cmd.exe /c start /wait my_installer.exe /S
+```
+
+This call waits until the installer is done. However, stream redirection won't work like this:
+
+```batch
+> cmd.exe /c start /wait my_installer.exe /S > logs.txt
+```
+
+Stream redirection does work as expected if run directly:
+
+```batch
+> my_installer.exe /S > logs.txt
+```
+
+Unfortunately, in this case the call won't block. You will have to poll the `logs.txt` file and block until finished (e.g. you find `Done!` or `:error:`).
+:::
 
 :::{admonition} EXE installers with file logging
 :class: tip
