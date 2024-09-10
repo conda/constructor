@@ -452,8 +452,8 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
                     subprocess.run([xcodebuild, "--help"], check=True, capture_output=True)
                 except subprocess.CalledSubprocessError:
                     raise RuntimeError(
-                        "Plugin directory contains an uncomplied project,"
-                        " but xcodebuild requires XCode to compile plugins."
+                        "Plugin directory contains an uncompiled project, "
+                        "but xcodebuild requires XCode to compile plugins."
                     )
             for xcodeproj in xcodeproj_dirs:
                 build_cmd = [
