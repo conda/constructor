@@ -28,29 +28,33 @@ Unicode true
   !endif
 !macroend
 
+var /global QuietMode # "0" = print normally, "1" = do not print
+
 !define Print "!insertmacro PrintMacro"
 !macro PrintMacro INPUT_TEXT
   DetailPrint "${INPUT_TEXT}"
   ${If} ${Silent}
+  ${AndIf} $QuietMode != "1"
     System::Call 'kernel32::GetStdHandle(i -11)i.r0'
     System::Call 'kernel32::AttachConsole(i -1)i.r1'
     ${If} $0 = 0
     ${OrIf} $1 = 0
-        System::Call 'kernel32::AllocConsole()'
-        System::Call 'kernel32::GetStdHandle(i -11)i.r0'
-        FileWrite $0 "${INPUT_TEXT}$\n"
+      System::Call 'kernel32::AllocConsole()'
+      System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+      FileWrite $0 "${INPUT_TEXT}$\n"
     ${EndIf}
   ${EndIf}
 !macroend
 
 !define CloseStdout "!insertmacro CloseStdout"
 !macro CloseStdout
-    ${If} ${Silent}
-        System::Call 'kernel32::GetStdHandle(i -11)i.r0'
-        FileClose $0
-        System::Free $0
-        System::Free $1
-        System::Call 'kernel32::FreeConsole()'
+  ${If} ${Silent}
+  ${AndIf} $QuietMode != "1"
+    System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+    FileClose $0
+    System::Free $0
+    System::Free $1
+    System::Call 'kernel32::FreeConsole()'
   ${EndIf}
 !macroend
 
@@ -112,6 +116,7 @@ var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
 var /global ARGV_NoShortcuts
 var /global ARGV_CheckPathLength
+var /global ARGV_QuietMode
 
 var /global IsDomainUser
 var /global CheckPathLength
@@ -279,6 +284,7 @@ FunctionEnd
                 /CheckPathLength=[0|1] [default: 1]$\n\
                 /? (show this help message)$\n\
                 /S (run in CLI/headless mode)$\n\
+                /Q (omit CLI logging)$\n\
                 /D=[installation directory] (must be last parameter)$\n"
         # There seems to be a limit to how many chars per ${Print} we can pass.
         # The message will get truncated silently, no errors.
@@ -369,6 +375,12 @@ FunctionEnd
         ${ElseIf} $ARGV_CheckPathLength = "1"
             StrCpy $CheckPathLength "1"
         ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/Q" $ARGV_QuietMode
+    ${IfNot} ${Errors}
+        StrCpy $QuietMode "1"
     ${EndIf}
 
 !macroend

@@ -68,6 +68,8 @@ Windows installers have the following CLI options available:
   `0`.
 - `/RegisterPython=[0|1]`: Whether to register Python as default in the Windows registry. Defaults
   to `1`. This is preferred to `AddToPath`.
+- `/Q` (quiet): do not report to the console in headless mode. Only relevant when used with `/S`
+  (see below).
 
 You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage), but only _after_ the ones mentioned above:
 
