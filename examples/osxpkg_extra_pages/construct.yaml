@@ -67,4 +67,7 @@ install_path_exists_error_text: >
 initialize_by_default: false
 register_python: False
 
+# Examples for how to write these plugins:
+# https://preserve.mactech.com/articles/mactech/Vol.25/25.06/InstallerPlugins/index.html
+# http://s.sudre.free.fr/Stuff/Installer/Installer_Plugins/index.html
 post_install_pages: "plugins/ExtraPage"
