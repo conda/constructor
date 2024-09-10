@@ -302,14 +302,28 @@ def make_nsi(
         # for the newlines business
         replace['CONCLUSION_TEXT'] = "\r\n".join(conclusion_lines[1:])
 
-    for key in ['welcome_file', 'conclusion_file']:
+    for key in ['welcome_file', 'conclusion_file', 'post_install_pages']:
         value = info.get(key, "")
-        if value and not value.endswith(".nsi"):
+        if not value:
+            continue
+        if isinstance(value, str) and not value.endswith(".nsi"):
             logger.warning(
-                "On Windows, %s must be a .nsi file; %s will be ignored.",
+                "On Windows, %s must be an .nsi file; %s will be ignored.",
                 key,
                 value,
             )
+        elif isinstance(value, list):
+            valid_values = []
+            for val in value:
+                if val.endswith(".nsi"):
+                    valid_values.append(val)
+                else:
+                    logger.warning(
+                        "On Windows, %s must be .nsi files; %s will be ignored.",
+                        key,
+                        val,
+                    )
+                info[key] = valid_values
 
     for key, value in replace.items():
         if value.startswith('@'):
@@ -333,6 +347,8 @@ def make_nsi(
     ppd["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
     ppd["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     ppd["has_license"] = bool(info.get("license_file"))
+    ppd["post_install_pages"] = bool(info.get("post_install_pages"))
+
     data = preprocess(data, ppd)
     data = fill_template(data, replace, exceptions=nsis_predefines)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
@@ -373,6 +389,12 @@ def make_nsi(
             custom_nsi_insert_from_file(info.get('conclusion_file', ''))
             if ppd['custom_conclusion']
             else ''
+        ),
+        (
+            '@POST_INSTALL_PAGES@',
+            '\n'.join(
+                custom_nsi_insert_from_file(file) for file in info.get('post_install_pages', [])
+            ),
         ),
         ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files))),
         ('@VIRTUAL_SPECS@', " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])),

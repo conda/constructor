@@ -188,6 +188,11 @@ Page Custom InstModePage_Create InstModePage_Leave
 # Custom options now differ depending on installation mode.
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
+
+#if post_install_pages is True
+@POST_INSTALL_PAGES@
+#endif
+
 #if with_conclusion_text is True
 !define MUI_FINISHPAGE_TITLE __CONCLUSION_TITLE__
 !define MUI_FINISHPAGE_TITLE_3LINES
