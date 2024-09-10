@@ -426,13 +426,37 @@ def pkgbuild_prepare_installation(info):
 
 
 def create_plugins(pages: list = None, codesigner: CodeSign = None):
+    def _build_xcode_projects(xcodeporj_dirs: list[Path]):
+        xcodebuild = shutil.which("xcodebuild")
+        if not xcodebuild:
+            raise RuntimeError(
+                "Plugin directory contains an uncompiled project,"
+                " but xcodebuild is not available."
+            )
+        try:
+            subprocess.run([xcodebuild, "--help"], check=True, capture_output=True)
+        except subprocess.CalledSubprocessError:
+            raise RuntimeError(
+                "Plugin directory contains an uncompiled project, "
+                "but xcodebuild requires XCode to compile plugins."
+            )
+        for xcodeproj in xcodeproj_dirs:
+            build_cmd = [
+                xcodebuild,
+                "-project",
+                str(xcodeproj),
+                f"CONFIGURATION_BUILD_DIR={PLUGINS_DIR}",
+                # do not create dSYM debug symbols directory
+                "DEBUG_INFORMATION_FORMAT=",
+            ]
+            explained_check_call(build_cmd)
+
     if not pages:
         return
     elif isinstance(pages, str):
         pages = [pages]
 
     fresh_dir(PLUGINS_DIR)
-    xcodebuild = None
 
     for page in pages:
         xcodeproj_dirs = [
@@ -441,30 +465,7 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
             if file.suffix == ".xcodeproj"
         ]
         if xcodeproj_dirs:
-            if not xcodebuild:
-                xcodebuild = shutil.which("xcodebuild")
-                if not xcodebuild:
-                    raise RuntimeError(
-                        "Plugin directory contains an uncompiled project,"
-                        " but xcodebuild is not available."
-                    )
-                try:
-                    subprocess.run([xcodebuild, "--help"], check=True, capture_output=True)
-                except subprocess.CalledSubprocessError:
-                    raise RuntimeError(
-                        "Plugin directory contains an uncompiled project, "
-                        "but xcodebuild requires XCode to compile plugins."
-                    )
-            for xcodeproj in xcodeproj_dirs:
-                build_cmd = [
-                    xcodebuild,
-                    "-project",
-                    str(xcodeproj),
-                    f"CONFIGURATION_BUILD_DIR={PLUGINS_DIR}",
-                    # do not create dSYM debug symbols directory
-                    "DEBUG_INFORMATION_FORMAT=",
-                ]
-                explained_check_call(build_cmd)
+            _build_xcode_projects(xcodeproj_dirs)
         else:
             plugin_name = os.path.basename(page)
             page_in_plugins = join(PLUGINS_DIR, plugin_name)
