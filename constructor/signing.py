@@ -2,10 +2,12 @@ import logging
 import os
 import shutil
 from pathlib import Path
+from plistlib import dump as plist_dump
 from subprocess import PIPE, STDOUT, check_call, run
+from tempfile import NamedTemporaryFile
 from typing import Union
 
-from .utils import check_required_env_vars, win_str_esc
+from .utils import check_required_env_vars, explained_check_call, win_str_esc
 
 logger = logging.getLogger(__name__)
 
@@ -218,3 +220,52 @@ class AzureSignTool(SigningTool):
         except ValueError:
             # Something else is in the output
             raise RuntimeError(f"Unexpected signature verification output: {proc.stdout}")
+
+
+class CodeSign(SigningTool):
+    def __init__(
+        self,
+        identity_name: str,
+        prefix: str = None,
+    ):
+        # hardcode to system location to avoid accidental clobber in PATH
+        super().__init__("/usr/bin/codesign")
+        self.identity_name = identity_name
+        self.prefix = prefix
+
+    def get_signing_command(
+        self,
+        bundle: Union[str, Path],
+        entitlements: Union[str, Path] = None,
+    ) -> list:
+        command = [
+            self.executable,
+            "--sign",
+            self.identity_name,
+            "--force",
+            "--options",
+            "runtime",
+        ]
+        if self.prefix:
+            command.extend(["--prefix", self.prefix])
+        if entitlements:
+            command.extend(["--entitlements", str(entitlements)])
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            command.append("--verbose")
+        command.append(str(bundle))
+        return command
+
+    def sign_bundle(
+        self,
+        bundle: Union[str, Path],
+        entitlements: Union[str, Path, dict] = None,
+    ):
+        if isinstance(entitlements, dict):
+            with NamedTemporaryFile(suffix=".plist", delete=False) as ent_file:
+                plist_dump(entitlements, ent_file)
+            command = self.get_signing_command(bundle, entitlements=ent_file.name)
+            explained_check_call(command)
+            os.unlink(ent_file.name)
+        else:
+            command = self.get_signing_command(bundle, entitlements=entitlements)
+            explained_check_call(command)
