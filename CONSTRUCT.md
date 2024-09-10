@@ -782,13 +782,13 @@ You can disable it altogether if you set this key to `""` (empty string).
 _required:_ no<br/>
 _types:_ list, string<br/>
 
-Adds extra panels to the installers to be shown after installation.
+Adds extra pages to the installers to be shown after installation.
 
-For pkg installers, these can be compiled installer plug-ins or
-a directories containing an Xcode project. In the latter case,
+For PKG installers, these can be compiled `installer` plug-ins or
+directories containing an Xcode project. In the latter case,
 constructor will try and compile the project file using `xcodebuild`.
 
-For Windows, the extra pages must be nsi files.
+For Windows, the extra pages must be `.nsi` files.
 They will be inserted as-is before the conclusion page.
 
 ### `conclusion_file`
