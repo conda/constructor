@@ -777,6 +777,20 @@ If this key is missing, it defaults to a message about Anaconda Cloud.
 You can disable it altogether if you set this key to `""` (empty string).
 (MacOS only).
 
+### `post_install_pages`
+
+_required:_ no<br/>
+_types:_ list, string<br/>
+
+Adds extra pages to the installers to be shown after installation.
+
+For PKG installers, these can be compiled `installer` plug-ins or
+directories containing an Xcode project. In the latter case,
+constructor will try and compile the project file using `xcodebuild`.
+
+For Windows, the extra pages must be `.nsi` files.
+They will be inserted as-is before the conclusion page.
+
 ### `conclusion_file`
 
 _required:_ no<br/>
@@ -788,9 +802,7 @@ plain text (.txt), rich text (.rtf) or HTML (.html). If both
 `conclusion_file` and `conclusion_text` are provided,
 `conclusion_file` takes precedence. (MacOS only).
 
-If the installer is for windows and conclusion file type is nsi,
-it will use the nsi script to add in extra pages and the conclusion file
-at the end of the installer.
+If the installer is for Windows, the file type must be nsi.
 
 ### `conclusion_text`
 

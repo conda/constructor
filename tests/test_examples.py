@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
+from plistlib import load as plist_load
 from typing import Generator, Iterable, Optional, Tuple
 
 import pytest
@@ -334,7 +335,7 @@ def create_installer(
 
 
 @lru_cache(maxsize=None)
-def _self_signed_certificate(path: str, password: str = None):
+def _self_signed_certificate_windows(path: str, password: str = None):
     if not sys.platform.startswith("win"):
         return
     return _execute(
@@ -360,6 +361,13 @@ def test_example_customize_controls(tmp_path, request):
 
 def test_example_customized_welcome_conclusion(tmp_path, request):
     input_path = _example_path("customized_welcome_conclusion")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_example_extra_pages_win(tmp_path, request):
+    input_path = _example_path("exe_extra_pages")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request)
 
@@ -464,6 +472,86 @@ def test_example_osxpkg(tmp_path, request):
         assert expected == found
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+@pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
+def test_example_osxpkg_extra_pages(tmp_path):
+    try:
+        subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("xcodebuild requires XCode to compile extra pages.")
+    recipe_path = _example_path("osxpkg_extra_pages")
+    input_path = tmp_path / "input"
+    output_path = tmp_path / "output"
+    shutil.copytree(str(recipe_path), str(input_path))
+    installer, install_dir = next(create_installer(input_path, output_path))
+    # expand-full is an undocumented option that extracts all archives,
+    # including binary archives like the PlugIns file
+    cmd = ["pkgutil", "--expand-full", installer, output_path / "expanded"]
+    _execute(cmd)
+    installer_sections = output_path / "expanded" / "PlugIns" / "InstallerSections.plist"
+    assert installer_sections.exists()
+
+    with open(installer_sections, "rb") as f:
+        plist = plist_load(f)
+    expected = {
+        "SectionOrder": [
+            "Introduction",
+            "ReadMe",
+            "License",
+            "Target",
+            "PackageSelection",
+            "Install",
+            "ExtraPage.bundle",
+        ]
+    }
+    assert plist == expected
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
+@pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
+@pytest.mark.skipif("CI" not in os.environ, reason="CI only")
+def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
+    try:
+        subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
+    except subprocess.CalledProcessError:
+        pytest.skip("xcodebuild requires XCode to compile extra pages.")
+    input_path = tmp_path / "input"
+    recipe_path = _example_path("osxpkg_extra_pages")
+    shutil.copytree(str(recipe_path), str(input_path))
+    with open(input_path / "construct.yaml", "a") as f:
+        f.write(f"notarization_identity_name: {self_signed_application_certificate_macos}\n")
+    output_path = tmp_path / "output"
+    installer, install_dir = next(create_installer(input_path, output_path))
+
+    # Check component signatures
+    expanded_path = output_path / "expanded"
+    # expand-full is an undocumented option that extracts all archives,
+    # including binary archives like the PlugIns file
+    cmd = ["pkgutil", "--expand-full", installer, expanded_path]
+    _execute(cmd)
+    components = [
+        Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", "_conda"),
+        Path(expanded_path, "Plugins", "ExtraPage.bundle"),
+    ]
+    validated_signatures = []
+    for component in components:
+        p = subprocess.run(
+            ["/usr/bin/codesign", "--verify", str(component), "--verbose=4"],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        # codesign --verify outputs to stderr
+        lines = p.stderr.split("\n")[:-1]
+        if (
+            len(lines) == 2
+            and lines[0] == f"{component}: valid on disk"
+            and lines[1] == f"{component}: satisfies its Designated Requirement"
+        ):
+            validated_signatures.append(component)
+    assert validated_signatures == components
+
+
 def test_example_scripts(tmp_path, request):
     input_path = _example_path("scripts")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
@@ -515,7 +603,7 @@ def test_example_signing(tmp_path, request):
     input_path = _example_path("signing")
     cert_path = tmp_path / "self-signed-cert.pfx"
     cert_pwd = "1234"
-    _self_signed_certificate(path=cert_path, password=cert_pwd)
+    _self_signed_certificate_windows(path=cert_path, password=cert_pwd)
     assert cert_path.exists()
     certificate_in_input_dir = input_path / "certificate.pfx"
     shutil.copy(str(cert_path), str(certificate_in_input_dir))
