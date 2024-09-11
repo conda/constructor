@@ -82,52 +82,31 @@ You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapt
 
 ### Examples:
 
-> Note that the NSIS installers will not write any output to the terminal. You will not see any
-> output, even if the installation fails. You can check the Task Manager to see if the installer is
-> running, or poll the installation directory to see if the installation has finished.
+> The following examples require PowerShell. You can use `cmd` if you want via `cmd /C start /wait my_installer.exe /S` but you'll find some limitations with stream redirection.
 
 Run the installer in silent mode:
 
-```batch
-> cmd.exe /c start /wait my_installer.exe /S
+```pwsh
+Start-Process -FilePath .\my_installer.exe -ArgumentList "/S" -NoNewWindow -Wait
 ```
 
 Run the installer in silent mode and install to a custom path:
 
-```batch
-> cmd.exe /c start /wait my_installer.exe /InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app
+```pwsh
+Start-Process -FilePath .\my_installer.exe -ArgumentList "/InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app" -NoNewWindow -Wait
 ```
 
 Run the uninstaller in silent mode from its original location:
 
-```batch
-> cmd.exe /c start /wait "C:\Program Files\my_app\uninstaller.exe" /S _?=C:\Program Files\my_app
+```pwsh
+Start-Process -FilePath C:\Program Files\my_app\uninstaller.exe -ArgumentList "/S _?=C:\Program Files\my_app" -NoNewWindow -Wait
 ```
 
-:::{admonition} Stream redirection in EXE installers
-:class: info
+Redirect the console output to a file named `log.txt`:
 
-When run in `/S` mode, EXE installers will output some minimal info to the console when invoked
-like this:
-
-```batch
-> cmd.exe /c start /wait my_installer.exe /S
+```pwsh
+Start-Process -FilePath .\my_installer.exe -ArgumentList "/S" -NoNewWindow -Wait -RedirectStandardOutput log.txt
 ```
-
-This call waits until the installer is done. However, stream redirection won't work like this:
-
-```batch
-> cmd.exe /c start /wait my_installer.exe /S > logs.txt
-```
-
-Stream redirection does work as expected if run directly:
-
-```batch
-> my_installer.exe /S > logs.txt
-```
-
-Unfortunately, in this case the call won't block. You will have to poll the `logs.txt` file and block until finished (e.g. you find `Done!` or `:error:`).
-:::
 
 :::{admonition} EXE installers with file logging
 :class: tip
