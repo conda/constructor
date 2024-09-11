@@ -43,6 +43,7 @@ if conda_interface_type == 'conda':
     from conda.base.context import replace_context_default as _conda_replace_context_default
     from conda.common.io import env_vars as _env_vars
     from conda.core.package_cache_data import PackageCacheData as _PackageCacheData
+    from conda.core.package_cache_data import ProgressiveFetchExtract as _ProgressiveFetchExtract
     from conda.core.prefix_data import PrefixData as _PrefixData
     from conda.exports import MatchSpec as _MatchSpec
     from conda.exports import default_prefix as _default_prefix
@@ -65,6 +66,7 @@ if conda_interface_type == 'conda':
     # used by fcp.py
     PackageCacheData = _PackageCacheData
     PrefixGraph = _PrefixGraph
+    ProgressiveFetchExtract = _ProgressiveFetchExtract
     Solver, read_paths_json = _Solver, _read_paths_json
     all_channel_urls = _all_channel_urls
     conda_context, env_vars = _conda_context, _env_vars
