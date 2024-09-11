@@ -43,7 +43,13 @@ case "$(ldd --version 2>&1)" in
         if [ -z "${libc_so}" ]; then
             libc_so="$(strings /etc/ld.so.cache | grep '^/.*/libc\.so.*' | head -1)"
         fi
-        system_glibc_version=$("${libc_so}" --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+        if [ -z "${libc_so}" ]; then
+            echo "Warning: Couldn't find libc.so; won't be able to determine GLIBC version!" >&2
+            echo "Override by setting CONDA_OVERRIDE_GLIBC" >&2
+            system_glibc_version="${CONDA_OVERRIDE_GLIBC:-0.0}"
+        else
+            system_glibc_version=$("${libc_so}" --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+        fi
     ;;
     *)
         # ldd reports glibc in the last field of the first line
