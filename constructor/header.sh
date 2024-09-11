@@ -38,6 +38,7 @@ min_glibc_version="__MIN_GLIBC_VERSION__"
 case "$(ldd --version 2>&1)" in
     *musl*)
         # musl ldd will report musl version; call libc.so directly
+        # see https://github.com/conda/constructor/issues/850#issuecomment-2343756454
         libc_so="$(find /lib /usr/local/lib /usr/lib -name 'libc.so.*' -print -quit 2>/dev/null)"
         if [ -z "${libc_so}" ]; then
             libc_so="$(strings /etc/ld.so.cache | grep '^/.*/libc\.so.*' | head -1)"
