@@ -307,7 +307,7 @@ FunctionEnd
                 is disabled (i.e. if /InstallationType=AllUsers, then$\n\
                 /AddToPath=1 will be ignored)."
         Abort
-     ${EndIf}
+    ${EndIf}
 
     ClearErrors
     ${GetOptions} $ARGV "/InstallationType=" $ARGV_InstallationType
@@ -743,6 +743,48 @@ Function .onInit
 FunctionEnd
 
 Function un.onInit
+    ClearErrors
+    ${GetParameters} $ARGV
+    ${GetOptions} $ARGV "/?" $ARGV_Help
+    ${IfNot} ${Errors}
+        SetSilent silent
+        ${Print} "\
+            Uninstalls ${NAME} ${VERSION}$\n\
+            $\n\
+            USAGE$\n\
+            -----$\n\
+            $\n\
+            Uninstall-${NAME}.exe [options]$\n\
+            $\n\
+            OPTIONS$\n\
+            -------$\n\
+            $\n\
+                /? (show this help message)$\n\
+                /S (run in CLI/headless mode)$\n\
+                /Q (quiet mode, do not print output to console)$\n\
+                /_?=[installation directory] (must be last parameter)$\n\
+            $\n\
+            EXAMPLES$\n\
+            --------$\n\
+            $\n\
+            Uninstall via CLI (no GUI) from C:\${NAME}$\n\
+                > cmd /C START /WAIT Uninstall-${NAME}.exe /S /_?=C:\${NAME}$\n\
+            $\n\
+            Closing in 10s..."
+        # Give it some time so users can read it the pop-up console
+        # The pop-up console happens because the uninstaller copies itself to
+        # a temporary location because actually running, so we can't get the parent
+        # console handle
+        Sleep 10000
+        Abort
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/Q" $ARGV_QuietMode
+    ${IfNot} ${Errors}
+        StrCpy $QuietMode "1"
+    ${EndIf}
+
     Push $0
     Push $1
     Push $2
@@ -1441,6 +1483,14 @@ Section "Uninstall"
         IntOp $0 $0 + 1
         goto loop_py
     endloop_py:
+
+    ${Print} "Done!"
+    ${If} ${Silent}
+        # give it some time so users can read the last lines
+        ${Print} "Closing in 3s..."
+        Sleep 3000
+    ${EndIf}
+
 SectionEnd
 
 !if '@SIGNTOOL_COMMAND@' != ''
