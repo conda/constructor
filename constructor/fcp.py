@@ -7,7 +7,6 @@
 fcp (fetch conda packages) module
 """
 
-import json
 import logging
 import os
 import shutil
@@ -15,16 +14,17 @@ import sys
 import tempfile
 from collections import defaultdict
 from itertools import groupby
-from os.path import abspath, expanduser, isdir, isfile, join
+from os.path import abspath, expanduser, isdir, join
 from subprocess import check_call
 
-from constructor.utils import filename_dist, hash_files
+from constructor.utils import filename_dist
 
 from .conda_interface import (
     PackageCacheData,
     PackageCacheRecord,
     PrefixData,
     PrefixGraph,
+    ProgressiveFetchExtract,
     Solver,
     SubdirData,
     VersionOrder,
@@ -32,7 +32,6 @@ from .conda_interface import (
     cc_platform,
     conda_context,
     conda_replace_context_default,
-    download,
     env_vars,
     locate_prefix_by_name,
     read_paths_json,
@@ -128,33 +127,7 @@ def _fetch(download_dir, precs):
     assert pc.pkgs_dir == download_dir
     assert pc.is_writable, f"{download_dir} does not exist or is not writable"
 
-    for prec in precs:
-        package_tarball_full_path = join(download_dir, prec.fn)
-        if package_tarball_full_path.endswith(".tar.bz2"):
-            extracted_package_dir = package_tarball_full_path[:-8]
-        elif package_tarball_full_path.endswith(".conda"):
-            extracted_package_dir = package_tarball_full_path[:-6]
-
-        if not (isfile(package_tarball_full_path)
-                and hash_files([package_tarball_full_path]) == prec.md5):
-            logger.info('fetching: %s', prec.fn)
-            download(prec.url, join(download_dir, prec.fn))
-
-        if not isdir(extracted_package_dir):
-            from conda.gateways.disk.create import extract_tarball
-            extract_tarball(package_tarball_full_path, extracted_package_dir)
-
-        repodata_record_path = join(extracted_package_dir, 'info', 'repodata_record.json')
-
-        with open(repodata_record_path, "w") as fh:
-            json.dump(prec.dump(), fh, indent=2, sort_keys=True, separators=(',', ': '))
-
-        package_cache_record = PackageCacheRecord.from_objects(
-            prec,
-            package_tarball_full_path=package_tarball_full_path,
-            extracted_package_dir=extracted_package_dir,
-        )
-        pc.insert(package_cache_record)
+    ProgressiveFetchExtract(precs).execute()
 
     return list(dict.fromkeys(PrefixGraph(pc.iter_records()).graph))
 
