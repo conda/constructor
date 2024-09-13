@@ -37,8 +37,19 @@ fi
 min_glibc_version="__MIN_GLIBC_VERSION__"
 case "$(ldd --version 2>&1)" in
     *musl*)
-        # musl ldd will report musl version; call ld.so directly
-        system_glibc_version=$($(find /lib/ /lib64/ -name 'ld-linux-*.so*' 2>/dev/null | head -1) --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+        # musl ldd will report musl version; call libc.so directly
+        # see https://github.com/conda/constructor/issues/850#issuecomment-2343756454
+        libc_so="$(find /lib /usr/local/lib /usr/lib -name 'libc.so.*' -print -quit 2>/dev/null)"
+        if [ -z "${libc_so}" ]; then
+            libc_so="$(strings /etc/ld.so.cache | grep '^/.*/libc\.so.*' | head -1)"
+        fi
+        if [ -z "${libc_so}" ]; then
+            echo "Warning: Couldn't find libc.so; won't be able to determine GLIBC version!" >&2
+            echo "Override by setting CONDA_OVERRIDE_GLIBC" >&2
+            system_glibc_version="${CONDA_OVERRIDE_GLIBC:-0.0}"
+        else
+            system_glibc_version=$("${libc_so}" --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+        fi
     ;;
     *)
         # ldd reports glibc in the last field of the first line
