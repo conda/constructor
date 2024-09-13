@@ -68,38 +68,84 @@ Windows installers have the following CLI options available:
   `0`.
 - `/RegisterPython=[0|1]`: Whether to register Python as default in the Windows registry. Defaults
   to `1`. This is preferred to `AddToPath`.
+- `/Q` (quiet): do not report to the console in headless mode. Only relevant when used with `/S`
+  (see below). Also works for the uninstallers.
 
 You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage), but only _after_ the ones mentioned above:
 
 - `/NCRC`: disables the CRC check.
-- `/S` (silent): runs the installer or uninstaller in silent mode.
+- `/S` (silent): runs the installer or uninstaller in headless mode. Installers created with
+  `constructor 3.10` or later will report information to the active console. Note that while the
+  installer output will be reported in the active console, the uninstaller output will happen in
+  a new console. See below for different invocation examples.
 - `/D` (directory): sets the default installation directory. Note that even if the path contains
   spaces, it must be the last parameter used in the command line and must not contain any quotes.
   Only absolute paths are supported. The uninstaller uses `_?` instead of `/D`.
 
-### Examples:
+### Examples
 
-> Note that the NSIS installers will not write any output to the terminal. You will not see any
-> output, even if the installation fails. You can check the Task Manager to see if the installer is
-> running, or poll the installation directory to see if the installation has finished.
+Run the installer in headless mode:
 
-Run the installer in silent mode:
-
-```batch
-> cmd.exe /c start /wait my_installer.exe /S
+`````{tab-set}
+````{tab-item} CMD
+```pwsh
+cmd.exe /C start /wait my_installer.exe /S
 ```
-
-Run the installer in silent mode and install to a custom path:
-
-```batch
-> cmd.exe /c start /wait my_installer.exe /InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app
+````
+````{tab-item} PowerShell
+```pwsh
+Start-Process -FilePath .\my_installer.exe -ArgumentList "/S" -NoNewWindow -Wait
 ```
+````
+`````
 
-Run the uninstaller in silent mode from its original location:
+Run the installer in headless mode, for all users, adding to PATH and installing to a custom path:
 
-```batch
-> cmd.exe /c start /wait "C:\Program Files\my_app\uninstaller.exe" /S _?=C:\Program Files\my_app
+
+`````{tab-set}
+````{tab-item} CMD
+```pwsh
+cmd.exe /C start /wait my_installer.exe /InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app
 ```
+````
+````{tab-item} PowerShell
+```pwsh
+Start-Process -FilePath .\my_installer.exe -ArgumentList "/InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app" -NoNewWindow -Wait
+```
+````
+`````
+
+Redirect the console output to a file named `log.txt`:
+
+
+`````{tab-set}
+````{tab-item} CMD
+```pwsh
+my_installer.exe /S > log.txt
+```
+> Stream redirection only works if the installer is invoked directly. Unfortunately this means that the call won't block and the installer will run in the background. If you need to block on the call, you can poll `log.txt` until you find `Done!` or `:error:`. We strongly recommend the Powershell alternative instead.
+````
+````{tab-item} PowerShell
+```pwsh
+Start-Process -FilePath .\my_installer.exe -ArgumentList "/S" -NoNewWindow -Wait -RedirectStandardOutput log.txt
+```
+````
+`````
+
+Run the uninstaller in headless mode from its original location:
+
+`````{tab-set}
+````{tab-item} CMD
+```pwsh
+cmd.exe /C start /wait C:\Program Files\my_app\uninstaller.exe /S _?=C:\Program Files\my_app
+```
+````
+````{tab-item} PowerShell
+```pwsh
+Start-Process -FilePath C:\Program Files\my_app\uninstaller.exe -ArgumentList "/S _?=C:\Program Files\my_app" -NoNewWindow -Wait
+```
+````
+`````
 
 :::{admonition} EXE installers with file logging
 :class: tip

@@ -39,7 +39,7 @@ See `man installer` for more details.
 
 ## Verbose EXE installers
 
-Windows installers do not have a verbose mode. By default, the graphical logs are only available in the "progress bar" dialog, by clicking on "Show details". This text box is right-clickable, which will allow you to copy the contents to the clipboard (and then paste them in a text file, presumably).
+By default, the graphical logs are only available in the "progress bar" dialog, by clicking on "Show details". This text box is right-clickable, which will allow you to copy the contents to the clipboard (and then paste them in a text file, presumably).
 
 If you want `conda` to print more details, then, run it from the CMD prompt like this:
 

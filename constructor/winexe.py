@@ -9,7 +9,7 @@ import os
 import shutil
 import sys
 import tempfile
-from os.path import abspath, dirname, isfile, join
+from os.path import abspath, basename, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
 from typing import List, Union
@@ -116,7 +116,7 @@ def setup_envs_commands(info, dir_path):
     template = r"""
         # Set up {name} env
         SetDetailsPrint both
-        DetailPrint "Setting up the {name} environment ..."
+        ${{Print}} "Setting up the {name} environment..."
         SetDetailsPrint listonly
 
         # List of packages to install
@@ -134,10 +134,10 @@ def setup_envs_commands(info, dir_path):
 
         # Run conda install
         ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
-            DetailPrint "Installing packages for {name}, creating shortcuts if necessary..."
+            ${{Print}} "Installing packages for {name}, creating shortcuts if necessary..."
             push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
         ${{Else}}
-            DetailPrint "Installing packages for {name}..."
+            ${{Print}} "Installing packages for {name}..."
             push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
         ${{EndIf}}
         push 'Failed to link extracted packages to {prefix}!'
@@ -195,7 +195,7 @@ def setup_envs_commands(info, dir_path):
 def uninstall_menus_commands(info):
     tmpl = r"""
         SetDetailsPrint both
-        DetailPrint "Deleting {name} menus in {env_name}..."
+        ${{Print}} "Deleting {name} menus in {env_name}..."
         SetDetailsPrint listonly
         push '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
         push 'Failed to delete menus in {env_name}'
@@ -346,7 +346,9 @@ def make_nsi(
     ppd["has_conda"] = info["_has_conda"]
     ppd["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
     ppd["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
+    ppd["has_license"] = bool(info.get("license_file"))
     ppd["post_install_pages"] = bool(info.get("post_install_pages"))
+
     data = preprocess(data, ppd)
     data = fill_template(data, replace, exceptions=nsis_predefines)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
@@ -396,7 +398,9 @@ def make_nsi(
         ),
         ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files))),
         ('@VIRTUAL_SPECS@', " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])),
-
+        # This is the same but without quotes so we can print it fine
+        ('@VIRTUAL_SPECS_DEBUG@', " ".join([spec for spec in info.get("virtual_specs", ())])),
+        ('@LICENSEFILENAME@', basename(info.get('license_file', 'placeholder_license.txt'))),
     ]:
         data = data.replace(key, value)
 

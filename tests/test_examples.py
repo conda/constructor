@@ -96,7 +96,9 @@ def _check_installer_log(install_dir):
     except Exception as exc:
         error_lines.append(
             f"Could not read logs! {exc.__class__.__name__}: {exc}\n"
-            "This usually means that the destination folder could not be created.\n"
+            "Did you install the 'log' variant of nsis? 'conda install conda-forge::nsis=*=*log*'\n"
+            "Once you have installed it, set NSIS_USING_LOG_BUILD=1.\n"
+            "Otherwise, this usually means that the destination folder could not be created.\n"
             "Possible causes: permissions, non-supported characters, long paths...\n"
             "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
         )
@@ -116,13 +118,17 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
     one, since the point is to just have spaces in the installation path -- one
     would be enough too :)
     This is why we have this weird .split() thingy down there in `/D=...`.
+
+    Note that we do print information to the console, but that's not the stdout stream
+    of the subprocess. We make NSIS attach itself to the parent console and write directly there.
+    As a result we can't capture the output, so we still have to rely on the logfiles.
     """
     if not sys.platform.startswith("win"):
         raise ValueError("Can only run .exe installers on Windows")
     if "NSIS_USING_LOG_BUILD" not in os.environ:
         warnings.warn(
             "Windows installers are tested with NSIS in silent mode, which does "
-            "not report errors on exit. You should use logging-enabled NSIS builds "
+            "not report errors to stdout. You should use logging-enabled NSIS builds "
             "to generate an 'install.log' file this script will search for errors "
             "after completion."
         )

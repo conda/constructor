@@ -1,9 +1,11 @@
 # Installer template file for creating a Windows installer using NSIS.
 
-# Dependencies:
-#   NSIS >=3.08      conda install "nsis>=3.08"  (includes extra unicode plugins)
+!if "${NSIS_PACKEDVERSION}" < 0x3008000
+  !error "NSIS 3.08 or higher is required to build this installer!"
+  # conda install "nsis>=3.08"  (includes extra unicode plugins)
+!endif
 
-Unicode "true"
+Unicode true
 
 #if enable_debugging is True
 # Special logging build needed for ENABLE_LOGGING
@@ -24,6 +26,29 @@ Unicode "true"
   !ifdef ENABLE_LOGGING
     LogText ${INPUT_TEXT}
   !endif
+!macroend
+
+var /global QuietMode # "0" = print normally, "1" = do not print
+var /global StdOutHandle
+var /global StdOutHandleSet
+!define Print "!insertmacro PrintMacro"
+!macro PrintMacro INPUT_TEXT
+  DetailPrint "${INPUT_TEXT}"
+  ${If} ${Silent}
+  ${AndIf} $QuietMode != "1"
+    ${IfNot} $StdOutHandleSet == "1"
+        System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+        System::Call 'kernel32::AttachConsole(i -1)i.r1'
+        ${If} $0 = 0
+        ${OrIf} $1 = 0
+            System::Call 'kernel32::AllocConsole()'
+            System::Call 'kernel32::GetStdHandle(i -11)i.r0'
+        ${EndIf}
+        StrCpy $StdOutHandle $0
+        StrCpy $StdOutHandleSet "1"
+    ${EndIf}
+    FileWrite $StdOutHandle "${INPUT_TEXT}$\n"
+  ${EndIf}
 !macroend
 
 !include "WinMessages.nsh"
@@ -84,6 +109,7 @@ var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
 var /global ARGV_NoShortcuts
 var /global ARGV_CheckPathLength
+var /global ARGV_QuietMode
 
 var /global IsDomainUser
 var /global CheckPathLength
@@ -229,35 +255,59 @@ FunctionEnd
     ${GetParameters} $ARGV
     ${GetOptions} $ARGV "/?" $ARGV_Help
     ${IfNot} ${Errors}
-        MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "Usage: $EXEFILE [options]$\n\
-             Options:$\n$\n\
-                /InstallationType=AllUsers [default: JustMe]$\n$\n\
-                /AddToPath=[0|1] [default: 0]$\n$\n\
+        SetSilent silent
+        ${Print} "\
+            Installs ${NAME} ${VERSION}$\n\
+            $\n\
+            USAGE$\n\
+            -----$\n\
+            $\n\
+            $EXEFILE [options]$\n\
+            $\n\
+            OPTIONS$\n\
+            -------$\n\
+            $\n\
+                /InstallationType=AllUsers [default: JustMe]$\n\
+                /AddToPath=[0|1] [default: 0]$\n\
 #if keep_pkgs is True
-                /KeepPkgCache=[0|1] [default: 1]$\n$\n\
+                /KeepPkgCache=[0|1] [default: 1]$\n\
 #endif
 #if keep_pkgs is False
-                /KeepPkgCache=[0|1] [default: 0]$\n$\n\
+                /KeepPkgCache=[0|1] [default: 0]$\n\
 #endif
-                /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n$\n\
-                /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n$\n\
-                /NoScripts=[0|1] [default: 0]$\n$\n\
-                /NoShortcuts=[0|1] [default: 0]$\n$\n\
-                /CheckPathLength=[0|1] [default: 1]$\n$\n\
-            Examples:$\n\
+                /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
+                /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
+                /NoScripts=[0|1] [default: 0]$\n\
+                /NoShortcuts=[0|1] [default: 0]$\n\
+                /CheckPathLength=[0|1] [default: 1]$\n\
+                /? (show this help message)$\n\
+                /S (run in CLI/headless mode)$\n\
+                /Q (quiet mode, do not print output to console)$\n\
+                /D=[installation directory] (must be last parameter)$\n"
+        # There seems to be a limit to how many chars per ${Print} we can pass.
+        # The message will get truncated silently, no errors.
+        # That's why we split the help message in two calls.
+        ${Print} "\
+            EXAMPLES$\n\
+            --------$\n\
+                $\n\
                 Install for all users, but don't add to PATH env var:$\n\
-                    $EXEFILE /InstallationType=AllUsers$\n$\n\
+                    > $EXEFILE /InstallationType=AllUsers$\n\
+                $\n\
                 Install for just me, add to PATH and register as system Python:$\n\
-                    $EXEFILE /RegisterPython=1 /AddToPath=1$\n$\n\
+                    > $EXEFILE /RegisterPython=1 /AddToPath=1$\n\
+                $\n\
                 Install for just me, with no registry modification (for CI):$\n\
-                    $EXEFILE /NoRegistry=1$\n$\n\
+                    > $EXEFILE /NoRegistry=1$\n\
+                $\n\
+                Install via CLI (no GUI) into C:\${NAME}$\n\
+                    > cmd /C START /WAIT $EXEFILE /S /D=C:\${NAME}$\n\
+            $\n\
             NOTE: If you install for AllUsers, then the option to AddToPath$\n\
-                is disabled (i.e. if ./InstallationType=AllUsers, then$\n\
-                /AddToPath=1 will be ignored).$\n" \
-            /SD IDOK
-            Abort
-     ${EndIf}
+                is disabled (i.e. if /InstallationType=AllUsers, then$\n\
+                /AddToPath=1 will be ignored)."
+        Abort
+    ${EndIf}
 
     ClearErrors
     ${GetOptions} $ARGV "/InstallationType=" $ARGV_InstallationType
@@ -325,6 +375,12 @@ FunctionEnd
         ${EndIf}
     ${EndIf}
 
+    ClearErrors
+    ${GetOptions} $ARGV "/Q" $ARGV_QuietMode
+    ${IfNot} ${Errors}
+        StrCpy $QuietMode "1"
+    ${EndIf}
+
 !macroend
 
 Function OnInit_Release
@@ -341,6 +397,7 @@ Function OnInit_Release
                 # To address CVE-2022-26526.
                 # In AllUsers install mode, do not allow AddToPath as an option.
                 MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                ${Print} "/AddToPath=1 is disabled and ignored in 'All Users' installations"
                 StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
             ${Else}
                 StrCpy $Ana_AddToPath_State ${BST_CHECKED}
@@ -676,6 +733,8 @@ Function .onInit
 
     Call OnInit_Release
 
+    ${Print} "Welcome to ${NAME} ${VERSION}$\n"
+
     Pop $R2
     Pop $R1
     Pop $2
@@ -684,6 +743,48 @@ Function .onInit
 FunctionEnd
 
 Function un.onInit
+    ClearErrors
+    ${GetParameters} $ARGV
+    ${GetOptions} $ARGV "/?" $ARGV_Help
+    ${IfNot} ${Errors}
+        SetSilent silent
+        ${Print} "\
+            Uninstalls ${NAME} ${VERSION}$\n\
+            $\n\
+            USAGE$\n\
+            -----$\n\
+            $\n\
+            Uninstall-${NAME}.exe [options]$\n\
+            $\n\
+            OPTIONS$\n\
+            -------$\n\
+            $\n\
+                /? (show this help message)$\n\
+                /S (run in CLI/headless mode)$\n\
+                /Q (quiet mode, do not print output to console)$\n\
+                /_?=[installation directory] (must be last parameter)$\n\
+            $\n\
+            EXAMPLES$\n\
+            --------$\n\
+            $\n\
+            Uninstall via CLI (no GUI) from C:\${NAME}$\n\
+                > cmd /C START /WAIT Uninstall-${NAME}.exe /S /_?=C:\${NAME}$\n\
+            $\n\
+            Closing in 10s..."
+        # Give it some time so users can read it the pop-up console
+        # The pop-up console happens because the uninstaller copies itself to
+        # a temporary location because actually running, so we can't get the parent
+        # console handle
+        Sleep 10000
+        Abort
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/Q" $ARGV_QuietMode
+    ${IfNot} ${Errors}
+        StrCpy $QuietMode "1"
+    ${EndIf}
+
     Push $0
     Push $1
     Push $2
@@ -732,6 +833,7 @@ Function un.onInit
     goto valid_dir
 
     invalid_dir:
+        ${Print} "::error:: $INSTDIR is not a valid conda directory. Please run the uninstaller from a conda directory."
         MessageBox MB_OK|MB_ICONSTOP \
             "Error: $INSTDIR is not a valid conda directory. Please run the uninstaller from a conda directory." \
             /SD IDABORT
@@ -853,7 +955,7 @@ Pop $0
 Function OnDirectoryLeave
     ${LogSet} on
     ${If} ${IsNonEmptyDirectory} "$InstDir"
-        DetailPrint "::error:: Directory '$INSTDIR' is not empty, please choose a different location."
+        ${Print} "::error:: Directory '$INSTDIR' is not empty, please choose a different location."
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Directory '$INSTDIR' is not empty,$\n\
              please choose a different location." \
@@ -876,7 +978,7 @@ Function OnDirectoryLeave
                 WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
             ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
             ${Else}
-                DetailPrint "::error:: The installation path should be shorter than 46 characters or \
+                ${Print} "::error:: The installation path should be shorter than 46 characters or \
                              the installation requires administrator rights to enable long \
                              path on Windows."
                 MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters or \
@@ -887,7 +989,7 @@ Function OnDirectoryLeave
             ${EndIf}
         ; If we don't have admin right, we suggest a shorter path or suggest to run with admin right
         ${Else}
-            DetailPrint "::error:: The installation path should be shorter than 46 characters. \
+            ${Print} "::error:: The installation path should be shorter than 46 characters. \
                          Please choose another location."
             MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters. \
                                           Please choose another location." \
@@ -928,7 +1030,7 @@ Function OnDirectoryLeave
 #endif
         # Show message box then take the user back to the Directory page.
         ${If} ${Silent}
-            DetailPrint "::$R9:: $R8"
+            ${Print} "::$R9:: $R8"
         ${Else}
             MessageBox MB_OK|MB_ICONINFORMATION "$R9: $R8" /SD IDOK
         ${EndIf}
@@ -947,7 +1049,7 @@ Function OnDirectoryLeave
     Pop $R0
 
     StrCmp $R0 "" NoInvalidCharaceters
-        DetailPrint "::error:: 'Destination Folder' contains the following invalid character: $R0"
+        ${Print} "::error:: 'Destination Folder' contains the following invalid character: $R0"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Error: 'Destination Folder' contains the following invalid character: $R0" \
             /SD IDOK
@@ -957,7 +1059,7 @@ Function OnDirectoryLeave
     UnicodePathTest::SpecialCharPathTest $INSTDIR
     Pop $R1
     StrCmp $R1 "nothingspecial" nothing_special_path
-        DetailPrint "::error:: 'Destination Folder' contains the following invalid character$R1"
+        ${Print} "::error:: 'Destination Folder' contains the following invalid character$R1"
         MessageBox MB_OK|MB_ICONEXCLAMATION \
             "Error: 'Destination Folder' contains the following invalid character$R1" \
             /SD IDOK
@@ -975,7 +1077,7 @@ Function OnDirectoryLeave
       StrCmp ${PY_VER} "2.7" not_cp_acp_capable
       StrCmp $R1 "ascii_cp_acp" valid_path
       not_cp_acp_capable:
-          DetailPrint "::error:: Due to incompatibility with several \
+          ${Print} "::error:: Due to incompatibility with several \
               Python libraries, 'Destination Folder' cannot contain non-ascii characters \
               (special characters or diacritics).  Please choose another location."
           MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Due to incompatibility with several \
@@ -990,7 +1092,7 @@ Function OnDirectoryLeave
     ${IsWritable} $INSTDIR $R1
     IntCmp $R1 0 pathgood
     Pop $R1
-    DetailPrint "::error: Path $INSTDIR is not writable. Please check permissions or \
+    ${Print} "::error: Path $INSTDIR is not writable. Please check permissions or \
                  try respawning the installer with elevated privileges."
     MessageBox MB_OK|MB_ICONEXCLAMATION \
         "Error: Path $INSTDIR is not writable. Please check permissions or \
@@ -1044,12 +1146,12 @@ FunctionEnd
             ${ElseIf} $1 == "NoLog"
                 nsExec::Exec $3
             ${Else}
-                DetailPrint "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
+                ${Print} "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
                 Abort
             ${EndIf}
             pop $0
             ${If} $0 != "0"
-                DetailPrint "::error:: $2"
+                ${Print} "::error:: $2"
                 MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
                         $2 /SD IDIGNORE IDABORT abort IDRETRY retry
                 ; IDIGNORE: Continue anyway
@@ -1070,7 +1172,6 @@ FunctionEnd
 # Installer sections
 Section "Install"
     ${LogSet} on
-
     ${If} ${Silent}
         call OnDirectoryLeave
     ${EndIf}
@@ -1088,12 +1189,25 @@ Section "Install"
     ${EndIf}
     StrCpy $INSTDIR $0
 
+#if has_license
+    SetOutPath "$INSTDIR"
+    File __LICENSEFILE__
+    ${Print} "By continuing this installation you are accepting this license agreement:"
+    ${Print} "$INSTDIR\@LICENSEFILENAME@"
+    ${Print} "Please run the installer in GUI mode to read the details.$\n"
+#endif
+
+    ${Print} "${NAME} will now be installed into this location:"
+    ${Print} "$INSTDIR$\n"
+
     ReadEnvStr $0 SystemRoot
     # set PATH for the installer process, so that MSVC runtimes get found OK
     #    This is also isolating PATH to be just us and Windows core stuff, which hopefully avoids
     #    clashes with other stuff on PATH
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                  "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$0;$0\system32;$0\system32\Wbem").r0'
+
+    ${Print} "Unpacking payload..."
 
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
@@ -1143,9 +1257,9 @@ Section "Install"
     # https://github.com/conda/conda-libmamba-solver/issues/480
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
-    DetailPrint "Checking virtual specs..."
+    ${Print} "Checking virtual specs compatibility: @VIRTUAL_SPECS_DEBUG@"
     push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@'
-    push 'Failed to check virtual specs: @VIRTUAL_SPECS@'
+    push 'Failed to check virtual specs: @VIRTUAL_SPECS_DEBUG@'
     push 'WithLog'
     call AbortRetryNSExecWait
     SetDetailsPrint both
@@ -1155,7 +1269,7 @@ Section "Install"
     @PKG_COMMANDS@
 
     SetDetailsPrint TextOnly
-    DetailPrint "Setting up the package cache..."
+    ${Print} "Setting up the package cache..."
     push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
     push 'Failed to extract packages'
     push 'NoLog'
@@ -1165,7 +1279,7 @@ Section "Install"
     SetDetailsPrint both
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
-        DetailPrint "Running pre_install scripts..."
+        ${Print} "Running pre_install scripts..."
         ReadEnvStr $5 SystemRoot
         ReadEnvStr $6 windir
         # This 'FileExists' also returns True for directories
@@ -1189,7 +1303,7 @@ Section "Install"
     AddSize @SIZE@
 
 #if has_conda is True
-    DetailPrint "Initializing conda directories..."
+    ${Print} "Initializing conda directories..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize conda directories'
     push 'WithLog'
@@ -1197,7 +1311,7 @@ Section "Install"
 #endif
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
-        DetailPrint "Running post install..."
+        ${Print} "Running post install..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
         push 'Failed to run post install script'
         push 'WithLog'
@@ -1205,7 +1319,7 @@ Section "Install"
     ${EndIf}
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
-        DetailPrint "Clearing package cache..."
+        ${Print} "Clearing package cache..."
         push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
         push 'Failed to clear package cache'
         push 'WithLog'
@@ -1213,7 +1327,7 @@ Section "Install"
     ${EndIf}
 
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-        DetailPrint "Adding to PATH..."
+        ${Print} "Adding to PATH..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
         push 'Failed to add @NAME@ to the system PATH'
         push 'WithLog'
@@ -1263,7 +1377,7 @@ Section "Install"
     #   BU - built-in (local) users
     #   DU - domain users
     ${If} ${UAC_IsAdmin}
-        DetailPrint "Setting installation directory permissions..."
+        ${Print} "Setting installation directory permissions..."
         AccessControl::DisableFileInheritance "$INSTDIR"
         AccessControl::RevokeOnFile "$INSTDIR" "(AU)" "GenericWrite"
         AccessControl::RevokeOnFile "$INSTDIR" "(DU)" "GenericWrite"
@@ -1271,11 +1385,12 @@ Section "Install"
         AccessControl::SetOnFile "$INSTDIR" "(BU)" "GenericRead + GenericExecute"
         AccessControl::SetOnFile "$INSTDIR" "(DU)" "GenericRead + GenericExecute"
     ${EndIf}
+    ${Print} "Done!"
 SectionEnd
 
 !macro AbortRetryNSExecWaitLibNsisCmd cmd
     SetDetailsPrint both
-    DetailPrint "Running ${cmd} scripts..."
+    ${Print} "Running ${cmd} scripts..."
     SetDetailsPrint listonly
     ${If} ${Silent}
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
@@ -1342,7 +1457,7 @@ Section "Uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
-    DetailPrint "Removing files and folders..."
+    ${Print} "Removing files and folders..."
     nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
 
     # In case the last command fails, run the slow method to remove leftover
@@ -1368,6 +1483,14 @@ Section "Uninstall"
         IntOp $0 $0 + 1
         goto loop_py
     endloop_py:
+
+    ${Print} "Done!"
+    ${If} ${Silent}
+        # give it some time so users can read the last lines
+        ${Print} "Closing in 3s..."
+        Sleep 3000
+    ${EndIf}
+
 SectionEnd
 
 !if '@SIGNTOOL_COMMAND@' != ''
