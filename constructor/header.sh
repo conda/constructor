@@ -468,6 +468,10 @@ export TMP_BACKUP="${TMP:-}"
 export TMP="$PREFIX/install_tmp"
 mkdir -p "$TMP"
 
+# Set this variable to prevent existing .condarc file from interfering with the installation
+# Requires conda-standalone 24.9.0 or newer
+export CONDA_RESTRICT_RC_SEARCH_PATH=1
+
 # Check whether the virtual specs can be satisfied
 # We need to specify CONDA_SOLVER=classic for conda-standalone
 # to work around this bug in conda-libmamba-solver:
