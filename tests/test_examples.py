@@ -827,3 +827,25 @@ def test_virtual_specs_ok(tmp_path, request):
             check_subprocess=True,
             uninstall=True,
         )
+
+
+@pytest.mark.skipif(CONDA_EXE != "conda-standalone", reason="requires conda-standalone")
+@pytest.mark.xfail(
+    CONDA_EXE == "conda-standalone" and Version(CONDA_EXE_VERSION) < Version("24.9.0"),
+    reason="Global .condarc breaks installation",
+)
+def test_ignore_condarc_files(tmp_path, monkeypatch, request):
+    # Create a bogus .condarc file that would break an installation if read
+    monkeypatch.setenv("HOME", str(tmp_path))
+    with open(tmp_path / ".condarc", "w") as crc:
+        crc.write("clobber: prevent")
+    input_path = _example_path("customize_controls")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )
