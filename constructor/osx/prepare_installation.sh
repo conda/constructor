@@ -23,9 +23,6 @@ PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
 CONDA_EXEC="$PREFIX/_conda"
-# Set this variable to prevent existing .condarc file from interfering with the installation
-# Requires conda-standalone 24.9.0 or newer
-export CONDA_RESTRICT_RC_SEARCH_PATH=1
 # /COMMON UTILS
 
 chmod +x "$CONDA_EXEC"
@@ -45,7 +42,7 @@ if [ "__VIRTUAL_SPECS__" != "" ]; then
     notify 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
-    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__ __NO_RCS_ARG__
 fi
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions

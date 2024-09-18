@@ -1207,10 +1207,6 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                  "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$0;$0\system32;$0\system32\Wbem").r0'
 
-    # Set this variable to prevent existing .condarc file from interfering with the installation
-    # Requires conda-standalone 24.9.0 or newer
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_RESTRICT_RC_SEARCH_PATH", "1").r0'
-
     ${Print} "Unpacking payload..."
 
     # A conda-meta\history file is required for a valid conda prefix
@@ -1262,7 +1258,7 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
     ${Print} "Checking virtual specs compatibility: @VIRTUAL_SPECS_DEBUG@"
-    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@'
+    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@ @NO_RCS_ARG@'
     push 'Failed to check virtual specs: @VIRTUAL_SPECS_DEBUG@'
     push 'WithLog'
     call AbortRetryNSExecWait
@@ -1324,7 +1320,7 @@ Section "Install"
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
         ${Print} "Clearing package cache..."
-        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
+        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes @NO_RCS_ARG@'
         push 'Failed to clear package cache'
         push 'WithLog'
         call AbortRetryNSExecWait

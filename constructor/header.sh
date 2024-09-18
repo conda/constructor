@@ -468,10 +468,6 @@ export TMP_BACKUP="${TMP:-}"
 export TMP="$PREFIX/install_tmp"
 mkdir -p "$TMP"
 
-# Set this variable to prevent existing .condarc file from interfering with the installation
-# Requires conda-standalone 24.9.0 or newer
-export CONDA_RESTRICT_RC_SEARCH_PATH=1
-
 # Check whether the virtual specs can be satisfied
 # We need to specify CONDA_SOLVER=classic for conda-standalone
 # to work around this bug in conda-libmamba-solver:
@@ -484,7 +480,7 @@ if [ "__VIRTUAL_SPECS__" != "" ]; then
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
-    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__ __NO_RCS_ARG__
 fi
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
@@ -562,7 +558,7 @@ CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 CONDA_QUIET="$BATCH" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts || exit 1
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts __NO_RCS_ARG__ || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
 #The templating doesn't support nested if statements
@@ -607,7 +603,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     CONDA_QUIET="$BATCH" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts __NO_RCS_ARG__ || exit 1
     rm -f "${env_pkgs}env.txt"
 done
 #endif

@@ -26,9 +26,6 @@ export PREFIX
 echo "PREFIX=$PREFIX"
 CONDA_EXEC="$PREFIX/_conda"
 # /COMMON UTILS
-# Set this variable to prevent existing .condarc file from interfering with the installation
-# Requires conda-standalone 24.9.0 or newer
-export CONDA_RESTRICT_RC_SEARCH_PATH=1
 
 # Check whether the user wants shortcuts or not
 # See check_shortcuts.sh script for details
@@ -51,7 +48,7 @@ CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS=__CHANNELS__ \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts; then
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts __NO_RCS_ARG__; then
     echo "ERROR: could not complete the conda install"
     exit 1
 fi
@@ -97,7 +94,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts __NO_RCS_ARG__ || exit 1
     # Move the prepackaged history file into place
     mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
     rm -f "${env_pkgs}env.txt"

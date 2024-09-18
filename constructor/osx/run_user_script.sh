@@ -24,9 +24,6 @@ export PREFIX
 echo "PREFIX=$PREFIX"
 CONDA_EXEC="$PREFIX/_conda"
 # /COMMON UTILS
-# Set this variable to prevent existing .condarc file from interfering with the installation
-# Requires conda-standalone 24.9.0 or newer
-export CONDA_RESTRICT_RC_SEARCH_PATH=1
 
 # Expose these to user scripts as well
 export INSTALLER_NAME="__NAME__"
