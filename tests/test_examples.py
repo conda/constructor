@@ -831,7 +831,7 @@ def test_virtual_specs_ok(tmp_path, request):
 
 @pytest.mark.xfail(
     CONDA_EXE == "conda-standalone" and Version(CONDA_EXE_VERSION) < Version("24.9.0"),
-    reason="Global .condarc breaks installation",
+    reason="Pre-existing .condarc breaks installation",
 )
 def test_ignore_condarc_files(tmp_path, monkeypatch, request):
     # Create a bogus .condarc file that would result in errors if read.
@@ -848,7 +848,13 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
         condarc = tmp_path / "conda" / ".condarc"
     condarc.parent.mkdir(parents=True, exist_ok=True)
     condarc.write_text("safety_checks:\n  - very safe\n")
-    input_path = _example_path("customize_controls")
+    recipe_path = _example_path("customize_controls")
+    input_path = tmp_path / "input"
+    shutil.copytree(str(recipe_path), str(input_path))
+    # Rewrite installer name to avoid duplicate artifacts
+    construct_yaml = input_path / "construct.yaml"
+    content = construct_yaml.read_text()
+    construct_yaml.write_text(content.replace("name: NoCondaOptions", "name: NoCondaRC"))
     for installer, install_dir in create_installer(input_path, tmp_path):
         proc = _run_installer(
             input_path,
