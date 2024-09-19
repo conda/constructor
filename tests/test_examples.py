@@ -848,10 +848,10 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
             check_subprocess=True,
             uninstall=True,
         )
-        if CONDA_EXE == "micromamba":
-            if installer.suffix == ".sh":
-                # micromamba loads the rc files even for constructor subcommands.
-                # This cannot be turned off with --no-rc, which causes four errors
-                # in stderr. If there are more, other micromamba calls have read
-                # the bogus .condarc file.
-                assert proc.stderr.count("Bad conversion of configurable") == 4
+        if CONDA_EXE == "micromamba" and installer.suffix == ".sh":
+            # micromamba loads the rc files even for constructor subcommands.
+            # This cannot be turned off with --no-rc, which causes four errors
+            # in stderr. If there are more, other micromamba calls have read
+            # the bogus .condarc file.
+            # pkg installers unfortunately do not output any errors into the log.
+            assert proc.stderr.count("Bad conversion of configurable") == 4

@@ -167,6 +167,7 @@ def setup_envs_commands(info, dir_path):
         channels=','.join(get_final_channels(info)),
         shortcuts=shortcuts_flags(info),
         register_envs=str(info.get("register_envs", True)).lower(),
+        no_rcs_arg=info.get("_ignore_condarcs_arg", ""),
     ).splitlines()
     # now we generate one more block per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
