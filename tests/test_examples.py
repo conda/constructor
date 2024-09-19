@@ -834,10 +834,20 @@ def test_virtual_specs_ok(tmp_path, request):
     reason="Global .condarc breaks installation",
 )
 def test_ignore_condarc_files(tmp_path, monkeypatch, request):
-    # Create a bogus .condarc file that would result in errors if read
-    monkeypatch.setenv("HOME", str(tmp_path))
-    with open(tmp_path / ".condarc", "w") as crc:
-        crc.write("safety_checks:\n- very safe\n")
+    # Create a bogus .condarc file that would result in errors if read.
+    # conda searches inside XDG_CONFIG_HOME on all systems, which is a
+    # a safer directory to monkeypatch, especially on Windows where patching
+    # HOME or USERPROFILE breaks installer builds.
+    # mamba does not search this directory, so use HOME as a fallback.
+    # Since micromamba is not supported on Windows, this is not a problem.
+    if CONDA_EXE == "micromamba":
+        monkeypatch.setenv("HOME", str(tmp_path))
+        condarc = tmp_path / ".condarc"
+    else:
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+        condarc = tmp_path / "conda" / ".condarc"
+    condarc.parent.mkdir(parents=True, exist_ok=True)
+    condarc.write_text("safety_checks:\n  - very safe\n")
     input_path = _example_path("customize_controls")
     for installer, install_dir in create_installer(input_path, tmp_path):
         proc = _run_installer(
