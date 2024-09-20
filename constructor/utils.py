@@ -9,18 +9,27 @@ import logging
 import math
 import re
 import sys
+from enum import Enum
 from io import StringIO
 from os import environ, sep, unlink
 from os.path import basename, isdir, isfile, islink, join, normpath
 from shutil import rmtree
 from subprocess import check_call, check_output
+from typing import Tuple
 
 from ruamel.yaml import YAML
+
+from .conda_interface import VersionOrder as Version
 
 logger = logging.getLogger(__name__)
 yaml = YAML(typ="rt")
 yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
+
+
+class StandaloneExe(Enum):
+    CONDA = 1
+    MAMBA = 2
 
 
 def explained_check_call(args):
@@ -252,18 +261,18 @@ def approx_size_kb(info, which="pkgs"):
     return int(math.ceil(size_bytes/1000))
 
 
-def identify_conda_exe(conda_exe=None):
+def identify_conda_exe(conda_exe=None) -> Tuple[StandaloneExe, Version]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
     output = check_output([conda_exe, "--version"], text=True)
     output = output.strip()
     fields = output.split()
     if "conda" in fields:
-        name = "conda-standalone"
-        version = fields[1]
+        name = StandaloneExe.CONDA
+        version = Version(fields[1])
     else:
-        name = "micromamba"
-        version = output.strip()
+        name = StandaloneExe.MAMBA
+        version = Version(output)
     return name, version
 
 

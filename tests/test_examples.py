@@ -18,7 +18,7 @@ from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 
-from constructor.utils import identify_conda_exe
+from constructor.utils import StandaloneExe, identify_conda_exe
 
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
@@ -391,7 +391,7 @@ def test_example_extra_files(tmp_path, request):
 
 
 @pytest.mark.xfail(
-    CONDA_EXE == "conda-standalone" and Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    CONDA_EXE == StandaloneExe.CONDA and CONDA_EXE_VERSION < Version("23.11.0a0"),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
 def test_example_miniforge(tmp_path, request):
@@ -565,7 +565,7 @@ def test_example_scripts(tmp_path, request):
 
 
 @pytest.mark.skipif(
-    CONDA_EXE == "micromamba" or Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    CONDA_EXE == StandaloneExe.MAMBA or CONDA_EXE_VERSION < Version("23.11.0a0"),
     reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
 )
 def test_example_shortcuts(tmp_path, request):
