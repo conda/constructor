@@ -9,7 +9,6 @@ import logging
 import math
 import re
 import sys
-from enum import Enum
 from io import StringIO
 from os import environ, sep, unlink
 from os.path import isdir, isfile, islink, join, normpath
@@ -26,9 +25,9 @@ yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
 
 
-class StandaloneExe(Enum):
-    CONDA = 1
-    MAMBA = 2
+class StandaloneExe:
+    CONDA = "conda"
+    MAMBA = "mamba"
 
 
 def explained_check_call(args):
