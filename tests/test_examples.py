@@ -394,7 +394,11 @@ def test_example_extra_files(tmp_path, request):
 
 
 @pytest.mark.xfail(
-    CONDA_EXE == StandaloneExe.CONDA and CONDA_EXE_VERSION < Version("23.11.0a0"),
+    (
+        CONDA_EXE == StandaloneExe.CONDA
+        and CONDA_EXE_VERSION is not None
+        and CONDA_EXE_VERSION < Version("23.11.0a0")
+    ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
 def test_example_miniforge(tmp_path, request):
@@ -568,7 +572,11 @@ def test_example_scripts(tmp_path, request):
 
 
 @pytest.mark.skipif(
-    CONDA_EXE == StandaloneExe.MAMBA or CONDA_EXE_VERSION < Version("23.11.0a0"),
+    (
+        CONDA_EXE == StandaloneExe.MAMBA
+        or CONDA_EXE_VERSION is None
+        or CONDA_EXE_VERSION < Version("23.11.0a0")
+    ),
     reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
 )
 def test_example_shortcuts(tmp_path, request):
