@@ -13,9 +13,10 @@ from enum import Enum
 from io import StringIO
 from os import environ, sep, unlink
 from os.path import isdir, isfile, islink, join, normpath
+from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
-from typing import Tuple
+from typing import Tuple, Union
 
 from ruamel.yaml import YAML
 
@@ -257,9 +258,11 @@ def approx_size_kb(info, which="pkgs"):
     return int(math.ceil(size_bytes/1000))
 
 
-def identify_conda_exe(conda_exe=None) -> Tuple[StandaloneExe, str]:
+def identify_conda_exe(conda_exe: Union[str, Path] = None) -> Tuple[StandaloneExe, str]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
+    if isinstance(conda_exe, Path):
+        conda_exe = str(conda_exe)
     try:
         output_version = check_output([conda_exe, "--version"], text=True)
         output_version = output_version.strip()
