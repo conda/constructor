@@ -14,7 +14,7 @@ from io import StringIO
 from os import environ, sep, unlink
 from os.path import basename, isdir, isfile, islink, join, normpath
 from shutil import rmtree
-from subprocess import check_call, check_output
+from subprocess import CalledProcessError, check_call, check_output
 from typing import Tuple
 
 from ruamel.yaml import YAML
@@ -264,16 +264,20 @@ def approx_size_kb(info, which="pkgs"):
 def identify_conda_exe(conda_exe=None) -> Tuple[StandaloneExe, Version]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
-    output = check_output([conda_exe, "--version"], text=True)
-    output = output.strip()
-    fields = output.split()
-    if "conda" in fields:
-        name = StandaloneExe.CONDA
-        version = Version(fields[1])
-    else:
-        name = StandaloneExe.MAMBA
-        version = Version(output)
-    return name, version
+    try:
+        output_version = check_output([conda_exe, "--version"], text=True)
+        output_version = output_version.strip()
+        fields = output_version.split()
+        if "conda" in fields:
+            return StandaloneExe.CONDA, Version(fields[1])
+        # micromamba only returns the version number
+        output_help = check_output([conda_exe, "--help"], text=True)
+        if "Usage: micromamba" in output_help:
+            return StandaloneExe.MAMBA, Version(output_version)
+    except CalledProcessError as exc:
+        logger.warning(f"Could not identify standalone binary {exc}.")
+        pass
+    return None, None
 
 
 def win_str_esc(s, newlines=True):
