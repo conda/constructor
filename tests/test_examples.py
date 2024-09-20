@@ -355,8 +355,9 @@ def _example_path(example_name):
     return REPO_DIR / "examples" / example_name
 
 
-def _is_micromamba(path):
-    return "micromamba" in Path(path).stem
+def _is_micromamba(path) -> bool:
+    name, _ = identify_conda_exe(path)
+    return name == StandaloneExe.MAMBA
 
 
 def test_example_customize_controls(tmp_path, request):

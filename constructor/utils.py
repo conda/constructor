@@ -12,7 +12,7 @@ import sys
 from enum import Enum
 from io import StringIO
 from os import environ, sep, unlink
-from os.path import basename, isdir, isfile, islink, join, normpath
+from os.path import isdir, isfile, islink, join, normpath
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
 from typing import Tuple
@@ -162,7 +162,7 @@ def ensure_transmuted_ext(info, url):
     """
     if (
         info.get("transmute_file_type") == ".conda"
-        and "micromamba" in basename(info.get("_conda_exe", ""))
+        and info.get("_conda_exe_type") == StandaloneExe.MAMBA
     ):
         if url.lower().endswith(".tar.bz2"):
             url = url[:-8] + ".conda"
@@ -224,15 +224,13 @@ def yield_lines(path):
         yield line
 
 
-def shortcuts_flags(info, conda_exe=None):
+def shortcuts_flags(info) -> str:
     menu_packages = info.get("menu_packages")
-    conda_exe = conda_exe or info.get("_conda_exe", "")
-    is_micromamba = "micromamba" in basename(conda_exe).lower()
     if menu_packages is None:
         # not set: we create all shortcuts (default behaviour)
         return ""
     if menu_packages:
-        if is_micromamba:
+        if info.get("_conda_exe_type") == StandaloneExe.MAMBA:
             logger.warning(
                 "Micromamba does not support '--shortcuts-only'. "
                 "Will install all shortcuts."

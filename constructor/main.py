@@ -94,6 +94,8 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
 
     exe_type, exe_version = identify_conda_exe(info.get["_conda_exe"])
+    info["_conda_exe_type"] = exe_type
+    info["_conda_exe_version"] = exe_version
     if osname == "win" and exe_type == StandaloneExe.MAMBA:
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
