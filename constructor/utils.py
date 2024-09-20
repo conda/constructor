@@ -271,7 +271,7 @@ def identify_conda_exe(conda_exe: Union[str, Path] = None) -> Tuple[StandaloneEx
             return StandaloneExe.CONDA, fields[1]
         # micromamba only returns the version number
         output_help = check_output([conda_exe, "--help"], text=True)
-        if "Usage: micromamba" in output_help:
+        if "mamba" in output_help:
             return StandaloneExe.MAMBA, output_version
     except CalledProcessError as exc:
         logger.warning(f"Could not identify standalone binary {exc}.")
