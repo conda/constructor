@@ -19,8 +19,6 @@ from typing import Tuple
 
 from ruamel.yaml import YAML
 
-from .conda_interface import VersionOrder as Version
-
 logger = logging.getLogger(__name__)
 yaml = YAML(typ="rt")
 yaml.default_flow_style = False
@@ -259,7 +257,7 @@ def approx_size_kb(info, which="pkgs"):
     return int(math.ceil(size_bytes/1000))
 
 
-def identify_conda_exe(conda_exe=None) -> Tuple[StandaloneExe, Version]:
+def identify_conda_exe(conda_exe=None) -> Tuple[StandaloneExe, str]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
     try:
@@ -267,11 +265,11 @@ def identify_conda_exe(conda_exe=None) -> Tuple[StandaloneExe, Version]:
         output_version = output_version.strip()
         fields = output_version.split()
         if "conda" in fields:
-            return StandaloneExe.CONDA, Version(fields[1])
+            return StandaloneExe.CONDA, fields[1]
         # micromamba only returns the version number
         output_help = check_output([conda_exe, "--help"], text=True)
         if "Usage: micromamba" in output_help:
-            return StandaloneExe.MAMBA, Version(output_version)
+            return StandaloneExe.MAMBA, output_version
     except CalledProcessError as exc:
         logger.warning(f"Could not identify standalone binary {exc}.")
         pass
