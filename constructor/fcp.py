@@ -462,7 +462,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         # Restoring the state for "proxy_servers" to what it was before
         conda_context.proxy_servers = proxy_servers
         assert conda_context.ssl_verify == _ssl_verify
-        assert conda_context.pkgs_dirs == download_dir
+        assert conda_context.pkgs_dirs and conda_context.pkgs_dirs[0] == download_dir
 
         (
             pkg_records,
