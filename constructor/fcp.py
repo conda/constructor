@@ -454,13 +454,15 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     # We can pass ssl_verify via env var, but proxy_servers is a mapping so we need to do it by hand
     # See: https://github.com/conda/constructor/issues/304
     proxy_servers = conda_context.proxy_servers
-
+    _ssl_verify = conda_context.ssl_verify
     with env_vars({
         "CONDA_PKGS_DIRS": download_dir,
         "CONDA_SSL_VERIFY": str(conda_context.ssl_verify),
     }, conda_replace_context_default):
         # Restoring the state for "proxy_servers" to what it was before
         conda_context.proxy_servers = proxy_servers
+        assert conda_context.ssl_verify == _ssl_verify
+        assert conda_context.pkgs_dirs == download_dir
 
         (
             pkg_records,
