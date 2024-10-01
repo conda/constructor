@@ -180,11 +180,11 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     if exe_type is None or exe_version is None:
         logger.warning(
-            "Could not identify conda-standalone / micromamba version (%s). "
+            "Could not identify conda-standalone / micromamba version. "
             "Will assume it is compatible with shortcuts."
         )
-    if sys.platform != "win32" and exe_type is not None and (
-        exe_type == StandaloneExe.MAMBA or exe_version < Version("23.11.0")
+    elif sys.platform != "win32" and (
+        exe_type != StandaloneExe.CONDA or exe_version < Version("23.11.0")
     ):
         logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
         info['_enable_shortcuts'] = "incompatible"
