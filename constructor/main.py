@@ -201,9 +201,9 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
 
     # Add --no-rc option to CONDA_EXE command so that existing
     # .condarc files do not pollute the installation process.
-    if exe_name == "conda-standalone" and Version(exe_version) >= Version("24.9.0"):
+    if exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.9.0"):
         info["_ignore_condarcs_arg"] = "--no-rc"
-    elif exe_name == "micromamba":
+    elif exe_type == StandaloneExe.MAMBA:
         info["_ignore_condarcs_arg"] = "--no-rc"
     else:
         info["_ignore_condarcs_arg"] = ""
