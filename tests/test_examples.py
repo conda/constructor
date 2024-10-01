@@ -845,7 +845,7 @@ def test_virtual_specs_ok(tmp_path, request):
 
 
 @pytest.mark.xfail(
-    CONDA_EXE == "conda-standalone" and Version(CONDA_EXE_VERSION) < Version("24.9.0"),
+    CONDA_EXE == StandaloneExe.CONDA and CONDA_EXE_VERSION < Version("24.9.0"),
     reason="Pre-existing .condarc breaks installation",
 )
 def test_ignore_condarc_files(tmp_path, monkeypatch, request):
@@ -855,7 +855,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
     # HOME or USERPROFILE breaks installer builds.
     # mamba does not search this directory, so use HOME as a fallback.
     # Since micromamba is not supported on Windows, this is not a problem.
-    if CONDA_EXE == "micromamba":
+    if CONDA_EXE == StandaloneExe.MAMBA:
         monkeypatch.setenv("HOME", str(tmp_path))
         condarc = tmp_path / ".condarc"
     else:
@@ -879,7 +879,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
             check_subprocess=True,
             uninstall=True,
         )
-        if CONDA_EXE == "micromamba" and installer.suffix == ".sh":
+        if CONDA_EXE == StandaloneExe.MAMBA and installer.suffix == ".sh":
             # micromamba loads the rc files even for constructor subcommands.
             # This cannot be turned off with --no-rc, which causes four errors
             # in stderr. If there are more, other micromamba calls have read
