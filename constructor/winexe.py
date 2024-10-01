@@ -173,6 +173,9 @@ def setup_envs_commands(info, dir_path):
     for env_name in info.get("_extra_envs_info", {}):
         lines += ["", ""]
         env_info = info["extra_envs"][env_name]
+        # Needed for shortcuts_flags function
+        if "_conda_exe_type" not in env_info:
+            env_info["_conda_exe_type"] = info.get("_conda_exe_type")
         channel_info = {
             "channels": env_info.get("channels", info.get("channels", ())),
             "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ()))
@@ -186,7 +189,7 @@ def setup_envs_commands(info, dir_path):
             conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
             history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
             channels=",".join(get_final_channels(channel_info)),
-            shortcuts=shortcuts_flags(env_info, conda_exe=info.get("_conda_exe")),
+            shortcuts=shortcuts_flags(env_info),
             register_envs=str(info.get("register_envs", True)).lower(),
             no_rcs_arg=info.get("_ignore_condarcs_arg", ""),
         ).splitlines()
