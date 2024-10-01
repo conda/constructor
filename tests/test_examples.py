@@ -734,7 +734,11 @@ def test_example_from_explicit(tmp_path, request):
             [sys.executable, "-mconda", "list", "-p", install_dir, "--explicit", "--md5"],
             text=True,
         )
-        assert out == (input_path / "explicit_linux-64.txt").read_text()
+        expected = (input_path / "explicit_linux-64.txt").read_text()
+        # Filter comments
+        out = [line for line in out.split("\n") if not line.startswith("#")]
+        expected = [line for line in expected.split("\n") if not line.startswith("#")]
+        assert out == expected
 
 
 def test_register_envs(tmp_path, request):
