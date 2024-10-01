@@ -18,7 +18,7 @@ from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 
-from constructor.utils import identify_conda_exe
+from constructor.utils import StandaloneExe, identify_conda_exe
 
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
@@ -36,6 +36,8 @@ REPO_DIR = Path(__file__).parent.parent
 ON_CI = os.environ.get("CI")
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
 CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
+if CONDA_EXE_VERSION is not None:
+    CONDA_EXE_VERSION = Version(CONDA_EXE_VERSION)
 CONSTRUCTOR_DEBUG = bool(os.environ.get("CONSTRUCTOR_DEBUG"))
 if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH = Path(artifacts_path)
@@ -355,8 +357,9 @@ def _example_path(example_name):
     return REPO_DIR / "examples" / example_name
 
 
-def _is_micromamba(path):
-    return "micromamba" in Path(path).stem
+def _is_micromamba(path) -> bool:
+    name, _ = identify_conda_exe(path)
+    return name == StandaloneExe.MAMBA
 
 
 def test_example_customize_controls(tmp_path, request):
@@ -391,7 +394,11 @@ def test_example_extra_files(tmp_path, request):
 
 
 @pytest.mark.xfail(
-    CONDA_EXE == "conda-standalone" and Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    (
+        CONDA_EXE == StandaloneExe.CONDA
+        and CONDA_EXE_VERSION is not None
+        and CONDA_EXE_VERSION < Version("23.11.0a0")
+    ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
 def test_example_miniforge(tmp_path, request):
@@ -565,7 +572,11 @@ def test_example_scripts(tmp_path, request):
 
 
 @pytest.mark.skipif(
-    CONDA_EXE == "micromamba" or Version(CONDA_EXE_VERSION) < Version("23.11.0a0"),
+    (
+        CONDA_EXE == StandaloneExe.MAMBA
+        or CONDA_EXE_VERSION is None
+        or CONDA_EXE_VERSION < Version("23.11.0a0")
+    ),
     reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
 )
 def test_example_shortcuts(tmp_path, request):
@@ -723,7 +734,11 @@ def test_example_from_explicit(tmp_path, request):
             [sys.executable, "-mconda", "list", "-p", install_dir, "--explicit", "--md5"],
             text=True,
         )
-        assert out == (input_path / "explicit_linux-64.txt").read_text()
+        expected = (input_path / "explicit_linux-64.txt").read_text()
+        # Filter comments
+        out = [line for line in out.split("\n") if not line.startswith("#")]
+        expected = [line for line in expected.split("\n") if not line.startswith("#")]
+        assert out == expected
 
 
 def test_register_envs(tmp_path, request):

@@ -11,9 +11,11 @@ import re
 import sys
 from io import StringIO
 from os import environ, sep, unlink
-from os.path import basename, isdir, isfile, islink, join, normpath
+from os.path import isdir, isfile, islink, join, normpath
+from pathlib import Path
 from shutil import rmtree
-from subprocess import check_call, check_output
+from subprocess import CalledProcessError, check_call, check_output
+from typing import Tuple, Union
 
 from ruamel.yaml import YAML
 
@@ -21,6 +23,11 @@ logger = logging.getLogger(__name__)
 yaml = YAML(typ="rt")
 yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
+
+
+class StandaloneExe:
+    CONDA = "conda"
+    MAMBA = "mamba"
 
 
 def explained_check_call(args):
@@ -153,7 +160,7 @@ def ensure_transmuted_ext(info, url):
     """
     if (
         info.get("transmute_file_type") == ".conda"
-        and "micromamba" in basename(info.get("_conda_exe", ""))
+        and info.get("_conda_exe_type") == StandaloneExe.MAMBA
     ):
         if url.lower().endswith(".tar.bz2"):
             url = url[:-8] + ".conda"
@@ -215,15 +222,13 @@ def yield_lines(path):
         yield line
 
 
-def shortcuts_flags(info, conda_exe=None):
+def shortcuts_flags(info) -> str:
     menu_packages = info.get("menu_packages")
-    conda_exe = conda_exe or info.get("_conda_exe", "")
-    is_micromamba = "micromamba" in basename(conda_exe).lower()
     if menu_packages is None:
         # not set: we create all shortcuts (default behaviour)
         return ""
     if menu_packages:
-        if is_micromamba:
+        if info.get("_conda_exe_type") == StandaloneExe.MAMBA:
             logger.warning(
                 "Micromamba does not support '--shortcuts-only'. "
                 "Will install all shortcuts."
@@ -252,19 +257,24 @@ def approx_size_kb(info, which="pkgs"):
     return int(math.ceil(size_bytes/1000))
 
 
-def identify_conda_exe(conda_exe=None):
+def identify_conda_exe(conda_exe: Union[str, Path] = None) -> Tuple[StandaloneExe, str]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
-    output = check_output([conda_exe, "--version"], text=True)
-    output = output.strip()
-    fields = output.split()
-    if "conda" in fields:
-        name = "conda-standalone"
-        version = fields[1]
-    else:
-        name = "micromamba"
-        version = output.strip()
-    return name, version
+    if isinstance(conda_exe, Path):
+        conda_exe = str(conda_exe)
+    try:
+        output_version = check_output([conda_exe, "--version"], text=True)
+        output_version = output_version.strip()
+        fields = output_version.split()
+        if "conda" in fields:
+            return StandaloneExe.CONDA, fields[1]
+        # micromamba only returns the version number
+        output_help = check_output([conda_exe, "--help"], text=True)
+        if "mamba" in output_help:
+            return StandaloneExe.MAMBA, output_version
+    except CalledProcessError as exc:
+        logger.warning(f"Could not identify standalone binary {exc}.")
+    return None, None
 
 
 def win_str_esc(s, newlines=True):
