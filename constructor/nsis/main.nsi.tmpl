@@ -1372,11 +1372,11 @@ Section "Install"
 
     # To address CVE-2022-26526.
     # Revoke the write permission on directory "$INSTDIR" for Users if this is
-    # being run with administrative privileges. Users are:
+    # an all-users installation. Users are:
     #   AU - authenticated users
     #   BU - built-in (local) users
     #   DU - domain users
-    ${If} ${UAC_IsAdmin}
+    ${If} $InstMode == ${ALL_USERS}
         ${Print} "Setting installation directory permissions..."
         AccessControl::DisableFileInheritance "$INSTDIR"
         AccessControl::RevokeOnFile "$INSTDIR" "(AU)" "GenericWrite"
