@@ -102,6 +102,14 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
 
+    if (
+        info.get("uninstall_with_conda_exe")
+        and not (
+            exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.11.0")
+        )
+    ):
+        sys.exit("Error: uninstalling with conda.exe requires conda-standalone 24.11 or newer.")
+
     logger.debug('conda packages download: %s', info['_download_dir'])
 
     for key in ('welcome_image_text', 'header_image_text'):
@@ -184,7 +192,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             "Will assume it is compatible with shortcuts."
         )
     elif sys.platform != "win32" and (
-        exe_type != StandaloneExe.CONDA or exe_version < Version("23.11.0")
+        exe_type != StandaloneExe.CONDA or (exe_version and exe_version < Version("23.11.0"))
     ):
         logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
         info['_enable_shortcuts'] = "incompatible"
