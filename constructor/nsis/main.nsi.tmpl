@@ -1406,9 +1406,7 @@ SectionEnd
 Section "Uninstall"
     ${LogSet} on
 
-    # Remove menu items, path entries
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
-    @UNINSTALL_MENUS@
 
     # ensure that MSVC runtime DLLs are on PATH during uninstallation
     ReadEnvStr $0 PATH
@@ -1453,15 +1451,7 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
 
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
-
-    ${Print} "Removing files and folders..."
-    nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
-
-    # In case the last command fails, run the slow method to remove leftover
-    RMDir /r /REBOOTOK "$INSTDIR"
+    @UNINSTALL_COMMANDS@
 
     ${If} $INSTALLER_NAME_FULL != ""
         DeleteRegKey SHCTX "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTALLER_NAME_FULL"

@@ -12,6 +12,7 @@ import tempfile
 from os.path import abspath, basename, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
+from textwrap import dedent
 from typing import List, Union
 
 from .construct import ns_platform
@@ -213,6 +214,56 @@ def uninstall_menus_commands(info):
     return [line.strip() for line in lines]
 
 
+def uninstall_commands_default(info):
+    return uninstall_menus_commands(info) + dedent("""
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+
+        ${Print} "Removing files and folders..."
+        nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
+
+        # In case the last command fails, run the slow method to remove leftover
+        RMDir /r /REBOOTOK "$INSTDIR"
+    """)
+
+
+def uninstall_commands_conda_standalone(info):
+    return dedent(r"""
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+
+        ${Print} "Removing files and folders..."
+        $INSTDIR\_conda.exe uninstall $INSTDIR
+        # If only .conda_trash files are left behind, remove the directory
+        IfFileExists $INSTDIR 0 skip_rmdir
+            StrLen $R0 ".conda_trash"
+            IntOp $R0 0 - $R0
+            FindFirst $0 $1 $INSTDIR\*
+            rmdir_loop:
+                StrCmp "" $1 end_rmdir_loop
+                StrCmp "." $1 advance_rmdir_loop
+                StrCmp ".." $1 advance_rmdir_loop
+                StrCpy $2 $1 "" $R0
+                StrCmp $2 ".conda_trash" advance_rmdir_loop end_rmdir
+            advance_rmdir_loop:
+                FindNext $0 $1
+                Goto rmdir_loop
+            end_rmdir_loop:
+                RMDir /r /REBOOTOK "$INSTDIR"
+            end_rmdir:
+                FindClose $0
+        skip_rmdir:
+    """)
+
+
+def uninstall_commands(info):
+    if info.get("uninstall_with_conda_exe"):
+        return uninstall_commands_conda_standalone(info)
+    return uninstall_commands_default(info)
+
+
 def make_nsi(
     info: dict,
     dir_path: str,
@@ -378,7 +429,7 @@ def make_nsi(
         ('@UNINSTALL_NAME@', info.get('uninstall_name',
                                       '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
                                       )),
-        ('@UNINSTALL_MENUS@', '\n    '.join(uninstall_menus_commands(info))),
+        ('@UNINSTALL_COMMANDS@', '\n    '.join(uninstall_commands(info))),
         ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
         ('@SCRIPT_ENV_VARIABLES@', '\n    '.join(setup_script_env_variables(info))),
         (
