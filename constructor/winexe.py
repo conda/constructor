@@ -225,7 +225,7 @@ def uninstall_commands_default(info):
 
         # In case the last command fails, run the slow method to remove leftover
         RMDir /r /REBOOTOK "$INSTDIR"
-    """)
+    """).splitlines()
 
 
 def uninstall_commands_conda_standalone(info):
@@ -235,8 +235,14 @@ def uninstall_commands_conda_standalone(info):
         !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
         ${Print} "Removing files and folders..."
-        $INSTDIR\_conda.exe uninstall $INSTDIR
-        # If only .conda_trash files are left behind, remove the directory
+        push '"$INSTDIR\_conda.exe" uninstall "$INSTDIR"'
+        push 'Failed to remove files and folders. Please see the log for more information.'
+        push 'WithLog'
+        SetDetailsPrint listonly
+        call un.AbortRetryNSExecWait
+        SetDetailsPrint both
+
+        # If only install.log and .conda_trash files are left behind, remove the directory
         IfFileExists $INSTDIR 0 skip_rmdir
             StrLen $R0 ".conda_trash"
             IntOp $R0 0 - $R0
@@ -245,6 +251,7 @@ def uninstall_commands_conda_standalone(info):
                 StrCmp "" $1 end_rmdir_loop
                 StrCmp "." $1 advance_rmdir_loop
                 StrCmp ".." $1 advance_rmdir_loop
+                StrCmp "install.log" $1 advance_rmdir_loop
                 StrCpy $2 $1 "" $R0
                 StrCmp $2 ".conda_trash" advance_rmdir_loop end_rmdir
             advance_rmdir_loop:
@@ -255,7 +262,7 @@ def uninstall_commands_conda_standalone(info):
             end_rmdir:
                 FindClose $0
         skip_rmdir:
-    """)
+    """).splitlines()
 
 
 def uninstall_commands(info):
