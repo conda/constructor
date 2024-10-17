@@ -9,6 +9,7 @@ import argparse
 import logging
 import os
 import sys
+import warnings
 from os.path import abspath, expanduser, isdir, join
 from textwrap import dedent, indent
 
@@ -58,6 +59,13 @@ def get_output_filename(info):
 
     osname, arch = info['_platform'].split('-')
     os_map = {'linux': 'Linux', 'osx': 'MacOSX', 'win': 'Windows'}
+    if osname == "osx":
+        warnings.warn(
+            "constructor 3.11.* will use the 'macOS' label (instead of 'MacOSX') for "
+            "the osx-* platforms. This will change the default name of the generated installers. "
+            "Use 'installer_filename' to control this default behavior.",
+            FutureWarning,
+        )
     arch_name_map = {'64': 'x86_64', '32': 'x86'}
     ext = info['installer_type']
     return '%s-%s-%s.%s' % ('%(name)s-%(version)s' % info,
