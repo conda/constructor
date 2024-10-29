@@ -476,13 +476,16 @@ Path to a post-install script. Some notes:
   installation path is available as `${PREFIX}`. Installer metadata is
   available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`
   environment variables. `${INSTALLER_TYPE}` is set to `SH`.
+  `${INSTALLER_UNATTENDED}` will be `"1"` in batch mode (`-b`), `"0"` otherwise.
 - For PKG installers, the shebang line is respected if present;
   otherwise, `bash` is used. The same variables mentioned for `sh`
   installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.
+  `${INSTALLER_UNATTENDED}` is not supported and always set to `"?"`.
 - For Windows `.exe` installers, the script must be a `.bat` file.
   Installation path is available as `%PREFIX%`. Metadata about
   the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
   `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
+  `%INSTALLER_UNATTENDED%` will be `"1"` in silent mode (`/S`), `"0"` otherwise.
 
 If necessary, you can activate the installed `base` environment like this:
 
