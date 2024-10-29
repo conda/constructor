@@ -1250,6 +1250,11 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "${VERSION}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
+    ${If} ${Silent}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "1").r0'
+    ${Else}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
+    ${EndIf}
 
     ${If} '@VIRTUAL_SPECS@' != ''
     # We need to specify CONDA_SOLVER=classic for conda-standalone
@@ -1452,6 +1457,11 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "$0").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_TYPE", "EXE").r0'
+    ${If} ${Silent}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "1").r0'
+    ${Else}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
+    ${EndIf}
 
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
