@@ -196,7 +196,7 @@ def setup_envs_commands(info, dir_path):
     return [line.strip() for line in lines]
 
 
-def uninstall_menus_commands(info):
+def uninstall_menus_commands(info: dict) -> List[str]:
     tmpl = r"""
         SetDetailsPrint both
         ${{Print}} "Deleting {name} menus in {env_name}..."
@@ -214,7 +214,7 @@ def uninstall_menus_commands(info):
     return [line.strip() for line in lines]
 
 
-def uninstall_commands_default(info):
+def uninstall_commands_default(info: dict) -> List[str]:
     return uninstall_menus_commands(info) + dedent("""
         !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
         !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
@@ -228,7 +228,7 @@ def uninstall_commands_default(info):
     """).splitlines()
 
 
-def uninstall_commands_conda_standalone(info):
+def uninstall_commands_conda_standalone() -> List[str]:
     return dedent(r"""
         !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
         !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
@@ -265,9 +265,9 @@ def uninstall_commands_conda_standalone(info):
     """).splitlines()
 
 
-def uninstall_commands(info):
+def uninstall_commands(info: dict) -> List[str]:
     if info.get("uninstall_with_conda_exe"):
-        return uninstall_commands_conda_standalone(info)
+        return uninstall_commands_conda_standalone()
     return uninstall_commands_default(info)
 
 
