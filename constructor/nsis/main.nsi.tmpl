@@ -67,6 +67,10 @@ var /global StdOutHandleSet
 
 !include "Utils.nsh"
 
+#if uninstall_with_conda_exe is True
+!include "StandaloneUninstallerOptions.nsh"
+#endif
+
 !define NAME __NAME__
 !define VERSION __VERSION__
 !define COMPANY __COMPANY__
@@ -203,6 +207,9 @@ Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_UNPAGE_WELCOME
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.OnDirectoryLeave
 !insertmacro MUI_UNPAGE_CONFIRM
+#if uninstall_with_conda_exe is True
+UninstPage Custom un.UninstCustomOptions_Show
+#endif
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
 
@@ -773,8 +780,7 @@ Function un.onInit
             Closing in 10s..."
         # Give it some time so users can read it the pop-up console
         # The pop-up console happens because the uninstaller copies itself to
-        # a temporary location because actually running, so we can't get the parent
-        # console handle
+        # a temporary location, so we can't get the parent console handle
         Sleep 10000
         Abort
     ${EndIf}
@@ -784,6 +790,10 @@ Function un.onInit
     ${IfNot} ${Errors}
         StrCpy $QuietMode "1"
     ${EndIf}
+
+#if uninstall_with_conda_exe is True
+    Call un.UninstCustomOptions_InitDefaults
+#endif
 
     Push $0
     Push $1

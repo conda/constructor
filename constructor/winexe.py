@@ -409,6 +409,7 @@ def make_nsi(
     ppd["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     ppd["has_license"] = bool(info.get("license_file"))
     ppd["post_install_pages"] = bool(info.get("post_install_pages"))
+    ppd["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
 
     data = preprocess(data, ppd)
     data = fill_template(data, replace, exceptions=nsis_predefines)
