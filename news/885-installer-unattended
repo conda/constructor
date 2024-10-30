@@ -1,0 +1,19 @@
+### Enhancements
+
+* Export `INSTALLER_UNATTENDED` environment variable so pre- and post-install scripts can detect if the installer is running in batch/silent mode or not. (#882 via #885)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
