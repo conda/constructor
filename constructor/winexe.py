@@ -234,8 +234,29 @@ def uninstall_commands_conda_standalone() -> List[str]:
         !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
         !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
+        # Parse arguments
+        StrCpy $R0 ""
+
+        ${If} $UninstRemoveCondaRcs_User_State == ${BST_CHECKED}
+            ${If} $UninstRemoveCondaRcs_System_State == ${BST_CHECKED}
+                StrCpy $R0 "$R0 --remove-condarcs=all"
+            ${Else}
+                StrCpy $R0 "$R0 --remove-condarcs=user"
+            ${EndIf}
+        ${ElseIf} $UninstRemoveCondaRcs_System_State == ${BST_CHECKED}
+                StrCpy $R0 "$R0 --remove-condarcs=system"
+        ${EndIf}
+
+        ${If} $UninstRemoveCaches_State == ${BST_CHECKED}
+            StrCpy $R0 "$R0 --remove-caches"
+        ${EndIf}
+
+        ${If} $UninstCondaClean_State == ${BST_CHECKED}
+            StrCpy $R0 "$R0 --conda-clean"
+        ${EndIf}
+
         ${Print} "Removing files and folders..."
-        push '"$INSTDIR\_conda.exe" uninstall "$INSTDIR"'
+        push '"$INSTDIR\_conda.exe" uninstall $R0 "$INSTDIR"'
         push 'Failed to remove files and folders. Please see the log for more information.'
         push 'WithLog'
         SetDetailsPrint listonly

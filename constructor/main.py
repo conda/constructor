@@ -108,7 +108,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.11.0")
         )
     ):
-        sys.exit("Error: uninstalling with conda.exe requires conda-standalone 24.11 or newer.")
+        sys.exit("Error: uninstalling with conda.exe requires conda-standalone 24.11.0 or newer.")
 
     logger.debug('conda packages download: %s', info['_download_dir'])
 

@@ -114,6 +114,11 @@ var /global ARGV_NoScripts
 var /global ARGV_NoShortcuts
 var /global ARGV_CheckPathLength
 var /global ARGV_QuietMode
+#if uninstall_with_conda_exe is True
+var /global ARGV_Uninst_RemoveCondaRcs
+var /global ARGV_Uninst_RemoveCaches
+var /global ARGV_Uninst_CondaClean
+#endif
 
 var /global IsDomainUser
 var /global CheckPathLength
@@ -749,7 +754,7 @@ Function .onInit
     Pop $0
 FunctionEnd
 
-Function un.onInit
+!macro un.ParseCommandLineArgs
     ClearErrors
     ${GetParameters} $ARGV
     ${GetOptions} $ARGV "/?" $ARGV_Help
@@ -769,6 +774,11 @@ Function un.onInit
                 /? (show this help message)$\n\
                 /S (run in CLI/headless mode)$\n\
                 /Q (quiet mode, do not print output to console)$\n\
+#if uninstall_with_conda_exe is True
+                /RemoveCondaRcs=[none|users|system|all] [default: none]$\n\
+                /RemoveCaches=[0|1] [default: 0]$\n\
+                /CondaClean=[0|1] [default: 0]$\n\
+#endif
                 /_?=[installation directory] (must be last parameter)$\n\
             $\n\
             EXAMPLES$\n\
@@ -790,6 +800,58 @@ Function un.onInit
     ${IfNot} ${Errors}
         StrCpy $QuietMode "1"
     ${EndIf}
+#if uninstall_with_conda_exe is True
+    ClearErrors
+    ${GetOptions} $ARGV "/RemoveCondaRcs=" $ARGV_Uninst_RemoveCondaRcs
+    ${IfNot} ${Errors}
+        ${IfNot} ${UAC_IsAdmin}
+            ${If} $ARGV_Uninst_RemoveCondaRcs != "all"
+                ${If} $ARGV_Uninst_RemoveCondaRcs != "system"
+                    goto parse_condarc_args
+                ${EndIf}
+            ${EndIf}
+            MessageBox MB_ICONSTOP "Removing system .condarc files requires an elevated prompt."
+            Abort
+        ${EndIf}
+        parse_condarc_args:
+        ${If} $ARGV_Uninst_RemoveCondaRcs == "user"
+            StrCpy $UninstRemoveCondaRcs_User_State ${BST_CHECKED}
+            StrCpy $UninstRemoveCondaRcs_System_State ${BST_UNCHECKED}
+        ${ElseIf} $ARGV_Uninst_RemoveCondaRcs == "system"
+            StrCpy $UninstRemoveCondaRcs_User_State ${BST_UNCHECKED}
+            StrCpy $UninstRemoveCondaRcs_System_State ${BST_CHECKED}
+        ${ElseIf} $ARGV_Uninst_RemoveCondaRcs == "all"
+            StrCpy $UninstRemoveCondaRcs_User_State ${BST_CHECKED}
+            StrCpy $UninstRemoveCondaRcs_System_State ${BST_CHECKED}
+        ${Else}
+            StrCpy $UninstRemoveCondaRcs_User_State ${BST_UNCHECKED}
+            StrCpy $UninstRemoveCondaRcs_System_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/RemoveCaches=" $ARGV_Uninst_RemoveCaches
+    ${IfNot} ${Errors}
+        ${If} $ARGV_Uninst_RemoveCaches = "1"
+            StrCpy $UninstRemoveCaches_State ${BST_CHECKED}
+        ${ElseIf} $ARGV_Uninst_RemoveCaches = "0"
+            StrCpy $UninstRemoveCaches_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/CondaClean=" $ARGV_Uninst_CondaClean
+    ${IfNot} ${Errors}
+        ${If} $ARGV_Uninst_CondaClean = "1"
+            StrCpy $UninstCondaClean_State ${BST_CHECKED}
+        ${ElseIf} $ARGV_Uninst_CondaClean = "0"
+            StrCpy $UninstCondaClean_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
+#endif
+!macroend
+
+Function un.onInit
 
 #if uninstall_with_conda_exe is True
     Call un.UninstCustomOptions_InitDefaults
@@ -1415,6 +1477,7 @@ SectionEnd
 
 Section "Uninstall"
     ${LogSet} on
+    !insertmacro un.ParseCommandLineArgs
 
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 
