@@ -479,7 +479,7 @@ mkdir -p "$TMP"
 # but we haven't created $PREFIX/pkgs yet... give it a temp location
 # shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
-    echo 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
+    echo "Checking virtual specs compatibility:" __VIRTUAL_SPECS__
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
