@@ -451,16 +451,18 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     # We need to preserve the configuration for proxy servers and ssl, otherwise if constructor is
     # running in a host that sits behind proxy (usually in a company / corporate environment) it
     # will have this settings reset with the call to conda_replace_context_default
+    # We can pass ssl_verify via env var, but proxy_servers is a mapping so we need to do it by hand
     # See: https://github.com/conda/constructor/issues/304
     proxy_servers = conda_context.proxy_servers
-    ssl_verify = conda_context.ssl_verify
-
+    _ssl_verify = conda_context.ssl_verify
     with env_vars({
         "CONDA_PKGS_DIRS": download_dir,
+        "CONDA_SSL_VERIFY": str(conda_context.ssl_verify),
     }, conda_replace_context_default):
-        # Restoring the state for both "proxy_servers" and "ssl_verify" to what was before
+        # Restoring the state for "proxy_servers" to what it was before
         conda_context.proxy_servers = proxy_servers
-        conda_context.ssl_verify = ssl_verify
+        assert conda_context.ssl_verify == _ssl_verify
+        assert conda_context.pkgs_dirs and conda_context.pkgs_dirs[0] == download_dir
 
         (
             pkg_records,

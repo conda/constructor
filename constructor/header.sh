@@ -179,6 +179,9 @@ while getopts "bifhkp:sut" x; do
     esac
 done
 
+# For pre- and post-install scripts
+export INSTALLER_UNATTENDED="$BATCH"
+
 # For testing, keep the package cache around longer
 CLEAR_AFTER_TEST=0
 if [ "$TEST" = "1" ] && [ "$KEEP_PKGS" = "0" ]; then
