@@ -347,6 +347,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'ENABLE_SHORTCUTS': str(info['_enable_shortcuts']).lower(),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
         'VIRTUAL_SPECS': shlex.join(virtual_specs),
+        'NO_RCS_ARG': info.get('_ignore_condarcs_arg', ''),
     }
     data = preprocess(data, ppd)
     custom_variables = info.get('script_env_variables', {})

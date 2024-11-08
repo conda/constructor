@@ -1263,7 +1263,7 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
     ${Print} "Checking virtual specs compatibility: @VIRTUAL_SPECS_DEBUG@"
-    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@'
+    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@ @NO_RCS_ARG@'
     push 'Failed to check virtual specs: @VIRTUAL_SPECS_DEBUG@'
     push 'WithLog'
     call AbortRetryNSExecWait
@@ -1325,7 +1325,7 @@ Section "Install"
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
         ${Print} "Clearing package cache..."
-        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes'
+        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes @NO_RCS_ARG@'
         push 'Failed to clear package cache'
         push 'WithLog'
         call AbortRetryNSExecWait
