@@ -339,7 +339,11 @@ def create_installer(
             )
         yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
-            shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
+            try:
+                shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
+            except shutil.Error:
+                # Some tests reuse the examples for different checks; ignore errors
+                pass
 
 
 @lru_cache(maxsize=None)
