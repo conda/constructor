@@ -496,9 +496,13 @@ def create(info, verbose=False):
     args = [MAKENSIS_EXE, verbosity, nsi]
     logger.info('Calling: %s', args)
     process = run(args, capture_output=True, text=True)
-    logger.debug("makensis stdout:\n'%s'", process.stdout)
-    logger.debug("makensis stderr:\n'%s'", process.stderr)
-    process.check_returncode()
+    if process.returncode:
+        logger.info("makensis stdout:\n'%s'", process.stdout)
+        logger.error("makensis stderr:\n'%s'", process.stderr)
+        sys.exit(f"Failed to run {args}. Exit code: {process.returncode}.")
+    else:
+        logger.debug("makensis stdout:\n'%s'", process.stdout)
+        logger.debug("makensis stderr:\n'%s'", process.stderr)
 
     if signing_tool:
         signing_tool.verify_signature(info['_outpath'])
