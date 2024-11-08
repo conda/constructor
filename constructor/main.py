@@ -241,6 +241,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     # '_dists': List[Dist]
     # '_urls': List[Tuple[url, md5]]
 
+    os.makedirs(output_dir, exist_ok=True)
     info_dicts = []
     for itype in itypes:
         if itype == 'sh':
