@@ -123,7 +123,7 @@ packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
 These specs are dry-run solved offline by the bundled `--conda-exe` binary.
 In SH installers, `__glibc>=x.y` and `__osx>=x.y` specs can be checked with
 Bash only. The detected version can be overriden with environment variables
-`CONDA_OVERRIDE_GLIBC` and `CONDA_OVERRIDE_OSX`, respectively. In PKG 
+`CONDA_OVERRIDE_GLIBC` and `CONDA_OVERRIDE_OSX`, respectively. In PKG
 installers, `__osx` specs can be checked natively without the solver being
 involved as long as only `>=`, `<` or `,` are used.
 
