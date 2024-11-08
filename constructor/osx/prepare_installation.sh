@@ -42,6 +42,7 @@ if [ "__VIRTUAL_SPECS__" != "" ]; then
     notify "Checking virtual specs compatibility: __VIRTUAL_SPECS__"
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
+    SYSTEM_VERSION_COMPAT=0 \
     "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__
 fi
 
