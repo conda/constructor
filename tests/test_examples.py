@@ -842,3 +842,21 @@ def test_virtual_specs_ok(tmp_path, request):
             check_subprocess=True,
             uninstall=True,
         )
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
+def test_virtual_specs_override(tmp_path, request, monkeypatch):
+    input_path = _example_path("virtual_specs_failed")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.name.endswith(".pkg"):
+            continue
+        monkeypatch.setenv("CONDA_OVERRIDE_GLIBC", "20")
+        monkeypatch.setenv("CONDA_OVERRIDE_OSX", "30")
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )
