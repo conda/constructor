@@ -30,6 +30,7 @@ export INSTALLER_NAME="__NAME__"
 export INSTALLER_VER="__VERSION__"
 export INSTALLER_PLAT="__PLAT__"
 export INSTALLER_TYPE="PKG"
+export INSTALLER_UNATTENDED="?"
 export PRE_OR_POST="__PRE_OR_POST__"
 _SCRIPT_ENV_VARIABLES_=''  # Templated extra environment variable(s)
 
