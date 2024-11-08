@@ -390,12 +390,11 @@ elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
 fi
 
 total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
-free_disk_space_bytes="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
-free_disk_space_kb="$((free_disk_space_bytes / 1024))"
+free_disk_space_kb="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
 free_disk_space_kb_with_buffer="$((free_disk_space_kb - 50 * 1024))"  # add 50MB of buffer
 if [ "$free_disk_space_kb_with_buffer" -lt "$total_installation_size_kb" ]; then
     printf "ERROR: Not enough free disk space. Only %s MB are available, but %s MB are required (leaving a 50 MB buffer).\\n" \
-        "$((free_disk_space_kb / 1024))" "$((total_installation_size_kb / 1024))" >&2
+        "$((free_disk_space_kb_with_buffer / 1024))" "$((total_installation_size_kb / 1024))" >&2
     exit 1
 fi
 
