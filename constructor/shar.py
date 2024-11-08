@@ -78,7 +78,7 @@ def get_header(conda_exec, tarball, info):
     # Omit __osx and __glibc because those are tested with shell code direcly
     virtual_specs = [
         spec
-        for spec in info.get("virtual_specs", ()) 
+        for spec in info.get("virtual_specs", ())
         if "__osx" not in spec and "__glibc" not in spec
     ]
     # Needs to happen first -- can be templated
