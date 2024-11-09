@@ -63,7 +63,7 @@ fi
 int_min_glibc_version="$(printf "%02d%02d%02d" $(echo "$min_glibc_version" | sed 's/\./ /g'))"
 # shellcheck disable=SC2183 disable=SC2046
 int_system_glibc_version="$(printf "%02d%02d%02d" $(echo "$system_glibc_version" | sed 's/\./ /g'))"
-if [  "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
+if [ "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
     echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
     exit 1
 fi
@@ -482,7 +482,7 @@ mkdir -p "$TMP"
 # but we haven't created $PREFIX/pkgs yet... give it a temp location
 # shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
-    echo 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
+    echo "Checking virtual specs compatibility:" __VIRTUAL_SPECS__
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
