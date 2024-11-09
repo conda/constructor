@@ -40,9 +40,8 @@ def render_jinja_for_input_file(data, directory, content_filter):
 
 
 def render_template(text, **kwargs):
-    env = Environment(keep_trailing_newline=True)
+    env = Environment(keep_trailing_newline=True, undefined=StrictUndefined)
     env.globals["constructor_version"] = __version__
-    env.undefined = StrictUndefined
     try:
         template = env.from_string(text)
         return template.render(**kwargs)

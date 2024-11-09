@@ -2,7 +2,7 @@
 # Copyright (c) 2017 Anaconda, Inc.
 # All rights reserved.
 
-# Created by constructor __CONSTRUCTOR_VERSION__
+# Created by constructor {{ constructor_version }}
 
 # COMMON UTILS
 # If you update this block, please propagate changes to the other scripts using it
@@ -10,17 +10,17 @@ set -euo pipefail
 
 notify() {
 # shellcheck disable=SC2050
-if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
+{%- if progress_notifications == "true" %}
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
 EOF
-fi
+{%- endif %}
 logger -p "install.info" "$1" || echo "$1"
 }
 
 unset DYLD_LIBRARY_PATH
 
-PREFIX="$2/__NAME_LOWER__"
+PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
@@ -29,9 +29,9 @@ CONDA_EXEC="$PREFIX/_conda"
 
 # Check whether the user wants shortcuts or not
 # See check_shortcuts.sh script for details
-ENABLE_SHORTCUTS="__ENABLE_SHORTCUTS__"
+ENABLE_SHORTCUTS="{{ enable_shortcuts }}"
 if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then  # this implies ENABLE_SHORTCUTS==true
-    shortcuts="__SHORTCUTS__"
+    shortcuts="{{ shortcuts }}"
 elif [[ "$ENABLE_SHORTCUTS" == "incompatible" ]]; then
     shortcuts=""
 else
@@ -42,13 +42,13 @@ fi
 notify "Installing packages. This might take a few minutes."
 # shellcheck disable=SC2086
 if ! \
-CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
+CONDA_REGISTER_ENVS="{{ register_envs }}" \
 CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_CHANNELS=__CHANNELS__ \
+CONDA_CHANNELS={{ channels }} \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts __NO_RCS_ARG__; then
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }}; then
     echo "ERROR: could not complete the conda install"
     exit 1
 fi
@@ -75,7 +75,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
         env_channels="$(cat "${env_pkgs}channels.txt")"
         rm -f "${env_pkgs}channels.txt"
     else
-        env_channels="__CHANNELS__"
+        env_channels="{{ channels }}"
     fi
     if [[ -f "$PREFIX/pkgs/user_wants_shortcuts" ]]; then  # this implies ENABLE_SHORTCUTS==true
         # This file is guaranteed to exist, even if empty
@@ -89,12 +89,12 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
 
     # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
-    CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
+    CONDA_REGISTER_ENVS="{{ register_envs }}" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts __NO_RCS_ARG__ || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
     # Move the prepackaged history file into place
     mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
     rm -f "${env_pkgs}env.txt"
@@ -103,7 +103,7 @@ done
 # Cleanup!
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
-__WRITE_CONDARC__
+{{ write_condarc }}
 
 if ! "$PREFIX/bin/python" -V; then
     echo "ERROR running Python"

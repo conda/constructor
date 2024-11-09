@@ -8,17 +8,17 @@ set -euo pipefail
 
 notify() {
 # shellcheck disable=SC2050
-if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
+{%- if progress_notifications == "true" %}
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
 EOF
-fi
+{%- endif %}
 logger -p "install.info" "$1" || echo "$1"
 }
 
 unset DYLD_LIBRARY_PATH
 
-PREFIX="$2/__NAME_LOWER__"
+PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
@@ -26,13 +26,13 @@ CONDA_EXEC="$PREFIX/_conda"
 # /COMMON UTILS
 
 # Expose these to user scripts as well
-export INSTALLER_NAME="__NAME__"
-export INSTALLER_VER="__VERSION__"
-export INSTALLER_PLAT="__PLAT__"
+export INSTALLER_NAME="{{ installer_name }}"
+export INSTALLER_VER="{{ installer_version }}"
+export INSTALLER_PLAT="{{ installer_platform }}"
 export INSTALLER_TYPE="PKG"
 export INSTALLER_UNATTENDED="?"
-export PRE_OR_POST="__PRE_OR_POST__"
-_SCRIPT_ENV_VARIABLES_=''  # Templated extra environment variable(s)
+export PRE_OR_POST="{{ pre_or_post }}"
+{{ script_env_variables }}
 
 # Run user-provided script
 if [ -f "$PREFIX/pkgs/user_${PRE_OR_POST}" ]; then

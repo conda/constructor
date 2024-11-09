@@ -14,16 +14,15 @@ from typing import List
 from . import preconda
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
+from .jinja import render_template
 from .imaging import write_images
 from .signing import CodeSign
 from .utils import (
     add_condarc,
     approx_size_kb,
     explained_check_call,
-    fill_template,
     get_final_channels,
     parse_virtual_specs,
-    preprocess,
     rm_rf,
     shortcuts_flags,
 )
@@ -318,8 +317,8 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         data = fi.read()
 
     # ppd hosts the conditions for the #if/#else/#endif preprocessors on scripts
-    ppd = ns_platform(info['_platform'])
-    ppd['check_path_spaces'] = bool(info.get("check_path_spaces", True))
+    variables = ns_platform(info['_platform'])
+    variables['check_path_spaces'] = bool(info.get("check_path_spaces", True))
 
     # This is necessary for when installing on case-sensitive macOS filesystems.
     pkg_name_lower = info.get("pkg_name", info['name']).lower()
@@ -330,29 +329,25 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     path_exists_error_text = info.get(
         "install_path_exists_error_text", default_path_exists_error_text
     ).format(CHOSEN_PATH=f"$2/{pkg_name_lower}")
-    replace = {
-        'NAME': info['name'],
-        'NAME_LOWER': pkg_name_lower,
-        'VERSION': info['version'],
-        'PLAT': info['_platform'],
-        'CHANNELS': ','.join(get_final_channels(info)),
-        'WRITE_CONDARC': '\n'.join(add_condarc(info)),
-        'PATH_EXISTS_ERROR_TEXT': path_exists_error_text,
-        'PROGRESS_NOTIFICATIONS': str(info.get('progress_notifications', False)),
-        'PRE_OR_POST': user_script_type or '__PRE_OR_POST__',
-        'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
-        'SHORTCUTS': shortcuts_flags(info),
-        'ENABLE_SHORTCUTS': str(info['_enable_shortcuts']).lower(),
-        'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
-        'VIRTUAL_SPECS': shlex.join(info.get("virtual_specs", ())),
-        'NO_RCS_ARG': info.get('_ignore_condarcs_arg', ''),
-    }
-    data = preprocess(data, ppd)
-    custom_variables = info.get('script_env_variables', {})
-    data = fill_template(data, replace)
+    variables["pkg_name_lower"] = pkg_name_lower
+    variables["installer_name"] = info['name']
+    variables["installer_version"] = info['version']
+    variables["installer_platform"] = info['_platform']
+    variables["channels"] = ','.join(get_final_channels(info))
+    variables["write_condarc"] = '\n'.join(add_condarc(info))
+    variables["path_exists_error_text"] = path_exists_error_text
+    variables["progress_notifications"] = str(info.get('progress_notifications', False))
+    variables["pre_or_post"] = user_script_type or '__PRE_OR_POST__'
+    variables["constructor_version"] = info['CONSTRUCTOR_VERSION']
+    variables["shortcuts"] = shortcuts_flags(info)
+    variables["enable_shortcuts"] = str(info['_enable_shortcuts']).lower()
+    variables["register_envs"] = str(info.get("register_envs", True)).lower()
+    variables["virtual_specs"] = shlex.join(info.get("virtual_specs", ()))
+    variables["no_rcs_arg"] = info.get('_ignore_condarcs_arg', '')
+    variables["script_env_variables"] = '\n'.join(
+        [f"export {key}='{value}'" for key, value in info.get('script_env_variables', {}).items()])
 
-    data = data.replace("_SCRIPT_ENV_VARIABLES_=''", '\n'.join(
-        [f"export {key}='{value}'" for key, value in custom_variables.items()]))
+    data = render_template(data, **variables)
 
     with open(dst, 'w') as fo:
         if (

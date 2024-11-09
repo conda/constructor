@@ -49,7 +49,27 @@ def run_shellcheck(script):
 def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
     with script.open() as f:
         data = f.read()
-    processed = render_template(data, arch=arch, check_path_spaces= check_path_spaces)
+    processed = render_template(
+        data,
+        arch=arch,
+        check_path_spaces= check_path_spaces,
+        pkg_name_lower="example",
+        installer_name="Example",
+        installer_version="1.2.3",
+        installer_platform="osx-64",
+        channels="conda-forge",
+        write_condarc="",
+        path_exists_error_text="Error",
+        progress_notifications=True,
+        pre_or_post="pre",
+        constructor_version=__version__,
+        shortcuts="",
+        enable_shortcuts=True,
+        register_envs=True,
+        virtual_specs="__osx>=10.13",
+        no_rcs_arg="",
+        script_env_variables="",
+    )
 
     findings, returncode = run_shellcheck(processed)
     print(*findings, sep="\n")

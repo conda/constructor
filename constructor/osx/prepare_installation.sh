@@ -8,17 +8,17 @@ set -euo pipefail
 
 notify() {
 # shellcheck disable=SC2050
-if [ "__PROGRESS_NOTIFICATIONS__" = "True" ]; then
+{%- if progress_notifications == "true" %}
 osascript <<EOF
-display notification "$1" with title "📦 Install __NAME__ __VERSION__"
+display notification "$1" with title "📦 Install {{ installer_name }} {{ installer_version }}"
 EOF
-fi
+{%- endif %}
 logger -p "install.info" "$1" || echo "$1"
 }
 
 unset DYLD_LIBRARY_PATH
 
-PREFIX="$2/__NAME_LOWER__"
+PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
@@ -38,12 +38,10 @@ touch "$PREFIX/conda-meta/history"
 # micromamba needs an existing pkgs_dir to operate even offline,
 # but we haven't created $PREFIX/pkgs yet... do it in a temporary location
 # shellcheck disable=SC2050
-if [ "__VIRTUAL_SPECS__" != "" ]; then
-    notify 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
-    CONDA_SOLVER="classic" \
-    CONDA_PKGS_DIRS="$(mktemp -d)" \
-    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__ __NO_RCS_ARG__
-fi
+notify 'Checking virtual specs compatibility: {{ virtual_specs }}'
+CONDA_SOLVER="classic" \
+CONDA_PKGS_DIRS="$(mktemp -d)" \
+"$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }}
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
 if [ "$(id -u)" -ne 0 ]; then
