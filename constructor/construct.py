@@ -744,10 +744,10 @@ def yamlize(data, directory, content_filter):
         if ('{{' not in data) and ('{%' not in data):
             raise UnableToParse(original=e)
         try:
-            from constructor.jinja import render_jinja
+            from constructor.jinja import render_jinja_for_input_file
         except ImportError as ex:
             raise UnableToParseMissingJinja2(original=ex)
-        data = render_jinja(data, directory, content_filter)
+        data = render_jinja_for_input_file(data, directory, content_filter)
         return yaml.load(data)
 
 

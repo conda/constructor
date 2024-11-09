@@ -1,4 +1,3 @@
-import itertools
 import subprocess
 import sys
 import tempfile
@@ -13,8 +12,9 @@ if sys.platform == "darwin":
 else:
     # Tests with OSX_DIR are skipped, but a placeholder is needed for pytest
     OSX_DIR = ""
+from constructor import __version__
+from constructor.jinja import render_template
 from constructor.shar import read_header_template
-from constructor.utils import preprocess
 
 
 @lru_cache
@@ -39,90 +39,6 @@ def run_shellcheck(script):
     return findings, p.returncode
 
 
-def test_linux_template_processing():
-    template = read_header_template()
-    errors = []
-    for (
-        osx,
-        direct_execute_post_install,
-        direct_execute_pre_install,
-        batch_mode,
-        keep_pkgs,
-        has_conda,
-        has_license,
-        initialize_conda,
-        initialize_by_default,
-        has_post_install,
-        has_pre_install,
-        enable_shortcuts,
-        check_path_spaces,
-        arch,
-        min_glibc_version,
-        min_osx_version,
-    ) in itertools.product(
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        [False, True],
-        ["x86", "x86_64", " ppc64le", "s390x", "aarch64"],
-        [None, "2.17"],
-        [None, "10.13"],
-    ):
-        params = {
-            "has_license": has_license,
-            "osx": osx,
-            "batch_mode": batch_mode,
-            "keep_pkgs": keep_pkgs,
-            "has_conda": has_conda,
-            "x86": arch == "x86",
-            "x86_64": arch == "x86_64",
-            "ppc64le": arch == "ppc64le",
-            "s390x": arch == "s390x",
-            "aarch64": arch == "aarch64",
-            "linux": not osx,
-            "has_pre_install": has_pre_install,
-            "direct_execute_pre_install": direct_execute_pre_install,
-            "has_post_install": has_post_install,
-            "direct_execute_post_install": direct_execute_post_install,
-            "initialize_conda": initialize_conda,
-            "initialize_by_default": initialize_by_default,
-            "enable_shortcuts": enable_shortcuts,
-            "check_path_spaces": check_path_spaces,
-            "min_glibc_version": min_glibc_version,
-            "min_osx_version": min_osx_version,
-        }
-        processed = preprocess(template, params)
-        for template_string in ["#if", "#else", "#endif"]:
-            if template_string in processed:
-                errors.append(
-                    f"Found '{template_string}' after processing header.sh with '{params}'."
-                )
-
-    assert not errors
-
-
-@pytest.mark.skipif(sys.platform != "darwin", reason="Only on MacOS")
-@pytest.mark.parametrize("arch", ["x86_64", "arm64"])
-@pytest.mark.parametrize("check_path_spaces", [False, True])
-@pytest.mark.parametrize("script", sorted(Path(OSX_DIR).glob("*.sh")))
-def test_osxpkg_scripts_template_processing(arch, check_path_spaces, script):
-    with script.open() as f:
-        data = f.read()
-    processed = preprocess(data, {"arch": arch, "check_path_spaces": check_path_spaces})
-    assert "#if" not in processed
-    assert "#else" not in processed
-    assert "#endif" not in processed
-
-
 @pytest.mark.skipif(sys.platform != "darwin", reason="Only on MacOS")
 @pytest.mark.skipif(available_command("shellcheck") is False, reason="requires shellcheck")
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
@@ -133,13 +49,7 @@ def test_osxpkg_scripts_template_processing(arch, check_path_spaces, script):
 def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
     with script.open() as f:
         data = f.read()
-    processed = preprocess(
-        data,
-        {
-            "arch": arch,
-            "check_path_spaces": check_path_spaces,
-        },
-    )
+    processed = render_template(data, arch=arch, check_path_spaces= check_path_spaces)
 
     findings, returncode = run_shellcheck(processed)
     print(*findings, sep="\n")
@@ -183,9 +93,9 @@ def test_template_shellcheck(
     min_osx_version,
 ):
     template = read_header_template()
-    processed = preprocess(
+    processed = render_template(
         template,
-        {
+        **{
             "has_license": has_license,
             "osx": osx,
             "batch_mode": batch_mode,
@@ -207,6 +117,24 @@ def test_template_shellcheck(
             "enable_shortcuts": enable_shortcuts,
             "min_glibc_version": min_glibc_version,
             "min_osx_version": min_osx_version,
+            "first_payload_size": "1024",
+            "second_payload_size": "512",
+            "constructor_version": __version__,
+            "installer_name": "Example",
+            "installer_version": "1.2.3",
+            "installer_platform": "linux-64",
+            "installer_md5": "a0098a2c837f4cf50180cfc0a041b2af",
+            "script_env_variables": "", # TODO: Fill this in with actual value
+            "default_prefix": "/opt/Example",
+            "license": "Some text",
+            "total_installation_size_kb": "1024",
+            "virtual_specs": "__glibc>=2.17",
+            "shortcuts": "",
+            "register_envs": "1",
+            "channels": "conda-forge",
+            "no_rcs_arg": "",
+            "install_commands": "",  # TODO: Fill this in with actual value
+            "conclusion_text": "Something",
         },
     )
 

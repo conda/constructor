@@ -7,3 +7,4 @@ dependencies:
   - ruamel.yaml >=0.11.14,<0.19
   - conda-standalone # >=23.11.0
   - pillow >=3.1  # [osx or win]
+  - jinja2
