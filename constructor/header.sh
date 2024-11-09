@@ -392,17 +392,19 @@ elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
     REINSTALL=1
 fi
 
+total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
+total_installation_size_mb="$(( total_installation_size_kb / 1024 ))"
 if ! mkdir -p "$PREFIX"; then
-    printf "ERROR: Could not create directory: '%s'\\n" "$PREFIX" >&2
+    printf "ERROR: Could not create directory: '%s'.\\n" "$PREFIX" >&2
+    printf "Check permissions and available disk space (%s MB needed).\\n" "$total_installation_size_mb" >&2
     exit 1
 fi
 
-total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
-free_disk_space_bytes="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
-free_disk_space_kb="$((free_disk_space_bytes / 1024))"
-free_disk_space_kb_with_buffer="$((free_disk_space_bytes - 100 * 1024))"  # add 100MB of buffer
+free_disk_space_kb="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
+free_disk_space_kb_with_buffer="$((free_disk_space_kb - 50 * 1024))"  # add 50MB of buffer
 if [ "$free_disk_space_kb_with_buffer" -lt "$total_installation_size_kb" ]; then
-    printf "ERROR: Not enough free disk space: %s < %s\\n" "$free_disk_space_kb_with_buffer" "$total_installation_size_kb" >&2
+    printf "ERROR: Not enough free disk space. Only %s MB are available, but %s MB are required (leaving a 50 MB buffer).\\n" \
+        "$((free_disk_space_kb_with_buffer / 1024))" "$total_installation_size_mb" >&2
     exit 1
 fi
 
