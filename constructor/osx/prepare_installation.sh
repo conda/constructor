@@ -38,10 +38,13 @@ touch "$PREFIX/conda-meta/history"
 # micromamba needs an existing pkgs_dir to operate even offline,
 # but we haven't created $PREFIX/pkgs yet... do it in a temporary location
 # shellcheck disable=SC2050
-notify 'Checking virtual specs compatibility: {{ virtual_specs }}'
+{%- if virtual_specs %}
+notify "Checking virtual specs compatibility: {{ virtual_specs }}"
 CONDA_SOLVER="classic" \
 CONDA_PKGS_DIRS="$(mktemp -d)" \
+SYSTEM_VERSION_COMPAT=0 \
 "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }}
+{%- endif %}
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
 if [ "$(id -u)" -ne 0 ]; then

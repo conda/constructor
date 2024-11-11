@@ -339,7 +339,11 @@ def create_installer(
             )
         yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
-            shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
+            try:
+                shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
+            except shutil.Error:
+                # Some tests reuse the examples for different checks; ignore errors
+                pass
 
 
 @lru_cache(maxsize=None)
@@ -834,6 +838,24 @@ def test_virtual_specs_failed(tmp_path, request):
 def test_virtual_specs_ok(tmp_path, request):
     input_path = _example_path("virtual_specs_ok")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
+def test_virtual_specs_override(tmp_path, request, monkeypatch):
+    input_path = _example_path("virtual_specs_failed")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.name.endswith(".pkg"):
+            continue
+        monkeypatch.setenv("CONDA_OVERRIDE_GLIBC", "20")
+        monkeypatch.setenv("CONDA_OVERRIDE_OSX", "30")
         _run_installer(
             input_path,
             installer,

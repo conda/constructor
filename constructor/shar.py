@@ -74,6 +74,12 @@ def get_header(conda_exec, tarball, info):
     variables['enable_shortcuts'] = str(info['_enable_shortcuts']).lower()
     variables['check_path_spaces'] = info.get("check_path_spaces", True)
     install_lines = list(add_condarc(info))
+    # Omit __osx and __glibc because those are tested with shell code direcly
+    virtual_specs = [
+        spec
+        for spec in info.get("virtual_specs", ())
+        if "__osx" not in spec and "__glibc" not in spec
+    ]
     variables['installer_name'] = name
     variables['installer_version'] = info['version']
     variables['installer_platform'] = info['_platform']
@@ -88,7 +94,7 @@ def get_header(conda_exec, tarball, info):
     variables['shortcuts'] = shortcuts_flags(info)
     variables['register_envs'] = str(info.get("register_envs", True)).lower()
     variables['total_installation_size_kb'] = str(approx_size_kb(info, "total"))
-    variables['virtual_specs'] = shlex.join(info.get("virtual_specs", ()))
+    variables['virtual_specs'] = shlex.join(virtual_specs)
     variables['no_rcs_arg'] = info.get('_ignore_condarcs_arg', '')
     if has_license:
         variables['license'] = read_ascii_only(info['license_file'])

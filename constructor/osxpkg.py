@@ -329,6 +329,8 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     path_exists_error_text = info.get(
         "install_path_exists_error_text", default_path_exists_error_text
     ).format(CHOSEN_PATH=f"$2/{pkg_name_lower}")
+    # __osx is tested by the PKG metadata directly, no need to repeat
+    virtual_specs = [spec for spec in info.get("virtual_specs", ()) if "__osx" not in spec]
     variables["pkg_name_lower"] = pkg_name_lower
     variables["installer_name"] = info['name']
     variables["installer_version"] = info['version']
@@ -342,7 +344,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["shortcuts"] = shortcuts_flags(info)
     variables["enable_shortcuts"] = str(info['_enable_shortcuts']).lower()
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
-    variables["virtual_specs"] = shlex.join(info.get("virtual_specs", ()))
+    variables["virtual_specs"] = shlex.join(virtual_specs)
     variables["no_rcs_arg"] = info.get('_ignore_condarcs_arg', '')
     variables["script_env_variables"] = '\n'.join(
         [f"export {key}='{value}'" for key, value in info.get('script_env_variables', {}).items()])
