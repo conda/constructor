@@ -330,6 +330,8 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     path_exists_error_text = info.get(
         "install_path_exists_error_text", default_path_exists_error_text
     ).format(CHOSEN_PATH=f"$2/{pkg_name_lower}")
+    # __osx is tested by the PKG metadata directly, no need to repeat
+    virtual_specs = [spec for spec in info.get("virtual_specs", ()) if "__osx" not in spec]
     replace = {
         'NAME': info['name'],
         'NAME_LOWER': pkg_name_lower,
@@ -344,7 +346,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
         'SHORTCUTS': shortcuts_flags(info),
         'ENABLE_SHORTCUTS': str(info['_enable_shortcuts']).lower(),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
-        'VIRTUAL_SPECS': shlex.join(info.get("virtual_specs", ())),
+        'VIRTUAL_SPECS': shlex.join(virtual_specs),
         'NO_RCS_ARG': info.get('_ignore_condarcs_arg', ''),
     }
     data = preprocess(data, ppd)

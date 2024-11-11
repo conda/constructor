@@ -39,9 +39,10 @@ touch "$PREFIX/conda-meta/history"
 # but we haven't created $PREFIX/pkgs yet... do it in a temporary location
 # shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
-    notify 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
+    notify "Checking virtual specs compatibility: __VIRTUAL_SPECS__"
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
+    SYSTEM_VERSION_COMPAT=0 \
     "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__ __NO_RCS_ARG__
 fi
 

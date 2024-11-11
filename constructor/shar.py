@@ -75,6 +75,12 @@ def get_header(conda_exec, tarball, info):
     ppd['enable_shortcuts'] = str(info['_enable_shortcuts']).lower()
     ppd['check_path_spaces'] = info.get("check_path_spaces", True)
     install_lines = list(add_condarc(info))
+    # Omit __osx and __glibc because those are tested with shell code direcly
+    virtual_specs = [
+        spec
+        for spec in info.get("virtual_specs", ())
+        if "__osx" not in spec and "__glibc" not in spec
+    ]
     # Needs to happen first -- can be templated
     replace = {
         'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
@@ -94,7 +100,7 @@ def get_header(conda_exec, tarball, info):
         'SHORTCUTS': shortcuts_flags(info),
         'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
         'TOTAL_INSTALLATION_SIZE_KB': str(approx_size_kb(info, "total")),
-        'VIRTUAL_SPECS': shlex.join(info.get("virtual_specs", ())),
+        'VIRTUAL_SPECS': shlex.join(virtual_specs),
         'NO_RCS_ARG': info.get('_ignore_condarcs_arg', ''),
     }
     if has_license:
