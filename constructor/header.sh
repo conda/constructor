@@ -23,44 +23,47 @@ fi
 
 #if osx and min_osx_version
 min_osx_version="__MIN_OSX_VERSION__"
-system_osx_version=$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)
+system_osx_version="${CONDA_OVERRIDE_OSX:-$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)}"
 # shellcheck disable=SC2183 disable=SC2046
 int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))"
 # shellcheck disable=SC2183 disable=SC2046
 int_system_osx_version="$(printf "%02d%02d%02d" $(echo "$system_osx_version" | sed 's/\./ /g'))"
-if [  "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
+if [ "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
     echo "Installer requires macOS >=${min_osx_version}, but system has ${system_osx_version}."
     exit 1
 fi
 #endif
 #if linux and min_glibc_version
 min_glibc_version="__MIN_GLIBC_VERSION__"
-case "$(ldd --version 2>&1)" in
-    *musl*)
-        # musl ldd will report musl version; call libc.so directly
-        # see https://github.com/conda/constructor/issues/850#issuecomment-2343756454
-        libc_so="$(find /lib /usr/local/lib /usr/lib -name 'libc.so.*' -print -quit 2>/dev/null)"
-        if [ -z "${libc_so}" ]; then
-            libc_so="$(strings /etc/ld.so.cache | grep '^/.*/libc\.so.*' | head -1)"
-        fi
-        if [ -z "${libc_so}" ]; then
-            echo "Warning: Couldn't find libc.so; won't be able to determine GLIBC version!" >&2
-            echo "Override by setting CONDA_OVERRIDE_GLIBC" >&2
-            system_glibc_version="${CONDA_OVERRIDE_GLIBC:-0.0}"
-        else
-            system_glibc_version=$("${libc_so}" --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
-        fi
-    ;;
-    *)
-        # ldd reports glibc in the last field of the first line
-        system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
-    ;;
-esac
+system_glibc_version="${CONDA_OVERRIDE_GLIBC:-}"
+if [ "${system_glibc_version}" = "" ]; then
+    case "$(ldd --version 2>&1)" in
+        *musl*)
+            # musl ldd will report musl version; call libc.so directly
+            # see https://github.com/conda/constructor/issues/850#issuecomment-2343756454
+            libc_so="$(find /lib /usr/local/lib /usr/lib -name 'libc.so.*' -print -quit 2>/dev/null)"
+            if [ -z "${libc_so}" ]; then
+                libc_so="$(strings /etc/ld.so.cache | grep '^/.*/libc\.so.*' | head -1)"
+            fi
+            if [ -z "${libc_so}" ]; then
+                echo "Warning: Couldn't find libc.so; won't be able to determine GLIBC version!" >&2
+                echo "Override by setting CONDA_OVERRIDE_GLIBC" >&2
+                system_glibc_version="0.0"
+            else
+                system_glibc_version=$("${libc_so}" --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+            fi
+        ;;
+        *)
+            # ldd reports glibc in the last field of the first line
+            system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
+        ;;
+    esac
+fi
 # shellcheck disable=SC2183 disable=SC2046
 int_min_glibc_version="$(printf "%02d%02d%02d" $(echo "$min_glibc_version" | sed 's/\./ /g'))"
 # shellcheck disable=SC2183 disable=SC2046
 int_system_glibc_version="$(printf "%02d%02d%02d" $(echo "$system_glibc_version" | sed 's/\./ /g'))"
-if [  "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
+if [ "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
     echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
     exit 1
 fi
@@ -178,6 +181,9 @@ while getopts "bifhkp:sut" x; do
             ;;
     esac
 done
+
+# For pre- and post-install scripts
+export INSTALLER_UNATTENDED="$BATCH"
 
 # For testing, keep the package cache around longer
 CLEAR_AFTER_TEST=0
@@ -389,17 +395,19 @@ elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
     REINSTALL=1
 fi
 
+total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
+total_installation_size_mb="$(( total_installation_size_kb / 1024 ))"
 if ! mkdir -p "$PREFIX"; then
-    printf "ERROR: Could not create directory: '%s'\\n" "$PREFIX" >&2
+    printf "ERROR: Could not create directory: '%s'.\\n" "$PREFIX" >&2
+    printf "Check permissions and available disk space (%s MB needed).\\n" "$total_installation_size_mb" >&2
     exit 1
 fi
 
-total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
-free_disk_space_bytes="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
-free_disk_space_kb="$((free_disk_space_bytes / 1024))"
-free_disk_space_kb_with_buffer="$((free_disk_space_bytes - 100 * 1024))"  # add 100MB of buffer
+free_disk_space_kb="$(df -Pk "$PREFIX" | tail -n 1 | awk '{print $4}')"
+free_disk_space_kb_with_buffer="$((free_disk_space_kb - 50 * 1024))"  # add 50MB of buffer
 if [ "$free_disk_space_kb_with_buffer" -lt "$total_installation_size_kb" ]; then
-    printf "ERROR: Not enough free disk space: %s < %s\\n" "$free_disk_space_kb_with_buffer" "$total_installation_size_kb" >&2
+    printf "ERROR: Not enough free disk space. Only %s MB are available, but %s MB are required (leaving a 50 MB buffer).\\n" \
+        "$((free_disk_space_kb_with_buffer / 1024))" "$total_installation_size_mb" >&2
     exit 1
 fi
 
@@ -476,11 +484,11 @@ mkdir -p "$TMP"
 # but we haven't created $PREFIX/pkgs yet... give it a temp location
 # shellcheck disable=SC2050
 if [ "__VIRTUAL_SPECS__" != "" ]; then
-    echo 'Checking virtual specs compatibility: __VIRTUAL_SPECS__'
+    echo "Checking virtual specs compatibility:" __VIRTUAL_SPECS__
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
-    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__ __NO_RCS_ARG__
 fi
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
@@ -558,7 +566,7 @@ CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="__CHANNELS__" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 CONDA_QUIET="$BATCH" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts || exit 1
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts __NO_RCS_ARG__ || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
 #The templating doesn't support nested if statements
@@ -603,7 +611,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     CONDA_QUIET="$BATCH" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts __NO_RCS_ARG__ || exit 1
     rm -f "${env_pkgs}env.txt"
 done
 #endif

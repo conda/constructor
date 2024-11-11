@@ -136,10 +136,10 @@ def setup_envs_commands(info, dir_path):
         # Run conda install
         ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
             ${{Print}} "Installing packages for {name}, creating shortcuts if necessary..."
-            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts}'
+            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts} {no_rcs_arg}'
         ${{Else}}
             ${{Print}} "Installing packages for {name}..."
-            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts'
+            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts {no_rcs_arg}'
         ${{EndIf}}
         push 'Failed to link extracted packages to {prefix}!'
         push 'WithLog'
@@ -168,6 +168,7 @@ def setup_envs_commands(info, dir_path):
         channels=','.join(get_final_channels(info)),
         shortcuts=shortcuts_flags(info),
         register_envs=str(info.get("register_envs", True)).lower(),
+        no_rcs_arg=info.get("_ignore_condarcs_arg", ""),
     ).splitlines()
     # now we generate one more block per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
@@ -191,6 +192,7 @@ def setup_envs_commands(info, dir_path):
             channels=",".join(get_final_channels(channel_info)),
             shortcuts=shortcuts_flags(env_info),
             register_envs=str(info.get("register_envs", True)).lower(),
+            no_rcs_arg=info.get("_ignore_condarcs_arg", ""),
         ).splitlines()
 
     return [line.strip() for line in lines]
@@ -484,6 +486,7 @@ def make_nsi(
         # This is the same but without quotes so we can print it fine
         ('@VIRTUAL_SPECS_DEBUG@', " ".join([spec for spec in info.get("virtual_specs", ())])),
         ('@LICENSEFILENAME@', basename(info.get('license_file', 'placeholder_license.txt'))),
+        ('@NO_RCS_ARG@', info.get('_ignore_condarcs_arg', '')),
     ]:
         data = data.replace(key, value)
 
@@ -576,9 +579,13 @@ def create(info, verbose=False):
     args = [MAKENSIS_EXE, verbosity, nsi]
     logger.info('Calling: %s', args)
     process = run(args, capture_output=True, text=True)
-    logger.debug("makensis stdout:\n'%s'", process.stdout)
-    logger.debug("makensis stderr:\n'%s'", process.stderr)
-    process.check_returncode()
+    if process.returncode:
+        logger.info("makensis stdout:\n'%s'", process.stdout)
+        logger.error("makensis stderr:\n'%s'", process.stderr)
+        sys.exit(f"Failed to run {args}. Exit code: {process.returncode}.")
+    else:
+        logger.debug("makensis stdout:\n'%s'", process.stdout)
+        logger.debug("makensis stderr:\n'%s'", process.stderr)
 
     if signing_tool:
         signing_tool.verify_signature(info['_outpath'])

@@ -339,7 +339,11 @@ def create_installer(
             )
         yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
-            shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
+            try:
+                shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
+            except shutil.Error:
+                # Some tests reuse the examples for different checks; ignore errors
+                pass
 
 
 @lru_cache(maxsize=None)
@@ -842,3 +846,65 @@ def test_virtual_specs_ok(tmp_path, request):
             check_subprocess=True,
             uninstall=True,
         )
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
+def test_virtual_specs_override(tmp_path, request, monkeypatch):
+    input_path = _example_path("virtual_specs_failed")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.name.endswith(".pkg"):
+            continue
+        monkeypatch.setenv("CONDA_OVERRIDE_GLIBC", "20")
+        monkeypatch.setenv("CONDA_OVERRIDE_OSX", "30")
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )
+
+
+@pytest.mark.xfail(
+    CONDA_EXE == StandaloneExe.CONDA and CONDA_EXE_VERSION < Version("24.9.0"),
+    reason="Pre-existing .condarc breaks installation",
+)
+def test_ignore_condarc_files(tmp_path, monkeypatch, request):
+    # Create a bogus .condarc file that would result in errors if read.
+    # conda searches inside XDG_CONFIG_HOME on all systems, which is a
+    # a safer directory to monkeypatch, especially on Windows where patching
+    # HOME or USERPROFILE breaks installer builds.
+    # mamba does not search this directory, so use HOME as a fallback.
+    # Since micromamba is not supported on Windows, this is not a problem.
+    if CONDA_EXE == StandaloneExe.MAMBA:
+        monkeypatch.setenv("HOME", str(tmp_path))
+        condarc = tmp_path / ".condarc"
+    else:
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+        condarc = tmp_path / "conda" / ".condarc"
+    condarc.parent.mkdir(parents=True, exist_ok=True)
+    condarc.write_text("safety_checks:\n  - very safe\n")
+    recipe_path = _example_path("customize_controls")
+    input_path = tmp_path / "input"
+    shutil.copytree(str(recipe_path), str(input_path))
+    # Rewrite installer name to avoid duplicate artifacts
+    construct_yaml = input_path / "construct.yaml"
+    content = construct_yaml.read_text()
+    construct_yaml.write_text(content.replace("name: NoCondaOptions", "name: NoCondaRC"))
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        proc = _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )
+        if CONDA_EXE == StandaloneExe.MAMBA and installer.suffix == ".sh":
+            # micromamba loads the rc files even for constructor subcommands.
+            # This cannot be turned off with --no-rc, which causes four errors
+            # in stderr. If there are more, other micromamba calls have read
+            # the bogus .condarc file.
+            # pkg installers unfortunately do not output any errors into the log.
+            assert proc.stderr.count("Bad conversion of configurable") == 4
