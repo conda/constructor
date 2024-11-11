@@ -463,7 +463,7 @@ mkdir -p "$TMP"
 # but we haven't created $PREFIX/pkgs yet... give it a temp location
 # shellcheck disable=SC2050
 {%- if virtual_specs %}
-    echo 'Checking virtual specs compatibility:" {{ virtual_specs }}
+    echo "Checking virtual specs compatibility:" {{ virtual_specs }}
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
