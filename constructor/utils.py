@@ -114,6 +114,7 @@ def preprocess(data, namespace):
         "This function is deprecated and will be removed. Use '.jinja.render_template' instead.",
         DeprecationWarning,
     )
+
     def if_repl(match):
         cond = match.group(1).strip()
         if eval(cond, namespace, {}):
