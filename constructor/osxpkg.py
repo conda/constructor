@@ -14,8 +14,8 @@ from typing import List
 from . import preconda
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
-from .jinja import render_template
 from .imaging import write_images
+from .jinja import render_template
 from .signing import CodeSign
 from .utils import (
     add_condarc,

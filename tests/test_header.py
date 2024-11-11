@@ -52,7 +52,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
     processed = render_template(
         data,
         arch=arch,
-        check_path_spaces= check_path_spaces,
+        check_path_spaces=check_path_spaces,
         pkg_name_lower="example",
         installer_name="Example",
         installer_version="1.2.3",
@@ -144,7 +144,7 @@ def test_template_shellcheck(
             "installer_version": "1.2.3",
             "installer_platform": "linux-64",
             "installer_md5": "a0098a2c837f4cf50180cfc0a041b2af",
-            "script_env_variables": "", # TODO: Fill this in with actual value
+            "script_env_variables": "",  # TODO: Fill this in with actual value
             "default_prefix": "/opt/Example",
             "license": "Some text",
             "total_installation_size_kb": "1024",

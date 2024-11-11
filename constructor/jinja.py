@@ -1,6 +1,6 @@
 import os
 
-from jinja2 import BaseLoader, Environment, FileSystemLoader, TemplateError, StrictUndefined
+from jinja2 import BaseLoader, Environment, FileSystemLoader, StrictUndefined, TemplateError
 
 from . import __version__
 from .exceptions import UnableToParse

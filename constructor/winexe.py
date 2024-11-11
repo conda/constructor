@@ -348,7 +348,8 @@ def make_nsi(
     variables['SETUP_ENVS'] = '\n    '.join(setup_envs_commands(info, dir_path))
     variables['WRITE_CONDARC'] = '\n    '.join(add_condarc(info))
     variables['SIZE'] = str(approx_pkgs_size_kb)
-    variables['UNINSTALL_NAME'] = info.get('uninstall_name',
+    variables['UNINSTALL_NAME'] = info.get(
+        'uninstall_name',
         '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
     )
     variables['UNINSTALL_MENUS'] = '\n    '.join(uninstall_menus_commands(info))
@@ -373,7 +374,6 @@ def make_nsi(
     variables['VIRTUAL_SPECS_DEBUG'] = " ".join([spec for spec in info.get("virtual_specs", ())])
     variables['LICENSEFILENAME'] = basename(info.get('license_file', 'placeholder_license.txt'))
     variables['NO_RCS_ARG'] = info.get('_ignore_condarcs_arg', '')
-
 
     data = render_template(read_nsi_tmpl(info), **variables)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
