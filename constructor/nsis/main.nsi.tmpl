@@ -269,11 +269,7 @@ FunctionEnd
             $\n\
                 /InstallationType=AllUsers [default: JustMe]$\n\
                 /AddToPath=[0|1] [default: 0]$\n\
-{%- if keep_pkgs %}
-                /KeepPkgCache=[0|1] [default: 1]$\n\
-{%- else %}
-                /KeepPkgCache=[0|1] [default: 0]$\n\
-{%- endif %}
+                /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
                 /NoScripts=[0|1] [default: 0]$\n\
@@ -701,32 +697,12 @@ Function .onInit
 {%- endif %}
 {%- endif %}
 {%- if register_python %}
-{%- if register_python_default %}
-    StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
-{%- else %}
-    StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
+    StrCpy $Ana_RegisterSystemPython_State {{ '${BST_CHECKED}' if register_python_default else '${BST_UNCHECKED}' }}
 {%- endif %}
-{%- endif %}
-{%- if check_path_length %}
-    StrCpy $CheckPathLength "1"
-{%- else %}
-    StrCpy $CheckPathLength "0"
-{%- endif %}
-{%- if keep_pkgs %}
-    StrCpy $Ana_ClearPkgCache_State ${BST_UNCHECKED}
-{%- else %}
-    StrCpy $Ana_ClearPkgCache_State ${BST_CHECKED}
-{%- endif %}
-{%- if pre_install_exists %}
-    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
-{%- else %}
-    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
-{%- endif %}
-{%- if post_install_exists %}
-    StrCpy $Ana_PostInstall_State ${BST_CHECKED}
-{%- else %}
-    StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
-{%- endif %}
+    StrCpy $CheckPathLength "{{ 1 if check_path_length else 0 }}"
+    StrCpy $Ana_ClearPkgCache_State {{ '${BST_UNCHECKED}' if keep_pkgs else '${BST_CHECKED}' }}
+    StrCpy $Ana_PreInstall_State {{ '${BST_CHECKED}' if pre_install_exists else '${BST_UNCHECKED}' }}
+    StrCpy $Ana_PostInstall_State {{ '${BST_CHECKED}' if post_install_exists else '${BST_UNCHECKED}' }}
 
     Call OnInit_Release
 

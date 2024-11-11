@@ -78,17 +78,9 @@ THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX="{{ default_prefix }}"
-{%- if batch_mode %}
-BATCH=1
-{%- else %}
-BATCH=0
-{%- endif %}
+BATCH={{ 1 if batch_mode else 0 }}
 FORCE=0
-{%- if keep_pkgs %}
-KEEP_PKGS=1
-{%- else %}
-KEEP_PKGS=0
-{%- endif %}
+KEEP_PKGS={{ 1 if keep_pkgs else 0 }}
 SKIP_SCRIPTS=0
 {%- if enable_shortcuts == "true" %}
 SKIP_SHORTCUTS=0
@@ -644,11 +636,7 @@ fi
 
 if [ "$BATCH" = "0" ]; then
 {%- if has_conda and initialize_conda %}
-{%- if initialize_by_default %}
-    DEFAULT=yes
-{%- else %}
-    DEFAULT=no
-{%- endif %}
+    DEFAULT={{ 'yes' if initialize_by_default else 'no' }}
     # Interactive mode.
 
     printf "Do you wish to update your shell profile to automatically initialize conda?\\n"
