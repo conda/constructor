@@ -1,5 +1,33 @@
 [//]: # (current developments)
 
+## 2024-11-11   3.10.0:
+### Enhancements
+
+* Windows installers will now report progress to stdout if run in headless mode (`/S`). (#764, #812 via #847)
+* Add capability to add extra post-install pages to PKG installers. (#852)
+* Parallelize artifact downloads. (#855 via #857)
+* Improve detection and handling of standalone executable type. (#864)
+* Export `INSTALLER_UNATTENDED` environment variable so pre- and post-install scripts can detect if the installer is running in batch/silent mode or not. (#882 via #885)
+* Do not run conda-based virtual specs tests for `__glibc` and `__osx`. These are already tested by the installation script in an earlier step. (#868 via #887)
+* Allow `__glibc` and `__osx` overrides with `CONDA_OVERRIDE_GLIBC` and `CONDA_OVERRIDE_OSX` environment variables, respectively (`.sh` installers only). (#888)
+
+### Bug fixes
+
+* Fix GLIBC detection method in some MUSL systems. (#850 via #856)
+* Respect `ssl_verify` setting if defined in any `condarc` file. (#851 via #860)
+* Ignore pre-existing `condarc` files to prevent these configuration files from interfering with the installation process. (#542 and #568 via #863)
+* Address quoting issue that created unneeded files in installation directory. (#865 via #887)
+* Perform disk space checks earlier and report errors in MB (`.sh` installers only). (#778 via 889)
+* Always report NSIS output when an error occurs. (#798 via #890)
+* Do not crash if `--output-dir` doesn't exist. Ensure it exists before creating installers. (#772 via #891)
+
+### Contributors
+
+* @jaimergp
+* @marcoesters
+
+
+
 ## 2024-08-15   3.9.3:
 ### Bug fixes
 
