@@ -805,15 +805,12 @@ FunctionEnd
     ${GetOptions} $ARGV "/RemoveCondaRcs=" $ARGV_Uninst_RemoveCondaRcs
     ${IfNot} ${Errors}
         ${IfNot} ${UAC_IsAdmin}
-            ${If} $ARGV_Uninst_RemoveCondaRcs != "all"
-                ${If} $ARGV_Uninst_RemoveCondaRcs != "system"
-                    goto parse_condarc_args
-                ${EndIf}
+            ${If} $ARGV_Uninst_RemoveCondaRcs == "all"
+            ${OrIf} $ARGV_Uninst_RemoveCondaRcs == "system"
+                MessageBox MB_ICONSTOP "Removing system .condarc files requires an elevated prompt."
+                Abort
             ${EndIf}
-            MessageBox MB_ICONSTOP "Removing system .condarc files requires an elevated prompt."
-            Abort
         ${EndIf}
-        parse_condarc_args:
         ${If} $ARGV_Uninst_RemoveCondaRcs == "user"
             StrCpy $UninstRemoveCondaRcs_User_State ${BST_CHECKED}
             StrCpy $UninstRemoveCondaRcs_System_State ${BST_UNCHECKED}
@@ -1482,7 +1479,9 @@ SectionEnd
 
 Section "Uninstall"
     ${LogSet} on
-    !insertmacro un.ParseCommandLineArgs
+    ${If} ${Silent}
+        !insertmacro un.ParseCommandLineArgs
+    ${EndIf}
 
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 

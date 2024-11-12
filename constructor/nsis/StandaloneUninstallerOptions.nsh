@@ -29,8 +29,8 @@ Function un.UninstCustomOptions_Show
     ${EndIf}
 
     !insertmacro MUI_HEADER_TEXT \
-	"Advanced uninstallation options" \
-       	"Remove configuration and cache files"
+        "Advanced uninstallation options" \
+            "Remove configuration and cache files"
 
     # We will use $5 as the y axis accumulator, starting at 0
     # We sum the the number of 'u' units added by 'NSD_Create*' functions
