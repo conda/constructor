@@ -217,8 +217,8 @@ then
 #if x86_64
     if [ "$(uname -m)" != "x86_64" ]; then
         printf "WARNING:\\n"
-        printf "    Your operating system appears not to be 64-bit, but you are trying to\\n"
-        printf "    install a 64-bit version of %s.\\n" "${INSTALLER_NAME}"
+        printf "    Your operating system appears not to be x86_64, but you are trying to\\n"
+        printf "    install a x86_64 version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
