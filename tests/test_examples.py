@@ -11,7 +11,7 @@ from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
 from plistlib import load as plist_load
-from typing import Generator, Iterable, Optional, Tuple
+from typing import Generator, Iterable, Optional, Tuple, Union
 
 import pytest
 from conda.base.context import context
@@ -145,8 +145,8 @@ def _run_uninstaller_exe(
     install_dir: Path,
     timeout: int = 420,
     check: bool = True,
-    options: list | None = None,
-) -> subprocess.CompletedProcess | None:
+    options: Union[list, None] = None,
+) -> Union[subprocess.CompletedProcess, None]:
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
@@ -937,7 +937,7 @@ def test_uninstallation_standalone(
     monkeypatch,
     remove_caches: bool,
     conda_clean: bool,
-    remove_condarcs: str | None,
+    remove_condarcs: Union[str, None],
     tmp_path: Path,
 ):
     recipe_path = _example_path("customize_controls")
