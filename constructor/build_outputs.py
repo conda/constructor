@@ -10,6 +10,11 @@ import os
 from collections import defaultdict
 from pathlib import Path
 
+from conda.base.constants import UNKNOWN_CHANNEL
+from conda.common.url import remove_auth, split_anaconda_token
+
+from . import __version__
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,6 +91,38 @@ def dump_packages_list(info, env="base"):
     return os.path.abspath(outpath)
 
 
+def dump_lockfile(info, env="base"):
+    if env == "base":
+        records = info["_records"]
+    elif env in info["_extra_envs_info"]:
+        records = info["_extra_envs_info"][env]["_records"]
+    else:
+        raise ValueError(f"env='{env}' is not a valid env name.")
+    lines = [
+        "# This file may be used to create an environment using:",
+        "# $ conda create --name <env> --file <this file>",
+        f"# installer-name: {info['name']}"
+        f"# installer-version: {info['version']}"
+        f"# env-name: {env}"
+        f"# platform: {info['platform']}",
+        f"# created-by: constructor {__version__}",
+        "@EXPLICIT"
+    ]
+    for record in records:
+        url = record.get("url")
+        if not url or url.startswith(UNKNOWN_CHANNEL):
+            print("# no URL for: {}".format(record["fn"]))
+            continue
+        url = remove_auth(split_anaconda_token(url)[0])
+        hash_value = record.get("md5")
+        lines.append(url + (f"#{hash_value}" if hash_value else ""))
+
+    outpath = os.path.join(info["_output_dir"], f'lockfile.{env}.txt')
+    with open(outpath, 'w') as f:
+        f.write("\n".join(lines))
+    return os.path.abspath(outpath)
+
+
 def dump_licenses(info, include_text=False, text_errors=None):
     """
     Create a JSON document with a mapping with schema:
@@ -140,5 +177,6 @@ OUTPUT_HANDLERS = {
     "hash": dump_hash,
     "info.json": dump_info,
     "pkgs_list": dump_packages_list,
+    "lockfile": dump_lockfile,
     "licenses": dump_licenses,
 }

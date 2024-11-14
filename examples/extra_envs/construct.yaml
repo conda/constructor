@@ -31,6 +31,9 @@ build_outputs:
   - pkgs_list
   - pkgs_list:
       env: py310
+  - lockfile
+  - lockfile:
+      env: py310
   - licenses:
       include_text: True
       text_errors: replace
