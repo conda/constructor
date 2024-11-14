@@ -104,7 +104,7 @@ def dump_lockfile(info, env="base"):
         f"# installer-name: {info['name']}"
         f"# installer-version: {info['version']}"
         f"# env-name: {env}"
-        f"# platform: {info['platform']}",
+        f"# platform: {info['_platform']}",
         f"# created-by: constructor {__version__}",
         "@EXPLICIT"
     ]
