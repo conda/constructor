@@ -12,6 +12,7 @@ from pathlib import Path
 
 from conda.base.constants import UNKNOWN_CHANNEL
 from conda.common.url import remove_auth, split_anaconda_token
+from conda.core.prefix_data import PrefixGraph
 
 from . import __version__
 
@@ -101,14 +102,14 @@ def dump_lockfile(info, env="base"):
     lines = [
         "# This file may be used to create an environment using:",
         "# $ conda create --name <env> --file <this file>",
-        f"# installer-name: {info['name']}"
-        f"# installer-version: {info['version']}"
-        f"# env-name: {env}"
+        f"# installer-name: {info['name']}",
+        f"# installer-version: {info['version']}",
+        f"# env-name: {env}",
         f"# platform: {info['_platform']}",
         f"# created-by: constructor {__version__}",
         "@EXPLICIT"
     ]
-    for record in records:
+    for record in PrefixGraph(records).graph:
         url = record.get("url")
         if not url or url.startswith(UNKNOWN_CHANNEL):
             print("# no URL for: {}".format(record["fn"]))
