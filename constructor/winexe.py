@@ -347,7 +347,7 @@ def make_nsi(
     variables['SIGNTOOL_COMMAND'] = signing_tool.get_signing_command() if signing_tool else ""
     variables['SETUP_ENVS'] = '\n    '.join(setup_envs_commands(info, dir_path))
     variables['WRITE_CONDARC'] = '\n    '.join(add_condarc(info))
-    variables['SIZE'] = str(approx_pkgs_size_kb)
+    variables['SIZE'] = approx_pkgs_size_kb
     variables['UNINSTALL_NAME'] = info.get(
         'uninstall_name',
         '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'

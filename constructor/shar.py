@@ -85,8 +85,8 @@ def get_header(conda_exec, tarball, info):
     variables['installer_platform'] = info['_platform']
     variables['installer_md5'] = hash_files([conda_exec, tarball])
     variables['default_prefix'] = info.get('default_prefix', '${HOME:-/opt}/%s' % name.lower())
-    variables['first_payload_size'] = str(getsize(conda_exec))
-    variables['second_payload_size'] = str(getsize(tarball))
+    variables['first_payload_size'] = getsize(conda_exec)
+    variables['second_payload_size'] = getsize(tarball)
     variables['install_commands'] = '\n'.join(install_lines)
     variables['channels'] = ','.join(get_final_channels(info))
     variables['conclusion_text'] = info.get("conclusion_text", "installation finished.")
