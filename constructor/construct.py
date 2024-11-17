@@ -635,6 +635,8 @@ Allowed keys are:
 - `info.json`: The internal `info` object, serialized to JSON. Takes no options.
 - `pkgs_list`: The list of packages contained in a given environment. Options:
     - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
+- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:
+    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
 - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
     - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
       If false, only the path will be included.
