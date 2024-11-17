@@ -431,11 +431,7 @@ boundary1=$(( boundary0 + {{ first_payload_size }} ))
 boundary2=$(( boundary1 + {{ second_payload_size }} ))
 
 # verify the MD5 sum of the tarball appended to this header
-{%- if osx %}
-MD5=$(extract_range "${boundary0}" "${boundary2}" | md5)
-{%- else %}
-MD5=$(extract_range "${boundary0}" "${boundary2}" | md5sum -)
-{%- endif %}
+MD5=$(extract_range "${boundary0}" "${boundary2}" | {{ "md5" if osx else "md5sum -" }})
 
 if ! echo "$MD5" | grep {{ installer_md5 }} >/dev/null; then
     printf "WARNING: md5sum mismatch of tar archive\\n" >&2
@@ -496,11 +492,11 @@ if [ "$SKIP_SCRIPTS" = "1" ]; then
     printf "WARNING: skipping pre_install.sh by user request\\n" >&2
 else
     export INST_OPT=''
-{%- if direct_execute_pre_install %}
+    {%- if direct_execute_pre_install %}
     if ! "$PREFIX/pkgs/pre_install.sh"; then
-{%- else %}
+    {%- else %}
     if ! sh "$PREFIX/pkgs/pre_install.sh"; then
-{%- endif %}
+    {%- endif %}
         printf "ERROR: executing pre_install.sh failed\\n" >&2
         exit 1
     fi
@@ -560,7 +556,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     else
         env_channels="{{ channels }}"
     fi
-{%- if enable_shortcuts == "true" %}
+    {%- if enable_shortcuts == "true" %}
     if [ "$SKIP_SHORTCUTS" = "1" ]; then
         env_shortcuts="--no-shortcuts"
     else
@@ -568,11 +564,11 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
         env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
         rm -f "${env_pkgs}shortcuts.txt"
     fi
-{%- elif enable_shortcuts == "false" %}
+    {%- elif enable_shortcuts == "false" %}
     env_shortcuts="--no-shortcuts"
-{%- elif enable_shortcuts == "incompatible" %}
+    {%- elif enable_shortcuts == "incompatible" %}
     env_shortcuts=""
-{%- endif %}
+    {%- endif %}
     # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_REGISTER_ENVS="{{ register_envs }}" \
@@ -601,11 +597,11 @@ export TMP="$TMP_BACKUP"
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     printf "WARNING: skipping post_install.sh by user request\\n" >&2
 else
-{%- if direct_execute_post_install %}
+    {%- if direct_execute_post_install %}
     if ! "$PREFIX/pkgs/post_install.sh"; then
-{%- else %}
+    {%- else %}
     if ! sh "$PREFIX/pkgs/post_install.sh"; then
-{%- endif %}
+    {%- endif %}
         printf "ERROR: executing post_install.sh failed\\n" >&2
         exit 1
     fi

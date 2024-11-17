@@ -664,9 +664,9 @@ Function .onInit
             ${IfNot} ${UAC_IsAdmin}
                 MessageBox MB_ICONSTOP "Installation for all users requires an elevated prompt."
                 Abort
-            ${EndIF}
-        ${EndIF}
-    ${EndIF}
+            ${EndIf}
+        ${EndIf}
+    ${EndIf}
 
     ; /D was not used, add default based on install type
     ${If} $InstDir == ""
@@ -688,14 +688,15 @@ Function .onInit
     # Override custom options with explicitly given values from contruct.yaml.
     # If initialize_by_default (register_python_default) is None, do nothing.
 {%- if initialize_conda %}
-{%- if initialize_by_default %}
+    {%- if initialize_by_default %}
     ${If} $InstMode == ${JUST_ME}
         StrCpy $Ana_AddToPath_State ${BST_CHECKED}
-    ${EndIF}
-{%- else %}
+    ${EndIf}
+    {%- else %}
     StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+    {%- endif %}
 {%- endif %}
-{%- endif %}
+
 {%- if register_python %}
     StrCpy $Ana_RegisterSystemPython_State {{ '${BST_CHECKED}' if register_python_default else '${BST_UNCHECKED}' }}
 {%- endif %}
@@ -997,7 +998,7 @@ Function OnDirectoryLeave
 {%- if check_path_spaces %}
             StrCpy $R8 "$R8Please remove the space$R1 from the destination folder."
             StrCpy $R9 "Error"
-#else
+{%- else %}
             StrCpy $R8 "$R8Please consider removing the space$R1."
             StrCpy $R9 "Warning"
 {%- endif %}
