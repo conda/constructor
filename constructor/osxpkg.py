@@ -338,7 +338,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["channels"] = ','.join(get_final_channels(info))
     variables["write_condarc"] = '\n'.join(add_condarc(info))
     variables["path_exists_error_text"] = path_exists_error_text
-    variables["progress_notifications"] = str(info.get('progress_notifications', False))
+    variables["progress_notifications"] = info.get('progress_notifications', False)
     variables["pre_or_post"] = user_script_type or '__PRE_OR_POST__'
     variables["constructor_version"] = info['CONSTRUCTOR_VERSION']
     variables["shortcuts"] = shortcuts_flags(info)

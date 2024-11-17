@@ -8,7 +8,7 @@ set -euo pipefail
 
 notify() {
 # shellcheck disable=SC2050
-{%- if progress_notifications == "true" %}
+{%- if progress_notifications %}
 osascript <<EOF
 display notification "$1" with title "📦 Install __NAME__ __VERSION__"
 EOF
