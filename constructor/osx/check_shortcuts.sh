@@ -4,7 +4,7 @@ set -eux
 
 # $2 is the install location, which is ~ by default
 # but which the user can change.
-PREFIX="$2/__NAME_LOWER__"
+PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 
 # If the UI selected the "Create shortcuts" option

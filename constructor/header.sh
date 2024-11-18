@@ -1,28 +1,28 @@
 #!/bin/sh
 #
-# Created by constructor __CONSTRUCTOR_VERSION__
+# Created by constructor {{ constructor_version }}
 #
-# NAME:  __NAME__
-# VER:   __VERSION__
-# PLAT:  __PLAT__
-# MD5:   __MD5__
+# NAME:  {{ installer_name }}
+# VER:   {{ installer_version }}
+# PLAT:  {{ installer_platform }}
+# MD5:   {{ installer_md5 }}
 
 set -eu
 
-#if osx
+{%- if osx %}
 unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH
-#else
+{%- else %}
 export OLD_LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
 unset LD_LIBRARY_PATH
-#endif
+{%- endif %}
 
 if ! echo "$0" | grep '\.sh$' > /dev/null; then
     printf 'Please run using "bash"/"dash"/"sh"/"zsh", but not "." or "source".\n' >&2
-    return 1
+    exit 1
 fi
 
-#if osx and min_osx_version
-min_osx_version="__MIN_OSX_VERSION__"
+{%- if osx and min_osx_version %}
+min_osx_version="{{ min_osx_version }}"
 system_osx_version="${CONDA_OVERRIDE_OSX:-$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)}"
 # shellcheck disable=SC2183 disable=SC2046
 int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))"
@@ -32,9 +32,8 @@ if [ "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
     echo "Installer requires macOS >=${min_osx_version}, but system has ${system_osx_version}."
     exit 1
 fi
-#endif
-#if linux and min_glibc_version
-min_glibc_version="__MIN_GLIBC_VERSION__"
+{%- elif linux and min_glibc_version %}
+min_glibc_version="{{ min_glibc_version }}"
 system_glibc_version="${CONDA_OVERRIDE_GLIBC:-}"
 if [ "${system_glibc_version}" = "" ]; then
     case "$(ldd --version 2>&1)" in
@@ -67,36 +66,28 @@ if [ "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
     echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
     exit 1
 fi
-#endif
+{%- endif %}
 
 # Export variables to make installer metadata available to pre/post install scripts
 # NOTE: If more vars are added, make sure to update the examples/scripts tests too
 
-_SCRIPT_ENV_VARIABLES_=''  # Templated extra environment variable(s)
-export INSTALLER_NAME='__NAME__'
-export INSTALLER_VER='__VERSION__'
-export INSTALLER_PLAT='__PLAT__'
+{{ script_env_variables }}
+export INSTALLER_NAME='{{ installer_name }}'
+export INSTALLER_VER='{{ installer_version }}'
+export INSTALLER_PLAT='{{ installer_platform }}'
 export INSTALLER_TYPE="SH"
 
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
-PREFIX="__DEFAULT_PREFIX__"
-#if batch_mode
-BATCH=1
-#else
-BATCH=0
-#endif
+PREFIX="{{ default_prefix }}"
+BATCH={{ 1 if batch_mode else 0 }}
 FORCE=0
-#if keep_pkgs
-KEEP_PKGS=1
-#else
-KEEP_PKGS=0
-#endif
+KEEP_PKGS={{ 1 if keep_pkgs else 0 }}
 SKIP_SCRIPTS=0
-#if enable_shortcuts == "true"
+{%- if enable_shortcuts == "true" %}
 SKIP_SHORTCUTS=0
-#endif
+{%- endif %}
 TEST=0
 REINSTALL=0
 USAGE="
@@ -104,41 +95,41 @@ usage: $0 [options]
 
 Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 
-#if batch_mode
+{%- if batch_mode %}
 -i           run install in interactive mode
-#else
+{%- else %}
 -b           run install in batch mode (without manual intervention),
              it is expected the license terms (if any) are agreed upon
-#endif
+{%- endif %}
 -f           no error if install prefix already exists
 -h           print this help message and exit
-#if not keep_pkgs
+{%- if not keep_pkgs %}
 -k           do not clear the package cache after installation
-#endif
-#if check_path_spaces
+{%- endif %}
+{%- if check_path_spaces %}
 -p PREFIX    install prefix, defaults to $PREFIX, must not contain spaces.
-#else
+{%- else %}
 -p PREFIX    install prefix, defaults to $PREFIX
-#endif
+{%- endif %}
 -s           skip running pre/post-link/install scripts
-#if enable_shortcuts == 'true'
+{%- if enable_shortcuts == 'true' %}
 -m           disable the creation of menu items / shortcuts
-#endif
+{%- endif %}
 -u           update an existing installation
-#if has_conda
+{%- if has_conda %}
 -t           run package tests after installation (may install conda-build)
-#endif
+{%- endif %}
 "
 
 # We used to have a getopt version here, falling back to getopts if needed
 # However getopt is not standardized and the version on Mac has different
 # behaviour. getopts is good enough for what we need :)
 # More info: https://unix.stackexchange.com/questions/62950/
-#if enable_shortcuts == "true"
+{%- if enable_shortcuts == "true" %}
 while getopts "bifhkp:smut" x; do
-#else
+{%- else %}
 while getopts "bifhkp:sut" x; do
-#endif
+{%- endif %}
     case "$x" in
         h)
             printf "%s\\n" "$USAGE"
@@ -162,19 +153,19 @@ while getopts "bifhkp:sut" x; do
         s)
             SKIP_SCRIPTS=1
             ;;
-#if enable_shortcuts == "true"
+{%- if enable_shortcuts == "true" %}
         m)
             SKIP_SHORTCUTS=1
             ;;
-#endif
+{%- endif %}
         u)
             FORCE=1
             ;;
-#if has_conda
+{%- if has_conda %}
         t)
             TEST=1
             ;;
-#endif
+{%- endif %}
         ?)
             printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
             exit 1
@@ -194,7 +185,7 @@ fi
 
 if [ "$BATCH" = "0" ] # interactive mode
 then
-#if x86 and not x86_64
+{%- if x86 and not x86_64 %}
     if [ "$(uname -m)" = "x86_64" ]; then
         printf "WARNING:\\n"
         printf "    Your system is x86_64, but you are trying to install an x86 (32-bit)\\n"
@@ -212,9 +203,7 @@ then
             exit 2
         fi
     fi
-#endif
-
-#if x86_64
+{%- elif x86_64 %}
     if [ "$(uname -m)" != "x86_64" ]; then
         printf "WARNING:\\n"
         printf "    Your operating system appears not to be x86_64, but you are trying to\\n"
@@ -229,9 +218,7 @@ then
             exit 2
         fi
     fi
-#endif
-
-#if ppc64le
+{%- elif ppc64le %}
     if [ "$(uname -m)" != "ppc64le" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be Power8 (little endian), \\n"
@@ -246,9 +233,7 @@ then
             exit 2
         fi
     fi
-#endif
-
-#if s390x
+{%- elif s390x %}
     if [ "$(uname -m)" != "s390x" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be s390x (big endian), \\n"
@@ -263,9 +248,7 @@ then
             exit 2
         fi
     fi
-#endif
-
-#if aarch64
+{%- elif aarch64 %}
     if [ "$(uname -m)" != "aarch64" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be aarch64, \\n"
@@ -280,9 +263,9 @@ then
             exit 2
         fi
     fi
-#endif
+{%- endif %}
 
-#if osx
+{%- if osx %}
     if [ "$(uname)" != "Darwin" ]; then
         printf "WARNING:\\n"
         printf "    Your operating system does not appear to be macOS, \\n"
@@ -297,9 +280,7 @@ then
             exit 2
         fi
     fi
-#endif
-
-#if linux
+{%- elif linux %}
     if [ "$(uname)" != "Linux" ]; then
         printf "WARNING:\\n"
         printf "    Your operating system does not appear to be Linux, \\n"
@@ -314,11 +295,11 @@ then
             exit 2
         fi
     fi
-#endif
+{%- endif %}
 
     printf "\\n"
     printf "Welcome to %s %s\\n" "${INSTALLER_NAME}" "${INSTALLER_VER}"
-#if has_license
+{%- if has_license %}
     printf "\\n"
     printf "In order to continue the installation process, please review the license\\n"
     printf "agreement.\\n"
@@ -330,7 +311,7 @@ then
       pager="more"
     fi
     "$pager" <<'EOF'
-__LICENSE__
+{{ license }}
 EOF
     printf "\\n"
     printf "Do you accept the license terms? [yes|no]\\n"
@@ -349,7 +330,7 @@ EOF
         printf "The license agreement wasn't approved, aborting installation.\\n"
         exit 2
     fi
-#endif
+{%- endif %}
 
     printf "\\n"
     printf "%s will now be installed into this location:\\n" "${INSTALLER_NAME}"
@@ -362,7 +343,7 @@ EOF
     printf "[%s] >>> " "$PREFIX"
     read -r user_prefix
     if [ "$user_prefix" != "" ]; then
-#if check_path_spaces is True
+{%- if check_path_spaces %}
         case "$user_prefix" in
             *\ * )
                 printf "ERROR: Cannot install into directories with spaces\\n" >&2
@@ -372,20 +353,20 @@ EOF
                 eval PREFIX="$user_prefix"
                 ;;
         esac
-#else
+{%- else %}
         PREFIX="$user_prefix"
-#endif
+{%- endif %}
     fi
 fi # !BATCH
 
-#if check_path_spaces is True
+{%- if check_path_spaces %}
 case "$PREFIX" in
     *\ * )
         printf "ERROR: Cannot install into directories with spaces\\n" >&2
         exit 1
         ;;
 esac
-#endif
+{%- endif %}
 
 if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
     printf "ERROR: File or directory already exists: '%s'\\n" "$PREFIX" >&2
@@ -395,7 +376,7 @@ elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
     REINSTALL=1
 fi
 
-total_installation_size_kb="__TOTAL_INSTALLATION_SIZE_KB__"
+total_installation_size_kb="{{ total_installation_size_kb }}"
 total_installation_size_mb="$(( total_installation_size_kb / 1024 ))"
 if ! mkdir -p "$PREFIX"; then
     printf "ERROR: Could not create directory: '%s'.\\n" "$PREFIX" >&2
@@ -445,20 +426,16 @@ last_line=$(grep -anm 1 '^@@END_HEADER@@' "$THIS_PATH" | sed 's/:.*//')
 # the start of the first payload, in bytes, indexed from zero
 boundary0=$(head -n "${last_line}" "${THIS_PATH}" | wc -c | sed 's/ //g')
 # the start of the second payload / the end of the first payload, plus one
-boundary1=$(( boundary0 + __FIRST_PAYLOAD_SIZE__ ))
+boundary1=$(( boundary0 + {{ first_payload_size }} ))
 # the end of the second payload, plus one
-boundary2=$(( boundary1 + __SECOND_PAYLOAD_SIZE__ ))
+boundary2=$(( boundary1 + {{ second_payload_size }} ))
 
 # verify the MD5 sum of the tarball appended to this header
-#if osx
-MD5=$(extract_range "${boundary0}" "${boundary2}" | md5)
-#else
-MD5=$(extract_range "${boundary0}" "${boundary2}" | md5sum -)
-#endif
+MD5=$(extract_range "${boundary0}" "${boundary2}" | {{ "md5" if osx else "md5sum -" }})
 
-if ! echo "$MD5" | grep __MD5__ >/dev/null; then
+if ! echo "$MD5" | grep {{ installer_md5 }} >/dev/null; then
     printf "WARNING: md5sum mismatch of tar archive\\n" >&2
-    printf "expected: __MD5__\\n" >&2
+    printf "expected: {{ installer_md5 }}\\n" >&2
     printf "     got: %s\\n" "$MD5" >&2
 fi
 
@@ -483,13 +460,13 @@ mkdir -p "$TMP"
 # micromamba needs an existing pkgs_dir to operate even offline,
 # but we haven't created $PREFIX/pkgs yet... give it a temp location
 # shellcheck disable=SC2050
-if [ "__VIRTUAL_SPECS__" != "" ]; then
-    echo "Checking virtual specs compatibility:" __VIRTUAL_SPECS__
+{%- if virtual_specs %}
+    echo "Checking virtual specs compatibility:" {{ virtual_specs }}
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
-    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline __VIRTUAL_SPECS__ __NO_RCS_ARG__
-fi
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }}
+{%- endif %}
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
 if [ "$(id -u)" -ne 0 ]; then
@@ -498,7 +475,7 @@ fi
 
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
-extract_range $boundary1 $boundary2 | \
+extract_range "${boundary1}" "${boundary2}" | \
     CONDA_QUIET="$BATCH" "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
 PRECONDA="$PREFIX/preconda.tar.bz2"
@@ -509,26 +486,22 @@ rm -f "$PRECONDA"
 CONDA_QUIET="$BATCH" \
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-conda-pkgs || exit 1
 
-#The templating doesn't support nested if statements
-#if has_pre_install
+{%- if has_pre_install %}
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     export INST_OPT='--skip-scripts'
     printf "WARNING: skipping pre_install.sh by user request\\n" >&2
 else
     export INST_OPT=''
-#endif
-#if has_pre_install and direct_execute_pre_install
+    {%- if direct_execute_pre_install %}
     if ! "$PREFIX/pkgs/pre_install.sh"; then
-#endif
-#if has_pre_install and not direct_execute_pre_install
+    {%- else %}
     if ! sh "$PREFIX/pkgs/pre_install.sh"; then
-#endif
-#if has_pre_install
+    {%- endif %}
         printf "ERROR: executing pre_install.sh failed\\n" >&2
         exit 1
     fi
 fi
-#endif
+{%- endif %}
 
 MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
@@ -544,33 +517,30 @@ test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda
 
 printf "\nInstalling base environment...\n\n"
 
-#if enable_shortcuts == "true"
+{%- if enable_shortcuts == "true" %}
 if [ "$SKIP_SHORTCUTS" = "1" ]; then
     shortcuts="--no-shortcuts"
 else
-    shortcuts="__SHORTCUTS__"
+    shortcuts="{{ shortcuts }}"
 fi
-#endif
-#if enable_shortcuts == "false"
+{%- elif enable_shortcuts == "false" %}
 shortcuts="--no-shortcuts"
-#endif
-#if enable_shortcuts == "incompatible"
+{%- elif enable_shortcuts == "incompatible" %}
 shortcuts=""
-#endif
+{%- endif %}
 
 # shellcheck disable=SC2086
 CONDA_ROOT_PREFIX="$PREFIX" \
-CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
+CONDA_REGISTER_ENVS="{{ register_envs }}" \
 CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
-CONDA_CHANNELS="__CHANNELS__" \
+CONDA_CHANNELS="{{ channels }}" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 CONDA_QUIET="$BATCH" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts __NO_RCS_ARG__ || exit 1
+"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }} || exit 1
 rm -f "$PREFIX/pkgs/env.txt"
 
-#The templating doesn't support nested if statements
-#if has_conda
+{%- if has_conda %}
 mkdir -p "$PREFIX/envs"
 for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     env_name=$(basename "${env_pkgs}")
@@ -584,10 +554,9 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
         env_channels=$(cat "${env_pkgs}channels.txt")
         rm -f "${env_pkgs}channels.txt"
     else
-        env_channels="__CHANNELS__"
+        env_channels="{{ channels }}"
     fi
-#endif
-#if has_conda and enable_shortcuts == "true"
+    {%- if enable_shortcuts == "true" %}
     if [ "$SKIP_SHORTCUTS" = "1" ]; then
         env_shortcuts="--no-shortcuts"
     else
@@ -595,28 +564,25 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
         env_shortcuts=$(cat "${env_pkgs}shortcuts.txt")
         rm -f "${env_pkgs}shortcuts.txt"
     fi
-#endif
-#if has_conda and enable_shortcuts == "false"
+    {%- elif enable_shortcuts == "false" %}
     env_shortcuts="--no-shortcuts"
-#endif
-#if has_conda and enable_shortcuts == "incompatible"
+    {%- elif enable_shortcuts == "incompatible" %}
     env_shortcuts=""
-#endif
-#if has_conda
+    {%- endif %}
     # shellcheck disable=SC2086
     CONDA_ROOT_PREFIX="$PREFIX" \
-    CONDA_REGISTER_ENVS="__REGISTER_ENVS__" \
+    CONDA_REGISTER_ENVS="{{ register_envs }}" \
     CONDA_SAFETY_CHECKS=disabled \
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     CONDA_QUIET="$BATCH" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts __NO_RCS_ARG__ || exit 1
+    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
     rm -f "${env_pkgs}env.txt"
 done
-#endif
+{%- endif %}
 
-__INSTALL_COMMANDS__
+{{ install_commands }}
 
 POSTCONDA="$PREFIX/postconda.tar.bz2"
 CONDA_QUIET="$BATCH" \
@@ -627,23 +593,20 @@ export TMP="$TMP_BACKUP"
 
 
 #The templating doesn't support nested if statements
-#if has_post_install
+{%- if has_post_install %}
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     printf "WARNING: skipping post_install.sh by user request\\n" >&2
 else
-#endif
-#if has_post_install and direct_execute_post_install
+    {%- if direct_execute_post_install %}
     if ! "$PREFIX/pkgs/post_install.sh"; then
-#endif
-#if has_post_install and not direct_execute_post_install
+    {%- else %}
     if ! sh "$PREFIX/pkgs/post_install.sh"; then
-#endif
-#if has_post_install
+    {%- endif %}
         printf "ERROR: executing post_install.sh failed\\n" >&2
         exit 1
     fi
 fi
-#endif
+{%- endif %}
 
 if [ -f "$MSGS" ]; then
   cat "$MSGS"
@@ -658,7 +621,7 @@ else
 fi
 
 cat <<'EOF'
-__CONCLUSION_TEXT__
+{{ conclusion_text }}
 EOF
 
 if [ "${PYTHONPATH:-}" != "" ]; then
@@ -671,14 +634,8 @@ if [ "${PYTHONPATH:-}" != "" ]; then
 fi
 
 if [ "$BATCH" = "0" ]; then
-#if initialize_conda is True and initialize_by_default is True
-    DEFAULT=yes
-#endif
-#if initialize_conda is True and initialize_by_default is False
-    DEFAULT=no
-#endif
-
-#if has_conda and initialize_conda is True
+{%- if has_conda and initialize_conda %}
+    DEFAULT={{ 'yes' if initialize_by_default else 'no' }}
     # Interactive mode.
 
     printf "Do you wish to update your shell profile to automatically initialize conda?\\n"
@@ -721,13 +678,13 @@ if [ "$BATCH" = "0" ]; then
             esac
         fi
     fi
-#endif
+{%- endif %}
 
     printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"
 fi # !BATCH
 
 
-#if has_conda
+{%- if has_conda %}
 if [ "$TEST" = "1" ]; then
     printf "INFO: Running package tests in a subshell\\n"
     NFAILS=0
@@ -760,7 +717,7 @@ if [ "$TEST" = "1" ]; then
         exit $NFAILS
     fi
 fi
-#endif
+{%- endif %}
 
 exit 0
 # shellcheck disable=SC2317

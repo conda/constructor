@@ -6,7 +6,7 @@
 # change.
 set -eux
 
-PREFIX="$2/__NAME_LOWER__"
+PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 INIT_FILES=$("$PREFIX/bin/python" -m conda init --all | tee)
 

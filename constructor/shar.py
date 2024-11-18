@@ -14,6 +14,7 @@ import tempfile
 from os.path import basename, dirname, getsize, isdir, join, relpath
 
 from .construct import ns_platform
+from .jinja import render_template
 from .preconda import copy_extra_files
 from .preconda import files as preconda_files
 from .preconda import write_files as preconda_write_files
@@ -21,11 +22,9 @@ from .utils import (
     add_condarc,
     approx_size_kb,
     filename_dist,
-    fill_template,
     get_final_channels,
     hash_files,
     parse_virtual_specs,
-    preprocess,
     read_ascii_only,
     shortcuts_flags,
 )
@@ -56,24 +55,24 @@ def get_header(conda_exec, tarball, info):
     name = info['name']
 
     has_license = bool(info.get('license_file'))
-    ppd = ns_platform(info['_platform'])
-    ppd['keep_pkgs'] = bool(info.get('keep_pkgs', False))
-    ppd['batch_mode'] = bool(info.get('batch_mode', False))
-    ppd['has_license'] = has_license
-    if ppd['batch_mode'] and has_license:
+    variables = ns_platform(info['_platform'])
+    variables['keep_pkgs'] = bool(info.get('keep_pkgs', False))
+    variables['batch_mode'] = bool(info.get('batch_mode', False))
+    variables['has_license'] = has_license
+    if variables['batch_mode'] and has_license:
         raise Exception(
             "It is not possible to use both the 'batch_mode' and "
             "'license_file' options together."
         )
     for key in 'pre_install', 'post_install', 'pre_uninstall':
-        ppd['has_%s' % key] = bool(key in info)
+        variables['has_%s' % key] = bool(key in info)
         if key in info:
-            ppd['direct_execute_%s' % key] = has_shebang(info[key])
-    ppd['initialize_conda'] = info.get('initialize_conda', True)
-    ppd['initialize_by_default'] = info.get('initialize_by_default', False)
-    ppd['has_conda'] = info['_has_conda']
-    ppd['enable_shortcuts'] = str(info['_enable_shortcuts']).lower()
-    ppd['check_path_spaces'] = info.get("check_path_spaces", True)
+            variables['direct_execute_%s' % key] = has_shebang(info[key])
+    variables['initialize_conda'] = info.get('initialize_conda', True)
+    variables['initialize_by_default'] = info.get('initialize_by_default', False)
+    variables['has_conda'] = info['_has_conda']
+    variables['enable_shortcuts'] = str(info['_enable_shortcuts']).lower()
+    variables['check_path_spaces'] = info.get("check_path_spaces", True)
     install_lines = list(add_condarc(info))
     # Omit __osx and __glibc because those are tested with shell code direcly
     virtual_specs = [
@@ -81,45 +80,35 @@ def get_header(conda_exec, tarball, info):
         for spec in info.get("virtual_specs", ())
         if "__osx" not in spec and "__glibc" not in spec
     ]
-    # Needs to happen first -- can be templated
-    replace = {
-        'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
-        'NAME': name,
-        'name': name.lower(),
-        'VERSION': info['version'],
-        'PLAT': info['_platform'],
-        'DEFAULT_PREFIX': info.get('default_prefix',
-                                   '${HOME:-/opt}/%s' % name.lower()),
-        'MD5': hash_files([conda_exec, tarball]),
-        'FIRST_PAYLOAD_SIZE': str(getsize(conda_exec)),
-        'SECOND_PAYLOAD_SIZE': str(getsize(tarball)),
-        'INSTALL_COMMANDS': '\n'.join(install_lines),
-        'CHANNELS': ','.join(get_final_channels(info)),
-        'CONCLUSION_TEXT': info.get("conclusion_text", "installation finished."),
-        'pycache': '__pycache__',
-        'SHORTCUTS': shortcuts_flags(info),
-        'REGISTER_ENVS': str(info.get("register_envs", True)).lower(),
-        'TOTAL_INSTALLATION_SIZE_KB': str(approx_size_kb(info, "total")),
-        'VIRTUAL_SPECS': shlex.join(virtual_specs),
-        'NO_RCS_ARG': info.get('_ignore_condarcs_arg', ''),
-    }
+    variables['installer_name'] = name
+    variables['installer_version'] = info['version']
+    variables['installer_platform'] = info['_platform']
+    variables['installer_md5'] = hash_files([conda_exec, tarball])
+    variables['default_prefix'] = info.get('default_prefix', '${HOME:-/opt}/%s' % name.lower())
+    variables['first_payload_size'] = getsize(conda_exec)
+    variables['second_payload_size'] = getsize(tarball)
+    variables['install_commands'] = '\n'.join(install_lines)
+    variables['channels'] = ','.join(get_final_channels(info))
+    variables['conclusion_text'] = info.get("conclusion_text", "installation finished.")
+    variables['pycache'] = '__pycache__'
+    variables['shortcuts'] = shortcuts_flags(info)
+    variables['register_envs'] = str(info.get("register_envs", True)).lower()
+    variables['total_installation_size_kb'] = str(approx_size_kb(info, "total"))
+    variables['virtual_specs'] = shlex.join(virtual_specs)
+    variables['no_rcs_arg'] = info.get('_ignore_condarcs_arg', '')
     if has_license:
-        replace['LICENSE'] = read_ascii_only(info['license_file'])
+        variables['license'] = read_ascii_only(info['license_file'])
 
     virtual_specs = parse_virtual_specs(info)
     min_osx_version = virtual_specs.get("__osx", {}).get("min") or ""
-    replace['MIN_OSX_VERSION'] = ppd['min_osx_version'] = min_osx_version
+    variables['min_osx_version'] = min_osx_version
     min_glibc_version = virtual_specs.get("__glibc", {}).get("min") or ""
-    replace['MIN_GLIBC_VERSION'] = ppd['min_glibc_version'] = min_glibc_version
+    variables['min_glibc_version'] = min_glibc_version
 
-    data = read_header_template()
-    data = preprocess(data, ppd)
-    custom_variables = info.get('script_env_variables', {})
-    data = fill_template(data, replace)
+    variables['script_env_variables'] = '\n'.join(
+        [f"export {key}='{value}'" for key, value in info.get('script_env_variables', {}).items()])
 
-    data = data.replace("_SCRIPT_ENV_VARIABLES_=''", '\n'.join(
-        [f"export {key}='{value}'" for key, value in custom_variables.items()]))
-    return data
+    return render_template(read_header_template(), **variables)
 
 
 def create(info, verbose=False):

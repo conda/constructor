@@ -9,6 +9,7 @@ import logging
 import math
 import re
 import sys
+import warnings
 from io import StringIO
 from os import environ, sep, unlink
 from os.path import isdir, isfile, islink, join, normpath
@@ -53,6 +54,10 @@ def yaml_to_string(data):
 
 
 def fill_template(data, d, exceptions=[]):
+    warnings.warn(
+        "This function is deprecated and will be removed. Use '.jinja.render_template' instead.",
+        DeprecationWarning,
+    )
     pat = re.compile(r'__(\w+)__')
 
     def replace(match):
@@ -105,6 +110,10 @@ if_pat = re.compile(r'^#if ([ \S]+)$\n'
 
 
 def preprocess(data, namespace):
+    warnings.warn(
+        "This function is deprecated and will be removed. Use '.jinja.render_template' instead.",
+        DeprecationWarning,
+    )
 
     def if_repl(match):
         cond = match.group(1).strip()
