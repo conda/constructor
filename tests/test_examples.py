@@ -33,7 +33,7 @@ except ImportError:
 
 pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
-ON_CI = os.environ.get("CI")
+ON_CI = bool(os.environ.get("CI")) and os.environ.get("CI") != "0"
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
 CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 if CONDA_EXE_VERSION is not None:
