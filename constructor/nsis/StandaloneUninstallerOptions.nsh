@@ -1,24 +1,24 @@
 var UninstCustomOptions
-var UninstCustomOptions.RemoveCondaRcs_User
-var UninstCustomOptions.RemoveCondaRcs_System
+var UninstCustomOptions.RemoveConfigFiles_User
+var UninstCustomOptions.RemoveConfigFiles_System
+var UninstCustomOptions.RemoveUserData
 var UninstCustomOptions.RemoveCaches
-var UninstCustomOptions.CondaClean
 
 # These are the checkbox states, to be used by the uninstaller
-var UninstRemoveCondaRcs_User_State
-var UninstRemoveCondaRcs_System_State
+var UninstRemoveConfigFiles_User_State
+var UninstRemoveConfigFiles_System_State
+var UninstRemoveUserData_State
 var UninstRemoveCaches_State
-var UninstCondaClean_State
 
 Function un.UninstCustomOptions_InitDefaults
-    StrCpy $UninstRemoveCondaRcs_User_State ${BST_UNCHECKED}
-    StrCpy $UninstRemoveCondaRcs_System_State ${BST_UNCHECKED}
+    StrCpy $UninstRemoveConfigFiles_User_State ${BST_UNCHECKED}
+    StrCpy $UninstRemoveConfigFiles_System_State ${BST_UNCHECKED}
+    StrCpy $UninstRemoveUserData_State ${BST_UNCHECKED}
     StrCpy $UninstRemoveCaches_State ${BST_UNCHECKED}
-    StrCpy $UninstCondaClean_State ${BST_UNCHECKED}
 FunctionEnd
 
 Function un.UninstCustomOptions_Show
-    ${If} $UninstCondaClean_State == ""
+    ${If} $UninstRemoveCaches_State == ""
         Abort
     ${EndIf}
     # Create dialog
@@ -39,9 +39,9 @@ Function un.UninstCustomOptions_Show
     # Option to remove .condarc files
     ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove user configuration files."
     IntOp $5 $5 + 11
-    Pop $UninstCustomOptions.RemoveCondaRcs_User
-    ${NSD_SetState} $UninstCustomOptions.RemoveCondaRcs_User $UninstRemoveCondaRcs_User_State
-    ${NSD_OnClick} $UninstCustomOptions.RemoveCondaRcs_User un.UninstRemoveCondarcs_User_Onclick
+    Pop $UninstCustomOptions.RemoveConfigFiles_User
+    ${NSD_SetState} $UninstCustomOptions.RemoveConfigFiles_User $UninstRemoveConfigFiles_User_State
+    ${NSD_OnClick} $UninstCustomOptions.RemoveConfigFiles_User un.UninstRemoveConfigFiles_User_Onclick
     ${NSD_CreateLabel} 5% "$5u" 90% 10u \
         "This removes .condarc files in the Users directory."
     IntOp $5 $5 + 10
@@ -49,9 +49,9 @@ Function un.UninstCustomOptions_Show
     ${If} ${UAC_IsAdmin}
         ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove system-wide configuration files."
         IntOp $5 $5 + 11
-        Pop $UninstCustomOptions.RemoveCondaRcs_System
-        ${NSD_SetState} $UninstCustomOptions.RemoveCondaRcs_System $UninstRemoveCondaRcs_System_State
-        ${NSD_OnClick} $UninstCustomOptions.RemoveCondaRcs_System un.UninstRemoveCondarcs_System_Onclick
+        Pop $UninstCustomOptions.RemoveConfigFiles_System
+        ${NSD_SetState} $UninstCustomOptions.RemoveConfigFiles_System $UninstRemoveConfigFiles_System_State
+        ${NSD_OnClick} $UninstCustomOptions.RemoveConfigFiles_System un.UninstRemoveConfigFiles_System_Onclick
         ${NSD_CreateLabel} 5% "$5u" 90% 10u \
             "This removes .condarc files in the ProgramData directory."
         IntOp $5 $5 + 10
@@ -60,9 +60,9 @@ Function un.UninstCustomOptions_Show
     # Option to remove cache files
     ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove cache files."
     IntOp $5 $5 + 11
-    Pop $UninstCustomOptions.RemoveCaches
-    ${NSD_SetState} $UninstCustomOptions.RemoveCaches $UninstRemoveCaches_State
-    ${NSD_OnClick} $UninstCustomOptions.RemoveCaches un.UninstRemoveCaches_Onclick
+    Pop $UninstCustomOptions.RemoveUserData
+    ${NSD_SetState} $UninstCustomOptions.RemoveUserData $UninstRemoveUserData_State
+    ${NSD_OnClick} $UninstCustomOptions.RemoveUserData un.UninstRemoveUserData_Onclick
     ${NSD_CreateLabel} 5% "$5u" 90% 10u \
         "This removes the .conda directory in the user folder and conda system cache files."
     IntOp $5 $5 + 10
@@ -70,9 +70,9 @@ Function un.UninstCustomOptions_Show
     # Option to run conda --clean
     ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove index and package files."
     IntOp $5 $5 + 11
-    Pop $UninstCustomOptions.CondaClean
-    ${NSD_SetState} $UninstCustomOptions.CondaClean $UninstCondaClean_State
-    ${NSD_OnClick} $UninstCustomOptions.CondaClean un.UninstCondaClean_Onclick
+    Pop $UninstCustomOptions.RemoveCaches
+    ${NSD_SetState} $UninstCustomOptions.RemoveCaches $UninstRemoveCaches_State
+    ${NSD_OnClick} $UninstCustomOptions.RemoveCaches un.UninstRemoveCaches_Onclick
     ${NSD_CreateLabel} 5% "$5u" 90% 20u \
         "This removes index and unused package files by running conda clean --all. \
         Only useful if pkgs_dirs is set in a .condarc file."
@@ -88,22 +88,22 @@ Function un.UninstCustomOptions_Show
     nsDialogs::Show
 FunctionEnd
 
-Function un.UninstRemoveCondarcs_User_OnClick
+Function un.UninstRemoveConfigFiles_User_OnClick
     Pop $0
-    ${NSD_GetState} $0 $UninstRemoveCondarcs_User_State
+    ${NSD_GetState} $0 $UninstRemoveConfigFiles_User_State
 FunctionEnd
 
-Function un.UninstRemoveCondarcs_System_OnClick
+Function un.UninstRemoveConfigFiles_System_OnClick
     Pop $0
-    ${NSD_GetState} $0 $UninstRemoveCondarcs_System_State
+    ${NSD_GetState} $0 $UninstRemoveConfigFiles_System_State
+FunctionEnd
+
+Function un.UninstRemoveUserData_OnClick
+    Pop $0
+    ${NSD_GetState} $0 $UninstRemoveUserData_State
 FunctionEnd
 
 Function un.UninstRemoveCaches_OnClick
     Pop $0
     ${NSD_GetState} $0 $UninstRemoveCaches_State
-FunctionEnd
-
-Function un.UninstCondaClean_OnClick
-    Pop $0
-    ${NSD_GetState} $0 $UninstCondaClean_State
 FunctionEnd

@@ -239,26 +239,26 @@ def uninstall_commands_conda_standalone() -> List[str]:
         # Parse arguments
         StrCpy $R0 ""
 
-        ${If} $UninstRemoveCondaRcs_User_State == ${BST_CHECKED}
-            ${If} $UninstRemoveCondaRcs_System_State == ${BST_CHECKED}
-                StrCpy $R0 "$R0 --remove-condarcs=all"
+        ${If} $UninstRemoveConfigFiles_User_State == ${BST_CHECKED}
+            ${If} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+                StrCpy $R0 "$R0 --remove-config-files=all"
             ${Else}
-                StrCpy $R0 "$R0 --remove-condarcs=user"
+                StrCpy $R0 "$R0 --remove-config-files=user"
             ${EndIf}
-        ${ElseIf} $UninstRemoveCondaRcs_System_State == ${BST_CHECKED}
-                StrCpy $R0 "$R0 --remove-condarcs=system"
+        ${ElseIf} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+                StrCpy $R0 "$R0 --remove-config-files=system"
+        ${EndIf}
+
+        ${If} $UninstRemoveUserData_State == ${BST_CHECKED}
+            StrCpy $R0 "$R0 --remove-user-data"
         ${EndIf}
 
         ${If} $UninstRemoveCaches_State == ${BST_CHECKED}
             StrCpy $R0 "$R0 --remove-caches"
         ${EndIf}
 
-        ${If} $UninstCondaClean_State == ${BST_CHECKED}
-            StrCpy $R0 "$R0 --conda-clean"
-        ${EndIf}
-
         ${Print} "Removing files and folders..."
-        push '"$INSTDIR\_conda.exe" uninstall $R0 "$INSTDIR"'
+        push '"$INSTDIR\_conda.exe" constructor uninstall $R0 --prefix "$INSTDIR"'
         push 'Failed to remove files and folders. Please see the log for more information.'
         push 'WithLog'
         SetDetailsPrint listonly

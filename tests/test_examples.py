@@ -925,7 +925,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
 @pytest.mark.skipif(not sys.platform == "win32", reason="Windows only")
 @pytest.mark.skipif(not ON_CI, reason="CI only - Interacts with system files")
 @pytest.mark.parametrize(
-    "remove_caches,conda_clean,remove_condarcs",
+    "remove_user_data,remove_caches,remove_config_files",
     (
         pytest.param(False, False, None, id="keep files"),
         pytest.param(True, True, "all", id="remove all files"),
@@ -935,9 +935,9 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
 )
 def test_uninstallation_standalone(
     monkeypatch,
+    remove_user_data: bool,
     remove_caches: bool,
-    conda_clean: bool,
-    remove_condarcs: Union[str, None],
+    remove_config_files: Union[str, None],
     tmp_path: Path,
 ):
     recipe_path = _example_path("customize_controls")
@@ -976,20 +976,20 @@ def test_uninstallation_standalone(
     uninstall_options = []
     remove_system_rcs = False
     remove_user_rcs = False
-    if remove_condarcs is not None:
-        uninstall_options.append(f"/RemoveCondaRcs={remove_condarcs}")
-        remove_system_rcs = remove_condarcs != "user"
-        remove_user_rcs = remove_condarcs != "system"
+    if remove_config_files is not None:
+        uninstall_options.append(f"/RemoveConfigFiles={remove_config_files}")
+        remove_system_rcs = remove_config_files != "user"
+        remove_user_rcs = remove_config_files != "system"
+    if remove_user_data:
+        uninstall_options.append("/RemoveUserData=1")
     if remove_caches:
         uninstall_options.append("/RemoveCaches=1")
-    if conda_clean:
-        uninstall_options.append("/CondaClean=1")
 
     try:
         _run_uninstaller_exe(install_dir, check=False, options=uninstall_options)
         assert not install_dir.exists() or not next(install_dir.glob("*.conda_trash"), None)
-        assert dot_conda_dir.exists() != remove_caches
-        assert pkg_cache.exists() != conda_clean
+        assert dot_conda_dir.exists() != remove_user_data
+        assert pkg_cache.exists() != remove_caches
         assert system_rc.exists() != remove_system_rcs
         assert user_rc.exists() != remove_user_rcs
     finally:
