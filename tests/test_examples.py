@@ -378,12 +378,14 @@ def test_example_customized_welcome_conclusion(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 @pytest.mark.parametrize(
     "extra_pages",
-    pytest.param(["extra_page_1.nsi", "extra_page_2.nsi"], id="two pages"),
-    pytest.param("extra_page_1.nsi", id="single page"),
+    (
+        pytest.param(["extra_page_1.nsi", "extra_page_2.nsi"], id="two pages"),
+        pytest.param("extra_page_1.nsi", id="single page"),
+    )
 )
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_example_extra_pages_win(tmp_path, request, extra_pages):
     recipe_path = _example_path("exe_extra_pages")
     input_path = tmp_path / "input"
