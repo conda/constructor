@@ -1,8 +1,9 @@
 import os
 
-from jinja2 import BaseLoader, Environment, FileSystemLoader, TemplateError
+from jinja2 import BaseLoader, Environment, FileSystemLoader, StrictUndefined, TemplateError
 
-from constructor.exceptions import UnableToParse
+from . import __version__
+from .exceptions import UnableToParse
 
 
 # adapted from conda-build
@@ -25,7 +26,7 @@ class FilteredLoader(BaseLoader):
 
 
 # adapted from conda-build
-def render_jinja(data, directory, content_filter):
+def render_jinja_for_input_file(data, directory, content_filter):
     loader = FilteredLoader(FileSystemLoader(directory), content_filter)
     env = Environment(loader=loader)
     env.globals['environ'] = os.environ.copy()
@@ -36,3 +37,13 @@ def render_jinja(data, directory, content_filter):
     except TemplateError as ex:
         raise UnableToParse(original=ex)
     return rendered
+
+
+def render_template(text, **kwargs):
+    env = Environment(keep_trailing_newline=True, undefined=StrictUndefined)
+    env.globals["constructor_version"] = __version__
+    try:
+        template = env.from_string(text)
+        return template.render(**kwargs)
+    except TemplateError as ex:
+        raise UnableToParse(original=ex) from ex

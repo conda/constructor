@@ -7,11 +7,11 @@
 
 Unicode true
 
-#if enable_debugging is True
+{%- if enable_debugging %}
 # Special logging build needed for ENABLE_LOGGING
 # See https://nsis.sourceforge.io/Special_Builds
 !define ENABLE_LOGGING
-#endif
+{%- endif %}
 
 # Comes from https://nsis.sourceforge.io/Logging:Enable_Logs_Quickly
 !define LogSet "!insertmacro LogSetMacro"
@@ -67,30 +67,30 @@ var /global StdOutHandleSet
 
 !include "Utils.nsh"
 
-#if uninstall_with_conda_exe is True
+{%- uninstall_with_conda_exe %}
 !include "StandaloneUninstallerOptions.nsh"
-#endif
+{%- endif %}
 
-!define NAME __NAME__
-!define VERSION __VERSION__
-!define COMPANY __COMPANY__
-!define ARCH __ARCH__
-!define PLATFORM __PLATFORM__
-!define CONSTRUCTOR_VERSION __CONSTRUCTOR_VERSION__
-!define PY_VER __PY_VER__
-!define PYVERSION_JUSTDIGITS __PYVERSION_JUSTDIGITS__
-!define PYVERSION __PYVERSION__
-!define PYVERSION_MAJOR __PYVERSION_MAJOR__
-!define DEFAULT_PREFIX __DEFAULT_PREFIX__
-!define DEFAULT_PREFIX_DOMAIN_USER __DEFAULT_PREFIX_DOMAIN_USER__
-!define DEFAULT_PREFIX_ALL_USERS __DEFAULT_PREFIX_ALL_USERS__
-!define PRE_INSTALL_DESC __PRE_INSTALL_DESC__
-!define POST_INSTALL_DESC __POST_INSTALL_DESC__
-!define ENABLE_SHORTCUTS __ENABLE_SHORTCUTS__
-!define SHOW_REGISTER_PYTHON __SHOW_REGISTER_PYTHON__
-!define SHOW_ADD_TO_PATH __SHOW_ADD_TO_PATH__
+!define NAME {{ installer_name }}
+!define VERSION {{ installer_version }}
+!define COMPANY {{ company }}
+!define ARCH {{ arch }}
+!define PLATFORM {{ installer_platform }}
+!define CONSTRUCTOR_VERSION {{ constructor_version }}
+!define PY_VER {{ py_ver }}
+!define PYVERSION_JUSTDIGITS {{ pyversion_justdigits }}
+!define PYVERSION {{ pyversion }}
+!define PYVERSION_MAJOR {{ pyversion_major }}
+!define DEFAULT_PREFIX {{ default_prefix }}
+!define DEFAULT_PREFIX_DOMAIN_USER {{ default_prefix_domain_user }}
+!define DEFAULT_PREFIX_ALL_USERS {{ default_prefix_all_users }}
+!define PRE_INSTALL_DESC {{ pre_install_desc }}
+!define POST_INSTALL_DESC {{ post_install_desc }}
+!define ENABLE_SHORTCUTS {{ enable_shortcuts }}
+!define SHOW_REGISTER_PYTHON {{ show_register_python }}
+!define SHOW_ADD_TO_PATH {{ show_add_to_path }}
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
-!define UNINSTALL_NAME "@UNINSTALL_NAME@"
+!define UNINSTALL_NAME "{{ UNINSTALL_NAME }}"
 !define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
                    \Uninstall\${UNINSTALL_NAME}"
 
@@ -114,11 +114,11 @@ var /global ARGV_NoScripts
 var /global ARGV_NoShortcuts
 var /global ARGV_CheckPathLength
 var /global ARGV_QuietMode
-#if uninstall_with_conda_exe is True
+{%- uninstall_with_conda_exe %}
 var /global ARGV_Uninst_RemoveConfigFiles
 var /global ARGV_Uninst_RemoveUserData
 var /global ARGV_Uninst_RemoveCaches
-#endif
+{%- endif %}
 
 var /global IsDomainUser
 var /global CheckPathLength
@@ -139,7 +139,7 @@ CRCCheck On
 
 # Basic options
 Name "${PRODUCT_NAME}"
-OutFile __OUTFILE__
+OutFile {{ outfile }}
 ShowInstDetails "hide"
 ShowUninstDetails "hide"
 # This installer contains tar.bz2 files, which are already compressed
@@ -156,33 +156,33 @@ VIAddVersionKey "CompanyName" "${COMPANY}"
 VIAddVersionKey "LegalCopyright" "(c) ${COMPANY}"
 VIAddVersionKey "FileDescription" "${NAME} Installer"
 VIAddVersionKey "Comments" "Created by constructor ${CONSTRUCTOR_VERSION}"
-VIProductVersion __VIPV__
+VIProductVersion {{ vipv }}
 BrandingText /TRIMLEFT "${COMPANY}"
 
 # Interface configuration
-!define MUI_ICON __ICONFILE__
-!define MUI_UNICON __ICONFILE__
+!define MUI_ICON {{ iconfile }}
+!define MUI_UNICON {{ iconfile }}
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP __HEADERIMAGE__
-!define MUI_HEADERIMAGE_UNBITMAP __HEADERIMAGE__
+!define MUI_HEADERIMAGE_BITMAP {{ headerimage }}
+!define MUI_HEADERIMAGE_UNBITMAP {{ headerimage }}
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 !define MUI_UNFINISHPAGE_NOAUTOCLOSE
-!define MUI_WELCOMEFINISHPAGE_BITMAP __WELCOMEIMAGE__
-!define MUI_UNWELCOMEFINISHPAGE_BITMAP __WELCOMEIMAGE__
+!define MUI_WELCOMEFINISHPAGE_BITMAP {{ welcomeimage }}
+!define MUI_UNWELCOMEFINISHPAGE_BITMAP {{ welcomeimage }}
 #!define MUI_CUSTOMFUNCTION_GUIINIT GuiInit
 
 # Pages
 #!define MUI_PAGE_CUSTOMFUNCTION_SHOW OnStartup
-#if custom_welcome
+{%- if custom_welcome %}
 # Custom welcome file(s)
-@CUSTOM_WELCOME_FILE@
-#else
+{{ CUSTOM_WELCOME_FILE }}
+{%- else %}
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !insertmacro MUI_PAGE_WELCOME
-#endif
+{%- endif %}
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
-!insertmacro MUI_PAGE_LICENSE __LICENSEFILE__
+!insertmacro MUI_PAGE_LICENSE {{ licensefile }}
 Page Custom InstModePage_Create InstModePage_Leave
 !define MUI_PAGE_CUSTOMFUNCTION_PRE DisableBackButtonIfUACInnerInstance
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE OnDirectoryLeave
@@ -191,30 +191,30 @@ Page Custom InstModePage_Create InstModePage_Leave
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
 
-#if post_install_pages is True
-@POST_INSTALL_PAGES@
-#endif
+{%- if post_install_pages %}
+{{ POST_INSTALL_PAGES }}
+{%- endif %}
 
-#if with_conclusion_text is True
-!define MUI_FINISHPAGE_TITLE __CONCLUSION_TITLE__
+{%- if with_conclusion_text %}
+!define MUI_FINISHPAGE_TITLE {{ conclusion_title }}
 !define MUI_FINISHPAGE_TITLE_3LINES
-!define MUI_FINISHPAGE_TEXT __CONCLUSION_TEXT__
-#endif
+!define MUI_FINISHPAGE_TEXT {{ conclusion_text }}
+{%- endif %}
 
-#if custom_conclusion
+{%- if custom_conclusion %}
 # Custom conclusion file(s)
-@CUSTOM_CONCLUSION_FILE@
-#else
+{{ CUSTOM_CONCLUSION_FILE }}
+{%- else %}
 !insertmacro MUI_PAGE_FINISH
-#endif
+{%- endif %}
 
 
 !insertmacro MUI_UNPAGE_WELCOME
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.OnDirectoryLeave
 !insertmacro MUI_UNPAGE_CONFIRM
-#if uninstall_with_conda_exe is True
+{%- uninstall_with_conda_exe %}
 UninstPage Custom un.UninstCustomOptions_Show
-#endif
+{%- endif %}
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
 
@@ -281,12 +281,7 @@ FunctionEnd
             $\n\
                 /InstallationType=AllUsers [default: JustMe]$\n\
                 /AddToPath=[0|1] [default: 0]$\n\
-#if keep_pkgs is True
-                /KeepPkgCache=[0|1] [default: 1]$\n\
-#endif
-#if keep_pkgs is False
-                /KeepPkgCache=[0|1] [default: 0]$\n\
-#endif
+                /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
                 /NoScripts=[0|1] [default: 0]$\n\
@@ -344,7 +339,7 @@ FunctionEnd
     ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
     ${If} ${Errors}
-        StrCpy $ARGV_KeepPkgCache "@KEEP_PKGS@"
+        StrCpy $ARGV_KeepPkgCache "{{ 1 if keep_pkgs else 0 }}"
     ${EndIf}
 
     ClearErrors
@@ -562,13 +557,13 @@ Function .onInit
     Push $R2
 
     InitPluginsDir
-    @TEMP_EXTRA_FILES@
+    {{ TEMP_EXTRA_FILES }}
     !insertmacro ParseCommandLineArgs
 
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
-    SetRegView @BITS@
-#if win64
+    SetRegView {{ BITS }}
+{%- if win64 %}
     # If we're a 64-bit installer, make sure it's 64-bit Windows
     ${IfNot} ${RunningX64}
         MessageBox MB_OK|MB_ICONEXCLAMATION \
@@ -578,7 +573,7 @@ Function .onInit
             /SD IDOK
         Abort
     ${EndIf}
-#endif
+{%- endif %}
 
     !insertmacro UAC_PageElevation_OnInit
     ${If} ${UAC_IsInnerInstance}
@@ -681,9 +676,9 @@ Function .onInit
             ${IfNot} ${UAC_IsAdmin}
                 MessageBox MB_ICONSTOP "Installation for all users requires an elevated prompt."
                 Abort
-            ${EndIF}
-        ${EndIF}
-    ${EndIF}
+            ${EndIf}
+        ${EndIf}
+    ${EndIf}
 
     ; /D was not used, add default based on install type
     ${If} $InstDir == ""
@@ -704,44 +699,23 @@ Function .onInit
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from contruct.yaml.
     # If initialize_by_default (register_python_default) is None, do nothing.
-#if initialize_conda is True and initialize_by_default is True
+{%- if initialize_conda %}
+    {%- if initialize_by_default %}
     ${If} $InstMode == ${JUST_ME}
         StrCpy $Ana_AddToPath_State ${BST_CHECKED}
-    ${EndIF}
-#endif
-#if initialize_conda is True and initialize_by_default is False
+    ${EndIf}
+    {%- else %}
     StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
-#endif
-#if register_python is True and register_python_default is True
-    StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
-#endif
-#if register_python is True and register_python_default is False
-    StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
-#endif
-#if check_path_length is True
-    StrCpy $CheckPathLength "1"
-#endif
-#if check_path_length is False
-    StrCpy $CheckPathLength "0"
-#endif
-#if keep_pkgs is True
-    StrCpy $Ana_ClearPkgCache_State ${BST_UNCHECKED}
-#endif
-#if keep_pkgs is False
-    StrCpy $Ana_ClearPkgCache_State ${BST_CHECKED}
-#endif
-#if pre_install_exists is True
-    StrCpy $Ana_PreInstall_State ${BST_CHECKED}
-#endif
-#if pre_install_exists is False
-    StrCpy $Ana_PreInstall_State ${BST_UNCHECKED}
-#endif
-#if post_install_exists is True
-    StrCpy $Ana_PostInstall_State ${BST_CHECKED}
-#endif
-#if post_install_exists is False
-    StrCpy $Ana_PostInstall_State ${BST_UNCHECKED}
-#endif
+    {%- endif %}
+{%- endif %}
+
+{%- if register_python %}
+    StrCpy $Ana_RegisterSystemPython_State {{ '${BST_CHECKED}' if register_python_default else '${BST_UNCHECKED}' }}
+{%- endif %}
+    StrCpy $CheckPathLength "{{ 1 if check_path_length else 0 }}"
+    StrCpy $Ana_ClearPkgCache_State {{ '${BST_UNCHECKED}' if keep_pkgs else '${BST_CHECKED}' }}
+    StrCpy $Ana_PreInstall_State {{ '${BST_CHECKED}' if pre_install_exists else '${BST_UNCHECKED}' }}
+    StrCpy $Ana_PostInstall_State {{ '${BST_CHECKED}' if post_install_exists else '${BST_UNCHECKED}' }}
 
     Call OnInit_Release
 
@@ -774,11 +748,11 @@ FunctionEnd
                 /? (show this help message)$\n\
                 /S (run in CLI/headless mode)$\n\
                 /Q (quiet mode, do not print output to console)$\n\
-#if uninstall_with_conda_exe is True
+{%- uninstall_with_conda_exe %}
                 /RemoveCaches=[0|1] [default: 0]$\n\
                 /RemoveConfigFiles=[none|users|system|all] [default: none]$\n\
                 /RemoveUserData=[0|1] [default: 0]$\n\
-#endif
+{%- endif %}
                 /_?=[installation directory] (must be last parameter)$\n\
             $\n\
             EXAMPLES$\n\
@@ -800,7 +774,7 @@ FunctionEnd
     ${IfNot} ${Errors}
         StrCpy $QuietMode "1"
     ${EndIf}
-#if uninstall_with_conda_exe is True
+{%- uninstall_with_conda_exe %}
     ClearErrors
     ${GetOptions} $ARGV "/RemoveConfigFiles=" $ARGV_Uninst_RemoveConfigFiles
     ${IfNot} ${Errors}
@@ -845,14 +819,14 @@ FunctionEnd
             StrCpy $UninstRemoveCaches_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
-#endif
+{%- endif %}
 !macroend
 
 Function un.onInit
 
-#if uninstall_with_conda_exe is True
+{%- uninstall_with_conda_exe %}
     Call un.UninstCustomOptions_InitDefaults
-#endif
+{%- endif %}
 
     Push $0
     Push $1
@@ -911,7 +885,7 @@ Function un.onInit
 
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
-    SetRegView @BITS@
+    SetRegView {{ BITS }}
 
     # Since the switch to a dual-mode installer (All Users/Just Me), the
     # uninstaller will inherit the requested execution level of the main
@@ -1090,22 +1064,22 @@ Function OnDirectoryLeave
           StrCpy $R7 "$\n"
         ${EndIf}
         StrCpy $R8 "'Destination Folder' contains $R0 space$R1.$R7This can cause problems with several conda packages.$R7"
-#if check_path_spaces is True
+{%- if check_path_spaces %}
             StrCpy $R8 "$R8Please remove the space$R1 from the destination folder."
             StrCpy $R9 "Error"
-#else
+{%- else %}
             StrCpy $R8 "$R8Please consider removing the space$R1."
             StrCpy $R9 "Warning"
-#endif
+{%- endif %}
         # Show message box then take the user back to the Directory page.
         ${If} ${Silent}
             ${Print} "::$R9:: $R8"
         ${Else}
             MessageBox MB_OK|MB_ICONINFORMATION "$R9: $R8" /SD IDOK
         ${EndIf}
-#if check_path_spaces is True
+{%- if check_path_spaces %}
             abort
-#endif
+{%- endif %}
     NoSpaces:
     Pop $R7
     Pop $R8
@@ -1246,8 +1220,8 @@ Section "Install"
     ${EndIf}
 
     SetOutPath "$INSTDIR\Lib"
-    File "@NSIS_DIR@\_nsis.py"
-    File "@NSIS_DIR@\_system_path.py"
+    File "{{ NSIS_DIR }}\_nsis.py"
+    File "{{ NSIS_DIR }}\_system_path.py"
 
     # Resolve INSTDIR so that paths and registry keys do not contain '..' or similar strings.
     # $0 is empty if the directory doesn't exist, but the File commands should have created it already.
@@ -1258,13 +1232,13 @@ Section "Install"
     ${EndIf}
     StrCpy $INSTDIR $0
 
-#if has_license
+{%- if has_license %}
     SetOutPath "$INSTDIR"
-    File __LICENSEFILE__
+    File {{ licensefile }}
     ${Print} "By continuing this installation you are accepting this license agreement:"
-    ${Print} "$INSTDIR\@LICENSEFILENAME@"
+    ${Print} "$INSTDIR\{{ LICENSEFILENAME }}"
     ${Print} "Please run the installer in GUI mode to read the details.$\n"
-#endif
+{%- endif %}
 
     ${Print} "${NAME} will now be installed into this location:"
     ${Print} "$INSTDIR$\n"
@@ -1280,14 +1254,14 @@ Section "Install"
 
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
-    File __CONDA_HISTORY__
+    File {{ conda_history }}
 
     SetOutPath "$INSTDIR"
-    File __CONDA_EXE__
-    File __PRE_UNINSTALL__
+    File {{ conda_exe }}
+    File {{ pre_uninstall }}
 
     # Copy extra files (code generated on winexe.py)
-    @EXTRA_FILES@
+    {{ EXTRA_FILES }}
 
     ${If} $InstMode = ${JUST_ME}
         SetOutPath "$INSTDIR"
@@ -1296,16 +1270,16 @@ Section "Install"
     ${EndIf}
 
     SetOutPath "$INSTDIR\pkgs"
-    File __URLS_FILE__
-    File __URLS_TXT_FILE__
-#if pre_install_exists is True
-    File __PRE_INSTALL__
-#endif
-    File __POST_INSTALL__
-    File /nonfatal /r __INDEX_CACHE__
-    File /r __REPODATA_RECORD__
+    File {{ urls_file }}
+    File {{ urls_txt_file }}
+{%- if pre_install_exists %}
+    File {{ pre_install }}
+{%- endif %}
+    File {{ post_install }}
+    File /nonfatal /r {{ index_cache }}
+    File /r {{ repodata_record }}
 
-    @SCRIPT_ENV_VARIABLES@
+    {{ SCRIPT_ENV_VARIABLES }}
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
@@ -1325,22 +1299,22 @@ Section "Install"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
     ${EndIf}
 
-    ${If} '@VIRTUAL_SPECS@' != ''
+    ${If} '{{ VIRTUAL_SPECS }}' != ''
     # We need to specify CONDA_SOLVER=classic for conda-standalone
     # to work around this bug in conda-libmamba-solver:
     # https://github.com/conda/conda-libmamba-solver/issues/480
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic").r0'
     SetDetailsPrint TextOnly
-    ${Print} "Checking virtual specs compatibility: @VIRTUAL_SPECS_DEBUG@"
-    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline @VIRTUAL_SPECS@ @NO_RCS_ARG@'
-    push 'Failed to check virtual specs: @VIRTUAL_SPECS_DEBUG@'
+    ${Print} "Checking virtual specs compatibility: {{ VIRTUAL_SPECS_DEBUG }}"
+    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline {{ VIRTUAL_SPECS }} {{ NO_RCS_ARG }}'
+    push 'Failed to check virtual specs: {{ VIRTUAL_SPECS_DEBUG }}'
     push 'WithLog'
     call AbortRetryNSExecWait
     SetDetailsPrint both
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "").r0'
     ${EndIf}
 
-    @PKG_COMMANDS@
+    {{ PKG_COMMANDS }}
 
     SetDetailsPrint TextOnly
     ${Print} "Setting up the package cache..."
@@ -1370,19 +1344,19 @@ Section "Install"
         call AbortRetryNSExecWait
     NoPreInstall:
 
-    @SETUP_ENVS@
+    {{ SETUP_ENVS }}
 
-    @WRITE_CONDARC@
+    {{ WRITE_CONDARC }}
 
-    AddSize @SIZE@
+    AddSize {{ SIZE }}
 
-#if has_conda is True
+{%- if has_conda %}
     ${Print} "Initializing conda directories..."
     push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
     push 'Failed to initialize conda directories'
     push 'WithLog'
     call AbortRetryNSExecWait
-#endif
+{%- endif %}
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
         ${Print} "Running post install..."
@@ -1394,7 +1368,7 @@ Section "Install"
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
         ${Print} "Clearing package cache..."
-        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes @NO_RCS_ARG@'
+        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes {{ NO_RCS_ARG }}'
         push 'Failed to clear package cache'
         push 'WithLog'
         call AbortRetryNSExecWait
@@ -1403,7 +1377,7 @@ Section "Install"
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
         ${Print} "Adding to PATH..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
-        push 'Failed to add @NAME@ to the system PATH'
+        push 'Failed to add {{ NAME }} to the system PATH'
         push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}
@@ -1533,7 +1507,7 @@ Section "Uninstall"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
     ${EndIf}
 
-    @UNINSTALL_COMMANDS@
+    {{ UNINSTALL_COMMANDS }}
 
     ${If} $INSTALLER_NAME_FULL != ""
         DeleteRegKey SHCTX "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTALLER_NAME_FULL"
@@ -1565,10 +1539,10 @@ Section "Uninstall"
 
 SectionEnd
 
-!if '@SIGNTOOL_COMMAND@' != ''
+!if '{{ SIGNTOOL_COMMAND }}' != ''
     # Signing for installer and uninstaller; nsis 3.08 required for uninstfinalize!
     # "= 0" comparison required to prevent both tasks running in parallel, which would cause signtool to fail
     # %1 is replaced by the installer and uninstaller paths, respectively
-    !finalize '@SIGNTOOL_COMMAND@ "%1"' = 0
-    !uninstfinalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+    !finalize '{{ SIGNTOOL_COMMAND }} "%1"' = 0
+    !uninstfinalize '{{ SIGNTOOL_COMMAND }} "%1"' = 0
 !endif

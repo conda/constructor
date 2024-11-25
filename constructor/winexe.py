@@ -17,6 +17,7 @@ from typing import List, Union
 
 from .construct import ns_platform
 from .imaging import write_images
+from .jinja import render_template
 from .preconda import copy_extra_files
 from .preconda import write_files as preconda_write_files
 from .signing import AzureSignTool, WindowsSignTool
@@ -24,10 +25,8 @@ from .utils import (
     add_condarc,
     approx_size_kb,
     filename_dist,
-    fill_template,
     get_final_channels,
     make_VIProductVersion,
-    preprocess,
     shortcuts_flags,
     win_str_esc,
 )
@@ -323,70 +322,52 @@ def make_nsi(
     info['pre_install_desc'] = info.get('pre_install_desc', "")
     info['post_install_desc'] = info.get('post_install_desc', "")
 
-    replace = {
-        'NAME': name,
-        'VERSION': info['version'],
-        'COMPANY': info.get('company', 'Unknown, Inc.'),
-        'PLATFORM': info['_platform'],
-        'ARCH': '%d-bit' % arch,
-        'PY_VER': ".".join(py_version.split(".")[:2]),
-        'PYVERSION_JUSTDIGITS': ''.join(py_version.split('.')),
-        'PYVERSION': py_version,
-        'PYVERSION_MAJOR': py_version.split('.')[0],
-        'DEFAULT_PREFIX': info.get('default_prefix', join('%USERPROFILE%', name.lower())),
-        'DEFAULT_PREFIX_DOMAIN_USER': info.get('default_prefix_domain_user',
+    variables = {
+        'installer_name': name,
+        'installer_version': info['version'],
+        'company': info.get('company', 'Unknown, Inc.'),
+        'installer_platform': info['_platform'],
+        'arch': '%d-bit' % arch,
+        'py_ver': ".".join(py_version.split(".")[:2]),
+        'pyversion_justdigits': ''.join(py_version.split('.')),
+        'pyversion': py_version,
+        'pyversion_major': py_version.split('.')[0],
+        'default_prefix': info.get('default_prefix', join('%USERPROFILE%', name.lower())),
+        'default_prefix_domain_user': info.get('default_prefix_domain_user',
                                                join('%LOCALAPPDATA%', name.lower())),
-        'DEFAULT_PREFIX_ALL_USERS': info.get('default_prefix_all_users',
+        'default_prefix_all_users': info.get('default_prefix_all_users',
                                              join('%ALLUSERSPROFILE%', name.lower())),
-        'PRE_INSTALL_DESC': info['pre_install_desc'],
-        'POST_INSTALL_DESC': info['post_install_desc'],
-        'ENABLE_SHORTCUTS': "yes" if info['_enable_shortcuts'] is True else "no",
-        'SHOW_REGISTER_PYTHON': "yes" if info.get("register_python", True) else "no",
-        'SHOW_ADD_TO_PATH': "yes" if info.get("initialize_conda", True) else "no",
-        'OUTFILE': info['_outpath'],
-        'VIPV': make_VIProductVersion(info['version']),
-        'CONSTRUCTOR_VERSION': info['CONSTRUCTOR_VERSION'],
-        'ICONFILE': '@icon.ico',
-        'HEADERIMAGE': '@header.bmp',
-        'WELCOMEIMAGE': '@welcome.bmp',
-        'LICENSEFILE': abspath(info.get('license_file', join(NSIS_DIR, 'placeholder_license.txt'))),
-        'CONDA_HISTORY': '@' + join('conda-meta', 'history'),
-        'CONDA_EXE': '@_conda.exe',
-        'ENV_TXT': '@env.txt',
-        'URLS_FILE': '@urls',
-        'URLS_TXT_FILE': '@urls.txt',
-        'PRE_INSTALL': '@pre_install.bat',
-        'POST_INSTALL': '@post_install.bat',
-        'PRE_UNINSTALL': '@pre_uninstall.bat',
-        'INDEX_CACHE': '@cache',
-        'REPODATA_RECORD': '@repodata_record.json',
+        'pre_install_desc': info['pre_install_desc'],
+        'post_install_desc': info['post_install_desc'],
+        'enable_shortcuts': "yes" if info['_enable_shortcuts'] is True else "no",
+        'show_register_python': "yes" if info.get("register_python", True) else "no",
+        'show_add_to_path': "yes" if info.get("initialize_conda", True) else "no",
+        'outfile': info['_outpath'],
+        'vipv': make_VIProductVersion(info['version']),
+        'constructor_version': info['CONSTRUCTOR_VERSION'],
+        'iconfile': '@icon.ico',
+        'headerimage': '@header.bmp',
+        'welcomeimage': '@welcome.bmp',
+        'licensefile': abspath(info.get('license_file', join(NSIS_DIR, 'placeholder_license.txt'))),
+        'conda_history': '@' + join('conda-meta', 'history'),
+        'conda_exe': '@_conda.exe',
+        'env_txt': '@env.txt',
+        'urls_file': '@urls',
+        'urls_txt_file': '@urls.txt',
+        'pre_install': '@pre_install.bat',
+        'post_install': '@post_install.bat',
+        'pre_uninstall': '@pre_uninstall.bat',
+        'index_cache': '@cache',
+        'repodata_record': '@repodata_record.json',
     }
-
-    # These are NSIS predefines and must not be replaced
-    # https://nsis.sourceforge.io/Docs/Chapter5.html#precounter
-    nsis_predefines = [
-        "COUNTER",
-        "DATE",
-        "FILE",
-        "FILEDIR",
-        "FUNCTION",
-        "GLOBAL",
-        "LINE",
-        "MACRO",
-        "PAGEEX",
-        "SECTION",
-        "TIME",
-        "TIMESTAMP",
-        "UNINSTALL",
-    ]
 
     conclusion_text = info.get("conclusion_text", "")
     if conclusion_text:
         conclusion_lines = conclusion_text.strip().splitlines()
-        replace['CONCLUSION_TITLE'] = conclusion_lines[0].strip()
+        variables['conclusion_title'] = conclusion_lines[0].strip()
         # See https://nsis.sourceforge.io/Docs/Modern%20UI/Readme.html#toggle_pgf
         # for the newlines business
-        replace['CONCLUSION_TEXT'] = "\r\n".join(conclusion_lines[1:])
+        variables['conclusion_text'] = "\r\n".join(conclusion_lines[1:])
 
     for key in ['welcome_file', 'conclusion_file', 'post_install_pages']:
         value = info.get(key, "")
@@ -411,33 +392,72 @@ def make_nsi(
                     )
                 info[key] = valid_values
 
-    for key, value in replace.items():
+    for key, value in variables.items():
         if value.startswith('@'):
             value = join(dir_path, value[1:])
-        replace[key] = win_str_esc(value)
+        variables[key] = win_str_esc(value)
 
-    data = read_nsi_tmpl(info)
-    ppd = ns_platform(info['_platform'])
-    ppd['initialize_conda'] = info.get('initialize_conda', True)
-    ppd['initialize_by_default'] = info.get('initialize_by_default', None)
-    ppd['register_python'] = info.get('register_python', True)
-    ppd['register_python_default'] = info.get('register_python_default', None)
-    ppd['check_path_length'] = info.get('check_path_length', None)
-    ppd['check_path_spaces'] = info.get('check_path_spaces', True)
-    ppd['keep_pkgs'] = info.get('keep_pkgs') or False
-    ppd['pre_install_exists'] = bool(info.get('pre_install'))
-    ppd['post_install_exists'] = bool(info.get('post_install'))
-    ppd['with_conclusion_text'] = bool(conclusion_text)
-    ppd["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
-    ppd["has_conda"] = info["_has_conda"]
-    ppd["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
-    ppd["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
-    ppd["has_license"] = bool(info.get("license_file"))
-    ppd["post_install_pages"] = bool(info.get("post_install_pages"))
-    ppd["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
+    # From now on, the items added to variables will NOT be escaped
 
-    data = preprocess(data, ppd)
-    data = fill_template(data, replace, exceptions=nsis_predefines)
+    # These are mostly booleans we use with if-checks
+    variables.update(ns_platform(info['_platform']))
+    variables['initialize_conda'] = info.get('initialize_conda', True)
+    variables['initialize_by_default'] = info.get('initialize_by_default', None)
+    variables['register_python'] = info.get('register_python', True)
+    variables['register_python_default'] = info.get('register_python_default', None)
+    variables['check_path_length'] = info.get('check_path_length', None)
+    variables['check_path_spaces'] = info.get('check_path_spaces', True)
+    variables['keep_pkgs'] = info.get('keep_pkgs') or False
+    variables['pre_install_exists'] = bool(info.get('pre_install'))
+    variables['post_install_exists'] = bool(info.get('post_install'))
+    variables['with_conclusion_text'] = bool(conclusion_text)
+    variables["enable_debugging"] = bool(os.environ.get("NSIS_USING_LOG_BUILD"))
+    variables["has_conda"] = info["_has_conda"]
+    variables["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
+    variables["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
+    variables["has_license"] = bool(info.get("license_file"))
+    variables["post_install_pages"] = bool(info.get("post_install_pages"))
+    variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
+
+    approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
+
+    # UPPERCASE variables are unescaped (and unquoted)
+    variables['NAME'] = name
+    variables['NSIS_DIR'] = NSIS_DIR
+    variables['BITS'] = str(arch)
+    variables['PKG_COMMANDS'] = '\n    '.join(pkg_commands(download_dir, dists))
+    variables['SIGNTOOL_COMMAND'] = signing_tool.get_signing_command() if signing_tool else ""
+    variables['SETUP_ENVS'] = '\n    '.join(setup_envs_commands(info, dir_path))
+    variables['WRITE_CONDARC'] = '\n    '.join(add_condarc(info))
+    variables['SIZE'] = approx_pkgs_size_kb
+    variables['UNINSTALL_NAME'] = info.get(
+        'uninstall_name',
+        '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
+    )
+    variables['UNINSTALL_MENUS'] = '\n    '.join(uninstall_menus_commands(info))
+    variables['EXTRA_FILES'] = '\n    '.join(extra_files_commands(extra_files, dir_path))
+    variables['SCRIPT_ENV_VARIABLES'] = '\n    '.join(setup_script_env_variables(info))
+    variables['CUSTOM_WELCOME_FILE'] = (
+        custom_nsi_insert_from_file(info.get('welcome_file', ''))
+        if variables['custom_welcome']
+        else ''
+    )
+    variables['CUSTOM_CONCLUSION_FILE'] = (
+        custom_nsi_insert_from_file(info.get('conclusion_file', ''))
+        if variables['custom_conclusion']
+        else ''
+    )
+    variables['POST_INSTALL_PAGES'] = '\n'.join(
+        custom_nsi_insert_from_file(file) for file in info.get('post_install_pages', [])
+    )
+    variables['TEMP_EXTRA_FILES'] = '\n    '.join(insert_tempfiles_commands(temp_extra_files))
+    variables['VIRTUAL_SPECS'] = " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])
+    # This is the same but without quotes so we can print it fine
+    variables['VIRTUAL_SPECS_DEBUG'] = " ".join([spec for spec in info.get("virtual_specs", ())])
+    variables['LICENSEFILENAME'] = basename(info.get('license_file', 'placeholder_license.txt'))
+    variables['NO_RCS_ARG'] = info.get('_ignore_condarcs_arg', '')
+
+    data = render_template(read_nsi_tmpl(info), **variables)
     if info['_platform'].startswith("win") and sys.platform != 'win32':
         # Branding /TRIM commannd is unsupported on non win platform
         data_lines = data.split("\n")
@@ -446,51 +466,6 @@ def make_nsi(
                 del data_lines[i]
                 break
         data = "\n".join(data_lines)
-
-    approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
-
-    # these are unescaped (and unquoted)
-    for key, value in [
-        ('@NAME@', name),
-        ('@NSIS_DIR@', NSIS_DIR),
-        ('@BITS@', str(arch)),
-        ('@PKG_COMMANDS@', '\n    '.join(pkg_commands(download_dir, dists))),
-        ('@SIGNTOOL_COMMAND@', signing_tool.get_signing_command() if signing_tool else ""),
-        ('@SETUP_ENVS@', '\n    '.join(setup_envs_commands(info, dir_path))),
-        ('@WRITE_CONDARC@', '\n    '.join(add_condarc(info))),
-        ('@SIZE@', str(approx_pkgs_size_kb)),
-        ('@UNINSTALL_NAME@', info.get('uninstall_name',
-                                      '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
-                                      )),
-        ('@UNINSTALL_COMMANDS@', '\n    '.join(uninstall_commands(info))),
-        ('@EXTRA_FILES@', '\n    '.join(extra_files_commands(extra_files, dir_path))),
-        ('@SCRIPT_ENV_VARIABLES@', '\n    '.join(setup_script_env_variables(info))),
-        (
-            '@CUSTOM_WELCOME_FILE@',
-            custom_nsi_insert_from_file(info.get('welcome_file', ''))
-            if ppd['custom_welcome']
-            else ''
-        ),
-        (
-            '@CUSTOM_CONCLUSION_FILE@',
-            custom_nsi_insert_from_file(info.get('conclusion_file', ''))
-            if ppd['custom_conclusion']
-            else ''
-        ),
-        (
-            '@POST_INSTALL_PAGES@',
-            '\n'.join(
-                custom_nsi_insert_from_file(file) for file in info.get('post_install_pages', [])
-            ),
-        ),
-        ('@TEMP_EXTRA_FILES@', '\n    '.join(insert_tempfiles_commands(temp_extra_files))),
-        ('@VIRTUAL_SPECS@', " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])),
-        # This is the same but without quotes so we can print it fine
-        ('@VIRTUAL_SPECS_DEBUG@', " ".join([spec for spec in info.get("virtual_specs", ())])),
-        ('@LICENSEFILENAME@', basename(info.get('license_file', 'placeholder_license.txt'))),
-        ('@NO_RCS_ARG@', info.get('_ignore_condarcs_arg', '')),
-    ]:
-        data = data.replace(key, value)
 
     nsi_path = join(dir_path, 'main.nsi')
     with open(nsi_path, 'w') as fo:

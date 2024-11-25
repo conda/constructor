@@ -1,6 +1,6 @@
 from os import sep
 
-from constructor.utils import fill_template, make_VIProductVersion, normalize_path, preprocess
+from constructor.utils import make_VIProductVersion, normalize_path
 
 
 def test_make_VIProductVersion():
@@ -14,72 +14,9 @@ def test_make_VIProductVersion():
     assert f('x') == '0.0.0.0'
 
 
-def test_fill_template():
-    template = """\
-My name is __NAME__!
-I am __AGE__ years old.
-Sincerely __NAME__
-"""
-    res = """\
-My name is Hugo!
-I am 44 years old.
-Sincerely Hugo
-"""
-    info = {'NAME': 'Hugo', 'AGE': '44', 'SEX': 'male'}
-    assert fill_template(template, info) == res
-
-
-def test_preprocess():
-    code = """\
-A
-#if True
-  always True
-  another line
-#endif
-B
-#if False
-  never see this
-#endif
-C
-#if x == 0
-  x = 0
-#else
-  x != 0
-#endif
-D
-#if x != 0
-  x != 0
-#endif
-E
-"""
-    res = """\
-A
-  always True
-  another line
-B
-C
-  x != 0
-D
-  x != 0
-E
-"""
-    assert preprocess(code, dict(x=1)) == res
-
-
 def test_normalize_path():
     path = "//test//test/test".replace('/', sep)
     assert normalize_path(path) == "/test/test/test".replace('/', sep)
 
     path = "test///test/test".replace('/', sep)
     assert normalize_path(path) == "test/test/test".replace('/', sep)
-
-
-def main():
-    test_make_VIProductVersion()
-    test_fill_template()
-    test_preprocess()
-    test_normalize_path()
-
-
-if __name__ == '__main__':
-    main()

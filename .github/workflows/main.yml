@@ -137,7 +137,7 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
           coverage run --branch --append -m constructor -V
           coverage json
-      - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
+      - uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5.0.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
@@ -155,7 +155,7 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
-      - uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
+      - uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5.0.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
@@ -226,7 +226,7 @@ jobs:
           clean: true
           fetch-depth: 0
       - name: Create and upload canary build
-        uses: conda/actions/canary-release@15f883f14f4232f83658e3609c3316d58905138f # v24.8.0
+        uses: conda/actions/canary-release@6e72e0db87e72f0020e493aeb02f864363bd9258 # v24.11.1
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}

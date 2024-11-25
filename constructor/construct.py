@@ -635,6 +635,8 @@ Allowed keys are:
 - `info.json`: The internal `info` object, serialized to JSON. Takes no options.
 - `pkgs_list`: The list of packages contained in a given environment. Options:
     - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
+- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:
+    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
 - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
     - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
       If false, only the path will be included.
@@ -751,10 +753,10 @@ def yamlize(data, directory, content_filter):
         if ('{{' not in data) and ('{%' not in data):
             raise UnableToParse(original=e)
         try:
-            from constructor.jinja import render_jinja
+            from constructor.jinja import render_jinja_for_input_file
         except ImportError as ex:
             raise UnableToParseMissingJinja2(original=ex)
-        data = render_jinja(data, directory, content_filter)
+        data = render_jinja_for_input_file(data, directory, content_filter)
         return yaml.load(data)
 
 

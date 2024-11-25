@@ -403,7 +403,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         env_pc_recs, env_urls, env_dists, _ = _fetch_precs(
             env_precs, download_dir, transmute_file_type=transmute_file_type
         )
-        extra_envs_data[env_name] = {"_urls": env_urls, "_dists": env_dists}
+        extra_envs_data[env_name] = {"_urls": env_urls, "_dists": env_dists, "_records": env_precs}
         all_pc_recs += env_pc_recs
 
     duplicate_files = "warn" if ignore_duplicate_files else "error"
@@ -418,6 +418,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
 
     return (
         all_pc_recs,
+        precs,
         _urls,
         dists,
         approx_tarballs_size,
@@ -466,8 +467,9 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
 
         (
             pkg_records,
-            _urls,
-            dists,
+            _base_env_records,
+            _base_env_urls,
+            _base_env_dists,
             approx_tarballs_size,
             approx_pkgs_size,
             has_conda,
@@ -495,10 +497,11 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         )
 
     info["_all_pkg_records"] = pkg_records  # full PackageRecord objects
-    info["_urls"] = _urls  # needed to mock the repodata cache
-    info["_dists"] = dists  # needed to tell conda what to install
+    info["_urls"] = _base_env_urls  # needed to mock the repodata cache
+    info["_dists"] = _base_env_dists  # needed to tell conda what to install
+    info["_records"] = _base_env_records  # needed to generate optional lockfile
     info["_approx_tarballs_size"] = approx_tarballs_size
     info["_approx_pkgs_size"] = approx_pkgs_size
     info["_has_conda"] = has_conda
-    # contains {env_name: [_dists, _urls]} for each extra environment
+    # contains {env_name: [_dists, _urls, _records]} for each extra environment
     info["_extra_envs_info"] = extra_envs_info
