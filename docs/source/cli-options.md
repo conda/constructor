@@ -54,6 +54,13 @@ $ CONDA_VERBOSITY=3 bash -x my_installer.sh
 
 Windows installers have the following CLI options available:
 
+- `/NCRC`: disables the CRC check.
+- `/S` (silent): runs the installer or uninstaller in headless mode. Installers created with
+  `constructor 3.10` or later will report information to the active console. Note that while the
+  installer output will be reported in the active console, the uninstaller output will happen in
+  a new console. See below for different invocation examples.
+- `/Q` (quiet): do not report to the console in headless mode. Only relevant when used with `/S`
+  (see above). Also works for the uninstallers.
 - `/InstallationType=[JustMe|AllUsers]`: This flag sets the installation type. The default is
   `JustMe`. `AllUsers` might require elevated privileges.
 - `/AddToPath=[0|1]`: Whether to add the installation directory to the `PATH` environment
@@ -68,19 +75,14 @@ Windows installers have the following CLI options available:
   `0`.
 - `/RegisterPython=[0|1]`: Whether to register Python as default in the Windows registry. Defaults
   to `1`. This is preferred to `AddToPath`.
-- `/Q` (quiet): do not report to the console in headless mode. Only relevant when used with `/S`
-  (see below). Also works for the uninstallers.
-
-You can also supply [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage), but only _after_ the ones mentioned above:
-
-- `/NCRC`: disables the CRC check.
-- `/S` (silent): runs the installer or uninstaller in headless mode. Installers created with
-  `constructor 3.10` or later will report information to the active console. Note that while the
-  installer output will be reported in the active console, the uninstaller output will happen in
-  a new console. See below for different invocation examples.
 - `/D` (directory): sets the default installation directory. Note that even if the path contains
   spaces, it must be the last parameter used in the command line and must not contain any quotes.
-  Only absolute paths are supported. The uninstaller uses `_?` instead of `/D`.
+  Only absolute paths are supported.
+
+Some of these flags are [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage).
+
+> [!IMPORTANT]
+> Flags without arguments should precede flags with arguments to avoid parsing errors.
 
 ### Examples
 
@@ -105,12 +107,12 @@ Run the installer in headless mode, for all users, adding to PATH and installing
 `````{tab-set}
 ````{tab-item} CMD
 ```pwsh
-cmd.exe /C start /wait my_installer.exe /InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app
+cmd.exe /C start /wait my_installer.exe /S /InstallationType=AllUsers /AddToPath=1 /D=C:\Program Files\my_app
 ```
 ````
 ````{tab-item} PowerShell
 ```pwsh
-Start-Process -FilePath .\my_installer.exe -ArgumentList "/InstallationType=AllUsers /AddToPath=1 /S /D=C:\Program Files\my_app" -NoNewWindow -Wait
+Start-Process -FilePath .\my_installer.exe -ArgumentList "/S /InstallationType=AllUsers /AddToPath=1 /D=C:\Program Files\my_app" -NoNewWindow -Wait
 ```
 ````
 `````
