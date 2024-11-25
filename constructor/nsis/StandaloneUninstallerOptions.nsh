@@ -30,20 +30,20 @@ Function un.UninstCustomOptions_Show
 
     !insertmacro MUI_HEADER_TEXT \
         "Advanced uninstallation options" \
-            "Remove configuration and cache files"
+            "Remove configuration, data, and cache files"
 
     # We will use $5 as the y axis accumulator, starting at 0
     # We sum the the number of 'u' units added by 'NSD_Create*' functions
     IntOp $5 0 + 0
 
-    # Option to remove .condarc files
+    # Option to remove configuration files
     ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove user configuration files."
     IntOp $5 $5 + 11
     Pop $UninstCustomOptions.RemoveConfigFiles_User
     ${NSD_SetState} $UninstCustomOptions.RemoveConfigFiles_User $UninstRemoveConfigFiles_User_State
     ${NSD_OnClick} $UninstCustomOptions.RemoveConfigFiles_User un.UninstRemoveConfigFiles_User_Onclick
     ${NSD_CreateLabel} 5% "$5u" 90% 10u \
-        "This removes .condarc files in the Users directory."
+        "This removes configuration files such as .condarc files in the Users directory."
     IntOp $5 $5 + 10
 
     ${If} ${UAC_IsAdmin}
@@ -53,29 +53,28 @@ Function un.UninstCustomOptions_Show
         ${NSD_SetState} $UninstCustomOptions.RemoveConfigFiles_System $UninstRemoveConfigFiles_System_State
         ${NSD_OnClick} $UninstCustomOptions.RemoveConfigFiles_System un.UninstRemoveConfigFiles_System_Onclick
         ${NSD_CreateLabel} 5% "$5u" 90% 10u \
-            "This removes .condarc files in the ProgramData directory."
+            "This removes configuration files such as .condarc files in the ProgramData directory."
         IntOp $5 $5 + 10
     ${EndIf}
 
-    # Option to remove cache files
-    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove cache files."
+    # Option to remove user data files
+    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove user data."
     IntOp $5 $5 + 11
     Pop $UninstCustomOptions.RemoveUserData
     ${NSD_SetState} $UninstCustomOptions.RemoveUserData $UninstRemoveUserData_State
     ${NSD_OnClick} $UninstCustomOptions.RemoveUserData un.UninstRemoveUserData_Onclick
     ${NSD_CreateLabel} 5% "$5u" 90% 10u \
-        "This removes the .conda directory in the user folder and conda system cache files."
+        "This removes user data files such as the .conda directory inside the Users folder."
     IntOp $5 $5 + 10
 
-    # Option to run conda --clean
-    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove index and package files."
+    # Option to remove caches
+    ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Remove caches."
     IntOp $5 $5 + 11
     Pop $UninstCustomOptions.RemoveCaches
     ${NSD_SetState} $UninstCustomOptions.RemoveCaches $UninstRemoveCaches_State
     ${NSD_OnClick} $UninstCustomOptions.RemoveCaches un.UninstRemoveCaches_Onclick
     ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-        "This removes index and unused package files by running conda clean --all. \
-        Only useful if pkgs_dirs is set in a .condarc file."
+        "This removes cache such as package caches and notices."
     IntOp $5 $5 + 20
 
     IntOp $5 $5 + 5
