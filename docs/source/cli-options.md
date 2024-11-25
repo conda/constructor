@@ -55,12 +55,10 @@ $ CONDA_VERBOSITY=3 bash -x my_installer.sh
 Windows installers have the following CLI options available:
 
 - `/NCRC`: disables the CRC check.
-- `/S` (silent): runs the installer or uninstaller in headless mode. Installers created with
-  `constructor 3.10` or later will report information to the active console. Note that while the
-  installer output will be reported in the active console, the uninstaller output will happen in
-  a new console. See below for different invocation examples.
+- `/S` (silent): runs the installer in headless mode. Installers created with `constructor 3.10` or
+   later will report information to the active console. See below for different invocation examples.
 - `/Q` (quiet): do not report to the console in headless mode. Only relevant when used with `/S`
-  (see above). Also works for the uninstallers.
+  (see above).
 - `/InstallationType=[JustMe|AllUsers]`: This flag sets the installation type. The default is
   `JustMe`. `AllUsers` might require elevated privileges.
 - `/AddToPath=[0|1]`: Whether to add the installation directory to the `PATH` environment
@@ -80,6 +78,29 @@ Windows installers have the following CLI options available:
   Only absolute paths are supported.
 
 Some of these flags are [standard NSIS flags](https://nsis.sourceforge.io/Docs/Chapter3.html#installerusage).
+
+Windows uninstallers have the following CLI options:
+
+- `/S` (silent): uninstaller in headless mode. Uninstallers created with `constructor 3.10` or
+  later will report information to the console in a new window.
+  See below for different invocation examples.
+- `/Q` (quiet): do not report to the console in headless mode. Only relevant when used with `/S`
+  (see above). Also works for the uninstallers.
+- `/RemoveCaches=[0|1]` (only if built with `uninstall_with_conda_exe`):
+   Removes caches such package caches.
+   For details, see the `constructor uninstall` subcommand of the `conda.exe` file.
+- `/RemoveConfigFiles=[none|users|system|all]` (only if built with `uninstall_with_conda_exe`):
+  Removes configuration files such as `.condarc` files. `user` removes the files inside the
+  current user's home directory and `system` removes all files outside of that directory.
+  For details, see the `constructor uninstall` subcommand of the `conda.exe` file.
+- `/RemoveUserData=[0|1]` (only if built with `uninstall_with_conda_exe`):
+   removes user data such as the `~/.conda` directory.
+   For details, see the `constructor uninstall` subcommand of the `conda.exe` file.
+- `/Q` (quiet): do not report to the console in headless mode. Only relevant when used with `/S`
+- `/D` (directory): sets the default installation directory. Note that even if the path contains
+  spaces, it must be the last parameter used in the command line and must not contain any quotes.
+  Only absolute paths are supported.
+- `_?`: like `/D` but prevents the uninstaller from copying itself to the temporary directory.
 
 > [!IMPORTANT]
 > Flags without arguments should precede flags with arguments to avoid parsing errors.
