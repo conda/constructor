@@ -379,7 +379,7 @@ def test_example_customized_welcome_conclusion(tmp_path, request):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-@pytest.mark.parameterize(
+@pytest.mark.parametrize(
     "extra_pages",
     pytest.param(["extra_page_1.nsi", "extra_page_2.nsi"], id="two pages"),
     pytest.param("extra_page_1.nsi", id="single page"),
