@@ -5,6 +5,3 @@ channels:
   - http://repo.anaconda.com/pkgs/main/
 specs:
   - python
-post_install_pages:
-  - extra_page_1.nsi
-  - extra_page_2.nsi
