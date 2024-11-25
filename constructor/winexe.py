@@ -434,7 +434,7 @@ def make_nsi(
         'uninstall_name',
         '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
     )
-    variables['UNINSTALL_MENUS'] = '\n    '.join(uninstall_menus_commands(info))
+    variables['UNINSTALL_COMMANDS'] = '\n    '.join(uninstall_commands(info))
     variables['EXTRA_FILES'] = '\n    '.join(extra_files_commands(extra_files, dir_path))
     variables['SCRIPT_ENV_VARIABLES'] = '\n    '.join(setup_script_env_variables(info))
     variables['CUSTOM_WELCOME_FILE'] = (
