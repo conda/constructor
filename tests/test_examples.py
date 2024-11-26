@@ -378,28 +378,12 @@ def test_example_customized_welcome_conclusion(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.parametrize(
-    "extra_pages",
-    (
-        pytest.param(["extra_page_1.nsi", "extra_page_2.nsi"], id="two pages"),
-        pytest.param("extra_page_1.nsi", id="single page"),
-    )
-)
+@pytest.mark.parametrize("extra_pages", ("str", "list"))
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_example_extra_pages_win(tmp_path, request, extra_pages):
-    recipe_path = _example_path("exe_extra_pages")
-    input_path = tmp_path / "input"
-    shutil.copytree(str(recipe_path), str(input_path))
-    construct_yaml = input_path / "construct.yaml"
-    content = construct_yaml.read_text()
-    if isinstance(extra_pages, str):
-        content += f"post_install_pages: {extra_pages}\n"
-        content = content.replace("extraPages", "extraPage")
-    else:
-        content += "post_install_pages:\n"
-        for page in extra_pages:
-            content += f"  - {page}\n"
-    construct_yaml.write_text(content)
+def test_example_extra_pages_win(tmp_path, request, extra_pages, monkeypatch):
+    if extra_pages == "list":
+        monkeypatch.setenv("POST_INSTALL_PAGES_LIST", "1")
+    input_path = _example_path("exe_extra_pages")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request)
 
