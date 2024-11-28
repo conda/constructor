@@ -365,9 +365,12 @@ def make_nsi(
         if variables['custom_conclusion']
         else ''
     )
-    variables['POST_INSTALL_PAGES'] = '\n'.join(
-        custom_nsi_insert_from_file(file) for file in info.get('post_install_pages', [])
-    )
+    if isinstance(info.get("post_install_pages"), str):
+        variables["POST_INSTALL_PAGES"] = custom_nsi_insert_from_file(info["post_install_pages"])
+    else:
+        variables['POST_INSTALL_PAGES'] = '\n'.join(
+            custom_nsi_insert_from_file(file) for file in info.get('post_install_pages', [])
+        )
     variables['TEMP_EXTRA_FILES'] = '\n    '.join(insert_tempfiles_commands(temp_extra_files))
     variables['VIRTUAL_SPECS'] = " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])
     # This is the same but without quotes so we can print it fine
