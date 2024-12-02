@@ -160,4 +160,44 @@ If you want to perform the uninstallation steps manually, you can:
 
 ### macOS and Linux
 
-Remove the installation directory. Usually this is a directory in your user's home directory (user installs), or under `/opt` for system-wide installations.
+:::{note}
+The following sections requires installers to be built using the `uninstall_with_conda_exe` option.
+This is currently only implemented for `conda-standalone` 24.11.0 and higher.
+
+For other installers, all files need to be removed manually.
+:::
+
+Unlike Windows, macOS and Linux installers do not ship an uninstaller executable.
+However, some standalone applications (like `conda-standalone`) provide an uninstaller subcommand.
+The following can be used to uninstall an existing installation:
+
+```bash
+$ $INSTDIR/_conda constructor uninstall --prefix $INSTDIR
+```
+
+where `$INSTDIR` is the installation directory. This command recursively removes all environments
+and removes shell initializers that point to `$INSTDIR`.
+
+The command supports additional options to delete files outside the installation directory:
+
+- `--remove-caches`:
+  Removes cache directories such as package caches and notices.
+  Not recommended with multiple conda installations when softlinks are enabled.
+- `--remove-config-files {user,system,all}`:
+   Removes all configuration files such as `.condarc` files outside the installation directory.
+   `user` removes the files inside the current user's home directory
+   and `system` removes all files outside of that directory.
+- `--remove-user-data`:
+  This removes user data files such as the `~/.conda` directory.
+
+These options are not recommended if multiple conda installations are on the same system because
+they delete commonly used files.
+
+:::{note}
+If removing these files requires superuser privileges, use `sudo -E` instead of `sudo` since
+finding these files may rely on environment variables, especially `$HOME`.
+:::
+
+For more detailed implementation notes, see the documentation of the standalone application:
+
+* [conda-standalone](https://github.com/conda/conda-standalone)

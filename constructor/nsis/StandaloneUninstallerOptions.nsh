@@ -73,8 +73,8 @@ Function un.UninstCustomOptions_Show
     Pop $UninstCustomOptions.RemoveCaches
     ${NSD_SetState} $UninstCustomOptions.RemoveCaches $UninstRemoveCaches_State
     ${NSD_OnClick} $UninstCustomOptions.RemoveCaches un.UninstRemoveCaches_Onclick
-    ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-        "This removes cache such as package caches and notices."
+    ${NSD_CreateLabel} 5% "$5u" 90% 10u \
+        "This removes cache directories such as package caches and notices."
     IntOp $5 $5 + 20
 
     IntOp $5 $5 + 5
