@@ -40,10 +40,6 @@ jobs:
         include:
           # UBUNTU
           - os: ubuntu-latest
-            python-version: "3.8"
-            conda-standalone: conda-standalone
-            check-docs: true
-          - os: ubuntu-latest
             python-version: "3.9"
             conda-standalone: conda-standalone
             check-docs: true
@@ -58,12 +54,9 @@ jobs:
             conda-standalone: conda-standalone
           # MACOS
           - os: macos-13
-            python-version: "3.8"
+            python-version: "3.9"
             conda-standalone: conda-standalone-nightly
-          # Not running for 3.9, 3.10 to save some CI resources
-          # - os: macos
-          #   python-version: "3.9"
-          #   conda-standalone: conda-standalone
+          # Not running for 3.10 to save some CI resources
           # - os: macos-13
           #   python-version: "3.10"
           #   conda-standalone: micromamba
@@ -74,9 +67,6 @@ jobs:
             python-version: "3.12"
             conda-standalone: micromamba
           # WINDOWS
-          - os: windows-latest
-            python-version: "3.8"
-            conda-standalone: conda-standalone
           - os: windows-latest
             python-version: "3.9"
             conda-standalone: conda-standalone-nightly
@@ -119,7 +109,7 @@ jobs:
       - name: Patch conda-libmamba-solver (TEMP)
         run: |
           conda remove --force conda-libmamba-solver
-          SETUPTOOLS_SCM_PRETEND_VERSION=24.11.1 python -m pip install https://github.com/conda/conda-libmamba-solver/archive/decode-urls.tar.gz --no-deps
+          SETUPTOOLS_SCM_PRETEND_VERSION=24.11.1 python -m pip install https://github.com/conda/conda-libmamba-solver/archive/remap.tar.gz --no-deps
       - name: Set up conda executable
         run: |
           if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
