@@ -106,10 +106,6 @@ jobs:
           conda install ${files[@]} -y
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
           pip install -e . --no-deps --no-build-isolation
-      - name: Patch conda-libmamba-solver (TEMP)
-        run: |
-          conda remove --force conda-libmamba-solver
-          SETUPTOOLS_SCM_PRETEND_VERSION=24.11.1 python -m pip install https://github.com/conda/conda-libmamba-solver/archive/remap.tar.gz --no-deps
       - name: Set up conda executable
         run: |
           if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
