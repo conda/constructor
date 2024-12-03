@@ -8,4 +8,3 @@ dependencies:
   - conda-standalone # >=23.11.0
   - pillow >=3.1  # [osx or win]
   - jinja2
-  - conda-libmamba-solver 24.9.*

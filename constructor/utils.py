@@ -181,8 +181,22 @@ def get_final_url(info, url):
     for entry in mapping:
         src = entry['src']
         dst = entry['dest']
-        if url.startswith(src):
-            new_url = url.replace(src, dst)
+        # Treat http:// and https:// as equivalent
+        if src.startswith("http"):
+            srcs = tuple(
+                dict.fromkeys(
+                    [
+                        src,
+                        src.replace("http://", "https://"),
+                        src.replace("https://", "http://")
+                    ]
+                )
+            )
+        else:
+            srcs = (src,)
+        if url.startswith(srcs):
+            for src in srcs:
+                new_url = url.replace(src, dst)
             if url.endswith(".tar.bz2"):
                 logger.warning("You need to make the package %s available "
                                "at %s", url.rsplit('/', 1)[1], new_url)
