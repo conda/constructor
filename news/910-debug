@@ -1,0 +1,19 @@
+### Enhancements
+
+* When `--debug` is used, do not delete temporary workspaces to facilitate inspection. (#910)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* Run SH tests in `-x` mode if `CONSTRUCTOR_DEBUG=1` is set. (#910)
