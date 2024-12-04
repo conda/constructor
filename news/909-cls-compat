@@ -1,0 +1,20 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* `channels_remap` is now insensitive to `http` vs `https`, and trailing slashes. (#909)
+* Add a regression test for packages including percent-encodable characters in their filenames. (#908 via #909)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* Do not run CI against Python 3.8. (#909)
