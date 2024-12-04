@@ -507,7 +507,8 @@ def pkgbuild_script(name, info, src, dst='postinstall', **kwargs):
         identifier=info.get("reverse_domain_identifier"),
         install_location=info.get("default_location_pkg"),
     )
-    rm_rf(SCRIPTS_DIR)
+    if not info.get('_debug'):
+        rm_rf(SCRIPTS_DIR)
 
 
 def create(info, verbose=False):

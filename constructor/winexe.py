@@ -488,7 +488,8 @@ def create(info, verbose=False):
     if signing_tool:
         signing_tool.verify_signature(info['_outpath'])
 
-    shutil.rmtree(tmp_dir)
+    if not info.get('_debug'):
+        shutil.rmtree(tmp_dir)
 
 
 if __name__ == '__main__':
