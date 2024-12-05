@@ -264,28 +264,11 @@ def uninstall_commands_conda_standalone() -> List[str]:
         call un.AbortRetryNSExecWait
         SetDetailsPrint both
 
-        # If only install.log, the uninstaller, and .conda_trash files are left behind,
-        # remove the directory
-        IfFileExists $INSTDIR 0 skip_rmdir
-            StrLen $R0 ".conda_trash"
-            IntOp $R0 0 - $R0
-            FindFirst $0 $1 $INSTDIR\*
-            rmdir_loop:
-                StrCmp "" $1 end_rmdir_loop
-                StrCmp "." $1 advance_rmdir_loop
-                StrCmp ".." $1 advance_rmdir_loop
-                StrCmp "install.log" $1 advance_rmdir_loop
-                StrCmp "Uninstall-${NAME}.exe" $1 advance_rmdir_loop
-                StrCpy $2 $1 "" $R0
-                StrCmp $2 ".conda_trash" advance_rmdir_loop end_rmdir
-            advance_rmdir_loop:
-                FindNext $0 $1
-                Goto rmdir_loop
-            end_rmdir_loop:
-                RMDir /r /REBOOTOK "$INSTDIR"
-            end_rmdir:
-                FindClose $0
-        skip_rmdir:
+        # The uninstallation may leave the install.log, the uninstaller,
+        # and .conda_trash files behind, so remove those manually.
+        ${If} ${FileExists} "$INSTDIR"
+            RMDir /r /REBOOTOK "$INSTDIR"
+        ${EndIf}
     """).splitlines()
 
 

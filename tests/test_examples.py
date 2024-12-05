@@ -989,11 +989,7 @@ def test_uninstallation_standalone(
         uninstall_options.append("/RemoveCaches=1")
 
     try:
-        _run_uninstaller_exe(install_dir, check=False, options=uninstall_options)
-        if install_dir.exists():
-            from pprint import pprint
-            pprint(list(install_dir.iterdir()))
-        assert not install_dir.exists() or not next(install_dir.glob("*.conda_trash"), None)
+        _run_uninstaller_exe(install_dir, check=True, options=uninstall_options)
         assert dot_conda_dir.exists() != remove_user_data
         assert pkg_cache.exists() != remove_caches
         assert system_rc.exists() != remove_system_rcs
