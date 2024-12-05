@@ -1,5 +1,38 @@
 [//]: # (current developments)
 
+## 2024-12-05   3.11.0:
+### Enhancements
+
+* Use Jinja for templating logic. (#892)
+* Implement feature to run uninstallation via conda-standalone (see https://github.com/conda/conda-standalone/pull/112). (#897)
+* Add new `lockfile` output in `build_outputs`. This generates a `@EXPLICIT` lockfile for the requested environment. (#898)
+* When `--debug` is used, do not delete temporary workspaces to facilitate inspection. (#910)
+
+### Bug fixes
+
+* Clarify warning about `x86_64` installers in non-`x86_64` machines. (#895 via #896)
+* Correctly parse post-install pages for Windows when input is a string. (#904)
+* `channels_remap` is now insensitive to `http` vs `https`, and trailing slashes. (#909)
+* Add a regression test for packages including percent-encodable characters in their filenames. (#908 via #909)
+
+### Deprecations
+
+* `constructor.utils.preprocess` and `constructor.utils.fill_template` are deprecated. (#892)
+
+### Other
+
+* Do not run CI against Python 3.8. (#909)
+* Run SH tests in `-x` mode if `CONSTRUCTOR_DEBUG=1` is set. (#910)
+
+### Contributors
+
+* @jaimergp
+* @marcoesters
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2024-11-11   3.10.0:
 ### Enhancements
 
