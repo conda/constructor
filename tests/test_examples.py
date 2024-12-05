@@ -987,6 +987,9 @@ def test_uninstallation_standalone(
 
     try:
         _run_uninstaller_exe(install_dir, check=False, options=uninstall_options)
+        if install_dir.exists():
+            from pprint import pprint
+            pprint(list(install_dir.iterdir()))
         assert not install_dir.exists() or not next(install_dir.glob("*.conda_trash"), None)
         assert dot_conda_dir.exists() != remove_user_data
         assert pkg_cache.exists() != remove_caches
