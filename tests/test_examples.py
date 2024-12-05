@@ -914,3 +914,16 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
             # the bogus .condarc file.
             # pkg installers unfortunately do not output any errors into the log.
             assert proc.stderr.count("Bad conversion of configurable") == 4
+
+
+def test_regressions(tmp_path, request):
+    input_path = _example_path("regressions")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )

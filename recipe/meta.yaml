@@ -28,6 +28,7 @@ requirements:
     - nsis >=3.08      # [win]
   run_constrained:     # [unix]
     - nsis >=3.08      # [unix]
+    - conda-libmamba-solver !=24.11.0
 
 test:
   source_files:
