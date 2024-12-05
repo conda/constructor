@@ -869,6 +869,14 @@ Allowed keys are:
       license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors'
       argument is valid. See https://docs.python.org/3/library/functions.html#open.
 
+### `uninstall_with_conda_exe`
+
+_required:_ no<br/>
+_type:_ boolean<br/>
+
+Use the standalone binary to perform the uninstallation.
+Requires conda-standalone 24.11.0 or newer.
+
 
 ## Available selectors
 - `aarch64`

@@ -12,6 +12,7 @@ import tempfile
 from os.path import abspath, basename, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
+from textwrap import dedent
 from typing import List, Union
 
 from .construct import ns_platform
@@ -196,7 +197,7 @@ def setup_envs_commands(info, dir_path):
     return [line.strip() for line in lines]
 
 
-def uninstall_menus_commands(info):
+def uninstall_menus_commands(info: dict) -> List[str]:
     tmpl = r"""
         SetDetailsPrint both
         ${{Print}} "Deleting {name} menus in {env_name}..."
@@ -212,6 +213,69 @@ def uninstall_menus_commands(info):
         path = join("$INSTDIR", "envs", env_name)
         lines += tmpl.format(name=info["name"], env_name=env_name, path=path).splitlines()
     return [line.strip() for line in lines]
+
+
+def uninstall_commands_default(info: dict) -> List[str]:
+    return uninstall_menus_commands(info) + dedent("""
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+
+        ${Print} "Removing files and folders..."
+        nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
+
+        # In case the last command fails, run the slow method to remove leftover
+        RMDir /r /REBOOTOK "$INSTDIR"
+    """).splitlines()
+
+
+def uninstall_commands_conda_standalone() -> List[str]:
+    return dedent(r"""
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+
+        # Parse arguments
+        StrCpy $R0 ""
+
+        ${If} $UninstRemoveConfigFiles_User_State == ${BST_CHECKED}
+            ${If} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+                StrCpy $R0 "$R0 --remove-config-files=all"
+            ${Else}
+                StrCpy $R0 "$R0 --remove-config-files=user"
+            ${EndIf}
+        ${ElseIf} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+                StrCpy $R0 "$R0 --remove-config-files=system"
+        ${EndIf}
+
+        ${If} $UninstRemoveUserData_State == ${BST_CHECKED}
+            StrCpy $R0 "$R0 --remove-user-data"
+        ${EndIf}
+
+        ${If} $UninstRemoveCaches_State == ${BST_CHECKED}
+            StrCpy $R0 "$R0 --remove-caches"
+        ${EndIf}
+
+        ${Print} "Removing files and folders..."
+        push '"$INSTDIR\_conda.exe" constructor uninstall $R0 --prefix "$INSTDIR"'
+        push 'Failed to remove files and folders. Please see the log for more information.'
+        push 'WithLog'
+        SetDetailsPrint listonly
+        call un.AbortRetryNSExecWait
+        SetDetailsPrint both
+
+        # The uninstallation may leave the install.log, the uninstaller,
+        # and .conda_trash files behind, so remove those manually.
+        ${If} ${FileExists} "$INSTDIR"
+            RMDir /r /REBOOTOK "$INSTDIR"
+        ${EndIf}
+    """).splitlines()
+
+
+def uninstall_commands(info: dict) -> List[str]:
+    if info.get("uninstall_with_conda_exe"):
+        return uninstall_commands_conda_standalone()
+    return uninstall_commands_default(info)
 
 
 def make_nsi(
@@ -336,6 +400,7 @@ def make_nsi(
     variables["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     variables["has_license"] = bool(info.get("license_file"))
     variables["post_install_pages"] = bool(info.get("post_install_pages"))
+    variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
 
     approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
@@ -352,7 +417,7 @@ def make_nsi(
         'uninstall_name',
         '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
     )
-    variables['UNINSTALL_MENUS'] = '\n    '.join(uninstall_menus_commands(info))
+    variables['UNINSTALL_COMMANDS'] = '\n    '.join(uninstall_commands(info))
     variables['EXTRA_FILES'] = '\n    '.join(extra_files_commands(extra_files, dir_path))
     variables['SCRIPT_ENV_VARIABLES'] = '\n    '.join(setup_script_env_variables(info))
     variables['CUSTOM_WELCOME_FILE'] = (

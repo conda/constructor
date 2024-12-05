@@ -11,7 +11,7 @@ from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
 from plistlib import load as plist_load
-from typing import Generator, Iterable, Optional, Tuple
+from typing import Generator, Iterable, Optional, Tuple, Union
 
 import pytest
 from conda.base.context import context
@@ -33,7 +33,7 @@ except ImportError:
 
 pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
-ON_CI = os.environ.get("CI")
+ON_CI = bool(os.environ.get("CI")) and os.environ.get("CI") != "0"
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
 CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 if CONDA_EXE_VERSION is not None:
@@ -141,7 +141,12 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
     return process
 
 
-def _run_uninstaller_exe(install_dir, timeout=420, check=True):
+def _run_uninstaller_exe(
+    install_dir: Path,
+    timeout: int = 420,
+    check: bool = True,
+    options: Union[list, None] = None,
+) -> Union[subprocess.CompletedProcess, None]:
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
@@ -150,6 +155,7 @@ def _run_uninstaller_exe(install_dir, timeout=420, check=True):
             "This is a known issue with our setup, to be fixed."
         )
         return
+    options = options or []
     # Rename install.log
     install_log = install_dir / "install.log"
     if install_log.exists():
@@ -164,11 +170,13 @@ def _run_uninstaller_exe(install_dir, timeout=420, check=True):
         "start",
         "/wait",
         str(uninstaller),
+        "/S",
+        *options,
         # We need silent mode + "uninstaller location" (_?=...) so the command can
         # be waited; otherwise, since the uninstaller copies itself to a different
         # location so it can be auto-deleted, it returns immediately and it gives
         # us problems with the tempdir cleanup later
-        f"/S _?={install_dir}",
+        f"_?={install_dir}",
     ]
     process = _execute(cmd, timeout=timeout, check=check)
     if check:
@@ -914,6 +922,84 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
             # the bogus .condarc file.
             # pkg installers unfortunately do not output any errors into the log.
             assert proc.stderr.count("Bad conversion of configurable") == 4
+
+
+@pytest.mark.skipif(
+    CONDA_EXE == StandaloneExe.CONDA and CONDA_EXE_VERSION < Version("24.11.0"),
+    reason="Requires conda-standalone 24.11.x or newer",
+)
+@pytest.mark.skipif(not sys.platform == "win32", reason="Windows only")
+@pytest.mark.skipif(not ON_CI, reason="CI only - Interacts with system files")
+@pytest.mark.parametrize(
+    "remove_user_data,remove_caches,remove_config_files",
+    (
+        pytest.param(False, False, None, id="keep files"),
+        pytest.param(True, True, "all", id="remove all files"),
+        pytest.param(False, False, "system", id="remove system .condarc files"),
+        pytest.param(False, False, "user", id="remove user .condarc files"),
+    )
+)
+def test_uninstallation_standalone(
+    monkeypatch,
+    remove_user_data: bool,
+    remove_caches: bool,
+    remove_config_files: Union[str, None],
+    tmp_path: Path,
+):
+    recipe_path = _example_path("customize_controls")
+    input_path = tmp_path / "input"
+    shutil.copytree(str(recipe_path), str(input_path))
+    with open(input_path / "construct.yaml", "a") as construct:
+        construct.write("uninstall_with_conda_exe: true\n")
+    installer, install_dir = next(create_installer(input_path, tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        check_subprocess=True,
+        uninstall=False,
+    )
+
+    # Set up files for removal.
+    # Since conda-standalone is extensively tested upstream,
+    # only set up a minimum set of files.
+    dot_conda_dir = tmp_path / ".conda"
+    assert dot_conda_dir.exists()
+
+    # Minimum set of files needed for an index cache
+    pkg_cache = tmp_path / "pkgs"
+    (pkg_cache / "cache").mkdir(parents=True)
+    (pkg_cache / "urls.txt").touch()
+
+    user_rc = tmp_path / ".condarc"
+    system_rc = Path("C:/ProgramData/conda/.condarc")
+    system_rc.parent.mkdir(parents=True)
+    condarc = f"pkgs_dirs:\n  - {pkg_cache}\n"
+    user_rc.write_text(condarc)
+    system_rc.write_text(condarc)
+
+    uninstall_options = []
+    remove_system_rcs = False
+    remove_user_rcs = False
+    if remove_config_files is not None:
+        uninstall_options.append(f"/RemoveConfigFiles={remove_config_files}")
+        remove_system_rcs = remove_config_files != "user"
+        remove_user_rcs = remove_config_files != "system"
+    if remove_user_data:
+        uninstall_options.append("/RemoveUserData=1")
+    if remove_caches:
+        uninstall_options.append("/RemoveCaches=1")
+
+    try:
+        _run_uninstaller_exe(install_dir, check=True, options=uninstall_options)
+        assert dot_conda_dir.exists() != remove_user_data
+        assert pkg_cache.exists() != remove_caches
+        assert system_rc.exists() != remove_system_rcs
+        assert user_rc.exists() != remove_user_rcs
+    finally:
+        if system_rc.parent.exists():
+            shutil.rmtree(system_rc.parent)
 
 
 def test_regressions(tmp_path, request):
