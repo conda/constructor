@@ -65,6 +65,5 @@ Authors are sorted alphabetically.
 * XuehaiPan
 * astaric
 * bkreider
-* conda-bot
 * guimondmm
 * y2kbugger
