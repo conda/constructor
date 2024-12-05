@@ -178,14 +178,35 @@ def ensure_transmuted_ext(info, url):
 
 def get_final_url(info, url):
     mapping = info.get('channels_remap', [])
+    if not url.lower().endswith((".tar.bz2", ".conda", "/")):
+        url += "/"
+        added_slash = True
+    else:
+        added_slash = False
     for entry in mapping:
         src = entry['src']
         dst = entry['dest']
-        if url.startswith(src):
-            new_url = url.replace(src, dst)
+        # Treat http:// and https:// as equivalent
+        if src.startswith("http"):
+            srcs = tuple(
+                dict.fromkeys(
+                    [
+                        src.replace("http://", "https://"),
+                        src.replace("https://", "http://")
+                    ]
+                )
+            )
+        else:
+            srcs = (src,)
+        if url.startswith(srcs):
+            new_url = url
+            for src in srcs:
+                new_url = new_url.replace(src, dst)
             if url.endswith(".tar.bz2"):
                 logger.warning("You need to make the package %s available "
                                "at %s", url.rsplit('/', 1)[1], new_url)
+            if added_slash:
+                new_url = new_url[:-1]
             return new_url
     return url
 
