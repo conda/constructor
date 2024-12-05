@@ -69,7 +69,7 @@ def get_output_filename(info):
 def main_build(dir_path, output_dir='.', platform=cc_platform,
                verbose=True, cache_dir=DEFAULT_CACHE_DIR,
                dry_run=False, conda_exe="conda.exe",
-               config_filename="construct.yaml"):
+               config_filename="construct.yaml", debug=False):
     logger.info('platform: %s', platform)
     if not os.path.isfile(conda_exe):
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
@@ -88,6 +88,7 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
     info['_platform'] = platform
     info['_download_dir'] = join(cache_dir, platform)
     info['_conda_exe'] = abspath(conda_exe)
+    info['_debug'] = debug
     itypes = get_installer_type(info)
 
     if platform != cc_platform and 'pkg' in itypes and not cc_platform.startswith('osx-'):
@@ -467,7 +468,7 @@ https://github.com/conda/conda-standalone/releases""".lstrip())
     main_build(dir_path, output_dir=out_dir, platform=args.platform,
                verbose=args.verbose, cache_dir=args.cache_dir,
                dry_run=args.dry_run, conda_exe=conda_exe,
-               config_filename=args.config_filename)
+               config_filename=args.config_filename, debug=args.debug)
 
 
 if __name__ == '__main__':

@@ -199,4 +199,5 @@ def create(info, verbose=False):
 
     os.unlink(tarball)
     os.chmod(shar_path, 0o755)
-    shutil.rmtree(tmp_dir)
+    if not info.get('_debug'):
+        shutil.rmtree(tmp_dir)
