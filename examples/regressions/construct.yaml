@@ -1,0 +1,17 @@
+name: regressions
+
+version: 0.0.1
+
+keep_pkgs: True
+
+channels:
+  - conda-forge
+
+specs:
+  - x264  # check https://github.com/conda/constructor/issues/908
+
+initialize_by_default: false
+register_python: false
+check_path_spaces: false
+check_path_length: false
+installer_type: all
