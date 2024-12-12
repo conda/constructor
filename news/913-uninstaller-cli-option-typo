@@ -12,7 +12,7 @@
 
 ### Docs
 
-* Fix typo `/RemoveConfigFiles` CLI option in the Windows uninstaller. (#913)
+* Fix typo for the `/RemoveConfigFiles` CLI option in the Windows uninstaller. (#913)
 
 ### Other
 
