@@ -89,7 +89,7 @@ Windows uninstallers have the following CLI options:
 - `/RemoveCaches=[0|1]` (only if built with `uninstall_with_conda_exe`):
    Removes caches such package caches.
    For details, see the `constructor uninstall` subcommand of the `conda.exe` file.
-- `/RemoveConfigFiles=[none|users|system|all]` (only if built with `uninstall_with_conda_exe`):
+- `/RemoveConfigFiles=[none|user|system|all]` (only if built with `uninstall_with_conda_exe`):
   Removes configuration files such as `.condarc` files. `user` removes the files inside the
   current user's home directory and `system` removes all files outside of that directory.
   For details, see the `constructor uninstall` subcommand of the `conda.exe` file.

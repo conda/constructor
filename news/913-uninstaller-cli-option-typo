@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* Fix typo for the `/RemoveConfigFiles` CLI option in the Windows uninstaller. (#913)
+
+### Other
+
+* <news item>
