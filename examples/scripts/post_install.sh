@@ -21,9 +21,7 @@ test "${CUSTOM_VARIABLE_1}" = 'FIR$T-CUSTOM_'\''STRING'\'' WITH SPACES AND @*! "
 # shellcheck disable=SC2016 # String interpolation disabling is deliberate
 test "${CUSTOM_VARIABLE_2}" = '$ECOND-CUSTOM_'\''STRING'\'' WITH SPACES AND @*! "CHARACTERS"'
 
-if [[ "${INSTALLER_TYPE}" == "SH" ]]; then
-    test "${INSTALLER_UNATTENDED}" = "1"
-fi
+test "${INSTALLER_UNATTENDED}" = "1"
 
 if [[ $(uname -s) == Linux ]]; then
     if [[ ${INSTALLER_PLAT} != linux-* ]]; then
