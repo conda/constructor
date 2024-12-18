@@ -30,7 +30,7 @@ export INSTALLER_NAME="{{ installer_name }}"
 export INSTALLER_VER="{{ installer_version }}"
 export INSTALLER_PLAT="{{ installer_platform }}"
 export INSTALLER_TYPE="PKG"
-export INSTALLER_UNATTENDED="?"
+export INSTALLER_UNATTENDED="${COMMAND_LINE_INSTALL:-0}"
 export PRE_OR_POST="{{ pre_or_post }}"
 {{ script_env_variables }}
 
