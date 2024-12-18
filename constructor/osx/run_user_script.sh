@@ -30,7 +30,14 @@ export INSTALLER_NAME="{{ installer_name }}"
 export INSTALLER_VER="{{ installer_version }}"
 export INSTALLER_PLAT="{{ installer_platform }}"
 export INSTALLER_TYPE="PKG"
+# The value for COMMAND_LINE_INSTALL is not documented,
+# but it is unset for interactive installations. To be
+# safe, set the variable for non-interactive installation
+# in a roundabout way.
 export INSTALLER_UNATTENDED="${COMMAND_LINE_INSTALL:-0}"
+if [[ "${INSTALLER_UNATTENDED}" != "0" ]]; then
+    INSTALLER_UNATTENDED="1"
+fi
 export PRE_OR_POST="{{ pre_or_post }}"
 {{ script_env_variables }}
 
