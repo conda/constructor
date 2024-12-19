@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Add support of mamba 2
+* Add support of mamba v2 shell initialization. (#914)
 
 ### Deprecations
 
