@@ -671,11 +671,22 @@ if [ "$BATCH" = "0" ]; then
             *) "$PREFIX/bin/python" -m conda init ;;
         esac
         if [ -f "$PREFIX/bin/mamba" ]; then
-            case $SHELL in
-                # We call the module directly to avoid issues with spaces in shebang
-                *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
-                *) "$PREFIX/bin/python" -m mamba.mamba init ;;
-            esac
+            # If the version of mamba is <2.0.0, we preferably use the `mamba` python module
+            # to perform the initialization.
+            #
+            # Otherwise (i.e. as of 2.0.0), we use the `mamba shell init` command
+            if [ "$("$PREFIX/bin/mamba" --version | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then
+                case $SHELL in
+                    # We call the module directly to avoid issues with spaces in shebang
+                    *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
+                    *) "$PREFIX/bin/python" -m mamba.mamba init ;;
+                esac
+            else
+                case $SHELL in
+                    *zsh) "$PREFIX/bin/mamba" shell init --shell zsh ;;
+                    *) "$PREFIX/bin/mamba" shell init ;;
+                esac
+            fi
         fi
     fi
 {%- endif %}
