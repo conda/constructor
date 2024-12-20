@@ -187,8 +187,8 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             else:
                 env_config[config_key] = value
 
-    # Installers will provide shortcut options and features only if the user
-    # didn't opt-out by setting every `menu_packages` item to an empty list
+    # Installers will disable shortcut options and features only if the user
+    # opted-out by setting every `menu_packages` item to an empty list
     info['_enable_shortcuts'] = bool(
         info.get("menu_packages", True)
         or any(
