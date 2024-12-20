@@ -71,7 +71,7 @@ def get_header(conda_exec, tarball, info):
     variables['initialize_conda'] = info.get('initialize_conda', True)
     variables['initialize_by_default'] = info.get('initialize_by_default', False)
     variables['has_conda'] = info['_has_conda']
-    variables['enable_shortcuts'] = str(info['_enable_shortcuts']).lower()
+    variables['enable_shortcuts'] = str(info.get('_enable_shortcuts', 'True')).lower()
     variables['check_path_spaces'] = info.get("check_path_spaces", True)
     install_lines = list(add_condarc(info))
     # Omit __osx and __glibc because those are tested with shell code direcly
