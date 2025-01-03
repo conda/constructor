@@ -12,7 +12,7 @@ notify() {
 # shellcheck disable=SC2050
 {%- if progress_notifications %}
 osascript <<EOF
-display notification "$1" with title "📦 Install __NAME__ __VERSION__"
+display notification "$1" with title "📦 Install {{ installer_name }} {{ installer_version }}"
 EOF
 {%- endif %}
 logger -p "install.info" "$1" || echo "$1"
