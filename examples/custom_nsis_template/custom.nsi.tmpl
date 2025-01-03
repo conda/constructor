@@ -5,11 +5,11 @@
 
 Unicode "true"
 
-#if enable_debugging is True
+{%- if enable_debugging %}
 # Special logging build needed for ENABLE_LOGGING
 # See https://nsis.sourceforge.io/Special_Builds
 !define ENABLE_LOGGING
-#endif
+{%- endif %}
 
 # Comes from https://nsis.sourceforge.io/Logging:Enable_Logs_Quickly
 !define LogSet "!insertmacro LogSetMacro"
@@ -114,27 +114,27 @@ BrandingText /TRIMLEFT "${COMPANY}"
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP __WELCOMEIMAGE__
 
 # Pages
-#if custom_welcome
+{%- if custom_welcome %}
 # Custom welcome file(s)
-@CUSTOM_WELCOME_FILE@
-#else
+{{ CUSTOM_WELCOME_FILE }}
+{%- else %}
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !insertmacro MUI_PAGE_WELCOME
-#endif
+{%- endif %}
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !insertmacro MUI_PAGE_LICENSE __LICENSEFILE__
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipPageIfUACInnerInstance
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE OnDirectoryLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-#if with_conclusion_text is True
+{%- if with_conclusion_text %}
 !define MUI_FINISHPAGE_TITLE __CONCLUSION_TITLE__
 !define MUI_FINISHPAGE_TITLE_3LINES
 !define MUI_FINISHPAGE_TEXT __CONCLUSION_TEXT__
-#endif
+{%- endif %}
 
 # Custom conclusion file(s)
-@CUSTOM_CONCLUSION_FILE@
+{{ CUSTOM_CONCLUSION_FILE }}
 
 !insertmacro MUI_PAGE_FINISH
 
@@ -248,8 +248,8 @@ Function .onInit
 
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
-    SetRegView @BITS@
-#if win64
+    SetRegView {{ BITS }}
+{%- if win64 %}
     # If we're a 64-bit installer, make sure it's 64-bit Windows
     ${IfNot} ${RunningX64}
         MessageBox MB_OK|MB_ICONEXCLAMATION \
@@ -259,7 +259,7 @@ Function .onInit
             /SD IDOK
         Abort
     ${EndIf}
-#endif
+{%- endif %}
 
     !insertmacro UAC_PageElevation_OnInit
     ${If} ${UAC_IsInnerInstance}
@@ -487,7 +487,7 @@ Function un.onInit
 
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
-    SetRegView @BITS@
+    SetRegView {{ BITS }}
 
     # Since the switch to a dual-mode installer (All Users/Just Me), the
     # uninstaller will inherit the requested execution level of the main
@@ -646,7 +646,7 @@ SectionEnd
 
 Section "Uninstall"
     # Remove menu items, path entries
-    DetailPrint "Deleting @NAME@ menus..."
+    DetailPrint "Deleting {{ NAME }} menus..."
     nsExec::ExecToLog '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --rm-menus'
 
     # ensure that MSVC runtime DLLs are on PATH during uninstallation
@@ -705,10 +705,10 @@ Section "Uninstall"
 
 SectionEnd
 
-!if '@SIGNTOOL_COMMAND@' != ''
+!if '{{ SIGNTOOL_COMMAND }}' != ''
     # Signing for installer and uninstaller; nsis 3.08 required for uninstfinalize!
     # "= 0" comparison required to prevent both tasks running in parallel, which would cause signtool to fail
     # %1 is replaced by the installer and uninstaller paths, respectively
-    !finalize '@SIGNTOOL_COMMAND@ "%1"' = 0
-    !uninstfinalize '@SIGNTOOL_COMMAND@ "%1"' = 0
+    !finalize ' {{ SIGNTOOL_COMMAND }} "%1"' = 0
+    !uninstfinalize '{{ SIGNTOOL_COMMAND }} "%1"' = 0
 !endif
