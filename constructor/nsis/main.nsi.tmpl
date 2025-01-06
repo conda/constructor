@@ -190,6 +190,7 @@ Page Custom InstModePage_Create InstModePage_Leave
 # Custom options now differ depending on installation mode.
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
+
 {%- for page in POST_INSTALL_PAGES %}
 {{ page }}
 {%- endfor %}
@@ -556,7 +557,7 @@ Function .onInit
     Push $R2
 
     InitPluginsDir
-{%- if TEMP_EXTRA_FILES|length != 0 %}
+{%- if TEMP_EXTRA_FILES | length != 0 %}
     SetOutPath $PLUGINSDIR
 {%- for file in TEMP_EXTRA_FILES %}
     File {{ file }}
@@ -1601,7 +1602,7 @@ Section "Uninstall"
     # The uninstallation may leave the install.log, the uninstaller,
     # and .conda_trash files behind, so remove those manually.
     ${If} ${FileExists} "$INSTDIR"
-    RMDir /r /REBOOTOK "$INSTDIR"
+        RMDir /r /REBOOTOK "$INSTDIR"
     ${EndIf}
 {%- else %}
 {%- for env in SETUP_ENVS | reverse %}
