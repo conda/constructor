@@ -77,10 +77,10 @@ var /global StdOutHandleSet
 !define ARCH {{ arch }}
 !define PLATFORM {{ installer_platform }}
 !define CONSTRUCTOR_VERSION {{ constructor_version }}
-!define PY_VER {{ py_ver }}
-!define PYVERSION_JUSTDIGITS {{ pyversion_justdigits }}
-!define PYVERSION {{ pyversion }}
-!define PYVERSION_MAJOR {{ pyversion_major }}
+!define PY_VER {{ pyver_components[:2] | join(".") }}
+!define PYVERSION_JUSTDIGITS {{ pyver_components | join("") }}
+!define PYVERSION {{ pyver_components | join(".") }}
+!define PYVERSION_MAJOR {{ pyver_components[0] }}
 !define DEFAULT_PREFIX {{ default_prefix }}
 !define DEFAULT_PREFIX_DOMAIN_USER {{ default_prefix_domain_user }}
 !define DEFAULT_PREFIX_ALL_USERS {{ default_prefix_all_users }}
@@ -190,10 +190,9 @@ Page Custom InstModePage_Create InstModePage_Leave
 # Custom options now differ depending on installation mode.
 Page Custom mui_AnaCustomOptions_Show
 !insertmacro MUI_PAGE_INSTFILES
-
-{%- if post_install_pages %}
-{{ POST_INSTALL_PAGES }}
-{%- endif %}
+{%- for page in POST_INSTALL_PAGES %}
+{{ page }}
+{%- endfor %}
 
 {%- if with_conclusion_text %}
 !define MUI_FINISHPAGE_TITLE {{ conclusion_title }}
@@ -557,7 +556,12 @@ Function .onInit
     Push $R2
 
     InitPluginsDir
-    {{ TEMP_EXTRA_FILES }}
+{%- if TEMP_EXTRA_FILES|length != 0 %}
+    SetOutPath $PLUGINSDIR
+{%- for file in TEMP_EXTRA_FILES %}
+    File {{ file }}
+{%- endfor %}
+{%- endif %}
     !insertmacro ParseCommandLineArgs
 
     # Select the correct registry to look at, depending
@@ -1260,8 +1264,12 @@ Section "Install"
     File {{ conda_exe }}
     File {{ pre_uninstall }}
 
-    # Copy extra files (code generated on winexe.py)
-    {{ EXTRA_FILES }}
+{%- for path, files in extra_files | items %}
+    SetOutPath {{ path }}
+{%- for file in files %}
+    File {{ file }}
+{%- endfor %}
+{%- endfor %}
 
     ${If} $InstMode = ${JUST_ME}
         SetOutPath "$INSTDIR"
@@ -1279,7 +1287,10 @@ Section "Install"
     File /nonfatal /r {{ index_cache }}
     File /r {{ repodata_record }}
 
-    {{ SCRIPT_ENV_VARIABLES }}
+
+{%- for key, val in SCRIPT_ENV_VARIABLES | items %}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{{ key }}", {{ val }}).r0'
+{%- endfor %}
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
@@ -1314,7 +1325,9 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "").r0'
     ${EndIf}
 
-    {{ PKG_COMMANDS }}
+{%- for dist in DISTS %}
+    File {{ dist }}
+{%- endfor %}
 
     SetDetailsPrint TextOnly
     ${Print} "Setting up the package cache..."
@@ -1344,9 +1357,53 @@ Section "Install"
         call AbortRetryNSExecWait
     NoPreInstall:
 
-    {{ SETUP_ENVS }}
+{%- for env in SETUP_ENVS %}
+    {%- set channels = env.final_channels|join(",") %}
+    # Set up {{ env.name }} env
+    SetDetailsPrint both
+    ${Print} "Setting up the {{ env.name }} environment..."
+    SetDetailsPrint listonly
 
-    {{ WRITE_CONDARC }}
+    # List of packages to install
+    SetOutPath "{{ env.env_txt_dir }}"
+    File "{{ env.env_txt_abspath }}"
+
+    # A conda-meta\history file is required for a valid conda prefix
+    SetOutPath "{{ env.conda_meta }}"
+    File "{{ env.history_abspath }}"
+
+    # Set channels
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{{ channels }}").r0'
+    # Set register_envs
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_REGISTER_ENVS", "{{ env.register_envs }}").r0'
+
+    # Run conda install
+    ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
+        ${Print} "Installing packages for {{ env.name }}, creating shortcuts if necessary..."
+        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.env_txt }}" {{ env.shortcuts }} {{ env.no_rcs_arg }}'
+    ${Else}
+        ${Print} "Installing packages for {{ env.name }}..."
+        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.env_txt }}" --no-shortcuts {{ env.no_rcs_arg }}'
+    ${EndIf}
+    push 'Failed to link extracted packages to {{ env.prefix }}!'
+    push 'WithLog'
+    SetDetailsPrint listonly
+    call AbortRetryNSExecWait
+    SetDetailsPrint both
+
+    # Cleanup {{ env.name }} env.txt
+    SetOutPath "$INSTDIR"
+    Delete "{{ env.env_txt }}"
+
+    # Restore shipped conda-meta\history for remapped
+    # channels and retain only the first transaction
+    SetOutPath "{{ env.conda_meta }}"
+    File "{{ env.history_abspath }}"
+{%- endfor %}
+
+{%- for condarc in WRITE_CONDARC %}
+    {{ condarc }}
+{%- endfor %}
 
     AddSize {{ SIZE }}
 
@@ -1507,7 +1564,68 @@ Section "Uninstall"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
     ${EndIf}
 
-    {{ UNINSTALL_COMMANDS }}
+{%- if uninstall_with_conda_exe %}
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+
+    # Parse arguments
+    StrCpy $R0 ""
+
+    ${If} $UninstRemoveConfigFiles_User_State == ${BST_CHECKED}
+    ${If} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+        StrCpy $R0 "$R0 --remove-config-files=all"
+    ${Else}
+        StrCpy $R0 "$R0 --remove-config-files=user"
+    ${EndIf}
+    ${ElseIf} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+        StrCpy $R0 "$R0 --remove-config-files=system"
+    ${EndIf}
+
+    ${If} $UninstRemoveUserData_State == ${BST_CHECKED}
+    StrCpy $R0 "$R0 --remove-user-data"
+    ${EndIf}
+
+    ${If} $UninstRemoveCaches_State == ${BST_CHECKED}
+    StrCpy $R0 "$R0 --remove-caches"
+    ${EndIf}
+
+    ${Print} "Removing files and folders..."
+    push '"$INSTDIR\_conda.exe" constructor uninstall $R0 --prefix "$INSTDIR"'
+    push 'Failed to remove files and folders. Please see the log for more information.'
+    push 'WithLog'
+    SetDetailsPrint listonly
+    call un.AbortRetryNSExecWait
+    SetDetailsPrint both
+
+    # The uninstallation may leave the install.log, the uninstaller,
+    # and .conda_trash files behind, so remove those manually.
+    ${If} ${FileExists} "$INSTDIR"
+    RMDir /r /REBOOTOK "$INSTDIR"
+    ${EndIf}
+{%- else %}
+{%- for env in SETUP_ENVS | reverse %}
+    {%- set subdir = ("\envs\%(name)s" | format(name=env.name)) if env.name != "base" else "" %}
+    SetDetailsPrint both
+    ${Print} "Deleting ${NAME} menus in {{ env.name }}..."
+    SetDetailsPrint listonly
+    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR{{ subdir }}" --rm-menus'
+    push 'Failed to delete menus in {{ env.name }}'
+    push 'WithLog'
+    call un.AbortRetryNSExecWait
+    SetDetailsPrint both
+{%- endfor %}
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+
+    ${Print} "Removing files and folders..."
+    nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
+
+    # In case the last command fails, run the slow method to remove leftover
+    RMDir /r /REBOOTOK "$INSTDIR"
+
+{%- endif %}
 
     ${If} $INSTALLER_NAME_FULL != ""
         DeleteRegKey SHCTX "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTALLER_NAME_FULL"
