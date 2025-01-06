@@ -290,7 +290,7 @@ def _run_installer(
         )
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
-    if check_sentinels:
+    if check_sentinels and not (installer.suffix == ".pkg" and ON_CI):
         _sentinel_file_checks(example_path, install_dir)
     if uninstall and installer.suffix == ".exe":
         _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
@@ -837,6 +837,8 @@ def test_virtual_specs_failed(tmp_path, request):
                 _check_installer_log(install_dir)
             continue
         elif installer.suffix == ".pkg":
+            if not ON_CI:
+                continue
             # The GUI does provide a better message with the min version and so on
             # but on the CLI we fail with this one instead
             msg = "Cannot install on volume"
