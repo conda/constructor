@@ -808,6 +808,8 @@ def test_cross_osx_building(tmp_path):
             "micromamba",
             "--platform",
             "osx-arm64",
+            "-c",
+            "conda-forge",
         ],
     )
     micromamba_arm64 = tmp_env / "bin" / "micromamba"
