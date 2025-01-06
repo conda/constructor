@@ -18,6 +18,8 @@ EOF
 logger -p "install.info" "$1" || echo "$1"
 }
 
+{%- set channels = final_channels|join(",") %}
+
 unset DYLD_LIBRARY_PATH
 
 PREFIX="$2/{{ pkg_name_lower }}"
@@ -103,7 +105,9 @@ done
 # Cleanup!
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
-{{ write_condarc }}
+{%- for condarc in write_condarc %}
+{{ condarc }}
+{%- endfor %}
 
 if ! "$PREFIX/bin/python" -V; then
     echo "ERROR running Python"

@@ -39,7 +39,9 @@ if [[ "${INSTALLER_UNATTENDED}" != "0" ]]; then
     INSTALLER_UNATTENDED="1"
 fi
 export PRE_OR_POST="{{ pre_or_post }}"
-{{ script_env_variables }}
+{%- for key, val in script_env_variables|items %}
+export {{ key }}='{{ val }}'
+{%- endfor %}
 
 # Run user-provided script
 if [ -f "$PREFIX/pkgs/user_${PRE_OR_POST}" ]; then
