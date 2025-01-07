@@ -1289,8 +1289,8 @@ Section "Install"
     File /r {{ repodata_record }}
 
 
-{%- for key, val in SCRIPT_ENV_VARIABLES | items %}
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{{ key }}", {{ val }}).r0'
+{%- for key, escaped_val in SCRIPT_ENV_VARIABLES | items %}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{{ key }}", {{ escaped_val }}).r0'
 {%- endfor %}
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SAFETY_CHECKS", "disabled").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
