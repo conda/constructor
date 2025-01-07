@@ -155,6 +155,8 @@ def test_template_shellcheck(
             "no_rcs_arg": "",
             "install_commands": "",  # TODO: Fill this in with actual value
             "conclusion_text": "Something",
+            "final_channels": "",
+            "write_condarc": "",
         },
     )
 
