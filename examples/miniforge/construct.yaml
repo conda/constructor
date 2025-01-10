@@ -13,7 +13,7 @@ transmute_file_type: .conda
 specs:
   - python 3.12.*
   - conda 24.11.2
-  - mamba 2
+  - mamba 2.0.5
   - pip
   - miniforge_console_shortcut 1.*  # [win]
 
