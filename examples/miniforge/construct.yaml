@@ -1,5 +1,5 @@
 name: Miniforge3
-version: 4.10.1-0
+version: 24.11.2-1
 company: conda-forge
 license_file: EULA.txt
 
@@ -11,8 +11,9 @@ keep_pkgs: True
 transmute_file_type: .conda
 
 specs:
-  - python 3.9.*
-  - conda 4.10.1
+  - python 3.12.*
+  - conda 24.11.2
+  - mamba 1.5.12
   - pip
   - miniforge_console_shortcut 1.*  # [win]
 
