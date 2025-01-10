@@ -73,7 +73,6 @@ def get_header(conda_exec, tarball, info):
     variables['has_conda'] = info['_has_conda']
     variables['enable_shortcuts'] = str(info['_enable_shortcuts']).lower()
     variables['check_path_spaces'] = info.get("check_path_spaces", True)
-    install_lines = list(add_condarc(info))
     # Omit __osx and __glibc because those are tested with shell code direcly
     virtual_specs = [
         spec
@@ -87,8 +86,8 @@ def get_header(conda_exec, tarball, info):
     variables['default_prefix'] = info.get('default_prefix', '${HOME:-/opt}/%s' % name.lower())
     variables['first_payload_size'] = getsize(conda_exec)
     variables['second_payload_size'] = getsize(tarball)
-    variables['install_commands'] = '\n'.join(install_lines)
-    variables['channels'] = ','.join(get_final_channels(info))
+    variables['write_condarc'] = list(add_condarc(info))
+    variables['final_channels'] = get_final_channels(info)
     variables['conclusion_text'] = info.get("conclusion_text", "installation finished.")
     variables['pycache'] = '__pycache__'
     variables['shortcuts'] = shortcuts_flags(info)
@@ -105,8 +104,7 @@ def get_header(conda_exec, tarball, info):
     min_glibc_version = virtual_specs.get("__glibc", {}).get("min") or ""
     variables['min_glibc_version'] = min_glibc_version
 
-    variables['script_env_variables'] = '\n'.join(
-        [f"export {key}='{value}'" for key, value in info.get('script_env_variables', {}).items()])
+    variables['script_env_variables'] = info.get('script_env_variables', {})
 
     return render_template(read_header_template(), **variables)
 

@@ -12,7 +12,6 @@ import tempfile
 from os.path import abspath, basename, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
-from textwrap import dedent
 from typing import List, Union
 
 from .construct import ns_platform
@@ -44,58 +43,16 @@ def read_nsi_tmpl(info) -> str:
         return fi.read()
 
 
-def pkg_commands(download_dir, dists):
-    for fn in dists:
-        yield 'File %s' % win_str_esc(join(download_dir, fn))
-
-
-def extra_files_commands(paths, common_parent):
+def get_extra_files(paths, common_parent):
     paths = sorted([Path(p) for p in paths])
-    lines = []
-    current_output_path = "$INSTDIR"
+    extra_files = {}
     for path in paths:
         relative_parent = path.relative_to(common_parent).parent
         output_path = f"$INSTDIR\\{relative_parent}"
-        if output_path != current_output_path:
-            lines.append(f"SetOutPath {output_path}")
-            current_output_path = output_path
-        lines.append(f"File {path}")
-    return lines
-
-
-def insert_tempfiles_commands(paths: os.PathLike) -> List[str]:
-    """Helper function that copies paths into temporary install directory.
-
-    Args:
-        paths (os.PathLike): Paths to files that need to be copied
-
-    Returns:
-        List[str]: Commands to be inserted into nsi template
-    """
-    if not paths:
-        return []
-    # Setting OutPath to PluginsDir so NSIS File command copies the path into the PluginsDir
-    lines = ['SetOutPath $PLUGINSDIR']
-    for path in sorted([Path(p) for p in paths]):
-        lines.append(f"File {path}")
-    return lines
-
-
-def setup_script_env_variables(info) -> List[str]:
-    """Helper function to insert extra environment variables into nsis template.
-
-    Args:
-        info: Dictionary of information parsed from construct.yaml
-
-    Returns:
-        List[str]: Commands to be inserted into nsi template
-    """
-    lines = []
-    for name, value in info.get('script_env_variables', {}).items():
-        lines.append(
-            "System::Call 'kernel32::SetEnvironmentVariable(t,t)i"
-            + f"""("{name}", {win_str_esc(value)}).r0'""")
-    return lines
+        if output_path not in extra_files:
+            extra_files[output_path] = []
+        extra_files[output_path].append(str(path))
+    return extra_files
 
 
 def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
@@ -113,65 +70,23 @@ def custom_nsi_insert_from_file(filepath: os.PathLike) -> str:
 
 
 def setup_envs_commands(info, dir_path):
-    template = r"""
-        # Set up {name} env
-        SetDetailsPrint both
-        ${{Print}} "Setting up the {name} environment..."
-        SetDetailsPrint listonly
-
-        # List of packages to install
-        SetOutPath "{env_txt_dir}"
-        File "{env_txt_abspath}"
-
-        # A conda-meta\history file is required for a valid conda prefix
-        SetOutPath "{conda_meta}"
-        File "{history_abspath}"
-
-        # Set channels
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{channels}").r0'
-        # Set register_envs
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_REGISTER_ENVS", "{register_envs}").r0'
-
-        # Run conda install
-        ${{If}} $Ana_CreateShortcuts_State = ${{BST_CHECKED}}
-            ${{Print}} "Installing packages for {name}, creating shortcuts if necessary..."
-            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" {shortcuts} {no_rcs_arg}'
-        ${{Else}}
-            ${{Print}} "Installing packages for {name}..."
-            push '"$INSTDIR\_conda.exe" install --offline -yp "{prefix}" --file "{env_txt}" --no-shortcuts {no_rcs_arg}'
-        ${{EndIf}}
-        push 'Failed to link extracted packages to {prefix}!'
-        push 'WithLog'
-        SetDetailsPrint listonly
-        call AbortRetryNSExecWait
-        SetDetailsPrint both
-
-        # Cleanup {name} env.txt
-        SetOutPath "$INSTDIR"
-        Delete "{env_txt}"
-
-        # Restore shipped conda-meta\history for remapped
-        # channels and retain only the first transaction
-        SetOutPath "{conda_meta}"
-        File "{history_abspath}"
-        """  # noqa
-
-    lines = template.format(  # this one block is for the base environment
-        name="base",
-        prefix=r"$INSTDIR",
-        env_txt=r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
-        env_txt_dir=r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
-        env_txt_abspath=join(dir_path, "env.txt"),  # env.txt location while building the installer
-        conda_meta=r"$INSTDIR\conda-meta",
-        history_abspath=join(dir_path, "conda-meta", "history"),
-        channels=','.join(get_final_channels(info)),
-        shortcuts=shortcuts_flags(info),
-        register_envs=str(info.get("register_envs", True)).lower(),
-        no_rcs_arg=info.get("_ignore_condarcs_arg", ""),
-    ).splitlines()
-    # now we generate one more block per extra env, if present
+    environments = []
+    # set up the base environment
+    environments.append({
+        "name": "base",
+        "prefix": r"$INSTDIR",
+        "env_txt": r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
+        "env_txt_dir": r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
+        "env_txt_abspath": join(dir_path, "env.txt"),  # env.txt path while building the installer
+        "conda_meta": r"$INSTDIR\conda-meta",
+        "history_abspath": join(dir_path, "conda-meta", "history"),
+        "final_channels": get_final_channels(info),
+        "shortcuts": shortcuts_flags(info),
+        "register_envs": str(info.get("register_envs", True)).lower(),
+        "no_rcs_arg": info.get("_ignore_condarcs_arg", ""),
+    })
+    # now we generate one item per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
-        lines += ["", ""]
         env_info = info["extra_envs"][env_name]
         # Needed for shortcuts_flags function
         if "_conda_exe_type" not in env_info:
@@ -180,102 +95,21 @@ def setup_envs_commands(info, dir_path):
             "channels": env_info.get("channels", info.get("channels", ())),
             "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ()))
         }
-        lines += template.format(
-            name=env_name,
-            prefix=join("$INSTDIR", "envs", env_name),
-            env_txt=join("$INSTDIR", "pkgs", "envs", env_name, "env.txt"),
-            env_txt_dir=join("$INSTDIR", "pkgs", "envs", env_name),
-            env_txt_abspath=join(dir_path, "envs", env_name, "env.txt"),
-            conda_meta=join("$INSTDIR", "envs", env_name, "conda-meta"),
-            history_abspath=join(dir_path, "envs", env_name, "conda-meta", "history"),
-            channels=",".join(get_final_channels(channel_info)),
-            shortcuts=shortcuts_flags(env_info),
-            register_envs=str(info.get("register_envs", True)).lower(),
-            no_rcs_arg=info.get("_ignore_condarcs_arg", ""),
-        ).splitlines()
+        environments.append({
+            "name": env_name,
+            "prefix": join("$INSTDIR", "envs", env_name),
+            "env_txt": join("$INSTDIR", "pkgs", "envs", env_name, "env.txt"),
+            "env_txt_dir": join("$INSTDIR", "pkgs", "envs", env_name),
+            "env_txt_abspath": join(dir_path, "envs", env_name, "env.txt"),
+            "conda_meta": join("$INSTDIR", "envs", env_name, "conda-meta"),
+            "history_abspath": join(dir_path, "envs", env_name, "conda-meta", "history"),
+            "final_channels": get_final_channels(channel_info),
+            "shortcuts": shortcuts_flags(env_info),
+            "register_envs": str(info.get("register_envs", True)).lower(),
+            "no_rcs_arg": info.get("_ignore_condarcs_arg", ""),
+        })
 
-    return [line.strip() for line in lines]
-
-
-def uninstall_menus_commands(info: dict) -> List[str]:
-    tmpl = r"""
-        SetDetailsPrint both
-        ${{Print}} "Deleting {name} menus in {env_name}..."
-        SetDetailsPrint listonly
-        push '"$INSTDIR\_conda.exe" constructor --prefix "{path}" --rm-menus'
-        push 'Failed to delete menus in {env_name}'
-        push 'WithLog'
-        call un.AbortRetryNSExecWait
-        SetDetailsPrint both
-        """
-    lines = tmpl.format(name=info["name"], env_name="base", path="$INSTDIR").splitlines()
-    for env_name in info.get("_extra_envs_info", {}):
-        path = join("$INSTDIR", "envs", env_name)
-        lines += tmpl.format(name=info["name"], env_name=env_name, path=path).splitlines()
-    return [line.strip() for line in lines]
-
-
-def uninstall_commands_default(info: dict) -> List[str]:
-    return uninstall_menus_commands(info) + dedent("""
-        !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
-        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
-        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
-
-        ${Print} "Removing files and folders..."
-        nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
-
-        # In case the last command fails, run the slow method to remove leftover
-        RMDir /r /REBOOTOK "$INSTDIR"
-    """).splitlines()
-
-
-def uninstall_commands_conda_standalone() -> List[str]:
-    return dedent(r"""
-        !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
-        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
-        !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
-
-        # Parse arguments
-        StrCpy $R0 ""
-
-        ${If} $UninstRemoveConfigFiles_User_State == ${BST_CHECKED}
-            ${If} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
-                StrCpy $R0 "$R0 --remove-config-files=all"
-            ${Else}
-                StrCpy $R0 "$R0 --remove-config-files=user"
-            ${EndIf}
-        ${ElseIf} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
-                StrCpy $R0 "$R0 --remove-config-files=system"
-        ${EndIf}
-
-        ${If} $UninstRemoveUserData_State == ${BST_CHECKED}
-            StrCpy $R0 "$R0 --remove-user-data"
-        ${EndIf}
-
-        ${If} $UninstRemoveCaches_State == ${BST_CHECKED}
-            StrCpy $R0 "$R0 --remove-caches"
-        ${EndIf}
-
-        ${Print} "Removing files and folders..."
-        push '"$INSTDIR\_conda.exe" constructor uninstall $R0 --prefix "$INSTDIR"'
-        push 'Failed to remove files and folders. Please see the log for more information.'
-        push 'WithLog'
-        SetDetailsPrint listonly
-        call un.AbortRetryNSExecWait
-        SetDetailsPrint both
-
-        # The uninstallation may leave the install.log, the uninstaller,
-        # and .conda_trash files behind, so remove those manually.
-        ${If} ${FileExists} "$INSTDIR"
-            RMDir /r /REBOOTOK "$INSTDIR"
-        ${EndIf}
-    """).splitlines()
-
-
-def uninstall_commands(info: dict) -> List[str]:
-    if info.get("uninstall_with_conda_exe"):
-        return uninstall_commands_conda_standalone()
-    return uninstall_commands_default(info)
+    return environments
 
 
 def make_nsi(
@@ -299,8 +133,6 @@ def make_nsi(
         dists += env_info["_dists"]
     dists = list({dist: None for dist in dists})  # de-duplicate
 
-    py_name, py_version, unused_build = filename_dist(dists[0]).rsplit('-', 2)
-    assert py_name == 'python'
     arch = int(info['_platform'].split('-')[1])
     info['pre_install_desc'] = info.get('pre_install_desc', "")
     info['post_install_desc'] = info.get('post_install_desc', "")
@@ -311,10 +143,6 @@ def make_nsi(
         'company': info.get('company', 'Unknown, Inc.'),
         'installer_platform': info['_platform'],
         'arch': '%d-bit' % arch,
-        'py_ver': ".".join(py_version.split(".")[:2]),
-        'pyversion_justdigits': ''.join(py_version.split('.')),
-        'pyversion': py_version,
-        'pyversion_major': py_version.split('.')[0],
         'default_prefix': info.get('default_prefix', join('%USERPROFILE%', name.lower())),
         'default_prefix_domain_user': info.get('default_prefix_domain_user',
                                                join('%LOCALAPPDATA%', name.lower())),
@@ -382,6 +210,10 @@ def make_nsi(
 
     # From now on, the items added to variables will NOT be escaped
 
+    py_name, py_version, _ = filename_dist(dists[0]).rsplit('-', 2)
+    assert py_name == 'python'
+    variables['pyver_components'] = py_version.split(".")
+
     # These are mostly booleans we use with if-checks
     variables.update(ns_platform(info['_platform']))
     variables['initialize_conda'] = info.get('initialize_conda', True)
@@ -399,7 +231,6 @@ def make_nsi(
     variables["custom_welcome"] = info.get("welcome_file", "").endswith(".nsi")
     variables["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     variables["has_license"] = bool(info.get("license_file"))
-    variables["post_install_pages"] = bool(info.get("post_install_pages"))
     variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
 
     approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
@@ -408,18 +239,19 @@ def make_nsi(
     variables['NAME'] = name
     variables['NSIS_DIR'] = NSIS_DIR
     variables['BITS'] = str(arch)
-    variables['PKG_COMMANDS'] = '\n    '.join(pkg_commands(download_dir, dists))
+    variables['DISTS'] = [win_str_esc(join(download_dir, dist)) for dist in dists]
     variables['SIGNTOOL_COMMAND'] = signing_tool.get_signing_command() if signing_tool else ""
-    variables['SETUP_ENVS'] = '\n    '.join(setup_envs_commands(info, dir_path))
-    variables['WRITE_CONDARC'] = '\n    '.join(add_condarc(info))
+    variables['SETUP_ENVS'] = setup_envs_commands(info, dir_path)
+    variables['WRITE_CONDARC'] = list(add_condarc(info))
     variables['SIZE'] = approx_pkgs_size_kb
     variables['UNINSTALL_NAME'] = info.get(
         'uninstall_name',
         '${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})'
     )
-    variables['UNINSTALL_COMMANDS'] = '\n    '.join(uninstall_commands(info))
-    variables['EXTRA_FILES'] = '\n    '.join(extra_files_commands(extra_files, dir_path))
-    variables['SCRIPT_ENV_VARIABLES'] = '\n    '.join(setup_script_env_variables(info))
+    variables['EXTRA_FILES'] = get_extra_files(extra_files, dir_path)
+    variables['SCRIPT_ENV_VARIABLES'] = {
+        key: win_str_esc(val) for key, val in info.get('script_env_variables', {}).items()
+    }
     variables['CUSTOM_WELCOME_FILE'] = (
         custom_nsi_insert_from_file(info.get('welcome_file', ''))
         if variables['custom_welcome']
@@ -431,12 +263,12 @@ def make_nsi(
         else ''
     )
     if isinstance(info.get("post_install_pages"), str):
-        variables["POST_INSTALL_PAGES"] = custom_nsi_insert_from_file(info["post_install_pages"])
+        variables['POST_INSTALL_PAGES'] = [custom_nsi_insert_from_file(info["post_install_pages"])]
     else:
-        variables['POST_INSTALL_PAGES'] = '\n'.join(
+        variables['POST_INSTALL_PAGES'] = [
             custom_nsi_insert_from_file(file) for file in info.get('post_install_pages', [])
-        )
-    variables['TEMP_EXTRA_FILES'] = '\n    '.join(insert_tempfiles_commands(temp_extra_files))
+        ]
+    variables['TEMP_EXTRA_FILES'] = sorted(temp_extra_files, key=Path)
     variables['VIRTUAL_SPECS'] = " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])
     # This is the same but without quotes so we can print it fine
     variables['VIRTUAL_SPECS_DEBUG'] = " ".join([spec for spec in info.get("virtual_specs", ())])

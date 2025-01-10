@@ -57,7 +57,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         installer_name="Example",
         installer_version="1.2.3",
         installer_platform="osx-64",
-        channels="conda-forge",
+        final_channels=["conda-forge"],
         write_condarc="",
         path_exists_error_text="Error",
         progress_notifications=True,
@@ -144,7 +144,7 @@ def test_template_shellcheck(
             "installer_version": "1.2.3",
             "installer_platform": "linux-64",
             "installer_md5": "a0098a2c837f4cf50180cfc0a041b2af",
-            "script_env_variables": "",  # TODO: Fill this in with actual value
+            "script_env_variables": {},  # TODO: Fill this in with actual value
             "default_prefix": "/opt/Example",
             "license": "Some text",
             "total_installation_size_kb": "1024",
@@ -155,6 +155,8 @@ def test_template_shellcheck(
             "no_rcs_arg": "",
             "install_commands": "",  # TODO: Fill this in with actual value
             "conclusion_text": "Something",
+            "final_channels": "",
+            "write_condarc": "",
         },
     )
 

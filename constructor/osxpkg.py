@@ -335,8 +335,8 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["installer_name"] = info['name']
     variables["installer_version"] = info['version']
     variables["installer_platform"] = info['_platform']
-    variables["channels"] = ','.join(get_final_channels(info))
-    variables["write_condarc"] = '\n'.join(add_condarc(info))
+    variables["final_channels"] = get_final_channels(info)
+    variables["write_condarc"] = list(add_condarc(info))
     variables["path_exists_error_text"] = path_exists_error_text
     variables["progress_notifications"] = info.get('progress_notifications', False)
     variables["pre_or_post"] = user_script_type or '__PRE_OR_POST__'
@@ -346,8 +346,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
     variables["virtual_specs"] = shlex.join(virtual_specs)
     variables["no_rcs_arg"] = info.get('_ignore_condarcs_arg', '')
-    variables["script_env_variables"] = '\n'.join(
-        [f"export {key}='{value}'" for key, value in info.get('script_env_variables', {}).items()])
+    variables["script_env_variables"] = info.get('script_env_variables', {})
 
     data = render_template(data, **variables)
 

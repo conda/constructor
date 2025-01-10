@@ -71,7 +71,9 @@ fi
 # Export variables to make installer metadata available to pre/post install scripts
 # NOTE: If more vars are added, make sure to update the examples/scripts tests too
 
-{{ script_env_variables }}
+{%- for key, val in script_env_variables|items %}
+export {{ key }}='{{ val }}'
+{%- endfor %}
 export INSTALLER_NAME='{{ installer_name }}'
 export INSTALLER_VER='{{ installer_version }}'
 export INSTALLER_PLAT='{{ installer_platform }}'
@@ -529,6 +531,7 @@ shortcuts="--no-shortcuts"
 shortcuts=""
 {%- endif %}
 
+{%- set channels = final_channels|join(",") %}
 # shellcheck disable=SC2086
 CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_REGISTER_ENVS="{{ register_envs }}" \
@@ -582,7 +585,9 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
 done
 {%- endif %}
 
-{{ install_commands }}
+{%- for condarc in write_condarc %}
+{{ condarc }}
+{%- endfor %}
 
 POSTCONDA="$PREFIX/postconda.tar.bz2"
 CONDA_QUIET="$BATCH" \

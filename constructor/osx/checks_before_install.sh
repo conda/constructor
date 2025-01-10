@@ -18,11 +18,11 @@ if [[ -e "$PREFIX" ]]; then
 
     # By default, osascript doesn't allow user interaction, so we have to work
     # around it.  http://stackoverflow.com/a/11874852/161801
-    logger -p "install.info" "ERROR: __PATH_EXISTS_ERROR_TEXT__" || echo "ERROR: __PATH_EXISTS_ERROR_TEXT__"
+    logger -p "install.info" "ERROR: {{ path_exists_error_text }}" || echo "ERROR: {{ path_exists_error_text }}"
     (osascript -e "try
 tell application (path to frontmost application as text)
 set theAlertText to \"Chosen path already exists!\"
-set theAlertMessage to \"__PATH_EXISTS_ERROR_TEXT__\"
+set theAlertMessage to \"{{ path_exists_error_text }}\"
 display alert theAlertText message theAlertMessage as critical buttons {\"OK\"} default button {\"OK\"}
 end
 activate app (path to frontmost application as text)
