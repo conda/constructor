@@ -27,6 +27,7 @@ Authors are sorted alphabetically.
 * JoelStansbury
 * John Kirkham
 * Jonathan J. Helmus
+* Julien Jerphanion
 * Kale Franz
 * Katherine Kinnaman
 * Ken Odegard
@@ -65,5 +66,8 @@ Authors are sorted alphabetically.
 * XuehaiPan
 * astaric
 * bkreider
+* conda-bot
+* dependabot[bot]
 * guimondmm
+* pre-commit-ci[bot]
 * y2kbugger
