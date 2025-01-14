@@ -1,5 +1,30 @@
 [//]: # (current developments)
 
+## 2025-01-14   3.11.1:
+### Enhancements
+
+* Add `INSTALLER_UNATTENDED` environment variable for `pkg` installers. (#915)
+* Improve use of Jinja for templating logic. (#901 via #922)
+
+### Bug fixes
+
+* Add support of mamba v2 shell initialization. (#914)
+
+### Docs
+
+* Fix typo for the `/RemoveConfigFiles` CLI option in the Windows uninstaller. (#913)
+* Update miniforge example to 24.11.2 (#924)
+
+### Contributors
+
+* @jjerphan
+* @marcoesters
+* @conda-bot
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2024-12-05   3.11.0:
 ### Enhancements
 
