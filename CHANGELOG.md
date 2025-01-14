@@ -21,6 +21,10 @@
 * @marcoesters
 
 
+### New contributors
+
+* @jjerphan made their first contribution in https://github.com/conda/constructor/pull/914
+
 
 ## 2024-12-05   3.11.0:
 ### Enhancements
