@@ -27,6 +27,7 @@ Authors are sorted alphabetically.
 * JoelStansbury
 * John Kirkham
 * Jonathan J. Helmus
+* Julien Jerphanion
 * Kale Franz
 * Katherine Kinnaman
 * Ken Odegard
