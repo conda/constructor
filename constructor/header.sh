@@ -680,7 +680,7 @@ if [ "$BATCH" = "0" ]; then
             # to perform the initialization.
             #
             # Otherwise (i.e. as of 2.0.0), we use the `mamba shell init` command
-            if [ "$("$PREFIX/bin/mamba" --version | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then
+            if [ "$("$PREFIX/bin/mamba" --version | head -n 1 | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then
                 case $SHELL in
                     # We call the module directly to avoid issues with spaces in shebang
                     *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
