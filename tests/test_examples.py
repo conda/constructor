@@ -419,8 +419,9 @@ def test_example_extra_files(tmp_path, request):
     ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
-def test_example_miniforge(tmp_path, request):
-    input_path = _example_path("miniforge")
+@pytest.mark.parametrize("miniforge_example", ("miniforge-mamba1", "miniforge-mamba2"))
+def test_example_miniforge(tmp_path, request, miniforge_example):
+    input_path = _example_path(miniforge_example)
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             # try both batch and interactive installations
