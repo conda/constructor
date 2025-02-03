@@ -1,3 +1,5 @@
+{% set mamba_version = os.environ.get("CONSTRUCTOR_TEST_MAMBA_VERSION") %}
+
 name: Miniforge3
 version: 24.11.2-1
 company: conda-forge
@@ -13,7 +15,7 @@ transmute_file_type: .conda
 specs:
   - python 3.12.*
   - conda 24.11.2
-  - mamba 1.5.12
+  - mamba {{ mamba_version }}
   - pip
   - miniforge_console_shortcut 1.*  # [win]
 

@@ -419,7 +419,9 @@ def test_example_extra_files(tmp_path, request):
     ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
-def test_example_miniforge(tmp_path, request):
+@pytest.mark.parametrize("mamba_version", ("1.5.12", "2.0.5"))
+def test_example_miniforge(tmp_path, request, mamba_version, monkeypatch):
+    monkeypatch.setenv("CONSTRUCTOR_TEST_MAMBA_VERSION", mamba_version)
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
