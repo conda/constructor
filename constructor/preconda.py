@@ -25,7 +25,10 @@ from .conda_interface import (
     default_prefix,
 )
 from .conda_interface import distro as conda_distro
-from .conda_interface import get_repodata, write_repodata
+from .conda_interface import (
+    get_repodata,
+    write_repodata,
+)
 from .utils import (
     ensure_transmuted_ext,
     filename_dist,
