@@ -1,7 +1,7 @@
 {% set mamba_version = os.environ.get("CONSTRUCTOR_TEST_MAMBA_VERSION") %}
 
 name: Miniforge3
-version: 24.11.2-1
+version: 25.0.0-1
 company: conda-forge
 license_file: EULA.txt
 
