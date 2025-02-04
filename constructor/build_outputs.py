@@ -65,7 +65,8 @@ def dump_hash(info, algorithm=None):
                     filehashes[algo].update(buffer)
         for algo, filehash in filehashes.items():
             outpath = Path(f"{installer}.{algo}")
-            outpath.write_text(f"{filehash.hexdigest()}  {installer.name}\n", newline="\n")
+            with open(outpath, newline="\n") as f:
+                f.write(f"{filehash.hexdigest()}  {installer.name}\n")
             outpaths.append(str(outpath.absolute()))
     return ", ".join(outpaths)
 
