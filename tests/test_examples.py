@@ -741,6 +741,42 @@ def test_example_from_env_yaml(tmp_path, request):
             assert pkg["channel"] != "pypi"
 
 
+@pytest.fixture(params=["linux-aarch64"])
+def platform_conda_exe(request, tmp_path) -> Tuple[str, Path]:
+    platform = request.param
+    tmp_env = tmp_path / "env"
+    subprocess.check_call(
+        [
+            sys.executable,
+            "-mconda",
+            "create",
+            "-p",
+            tmp_env,
+            "-y",
+            "conda-standalone",
+            "--platform",
+            platform,
+        ],
+    )
+    conda_exe = tmp_env / "conda_standalone/conda.exe"
+    assert conda_exe.exists()
+    return platform, tmp_env
+
+
+def test_cross_build_example_from_env_yaml(tmp_path, request, platform_conda_exe):
+    platform, conda_exe = platform_conda_exe
+    input_path = _example_path("from_env_yaml")
+
+    for installer, install_dir in create_installer(
+        input_path,
+        tmp_path,
+        timeout=600,
+        conda_exe=conda_exe,
+        extra_constructor_args=["--platform", platform]
+    ):
+        assert installer.exists()
+
+
 @pytest.mark.skipif(context.subdir != "linux-64", reason="Linux x64 only")
 def test_example_from_explicit(tmp_path, request):
     input_path = _example_path("from_explicit")
