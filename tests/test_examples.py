@@ -355,6 +355,10 @@ def create_installer(
             except shutil.Error:
                 # Some tests reuse the examples for different checks; ignore errors
                 pass
+        else:
+            # Remove the installer and the install dir at the end of the test
+            shutil.rmtree(str(installer), ignore_errors=True)
+            shutil.rmtree(str(install_dir), ignore_errors=True)
 
 
 @lru_cache(maxsize=None)
