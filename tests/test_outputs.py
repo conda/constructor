@@ -44,6 +44,9 @@ def test_hash_dump(tmp_path, algorithm, context):
             for algo in algorithm:
                 hashfile = Path(f"{file}.{algo}")
                 assert hashfile.exists()
-                filehash, filename = hashfile.read_text().strip().split()
+                with open(hashfile, newline="") as f:
+                    content = f.read()
+                assert "\r" not in content
+                filehash, filename = content.strip().split()
                 assert filename == Path(file).name
                 assert filehash == TEST_FILES[filename][algo]
