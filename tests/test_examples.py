@@ -446,7 +446,8 @@ def test_example_miniforge(tmp_path, request, monkeypatch, example):
                 uninstall=False,
             )
             if installer.suffix == ".pkg" and ON_CI:
-                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
+                basename = "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
+                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / basename)
             if installer.suffix == ".exe":
                 for key in ("ProgramData", "AppData"):
                     start_menu_dir = Path(

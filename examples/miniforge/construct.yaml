@@ -1,6 +1,5 @@
 name: Miniforge3
 version: 25.0.0-1
-default_location_pkg: Library/Miniforge3-25.0.0-1
 company: conda-forge
 license_file: EULA.txt
 
