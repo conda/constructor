@@ -355,10 +355,6 @@ def create_installer(
             except shutil.Error:
                 # Some tests reuse the examples for different checks; ignore errors
                 pass
-        else:
-            # Remove the installer and the install dir at the end of the test
-            shutil.rmtree(str(installer), ignore_errors=True)
-            shutil.rmtree(str(install_dir), ignore_errors=True)
 
 
 @lru_cache(maxsize=None)
@@ -424,7 +420,7 @@ def test_example_extra_files(tmp_path, request):
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
 @pytest.mark.parametrize("example", ("miniforge", "miniforge-mamba2"))
-def test_example_miniforge(tmp_path, request, monkeypatch, example):
+def test_example_miniforge(tmp_path, request, example):
     input_path = _example_path(example)
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
@@ -440,6 +436,7 @@ def test_example_miniforge(tmp_path, request, monkeypatch, example):
                 installer,
                 install_dir,
                 installer_input=installer_input,
+                request=request,
                 # PKG installers use their own install path, so we can't check sentinels
                 # via `install_dir`
                 check_sentinels=installer.suffix != ".pkg",

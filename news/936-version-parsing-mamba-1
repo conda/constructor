@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix version parsing when mamba 1 is used (#936)
+* Fix version parsing when `mamba` v1 is used (#936)
 
 ### Deprecations
 
