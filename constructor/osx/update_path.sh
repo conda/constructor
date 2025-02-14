@@ -18,7 +18,10 @@ INIT_FILES=$("$PREFIX/bin/python" -m conda init --all | tee)
 # have the correct owner.
 if [[ "${USER}" != "root" ]]; then
     echo "Fixing permissions..."
-    read -r -a MODIFIED_FILES <<< "$(\
+    MODIFIED_FILES=()
+    while read -r line; do
+        MODIFIED_FILES+=("$line")
+    done <<< "$(\
       echo "${INIT_FILES}" |\
       awk '/modified/{print $2}' |\
       # Only grab files inside $HOME or $PREFIX.
