@@ -1265,7 +1265,7 @@ Section "Install"
     File {{ conda_exe }}
     File {{ pre_uninstall }}
 
-{%- for path, files in extra_files | items %}
+{%- for path, files in EXTRA_FILES | items %}
     SetOutPath {{ path }}
 {%- for file in files %}
     File {{ file }}
