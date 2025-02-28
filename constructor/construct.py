@@ -11,8 +11,9 @@ import sys
 from functools import partial
 from os.path import dirname
 from pathlib import Path
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from ruamel.yaml import YAMLError
 
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
@@ -23,37 +24,82 @@ WIN_SIGNTOOLS = [
     "signtool",
 ]
 HERE = Path(__file__).parent
+# TODO: lookarounds are not supported, we need to add (?<!\.\-) at the end of the regex though
+NAME_REGEX = r"^[A-z0-9_][A-z0-9_\-\.]*$"
+NonEmptyStr = Annotated[str, Field(min_length=1)]
+_base_config_dict = ConfigDict(
+    extra="forbid",
+    use_attribute_docstrings=True,
+)
+
+
+class ChannelRemap(BaseModel):
+    model_config: ConfigDict = _base_config_dict
+
+    src: NonEmptyStr = ...
+    "Source channel, before being mapped"
+    dest: NonEmptyStr = ...
+    "Target channel, after being mapped"
+
+
+class ExtraEnv(BaseModel):
+    model_config: ConfigDict = _base_config_dict
+
+    specs: list[NonEmptyStr] = []
+    "Which packages to install in this environment"
+    environment: NonEmptyStr | None = None
+    "Same as global option, for this environment"
+    environment_file: NonEmptyStr | None = None
+    "Same as global option, for this environment"
+    channels: list[NonEmptyStr] | None = None
+    """
+    Solve specs using these channels; if not provided, the global
+    value is used. To override inheritance, set it to an empty list.
+    """
+    channels_remap: list[ChannelRemap] | None = None
+    """
+    Same as global option, for this env; if not provided, the global
+    value is used. To override inheritance, set it to an empty list.
+    """
+    user_requested_specs: list[NonEmptyStr] | None = None
+    """
+    Same as the global option, but for this env.
+    If not provided, global value is _not_ used
+    """
+    menu_packages: list[NonEmptyStr] | None = None
+    """
+    Same as the global option, but for this env.
+    If not provided, global value is _not_ used
+    """
 
 
 class ConstructorConfiguration(BaseModel):
     """
     Schema for constructor.yaml input files.
     """
-    model_config: ConfigDict = ConfigDict(
-        extra="forbid",
-        use_attribute_docstrings=True,
-    )
 
-    name: str = ...
+    model_config: ConfigDict = _base_config_dict
+
+    name: Annotated[str, Field(min_length=1, pattern=NAME_REGEX)] = ...
     """
     Name of the installer. Names may be composed of letters, numbers,
     underscores, dashes, and periods, but may not begin or end with a
     dash or period.
     """
-    version: str = ...
+    version: Annotated[str, Field(min_length=1, pattern=NAME_REGEX)] = ...
     """
     Version of the installer. Versions may be composed of letters, numbers,
     underscores, dashes, and periods, but may not begin or end with a
     dash or period.
     """
-    channels: list = list()
+    channels: list[NonEmptyStr] = []
     """
     The conda channels from which packages are retrieved. At least one channel must
     be supplied, either in `channels` or `channels_remap`.
 
     See notes in `channels_remap` for details about local channels.
     """
-    channels_remap: list = list()
+    channels_remap: list[ChannelRemap] = []
     """
     A list of `src/dest` channel URL pairs. When building the installer, conda will
     use the `src` channels to solve and fetch the packages. However, the resulting
@@ -71,7 +117,7 @@ class ConstructorConfiguration(BaseModel):
 
     At least one channel must be supplied, either in `channels` or `channels_remap`.
     """
-    specs: tuple = tuple()
+    specs: list[NonEmptyStr] | NonEmptyStr = []
     """
     A list of package specifications; e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
     The specifications are identical in form and purpose to those that would be
@@ -86,7 +132,7 @@ class ConstructorConfiguration(BaseModel):
     `constructor` from a non-`base` environment, make sure the
     configured solver plugin is also installed in that environment.
     """
-    user_requested_specs: tuple = tuple()
+    user_requested_specs: list[NonEmptyStr] = []
     """
     A list of package specifications to be recorded as "user-requested" for the
     initial environment in conda's history file. This information is used by newer
@@ -95,7 +141,7 @@ class ConstructorConfiguration(BaseModel):
     of packages compatible with Python 3.6. If this is option is not provided, it
     will be set equal to the value of `specs`.
     """
-    virtual_specs: list = list()
+    virtual_specs: list[NonEmptyStr] = []
     """
     A list of virtual packages that must be satisfied at install time. Virtual
     packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
@@ -106,13 +152,13 @@ class ConstructorConfiguration(BaseModel):
     installers, `__osx` specs can be checked natively without the solver being
     involved as long as only `>=`, `<` or `,` are used.
     """
-    exclude: list = list()
+    exclude: list[NonEmptyStr] = []
     """
     A list of package names to be excluded after the `specs` have been resolved.
     For example, you can say that `readline` should be excluded, even though it
     is contained as a result of resolving the specs for `python 2.7`.
     """
-    menu_packages: list = list()
+    menu_packages: list[NonEmptyStr] | None = None
     """
     A list of packages with menu items to be installed. The packages must have
     necessary metadata in `Menu/<package name>.json`). By default, all menu items
@@ -126,18 +172,20 @@ class ConstructorConfiguration(BaseModel):
     Note: This option is not fully implemented when `micromamba` is used as
     the `--conda-exe` binary. The only accepted value is an empty list (`[]`).
     """
-    ignore_duplicate_files: bool = bool()
+    ignore_duplicate_files: bool = True
     """
     By default, constructor will warn you when adding packages with duplicate
     files in them. Setting this option to false will raise an error instead.
     """
-    install_in_dependency_order: tuple = tuple()
+    install_in_dependency_order: (
+        Annotated[bool, Field(deprecated=True)] | Annotated[str, Field(deprecated=True)]
+    ) = True
     """
     _Obsolete_. The current version of constructor relies on the standalone
     conda executable for its installation behavior. This option is now
     ignored with a warning.
     """
-    environment: str = ''
+    environment: NonEmptyStr | None = None
     """
     Name of the environment to construct from. If this option is present, the
     `specs` argument will be ignored. Using this option allows the user to
@@ -145,7 +193,7 @@ class ConstructorConfiguration(BaseModel):
     run constructor with full confidence that the exact environment will be
     reproduced.
     """
-    environment_file: str = ''
+    environment_file: NonEmptyStr | None = None
     """
     Path to an environment file (TXT or YAML) to construct from. If this option
     is present, the `specs` argument will be ignored. Instead, constructor will
@@ -157,41 +205,28 @@ class ConstructorConfiguration(BaseModel):
 
     Read notes about the solver in the `specs` field.
     """
-    transmute_file_type: str = ''
+    transmute_file_type: Literal[".conda"] | None = None
     """
     File type extension for the files to be transmuted into. Currently supports
     only '.conda'. See conda-package-handling for supported extension names.
     If left empty, no transmuting is done.
     """
-    conda_default_channels: list = list()
+    conda_default_channels: list[NonEmptyStr] = []
     """
     If this value is provided as well as `write_condarc`, then the channels
     in this list will be included as the value of the `default_channels:`
     option in the environment's `.condarc` file. This will have an impact
     only if `conda` is included in the environmnent.
     """
-    conda_channel_alias: str = ''
+    conda_channel_alias: NonEmptyStr | None = None
     """
     The channel alias that would be assumed for the created installer
-    (only useful if it includes conda).
+    (only useful if it includes `conda`).
     """
-    extra_envs: tuple = tuple()
+    extra_envs: dict[NonEmptyStr, ExtraEnv] = {}
     """
     Create more environments in addition to the default `base` provided by `specs`,
-    `environment` or `environment_file`. This should be a map of `str` (environment
-    name) to a dictionary of options:
-    - `specs` (list of str): which packages to install in that environment
-    - `environment` (str): same as global option, for this env
-    - `environment_file` (str): same as global option, for this env
-    - `channels` (list of str): using these channels; if not provided, the global
-      value is used. To override inheritance, set it to an empty list.
-    - `channels_remap` (list of str): same as global option, for this env;
-      if not provided, the global value is used. To override inheritance, set it to
-      an empty list.
-    - `user_requested_specs` (list of str): same as the global option, but for this env;
-      if not provided, global value is _not_ used
-    - `menu_packages` (list of str): same as the global option, for this env;
-      if not provided, the global value is _not_ used.
+    `environment` or `environment_file`.
 
     Notes:
     - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
@@ -202,17 +237,17 @@ class ConstructorConfiguration(BaseModel):
       thrown if the excluded package is not found in the packages required by the extra environment.
       To override the global `exclude` value, use an empty list `[]`.
     """
-    register_envs: bool = bool()
+    register_envs: bool = True
     """
     Whether to register the environments created by the installer (both `base` and `extra_envs`)
-    in `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9. Defaults to `True`.
+    in `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9.
     """
-    installer_filename: str = ''
+    installer_filename: NonEmptyStr | None = None
     """
     The filename of the installer being created. If not supplied, a reasonable
     default will determined by the `name`, `version`, platform, and installer type.
     """
-    installer_type: tuple = tuple()
+    installer_type: NonEmptyStr | list[NonEmptyStr] | None = None
     """
     The type of the installer being created.  Possible values are:
     - `sh`: shell-based installer for Linux or macOS;
@@ -226,21 +261,21 @@ class ConstructorConfiguration(BaseModel):
     Notes for silent mode `/S` on Windows EXEs:
     - NSIS Silent mode will not print any error message, but will silently abort the installation.
       If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which
-      can be searched for `::error::` strings. Pre- and post- install scripts will only throw an error
-      if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
+      can be searched for `::error::` strings. Pre- and post- install scripts will only throw
+      an error if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
     - The `/D` flag can be used to specify the target location. It must be the last argument in
       the command and should NEVER be quoted, even if it contains spaces. For example:
       `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.
 
     [nsis-log]: https://nsis.sourceforge.io/Special_Builds
     """
-    license_file: str = ''
+    license_file: NonEmptyStr | None = None
     """
     Path to the license file being displayed by the installer during the install
     process. It must be plain text (.txt) for shell-based installers. On PKG,
     .txt, .rtf and .html are supported. On Windows, .txt and .rtf are supported.
     """
-    keep_pkgs: bool = bool()
+    keep_pkgs: bool = False
     """
     If `False` (default), the package cache in the `pkgs` subdirectory is removed
     when the installation process is complete. If `True`, this subdirectory and
@@ -248,13 +283,13 @@ class ConstructorConfiguration(BaseModel):
     installers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)
     to preserve the package cache.
     """
-    batch_mode: bool = bool()
+    batch_mode: bool = False
     """
-    Only affects ``.sh`` installers. If ``False`` (default), the installer launches
+    Only affects `.sh` installers. If `False` (default), the installer launches
     an interactive wizard guiding the user through the available options. If
-    ``True``, the installer runs automatically as if ``-b`` was passed.
+    `True`, the installer runs automatically as if `-b` was passed.
     """
-    signing_identity_name: str = ''
+    signing_identity_name: NonEmptyStr | None = None
     """
     By default, the MacOS pkg installer isn't signed. If an identity name is specified
     using this option, it will be used to sign the installer with Apple's `productsign`.
@@ -263,7 +298,7 @@ class ConstructorConfiguration(BaseModel):
     accessible keychains. Common values for this option follow this format
     `Developer ID Installer: Name of the owner (XXXXXX)`.
     """
-    notarization_identity_name: str = ''
+    notarization_identity_name: NonEmptyStr | None = None
     """
     If the pkg installer is going to be signed with `signing_identity_name`, you
     can also prepare the bundle for notarization. This will use Apple's `codesign`
@@ -271,7 +306,7 @@ class ConstructorConfiguration(BaseModel):
     "Installer certificate" mentioned above). Common values for this option follow the format
     `Developer ID Application: Name of the owner (XXXXXX)`.
     """
-    windows_signing_tool: str = ''
+    windows_signing_tool: NonEmptyStr | None = None
     """
     The tool used to sign Windows installers. Must be one of: azuresigntool, signtool.
     Some tools require `signing_certificate` to be set.
@@ -280,23 +315,25 @@ class ConstructorConfiguration(BaseModel):
     See the documentation for details:
     https://conda.github.io/constructor/howto/#signing-exe-installers
     """
-    signing_certificate: str = ''
+    signing_certificate: NonEmptyStr | None = None
     """
     On Windows only, set this key to the path of the certificate file to be used
     with the `windows_signing_tool`.
     """
-    attempt_hardlinks: tuple = tuple()
+    attempt_hardlinks: (
+        Annotated[bool, Field(deprecated=True)] | Annotated[str, Field(deprecated=True)]
+    ) = True
     """
     _Obsolete_. The current version of constructor relies on the standalone
     conda executable for its installation behavior. This option is now
     ignored with a warning.
     """
-    write_condarc: bool = bool()
+    write_condarc: bool = False
     """
     By default, no `.condarc` file is written. If set, a `.condarc` file is written to
-    the base environment if there are any channels or conda_default_channels is set.
+    the base environment if there are any channels or `conda_default_channels` is set.
     """
-    condarc: tuple = tuple()
+    condarc: NonEmptyStr | dict | None = None
     """
     If set, a `.condarc` file is written to the base environment containing the contents
     of this value. The value can either be a string (likely a multi-line string) or
@@ -304,22 +341,22 @@ class ConstructorConfiguration(BaseModel):
     option is used, then all other options related to the construction of a `.condarc`
     file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
     """
-    company: str = ''
+    company: NonEmptyStr | None = None
     """
     Name of the company/entity who is responsible for the installer.
     """
-    reverse_domain_identifier: str = ''
+    reverse_domain_identifier: NonEmptyStr | None = None
     """
     Unique identifier for this package, formatted with reverse domain notation. This is
     used internally in the PKG installers to handle future updates and others. If not
     provided, it will default to `io.continuum`. (MacOS only)
     """
-    uninstall_name: str = ''
+    uninstall_name: NonEmptyStr | None = None
     """
     Application name in the Windows "Programs and Features" control panel.
     Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
     """
-    script_env_variables: tuple = tuple()
+    script_env_variables: dict[NonEmptyStr, str] = {}
     """
     Dictionary of additional environment variables to be made available to
     the pre_install and post_install scripts, in the form of VAR:VALUE
@@ -340,14 +377,14 @@ class ConstructorConfiguration(BaseModel):
     Note that the # (hash) character cannot be used as it denotes yaml
     comments for all platforms.
     """
-    pre_install: str = ''
+    pre_install: NonEmptyStr | None = None
     """
     Path to a pre-install script, run after the package cache has been set, but
     before the files are linked to their final locations. As a result, you should
     only rely on tools known to be available on most systems (e.g. `bash`, `cmd`,
     etc). See `post_install` for information about available environment variables.
     """
-    pre_install_desc: str = ''
+    pre_install_desc: NonEmptyStr | None = None
     """
     A description of the purpose of the supplied `pre_install` script. If this
     string is supplied and non-empty, then the Windows and macOS GUI installers
@@ -357,7 +394,7 @@ class ConstructorConfiguration(BaseModel):
 
     This option has no effect on `SH` installers.
     """
-    post_install: str = ''
+    post_install: NonEmptyStr | None = None
     """
     Path to a post-install script. Some notes:
 
@@ -383,7 +420,7 @@ class ConstructorConfiguration(BaseModel):
     - Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
     - Windows: `call "%PREFIX%\\Scripts\\activate.bat"`
     """
-    post_install_desc: str = ''
+    post_install_desc: NonEmptyStr | None = None
     """
     A description of the purpose of the supplied `post_install` script. If this
     string is supplied and non-empty, then the Windows and macOS GUI installers
@@ -393,7 +430,7 @@ class ConstructorConfiguration(BaseModel):
 
     This option has no effect on `SH` installers.
     """
-    pre_uninstall: str = ''
+    pre_uninstall: NonEmptyStr | None = None
     """
     Path to a pre uninstall script. This is only supported for on Windows,
     and must be a `.bat` file. Installation path is available as `%PREFIX%`.
@@ -401,7 +438,7 @@ class ConstructorConfiguration(BaseModel):
     `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
     `%INSTALLER_TYPE%` is set to `EXE`.
     """
-    default_prefix: str = ''
+    default_prefix: NonEmptyStr | None = None
     """
     Set default install prefix. On Linux, if not provided, the default prefix
     is `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows,
@@ -410,7 +447,7 @@ class ConstructorConfiguration(BaseModel):
     is `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at
     installation time.
     """
-    default_prefix_domain_user: str = ''
+    default_prefix_domain_user: NonEmptyStr | None = None
     """
     Set default installation prefix for domain user. If not provided, the
     installation prefix for domain user will be `%LOCALAPPDATA%\\<NAME>`.
@@ -418,14 +455,14 @@ class ConstructorConfiguration(BaseModel):
     the distribution in the roaming profile. Environment variables will be expanded
     at installation time. Windows only.
     """
-    default_prefix_all_users: str = ''
+    default_prefix_all_users: NonEmptyStr | None = None
     """
     Set default installation prefix for All Users installation. If not provided,
     the installation prefix for all users installation will be
     `%ALLUSERSPROFILE%\\<NAME>`. Environment variables will be expanded at installation
     time. Windows only.
     """
-    default_location_pkg: str = ''
+    default_location_pkg: NonEmptyStr | None = None
     """
     Default installation subdirectory in the chosen volume. In PKG installers,
     default installation locations are configured differently. The user can choose
@@ -438,7 +475,7 @@ class ConstructorConfiguration(BaseModel):
     Internally, this is passed to `pkgbuild --install-location`.
     macOS only.
     """
-    pkg_domains: dict = dict()
+    pkg_domains: dict[NonEmptyStr, Any] = {}
     """
     The domains the package can be installed into. For a detailed explanation, see:
     https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
@@ -446,13 +483,13 @@ class ConstructorConfiguration(BaseModel):
     `enable_localSystem` should not be set to true unless `default_location_pkg` is set as well.
     macOS only.
     """
-    pkg_name: str = ''
+    pkg_name: NonEmptyStr | None = None
     """
     Internal identifier for the installer. This is used in the build prefix and will
     determine part of the default location path. Combine with `default_location_pkg`
     for more flexibility. If not provided, the value of `name` will be used.  (MacOS only)
     """
-    install_path_exists_error_text: str = ''
+    install_path_exists_error_text: NonEmptyStr | None = None
     """
     Error message that will be shown if the installation path already exists.
     You cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is
@@ -463,7 +500,7 @@ class ConstructorConfiguration(BaseModel):
 
     (MacOS only)
     """
-    progress_notifications: bool = bool()
+    progress_notifications: bool = False
     """
     Whether to show UI notifications on PKG installers. On large installations,
     the progress bar reaches ~90% very quickly and stays there for a long time.
@@ -471,7 +508,7 @@ class ConstructorConfiguration(BaseModel):
     so the user receives updates after each command executed by the installer.
     (macOS only)
     """
-    welcome_image: str = ''
+    welcome_image: str | None = None
     """
     Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
     to be used as the welcome image for the Windows and PKG installers.
@@ -480,54 +517,54 @@ class ConstructorConfiguration(BaseModel):
     logo is shown if this key is not provided. If you don't want a background on
     PKG installers, set this key to `""` (empty string).
     """
-    header_image: str = ''
+    header_image: str | None = None
     """
     Like `welcome_image` for Windows, re-sized to 150 x 57 pixels.
     """
-    icon_image: str = ''
+    icon_image: str | None = None
     """
     Like `welcome_image` for Windows, re-sized to 256 x 256 pixels.
     """
-    default_image_color: str = ''
+    default_image_color: Literal["red", "green", "blue", "yellow"] = "blue"
     """
     The color of the default images (when not providing explicit image files)
-    used on Windows.  Possible values are `red`, `green`, `blue`, `yellow`.
+    used on Windows. Possible values are `red`, `green`, `blue`, `yellow`.
     The default is `blue`.
     """
-    welcome_image_text: str = ''
+    welcome_image_text: NonEmptyStr | None = None
     """
     If `welcome_image` is not provided, use this text when generating the image
     (Windows and PKG only). Defaults to `name` on Windows.
     """
-    header_image_text: str = ''
+    header_image_text: NonEmptyStr | None = None
     """
     If `header_image` is not provided, use this text when generating the image
     (Windows only). Defaults to `name`.
     """
-    initialize_conda: bool = bool()
+    initialize_conda: bool = True
     """
     Add an option to the installer so the user can choose whether to run `conda init`
     after the install. See also `initialize_by_default`.
     """
-    initialize_by_default: bool = bool()
+    initialize_by_default: bool | None = None
     """
     Whether to add the installation to the PATH environment variable. The default
     is true for GUI installers (msi, pkg) and False for shell installers. The user
     is able to change the default during interactive installation. NOTE: For Windows,
     `AddToPath` is disabled when `InstallationType=AllUsers`.
     """
-    register_python: bool = bool()
+    register_python: bool = True
     """
     Whether to offer the user an option to register the installed Python instance as the
     system's default Python. (Windows only)
     """
-    register_python_default: bool = bool()
+    register_python_default: bool | None = False
     """
     Default choice for whether to register the installed Python instance as the
     system's default Python. The user is still able to change this during
     interactive installation. (Windows only).
     """
-    check_path_length: bool = bool()
+    check_path_length: bool | None = None
     """
     Check the length of the path where the distribution is installed to ensure nodejs
     can be installed.  Raise a message to request shorter path (less than 46 character)
@@ -536,7 +573,7 @@ class ConstructorConfiguration(BaseModel):
     Read notes about the particularities of Windows silent mode `/S` in the
     `installer_type` documentation.
     """
-    check_path_spaces: bool = bool()
+    check_path_spaces: bool = True
     """
     Check if the path where the distribution is installed contains spaces. Default is True.
     To allow installations with spaces, change to False. Note that:
@@ -547,13 +584,13 @@ class ConstructorConfiguration(BaseModel):
     Read notes about the particularities of Windows silent mode `/S` in the
     `installer_type` documentation.
     """
-    nsis_template: str = ''
+    nsis_template: NonEmptyStr | None = None
     """
     If `nsis_template` is not provided, constructor uses its default
     NSIS template. For more complete customization for the installation experience,
     provide an NSIS template file. (Windows only).
     """
-    welcome_file: str = ''
+    welcome_file: NonEmptyStr | None = None
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the introduction.
@@ -565,7 +602,7 @@ class ConstructorConfiguration(BaseModel):
     it will use the nsi script to add in extra pages before the installer
     begins the installation process.
     """
-    welcome_text: str = ''
+    welcome_text: str | None = None
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the introduction.
@@ -574,7 +611,7 @@ class ConstructorConfiguration(BaseModel):
     if you set this key to `""` (empty string).
     (MacOS only).
     """
-    readme_file: str = ''
+    readme_file: NonEmptyStr | None = None
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the welcome screen.
@@ -582,7 +619,7 @@ class ConstructorConfiguration(BaseModel):
     both `readme_file` and `readme_text` are provided, `readme_file` takes precedence.
     (MacOS only).
     """
-    readme_text: str = ''
+    readme_text: str | None = None
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the welcome screen.
@@ -590,7 +627,7 @@ class ConstructorConfiguration(BaseModel):
     You can disable it altogether if you set this key to `""` (empty string).
     (MacOS only).
     """
-    post_install_pages: tuple = tuple()
+    post_install_pages: NonEmptyStr | list[NonEmptyStr] | None = None
     """
     Adds extra pages to the installers to be shown after installation.
 
@@ -601,7 +638,7 @@ class ConstructorConfiguration(BaseModel):
     For Windows, the extra pages must be `.nsi` files.
     They will be inserted as-is before the conclusion page.
     """
-    conclusion_file: str = ''
+    conclusion_file: NonEmptyStr | None = None
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown at the end of the installer upon success. File can be
@@ -611,7 +648,7 @@ class ConstructorConfiguration(BaseModel):
 
     If the installer is for Windows, the file type must be nsi.
     """
-    conclusion_text: str = ''
+    conclusion_text: str | None = None
     """
     A message that will be shown at the end of the installer upon success.
     The behaviour is slightly different across installer types:
@@ -621,7 +658,7 @@ class ConstructorConfiguration(BaseModel):
     - EXE: The first line will be used as a title. The following lines will be used as text.
     (macOS PKG and Windows only).
     """
-    extra_files: list = list()
+    extra_files: list[NonEmptyStr] | list[dict[NonEmptyStr, NonEmptyStr]] = []
     """
     Extra, non-packaged files that should be added to the installer. If provided as relative
     paths, they will be considered relative to the directory where `construct.yaml` is.
@@ -629,7 +666,7 @@ class ConstructorConfiguration(BaseModel):
     - `str`: each found file will be copied to the root prefix
     - `Mapping[str, str]`: map of path in disk to path in prefix.
     """
-    temp_extra_files: list = list()
+    temp_extra_files: list[NonEmptyStr] | list[dict[NonEmptyStr, NonEmptyStr]] = []
     """
     Temporary files that could be referenced in the installation process (i.e. customized
     `welcome_file` and `conclusion_file` (see above)) . Should be a list of
@@ -639,13 +676,14 @@ class ConstructorConfiguration(BaseModel):
 
     Supports the same values as `extra_files`.
     """
-    build_outputs: list = list()
+    build_outputs: list[NonEmptyStr | dict[NonEmptyStr, Any]] = []
     """
     Additional artifacts to be produced after building the installer.
     It expects either a list of strings or single-key dictionaries:
     Allowed keys are:
     - `hash`: The hash of the installer files.
-        - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available algorithms:
+        - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available
+           algorithms:
            https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available
     - `info.json`: The internal `info` object, serialized to JSON. Takes no options.
     - `pkgs_list`: The list of packages contained in a given environment. Options:
@@ -653,19 +691,17 @@ class ConstructorConfiguration(BaseModel):
     - `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:
         - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
     - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
-        - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.
-          If false, only the path will be included.
-        - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the
-          license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors'
-          argument is valid. See https://docs.python.org/3/library/functions.html#open.
+        - `include_text` (optional bool, default=`False`): Whether to dump the license text in the
+          JSON. If false, only the path will be included.
+        - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading
+          the license text. Only relevant if include_text is True. Any str accepted by open()'s
+          'errors' argument is valid. See https://docs.python.org/3/library/functions.html#open.
     """
-    uninstall_with_conda_exe: bool = bool()
+    uninstall_with_conda_exe: bool | None = None
     """
     Use the standalone binary to perform the uninstallation.
     Requires conda-standalone 24.11.0 or newer.
     """
-
-
 
 
 _EXTRA_ENVS_SCHEMA = {
@@ -685,15 +721,15 @@ logger = logging.getLogger(__name__)
 def generate_key_info_list():
     key_info_list = []
     for key_info in KEYS:
-        type_names = {str: 'string', list: 'list', dict: 'dictionary', bool: 'boolean'}
+        type_names = {str: "string", list: "list", dict: "dictionary", bool: "boolean"}
         key_types = key_info[2]
         if not isinstance(key_types, (tuple, list)):
-            key_types = key_types,
-        plural = 's' if len(key_types) > 1 else ''
-        key_types = ', '.join(type_names.get(k, '') for k in key_types)
-        required = 'yes' if key_info[1] else 'no'
+            key_types = (key_types,)
+        plural = "s" if len(key_types) > 1 else ""
+        key_types = ", ".join(type_names.get(k, "") for k in key_types)
+        required = "yes" if key_info[1] else "no"
 
-        if key_info[3] == 'XXX':
+        if key_info[3] == "XXX":
             logger.info("Not including %s because the skip sentinel ('XXX') is set", key_info[0])
             continue
 
@@ -704,28 +740,28 @@ def generate_key_info_list():
 def ns_platform(platform):
     p = platform
     return dict(
-        linux=p.startswith('linux-'),
-        linux32=bool(p == 'linux-32'),
-        linux64=bool(p == 'linux-64'),
-        armv7l=bool(p == 'linux-armv7l'),
-        aarch64=bool(p == 'linux-aarch64'),
-        ppc64le=bool(p == 'linux-ppc64le'),
-        arm64=bool(p == 'osx-arm64'),
-        s390x=bool(p == 'linux-s390x'),
-        x86=p.endswith(('-32', '-64')),
-        x86_64=p.endswith('-64'),
-        osx=p.startswith('osx-'),
-        unix=p.startswith(('linux-', 'osx-')),
-        win=p.startswith('win-'),
-        win32=bool(p == 'win-32'),
-        win64=bool(p == 'win-64'),
+        linux=p.startswith("linux-"),
+        linux32=bool(p == "linux-32"),
+        linux64=bool(p == "linux-64"),
+        armv7l=bool(p == "linux-armv7l"),
+        aarch64=bool(p == "linux-aarch64"),
+        ppc64le=bool(p == "linux-ppc64le"),
+        arm64=bool(p == "osx-arm64"),
+        s390x=bool(p == "linux-s390x"),
+        x86=p.endswith(("-32", "-64")),
+        x86_64=p.endswith("-64"),
+        osx=p.startswith("osx-"),
+        unix=p.startswith(("linux-", "osx-")),
+        win=p.startswith("win-"),
+        win32=bool(p == "win-32"),
+        win64=bool(p == "win-64"),
     )
 
 
 # This regex is taken from https://github.com/conda/conda_build/metadata.py
 # The following function "select_lines" is also a slightly modified version of
 # the function of the same name from conda_build/metadata.py
-sel_pat = re.compile(r'(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$')
+sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$")
 
 
 def select_lines(data, namespace):
@@ -738,7 +774,7 @@ def select_lines(data, namespace):
         if line and line[-1] in ("'", '"'):
             trailing_quote = line[-1]
 
-        if line.lstrip().startswith('#'):
+        if line.lstrip().startswith("#"):
             # Don't bother with comment only lines
             continue
         m = sel_pat.match(line)
@@ -748,16 +784,19 @@ def select_lines(data, namespace):
                 if eval(cond, namespace, {}):
                     lines.append(m.group(1) + trailing_quote)
             except Exception as e:
-                sys.exit('''\
+                sys.exit(
+                    """\
 Error: Invalid selector in meta.yaml line %d:
 offending line:
 %s
 exception:
 %s
-''' % (i + 1, line, str(e)))
+"""
+                    % (i + 1, line, str(e))
+                )
         else:
             lines.append(line)
-    return '\n'.join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 # adapted from conda-build
@@ -766,7 +805,7 @@ def yamlize(data, directory, content_filter):
     try:
         return yaml.load(data)
     except YAMLError as e:
-        if ('{{' not in data) and ('{%' not in data):
+        if ("{{" not in data) and ("{%" not in data):
             raise UnableToParse(original=e)
         try:
             from constructor.jinja import render_jinja_for_input_file
@@ -790,7 +829,7 @@ def parse(path, platform):
         sys.exit(e.error_msg())
 
     try:
-        res['version'] = str(res['version'])
+        res["version"] = str(res["version"])
     except KeyError:
         pass
 
@@ -809,7 +848,7 @@ def verify(info):
         types_key[key] = types
         if required:
             required_keys.add(key)
-        if 'Obsolete' in descr:
+        if "Obsolete" in descr:
             obsolete_keys.add(key)
 
     for key in info:
@@ -817,26 +856,25 @@ def verify(info):
             sys.exit("Error: unknown key '%s' in construct.yaml" % key)
         elt = info[key]
         if key in obsolete_keys:
-            logger.warning("key '%s' is obsolete."
-                           " Its value '%s' is being ignored.", key, elt)
+            logger.warning("key '%s' is obsolete." " Its value '%s' is being ignored.", key, elt)
         types = types_key[key]
         if not isinstance(elt, types):
-            sys.exit("Error: key '%s' points to %s,\n"
-                     "       expected %s" % (key, type(elt), types))
+            sys.exit(
+                "Error: key '%s' points to %s,\n" "       expected %s" % (key, type(elt), types)
+            )
 
     for key in required_keys:
         if key not in info:
-            sys.exit("Error: Required key '%s' not found in construct.yaml" %
-                     key)
+            sys.exit("Error: Required key '%s' not found in construct.yaml" % key)
 
-    pat = re.compile(r'[\w][\w\-\.]*$')
-    for key in 'name', 'version':
+    pat = re.compile(r"[\w][\w\-\.]*$")
+    for key in "name", "version":
         value = info[key]
-        if not pat.match(value) or value.endswith(('.', '-')):
+        if not pat.match(value) or value.endswith((".", "-")):
             sys.exit("Error: invalid %s '%s'" % (key, value))
 
     for env_name, env_data in info.get("extra_envs", {}).items():
-        disallowed = ('/', ' ', ':', '#')
+        disallowed = ("/", " ", ":", "#")
         if any(character in env_name for character in disallowed):
             sys.exit(
                 f"Environment names (keys in 'extra_envs') cannot contain any of {disallowed}. "
@@ -848,8 +886,10 @@ def verify(info):
             types = _EXTRA_ENVS_SCHEMA[key]
             if not isinstance(value, types):
                 types_str = " or ".join([type_.__name__ for type_ in types])
-                sys.exit(f"Value for 'extra_envs.{env_name}.{key}' "
-                         f"must be an instance of {types_str}")
+                sys.exit(
+                    f"Value for 'extra_envs.{env_name}.{key}' "
+                    f"must be an instance of {types_str}"
+                )
     if signtool := info.get("windows_signing_tool"):
         if signtool.lower().replace(".exe", "") not in WIN_SIGNTOOLS:
             sys.exit(
@@ -862,12 +902,12 @@ def verify(info):
 
 
 def dump_schema():
-    model = ConstructorConfiguration(name="...", version="...")
+    model = ConstructorConfiguration(name="doesnotmatter", version="0.0.0")
     obj = model.model_json_schema()
     obj["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     (HERE / "data" / "constructor.schema.json").write_text(json.dumps(obj, indent=2))
     print(json.dumps(obj, indent=2))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     dump_schema()

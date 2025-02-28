@@ -1,140 +1,395 @@
 {
+  "$defs": {
+    "ChannelRemap": {
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "description": "Source channel, before being mapped",
+          "minLength": 1,
+          "title": "Src",
+          "type": "string"
+        },
+        "dest": {
+          "description": "Target channel, after being mapped",
+          "minLength": 1,
+          "title": "Dest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "src",
+        "dest"
+      ],
+      "title": "ChannelRemap",
+      "type": "object"
+    },
+    "ExtraEnv": {
+      "additionalProperties": false,
+      "properties": {
+        "specs": {
+          "default": [],
+          "description": "Which packages to install in this environment",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Specs",
+          "type": "array"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Same as global option, for this environment",
+          "title": "Environment"
+        },
+        "environment_file": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Same as global option, for this environment",
+          "title": "Environment File"
+        },
+        "channels": {
+          "anyOf": [
+            {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Solve specs using these channels; if not provided, the global\nvalue is used. To override inheritance, set it to an empty list.",
+          "title": "Channels"
+        },
+        "channels_remap": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ChannelRemap"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Same as global option, for this env; if not provided, the global \nvalue is used. To override inheritance, set it to an empty list.",
+          "title": "Channels Remap"
+        },
+        "user_requested_specs": {
+          "anyOf": [
+            {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Same as the global option, but for this env.\nIf not provided, global value is _not_ used",
+          "title": "User Requested Specs"
+        },
+        "menu_packages": {
+          "anyOf": [
+            {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Same as the global option, but for this env.\nIf not provided, global value is _not_ used",
+          "title": "Menu Packages"
+        }
+      },
+      "title": "ExtraEnv",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
+  "description": "Schema for constructor.yaml input files.",
   "properties": {
     "name": {
       "description": "Name of the installer. Names may be composed of letters, numbers,\nunderscores, dashes, and periods, but may not begin or end with a\ndash or period.",
+      "minLength": 1,
+      "pattern": "^[A-z0-9_][A-z0-9_\\-\\.]*$",
       "title": "Name",
       "type": "string"
     },
     "version": {
       "description": "Version of the installer. Versions may be composed of letters, numbers,\nunderscores, dashes, and periods, but may not begin or end with a\ndash or period.",
+      "minLength": 1,
+      "pattern": "^[A-z0-9_][A-z0-9_\\-\\.]*$",
       "title": "Version",
       "type": "string"
     },
     "channels": {
       "default": [],
       "description": "The conda channels from which packages are retrieved. At least one channel must\nbe supplied, either in `channels` or `channels_remap`.\n\nSee notes in `channels_remap` for details about local channels.",
-      "items": {},
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
       "title": "Channels",
       "type": "array"
     },
     "channels_remap": {
       "default": [],
       "description": "A list of `src/dest` channel URL pairs. When building the installer, conda will\nuse the `src` channels to solve and fetch the packages. However, the resulting\ninstallation will see the packages as coming from the `dest` equivalent.\nThis allows an installer to be built against a different set of channels than\nwill be present when the installer is actually used. Example use:\n\n```yaml\nchannels_remap:\n  - src: file:///tmp/a3/conda-bld              # [unix]\n    dest: https://repo.anaconda.com/pkgs/main  # [unix]\n  - src: file:///D:/tmp/a3/conda-bld           # [win]\n    dest: https://repo.anaconda.com/pkgs/main  # [unix]\n```\n\nAt least one channel must be supplied, either in `channels` or `channels_remap`.",
-      "items": {},
+      "items": {
+        "$ref": "#/$defs/ChannelRemap"
+      },
       "title": "Channels Remap",
       "type": "array"
     },
     "specs": {
+      "anyOf": [
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        }
+      ],
       "default": [],
       "description": "A list of package specifications; e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.\nThe specifications are identical in form and purpose to those that would be\nincluded in a `conda create --file` command. Packages may also be specified\nby an exact URL; e.g.,\n`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.\nThis key can also take a `str` pointing to a requirements file with the same syntax.\n\nNote: `constructor` relies on `conda`'s Python API to solve the passed\nspecifications. You can still set the `CONDA_SOLVER` environment variable\nto override system-wide settings for `constructor`. If you are using\n`constructor` from a non-`base` environment, make sure the\nconfigured solver plugin is also installed in that environment.",
-      "items": {},
-      "title": "Specs",
-      "type": "array"
+      "title": "Specs"
     },
     "user_requested_specs": {
       "default": [],
       "description": "A list of package specifications to be recorded as \"user-requested\" for the\ninitial environment in conda's history file. This information is used by newer\nversions of conda to better filter its package choices on subsequent installs;\nfor example, if `python=3.6` is included, then conda will always seek versions\nof packages compatible with Python 3.6. If this is option is not provided, it\nwill be set equal to the value of `specs`.",
-      "items": {},
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
       "title": "User Requested Specs",
       "type": "array"
     },
     "virtual_specs": {
       "default": [],
       "description": "A list of virtual packages that must be satisfied at install time. Virtual\npackages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.\nThese specs are dry-run solved offline by the bundled `--conda-exe` binary.\nIn SH installers, `__glibc>=x.y` and `__osx>=x.y` specs can be checked with\nBash only. The detected version can be overriden with environment variables\n`CONDA_OVERRIDE_GLIBC` and `CONDA_OVERRIDE_OSX`, respectively. In PKG\ninstallers, `__osx` specs can be checked natively without the solver being\ninvolved as long as only `>=`, `<` or `,` are used.",
-      "items": {},
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
       "title": "Virtual Specs",
       "type": "array"
     },
     "exclude": {
       "default": [],
       "description": "A list of package names to be excluded after the `specs` have been resolved.\nFor example, you can say that `readline` should be excluded, even though it\nis contained as a result of resolving the specs for `python 2.7`.",
-      "items": {},
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
       "title": "Exclude",
       "type": "array"
     },
     "menu_packages": {
-      "default": [],
+      "anyOf": [
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "A list of packages with menu items to be installed. The packages must have\nnecessary metadata in `Menu/<package name>.json`). By default, all menu items\nfound in the installation will be created; supplying this list allows a\nsubset to be selected instead. If an empty list is supplied, no shortcuts will\nbe created.\n\nIf all environments (`extra_envs` included) set `menu_packages` to an empty list,\nno UI options about shortcuts will be offered to the user.\n\nNote: This option is not fully implemented when `micromamba` is used as\nthe `--conda-exe` binary. The only accepted value is an empty list (`[]`).",
-      "items": {},
-      "title": "Menu Packages",
-      "type": "array"
+      "title": "Menu Packages"
     },
     "ignore_duplicate_files": {
-      "default": false,
+      "default": true,
       "description": "By default, constructor will warn you when adding packages with duplicate\nfiles in them. Setting this option to false will raise an error instead.",
       "title": "Ignore Duplicate Files",
       "type": "boolean"
     },
     "install_in_dependency_order": {
-      "default": [],
+      "anyOf": [
+        {
+          "deprecated": true,
+          "type": "boolean"
+        },
+        {
+          "deprecated": true,
+          "type": "string"
+        }
+      ],
+      "default": true,
       "description": "_Obsolete_. The current version of constructor relies on the standalone\nconda executable for its installation behavior. This option is now\nignored with a warning.",
-      "items": {},
-      "title": "Install In Dependency Order",
-      "type": "array"
+      "title": "Install In Dependency Order"
     },
     "environment": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Name of the environment to construct from. If this option is present, the\n`specs` argument will be ignored. Using this option allows the user to\ncurate the enviromment interactively using standard `conda` commands, and\nrun constructor with full confidence that the exact environment will be\nreproduced.",
-      "title": "Environment",
-      "type": "string"
+      "title": "Environment"
     },
     "environment_file": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Path to an environment file (TXT or YAML) to construct from. If this option\nis present, the `specs` argument will be ignored. Instead, constructor will\ncall conda to create a temporary environment, constructor will build and\ninstaller from that, and the temporary environment will be removed.\nThis ensures that constructor is using the precise local conda configuration\nto discover and install the packages. The created environment MUST include\n`python`.\n\nRead notes about the solver in the `specs` field.",
-      "title": "Environment File",
-      "type": "string"
+      "title": "Environment File"
     },
     "transmute_file_type": {
-      "default": "",
+      "anyOf": [
+        {
+          "const": ".conda",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "File type extension for the files to be transmuted into. Currently supports\nonly '.conda'. See conda-package-handling for supported extension names.\nIf left empty, no transmuting is done.",
-      "title": "Transmute File Type",
-      "type": "string"
+      "title": "Transmute File Type"
     },
     "conda_default_channels": {
       "default": [],
       "description": "If this value is provided as well as `write_condarc`, then the channels\nin this list will be included as the value of the `default_channels:`\noption in the environment's `.condarc` file. This will have an impact\nonly if `conda` is included in the environmnent.",
-      "items": {},
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
       "title": "Conda Default Channels",
       "type": "array"
     },
     "conda_channel_alias": {
-      "default": "",
-      "description": "The channel alias that would be assumed for the created installer\n(only useful if it includes conda).",
-      "title": "Conda Channel Alias",
-      "type": "string"
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The channel alias that would be assumed for the created installer\n(only useful if it includes `conda`).",
+      "title": "Conda Channel Alias"
     },
     "extra_envs": {
-      "default": [],
-      "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`. This should be a map of `str` (environment\nname) to a dictionary of options:\n- `specs` (list of str): which packages to install in that environment\n- `environment` (str): same as global option, for this env\n- `environment_file` (str): same as global option, for this env\n- `channels` (list of str): using these channels; if not provided, the global\n  value is used. To override inheritance, set it to an empty list.\n- `channels_remap` (list of str): same as global option, for this env;\n  if not provided, the global value is used. To override inheritance, set it to\n  an empty list.\n- `user_requested_specs` (list of str): same as the global option, but for this env;\n  if not provided, global value is _not_ used\n- `menu_packages` (list of str): same as the global option, for this env;\n  if not provided, the global value is _not_ used.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)\n- If a global `exclude` option is used, it will have an effect on the environments created\n  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the\n  extra environments will have it either. Unlike the global option, an error will not be\n  thrown if the excluded package is not found in the packages required by the extra environment.\n  To override the global `exclude` value, use an empty list `[]`.",
-      "items": {},
+      "additionalProperties": {
+        "$ref": "#/$defs/ExtraEnv"
+      },
+      "default": {},
+      "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)\n- If a global `exclude` option is used, it will have an effect on the environments created\n  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the\n  extra environments will have it either. Unlike the global option, an error will not be\n  thrown if the excluded package is not found in the packages required by the extra environment.\n  To override the global `exclude` value, use an empty list `[]`.",
+      "propertyNames": {
+        "minLength": 1
+      },
       "title": "Extra Envs",
-      "type": "array"
+      "type": "object"
     },
     "register_envs": {
-      "default": false,
-      "description": "Whether to register the environments created by the installer (both `base` and `extra_envs`)\nin `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9. Defaults to `True`.",
+      "default": true,
+      "description": "Whether to register the environments created by the installer (both `base` and `extra_envs`)\nin `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9.",
       "title": "Register Envs",
       "type": "boolean"
     },
     "installer_filename": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "The filename of the installer being created. If not supplied, a reasonable\ndefault will determined by the `name`, `version`, platform, and installer type.",
-      "title": "Installer Filename",
-      "type": "string"
+      "title": "Installer Filename"
     },
     "installer_type": {
-      "default": [],
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "The type of the installer being created.  Possible values are:\n- `sh`: shell-based installer for Linux or macOS;\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special\nvalue of `all` builds _both_ `sh` and `pkg` installers on macOS, as well\nas `sh` on Linux and `exe` on Windows.\n\nNotes for silent mode `/S` on Windows EXEs:\n- NSIS Silent mode will not print any error message, but will silently abort the installation.\n  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which\n  can be searched for `::error::` strings. Pre- and post- install scripts will only throw an error\n  if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.\n- The `/D` flag can be used to specify the target location. It must be the last argument in\n  the command and should NEVER be quoted, even if it contains spaces. For example:\n  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.\n\n[nsis-log]: https://nsis.sourceforge.io/Special_Builds",
-      "items": {},
-      "title": "Installer Type",
-      "type": "array"
+      "title": "Installer Type"
     },
     "license_file": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Path to the license file being displayed by the installer during the install\nprocess. It must be plain text (.txt) for shell-based installers. On PKG,\n.txt, .rtf and .html are supported. On Windows, .txt and .rtf are supported.",
-      "title": "License File",
-      "type": "string"
+      "title": "License File"
     },
     "keep_pkgs": {
       "default": false,
@@ -144,150 +399,320 @@
     },
     "batch_mode": {
       "default": false,
-      "description": "Only affects ``.sh`` installers. If ``False`` (default), the installer launches\nan interactive wizard guiding the user through the available options. If\n``True``, the installer runs automatically as if ``-b`` was passed.",
+      "description": "Only affects `.sh` installers. If `False` (default), the installer launches\nan interactive wizard guiding the user through the available options. If\n`True`, the installer runs automatically as if `-b` was passed.",
       "title": "Batch Mode",
       "type": "boolean"
     },
     "signing_identity_name": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "By default, the MacOS pkg installer isn't signed. If an identity name is specified\nusing this option, it will be used to sign the installer with Apple's `productsign`.\nNote that you will need to have a certificate (usually an \"Installer certificate\")\nand the corresponding private key, together called an 'identity', in one of your\naccessible keychains. Common values for this option follow this format\n`Developer ID Installer: Name of the owner (XXXXXX)`.",
-      "title": "Signing Identity Name",
-      "type": "string"
+      "title": "Signing Identity Name"
     },
     "notarization_identity_name": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If the pkg installer is going to be signed with `signing_identity_name`, you\ncan also prepare the bundle for notarization. This will use Apple's `codesign`\nto sign `conda.exe`. For this, you need an \"Application certificate\" (different from the\n\"Installer certificate\" mentioned above). Common values for this option follow the format\n`Developer ID Application: Name of the owner (XXXXXX)`.",
-      "title": "Notarization Identity Name",
-      "type": "string"
+      "title": "Notarization Identity Name"
     },
     "windows_signing_tool": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "The tool used to sign Windows installers. Must be one of: azuresigntool, signtool.\nSome tools require `signing_certificate` to be set.\nDefaults to `signtool` if `signing_certificate` is set.\nAdditional environment variables may need to be used to configure signing.\nSee the documentation for details:\nhttps://conda.github.io/constructor/howto/#signing-exe-installers",
-      "title": "Windows Signing Tool",
-      "type": "string"
+      "title": "Windows Signing Tool"
     },
     "signing_certificate": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "On Windows only, set this key to the path of the certificate file to be used\nwith the `windows_signing_tool`.",
-      "title": "Signing Certificate",
-      "type": "string"
+      "title": "Signing Certificate"
     },
     "attempt_hardlinks": {
-      "default": [],
+      "anyOf": [
+        {
+          "deprecated": true,
+          "type": "boolean"
+        },
+        {
+          "deprecated": true,
+          "type": "string"
+        }
+      ],
+      "default": true,
       "description": "_Obsolete_. The current version of constructor relies on the standalone\nconda executable for its installation behavior. This option is now\nignored with a warning.",
-      "items": {},
-      "title": "Attempt Hardlinks",
-      "type": "array"
+      "title": "Attempt Hardlinks"
     },
     "write_condarc": {
       "default": false,
-      "description": "By default, no `.condarc` file is written. If set, a `.condarc` file is written to\nthe base environment if there are any channels or conda_default_channels is set.",
+      "description": "By default, no `.condarc` file is written. If set, a `.condarc` file is written to\nthe base environment if there are any channels or `conda_default_channels` is set.",
       "title": "Write Condarc",
       "type": "boolean"
     },
     "condarc": {
-      "default": [],
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If set, a `.condarc` file is written to the base environment containing the contents\nof this value. The value can either be a string (likely a multi-line string) or\na dictionary, which will be converted to a YAML string for writing. _Note:_ if this\noption is used, then all other options related to the construction of a `.condarc`\nfile (`write_condarc`, `conda_default_channels`, etc.) are ignored.",
-      "items": {},
-      "title": "Condarc",
-      "type": "array"
+      "title": "Condarc"
     },
     "company": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Name of the company/entity who is responsible for the installer.",
-      "title": "Company",
-      "type": "string"
+      "title": "Company"
     },
     "reverse_domain_identifier": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Unique identifier for this package, formatted with reverse domain notation. This is\nused internally in the PKG installers to handle future updates and others. If not\nprovided, it will default to `io.continuum`. (MacOS only)",
-      "title": "Reverse Domain Identifier",
-      "type": "string"
+      "title": "Reverse Domain Identifier"
     },
     "uninstall_name": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Application name in the Windows \"Programs and Features\" control panel.\nDefaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.",
-      "title": "Uninstall Name",
-      "type": "string"
+      "title": "Uninstall Name"
     },
     "script_env_variables": {
-      "default": [],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
       "description": "Dictionary of additional environment variables to be made available to\nthe pre_install and post_install scripts, in the form of VAR:VALUE\npairs. These environment variables are in addition to those in the\n`post_install` section above and take precedence in the case of name\ncollisions.\n\nOn Unix the variable values are automatically single quoted, allowing\nyou to supply strings with spaces, without needing to worry about\nescaping. As a consequence, string interpolation is disabled: if you\nneed string interpolation, you can apply it in the\npre_install/post_install script(s). If you need to include single quotes\nin your value, you can escape them by replacing each single quote with\n`'''`.\n\nOn Windows, single quotes and double quotes are not supported.\n\nNote that the # (hash) character cannot be used as it denotes yaml\ncomments for all platforms.",
-      "items": {},
+      "propertyNames": {
+        "minLength": 1
+      },
       "title": "Script Env Variables",
-      "type": "array"
+      "type": "object"
     },
     "pre_install": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Path to a pre-install script, run after the package cache has been set, but\nbefore the files are linked to their final locations. As a result, you should\nonly rely on tools known to be available on most systems (e.g. `bash`, `cmd`,\netc). See `post_install` for information about available environment variables.",
-      "title": "Pre Install",
-      "type": "string"
+      "title": "Pre Install"
     },
     "pre_install_desc": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "A description of the purpose of the supplied `pre_install` script. If this\nstring is supplied and non-empty, then the Windows and macOS GUI installers\nwill display it along with checkbox to enable or disable the execution of the\nscript. If this string is not supplied, it is assumed that the script\nis compulsory and the option to disable it will not be offered.\n\nThis option has no effect on `SH` installers.",
-      "title": "Pre Install Desc",
-      "type": "string"
+      "title": "Pre Install Desc"
     },
     "post_install": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Path to a post-install script. Some notes:\n\n- For Unix `.sh` installers, the shebang line is respected if present;\n  otherwise, the script is run by the POSIX shell `sh`. Note that the use\n  of a shebang can reduce the portability of the installer. The\n  installation path is available as `${PREFIX}`. Installer metadata is\n  available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`\n  environment variables. `${INSTALLER_TYPE}` is set to `SH`.\n  `${INSTALLER_UNATTENDED}` will be `\"1\"` in batch mode (`-b`), `\"0\"` otherwise.\n- For PKG installers, the shebang line is respected if present;\n  otherwise, `bash` is used. The same variables mentioned for `sh`\n  installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.\n  `${INSTALLER_UNATTENDED}` will be `\"1\"` for command line installs, `\"0\"` otherwise.\n- For Windows `.exe` installers, the script must be a `.bat` file.\n  Installation path is available as `%PREFIX%`. Metadata about\n  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,\n  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.\n  `%INSTALLER_UNATTENDED%` will be `\"1\"` in silent mode (`/S`), `\"0\"` otherwise.\n\nIf necessary, you can activate the installed `base` environment like this:\n\n- Unix: `source \"$PREFIX/etc/profile.d/conda.sh\" && conda activate \"$PREFIX\"`\n- Windows: `call \"%PREFIX%\\Scripts\\activate.bat\"`",
-      "title": "Post Install",
-      "type": "string"
+      "title": "Post Install"
     },
     "post_install_desc": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "A description of the purpose of the supplied `post_install` script. If this\nstring is supplied and non-empty, then the Windows and macOS GUI installers\nwill display it along with checkbox to enable or disable the execution of the\nscript. If this string is not supplied, it is assumed that the script\nis compulsory and the option to disable it will not be offered.\n\nThis option has no effect on `SH` installers.",
-      "title": "Post Install Desc",
-      "type": "string"
+      "title": "Post Install Desc"
     },
     "pre_uninstall": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Path to a pre uninstall script. This is only supported for on Windows,\nand must be a `.bat` file. Installation path is available as `%PREFIX%`.\nMetadata about the installer can be found in the `%INSTALLER_NAME%`,\n`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.\n`%INSTALLER_TYPE%` is set to `EXE`.",
-      "title": "Pre Uninstall",
-      "type": "string"
+      "title": "Pre Uninstall"
     },
     "default_prefix": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Set default install prefix. On Linux, if not provided, the default prefix\nis `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows,\nthis is used only for \"Just Me\" installation; for \"All Users\" installation,\nuse the `default_prefix_all_users` key. If not provided, the default prefix\nis `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at\ninstallation time.",
-      "title": "Default Prefix",
-      "type": "string"
+      "title": "Default Prefix"
     },
     "default_prefix_domain_user": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Set default installation prefix for domain user. If not provided, the\ninstallation prefix for domain user will be `%LOCALAPPDATA%\\<NAME>`.\nBy default, it is different from the `default_prefix` value to avoid installing\nthe distribution in the roaming profile. Environment variables will be expanded\nat installation time. Windows only.",
-      "title": "Default Prefix Domain User",
-      "type": "string"
+      "title": "Default Prefix Domain User"
     },
     "default_prefix_all_users": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Set default installation prefix for All Users installation. If not provided,\nthe installation prefix for all users installation will be\n`%ALLUSERSPROFILE%\\<NAME>`. Environment variables will be expanded at installation\ntime. Windows only.",
-      "title": "Default Prefix All Users",
-      "type": "string"
+      "title": "Default Prefix All Users"
     },
     "default_location_pkg": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Default installation subdirectory in the chosen volume. In PKG installers,\ndefault installation locations are configured differently. The user can choose\nbetween a \"Just me\" installation (which would result in `~/<PKG_NAME>`) or another\nvolume (which defaults to `<VOLUME>/<PKG_NAME>`). If you want a different default,\nyou can add a middle component with this option, let's call it `location`. It would\nresult in these default values: `~/<LOCATION>/<PKG_NAME>` for \"Just me\",\n`<VOLUME>/<LOCATION>/<PKG_NAME>` for custom volumes. For example, setting this option\nto `/Library` in a \"Just me\" installation will give you `~/Library/<PKG_NAME>`.\nInternally, this is passed to `pkgbuild --install-location`.\nmacOS only.",
-      "title": "Default Location Pkg",
-      "type": "string"
+      "title": "Default Location Pkg"
     },
     "pkg_domains": {
       "default": {},
       "description": "The domains the package can be installed into. For a detailed explanation, see:\nhttps://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html\nconstructor defaults to `enable_anywhere=true` and `enable_currentUserHome=true`.\n`enable_localSystem` should not be set to true unless `default_location_pkg` is set as well.\nmacOS only.",
+      "propertyNames": {
+        "minLength": 1
+      },
       "title": "Pkg Domains",
       "type": "object"
     },
     "pkg_name": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Internal identifier for the installer. This is used in the build prefix and will\ndetermine part of the default location path. Combine with `default_location_pkg`\nfor more flexibility. If not provided, the value of `name` will be used.  (MacOS only)",
-      "title": "Pkg Name",
-      "type": "string"
+      "title": "Pkg Name"
     },
     "install_path_exists_error_text": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Error message that will be shown if the installation path already exists.\nYou cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is\navailable and set to the destination causing the error. Defaults to:\n\n> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and\n> choose another location in the Destination Select step.\n\n(MacOS only)",
-      "title": "Install Path Exists Error Text",
-      "type": "string"
+      "title": "Install Path Exists Error Text"
     },
     "progress_notifications": {
       "default": false,
@@ -296,159 +721,350 @@
       "type": "boolean"
     },
     "welcome_image": {
-      "default": "",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)\nto be used as the welcome image for the Windows and PKG installers.\nThe image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on Macos.\nBy default, an image is automatically generated on Windows. On MacOS, Anaconda's\nlogo is shown if this key is not provided. If you don't want a background on\nPKG installers, set this key to `\"\"` (empty string).",
-      "title": "Welcome Image",
-      "type": "string"
+      "title": "Welcome Image"
     },
     "header_image": {
-      "default": "",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Like `welcome_image` for Windows, re-sized to 150 x 57 pixels.",
-      "title": "Header Image",
-      "type": "string"
+      "title": "Header Image"
     },
     "icon_image": {
-      "default": "",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Like `welcome_image` for Windows, re-sized to 256 x 256 pixels.",
-      "title": "Icon Image",
-      "type": "string"
+      "title": "Icon Image"
     },
     "default_image_color": {
-      "default": "",
-      "description": "The color of the default images (when not providing explicit image files)\nused on Windows.  Possible values are `red`, `green`, `blue`, `yellow`.\nThe default is `blue`.",
+      "default": "blue",
+      "description": "The color of the default images (when not providing explicit image files)\nused on Windows. Possible values are `red`, `green`, `blue`, `yellow`.\nThe default is `blue`.",
+      "enum": [
+        "red",
+        "green",
+        "blue",
+        "yellow"
+      ],
       "title": "Default Image Color",
       "type": "string"
     },
     "welcome_image_text": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `welcome_image` is not provided, use this text when generating the image\n(Windows and PKG only). Defaults to `name` on Windows.",
-      "title": "Welcome Image Text",
-      "type": "string"
+      "title": "Welcome Image Text"
     },
     "header_image_text": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `header_image` is not provided, use this text when generating the image\n(Windows only). Defaults to `name`.",
-      "title": "Header Image Text",
-      "type": "string"
+      "title": "Header Image Text"
     },
     "initialize_conda": {
-      "default": false,
+      "default": true,
       "description": "Add an option to the installer so the user can choose whether to run `conda init`\nafter the install. See also `initialize_by_default`.",
       "title": "Initialize Conda",
       "type": "boolean"
     },
     "initialize_by_default": {
-      "default": false,
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Whether to add the installation to the PATH environment variable. The default\nis true for GUI installers (msi, pkg) and False for shell installers. The user\nis able to change the default during interactive installation. NOTE: For Windows,\n`AddToPath` is disabled when `InstallationType=AllUsers`.",
-      "title": "Initialize By Default",
-      "type": "boolean"
+      "title": "Initialize By Default"
     },
     "register_python": {
-      "default": false,
+      "default": true,
       "description": "Whether to offer the user an option to register the installed Python instance as the\nsystem's default Python. (Windows only)",
       "title": "Register Python",
       "type": "boolean"
     },
     "register_python_default": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "default": false,
       "description": "Default choice for whether to register the installed Python instance as the\nsystem's default Python. The user is still able to change this during\ninteractive installation. (Windows only).",
-      "title": "Register Python Default",
-      "type": "boolean"
+      "title": "Register Python Default"
     },
     "check_path_length": {
-      "default": false,
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Check the length of the path where the distribution is installed to ensure nodejs\ncan be installed.  Raise a message to request shorter path (less than 46 character)\nor enable long path on windows > 10 (require admin right). Default is True. (Windows only).\n\nRead notes about the particularities of Windows silent mode `/S` in the\n`installer_type` documentation.",
-      "title": "Check Path Length",
-      "type": "boolean"
+      "title": "Check Path Length"
     },
     "check_path_spaces": {
-      "default": false,
+      "default": true,
       "description": "Check if the path where the distribution is installed contains spaces. Default is True.\nTo allow installations with spaces, change to False. Note that:\n\n- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.\n- `conda` cannot be present in the `base` environment\n\nRead notes about the particularities of Windows silent mode `/S` in the\n`installer_type` documentation.",
       "title": "Check Path Spaces",
       "type": "boolean"
     },
     "nsis_template": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `nsis_template` is not provided, constructor uses its default\nNSIS template. For more complete customization for the installation experience,\nprovide an NSIS template file. (Windows only).",
-      "title": "Nsis Template",
-      "type": "string"
+      "title": "Nsis Template"
     },
     "welcome_file": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the introduction.\nFile can be plain text (.txt), rich text (.rtf) or HTML (.html). If\nboth `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\n(MacOS only).\n\nIf the installer is for windows and welcome file type is nsi,\nit will use the nsi script to add in extra pages before the installer\nbegins the installation process.",
-      "title": "Welcome File",
-      "type": "string"
+      "title": "Welcome File"
     },
     "welcome_text": {
-      "default": "",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the introduction.\nIf this key is missing, it defaults to a message about Anaconda Cloud.\nYou can disable it altogether so it defaults to the system message\nif you set this key to `\"\"` (empty string).\n(MacOS only).",
-      "title": "Welcome Text",
-      "type": "string"
+      "title": "Welcome Text"
     },
     "readme_file": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the welcome screen.\nFile can be plain text (.txt), rich text (.rtf) or HTML (.html). If\nboth `readme_file` and `readme_text` are provided, `readme_file` takes precedence.\n(MacOS only).",
-      "title": "Readme File",
-      "type": "string"
+      "title": "Readme File"
     },
     "readme_text": {
-      "default": "",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the welcome screen.\nIf this key is missing, it defaults to a message about Anaconda Cloud.\nYou can disable it altogether if you set this key to `\"\"` (empty string).\n(MacOS only).",
-      "title": "Readme Text",
-      "type": "string"
+      "title": "Readme Text"
     },
     "post_install_pages": {
-      "default": [],
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Adds extra pages to the installers to be shown after installation.\n\nFor PKG installers, these can be compiled `installer` plug-ins or\ndirectories containing an Xcode project. In the latter case,\nconstructor will try and compile the project file using `xcodebuild`.\n\nFor Windows, the extra pages must be `.nsi` files.\nThey will be inserted as-is before the conclusion page.",
-      "items": {},
-      "title": "Post Install Pages",
-      "type": "array"
+      "title": "Post Install Pages"
     },
     "conclusion_file": {
-      "default": "",
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown at the end of the installer upon success. File can be\nplain text (.txt), rich text (.rtf) or HTML (.html). If both\n`conclusion_file` and `conclusion_text` are provided,\n`conclusion_file` takes precedence. (MacOS only).\n\nIf the installer is for Windows, the file type must be nsi.",
-      "title": "Conclusion File",
-      "type": "string"
+      "title": "Conclusion File"
     },
     "conclusion_text": {
-      "default": "",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "A message that will be shown at the end of the installer upon success.\nThe behaviour is slightly different across installer types:\n- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.\n  You can disable it altogether so it defaults to the system message if you set this\n  key to `\"\"` (empty string).\n- EXE: The first line will be used as a title. The following lines will be used as text.\n(macOS PKG and Windows only).",
-      "title": "Conclusion Text",
-      "type": "string"
+      "title": "Conclusion Text"
     },
     "extra_files": {
+      "anyOf": [
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "items": {
+            "additionalProperties": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "propertyNames": {
+              "minLength": 1
+            },
+            "type": "object"
+          },
+          "type": "array"
+        }
+      ],
       "default": [],
       "description": "Extra, non-packaged files that should be added to the installer. If provided as relative\npaths, they will be considered relative to the directory where `construct.yaml` is.\nThis setting can be passed as a list of:\n- `str`: each found file will be copied to the root prefix\n- `Mapping[str, str]`: map of path in disk to path in prefix.",
-      "items": {},
-      "title": "Extra Files",
-      "type": "array"
+      "title": "Extra Files"
     },
     "temp_extra_files": {
+      "anyOf": [
+        {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
+          "items": {
+            "additionalProperties": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "propertyNames": {
+              "minLength": 1
+            },
+            "type": "object"
+          },
+          "type": "array"
+        }
+      ],
       "default": [],
       "description": "Temporary files that could be referenced in the installation process (i.e. customized\n`welcome_file` and `conclusion_file` (see above)) . Should be a list of\nfile paths, relative to the directory where `construct.yaml` is. In Windows, these\nfiles will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during\ninstall process (Windows only).\n\nSupports the same values as `extra_files`.",
-      "items": {},
-      "title": "Temp Extra Files",
-      "type": "array"
+      "title": "Temp Extra Files"
     },
     "build_outputs": {
       "default": [],
       "description": "Additional artifacts to be produced after building the installer.\nIt expects either a list of strings or single-key dictionaries:\nAllowed keys are:\n- `hash`: The hash of the installer files.\n    - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available algorithms:\n       https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available\n- `info.json`: The internal `info` object, serialized to JSON. Takes no options.\n- `pkgs_list`: The list of packages contained in a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:\n    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.\n      If false, only the path will be included.\n    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the\n      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors'\n      argument is valid. See https://docs.python.org/3/library/functions.html#open.",
-      "items": {},
+      "items": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "propertyNames": {
+              "minLength": 1
+            },
+            "type": "object"
+          }
+        ]
+      },
       "title": "Build Outputs",
       "type": "array"
     },
     "uninstall_with_conda_exe": {
-      "default": false,
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
       "description": "Use the standalone binary to perform the uninstallation.\nRequires conda-standalone 24.11.0 or newer.",
-      "title": "Uninstall With Conda Exe",
-      "type": "boolean"
+      "title": "Uninstall With Conda Exe"
     }
   },
   "required": [
     "name",
     "version"
   ],
-  "title": "ConstructorModel",
+  "title": "ConstructorConfiguration",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }
