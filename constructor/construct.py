@@ -10,6 +10,7 @@ import re
 import sys
 from functools import partial
 from os.path import dirname
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 from ruamel.yaml import YAMLError
@@ -21,6 +22,7 @@ WIN_SIGNTOOLS = [
     "azuresigntool",
     "signtool",
 ]
+HERE = Path(__file__).parent
 
 
 class ConstructorConfiguration(BaseModel):
@@ -135,7 +137,7 @@ class ConstructorConfiguration(BaseModel):
     conda executable for its installation behavior. This option is now
     ignored with a warning.
     """
-    environment: str = str()
+    environment: str = ''
     """
     Name of the environment to construct from. If this option is present, the
     `specs` argument will be ignored. Using this option allows the user to
@@ -143,7 +145,7 @@ class ConstructorConfiguration(BaseModel):
     run constructor with full confidence that the exact environment will be
     reproduced.
     """
-    environment_file: str = str()
+    environment_file: str = ''
     """
     Path to an environment file (TXT or YAML) to construct from. If this option
     is present, the `specs` argument will be ignored. Instead, constructor will
@@ -155,7 +157,7 @@ class ConstructorConfiguration(BaseModel):
 
     Read notes about the solver in the `specs` field.
     """
-    transmute_file_type: str = str()
+    transmute_file_type: str = ''
     """
     File type extension for the files to be transmuted into. Currently supports
     only '.conda'. See conda-package-handling for supported extension names.
@@ -168,7 +170,7 @@ class ConstructorConfiguration(BaseModel):
     option in the environment's `.condarc` file. This will have an impact
     only if `conda` is included in the environmnent.
     """
-    conda_channel_alias: str = str()
+    conda_channel_alias: str = ''
     """
     The channel alias that would be assumed for the created installer
     (only useful if it includes conda).
@@ -205,7 +207,7 @@ class ConstructorConfiguration(BaseModel):
     Whether to register the environments created by the installer (both `base` and `extra_envs`)
     in `~/.conda/environments.txt`. Only compatible with conda-standalone >=23.9. Defaults to `True`.
     """
-    installer_filename: str = str()
+    installer_filename: str = ''
     """
     The filename of the installer being created. If not supplied, a reasonable
     default will determined by the `name`, `version`, platform, and installer type.
@@ -232,7 +234,7 @@ class ConstructorConfiguration(BaseModel):
 
     [nsis-log]: https://nsis.sourceforge.io/Special_Builds
     """
-    license_file: str = str()
+    license_file: str = ''
     """
     Path to the license file being displayed by the installer during the install
     process. It must be plain text (.txt) for shell-based installers. On PKG,
@@ -252,7 +254,7 @@ class ConstructorConfiguration(BaseModel):
     an interactive wizard guiding the user through the available options. If
     ``True``, the installer runs automatically as if ``-b`` was passed.
     """
-    signing_identity_name: str = str()
+    signing_identity_name: str = ''
     """
     By default, the MacOS pkg installer isn't signed. If an identity name is specified
     using this option, it will be used to sign the installer with Apple's `productsign`.
@@ -261,7 +263,7 @@ class ConstructorConfiguration(BaseModel):
     accessible keychains. Common values for this option follow this format
     `Developer ID Installer: Name of the owner (XXXXXX)`.
     """
-    notarization_identity_name: str = str()
+    notarization_identity_name: str = ''
     """
     If the pkg installer is going to be signed with `signing_identity_name`, you
     can also prepare the bundle for notarization. This will use Apple's `codesign`
@@ -269,7 +271,7 @@ class ConstructorConfiguration(BaseModel):
     "Installer certificate" mentioned above). Common values for this option follow the format
     `Developer ID Application: Name of the owner (XXXXXX)`.
     """
-    windows_signing_tool: str = str()
+    windows_signing_tool: str = ''
     """
     The tool used to sign Windows installers. Must be one of: azuresigntool, signtool.
     Some tools require `signing_certificate` to be set.
@@ -278,7 +280,7 @@ class ConstructorConfiguration(BaseModel):
     See the documentation for details:
     https://conda.github.io/constructor/howto/#signing-exe-installers
     """
-    signing_certificate: str = str()
+    signing_certificate: str = ''
     """
     On Windows only, set this key to the path of the certificate file to be used
     with the `windows_signing_tool`.
@@ -302,17 +304,17 @@ class ConstructorConfiguration(BaseModel):
     option is used, then all other options related to the construction of a `.condarc`
     file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
     """
-    company: str = str()
+    company: str = ''
     """
     Name of the company/entity who is responsible for the installer.
     """
-    reverse_domain_identifier: str = str()
+    reverse_domain_identifier: str = ''
     """
     Unique identifier for this package, formatted with reverse domain notation. This is
     used internally in the PKG installers to handle future updates and others. If not
     provided, it will default to `io.continuum`. (MacOS only)
     """
-    uninstall_name: str = str()
+    uninstall_name: str = ''
     """
     Application name in the Windows "Programs and Features" control panel.
     Defaults to `${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})`.
@@ -338,14 +340,14 @@ class ConstructorConfiguration(BaseModel):
     Note that the # (hash) character cannot be used as it denotes yaml
     comments for all platforms.
     """
-    pre_install: str = str()
+    pre_install: str = ''
     """
     Path to a pre-install script, run after the package cache has been set, but
     before the files are linked to their final locations. As a result, you should
     only rely on tools known to be available on most systems (e.g. `bash`, `cmd`,
     etc). See `post_install` for information about available environment variables.
     """
-    pre_install_desc: str = str()
+    pre_install_desc: str = ''
     """
     A description of the purpose of the supplied `pre_install` script. If this
     string is supplied and non-empty, then the Windows and macOS GUI installers
@@ -355,7 +357,7 @@ class ConstructorConfiguration(BaseModel):
 
     This option has no effect on `SH` installers.
     """
-    post_install: str = str()
+    post_install: str = ''
     """
     Path to a post-install script. Some notes:
 
@@ -381,7 +383,7 @@ class ConstructorConfiguration(BaseModel):
     - Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
     - Windows: `call "%PREFIX%\\Scripts\\activate.bat"`
     """
-    post_install_desc: str = str()
+    post_install_desc: str = ''
     """
     A description of the purpose of the supplied `post_install` script. If this
     string is supplied and non-empty, then the Windows and macOS GUI installers
@@ -391,7 +393,7 @@ class ConstructorConfiguration(BaseModel):
 
     This option has no effect on `SH` installers.
     """
-    pre_uninstall: str = str()
+    pre_uninstall: str = ''
     """
     Path to a pre uninstall script. This is only supported for on Windows,
     and must be a `.bat` file. Installation path is available as `%PREFIX%`.
@@ -399,7 +401,7 @@ class ConstructorConfiguration(BaseModel):
     `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
     `%INSTALLER_TYPE%` is set to `EXE`.
     """
-    default_prefix: str = str()
+    default_prefix: str = ''
     """
     Set default install prefix. On Linux, if not provided, the default prefix
     is `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows,
@@ -408,7 +410,7 @@ class ConstructorConfiguration(BaseModel):
     is `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at
     installation time.
     """
-    default_prefix_domain_user: str = str()
+    default_prefix_domain_user: str = ''
     """
     Set default installation prefix for domain user. If not provided, the
     installation prefix for domain user will be `%LOCALAPPDATA%\\<NAME>`.
@@ -416,14 +418,14 @@ class ConstructorConfiguration(BaseModel):
     the distribution in the roaming profile. Environment variables will be expanded
     at installation time. Windows only.
     """
-    default_prefix_all_users: str = str()
+    default_prefix_all_users: str = ''
     """
     Set default installation prefix for All Users installation. If not provided,
     the installation prefix for all users installation will be
     `%ALLUSERSPROFILE%\\<NAME>`. Environment variables will be expanded at installation
     time. Windows only.
     """
-    default_location_pkg: str = str()
+    default_location_pkg: str = ''
     """
     Default installation subdirectory in the chosen volume. In PKG installers,
     default installation locations are configured differently. The user can choose
@@ -444,13 +446,13 @@ class ConstructorConfiguration(BaseModel):
     `enable_localSystem` should not be set to true unless `default_location_pkg` is set as well.
     macOS only.
     """
-    pkg_name: str = str()
+    pkg_name: str = ''
     """
     Internal identifier for the installer. This is used in the build prefix and will
     determine part of the default location path. Combine with `default_location_pkg`
     for more flexibility. If not provided, the value of `name` will be used.  (MacOS only)
     """
-    install_path_exists_error_text: str = str()
+    install_path_exists_error_text: str = ''
     """
     Error message that will be shown if the installation path already exists.
     You cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is
@@ -469,7 +471,7 @@ class ConstructorConfiguration(BaseModel):
     so the user receives updates after each command executed by the installer.
     (macOS only)
     """
-    welcome_image: str = str()
+    welcome_image: str = ''
     """
     Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
     to be used as the welcome image for the Windows and PKG installers.
@@ -478,26 +480,26 @@ class ConstructorConfiguration(BaseModel):
     logo is shown if this key is not provided. If you don't want a background on
     PKG installers, set this key to `""` (empty string).
     """
-    header_image: str = str()
+    header_image: str = ''
     """
     Like `welcome_image` for Windows, re-sized to 150 x 57 pixels.
     """
-    icon_image: str = str()
+    icon_image: str = ''
     """
     Like `welcome_image` for Windows, re-sized to 256 x 256 pixels.
     """
-    default_image_color: str = str()
+    default_image_color: str = ''
     """
     The color of the default images (when not providing explicit image files)
     used on Windows.  Possible values are `red`, `green`, `blue`, `yellow`.
     The default is `blue`.
     """
-    welcome_image_text: str = str()
+    welcome_image_text: str = ''
     """
     If `welcome_image` is not provided, use this text when generating the image
     (Windows and PKG only). Defaults to `name` on Windows.
     """
-    header_image_text: str = str()
+    header_image_text: str = ''
     """
     If `header_image` is not provided, use this text when generating the image
     (Windows only). Defaults to `name`.
@@ -545,13 +547,13 @@ class ConstructorConfiguration(BaseModel):
     Read notes about the particularities of Windows silent mode `/S` in the
     `installer_type` documentation.
     """
-    nsis_template: str = str()
+    nsis_template: str = ''
     """
     If `nsis_template` is not provided, constructor uses its default
     NSIS template. For more complete customization for the installation experience,
     provide an NSIS template file. (Windows only).
     """
-    welcome_file: str = str()
+    welcome_file: str = ''
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the introduction.
@@ -563,7 +565,7 @@ class ConstructorConfiguration(BaseModel):
     it will use the nsi script to add in extra pages before the installer
     begins the installation process.
     """
-    welcome_text: str = str()
+    welcome_text: str = ''
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the introduction.
@@ -572,7 +574,7 @@ class ConstructorConfiguration(BaseModel):
     if you set this key to `""` (empty string).
     (MacOS only).
     """
-    readme_file: str = str()
+    readme_file: str = ''
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the welcome screen.
@@ -580,7 +582,7 @@ class ConstructorConfiguration(BaseModel):
     both `readme_file` and `readme_text` are provided, `readme_file` takes precedence.
     (MacOS only).
     """
-    readme_text: str = str()
+    readme_text: str = ''
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown before the license information, right after the welcome screen.
@@ -599,7 +601,7 @@ class ConstructorConfiguration(BaseModel):
     For Windows, the extra pages must be `.nsi` files.
     They will be inserted as-is before the conclusion page.
     """
-    conclusion_file: str = str()
+    conclusion_file: str = ''
     """
     If `installer_type` is `pkg` on MacOS, this message will be
     shown at the end of the installer upon success. File can be
@@ -609,7 +611,7 @@ class ConstructorConfiguration(BaseModel):
 
     If the installer is for Windows, the file type must be nsi.
     """
-    conclusion_text: str = str()
+    conclusion_text: str = ''
     """
     A message that will be shown at the end of the installer upon success.
     The behaviour is slightly different across installer types:
@@ -860,7 +862,7 @@ def verify(info):
 
 
 def dump_schema():
-    model = ConstructorModel(name="...", version="...")
+    model = ConstructorConfiguration(name="...", version="...")
     obj = model.model_json_schema()
     obj["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     (HERE / "data" / "constructor.schema.json").write_text(json.dumps(obj, indent=2))
