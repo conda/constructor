@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../constructor/data/constructor.schema.json
 name: Signed_AzureSignTool
 version: X
 installer_type: exe
