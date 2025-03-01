@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix extra_file functionality on exe installers. (#942)
+* Fix `extra_files` functionality on EXE installers. (#942)
 
 ### Deprecations
 
