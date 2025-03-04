@@ -1296,6 +1296,9 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_EXTRA_SAFETY_CHECKS", "no").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_PKGS_DIRS", "$INSTDIR\pkgs")".r0'
+    # Spinners in conda write a new character with each movement of the spinner.
+    # For long installation times, this may cause a buffer overflow, crashing the installer.
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_QUIET", "1")".r0'
     # Extra info for pre and post install scripts
     # NOTE: If more vars are added, make sure to update the examples/scripts tests too
     #       There's a similar block for the pre_uninstall script, further down this file.
@@ -1526,6 +1529,10 @@ Section "Uninstall"
     # our newest Python builds have a patch that allows us to control the PATH search stuff much more
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_DLL_SEARCH_MODIFICATION_ENABLE", "1").r0'
+
+    # Spinners in conda write a new character with each movement of the spinner.
+    # For long installation times, this may cause a buffer overflow, crashing the installer.
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_QUIET", "1")".r0'
 
     # Read variables the uninstaller needs from the registry
     StrCpy $R0 "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
