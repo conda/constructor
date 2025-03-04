@@ -105,6 +105,7 @@ jobs:
             && files+=(--file "dev/extra-requirements-${{ runner.os }}.txt")
           conda install ${files[@]} -y
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
+          echo "NSIS_SCRIPTS_RAISE_ERRORS=1" >> $GITHUB_ENV
           pip install -e . --no-deps --no-build-isolation
       - name: Set up conda executable
         run: |
