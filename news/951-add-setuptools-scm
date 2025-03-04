@@ -16,4 +16,4 @@
 
 ### Other
 
-* Add `setuptools-scm` to build recipe. (#951)
+* Add `setuptools_scm` to build recipe. (#951)
