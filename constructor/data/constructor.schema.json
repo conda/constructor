@@ -145,7 +145,7 @@
             }
           ],
           "default": null,
-          "description": "Same as the global option, but for this env.\nSee notes in global option about overrides.",
+          "description": "Same as the global option, but for this env.\nSee global option for notes about overrides.",
           "title": "Exclude"
         }
       },
@@ -353,7 +353,7 @@
     },
     "extra_envs": {
       "default": {},
-      "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)",
+      "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)\n- If a global `exclude` option is used, it will have an effect on the environments created\n  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the\n  extra environments will have it either. Unlike the global option, an error will not be\n  thrown if the excluded package is not found in the packages required by the extra environment.\n  To override the global `exclude` value, use an empty list `[]`.",
       "patternProperties": {
         "^[\\w][\\w\\-\\.]*$": {
           "$ref": "#/$defs/ExtraEnv"
@@ -1049,7 +1049,7 @@
     },
     "build_outputs": {
       "default": [],
-      "description": "Additional artifacts to be produced after building the installer.\nIt expects either a list of strings or single-key dictionaries:\nAllowed keys are:\n- `hash`: The hash of the installer files. The output file is designed to work with the `shasum`\n   command and thus has POSIX line endings, including on Windows. Options:\n    - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available\n       algorithms:\n       https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available\n- `info.json`: The internal `info` object, serialized to JSON. Takes no options.\n- `pkgs_list`: The list of packages contained in a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:\n    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the\n      JSON. If false, only the path will be included.\n    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading\n      the license text. Only relevant if include_text is True. Any str accepted by open()'s\n      'errors' argument is valid. See https://docs.python.org/3/library/functions.html#open.",
+      "description": "Additional artifacts to be produced after building the installer.\nIt expects either a list of strings or single-key dictionaries:\nAllowed keys are:\n- `hash`: The hash of the installer files. The output file is designed to work with the `shasum`\n  command and thus has POSIX line endings, including on Windows. Options:\n    - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available\n       algorithms:\n       https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available\n- `info.json`: The internal `info` object, serialized to JSON. Takes no options.\n- `pkgs_list`: The list of packages contained in a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:\n    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the\n      JSON. If false, only the path will be included.\n    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading\n      the license text. Only relevant if include_text is True. Any str accepted by open()'s\n      'errors' argument is valid. See https://docs.python.org/3/library/functions.html#open.",
       "items": {
         "anyOf": [
           {

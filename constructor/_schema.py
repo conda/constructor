@@ -71,7 +71,7 @@ class ExtraEnv(BaseModel):
     exclude: list[NonEmptyStr] | None = None
     """
     Same as the global option, but for this env.
-    See notes in global option about overrides.
+    See global option for notes about overrides.
     """
 
 
@@ -233,6 +233,11 @@ class ConstructorConfiguration(BaseModel):
     Notes:
     - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
     - `conda` needs to be present in the `base` environment (via `specs`)
+    - If a global `exclude` option is used, it will have an effect on the environments created
+      by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
+      extra environments will have it either. Unlike the global option, an error will not be
+      thrown if the excluded package is not found in the packages required by the extra environment.
+      To override the global `exclude` value, use an empty list `[]`.
     """
     register_envs: bool = True
     """
@@ -679,7 +684,7 @@ class ConstructorConfiguration(BaseModel):
     It expects either a list of strings or single-key dictionaries:
     Allowed keys are:
     - `hash`: The hash of the installer files. The output file is designed to work with the `shasum`
-       command and thus has POSIX line endings, including on Windows. Options:
+      command and thus has POSIX line endings, including on Windows. Options:
         - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available
            algorithms:
            https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available
