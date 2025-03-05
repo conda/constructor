@@ -396,7 +396,7 @@ def platform_conda_exe(request, tmp_path) -> Tuple[str, Path]:
     )
     conda_exe = tmp_env / "standalone_conda/conda.exe"
     assert conda_exe.exists()
-    return platform, tmp_env
+    return platform, conda_exe
 
 
 def test_example_customize_controls(tmp_path, request):
@@ -847,9 +847,9 @@ def test_cross_osx_building(tmp_path):
     )
 
 
-def test_cross_build_example_from_env_yaml(tmp_path, platform_conda_exe):
+def test_cross_build_example(tmp_path, platform_conda_exe):
     platform, conda_exe = platform_conda_exe
-    input_path = _example_path("from_env_yaml")
+    input_path = _example_path("virtual_specs_ok")
 
     for installer, _ in create_installer(
         input_path,
