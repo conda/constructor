@@ -983,43 +983,15 @@
       "title": "Conclusion Text"
     },
     "extra_files": {
-      "anyOf": [
-        {
-          "items": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "type": "array"
-        },
-        {
-          "items": {
-            "additionalProperties": {
-              "minLength": 1,
-              "type": "string"
-            },
-            "propertyNames": {
-              "minLength": 1
-            },
-            "type": "object"
-          },
-          "type": "array"
-        }
-      ],
       "default": [],
       "description": "Extra, non-packaged files that should be added to the installer. If provided as relative\npaths, they will be considered relative to the directory where `construct.yaml` is.\nThis setting can be passed as a list of:\n- `str`: each found file will be copied to the root prefix\n- `Mapping[str, str]`: map of path in disk to path in prefix.",
-      "title": "Extra Files"
-    },
-    "temp_extra_files": {
-      "anyOf": [
-        {
-          "items": {
+      "items": {
+        "anyOf": [
+          {
             "minLength": 1,
             "type": "string"
           },
-          "type": "array"
-        },
-        {
-          "items": {
+          {
             "additionalProperties": {
               "minLength": 1,
               "type": "string"
@@ -1028,13 +1000,35 @@
               "minLength": 1
             },
             "type": "object"
-          },
-          "type": "array"
-        }
-      ],
+          }
+        ]
+      },
+      "title": "Extra Files",
+      "type": "array"
+    },
+    "temp_extra_files": {
       "default": [],
       "description": "Temporary files that could be referenced in the installation process (i.e. customized\n`welcome_file` and `conclusion_file` (see above)) . Should be a list of\nfile paths, relative to the directory where `construct.yaml` is. In Windows, these\nfiles will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during\ninstall process (Windows only).\n\nSupports the same values as `extra_files`.",
-      "title": "Temp Extra Files"
+      "items": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "additionalProperties": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "propertyNames": {
+              "minLength": 1
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "title": "Temp Extra Files",
+      "type": "array"
     },
     "build_outputs": {
       "default": [],

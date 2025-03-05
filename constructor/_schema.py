@@ -655,7 +655,7 @@ class ConstructorConfiguration(BaseModel):
     - EXE: The first line will be used as a title. The following lines will be used as text.
     (macOS PKG and Windows only).
     """
-    extra_files: list[NonEmptyStr] | list[dict[NonEmptyStr, NonEmptyStr]] = []
+    extra_files: list[NonEmptyStr | dict[NonEmptyStr, NonEmptyStr]] = []
     """
     Extra, non-packaged files that should be added to the installer. If provided as relative
     paths, they will be considered relative to the directory where `construct.yaml` is.
@@ -663,7 +663,7 @@ class ConstructorConfiguration(BaseModel):
     - `str`: each found file will be copied to the root prefix
     - `Mapping[str, str]`: map of path in disk to path in prefix.
     """
-    temp_extra_files: list[NonEmptyStr] | list[dict[NonEmptyStr, NonEmptyStr]] = []
+    temp_extra_files: list[NonEmptyStr | dict[NonEmptyStr, NonEmptyStr]] = []
     """
     Temporary files that could be referenced in the installation process (i.e. customized
     `welcome_file` and `conclusion_file` (see above)) . Should be a list of
