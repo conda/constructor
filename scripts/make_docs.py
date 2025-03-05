@@ -3,7 +3,7 @@ from os.path import dirname, join
 
 import jinja2
 
-from constructor import construct
+from constructor.construct import ConstructorConfiguration, ns_platform
 from constructor.conda_interface import SUPPORTED_PLATFORMS
 
 REPO_ROOT = dirname(dirname(__file__))
@@ -11,7 +11,7 @@ REPO_ROOT = dirname(dirname(__file__))
 sys.path.insert(0, REPO_ROOT)
 
 
-valid_selectors = construct.ns_platform(sys.platform)
+valid_selectors = ns_platform(sys.platform)
 
 template = """
 <!--
@@ -53,13 +53,11 @@ are not available here.
 > This is only a name and description render of the `constructor` JSON Schema.
 > For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjaimergp%2Fconstructor%2Frefs%2Fheads%2Fpydantic-schema%2Fconstructor%2Fdata%2Fconstructor.schema.json)
 
-{% for key_info in keys %}
-### `{{key_info[0]}}`
-{{ '_required_' if key_info[1] else '' }}
+{% for name, description in key_info_dict.items() %}
+### `{{ name }}`
 
-{{key_info[3]}}
+{{ description }}
 {% endfor %}
-
 
 ## Available selectors
 
@@ -74,11 +72,17 @@ Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argume
 {%- endfor %}
 """ # noqa
 
-key_info_list = construct.generate_key_info_list()
+
+def generate_key_info_dict():
+    return {
+        name: field.description
+        for name, field in ConstructorConfiguration.model_fields.items()
+    }
+
 
 output = jinja2.Template(template).render(
     selectors=valid_selectors,
-    keys=key_info_list,
+    key_info_dict=generate_key_info_dict(),
     supported_platforms=SUPPORTED_PLATFORMS,
 )
 
