@@ -94,7 +94,7 @@
             }
           ],
           "default": null,
-          "description": "Same as global option, for this env; if not provided, the global \nvalue is used. To override inheritance, set it to an empty list.",
+          "description": "Same as global option, for this env; if not provided, the global\nvalue is used. To override inheritance, set it to an empty list.",
           "title": "Channels Remap"
         },
         "user_requested_specs": {
@@ -134,6 +134,16 @@
       },
       "title": "ExtraEnv",
       "type": "object"
+    },
+    "WinSignTools": {
+      "enum": [
+        "azuresigntool",
+        "signtool",
+        "azuresigntool.exe",
+        "signtool.exe"
+      ],
+      "title": "WinSignTools",
+      "type": "string"
     }
   },
   "additionalProperties": false,
@@ -142,14 +152,14 @@
     "name": {
       "description": "Name of the installer. Names may be composed of letters, numbers,\nunderscores, dashes, and periods, but may not begin or end with a\ndash or period.",
       "minLength": 1,
-      "pattern": "^[A-z0-9_][A-z0-9_\\-\\.]*$",
+      "pattern": "^[\\w][\\w\\-\\.]*$",
       "title": "Name",
       "type": "string"
     },
     "version": {
       "description": "Version of the installer. Versions may be composed of letters, numbers,\nunderscores, dashes, and periods, but may not begin or end with a\ndash or period.",
       "minLength": 1,
-      "pattern": "^[A-z0-9_][A-z0-9_\\-\\.]*$",
+      "pattern": "^[\\w][\\w\\-\\.]*$",
       "title": "Version",
       "type": "string"
     },
@@ -325,11 +335,13 @@
       "title": "Conda Channel Alias"
     },
     "extra_envs": {
-      "additionalProperties": {
-        "$ref": "#/$defs/ExtraEnv"
-      },
       "default": {},
       "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)\n- If a global `exclude` option is used, it will have an effect on the environments created\n  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the\n  extra environments will have it either. Unlike the global option, an error will not be\n  thrown if the excluded package is not found in the packages required by the extra environment.\n  To override the global `exclude` value, use an empty list `[]`.",
+      "patternProperties": {
+        "^[\\w][\\w\\-\\.]*$": {
+          "$ref": "#/$defs/ExtraEnv"
+        }
+      },
       "propertyNames": {
         "minLength": 1
       },
@@ -374,7 +386,7 @@
         }
       ],
       "default": null,
-      "description": "The type of the installer being created.  Possible values are:\n- `sh`: shell-based installer for Linux or macOS;\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special\nvalue of `all` builds _both_ `sh` and `pkg` installers on macOS, as well\nas `sh` on Linux and `exe` on Windows.\n\nNotes for silent mode `/S` on Windows EXEs:\n- NSIS Silent mode will not print any error message, but will silently abort the installation.\n  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which\n  can be searched for `::error::` strings. Pre- and post- install scripts will only throw an error\n  if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.\n- The `/D` flag can be used to specify the target location. It must be the last argument in\n  the command and should NEVER be quoted, even if it contains spaces. For example:\n  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.\n\n[nsis-log]: https://nsis.sourceforge.io/Special_Builds",
+      "description": "The type of the installer being created.  Possible values are:\n- `sh`: shell-based installer for Linux or macOS;\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special\nvalue of `all` builds _both_ `sh` and `pkg` installers on macOS, as well\nas `sh` on Linux and `exe` on Windows.\n\nNotes for silent mode `/S` on Windows EXEs:\n- NSIS Silent mode will not print any error message, but will silently abort the installation.\n  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which\n  can be searched for `::error::` strings. Pre- and post- install scripts will only throw\n  an error if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.\n- The `/D` flag can be used to specify the target location. It must be the last argument in\n  the command and should NEVER be quoted, even if it contains spaces. For example:\n  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.\n\n[nsis-log]: https://nsis.sourceforge.io/Special_Builds",
       "title": "Installer Type"
     },
     "license_file": {
@@ -434,16 +446,14 @@
     "windows_signing_tool": {
       "anyOf": [
         {
-          "minLength": 1,
-          "type": "string"
+          "$ref": "#/$defs/WinSignTools"
         },
         {
           "type": "null"
         }
       ],
       "default": null,
-      "description": "The tool used to sign Windows installers. Must be one of: azuresigntool, signtool.\nSome tools require `signing_certificate` to be set.\nDefaults to `signtool` if `signing_certificate` is set.\nAdditional environment variables may need to be used to configure signing.\nSee the documentation for details:\nhttps://conda.github.io/constructor/howto/#signing-exe-installers",
-      "title": "Windows Signing Tool"
+      "description": "The tool used to sign Windows installers. Must be one of: azuresigntool, signtool.\nSome tools require `signing_certificate` to be set.\nDefaults to `signtool` if `signing_certificate` is set.\nAdditional environment variables may need to be used to configure signing.\nSee the documentation for details:\nhttps://conda.github.io/constructor/howto/#signing-exe-installers"
     },
     "signing_certificate": {
       "anyOf": [
@@ -1028,7 +1038,7 @@
     },
     "build_outputs": {
       "default": [],
-      "description": "Additional artifacts to be produced after building the installer.\nIt expects either a list of strings or single-key dictionaries:\nAllowed keys are:\n- `hash`: The hash of the installer files.\n    - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available algorithms:\n       https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available\n- `info.json`: The internal `info` object, serialized to JSON. Takes no options.\n- `pkgs_list`: The list of packages contained in a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:\n    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the JSON.\n      If false, only the path will be included.\n    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading the\n      license text. Only relevant if include_text is True. Any str accepted by open()'s 'errors'\n      argument is valid. See https://docs.python.org/3/library/functions.html#open.",
+      "description": "Additional artifacts to be produced after building the installer.\nIt expects either a list of strings or single-key dictionaries:\nAllowed keys are:\n- `hash`: The hash of the installer files.\n    - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available\n       algorithms:\n       https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available\n- `info.json`: The internal `info` object, serialized to JSON. Takes no options.\n- `pkgs_list`: The list of packages contained in a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:\n    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:\n    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the\n      JSON. If false, only the path will be included.\n    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading\n      the license text. Only relevant if include_text is True. Any str accepted by open()'s\n      'errors' argument is valid. See https://docs.python.org/3/library/functions.html#open.",
       "items": {
         "anyOf": [
           {
