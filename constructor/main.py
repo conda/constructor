@@ -336,21 +336,21 @@ class _HelpConstructAction(argparse.Action):
             ==================================
 
             constructor version {version}
-            
+
             The `construct.yaml` file is the primary mechanism for controlling
             the output of the Constructor package. The file contains a list of
             key/value pairs in the standard YAML format.
-            
+
             Available keys
             --------------
-            
+
             {available_keys}
-            
+
             Available selectors
             -------------------
             Constructor can use the same Selector enhancement of the YAML format
             used in conda-build ('# [selector]'). Available keywords are:
-            
+
             {available_selectors}
             """
         )
