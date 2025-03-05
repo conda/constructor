@@ -16,8 +16,11 @@ dependencies = [
     "ruamel.yaml >=0.11.14,<0.19",
     "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
     "jinja2",
-    "pydantic >=2"
+    "jsonschema >=4"
 ]
+
+[project.optional-dependencies]
+schema = ["pydantic >=2"]
 
 [project.scripts]
 constructor = "constructor.main:main"

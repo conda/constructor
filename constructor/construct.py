@@ -8,29 +8,40 @@ import json
 import logging
 import re
 import sys
+from enum import StrEnum
 from functools import partial
 from os.path import dirname
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
+from jsonschema import Draft202012Validator, validators
+from jsonschema.exceptions import ValidationError
 from pydantic import BaseModel, ConfigDict, Field
 from ruamel.yaml import YAMLError
 
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
 from constructor.utils import yaml
 
-WIN_SIGNTOOLS = [
-    "azuresigntool",
-    "signtool",
-]
+
+logger = logging.getLogger(__name__)
+
 HERE = Path(__file__).parent
+SCHEMA_PATH = HERE / "data" / "constructor.schema.json"
 # TODO: lookarounds are not supported, we need to add (?<!\.\-) at the end of the regex though
-NAME_REGEX = r"^[A-z0-9_][A-z0-9_\-\.]*$"
+NAME_REGEX = r"^[\w][\w\-\.]*$"
+ENV_NAME_REGEX = r"^[^/:# ]+$"
 NonEmptyStr = Annotated[str, Field(min_length=1)]
 _base_config_dict = ConfigDict(
     extra="forbid",
     use_attribute_docstrings=True,
 )
+
+
+class WinSignTools(StrEnum):
+    AZURESIGNTOOL = "azuresigntool"
+    SIGNTOOL = "signtool"
+    AZURESIGNTOOL_EXE = "azuresigntool.exe"
+    SIGNTOOL_EXE = "signtool.exe"
 
 
 class ChannelRemap(BaseModel):
@@ -223,7 +234,7 @@ class ConstructorConfiguration(BaseModel):
     The channel alias that would be assumed for the created installer
     (only useful if it includes `conda`).
     """
-    extra_envs: dict[NonEmptyStr, ExtraEnv] = {}
+    extra_envs: dict[Annotated[str, Field(min_length=1, pattern=NAME_REGEX)], ExtraEnv] = {}
     """
     Create more environments in addition to the default `base` provided by `specs`,
     `environment` or `environment_file`.
@@ -306,7 +317,7 @@ class ConstructorConfiguration(BaseModel):
     "Installer certificate" mentioned above). Common values for this option follow the format
     `Developer ID Application: Name of the owner (XXXXXX)`.
     """
-    windows_signing_tool: NonEmptyStr | None = None
+    windows_signing_tool: WinSignTools | None = None
     """
     The tool used to sign Windows installers. Must be one of: azuresigntool, signtool.
     Some tools require `signing_certificate` to be set.
@@ -703,18 +714,6 @@ class ConstructorConfiguration(BaseModel):
     Requires conda-standalone 24.11.0 or newer.
     """
 
-logger = logging.getLogger(__name__)
-
-
-def generate_key_info_list():
-    key_info_list = []
-    for name, field in ConstructorConfiguration.model_fields.items():
-        type_ = getattr(field.annotation, "__name__", field.annotation.__class__.__name__)
-        if type_ in ("Optional", "Union", "UnionType"):
-            type_ = f"`{field.annotation.__args__}`"
-        key_info_list.append((name, field.is_required(), type_, field.description, "" ))
-    return key_info_list
-
 
 def ns_platform(platform):
     p = platform
@@ -819,72 +818,56 @@ def parse(path, platform):
     return res
 
 
+# this is actually not an error, therefore the naming is okay
+class DeprecatedFieldWarning(ValidationError):  # noqa: N818
+    pass
+
+
+def deprecated_validator(validator, value, instance, schema):
+    if value and instance is not None:
+        yield DeprecatedFieldWarning(f"'{schema['title']}' is deprecated.\n{schema['description']}")
+
+
+def get_validator_class():
+    all_validators = dict(Draft202012Validator.VALIDATORS)
+    all_validators["deprecated"] = deprecated_validator
+
+    return validators.create(
+        meta_schema=Draft202012Validator.META_SCHEMA, validators=all_validators
+    )
+
+
 def verify(info):
-    types_key = {}  # maps key to types
-    required_keys = set()
-    obsolete_keys = set()
-    for key, required, types, descr in KEYS:
-        types_key[key] = types
-        if required:
-            required_keys.add(key)
-        if "Obsolete" in descr:
-            obsolete_keys.add(key)
+    schema = json.loads(SCHEMA_PATH.read_text())
+    validator = get_validator_class()(schema)
+    errors = []
+    for error_or_warning in validator.iter_errors(info):
+        if isinstance(error_or_warning, DeprecatedFieldWarning):
+            print("Warning:", error_or_warning, file=sys.stderr)
+        else:
+            errors.append(error_or_warning)
+    if errors:
+        msg = ["Configuration has validation errors:"]
+        for error in errors:
+            msg.append(f"- {error}")
+        sys.exit("\n".join(msg))
 
-    for key in info:
-        if key not in types_key:
-            sys.exit("Error: unknown key '%s' in construct.yaml" % key)
-        elt = info[key]
-        if key in obsolete_keys:
-            logger.warning("key '%s' is obsolete." " Its value '%s' is being ignored.", key, elt)
-        types = types_key[key]
-        if not isinstance(elt, types):
-            sys.exit(
-                "Error: key '%s' points to %s,\n" "       expected %s" % (key, type(elt), types)
-            )
-
-    for key in required_keys:
-        if key not in info:
-            sys.exit("Error: Required key '%s' not found in construct.yaml" % key)
-
-    pat = re.compile(r"[\w][\w\-\.]*$")
     for key in "name", "version":
         value = info[key]
-        if not pat.match(value) or value.endswith((".", "-")):
-            sys.exit("Error: invalid %s '%s'" % (key, value))
+        if value.endswith((".", "-")):
+            sys.exit(f"Error: invalid {key} '{value}'. Cannot end with '.' or '-'.")
 
-    for env_name, env_data in info.get("extra_envs", {}).items():
-        disallowed = ("/", " ", ":", "#")
-        if any(character in env_name for character in disallowed):
-            sys.exit(
-                f"Environment names (keys in 'extra_envs') cannot contain any of {disallowed}. "
-                f"You tried to use: {env_name}"
-            )
-        for key, value in env_data.items():
-            if key not in _EXTRA_ENVS_SCHEMA:
-                sys.exit(f"Key '{key}' not supported in 'extra_envs'.")
-            types = _EXTRA_ENVS_SCHEMA[key]
-            if not isinstance(value, types):
-                types_str = " or ".join([type_.__name__ for type_ in types])
-                sys.exit(
-                    f"Value for 'extra_envs.{env_name}.{key}' "
-                    f"must be an instance of {types_str}"
-                )
     if signtool := info.get("windows_signing_tool"):
-        if signtool.lower().replace(".exe", "") not in WIN_SIGNTOOLS:
-            sys.exit(
-                "Value for 'windows_signing_tool' must be one of: "
-                f"{', '.join(WIN_SIGNTOOLS)}. You tried to use: {signtool}."
-            )
-        need_cert_file = ["signtool"]
+        need_cert_file = ["signtool", "signtool.exe"]
         if signtool in need_cert_file and not info.get("signing_certificate"):
-            sys.exit(f"The signing tool {signtool} requires 'signing_certificate' to be set.")
+            sys.exit(f"The signing tool '{signtool}' requires 'signing_certificate' to be set.")
 
 
 def dump_schema():
     model = ConstructorConfiguration(name="doesnotmatter", version="0.0.0")
     obj = model.model_json_schema()
     obj["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-    (HERE / "data" / "constructor.schema.json").write_text(json.dumps(obj, indent=2))
+    SCHEMA_PATH.write_text(json.dumps(obj, indent=2))
     print(json.dumps(obj, indent=2))
 
 
