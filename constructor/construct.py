@@ -703,37 +703,16 @@ class ConstructorConfiguration(BaseModel):
     Requires conda-standalone 24.11.0 or newer.
     """
 
-
-_EXTRA_ENVS_SCHEMA = {
-    "specs": (list, tuple),
-    "environment": (str,),
-    "environment_file": (str,),
-    "channels": (list, tuple),
-    "channels_remap": (list, tuple),
-    "user_requested_specs": (list, tuple),
-    "exclude": (list, tuple),
-    "menu_packages": (list, tuple),
-}
-
 logger = logging.getLogger(__name__)
 
 
 def generate_key_info_list():
     key_info_list = []
-    for key_info in KEYS:
-        type_names = {str: "string", list: "list", dict: "dictionary", bool: "boolean"}
-        key_types = key_info[2]
-        if not isinstance(key_types, (tuple, list)):
-            key_types = (key_types,)
-        plural = "s" if len(key_types) > 1 else ""
-        key_types = ", ".join(type_names.get(k, "") for k in key_types)
-        required = "yes" if key_info[1] else "no"
-
-        if key_info[3] == "XXX":
-            logger.info("Not including %s because the skip sentinel ('XXX') is set", key_info[0])
-            continue
-
-        key_info_list.append((key_info[0], required, key_types, key_info[3], plural))
+    for name, field in ConstructorConfiguration.model_fields.items():
+        type_ = getattr(field.annotation, "__name__", field.annotation.__class__.__name__)
+        if type_ in ("Optional", "Union", "UnionType"):
+            type_ = f"`{field.annotation.__args__}`"
+        key_info_list.append((name, field.is_required(), type_, field.description, "" ))
     return key_info_list
 
 

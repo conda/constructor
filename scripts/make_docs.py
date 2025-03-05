@@ -50,13 +50,16 @@ are not available here.
 
 ## Available keys
 
-{%- for key_info in keys %}
-### `{{key_info[0]}}`
+> This is only a name and description render of the `constructor` JSON Schema.
+> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjaimergp%2Fconstructor%2Frefs%2Fheads%2Fpydantic-schema%2Fconstructor%2Fdata%2Fconstructor.schema.json)
 
-_required:_ {{key_info[1]}}<br/>
-_type{{key_info[4]}}:_ {{key_info[2]}}<br/>
+{% for key_info in keys %}
+### `{{key_info[0]}}`
+{{ '_required_' if key_info[1] else '' }}
+
 {{key_info[3]}}
-{%- endfor %}
+{% endfor %}
+
 
 ## Available selectors
 
