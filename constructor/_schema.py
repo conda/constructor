@@ -68,6 +68,11 @@ class ExtraEnv(BaseModel):
     Same as the global option, but for this env.
     If not provided, global value is _not_ used
     """
+    exclude: list[NonEmptyStr] | None = None
+    """
+    Same as the global option, but for this env.
+    See notes in global option about overrides.
+    """
 
 
 class ConstructorConfiguration(BaseModel):
@@ -228,11 +233,6 @@ class ConstructorConfiguration(BaseModel):
     Notes:
     - `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.
     - `conda` needs to be present in the `base` environment (via `specs`)
-    - If a global `exclude` option is used, it will have an effect on the environments created
-      by `extra_envs` too. For example, if the global environment excludes `tk`, none of the
-      extra environments will have it either. Unlike the global option, an error will not be
-      thrown if the excluded package is not found in the packages required by the extra environment.
-      To override the global `exclude` value, use an empty list `[]`.
     """
     register_envs: bool = True
     """

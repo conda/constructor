@@ -130,6 +130,23 @@
           "default": null,
           "description": "Same as the global option, but for this env.\nIf not provided, global value is _not_ used",
           "title": "Menu Packages"
+        },
+        "exclude": {
+          "anyOf": [
+            {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Same as the global option, but for this env.\nSee notes in global option about overrides.",
+          "title": "Exclude"
         }
       },
       "title": "ExtraEnv",
@@ -336,7 +353,7 @@
     },
     "extra_envs": {
       "default": {},
-      "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)\n- If a global `exclude` option is used, it will have an effect on the environments created\n  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the\n  extra environments will have it either. Unlike the global option, an error will not be\n  thrown if the excluded package is not found in the packages required by the extra environment.\n  To override the global `exclude` value, use an empty list `[]`.",
+      "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)",
       "patternProperties": {
         "^[\\w][\\w\\-\\.]*$": {
           "$ref": "#/$defs/ExtraEnv"
