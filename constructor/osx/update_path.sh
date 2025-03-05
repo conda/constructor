@@ -24,7 +24,7 @@ if [[ "${USER}" != "root" ]]; then
     done <<< "$(\
       echo "${INIT_FILES}" |\
       grep -E "^modified" |\
-      sed -e 's/^modified */' |\
+      sed -e 's/^modified *//' |\
       # Only grab files inside $HOME or $PREFIX.
       # All init files should be there, but that may change, and it
       # is better to miss files than to have an infinite loop below.
