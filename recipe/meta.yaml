@@ -18,6 +18,7 @@ requirements:
     - python  # >=3.8
     - pip
     - setuptools >=70.1
+    - setuptools_scm >=6.2
   run:
     - conda >=4.6
     - python  # >=3.8
