@@ -6,6 +6,7 @@
 
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -16,6 +17,7 @@ from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS
 from .conda_interface import VersionOrder as Version
 from .conda_interface import cc_platform
+from .construct import SCHEMA_PATH
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
@@ -310,7 +312,14 @@ class _HelpConstructAction(argparse.Action):
         parser.exit()
 
     def _build_message(self):
-        return "Please refer to https://conda.github.io/constructor/construct-yaml/."
+        lines = [f"> Check full details in {SCHEMA_PATH}", ""]
+        schema = json.loads(SCHEMA_PATH.read_text())
+        for name, prop in schema["properties"].items():
+            lines.append(f"# {name}")
+            lines.append("")
+            lines.append(prop.get("description", "No description available"))
+            lines.append("")
+        return "\n".join(lines)
 
 
 def main():
