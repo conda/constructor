@@ -19,7 +19,7 @@ echo "+ Testing conda channels"
 conda config --show --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert 'conda-forge' in info['channels'], info"
 echo "  OK"
 
-EXPECTED_MAMBA_VERSION="1.5.12"
+EXPECTED_MAMBA_VERSION="2.0.5"
 
 # Get versions with conda
 MAMBA_VERSION=$(conda list "^mamba$" --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); print(info[0]['version'])")
@@ -41,17 +41,23 @@ if [ "$LIBMAMBAPY_VERSION" != "$EXPECTED_MAMBA_VERSION" ]; then
     exit 1
 fi
 
-echo "+ Testing mamba 1 installation"
-mamba --version
+echo "+ Testing mamba 2 installation"
+mamba --version | grep -q "$EXPECTED_MAMBA_VERSION"
 
 echo "+ mamba info"
 mamba info
 
-echo "+ Testing mamba version"
-mamba --version | grep mamba | cut -d' ' -f2 | grep -q "$EXPECTED_MAMBA_VERSION"
-mamba --version | grep conda | cut -d' ' -f2 | grep -q 24.11.2
+echo "+ mamba config sources"
+mamba config sources
 
-mamba info --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert info['mamba_version'] == '$EXPECTED_MAMBA_VERSION', info"
+echo "+ mamba config list"
+mamba config list
+
+echo "+ Testing mamba 2 version"
+mamba info --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert info['mamba version'] == '$EXPECTED_MAMBA_VERSION', info"
+
+echo "+ Testing libmambapy 2 version"
+python -c "import libmambapy; assert libmambapy.__version__ == '$EXPECTED_MAMBA_VERSION', f'libmamba version got: {libmambapy.__version__}; expected: ${EXPECTED_MAMBA_VERSION}'"
 
 echo "+ Testing mamba channels"
 mamba info --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert any('conda-forge' in c for c in info['channels']), info"

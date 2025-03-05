@@ -419,8 +419,9 @@ def test_example_extra_files(tmp_path, request):
     ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
-def test_example_miniforge(tmp_path, request):
-    input_path = _example_path("miniforge")
+@pytest.mark.parametrize("example", ("miniforge", "miniforge-mamba2"))
+def test_example_miniforge(tmp_path, request, example):
+    input_path = _example_path(example)
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             # try both batch and interactive installations
@@ -435,13 +436,15 @@ def test_example_miniforge(tmp_path, request):
                 installer,
                 install_dir,
                 installer_input=installer_input,
+                request=request,
                 # PKG installers use their own install path, so we can't check sentinels
                 # via `install_dir`
                 check_sentinels=installer.suffix != ".pkg",
                 uninstall=False,
             )
             if installer.suffix == ".pkg" and ON_CI:
-                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / "Miniforge3")
+                basename = "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
+                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / basename)
             if installer.suffix == ".exe":
                 for key in ("ProgramData", "AppData"):
                     start_menu_dir = Path(
