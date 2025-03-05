@@ -135,6 +135,9 @@ class DeprecatedFieldWarning(ValidationError):  # noqa: N818
 
 def deprecated_validator(validator, value, instance, schema):
     if value and instance is not None:
+        print(value)
+        print(instance)
+        print(schema)
         yield DeprecatedFieldWarning(f"'{schema['title']}' is deprecated.\n{schema['description']}")
 
 

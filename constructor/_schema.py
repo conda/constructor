@@ -179,9 +179,7 @@ class ConstructorConfiguration(BaseModel):
     By default, constructor will warn you when adding packages with duplicate
     files in them. Setting this option to false will raise an error instead.
     """
-    install_in_dependency_order: (
-        Annotated[bool, Field(deprecated=True)] | Annotated[str, Field(deprecated=True)]
-    ) = True
+    install_in_dependency_order: bool | str = Field(True, deprecated=True)
     """
     _Obsolete_. The current version of constructor relies on the standalone
     conda executable for its installation behavior. This option is now
@@ -322,9 +320,7 @@ class ConstructorConfiguration(BaseModel):
     On Windows only, set this key to the path of the certificate file to be used
     with the `windows_signing_tool`.
     """
-    attempt_hardlinks: (
-        Annotated[bool, Field(deprecated=True)] | Annotated[str, Field(deprecated=True)]
-    ) = True
+    attempt_hardlinks: bool | str = Field(True, deprecated=True)
     """
     _Obsolete_. The current version of constructor relies on the standalone
     conda executable for its installation behavior. This option is now

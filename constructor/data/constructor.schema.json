@@ -273,15 +273,14 @@
     "install_in_dependency_order": {
       "anyOf": [
         {
-          "deprecated": true,
           "type": "boolean"
         },
         {
-          "deprecated": true,
           "type": "string"
         }
       ],
       "default": true,
+      "deprecated": true,
       "description": "_Obsolete_. The current version of constructor relies on the standalone\nconda executable for its installation behavior. This option is now\nignored with a warning.",
       "title": "Install In Dependency Order"
     },
@@ -489,15 +488,14 @@
     "attempt_hardlinks": {
       "anyOf": [
         {
-          "deprecated": true,
           "type": "boolean"
         },
         {
-          "deprecated": true,
           "type": "string"
         }
       ],
       "default": true,
+      "deprecated": true,
       "description": "_Obsolete_. The current version of constructor relies on the standalone\nconda executable for its installation behavior. This option is now\nignored with a warning.",
       "title": "Attempt Hardlinks"
     },
