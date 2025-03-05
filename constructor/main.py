@@ -208,7 +208,6 @@ def main_build(dir_path, output_dir='.', platform=cc_platform,
             logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
             info['_enable_shortcuts'] = "incompatible"
 
-
     # Add --no-rc option to CONDA_EXE command so that existing
     # .condarc files do not pollute the installation process.
     if exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.9.0"):
