@@ -680,7 +680,8 @@ class ConstructorConfiguration(BaseModel):
     Additional artifacts to be produced after building the installer.
     It expects either a list of strings or single-key dictionaries:
     Allowed keys are:
-    - `hash`: The hash of the installer files.
+    - `hash`: The hash of the installer files. The output file is designed to work with the `shasum`
+       command and thus has POSIX line endings, including on Windows. Options:
         - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available
            algorithms:
            https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available
