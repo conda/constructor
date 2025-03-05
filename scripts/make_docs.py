@@ -3,8 +3,8 @@ from os.path import dirname, join
 
 import jinja2
 
-from constructor.construct import ConstructorConfiguration, ns_platform
 from constructor.conda_interface import SUPPORTED_PLATFORMS
+from constructor.construct import ConstructorConfiguration, ns_platform
 
 REPO_ROOT = dirname(dirname(__file__))
 

@@ -22,7 +22,6 @@ from ruamel.yaml import YAMLError
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
 from constructor.utils import yaml
 
-
 logger = logging.getLogger(__name__)
 
 HERE = Path(__file__).parent

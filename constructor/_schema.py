@@ -6,12 +6,10 @@
 
 import json
 from enum import StrEnum
-
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 HERE = Path(__file__).parent
 SCHEMA_PATH = HERE / "data" / "constructor.schema.json"
@@ -708,7 +706,7 @@ def dump_schema():
     model = ConstructorConfiguration(name="doesnotmatter", version="0.0.0")
     obj = model.model_json_schema()
     obj["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-    SCHEMA_PATH.write_text(json.dumps(obj, indent=2))
+    SCHEMA_PATH.write_text(json.dumps(obj, indent=2) + "\n")
     print(json.dumps(obj, indent=2))
 
 
