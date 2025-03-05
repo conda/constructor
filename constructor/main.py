@@ -6,18 +6,18 @@
 
 
 import argparse
+import json
 import logging
 import os
 import sys
 from os.path import abspath, expanduser, isdir, join
-from textwrap import dedent, indent
 
 from . import __version__
 from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS
 from .conda_interface import VersionOrder as Version
 from .conda_interface import cc_platform
-from .construct import generate_key_info_list, ns_platform
+from .construct import SCHEMA_PATH
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
@@ -312,54 +312,14 @@ class _HelpConstructAction(argparse.Action):
         parser.exit()
 
     def _build_message(self):
-        msg = dedent(
-            """
-            The 'construct.yaml' specification
-            ==================================
-
-            constructor version {version}
-
-            The `construct.yaml` file is the primary mechanism for controlling
-            the output of the Constructor package. The file contains a list of
-            key/value pairs in the standard YAML format.
-
-            Available keys
-            --------------
-
-            {available_keys}
-
-            Available selectors
-            -------------------
-
-            Constructor can use the same Selector enhancement of the YAML format
-            used in conda-build ('# [selector]'). Available keywords are:
-
-            {available_selectors}
-            """
-        )
-        available_keys_list = []
-        for key, required, key_types, help_msg, plural in generate_key_info_list():
-            available_keys_list.append(
-                "\n".join(
-                    [
-                        key,
-                        "·" * len(key),
-                        indent(
-                            f"Required: {required}, type{plural}: {key_types}", "    "
-                        ),
-                        indent(help_msg.strip(), "    "),
-                        "",
-                    ]
-                )
-            )
-        available_selectors_list = [
-            f"- {sel}" for sel in sorted(ns_platform(sys.platform).keys())
-        ]
-        return msg.format(
-            version=__version__,
-            available_keys="\n".join(available_keys_list),
-            available_selectors="\n".join(available_selectors_list),
-        )
+        lines = [f"> Check full details in {SCHEMA_PATH}", ""]
+        schema = json.loads(SCHEMA_PATH.read_text())
+        for name, prop in schema["properties"].items():
+            lines.append(f"# {name}")
+            lines.append("")
+            lines.append(prop.get("description", "No description available"))
+            lines.append("")
+        return "\n".join(lines)
 
 
 def main():
