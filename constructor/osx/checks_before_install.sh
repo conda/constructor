@@ -31,7 +31,7 @@ end")
     exit 1
 fi
 
-#if check_path_spaces is True
+{%- if check_path_spaces %}
 # Check if the path has spaces
 case "$PREFIX" in
     *\ * )
@@ -51,6 +51,6 @@ end")
 
         ;;
 esac
-#endif
+{%- endif %}
 
 exit 0
