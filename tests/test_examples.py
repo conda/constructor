@@ -377,6 +377,29 @@ def _is_micromamba(path) -> bool:
     return name == StandaloneExe.MAMBA
 
 
+@pytest.fixture(params=["linux-aarch64"])
+def platform_conda_exe(request, tmp_path) -> Tuple[str, Path]:
+    platform = request.param
+    tmp_env = tmp_path / "env"
+    subprocess.check_call(
+        [
+            sys.executable,
+            "-m",
+            "conda",
+            "create",
+            "-p",
+            tmp_env,
+            "-y",
+            "conda-standalone",
+            "--platform",
+            platform,
+        ],
+    )
+    conda_exe = tmp_env / "standalone_conda/conda.exe"
+    assert conda_exe.exists()
+    return platform, conda_exe
+
+
 def test_example_customize_controls(tmp_path, request):
     input_path = _example_path("customize_controls")
     for installer, install_dir in create_installer(input_path, tmp_path):
@@ -823,6 +846,20 @@ def test_cross_osx_building(tmp_path):
         extra_constructor_args=["--platform", "osx-arm64"],
         config_filename="constructor_input.yaml",
     )
+
+
+def test_cross_build_example(tmp_path, platform_conda_exe):
+    platform, conda_exe = platform_conda_exe
+    input_path = _example_path("virtual_specs_ok")
+
+    for installer, _ in create_installer(
+        input_path,
+        tmp_path,
+        timeout=600,
+        conda_exe=conda_exe,
+        extra_constructor_args=["--platform", platform]
+    ):
+        assert installer.exists()
 
 
 def test_virtual_specs_failed(tmp_path, request):
