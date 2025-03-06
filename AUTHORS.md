@@ -43,6 +43,7 @@ Authors are sorted alphabetically.
 * Michael Sarahan
 * Nehal J Wani
 * Nicola Soranzo
+* NixM0nk3y
 * Paul Yim
 * Phil Elson
 * Pradipta Ghosh
@@ -66,5 +67,8 @@ Authors are sorted alphabetically.
 * XuehaiPan
 * astaric
 * bkreider
+* conda-bot
+* dependabot[bot]
 * guimondmm
+* pre-commit-ci[bot]
 * y2kbugger
