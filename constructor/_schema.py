@@ -150,7 +150,7 @@ class ConstructorConfiguration(BaseModel):
     of packages compatible with Python 3.6. If this is option is not provided, it
     will be set equal to the value of `specs`.
     """
-    virtual_specs: list[NonEmptyStr] = []
+    virtual_specs: list[Annotated[str, Field(min_length=3, pattern=r"^__\S+.*$")]] = []
     """
     A list of virtual packages that must be satisfied at install time. Virtual
     packages must start with `__`. For example, `__osx>=11` or `__glibc>=2.24`.
