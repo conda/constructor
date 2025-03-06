@@ -152,6 +152,16 @@
       "title": "ExtraEnv",
       "type": "object"
     },
+    "InstallerTypes": {
+      "enum": [
+        "sh",
+        "pkg",
+        "exe",
+        "all"
+      ],
+      "title": "InstallerTypes",
+      "type": "string"
+    },
     "WinSignTools": {
       "enum": [
         "azuresigntool",
@@ -387,13 +397,11 @@
     "installer_type": {
       "anyOf": [
         {
-          "minLength": 1,
-          "type": "string"
+          "$ref": "#/$defs/InstallerTypes"
         },
         {
           "items": {
-            "minLength": 1,
-            "type": "string"
+            "$ref": "#/$defs/InstallerTypes"
           },
           "type": "array"
         },

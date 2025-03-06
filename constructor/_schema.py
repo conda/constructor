@@ -30,6 +30,13 @@ class WinSignTools(StrEnum):
     SIGNTOOL_EXE = "signtool.exe"
 
 
+class InstallerTypes(StrEnum):
+    SH = "sh"
+    PKG = "pkg"
+    EXE = "exe"
+    ALL = "all"
+
+
 class ChannelRemap(BaseModel):
     model_config: ConfigDict = _base_config_dict
 
@@ -247,7 +254,7 @@ class ConstructorConfiguration(BaseModel):
     The filename of the installer being created. If not supplied, a reasonable
     default will determined by the `name`, `version`, platform, and installer type.
     """
-    installer_type: NonEmptyStr | list[NonEmptyStr] | None = None
+    installer_type: InstallerTypes | list[InstallerTypes] | None = None
     """
     The type of the installer being created.  Possible values are:
     - `sh`: shell-based installer for Linux or macOS;
