@@ -384,7 +384,8 @@ def platform_conda_exe(request, tmp_path) -> Tuple[str, Path]:
     subprocess.check_call(
         [
             sys.executable,
-            "-mconda",
+            "-m",
+            "conda",
             "create",
             "-p",
             tmp_env,
