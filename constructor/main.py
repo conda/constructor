@@ -169,10 +169,9 @@ def main_build(
             if isinstance(path, str):
                 new_extras.append(abspath(join(dir_path, path)))
             elif isinstance(path, dict):
-                assert len(path) == 1
-                orig, dest = next(iter(path.items()))
-                orig = abspath(join(dir_path, orig))
-                new_extras.append({orig: dest})
+                for orig, dest in path.items():
+                    orig = abspath(join(dir_path, orig))
+                    new_extras.append({orig: dest})
         info[extra_type] = new_extras
 
     for key in "channels", "specs", "exclude", "packages", "menu_packages", "virtual_specs":
