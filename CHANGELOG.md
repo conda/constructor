@@ -1,5 +1,32 @@
 [//]: # (current developments)
 
+## 2025-03-06   3.11.2:
+### Bug fixes
+
+* Fix version parsing when `mamba` v1 is used (#936)
+* Enforce POSIX newline characters in checksum files to allow `shasum -c` on Windows. (#938)
+* Fix ownership of files created by `conda init` for `PKG` installers. (#939)
+* Fix `extra_files` functionality on EXE installers. (#942)
+* Set `CONDA_QUIET=1` for EXE installers to avoid crashes due to NSIS log buffer overflows. (#944 via #950)
+* Check conda-standalone version only if shortcuts are enabled. (#952)
+* Catch `OSError` during `--conda-exe` compatibility checks too. (#952)
+
+### Other
+
+* Add `setuptools_scm` to build recipe. (#951)
+
+### Contributors
+
+* @jaimergp
+* @jjerphan
+* @marcoesters
+* @NixM0nk3y
+* @conda-bot
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2025-01-14   3.11.1:
 ### Enhancements
 
