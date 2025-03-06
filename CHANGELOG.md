@@ -21,10 +21,10 @@
 * @jjerphan
 * @marcoesters
 * @NixM0nk3y
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
+### New contributors
+
+* @NixM0nk3y made their first contribution in https://github.com/conda/constructor/pull/942
 
 
 ## 2025-01-14   3.11.1:
