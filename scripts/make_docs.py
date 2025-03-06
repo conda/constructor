@@ -52,7 +52,7 @@ are not available here.
 ## Available keys
 
 > This is only a name and description render of the `constructor` JSON Schema.
-> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjaimergp%2Fconstructor%2Frefs%2Fheads%2Fpydantic-schema%2Fconstructor%2Fdata%2Fconstructor.schema.json)
+> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstructor.schema.json)
 
 {% for name, description in key_info_dict.items() %}
 ### `{{ name }}`
