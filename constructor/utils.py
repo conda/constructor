@@ -303,8 +303,8 @@ def identify_conda_exe(conda_exe: Union[str, Path] = None) -> Tuple[StandaloneEx
         if "mamba" in output_help:
             return StandaloneExe.MAMBA, output_version
     except (CalledProcessError, OSError) as exc:
+        logger.debug("Exception while identifying binary", exc_info=exc)
         logger.warning("Could not identify standalone binary: %s", exc)
-        logger.debug("Exception details", exc_info=exc)
     return None, None
 
 
