@@ -162,6 +162,15 @@
       "title": "InstallerTypes",
       "type": "string"
     },
+    "PkgDomains": {
+      "enum": [
+        "enable_anywhere",
+        "enable_currentUserHome",
+        "enable_localSystem"
+      ],
+      "title": "PkgDomains",
+      "type": "string"
+    },
     "WinSignTools": {
       "enum": [
         "azuresigntool",
@@ -712,10 +721,16 @@
       "title": "Default Location Pkg"
     },
     "pkg_domains": {
-      "default": {},
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "default": {
+        "enable_anywhere": true,
+        "enable_currentUserHome": false
+      },
       "description": "The domains the package can be installed into. For a detailed explanation, see:\nhttps://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html\nconstructor defaults to `enable_anywhere=true` and `enable_currentUserHome=true`.\n`enable_localSystem` should not be set to true unless `default_location_pkg` is set as well.\nmacOS only.",
       "propertyNames": {
-        "minLength": 1
+        "$ref": "#/$defs/PkgDomains"
       },
       "title": "Pkg Domains",
       "type": "object"

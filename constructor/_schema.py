@@ -37,6 +37,12 @@ class InstallerTypes(StrEnum):
     ALL = "all"
 
 
+class PkgDomains(StrEnum):
+    ANYWHERE = "enable_anywhere"
+    CURRENT_USER_HOME = "enable_currentUserHome"
+    LOCAL_SYSTEM = "enable_localSystem"
+
+
 class ChannelRemap(BaseModel):
     model_config: ConfigDict = _base_config_dict
 
@@ -480,7 +486,7 @@ class ConstructorConfiguration(BaseModel):
     Internally, this is passed to `pkgbuild --install-location`.
     macOS only.
     """
-    pkg_domains: dict[NonEmptyStr, Any] = {}
+    pkg_domains: dict[PkgDomains, bool] = {"enable_anywhere": True, "enable_currentUserHome": False}
     """
     The domains the package can be installed into. For a detailed explanation, see:
     https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
