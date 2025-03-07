@@ -43,6 +43,7 @@ Authors are sorted alphabetically.
 * Michael Sarahan
 * Nehal J Wani
 * Nicola Soranzo
+* NixM0nk3y
 * Paul Yim
 * Phil Elson
 * Pradipta Ghosh
