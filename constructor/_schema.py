@@ -3,13 +3,21 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Logic to generate the JSON Schema for construct.yaml, using Pydantic.
+"""
+
+from __future__ import annotations
 
 import json
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import TYPE_CHECKING, Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
+
+if TYPE_CHECKING:
+    from typing import Any, Literal
 
 HERE = Path(__file__).parent
 SCHEMA_PATH = HERE / "data" / "constructor.schema.json"

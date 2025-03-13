@@ -80,8 +80,7 @@ Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argume
 
 def generate_key_info_dict():
     return {
-        name: field.description
-        for name, field in ConstructorConfiguration.model_fields.items()
+        name: field.description for name, field in ConstructorConfiguration.model_fields.items()
     }
 
 

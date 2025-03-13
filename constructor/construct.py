@@ -7,6 +7,8 @@
 Defines the construct.yaml input file schema, how to parse it and verify it.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import re
@@ -132,7 +134,7 @@ def parse(path, platform):
 
 
 # this is actually not an error, therefore the naming is okay
-class DeprecatedFieldWarning(ValidationError):  # noqa: N818
+class DeprecatedFieldWarning(ValidationError):
     pass
 
 
