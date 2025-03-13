@@ -44,16 +44,44 @@ constructor = [
     "ttf/*",
 ]
 
-[tool.black]
-line-length = 100
-target-version = ['py38', 'py39', 'py310']
-
-[tool.isort]
-profile = "black"
-line_length = 100
-
 [tool.ruff]
 line-length = 100
+target-version = "py39"
+exclude = [
+  "constructor/nsis/*.py",
+]
+
+[tool.ruff.lint]
+extend-per-file-ignores = {"docs/*" = ["D1"], "tests/*" = ["D1"]}
+flake8-type-checking = {exempt-modules = [], strict = true}
+ignore = [
+  "D101",  # Missing docstring in public class
+  "D102",  # Missing docstring in public method
+  "D103",  # Missing docstring in public function
+  "D104",  # Missing docstring in public package
+  "D105",  # Missing docstring in magic method
+  "D107",  # Missing docstring in `__init__`
+  "E402",  # module level import not at top of file
+  "E501",  # line too long
+  "E722",  # do not use bare 'except'
+  "E731",  # do not assign a lambda expression, use a def
+  "UP031",  # do not fix printf-style string formatting
+]
+pydocstyle = {convention = "pep257"}
+# see https://docs.astral.sh/ruff/rules/
+select = [
+  "D1",  # pydocstyle
+  "E",  # pycodestyle errors
+  "F",  # pyflakes
+  "FA",  # flake8-future-annotations
+  "I",  # isort
+  "ISC",  # flake8-implicit-str-concat
+  "RUF100",  # Unused noqa directive
+  "T10",  # flake8-debugger
+  "TCH",  # flake8-type-checking
+  "UP",  # pyupgrade
+  "W",  # pycodestyle warnings
+]
 
 [tool.pytest.ini_options]
 markers = [

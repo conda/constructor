@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Run examples bundled with this repo."""
+
 import argparse
 import os
 import platform
@@ -16,7 +17,8 @@ from constructor.utils import rm_rf
 
 try:
     import coverage  # noqa
-    COV_CMD = ['coverage', 'run', '--branch', '--append', '-m']
+
+    COV_CMD = ["coverage", "run", "--branch", "--append", "-m"]
 except ImportError:
     COV_CMD = []
 
@@ -24,27 +26,27 @@ except ImportError:
 warnings.warn(
     "This script is now deprecated and will be removed soon. "
     "Please use tests/test_examples.py with pytest.",
-    DeprecationWarning
+    DeprecationWarning,
 )
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 REPO_DIR = os.path.dirname(HERE)
-EXAMPLES_DIR = os.path.join(REPO_DIR, 'examples')
+EXAMPLES_DIR = os.path.join(REPO_DIR, "examples")
 PY3 = sys.version_info[0] == 3
-WHITELIST = ['grin', 'jetsonconda', 'miniconda', 'newchan']
+WHITELIST = ["grin", "jetsonconda", "miniconda", "newchan"]
 BLACKLIST = []
 WITH_SPACES = {"extra_files", "noconda", "signing", "scripts"}
 
 # .sh installers to also test in interactiv mode
 # (require all to a have License = have same interactive input steps)
-INTERACTIVE_TESTS = ['miniforge']
+INTERACTIVE_TESTS = ["miniforge"]
 # Test runs with even Python version are done in interactive mode, odd in batch mode
 INTERACTIVE_TESTING = (sys.version_info.minor % 2) == 0
 
 
 def _execute(cmd, installer_input=None, **env_vars):
-    print(' '.join(cmd))
+    print(" ".join(cmd))
     t0 = time.time()
     if env_vars:
         env = os.environ.copy()
@@ -65,18 +67,18 @@ def _execute(cmd, installer_input=None, **env_vars):
     except subprocess.TimeoutExpired:
         p.kill()
         stdout, stderr = p.communicate()
-        print('--- TEST TIMEOUT ---')
+        print("--- TEST TIMEOUT ---")
         errored = True
     t1 = time.time()
     if errored or "CONDA_VERBOSITY" in env_vars:
-        print(f'--- RETURNCODE: {p.returncode} ---')
+        print(f"--- RETURNCODE: {p.returncode} ---")
         if stdout:
-            print('--- STDOUT ---')
+            print("--- STDOUT ---")
             print(stdout)
         if stderr:
-            print('--- STDERR ---')
+            print("--- STDERR ---")
             print(stderr)
-    print('--- Done in', timedelta(seconds=t1 - t0))
+    print("--- Done in", timedelta(seconds=t1 - t0))
     return errored
 
 
@@ -104,7 +106,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
         )
     example_paths = []
     errored = 0
-    if platform.system() != 'Darwin':
+    if platform.system() != "Darwin":
         BLACKLIST.append(os.path.join(EXAMPLES_DIR, "osxpkg"))
     if keep_artifacts:
         os.makedirs(keep_artifacts, exist_ok=True)
@@ -113,7 +115,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
     for fname in os.listdir(EXAMPLES_DIR):
         fpath = os.path.join(EXAMPLES_DIR, fname)
         if os.path.isdir(fpath) and fpath not in whitelist and fpath not in BLACKLIST:
-            if os.path.exists(os.path.join(fpath, 'construct.yaml')):
+            if os.path.exists(os.path.join(fpath, "construct.yaml")):
                 example_paths.append(fpath)
 
     # NSIS won't error out when running scripts unless
@@ -127,7 +129,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
         example_name = Path(example_path).name
         test_with_spaces = example_name in WITH_SPACES
         print(example_name)
-        print('-' * len(example_name))
+        print("-" * len(example_name))
         if (
             sys.platform.startswith("win")
             and conda_exe
@@ -141,15 +143,15 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
         output_dir = tempfile.mkdtemp(prefix=f"{example_name}-", dir=parent_output)
         # resolve path to avoid some issues with TEMPDIR on Windows
         output_dir = str(Path(output_dir).resolve())
-        is_fromenv = os.path.basename(example_path) == 'fromenv'
+        is_fromenv = os.path.basename(example_path) == "fromenv"
         if is_fromenv:
-            env_file = os.path.join(example_path, 'environment.txt')
-            test_prefix = os.path.join(example_path, 'tmp_prefix_fromenv')
-            cmd = ['conda', 'create', '--prefix', test_prefix, '--file', env_file, '--yes']
+            env_file = os.path.join(example_path, "environment.txt")
+            test_prefix = os.path.join(example_path, "tmp_prefix_fromenv")
+            cmd = ["conda", "create", "--prefix", test_prefix, "--file", env_file, "--yes"]
             errored += _execute(cmd)
-        cmd = COV_CMD + ['constructor', '-v', example_path, '--output-dir', output_dir]
+        cmd = COV_CMD + ["constructor", "-v", example_path, "--output-dir", output_dir]
         if conda_exe:
-            cmd += ['--conda-exe', conda_exe]
+            cmd += ["--conda-exe", conda_exe]
         if debug:
             cmd.append("--debug")
         creation_errored = _execute(cmd)
@@ -157,34 +159,40 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
             rm_rf(test_prefix)
         errored += creation_errored
         for fpath in os.listdir(output_dir):
-            ext = fpath.rsplit('.', 1)[-1]
-            if fpath in tested_files or ext not in ('sh', 'exe', 'pkg'):
+            ext = fpath.rsplit(".", 1)[-1]
+            if fpath in tested_files or ext not in ("sh", "exe", "pkg"):
                 continue
             tested_files.add(fpath)
             test_suffix = "s p a c e s" if test_with_spaces else None
             env_dir = tempfile.mkdtemp(suffix=test_suffix, dir=output_dir)
             rm_rf(env_dir)
             fpath = os.path.join(output_dir, fpath)
-            print('--- Testing', os.path.basename(fpath))
+            print("--- Testing", os.path.basename(fpath))
             installer_input = None
-            if ext == 'sh':
+            if ext == "sh":
                 if INTERACTIVE_TESTING and example_name in INTERACTIVE_TESTS:
-                    cmd = ['/bin/sh', fpath]
+                    cmd = ["/bin/sh", fpath]
                     # Input: Enter, yes to the license, installation folder, no to initialize shells
                     installer_input = f"\nyes\n{env_dir}\nno\n"
                 else:
-                    cmd = ['/bin/sh', fpath, '-b', '-p', env_dir]
-            elif ext == 'pkg':
+                    cmd = ["/bin/sh", fpath, "-b", "-p", env_dir]
+            elif ext == "pkg":
                 if os.environ.get("CI"):
                     # We want to run it in an arbitrary directory, but the options
                     # are limited here... We can only install to $HOME :shrug:
                     # but that will pollute ~, so we only do it if we are running on CI
-                    cmd = ['installer', '-pkg', fpath, '-dumplog',
-                           '-target', 'CurrentUserHomeDirectory']
+                    cmd = [
+                        "installer",
+                        "-pkg",
+                        fpath,
+                        "-dumplog",
+                        "-target",
+                        "CurrentUserHomeDirectory",
+                    ]
                 else:
                     # This command only expands the PKG, but does not install
-                    cmd = ['pkgutil', '--expand', fpath, env_dir]
-            elif ext == 'exe':
+                    cmd = ["pkgutil", "--expand", fpath, env_dir]
+            elif ext == "exe":
                 # NSIS manual:
                 # > /D sets the default installation directory ($INSTDIR), overriding InstallDir
                 # > and InstallDirRegKey. It must be the last parameter used in the command line
@@ -195,13 +203,13 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                 # one, since the point is to just have spaces in the installation path -- one
                 # would be enough too :)
                 # This is why we have this weird .split() thingy down here:
-                cmd = ['cmd.exe', '/c', 'start', '/wait', fpath, '/S', *f'/D={env_dir}'.split()]
+                cmd = ["cmd.exe", "/c", "start", "/wait", fpath, "/S", *f"/D={env_dir}".split()]
             env = {"CONDA_VERBOSITY": "3"} if debug else {}
             test_errored = _execute(cmd, installer_input=installer_input, **env)
             # Windows EXEs never throw a non-0 exit code, so we need to check the logs,
             # which are only written if a special NSIS build is used
             win_error_lines = []
-            if ext == 'exe' and os.environ.get("NSIS_USING_LOG_BUILD"):
+            if ext == "exe" and os.environ.get("NSIS_USING_LOG_BUILD"):
                 test_errored = 0
                 try:
                     log_is_empty = True
@@ -221,7 +229,7 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                         "This usually means that the destination folder could not be created.\n"
                         "Possible causes: permissions, non-supported characters, long paths...\n"
                         "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
-                        )
+                    )
             for script_prefix in "pre", "post", "test":
                 install_location = Path(env_dir)
                 if ext == "exe":
@@ -233,10 +241,9 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                     install_location = Path("~/Library/osx-pkg-test").expanduser()
                 else:
                     continue
-                if (
-                    (Path(example_path) / f"{script_prefix}_install.{script_ext}").exists()
-                    and not (install_location / f"{script_prefix}_install_sentinel.txt").exists()
-                ):
+                if (Path(example_path) / f"{script_prefix}_install.{script_ext}").exists() and not (
+                    install_location / f"{script_prefix}_install_sentinel.txt"
+                ).exists():
                     # All pre/post scripts need to write a sentinel file so we can tell they did run
                     test_errored += 1
                     which_errored.setdefault(example_path, []).append(
@@ -246,12 +253,12 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
             if test_errored:
                 which_errored.setdefault(example_path, []).append(fpath)
                 if win_error_lines:
-                    print('---  LOGS  ---')
+                    print("---  LOGS  ---")
                     for line in win_error_lines:
                         print(line.rstrip())
                 if ext == "pkg" and os.environ.get("CI"):
                     # more complete logs are available under /var/log/install.log
-                    print('---  LOGS  ---')
+                    print("---  LOGS  ---")
                     print("Tip: Debug locally and check the full logs in the Installer UI")
                     print("     or check /var/log/install.log if run from the CLI.")
             elif ext == "exe" and not test_with_spaces:
@@ -263,13 +270,16 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                 )
                 if uninstaller:
                     cmd = [
-                        'cmd.exe', '/c', 'start', '/wait',
+                        "cmd.exe",
+                        "/c",
+                        "start",
+                        "/wait",
                         os.path.join(env_dir, uninstaller),
                         # We need silent mode + "uninstaller location" (_?=...) so the command can
                         # be waited; otherwise, since the uninstaller copies itself to a different
                         # location so it can be auto-deleted, it returns immediately and it gives
                         # us problems with the tempdir cleanup later
-                        f"/S _?={env_dir}"
+                        f"/S _?={env_dir}",
                     ]
                     test_errored = _execute(cmd)
                     errored += test_errored
@@ -286,8 +296,9 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
                         # whether the registry was restored, menu items were deleted, etc.
                         # TODO :)
                         which_errored.setdefault(example_path, []).append(
-                            "Uninstaller left too many files behind!\n - "
-                            "\n - ".join(paths_after_uninstall)
+                            "Uninstaller left too many files behind!\n - \n - ".join(
+                                paths_after_uninstall
+                            )
                         )
                 else:
                     which_errored.setdefault(example_path, []).append("Could not find uninstaller!")
@@ -303,14 +314,14 @@ def run_examples(keep_artifacts=None, conda_exe=None, debug=False):
 
     print("-------------------------------")
     if errored:
-        print('Some examples failed:')
+        print("Some examples failed:")
         for installer, reasons in which_errored.items():
             print(f"+ {os.path.basename(installer)}")
             for reason in reasons:
                 print(f"---> {reason}")
-        print('Assets saved in:', keep_artifacts or parent_output)
+        print("Assets saved in:", keep_artifacts or parent_output)
     else:
-        print('All examples ran successfully!')
+        print("All examples ran successfully!")
         shutil.rmtree(parent_output)
     return errored
 
@@ -323,13 +334,11 @@ def cli():
     return p.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = cli()
     if args.conda_exe:
         assert os.path.isfile(args.conda_exe)
     n_errors = run_examples(
-        keep_artifacts=args.keep_artifacts,
-        conda_exe=args.conda_exe,
-        debug=args.debug
+        keep_artifacts=args.keep_artifacts, conda_exe=args.conda_exe, debug=args.debug
     )
     sys.exit(n_errors)

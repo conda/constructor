@@ -26,12 +26,9 @@ TEST_FILES = {
         pytest.param("sha256", nullcontext(), id="string"),
         pytest.param(["sha256", "md5"], nullcontext(), id="list"),
     ),
-
 )
 def test_hash_dump(tmp_path, algorithm, context):
-    info = {
-        "_outpath": []
-    }
+    info = {"_outpath": []}
     for file, data in TEST_FILES.items():
         testfile = tmp_path / file
         testfile.write_text(data["content"])

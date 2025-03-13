@@ -3,6 +3,11 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Miscellaneous utilities to support other parts of the library.
+"""
+
+from __future__ import annotations
 
 import hashlib
 import logging
@@ -16,7 +21,6 @@ from os.path import isdir, isfile, islink, join, normpath
 from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
-from typing import Tuple, Union
 
 from ruamel.yaml import YAML
 
@@ -40,8 +44,8 @@ def explained_check_call(args):
 
 
 def filename_dist(dist):
-    """ Return the filename of a distribution. """
-    if hasattr(dist, 'to_filename'):
+    """Return the filename of a distribution."""
+    if hasattr(dist, "to_filename"):
         return dist.to_filename()
     else:
         return dist
@@ -58,7 +62,7 @@ def fill_template(data, d, exceptions=[]):
         "This function is deprecated and will be removed. Use '.jinja.render_template' instead.",
         DeprecationWarning,
     )
-    pat = re.compile(r'__(\w+)__')
+    pat = re.compile(r"__(\w+)__")
 
     def replace(match):
         key = match.group(1)
@@ -67,10 +71,10 @@ def fill_template(data, d, exceptions=[]):
     return pat.sub(replace, data)
 
 
-def hash_files(paths, algorithm='md5'):
+def hash_files(paths, algorithm="md5"):
     h = hashlib.new(algorithm)
     for path in paths:
-        with open(path, 'rb') as fi:
+        with open(path, "rb") as fi:
             while True:
                 chunk = fi.read(262144)
                 if not chunk:
@@ -83,14 +87,14 @@ def make_VIProductVersion(version):
     """
     always create a version of the form X.X.X.X
     """
-    pat = re.compile(r'\d+$')
+    pat = re.compile(r"\d+$")
     res = []
-    for part in version.split('.'):
+    for part in version.split("."):
         if pat.match(part):
             res.append(part)
     while len(res) < 4:
-        res.append('0')
-    return '.'.join(res[:4])
+        res.append("0")
+    return ".".join(res[:4])
 
 
 def read_ascii_only(path):
@@ -98,15 +102,17 @@ def read_ascii_only(path):
         data = fi.read()
     for c in data:
         if ord(c) > 127:
-            sys.exit("Error: unexpected non-ASCII character '%s' in: %s" %
-                     (c, path))
+            sys.exit("Error: unexpected non-ASCII character '%s' in: %s" % (c, path))
     return data
 
 
-if_pat = re.compile(r'^#if ([ \S]+)$\n'
-                    r'(.*?)'
-                    r'(^#else\s*$\n(.*?))?'
-                    r'^#endif\s*$\n', re.M | re.S)
+if_pat = re.compile(
+    r"^#if ([ \S]+)$\n"
+    r"(.*?)"
+    r"(^#else\s*$\n(.*?))?"
+    r"^#endif\s*$\n",
+    re.M | re.S,
+)
 
 
 def preprocess(data, namespace):
@@ -120,42 +126,42 @@ def preprocess(data, namespace):
         if eval(cond, namespace, {}):
             return match.group(2)
         else:
-            return match.group(4) or ''
+            return match.group(4) or ""
 
     return if_pat.sub(if_repl, data)
 
 
 def add_condarc(info):
-    condarc = info.get('condarc')
+    condarc = info.get("condarc")
     if condarc is None:
         # The legacy approach
-        write_condarc = info.get('write_condarc')
-        default_channels = info.get('conda_default_channels')
-        channel_alias = info.get('conda_channel_alias')
-        channels = info.get('channels')
+        write_condarc = info.get("write_condarc")
+        default_channels = info.get("conda_default_channels")
+        channel_alias = info.get("conda_channel_alias")
+        channels = info.get("channels")
         if not (write_condarc and (default_channels or channels or channel_alias)):
             return
         condarc = {}
         if default_channels:
-            condarc['default_channels'] = default_channels
+            condarc["default_channels"] = default_channels
         if channels:
-            condarc['channels'] = channels
+            condarc["channels"] = channels
         if channel_alias:
-            condarc['channel_alias'] = channel_alias
+            condarc["channel_alias"] = channel_alias
     if isinstance(condarc, dict):
         condarc = yaml_to_string(condarc)
-    yield '# ----- add condarc'
-    if info['_platform'].startswith('win'):
-        yield 'Var /Global CONDARC'
+    yield "# ----- add condarc"
+    if info["_platform"].startswith("win"):
+        yield "Var /Global CONDARC"
         yield 'FileOpen $CONDARC "$INSTDIR\\.condarc" w'
         for line in condarc.splitlines():
             yield 'FileWrite $CONDARC "%s$\\r$\\n"' % line
-        yield 'FileClose $CONDARC'
+        yield "FileClose $CONDARC"
     else:
         yield 'cat <<EOF >"$PREFIX/.condarc"'
         for line in condarc.splitlines():
             yield line
-        yield 'EOF'
+        yield "EOF"
 
 
 def ensure_transmuted_ext(info, url):
@@ -177,23 +183,20 @@ def ensure_transmuted_ext(info, url):
 
 
 def get_final_url(info, url):
-    mapping = info.get('channels_remap', [])
+    mapping = info.get("channels_remap", [])
     if not url.lower().endswith((".tar.bz2", ".conda", "/")):
         url += "/"
         added_slash = True
     else:
         added_slash = False
     for entry in mapping:
-        src = entry['src']
-        dst = entry['dest']
+        src = entry["src"]
+        dst = entry["dest"]
         # Treat http:// and https:// as equivalent
         if src.startswith("http"):
             srcs = tuple(
                 dict.fromkeys(
-                    [
-                        src.replace("http://", "https://"),
-                        src.replace("https://", "http://")
-                    ]
+                    [src.replace("http://", "https://"), src.replace("https://", "http://")]
                 )
             )
         else:
@@ -203,8 +206,11 @@ def get_final_url(info, url):
             for src in srcs:
                 new_url = new_url.replace(src, dst)
             if url.endswith(".tar.bz2"):
-                logger.warning("You need to make the package %s available "
-                               "at %s", url.rsplit('/', 1)[1], new_url)
+                logger.warning(
+                    "You need to make the package %s available at %s",
+                    url.rsplit("/", 1)[1],
+                    new_url,
+                )
             if added_slash:
                 new_url = new_url[:-1]
             return new_url
@@ -213,11 +219,13 @@ def get_final_url(info, url):
 
 def get_final_channels(info):
     mapped_channels = []
-    for channel in info.get('channels', []):
+    for channel in info.get("channels", []):
         url = get_final_url(info, channel)
         if url.startswith("file://"):
-            logger.warning("local channel %s does not have a remap. "
-                           "It will not be included in the installer", url)
+            logger.warning(
+                "local channel %s does not have a remap. It will not be included in the installer",
+                url,
+            )
             continue
         mapped_channels.append(url)
     return mapped_channels
@@ -247,7 +255,7 @@ def rm_rf(path):
 def yield_lines(path):
     for line in open(path):
         line = line.strip()
-        if not line or line.startswith('#'):
+        if not line or line.startswith("#"):
             continue
         yield line
 
@@ -260,8 +268,7 @@ def shortcuts_flags(info) -> str:
     if menu_packages:
         if info.get("_conda_exe_type") == StandaloneExe.MAMBA:
             logger.warning(
-                "Micromamba does not support '--shortcuts-only'. "
-                "Will install all shortcuts."
+                "Micromamba does not support '--shortcuts-only'. Will install all shortcuts."
             )
             return ""
         # set and populated: we only create shortcuts for some
@@ -274,8 +281,8 @@ def shortcuts_flags(info) -> str:
 def approx_size_kb(info, which="pkgs"):
     valid = ("pkgs", "tarballs", "total")
     assert which in valid, f"'which' must be one of {valid}"
-    size_pkgs = info.get('_approx_pkgs_size', 0)
-    size_tarballs = info.get('_approx_tarballs_size', 0)
+    size_pkgs = info.get("_approx_pkgs_size", 0)
+    size_tarballs = info.get("_approx_tarballs_size", 0)
     if which == "pkgs":
         size_bytes = size_pkgs
     elif which == "tarballs":
@@ -284,10 +291,10 @@ def approx_size_kb(info, which="pkgs"):
         size_bytes = size_pkgs + size_tarballs
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
-    return int(math.ceil(size_bytes/1000))
+    return int(math.ceil(size_bytes / 1000))
 
 
-def identify_conda_exe(conda_exe: Union[str, Path] = None) -> Tuple[StandaloneExe, str]:
+def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneExe, str]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
     if isinstance(conda_exe, Path):
@@ -309,9 +316,9 @@ def identify_conda_exe(conda_exe: Union[str, Path] = None) -> Tuple[StandaloneEx
 
 
 def win_str_esc(s, newlines=True):
-    maps = [('$', '$$'), ('"', '$\\"'), ('\t', '$\\t')]
+    maps = [("$", "$$"), ('"', '$\\"'), ("\t", "$\\t")]
     if newlines:
-        maps.extend([('\n', '$\\n'), ('\r', '$\\r')])
+        maps.extend([("\n", "$\\n"), ("\r", "$\\r")])
     for a, b in maps:
         s = s.replace(a, b)
     return '"%s"' % s
@@ -320,9 +327,7 @@ def win_str_esc(s, newlines=True):
 def check_required_env_vars(env_vars):
     missing_vars = {var for var in env_vars if var not in environ}
     if missing_vars:
-        raise RuntimeError(
-            f"Missing required environment variables {', '.join(missing_vars)}."
-        )
+        raise RuntimeError(f"Missing required environment variables {', '.join(missing_vars)}.")
 
 
 def parse_virtual_specs(info) -> dict:

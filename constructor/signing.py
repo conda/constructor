@@ -1,3 +1,9 @@
+"""
+Common utilities to sign installers.
+"""
+
+from __future__ import annotations
+
 import logging
 import os
 import shutil
@@ -5,7 +11,6 @@ from pathlib import Path
 from plistlib import dump as plist_dump
 from subprocess import PIPE, STDOUT, check_call, run
 from tempfile import NamedTemporaryFile
-from typing import Union
 
 from .utils import check_required_env_vars, explained_check_call, win_str_esc
 
@@ -22,10 +27,11 @@ class SigningTool:
     certificate_file: str | Path
         Path to the certificate file
     """
+
     def __init__(
         self,
-        executable: Union[str, Path],
-        certificate_file: Union[str, Path] = None,
+        executable: str | Path,
+        certificate_file: str | Path | None = None,
     ):
         self.executable = str(executable)
         if certificate_file and not Path(certificate_file).exists():
@@ -71,17 +77,10 @@ class WindowsSignTool(SigningTool):
 
     def get_signing_command(self) -> str:
         timestamp_server = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
-            "http://timestamp.sectigo.com"
+            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL", "http://timestamp.sectigo.com"
         )
-        timestamp_digest = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST",
-            "sha256"
-        )
-        file_digest = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_FILE_DIGEST",
-            "sha256"
-        )
+        timestamp_digest = os.environ.get("CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST", "sha256")
+        file_digest = os.environ.get("CONSTRUCTOR_SIGNTOOL_FILE_DIGEST", "sha256")
         command = (
             f"{win_str_esc(self.executable)} sign /f {win_str_esc(self.certificate_file)} "
             f"/tr {win_str_esc(timestamp_server)} /td {timestamp_digest} /fd {file_digest}"
@@ -97,7 +96,7 @@ class WindowsSignTool(SigningTool):
             raise FileNotFoundError(f"Could not find certificate file {self.certificate_file}.")
         check_call([self.executable, "/?"], stdout=PIPE, stderr=PIPE)
 
-    def verify_signature(self, installer_file: Union[str, Path]):
+    def verify_signature(self, installer_file: str | Path):
         proc = run(
             [self.executable, "verify", "/v", str(installer_file)],
             stdout=PIPE,
@@ -122,24 +121,16 @@ class AzureSignTool(SigningTool):
         super().__init__(os.environ.get("AZURE_SIGNTOOL_PATH", "AzureSignTool"))
 
     def get_signing_command(self) -> str:
-
         required_env_vars = (
             "AZURE_SIGNTOOL_KEY_VAULT_URL",
             "AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE",
         )
         check_required_env_vars(required_env_vars)
         timestamp_server = os.environ.get(
-            "AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL",
-            "http://timestamp.sectigo.com"
+            "AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL", "http://timestamp.sectigo.com"
         )
-        timestamp_digest = os.environ.get(
-            "AZURE_SIGNTOOL_TIMESTAMP_DIGEST",
-            "sha256"
-        )
-        file_digest = os.environ.get(
-            "AZURE_SIGNTOOL_FILE_DIGEST",
-            "sha256"
-        )
+        timestamp_digest = os.environ.get("AZURE_SIGNTOOL_TIMESTAMP_DIGEST", "sha256")
+        file_digest = os.environ.get("AZURE_SIGNTOOL_FILE_DIGEST", "sha256")
 
         command = (
             f"{win_str_esc(self.executable)} sign -v"
@@ -179,7 +170,7 @@ class AzureSignTool(SigningTool):
         self._verify_tool_is_available()
         check_call([self.executable, "--help"], stdout=PIPE, stderr=PIPE)
 
-    def verify_signature(self, installer_file: Union[str, Path]):
+    def verify_signature(self, installer_file: str | Path):
         """Use Powershell to verify signature.
 
         For available statuses, see the Microsoft documentation:
@@ -193,7 +184,8 @@ class AzureSignTool(SigningTool):
             "$sig.Status.value__;"
             "$sig.StatusMessage"
         )
-        proc = run([
+        proc = run(
+            [
                 "powershell",
                 "-c",
                 command,
@@ -235,8 +227,8 @@ class CodeSign(SigningTool):
 
     def get_signing_command(
         self,
-        bundle: Union[str, Path],
-        entitlements: Union[str, Path] = None,
+        bundle: str | Path,
+        entitlements: str | Path = None,
     ) -> list:
         command = [
             self.executable,
@@ -257,8 +249,8 @@ class CodeSign(SigningTool):
 
     def sign_bundle(
         self,
-        bundle: Union[str, Path],
-        entitlements: Union[str, Path, dict] = None,
+        bundle: str | Path,
+        entitlements: str | Path | dict | None = None,
     ):
         if isinstance(entitlements, dict):
             with NamedTemporaryFile(suffix=".plist", delete=False) as ent_file:
