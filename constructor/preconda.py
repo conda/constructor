@@ -3,6 +3,11 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Common logic to prepare the tarball payloads shipped in some installers.
+"""
+
+from __future__ import annotations
 
 import os
 import platform
@@ -13,7 +18,7 @@ from os.path import isdir, join
 from os.path import split as path_split
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Mapping, Union
+from typing import TYPE_CHECKING
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
@@ -23,12 +28,10 @@ from .conda_interface import (
     PrefixData,
     all_channel_urls,
     default_prefix,
-)
-from .conda_interface import distro as conda_distro
-from .conda_interface import (
     get_repodata,
     write_repodata,
 )
+from .conda_interface import distro as conda_distro
 from .utils import (
     ensure_transmuted_ext,
     filename_dist,
@@ -37,29 +40,31 @@ from .utils import (
     shortcuts_flags,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 try:
     import json
 except ImportError:
     import ruamel_json as json
 
-files = '.constructor-build.info', 'urls', 'urls.txt', 'env.txt'
+files = ".constructor-build.info", "urls", "urls.txt", "env.txt"
 
 
 def write_index_cache(info, dst_dir, used_packages):
-    cache_dir = join(dst_dir, 'cache')
+    cache_dir = join(dst_dir, "cache")
 
     if not isdir(cache_dir):
         os.makedirs(cache_dir)
 
-    _platforms = info['_platform'], 'noarch'
+    _platforms = info["_platform"], "noarch"
     _remap_configs = list(info.get("channels_remap", []))
     _env_channels = []
     for env_info in info.get("extra_envs", {}).values():
         _remap_configs += env_info.get("channels_remap", [])
         _env_channels += env_info.get("channels", [])
 
-    _remaps = {url['src'].rstrip('/'): url['dest'].rstrip('/')
-               for url in _remap_configs}
+    _remaps = {url["src"].rstrip("/"): url["dest"].rstrip("/") for url in _remap_configs}
     _channels = [
         url.rstrip("/")
         for url in list(_remaps)
@@ -75,24 +80,24 @@ def write_index_cache(info, dst_dir, used_packages):
         all_urls += env_info["_urls"]
 
     for url, _ in all_urls:
-        src, subdir, fn = url.rsplit('/', 2)
+        src, subdir, fn = url.rsplit("/", 2)
         dst = _remaps.get(src)
         if dst is not None:
-            src = '%s/%s' % (src, subdir)
-            dst = '%s/%s' % (dst, subdir)
+            src = "%s/%s" % (src, subdir)
+            dst = "%s/%s" % (dst, subdir)
             if dst not in repodatas:
                 repodatas[dst] = {
-                    '_url': dst,
-                    'info': {'subdir': subdir},
-                    'packages': {},
-                    'packages.conda': {},
-                    'removed': []
+                    "_url": dst,
+                    "info": {"subdir": subdir},
+                    "packages": {},
+                    "packages.conda": {},
+                    "removed": [],
                 }
-            loc = 'packages.conda' if fn.endswith('.conda') else 'packages'
+            loc = "packages.conda" if fn.endswith(".conda") else "packages"
             repodatas[dst][loc][fn] = repodatas[src][loc][fn]
     for src in _remaps:
         for subdir in _platforms:
-            del repodatas['%s/%s' % (src, subdir)]
+            del repodatas["%s/%s" % (src, subdir)]
 
     for url, repodata in repodatas.items():
         if repodata is not None:
@@ -104,33 +109,34 @@ def write_index_cache(info, dst_dir, used_packages):
 
 
 def system_info():
-    out = {'constructor': CONSTRUCTOR_VERSION,
-           'conda': CONDA_INTERFACE_VERSION,
-           'platform': sys.platform,
-           'python': sys.version,
-           'python_version': tuple(sys.version_info),
-           'machine': platform.machine(),
-           'platform_full': platform.version()}
-    if sys.platform == 'darwin':
-        out['extra'] = platform.mac_ver()
-    elif sys.platform.startswith('linux'):
+    out = {
+        "constructor": CONSTRUCTOR_VERSION,
+        "conda": CONDA_INTERFACE_VERSION,
+        "platform": sys.platform,
+        "python": sys.version,
+        "python_version": tuple(sys.version_info),
+        "machine": platform.machine(),
+        "platform_full": platform.version(),
+    }
+    if sys.platform == "darwin":
+        out["extra"] = platform.mac_ver()
+    elif sys.platform.startswith("linux"):
         if conda_distro is not None:
-            out['extra'] = conda_distro.linux_distribution(full_distribution_name=False)
-        elif hasattr(platform, 'dist'):
-            out['extra'] = platform.dist()
-    elif sys.platform.startswith('win'):
-        out['extra'] = platform.win32_ver()
+            out["extra"] = conda_distro.linux_distribution(full_distribution_name=False)
+        elif hasattr(platform, "dist"):
+            out["extra"] = platform.dist()
+    elif sys.platform.startswith("win"):
+        out["extra"] = platform.win32_ver()
         prefix = default_prefix
         prefix_records = list(PrefixData(prefix).iter_records())
-        nsis_prefix_rec = next(
-            (rec for rec in prefix_records if rec.name == 'nsis'), None)
+        nsis_prefix_rec = next((rec for rec in prefix_records if rec.name == "nsis"), None)
         if nsis_prefix_rec:
-            out['nsis'] = nsis_prefix_rec.version
+            out["nsis"] = nsis_prefix_rec.version
     return out
 
 
 def write_files(info, dst_dir):
-    with open(join(dst_dir, '.constructor-build.info'), 'w') as fo:
+    with open(join(dst_dir, ".constructor-build.info"), "w") as fo:
         json.dump(system_info(), fo)
 
     all_urls = info["_urls"].copy()
@@ -140,7 +146,7 @@ def write_files(info, dst_dir):
     final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in info["_urls"])
     all_final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in all_urls)
 
-    with open(join(dst_dir, 'urls'), 'w') as fo:
+    with open(join(dst_dir, "urls"), "w") as fo:
         for url, md5 in all_final_urls_md5s:
             maybe_different_url = ensure_transmuted_ext(info, url)
             if maybe_different_url != url:  # transmuted, no md5
@@ -148,9 +154,9 @@ def write_files(info, dst_dir):
             else:
                 fo.write(f"{url}#{md5}\n")
 
-    with open(join(dst_dir, 'urls.txt'), 'w') as fo:
+    with open(join(dst_dir, "urls.txt"), "w") as fo:
         for url, _ in all_final_urls_md5s:
-            fo.write('%s\n' % url)
+            fo.write("%s\n" % url)
 
     all_dists = info["_dists"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
@@ -176,7 +182,7 @@ def write_files(info, dst_dir):
         env_dst_dir = os.path.join(dst_dir, "envs", env_name)
         # environment conda-meta
         env_urls_md5 = tuple((get_final_url(info, url), md5) for url, md5 in env_info["_urls"])
-        user_requested_specs = env_config.get('user_requested_specs', env_config.get('specs', ()))
+        user_requested_specs = env_config.get("user_requested_specs", env_config.get("specs", ()))
         write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
         # environment installation list
         write_env_txt(info, env_dst_dir, env_urls_md5)
@@ -188,14 +194,14 @@ def write_files(info, dst_dir):
 
 def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
     if user_requested_specs is None:
-        user_requested_specs = info.get('user_requested_specs', info.get('specs', ()))
+        user_requested_specs = info.get("user_requested_specs", info.get("specs", ()))
 
     cmd = path_split(sys.argv[0])[-1]
     if len(sys.argv) > 1:
         cmd = "%s %s" % (cmd, " ".join(sys.argv[1:]))
 
     builder = [
-        "==> %s <==" % time.strftime('%Y-%m-%d %H:%M:%S'),
+        "==> %s <==" % time.strftime("%Y-%m-%d %H:%M:%S"),
         "# cmd: %s" % cmd,
     ]
     dists = tuple(Dist(url) for url, _ in final_urls_md5s)
@@ -206,9 +212,9 @@ def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
         builder.append("# update specs: %s" % update_specs)
     builder.append("\n")
 
-    if not isdir(join(dst_dir, 'conda-meta')):
-        os.makedirs(join(dst_dir, 'conda-meta'))
-    with open(join(dst_dir, 'conda-meta', 'history'), 'w') as fh:
+    if not isdir(join(dst_dir, "conda-meta")):
+        os.makedirs(join(dst_dir, "conda-meta"))
+    with open(join(dst_dir, "conda-meta", "history"), "w") as fh:
         fh.write("\n".join(builder))
 
 
@@ -221,21 +227,21 @@ def write_repodata_record(info, dst_dir):
             _dist = filename_dist(dist)[:-6]
         elif filename_dist(dist).endswith(".tar.bz2"):
             _dist = filename_dist(dist)[:-8]
-        record_file = join(_dist, 'info', 'repodata_record.json')
-        record_file_src = join(info['_download_dir'], record_file)
+        record_file = join(_dist, "info", "repodata_record.json")
+        record_file_src = join(info["_download_dir"], record_file)
 
         with open(record_file_src) as rf:
             rr_json = json.load(rf)
 
-        rr_json['url'] = get_final_url(info, rr_json['url'])
-        rr_json['channel'] = get_final_url(info, rr_json['channel'])
+        rr_json["url"] = get_final_url(info, rr_json["url"])
+        rr_json["channel"] = get_final_url(info, rr_json["channel"])
 
-        if not isdir(join(dst_dir, _dist, 'info')):
-            os.makedirs(join(dst_dir, _dist, 'info'))
+        if not isdir(join(dst_dir, _dist, "info")):
+            os.makedirs(join(dst_dir, _dist, "info"))
 
         record_file_dest = join(dst_dir, record_file)
 
-        with open(record_file_dest, 'w') as rf:
+        with open(record_file_dest, "w") as rf:
             json.dump(rr_json, rf, indent=2, sort_keys=True)
 
 
@@ -247,7 +253,7 @@ def write_env_txt(info, dst_dir, urls):
         f"""
         # This file may be used to create an environment using:
         # $ conda create --name <env> --file <this file>
-        # platform: {info['_platform']}
+        # platform: {info["_platform"]}
         @EXPLICIT
         """
     ).lstrip()
@@ -282,19 +288,19 @@ def write_shortcuts_txt(info, dst_dir, env_config):
 
 
 def copy_extra_files(
-    extra_files: List[Union[os.PathLike, Mapping]], workdir: os.PathLike
-) -> List[os.PathLike]:
+    extra_files: list[os.PathLike | Mapping], workdir: os.PathLike
+) -> list[os.PathLike]:
     """Copy list of extra files to a working directory
 
     Args:
-        extra_files (List[Union[os.PathLike, Mapping]]): A path or a mapping
-        workdir (os.PathLike): Path to where extra files will be copied to.
+        extra_files: A path or a mapping
+        workdir: Path to where extra files will be copied to.
 
     Raises:
         FileNotFoundError: Raises when the file isn't found.
 
     Returns:
-        List[os.PathLike]: List of normalized paths of copied locations.
+        list[os.PathLike]: List of normalized paths of copied locations.
     """
     if not extra_files:
         return []

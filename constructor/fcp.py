@@ -16,12 +16,12 @@ from collections import defaultdict
 from itertools import groupby
 from os.path import abspath, expanduser, isdir, join
 from subprocess import check_call
+from typing import TYPE_CHECKING
 
 from constructor.utils import filename_dist
 
 from .conda_interface import (
     PackageCacheData,
-    PackageCacheRecord,
     PrefixData,
     PrefixGraph,
     ProgressiveFetchExtract,
@@ -36,6 +36,9 @@ from .conda_interface import (
     locate_prefix_by_name,
     read_paths_json,
 )
+
+if TYPE_CHECKING:
+    from .conda_interface import PackageCacheRecord
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +77,7 @@ def check_duplicates(precs):
 
 def exclude_packages(precs, exclude=(), error_on_absence=True):
     for name in exclude:
-        for bad_char in ' =<>*':
+        for bad_char in " =<>*":
             if bad_char in name:
                 sys.exit("Error: did not expect '%s' in package name: %s" % (bad_char, name))
 
@@ -91,34 +94,43 @@ def _find_out_of_date_precs(precs, channel_urls, platform):
     for prec in precs:
         all_versions = SubdirData.query_all(prec.name, channels=channel_urls, subdirs=[platform])
         if all_versions:
-            most_recent = max(all_versions, key=lambda package_version: (
-                VersionOrder(package_version.version), package_version.build_number))
+            most_recent = max(
+                all_versions,
+                key=lambda package_version: (
+                    VersionOrder(package_version.version),
+                    package_version.build_number,
+                ),
+            )
             prec_version = VersionOrder(prec.version)
             latest_version = VersionOrder(most_recent.version)
-            if prec_version < latest_version or (prec_version == latest_version
-                                                 and prec.build_number < most_recent.build_number):
+            if prec_version < latest_version or (
+                prec_version == latest_version and prec.build_number < most_recent.build_number
+            ):
                 out_of_date_package_records[prec.name] = most_recent
     return out_of_date_package_records
 
 
 def _show(name, version, platform, download_dir, precs, more_recent_versions={}):
-    logger.debug("""
+    logger.debug(
+        """
 name: %(name)s
 version: %(version)s
 cache download location: %(download_dir)s
-platform: %(platform)s""", dict(
-        name=name,
-        version=version,
-        platform=platform,
-        download_dir=download_dir,
-    ))
+platform: %(platform)s""",
+        dict(
+            name=name,
+            version=version,
+            platform=platform,
+            download_dir=download_dir,
+        ),
+    )
     logger.debug("number of packages: %d", len(precs))
     for prec in precs:
         more_recent_version = more_recent_versions.get(prec.name, None)
         if more_recent_version:
-            logger.debug('    %s (latest: %s)', prec.fn, more_recent_version)
+            logger.debug("    %s (latest: %s)", prec.fn, more_recent_version)
         else:
-            logger.debug('    %s', prec.fn)
+            logger.debug("    %s", prec.fn)
 
 
 def _fetch(download_dir, precs):
@@ -136,7 +148,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     assert duplicate_files in ("warn", "skip", "error")
 
     map_members_scase = defaultdict(set)
-    map_members_icase = defaultdict(lambda: {'files': set(), 'fns': set()})
+    map_members_icase = defaultdict(lambda: {"files": set(), "fns": set()})
 
     # Keep a min, 50MB buffer size
     total_tarball_size = 52428800
@@ -152,8 +164,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
         for path_data in paths_data:
             short_path = path_data.path
             try:
-                size = (path_data.size_in_bytes or
-                        getsize(join(extracted_package_dir, short_path)))
+                size = path_data.size_in_bytes or getsize(join(extracted_package_dir, short_path))
             except AttributeError:
                 size = getsize(join(extracted_package_dir, short_path))
             total_extracted_pkgs_size += size
@@ -161,43 +172,40 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             map_members_scase[short_path].add(fn)
 
             short_path_lower = short_path.lower()
-            map_members_icase[short_path_lower]['files'].add(short_path)
-            map_members_icase[short_path_lower]['fns'].add(fn)
+            map_members_icase[short_path_lower]["files"].add(short_path)
+            map_members_icase[short_path_lower]["fns"].add(fn)
 
     if duplicate_files == "skip":
         return total_tarball_size, total_extracted_pkgs_size
 
-    logger.info('Checking for duplicate files ...')
+    logger.info("Checking for duplicate files ...")
     for member in map_members_scase:
         fns = map_members_scase[member]
         if len(fns) > 1:
-            msg_str = "File '%s' found in multiple packages: %s" % (
-                    member, ', '.join(fns))
+            msg_str = "File '%s' found in multiple packages: %s" % (member, ", ".join(fns))
             if duplicate_files == "warn":
                 logger.warning(msg_str)
             else:
-                sys.exit(f'Error: {msg_str}')
+                sys.exit(f"Error: {msg_str}")
 
     for member in map_members_icase:
         # Some filesystems are not case sensitive by default (e.g HFS)
         # Throw warning on linux and error out on macOS/windows
-        fns = map_members_icase[member]['fns']
-        files = list(map_members_icase[member]['files'])
-        msg_str = "Files %s found in the package(s): %s" % (
-            str(files)[1:-1], ', '.join(fns))
+        fns = map_members_icase[member]["fns"]
+        files = list(map_members_icase[member]["files"])
+        msg_str = "Files %s found in the package(s): %s" % (str(files)[1:-1], ", ".join(fns))
         if len(files) > 1:
-            msg_str = "Files %s found in the package(s): %s" % (
-                str(files)[1:-1], ', '.join(fns))
-            if duplicate_files == "warn" or platform.startswith('linux'):
+            msg_str = "Files %s found in the package(s): %s" % (str(files)[1:-1], ", ".join(fns))
+            if duplicate_files == "warn" or platform.startswith("linux"):
                 logger.warning(msg_str)
             else:
-                sys.exit(f'Error: {msg_str}')
+                sys.exit(f"Error: {msg_str}")
 
     return total_tarball_size, total_extracted_pkgs_size
 
 
 def _precs_from_environment(environment, input_dir):
-    if not isdir(environment) and ('/' in environment or '\\' in environment):
+    if not isdir(environment) and ("/" in environment or "\\" in environment):
         env2 = join(input_dir, environment)
         if isdir(env2):
             environment = env2
@@ -210,9 +218,23 @@ def _precs_from_environment(environment, input_dir):
     return list(pdata.iter_records_sorted())
 
 
-def _solve_precs(name, version, download_dir, platform, channel_urls=(), channels_remap=(),
-                 specs=(), exclude=(), menu_packages=None, environment=None, environment_file=None,
-                 verbose=True, conda_exe="conda.exe", extra_env=False, input_dir=""):
+def _solve_precs(
+    name,
+    version,
+    download_dir,
+    platform,
+    channel_urls=(),
+    channels_remap=(),
+    specs=(),
+    exclude=(),
+    menu_packages=None,
+    environment=None,
+    environment_file=None,
+    verbose=True,
+    conda_exe="conda.exe",
+    extra_env=False,
+    input_dir="",
+):
     # Add python to specs, since all installers need a python interpreter. In the future we'll
     # probably want to add conda too.
     # JRG: This only applies to the `base` environment; `extra_envs` are exempt
@@ -226,14 +248,14 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         logger.debug("specs: %s", specs)
 
     # Append channels_remap srcs to channel_urls
-    channel_urls = (*channel_urls, *(x['src'] for x in channels_remap))
+    channel_urls = (*channel_urls, *(x["src"] for x in channels_remap))
 
     if environment_file or environment:
         # set conda to be the user's conda (what is in the environment)
         # for purpose of getting & building environments, rather
         # than the standalone conda (conda_exe). Fallback to the
         # standalone, if needed
-        user_conda = os.environ.get('CONDA_EXE', '')
+        user_conda = os.environ.get("CONDA_EXE", "")
         if not user_conda:
             if cc_platform == platform:
                 # We can use the standalone conda for native platforms if there is no
@@ -251,13 +273,12 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
         # use conda env for yaml, and standard conda create otherwise
         subcommand = (
             ["env", "create"]
-            if environment_file.endswith(('.yml', '.yaml'))
+            if environment_file.endswith((".yml", ".yaml"))
             else ["create", "--yes"]
         )
         if channel_urls:
             logger.warning(
-                "Channels passed in construct.yaml won't be used "
-                "during environment creation."
+                "Channels passed in construct.yaml won't be used during environment creation."
             )
         check_call(
             [
@@ -313,20 +334,21 @@ def _solve_precs(name, version, download_dir, platform, channel_urls=(), channel
     return precs
 
 
-def _fetch_precs(precs, download_dir, transmute_file_type=''):
+def _fetch_precs(precs, download_dir, transmute_file_type=""):
     pc_recs = _fetch(download_dir, precs)
     # Constructor cache directory can have multiple packages from different
     # installer creations. Filter out those which the solver picked.
     precs_fns = [x.fn for x in precs]
     pc_recs = [x for x in pc_recs if x.fn in precs_fns]
     _urls = [(pc_rec.url, pc_rec.md5) for pc_rec in pc_recs]
-    has_conda = any(pc_rec.name == 'conda' for pc_rec in pc_recs)
+    has_conda = any(pc_rec.name == "conda" for pc_rec in pc_recs)
 
     dists = list(prec.fn for prec in precs)
 
-    if transmute_file_type != '':
+    if transmute_file_type != "":
         new_dists = []
         import conda_package_handling.api
+
         for dist in dists:
             if dist.endswith(transmute_file_type):
                 new_dists.append(dist)
@@ -350,15 +372,41 @@ def _fetch_precs(precs, download_dir, transmute_file_type=''):
     return pc_recs, _urls, dists, has_conda
 
 
-def _main(name, version, download_dir, platform, channel_urls=(), channels_remap=(), specs=(),
-          exclude=(), menu_packages=None, ignore_duplicate_files=True, environment=None,
-          environment_file=None, verbose=True, dry_run=False, conda_exe="conda.exe",
-          transmute_file_type='', extra_envs=None, check_path_spaces=True, input_dir=""):
+def _main(
+    name,
+    version,
+    download_dir,
+    platform,
+    channel_urls=(),
+    channels_remap=(),
+    specs=(),
+    exclude=(),
+    menu_packages=None,
+    ignore_duplicate_files=True,
+    environment=None,
+    environment_file=None,
+    verbose=True,
+    dry_run=False,
+    conda_exe="conda.exe",
+    transmute_file_type="",
+    extra_envs=None,
+    check_path_spaces=True,
+    input_dir="",
+):
     precs = _solve_precs(
-        name, version, download_dir, platform, channel_urls=channel_urls,
-        channels_remap=channels_remap, specs=specs, exclude=exclude,
-        menu_packages=menu_packages, environment=environment,
-        environment_file=environment_file, verbose=verbose, conda_exe=conda_exe,
+        name,
+        version,
+        download_dir,
+        platform,
+        channel_urls=channel_urls,
+        channels_remap=channels_remap,
+        specs=specs,
+        exclude=exclude,
+        menu_packages=menu_packages,
+        environment=environment,
+        environment_file=environment_file,
+        verbose=verbose,
+        conda_exe=conda_exe,
         input_dir=input_dir,
     )
     extra_envs = extra_envs or {}
@@ -378,7 +426,10 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
     for env_name, env_config in extra_envs.items():
         logger.debug("Solving extra environment: %s", env_name)
         extra_envs_precs[env_name] = _solve_precs(
-            f"{name}/envs/{env_name}", version, download_dir, platform,
+            f"{name}/envs/{env_name}",
+            version,
+            download_dir,
+            platform,
             channel_urls=env_config.get("channels", channel_urls),
             channels_remap=env_config.get("channels_remap", channels_remap),
             specs=env_config.get("specs", ()),
@@ -424,7 +475,7 @@ def _main(name, version, download_dir, platform, channel_urls=(), channels_remap
         approx_tarballs_size,
         approx_pkgs_size,
         has_conda,
-        extra_envs_data
+        extra_envs_data,
     )
 
 
@@ -435,7 +486,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     download_dir = info["_download_dir"]
     platform = info["_platform"]
     channel_urls = all_channel_urls(info.get("channels", ()), subdirs=[platform, "noarch"])
-    channels_remap = info.get('channels_remap', ())
+    channels_remap = info.get("channels_remap", ())
     specs = info.get("specs", ())
     exclude = info.get("exclude", ())
     menu_packages = info.get("menu_packages")
@@ -456,10 +507,13 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     # See: https://github.com/conda/constructor/issues/304
     proxy_servers = conda_context.proxy_servers
     _ssl_verify = conda_context.ssl_verify
-    with env_vars({
-        "CONDA_PKGS_DIRS": download_dir,
-        "CONDA_SSL_VERIFY": str(conda_context.ssl_verify),
-    }, conda_replace_context_default):
+    with env_vars(
+        {
+            "CONDA_PKGS_DIRS": download_dir,
+            "CONDA_SSL_VERIFY": str(conda_context.ssl_verify),
+        },
+        conda_replace_context_default,
+    ):
         # Restoring the state for "proxy_servers" to what it was before
         conda_context.proxy_servers = proxy_servers
         assert conda_context.ssl_verify == _ssl_verify
