@@ -12,12 +12,9 @@ from __future__ import annotations
 import json
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated, Any, Literal  # noqa
 
 from pydantic import BaseModel, ConfigDict, Field
-
-if TYPE_CHECKING:
-    from typing import Any, Literal
 
 HERE = Path(__file__).parent
 SCHEMA_PATH = HERE / "data" / "constructor.schema.json"
