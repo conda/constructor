@@ -201,14 +201,11 @@ def main_build(
 
     # Installers will provide shortcut options and features only if the user
     # didn't opt-out by setting every `menu_packages` item to an empty list
-    info['_enable_shortcuts'] = bool(
+    info["_enable_shortcuts"] = bool(
         info.get("menu_packages", True)
-        or any(
-            env.get("menu_packages", True)
-            for env in info.get("extra_envs", {}).values()
-        )
+        or any(env.get("menu_packages", True) for env in info.get("extra_envs", {}).values())
     )
-    if info['_enable_shortcuts']:
+    if info["_enable_shortcuts"]:
         if exe_type is None or exe_version is None:
             logger.warning(
                 "Could not identify conda-standalone / micromamba version. "
@@ -218,7 +215,7 @@ def main_build(
             exe_type != StandaloneExe.CONDA or (exe_version and exe_version < Version("23.11.0"))
         ):
             logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
-            info['_enable_shortcuts'] = "incompatible"
+            info["_enable_shortcuts"] = "incompatible"
 
     # Add --no-rc option to CONDA_EXE command so that existing
     # .condarc files do not pollute the installation process.
