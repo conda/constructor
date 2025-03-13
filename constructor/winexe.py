@@ -3,6 +3,11 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Logic to build the EXE installers for Windows, with NSIS.
+"""
+
+from __future__ import annotations
 
 import logging
 import os
@@ -12,7 +17,6 @@ import tempfile
 from os.path import abspath, basename, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
-from typing import List, Union
 
 from .construct import ns_platform
 from .imaging import write_images
@@ -121,9 +125,9 @@ def setup_envs_commands(info, dir_path):
 def make_nsi(
     info: dict,
     dir_path: str,
-    extra_files: List = None,
-    temp_extra_files: List = None,
-    signing_tool: Union[AzureSignTool, WindowsSignTool] = None,
+    extra_files: list = None,
+    temp_extra_files: list = None,
+    signing_tool: AzureSignTool | WindowsSignTool = None,
 ):
     "Creates the tmp/main.nsi from the template file"
 

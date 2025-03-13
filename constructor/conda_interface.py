@@ -1,3 +1,9 @@
+"""
+Collects all imports needed from conda in a single module. If something
+from conda is needed elsewhere in the code, it needs to be imported here
+first. Then the other module can import from this one.
+"""
+
 import datetime
 import json
 import os
@@ -48,7 +54,7 @@ if conda_interface_type == "conda":
     CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
     from conda.api import SubdirData  # noqa
-    from conda.base.context import context as _conda_context  # noqa
+    from conda.base.context import context as _conda_context
     from conda.base.context import locate_prefix_by_name as _locate_prefix_by_name
     from conda.base.context import replace_context_default as _conda_replace_context_default
     from conda.common.io import env_vars as _env_vars
@@ -62,7 +68,7 @@ if conda_interface_type == "conda":
     from conda.models.channel import all_channel_urls as _all_channel_urls
     from conda.models.dist import Dist as _Dist
     from conda.models.prefix_graph import PrefixGraph as _PrefixGraph
-    from conda.models.version import VersionOrder  # noqa
+    from conda.models.version import VersionOrder
 
     try:
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord

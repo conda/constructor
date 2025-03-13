@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import getpass
 import json
 import os
@@ -8,10 +10,10 @@ import time
 import warnings
 import xml.etree.ElementTree as ET
 from datetime import timedelta
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from plistlib import load as plist_load
-from typing import Generator, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import pytest
 from conda.base.context import context
@@ -19,6 +21,9 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 
 from constructor.utils import StandaloneExe, identify_conda_exe
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterable
 
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
@@ -145,8 +150,8 @@ def _run_uninstaller_exe(
     install_dir: Path,
     timeout: int = 420,
     check: bool = True,
-    options: Union[list, None] = None,
-) -> Union[subprocess.CompletedProcess, None]:
+    options: list | None = None,
+) -> subprocess.CompletedProcess | None:
     # Now test the uninstallers
     if " " in str(install_dir):
         # TODO: We can't seem to run the uninstaller when there are spaces in the PATH
@@ -253,7 +258,7 @@ def _run_installer(
     example_path: Path,
     installer: Path,
     install_dir: Path,
-    installer_input: Optional[str] = None,
+    installer_input: str | None = None,
     config_filename="construct.yaml",
     check_sentinels=True,
     check_subprocess=True,
@@ -307,7 +312,7 @@ def create_installer(
     config_filename="construct.yaml",
     extra_constructor_args: Iterable[str] = None,
     **env_vars,
-) -> Generator[Tuple[Path, Path], None, None]:
+) -> Generator[tuple[Path, Path], None, None]:
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
         pytest.skip("Micromamba is not supported on Windows yet.")
 
@@ -357,7 +362,7 @@ def create_installer(
                 pass
 
 
-@lru_cache(maxsize=None)
+@cache
 def _self_signed_certificate_windows(path: str, password: str = None):
     if not sys.platform.startswith("win"):
         return
@@ -378,7 +383,7 @@ def _is_micromamba(path) -> bool:
 
 
 @pytest.fixture(params=["linux-aarch64"])
-def platform_conda_exe(request, tmp_path) -> Tuple[str, Path]:
+def platform_conda_exe(request, tmp_path) -> tuple[str, Path]:
     platform = request.param
     tmp_env = tmp_path / "env"
     subprocess.check_call(
@@ -987,7 +992,7 @@ def test_uninstallation_standalone(
     monkeypatch,
     remove_user_data: bool,
     remove_caches: bool,
-    remove_config_files: Union[str, None],
+    remove_config_files: str | None,
     tmp_path: Path,
 ):
     recipe_path = _example_path("customize_controls")

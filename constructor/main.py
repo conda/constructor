@@ -3,7 +3,11 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Application layer.
 
+CLI logic and main functions to run constructor on a given input file.
+"""
 
 import argparse
 import logging
@@ -14,9 +18,8 @@ from textwrap import dedent, indent
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import SUPPORTED_PLATFORMS
+from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
-from .conda_interface import cc_platform
 from .construct import generate_key_info_list, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
@@ -271,8 +274,8 @@ def main_build(
     # 'specs': ['python 3.5*', 'conda', 'nomkl', 'numpy', 'scipy', 'pandas',
     #           'notebook', 'matplotlib', 'lighttpd']
     # 'license_file': '/Users/kfranz/continuum/constructor/examples/miniconda/EULA.txt'
-    # '_dists': List[Dist]
-    # '_urls': List[Tuple[url, md5]]
+    # '_dists': list[Dist]
+    # '_urls': list[Tuple[url, md5]]
 
     os.makedirs(output_dir, exist_ok=True)
     info_dicts = []
@@ -388,7 +391,7 @@ def main():
         action="store",
         default=os.getcwd(),
         help="path to directory in which output installer is written "
-        "to, defaults to CWD ('{}')".format(os.getcwd()),
+        f"to, defaults to CWD ('{os.getcwd()}')",
         metavar="PATH",
     )
 
@@ -398,7 +401,7 @@ def main():
         default=DEFAULT_CACHE_DIR,
         help="cache directory, used for downloading conda packages, "
         "may be changed by CONSTRUCTOR_CACHE, "
-        "defaults to '{}'".format(DEFAULT_CACHE_DIR),
+        f"defaults to '{DEFAULT_CACHE_DIR}'",
         metavar="PATH",
     )
 

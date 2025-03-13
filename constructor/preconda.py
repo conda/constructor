@@ -3,6 +3,11 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Common logic to prepare the tarball payloads shipped in some installers.
+"""
+
+from __future__ import annotations
 
 import os
 import platform
@@ -13,7 +18,7 @@ from os.path import isdir, join
 from os.path import split as path_split
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Mapping, Union
+from typing import TYPE_CHECKING
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
@@ -23,12 +28,10 @@ from .conda_interface import (
     PrefixData,
     all_channel_urls,
     default_prefix,
-)
-from .conda_interface import distro as conda_distro
-from .conda_interface import (
     get_repodata,
     write_repodata,
 )
+from .conda_interface import distro as conda_distro
 from .utils import (
     ensure_transmuted_ext,
     filename_dist,
@@ -36,6 +39,9 @@ from .utils import (
     get_final_url,
     shortcuts_flags,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 try:
     import json
@@ -282,19 +288,19 @@ def write_shortcuts_txt(info, dst_dir, env_config):
 
 
 def copy_extra_files(
-    extra_files: List[Union[os.PathLike, Mapping]], workdir: os.PathLike
-) -> List[os.PathLike]:
+    extra_files: list[os.PathLike | Mapping], workdir: os.PathLike
+) -> list[os.PathLike]:
     """Copy list of extra files to a working directory
 
     Args:
-        extra_files (List[Union[os.PathLike, Mapping]]): A path or a mapping
-        workdir (os.PathLike): Path to where extra files will be copied to.
+        extra_files: A path or a mapping
+        workdir: Path to where extra files will be copied to.
 
     Raises:
         FileNotFoundError: Raises when the file isn't found.
 
     Returns:
-        List[os.PathLike]: List of normalized paths of copied locations.
+        list[os.PathLike]: List of normalized paths of copied locations.
     """
     if not extra_files:
         return []

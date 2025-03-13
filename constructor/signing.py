@@ -1,3 +1,9 @@
+"""
+Common utilities to sign installers.
+"""
+
+from __future__ import annotations
+
 import logging
 import os
 import shutil
@@ -5,7 +11,6 @@ from pathlib import Path
 from plistlib import dump as plist_dump
 from subprocess import PIPE, STDOUT, check_call, run
 from tempfile import NamedTemporaryFile
-from typing import Union
 
 from .utils import check_required_env_vars, explained_check_call, win_str_esc
 
@@ -25,8 +30,8 @@ class SigningTool:
 
     def __init__(
         self,
-        executable: Union[str, Path],
-        certificate_file: Union[str, Path] = None,
+        executable: str | Path,
+        certificate_file: str | Path | None = None,
     ):
         self.executable = str(executable)
         if certificate_file and not Path(certificate_file).exists():
@@ -91,7 +96,7 @@ class WindowsSignTool(SigningTool):
             raise FileNotFoundError(f"Could not find certificate file {self.certificate_file}.")
         check_call([self.executable, "/?"], stdout=PIPE, stderr=PIPE)
 
-    def verify_signature(self, installer_file: Union[str, Path]):
+    def verify_signature(self, installer_file: str | Path):
         proc = run(
             [self.executable, "verify", "/v", str(installer_file)],
             stdout=PIPE,
@@ -165,7 +170,7 @@ class AzureSignTool(SigningTool):
         self._verify_tool_is_available()
         check_call([self.executable, "--help"], stdout=PIPE, stderr=PIPE)
 
-    def verify_signature(self, installer_file: Union[str, Path]):
+    def verify_signature(self, installer_file: str | Path):
         """Use Powershell to verify signature.
 
         For available statuses, see the Microsoft documentation:
@@ -222,8 +227,8 @@ class CodeSign(SigningTool):
 
     def get_signing_command(
         self,
-        bundle: Union[str, Path],
-        entitlements: Union[str, Path] = None,
+        bundle: str | Path,
+        entitlements: str | Path = None,
     ) -> list:
         command = [
             self.executable,
@@ -244,8 +249,8 @@ class CodeSign(SigningTool):
 
     def sign_bundle(
         self,
-        bundle: Union[str, Path],
-        entitlements: Union[str, Path, dict] = None,
+        bundle: str | Path,
+        entitlements: str | Path | dict | None = None,
     ):
         if isinstance(entitlements, dict):
             with NamedTemporaryFile(suffix=".plist", delete=False) as ent_file:

@@ -3,6 +3,9 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Defines the construct.yaml input file schema, how to parse it and verify it.
+"""
 
 import logging
 import re
@@ -557,7 +560,7 @@ use the `default_prefix_all_users` key. If not provided, the default prefix
 is `%USERPROFILE%\<NAME>`. Environment variables will be expanded at
 installation time.
 """,
-    ),  # noqa
+    ),
     (
         "default_prefix_domain_user",
         False,
@@ -569,7 +572,7 @@ By default, it is different from the `default_prefix` value to avoid installing
 the distribution in the roaming profile. Environment variables will be expanded
 at installation time. Windows only.
 """,
-    ),  # noqa
+    ),
     (
         "default_prefix_all_users",
         False,
@@ -580,7 +583,7 @@ the installation prefix for all users installation will be
 `%ALLUSERSPROFILE%\<NAME>`. Environment variables will be expanded at installation
 time. Windows only.
 """,
-    ),  # noqa
+    ),
     (
         "default_location_pkg",
         False,

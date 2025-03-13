@@ -1,3 +1,7 @@
+"""
+Logic to build PKG installers for macOS.
+"""
+
 import logging
 import os
 import shlex
@@ -9,7 +13,6 @@ from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
-from typing import List
 
 from . import preconda
 from .conda_interface import conda_context
@@ -191,7 +194,7 @@ def modify_xml(xml_path, info):
         root.append(readme)
 
     # -- __osx virtual package checks -- #
-    # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html  # noqa
+    # Reference: https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
     osx_versions = parse_virtual_specs(info).get("__osx")
     if osx_versions:
         if "min" not in osx_versions:
@@ -427,7 +430,7 @@ def pkgbuild_prepare_installation(info):
 
 
 def create_plugins(pages: list = None, codesigner: CodeSign = None):
-    def _build_xcode_projects(xcodeporj_dirs: List[Path]):
+    def _build_xcode_projects(xcodeporj_dirs: list[Path]):
         xcodebuild = shutil.which("xcodebuild")
         if not xcodebuild:
             raise RuntimeError(

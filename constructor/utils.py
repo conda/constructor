@@ -3,6 +3,11 @@
 #
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
+"""
+Miscellaneous utilities to support other parts of the library.
+"""
+
+from __future__ import annotations
 
 import hashlib
 import logging
@@ -16,7 +21,6 @@ from os.path import isdir, isfile, islink, join, normpath
 from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
-from typing import Tuple, Union
 
 from ruamel.yaml import YAML
 
@@ -290,7 +294,7 @@ def approx_size_kb(info, which="pkgs"):
     return int(math.ceil(size_bytes / 1000))
 
 
-def identify_conda_exe(conda_exe: Union[str, Path] = None) -> Tuple[StandaloneExe, str]:
+def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneExe, str]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
     if isinstance(conda_exe, Path):

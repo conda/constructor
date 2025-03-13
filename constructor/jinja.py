@@ -1,3 +1,7 @@
+"""
+Provides the Jinja renderers to parse and process construct.yaml files.
+"""
+
 import os
 
 from jinja2 import BaseLoader, Environment, FileSystemLoader, StrictUndefined, TemplateError

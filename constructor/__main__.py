@@ -1,3 +1,7 @@
+"""
+Entry point for the constructor CLI
+"""
+
 if __name__ == "__main__":
     import sys
 

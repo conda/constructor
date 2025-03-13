@@ -16,12 +16,12 @@ from collections import defaultdict
 from itertools import groupby
 from os.path import abspath, expanduser, isdir, join
 from subprocess import check_call
+from typing import TYPE_CHECKING
 
 from constructor.utils import filename_dist
 
 from .conda_interface import (
     PackageCacheData,
-    PackageCacheRecord,
     PrefixData,
     PrefixGraph,
     ProgressiveFetchExtract,
@@ -36,6 +36,9 @@ from .conda_interface import (
     locate_prefix_by_name,
     read_paths_json,
 )
+
+if TYPE_CHECKING:
+    from .conda_interface import PackageCacheRecord
 
 logger = logging.getLogger(__name__)
 

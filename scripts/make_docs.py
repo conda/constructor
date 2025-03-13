@@ -1,3 +1,7 @@
+"""
+Generates the documentation for construct.yaml input files
+"""
+
 import sys
 from os.path import dirname, join
 
@@ -69,7 +73,7 @@ Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argume
 {%- for platform in supported_platforms %}
 - `{{platform}}`
 {%- endfor %}
-"""  # noqa
+"""
 
 key_info_list = construct.generate_key_info_list()
 

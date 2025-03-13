@@ -4,6 +4,10 @@
 # constructor is distributed under the terms of the BSD 3-clause license.
 # Consult LICENSE.txt or http://opensource.org/licenses/BSD-3-Clause.
 
+"""
+Utilities to generate images out of text, used in GUI installers as logo replacements.
+"""
+
 import sys
 from io import BytesIO
 from os.path import dirname, join

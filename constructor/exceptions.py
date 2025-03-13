@@ -1,4 +1,7 @@
 # adapted from conda-build
+"""
+constructor-specific exceptions
+"""
 
 import textwrap
 
