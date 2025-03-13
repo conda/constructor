@@ -22,6 +22,7 @@ class SigningTool:
     certificate_file: str | Path
         Path to the certificate file
     """
+
     def __init__(
         self,
         executable: Union[str, Path],
@@ -71,17 +72,10 @@ class WindowsSignTool(SigningTool):
 
     def get_signing_command(self) -> str:
         timestamp_server = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL",
-            "http://timestamp.sectigo.com"
+            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL", "http://timestamp.sectigo.com"
         )
-        timestamp_digest = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST",
-            "sha256"
-        )
-        file_digest = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_FILE_DIGEST",
-            "sha256"
-        )
+        timestamp_digest = os.environ.get("CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST", "sha256")
+        file_digest = os.environ.get("CONSTRUCTOR_SIGNTOOL_FILE_DIGEST", "sha256")
         command = (
             f"{win_str_esc(self.executable)} sign /f {win_str_esc(self.certificate_file)} "
             f"/tr {win_str_esc(timestamp_server)} /td {timestamp_digest} /fd {file_digest}"
@@ -122,24 +116,16 @@ class AzureSignTool(SigningTool):
         super().__init__(os.environ.get("AZURE_SIGNTOOL_PATH", "AzureSignTool"))
 
     def get_signing_command(self) -> str:
-
         required_env_vars = (
             "AZURE_SIGNTOOL_KEY_VAULT_URL",
             "AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE",
         )
         check_required_env_vars(required_env_vars)
         timestamp_server = os.environ.get(
-            "AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL",
-            "http://timestamp.sectigo.com"
+            "AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL", "http://timestamp.sectigo.com"
         )
-        timestamp_digest = os.environ.get(
-            "AZURE_SIGNTOOL_TIMESTAMP_DIGEST",
-            "sha256"
-        )
-        file_digest = os.environ.get(
-            "AZURE_SIGNTOOL_FILE_DIGEST",
-            "sha256"
-        )
+        timestamp_digest = os.environ.get("AZURE_SIGNTOOL_TIMESTAMP_DIGEST", "sha256")
+        file_digest = os.environ.get("AZURE_SIGNTOOL_FILE_DIGEST", "sha256")
 
         command = (
             f"{win_str_esc(self.executable)} sign -v"
@@ -193,7 +179,8 @@ class AzureSignTool(SigningTool):
             "$sig.Status.value__;"
             "$sig.StatusMessage"
         )
-        proc = run([
+        proc = run(
+            [
                 "powershell",
                 "-c",
                 command,

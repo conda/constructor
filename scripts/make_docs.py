@@ -69,7 +69,7 @@ Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argume
 {%- for platform in supported_platforms %}
 - `{{platform}}`
 {%- endfor %}
-""" # noqa
+"""  # noqa
 
 key_info_list = construct.generate_key_info_list()
 
@@ -79,8 +79,8 @@ output = jinja2.Template(template).render(
     supported_platforms=SUPPORTED_PLATFORMS,
 )
 
-with open(join(REPO_ROOT, 'CONSTRUCT.md'), 'w') as f:
+with open(join(REPO_ROOT, "CONSTRUCT.md"), "w") as f:
     f.write(output)
 
-with open(join(REPO_ROOT, 'docs', 'source', 'construct-yaml.md'), 'w') as f:
+with open(join(REPO_ROOT, "docs", "source", "construct-yaml.md"), "w") as f:
     f.write(output)

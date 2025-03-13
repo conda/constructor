@@ -857,7 +857,7 @@ def test_cross_build_example(tmp_path, platform_conda_exe):
         tmp_path,
         timeout=600,
         conda_exe=conda_exe,
-        extra_constructor_args=["--platform", platform]
+        extra_constructor_args=["--platform", platform],
     ):
         assert installer.exists()
 
@@ -981,7 +981,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
         pytest.param(True, True, "all", id="remove all files"),
         pytest.param(False, False, "system", id="remove system .condarc files"),
         pytest.param(False, False, "user", id="remove user .condarc files"),
-    )
+    ),
 )
 def test_uninstallation_standalone(
     monkeypatch,

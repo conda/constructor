@@ -11,10 +11,10 @@ from random import randint
 
 from PIL import Image, ImageDraw, ImageFont
 
-ttf_path = join(dirname(__file__), 'ttf', 'Vera.ttf')
+ttf_path = join(dirname(__file__), "ttf", "Vera.ttf")
 with open(ttf_path, "rb") as f:
     ttf_bytes = f.read()
-white = 0xff, 0xff, 0xff
+white = 0xFF, 0xFF, 0xFF
 # These are for Windows
 welcome_size = 164, 314
 header_size = 150, 57
@@ -24,7 +24,7 @@ welcome_size_osx = 1227, 600
 
 
 def new_background(size, color, bs=20, boxes=50):
-    im = Image.new('RGB', size, color=color)
+    im = Image.new("RGB", size, color=color)
     d = ImageDraw.Draw(im)
     for unused in range(boxes):
         x0 = randint(0, size[0] - bs)
@@ -49,8 +49,8 @@ def add_text(im, xy, text, min_lines, line_height, font, color):
 
 def mk_welcome_image(info):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
-    im = new_background(welcome_size, info['_color'])
-    text = '\n'.join([info['welcome_image_text'], info['version']])
+    im = new_background(welcome_size, info["_color"])
+    text = "\n".join([info["welcome_image_text"], info["version"]])
     add_text(im, (20, 100), text, 2, 30, font, white)
     return im
 
@@ -58,39 +58,39 @@ def mk_welcome_image(info):
 def mk_welcome_image_osx(info):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 40)
     # Transparent background
-    im = Image.new('RGBA', welcome_size_osx, color=(0, 0, 0, 0))
-    text = '\n'.join([info['welcome_image_text'], info['version']])
-    add_text(im, (40, 450), text, 2, 60, font, info['_color'])
+    im = Image.new("RGBA", welcome_size_osx, color=(0, 0, 0, 0))
+    text = "\n".join([info["welcome_image_text"], info["version"]])
+    add_text(im, (40, 450), text, 2, 60, font, info["_color"])
     return im
 
 
 def mk_header_image(info):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
-    im = Image.new('RGB', header_size, color=white)
-    text = info['header_image_text']
-    color = info['_color']
+    im = Image.new("RGB", header_size, color=white)
+    text = info["header_image_text"]
+    color = info["_color"]
     add_text(im, (20, 15), text, 1, 20, font, color)
     return im
 
 
 def mk_icon_image(info):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 200)
-    im = new_background(icon_size, info['_color'])
+    im = new_background(icon_size, info["_color"])
     d = ImageDraw.Draw(im)
-    d.text((60, 20), info['name'][0], fill=white, font=font)
+    d.text((60, 20), info["name"][0], fill=white, font=font)
     return im
 
 
 def add_color_info(info):
     color_map = {
-        'red': (0xcc, 0x33, 0x33),
-        'green': (0x33, 0x99, 0x33),
-        'blue': (0x33, 0x66, 0x99),
-        'yellow': (0xcc, 0xcc, 0x33),
+        "red": (0xCC, 0x33, 0x33),
+        "green": (0x33, 0x99, 0x33),
+        "blue": (0x33, 0x66, 0x99),
+        "yellow": (0xCC, 0xCC, 0x33),
     }
-    color_name = info.get('default_image_color', 'blue')
+    color_name = info.get("default_image_color", "blue")
     try:
-        info['_color'] = color_map[color_name]
+        info["_color"] = color_map[color_name]
     except KeyError:
         sys.exit("Error: color '%s' not defined" % color_name)
 
@@ -98,19 +98,19 @@ def add_color_info(info):
 def write_images(info, dir_path, os="windows"):
     if os == "windows":
         instructions = [
-            ('welcome', welcome_size, mk_welcome_image, '.bmp'),
-            ('header',  header_size,  mk_header_image,  '.bmp'),
-            ('icon',    icon_size,    mk_icon_image,    '.ico'),
+            ("welcome", welcome_size, mk_welcome_image, ".bmp"),
+            ("header", header_size, mk_header_image, ".bmp"),
+            ("icon", icon_size, mk_icon_image, ".ico"),
         ]
     elif os == "osx":
         instructions = [
-            ('welcome', welcome_size_osx, mk_welcome_image_osx, '.png'),
+            ("welcome", welcome_size_osx, mk_welcome_image_osx, ".png"),
         ]
     else:
         raise ValueError(f"OS {os} not supported. Choose `windows` or `osx`.")
 
     for name, size, function, ext in instructions:
-        key = name + '_image'
+        key = name + "_image"
         if info.get(key):
             im = Image.open(info[key])
             im = im.resize(size)
@@ -121,8 +121,11 @@ def write_images(info, dir_path, os="windows"):
         im.save(join(dir_path, name + ext))
 
 
-if __name__ == '__main__':
-    info = {'name': 'test', 'version': '0.3.1',
-            'default_image_color': 'yellow',
-            'welcome_image': '../examples/miniconda/bird.png'}
-    write_images(info, '.')
+if __name__ == "__main__":
+    info = {
+        "name": "test",
+        "version": "0.3.1",
+        "default_image_color": "yellow",
+        "welcome_image": "../examples/miniconda/bird.png",
+    }
+    write_images(info, ".")

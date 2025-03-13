@@ -3,6 +3,7 @@ Additional artifacts to be produced after building the installer.
 
 Update documentation in `construct.py` if any changes are made.
 """
+
 import hashlib
 import json
 import logging
@@ -86,8 +87,8 @@ def dump_packages_list(info, env="base"):
     else:
         raise ValueError(f"env='{env}' is not a valid env name.")
 
-    outpath = os.path.join(info["_output_dir"], f'pkg-list.{env}.txt')
-    with open(outpath, 'w') as fo:
+    outpath = os.path.join(info["_output_dir"], f"pkg-list.{env}.txt")
+    with open(outpath, "w") as fo:
         fo.write(f"# {info['name']} {info['version']}, env={env}\n")
         fo.write("\n".join(dists))
     return os.path.abspath(outpath)
@@ -108,7 +109,7 @@ def dump_lockfile(info, env="base"):
         f"# env-name: {env}",
         f"# platform: {info['_platform']}",
         f"# created-by: constructor {__version__}",
-        "@EXPLICIT"
+        "@EXPLICIT",
     ]
     for record in PrefixGraph(records).graph:
         url = record.get("url")
@@ -119,8 +120,8 @@ def dump_lockfile(info, env="base"):
         hash_value = record.get("md5")
         lines.append(url + (f"#{hash_value}" if hash_value else ""))
 
-    outpath = os.path.join(info["_output_dir"], f'lockfile.{env}.txt')
-    with open(outpath, 'w') as f:
+    outpath = os.path.join(info["_output_dir"], f"lockfile.{env}.txt")
+    with open(outpath, "w") as f:
         f.write("\n".join(lines))
     return os.path.abspath(outpath)
 

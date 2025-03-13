@@ -29,8 +29,8 @@ class FilteredLoader(BaseLoader):
 def render_jinja_for_input_file(data, directory, content_filter):
     loader = FilteredLoader(FileSystemLoader(directory), content_filter)
     env = Environment(loader=loader)
-    env.globals['environ'] = os.environ.copy()
-    env.globals['os'] = os
+    env.globals["environ"] = os.environ.copy()
+    env.globals["os"] = os
     try:
         template = env.from_string(data)
         rendered = template.render()
