@@ -8,3 +8,5 @@ dependencies:
   - conda-standalone # >=23.11.0
   - pillow >=3.1  # [osx or win]
   - jinja2
+  - jsonschema >=4
+  - pydantic >=2
