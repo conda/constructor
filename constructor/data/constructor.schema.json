@@ -186,16 +186,16 @@
   "description": "Schema for constructor.yaml input files.",
   "properties": {
     "name": {
-      "description": "Name of the installer. Names may be composed of letters, numbers,\nunderscores, dashes, and periods, but may not begin or end with a\ndash or period.",
+      "description": "Name of the installer. Names may be composed of letters, numbers,\nunderscores, dashes, and periods, but must not begin or end with a\ndash or period.",
       "minLength": 1,
-      "pattern": "^[\\w][\\w\\-\\.]*$",
+      "pattern": "^[a-zA-Z0-9_]([a-zA-Z0-9._-]*[a-zA-Z0-9_])?$",
       "title": "Name",
       "type": "string"
     },
     "version": {
-      "description": "Version of the installer. Versions may be composed of letters, numbers,\nunderscores, dashes, and periods, but may not begin or end with a\ndash or period.",
+      "description": "Version of the installer. Versions may be composed of letters, numbers,\nunderscores, dashes, and periods, but must not begin or end with a\ndash or period.",
       "minLength": 1,
-      "pattern": "^[\\w][\\w\\-\\.]*$",
+      "pattern": "^[a-zA-Z0-9_]([a-zA-Z0-9._-]*[a-zA-Z0-9_])?$",
       "title": "Version",
       "type": "string"
     },
@@ -374,7 +374,7 @@
       "default": {},
       "description": "Create more environments in addition to the default `base` provided by `specs`,\n`environment` or `environment_file`.\n\nNotes:\n- `ignore_duplicate_files` will always be considered `True` if `extra_envs` is in use.\n- `conda` needs to be present in the `base` environment (via `specs`)\n- If a global `exclude` option is used, it will have an effect on the environments created\n  by `extra_envs` too. For example, if the global environment excludes `tk`, none of the\n  extra environments will have it either. Unlike the global option, an error will not be\n  thrown if the excluded package is not found in the packages required by the extra environment.\n  To override the global `exclude` value, use an empty list `[]`.",
       "patternProperties": {
-        "^[\\w][\\w\\-\\.]*$": {
+        "^[^/:# ]+$": {
           "$ref": "#/$defs/ExtraEnv"
         }
       },

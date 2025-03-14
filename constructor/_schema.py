@@ -18,8 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 HERE = Path(__file__).parent
 SCHEMA_PATH = HERE / "data" / "constructor.schema.json"
-# TODO: lookarounds are not supported, we need to add (?<!\.\-) at the end of the regex though
-NAME_REGEX = r"^[\w][\w\-\.]*$"
+NAME_REGEX = VERSION_REGEX = r"^[a-zA-Z0-9_]([a-zA-Z0-9._-]*[a-zA-Z0-9_])?$"
 ENV_NAME_REGEX = r"^[^/:# ]+$"
 NonEmptyStr = Annotated[str, Field(min_length=1)]
 _base_config_dict = ConfigDict(
@@ -103,13 +102,13 @@ class ConstructorConfiguration(BaseModel):
     name: Annotated[str, Field(min_length=1, pattern=NAME_REGEX)] = ...
     """
     Name of the installer. Names may be composed of letters, numbers,
-    underscores, dashes, and periods, but may not begin or end with a
+    underscores, dashes, and periods, but must not begin or end with a
     dash or period.
     """
-    version: Annotated[str, Field(min_length=1, pattern=NAME_REGEX)] = ...
+    version: Annotated[str, Field(min_length=1, pattern=VERSION_REGEX)] = ...
     """
     Version of the installer. Versions may be composed of letters, numbers,
-    underscores, dashes, and periods, but may not begin or end with a
+    underscores, dashes, and periods, but must not begin or end with a
     dash or period.
     """
     channels: list[NonEmptyStr] = []
@@ -241,7 +240,7 @@ class ConstructorConfiguration(BaseModel):
     The channel alias that would be assumed for the created installer
     (only useful if it includes `conda`).
     """
-    extra_envs: dict[Annotated[str, Field(min_length=1, pattern=NAME_REGEX)], ExtraEnv] = {}
+    extra_envs: dict[Annotated[str, Field(min_length=1, pattern=ENV_NAME_REGEX)], ExtraEnv] = {}
     """
     Create more environments in addition to the default `base` provided by `specs`,
     `environment` or `environment_file`.

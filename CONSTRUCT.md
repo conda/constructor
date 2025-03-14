@@ -42,13 +42,13 @@ are not available here.
 ### `name`
 
 Name of the installer. Names may be composed of letters, numbers,
-underscores, dashes, and periods, but may not begin or end with a
+underscores, dashes, and periods, but must not begin or end with a
 dash or period.
 
 ### `version`
 
 Version of the installer. Versions may be composed of letters, numbers,
-underscores, dashes, and periods, but may not begin or end with a
+underscores, dashes, and periods, but must not begin or end with a
 dash or period.
 
 ### `channels`
