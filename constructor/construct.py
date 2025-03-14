@@ -170,11 +170,6 @@ def verify(info):
             msg.append(f"- {error}")
         sys.exit("\n".join(msg))
 
-    for key in "name", "version":
-        value = info[key]
-        if value.endswith((".", "-")):
-            sys.exit(f"Error: invalid {key} '{value}'. Cannot end with '.' or '-'.")
-
     if signtool := info.get("windows_signing_tool"):
         need_cert_file = ["signtool", "signtool.exe"]
         if signtool in need_cert_file and not info.get("signing_certificate"):
