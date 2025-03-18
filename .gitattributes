@@ -1,1 +1,4 @@
 constructor/_version.py export-subst
+
+# Make GitHub syntax-highlight the templates correctly
+constructor/nsis/main.nsi.tmpl linguist-language=nsis
