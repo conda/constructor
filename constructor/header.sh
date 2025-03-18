@@ -334,6 +334,17 @@ EOF
     fi
 {%- endif %}
 
+    expand_user_input() {
+        expanded_prefix=$(echo "${1}" | sed -r "s#^~#$HOME#")
+        if command -v envsubst > /dev/null 2>&1; then
+            envsubst << EOF
+$expanded_prefix
+EOF
+        else
+            echo "$expanded_prefix"
+        fi
+    }
+
     printf "\\n"
     printf "%s will now be installed into this location:\\n" "${INSTALLER_NAME}"
     printf "%s\\n" "$PREFIX"
@@ -341,6 +352,9 @@ EOF
     printf "  - Press ENTER to confirm the location\\n"
     printf "  - Press CTRL-C to abort the installation\\n"
     printf "  - Or specify a different location below\\n"
+    if ! command -v envsubst > /dev/null 2>&1; then
+        printf "    Note: environment variables will NOT be expanded.\\n"
+    fi
     printf "\\n"
     printf "[%s] >>> " "$PREFIX"
     read -r user_prefix
@@ -352,11 +366,11 @@ EOF
                 exit 1
                 ;;
             *)
-                eval PREFIX="$user_prefix"
+                PREFIX="$(expand_user_input "${user_prefix}")"
                 ;;
         esac
 {%- else %}
-        PREFIX="$user_prefix"
+        PREFIX="$(expand_user_input "${user_prefix}")"
 {%- endif %}
     fi
 fi # !BATCH
