@@ -1313,6 +1313,9 @@ Section "Install"
     ${Else}
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
     ${EndIf}
+    # Installers should ignore pre-existing configuration files.
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDARC", 0).r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("MAMBARC", 0).r0'
 
     ${If} '{{ VIRTUAL_SPECS }}' != ''
     # We need to specify CONDA_SOLVER=classic for conda-standalone
