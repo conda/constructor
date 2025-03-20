@@ -23,6 +23,9 @@ PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
 CONDA_EXEC="$PREFIX/_conda"
+# Installers should ignore pre-existing configuration files.
+unset CONDARC
+unset MAMBARC
 # /COMMON UTILS
 
 chmod +x "$CONDA_EXEC"
