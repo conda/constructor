@@ -14,8 +14,6 @@
 
 * @jaimergp
 * @marcoesters
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
