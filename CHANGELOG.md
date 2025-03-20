@@ -1,5 +1,24 @@
 [//]: # (current developments)
 
+## 2025-03-20   3.11.3:
+### Bug fixes
+
+* Unset `CONDARC` and `MAMBARC` to prevent pre-existing configuration files from influencing the installation. (#962)
+* Avoid using `eval` to process user-provided installation prefixes in SH installers.
+
+### Other
+
+* Apply `ruff` to the whole codebase. (#956)
+
+### Contributors
+
+* @jaimergp
+* @marcoesters
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2025-03-06   3.11.2:
 ### Bug fixes
 
