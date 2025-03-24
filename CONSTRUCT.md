@@ -124,7 +124,7 @@ is contained as a result of resolving the specs for `python 2.7`.
 ### `menu_packages`
 
 A list of packages with menu items to be installed. The packages must have
-necessary metadata in `Menu/<package name>.json`). By default, all menu items
+necessary metadata in `Menu/<package name>.json`. By default, all menu items
 found in the installation will be created; supplying this list allows a
 subset to be selected instead. If an empty list is supplied, no shortcuts will
 be created.
@@ -617,6 +617,8 @@ Supports the same values as `extra_files`.
 
 Additional artifacts to be produced after building the installer.
 It expects either a list of strings or single-key dictionaries.
+
+Allowed strings / keys: `hash`, `info.json`, `licenses`, `lockfile`, `pkgs_list`.
 
 ### `uninstall_with_conda_exe`
 

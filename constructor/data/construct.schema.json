@@ -285,7 +285,6 @@
     },
     "_HashBuildOutputOptions": {
       "additionalProperties": false,
-      "description": "The hash of the installer files. The output file is designed to work with the `shasum` command and thus has POSIX line endings, including on Windows",
       "properties": {
         "algorithm": {
           "anyOf": [
@@ -311,14 +310,12 @@
     },
     "_InfoJsonBuildOutputOptions": {
       "additionalProperties": false,
-      "description": "The internal `info` object, serialized to JSON. Takes no options.",
       "properties": {},
       "title": "_InfoJsonBuildOutputOptions",
       "type": "object"
     },
     "_LicensesBuildOutputOptions": {
       "additionalProperties": false,
-      "description": "Generate a JSON file with the licensing details of all included packages.",
       "properties": {
         "include_text": {
           "default": false,
@@ -345,7 +342,6 @@
     },
     "_LockfileBuildOutputOptions": {
       "additionalProperties": false,
-      "description": "An `@EXPLICIT` lockfile for a given environment.",
       "properties": {
         "env": {
           "default": "base",
@@ -360,7 +356,6 @@
     },
     "_PkgsListBuildOutputOptions": {
       "additionalProperties": false,
-      "description": "The list of packages contained in a given environment.",
       "properties": {
         "env": {
           "default": "base",
@@ -407,7 +402,7 @@
     },
     "build_outputs": {
       "default": [],
-      "description": "Additional artifacts to be produced after building the installer. It expects either a list of strings or single-key dictionaries.",
+      "description": "Additional artifacts to be produced after building the installer. It expects either a list of strings or single-key dictionaries.\nAllowed strings / keys: `hash`, `info.json`, `licenses`, `lockfile`, `pkgs_list`.",
       "items": {
         "anyOf": [
           {
@@ -857,7 +852,7 @@
         }
       ],
       "default": null,
-      "description": "A list of packages with menu items to be installed. The packages must have necessary metadata in `Menu/<package name>.json`). By default, all menu items found in the installation will be created; supplying this list allows a subset to be selected instead. If an empty list is supplied, no shortcuts will be created.\nIf all environments (`extra_envs` included) set `menu_packages` to an empty list, no UI options about shortcuts will be offered to the user.\nNote: This option is not fully implemented when `micromamba` is used as the `--conda-exe` binary. The only accepted value is an empty list (`[]`).",
+      "description": "A list of packages with menu items to be installed. The packages must have necessary metadata in `Menu/<package name>.json`. By default, all menu items found in the installation will be created; supplying this list allows a subset to be selected instead. If an empty list is supplied, no shortcuts will be created.\nIf all environments (`extra_envs` included) set `menu_packages` to an empty list, no UI options about shortcuts will be offered to the user.\nNote: This option is not fully implemented when `micromamba` is used as the `--conda-exe` binary. The only accepted value is an empty list (`[]`).",
       "title": "Menu Packages"
     },
     "name": {
