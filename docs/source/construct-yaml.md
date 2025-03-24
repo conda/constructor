@@ -501,6 +501,21 @@ is able to change the default during interactive installation. NOTE: For Windows
 
 Only applies if `initialize_conda` is true.
 
+### `add_condabin_to_path`
+
+Add an option to the installer so the user can choose whether to add the `condabin/`
+directory to PATH. Only applicable if `conda` is part of the installation.
+See also `add_condabin_to_path_default`.
+
+### `add_condabin_to_path_default`
+
+Default value for the option added by `add_condabin_to_path`. The default
+is true for GUI installers (EXE, PKG) and false for shell installers. The user
+is able to change the default during interactive installation. NOTE: For Windows,
+`AddCondabinToPath` is disabled when `InstallationType=AllUsers`.
+
+Only applies if `add_condabin_to_path` is true.
+
 ### `register_python`
 
 Whether to offer the user an option to register the installed Python instance as the

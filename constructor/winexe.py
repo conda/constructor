@@ -165,6 +165,11 @@ def make_nsi(
         "enable_shortcuts": "yes" if info["_enable_shortcuts"] is True else "no",
         "show_register_python": "yes" if info.get("register_python", True) else "no",
         "show_add_to_path": "yes" if info.get("initialize_conda", True) else "no",
+        "add_condabin_to_path": (
+            "yes"
+            if info.get("add_condabin_to_path", True) and info.get("_has_conda", False)
+            else "no"
+        ),
         "outfile": info["_outpath"],
         "vipv": make_VIProductVersion(info["version"]),
         "constructor_version": info["CONSTRUCTOR_VERSION"],
@@ -230,6 +235,8 @@ def make_nsi(
     variables.update(ns_platform(info["_platform"]))
     variables["initialize_conda"] = info.get("initialize_conda", True)
     variables["initialize_by_default"] = info.get("initialize_by_default", None)
+    variables["add_condabin_to_path"] = info.get("add_condabin_to_path", None)
+    variables["add_condabin_to_path_default"] = info.get("add_condabin_to_path_default", None)
     variables["register_python"] = info.get("register_python", True)
     variables["register_python_default"] = info.get("register_python_default", None)
     variables["check_path_length"] = info.get("check_path_length", None)

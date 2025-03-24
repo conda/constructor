@@ -7,6 +7,7 @@
 
 Var mui_AnaCustomOptions
 Var mui_AnaCustomOptions.AddToPath
+Var mui_AnaCustomOptions.AddCondabinToPath
 Var mui_AnaCustomOptions.RegisterSystemPython
 Var mui_AnaCustomOptions.PostInstall
 Var mui_AnaCustomOptions.PreInstall
@@ -15,6 +16,7 @@ Var mui_AnaCustomOptions.CreateShortcuts
 
 # These are the checkbox states, to be used by the installer
 Var Ana_AddToPath_State
+Var Ana_AddCondabinToPath_State
 Var Ana_RegisterSystemPython_State
 Var Ana_PostInstall_State
 Var Ana_PreInstall_State
@@ -22,6 +24,7 @@ Var Ana_ClearPkgCache_State
 Var Ana_CreateShortcuts_State
 
 Var Ana_AddToPath_Label
+Var Ana_AddCondabinToPath_Label
 Var Ana_RegisterSystemPython_Label
 Var Ana_ClearPkgCache_Label
 Var Ana_PostInstall_Label
@@ -42,13 +45,16 @@ Function mui_AnaCustomOptions_InitDefaults
         ${Else}
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${EndIf}
-	${If} $Ana_CreateShortcuts_State == ""
+    ${EndIf}
+    ${If} $Ana_CreateShortcuts_State == ""
         ${If} "${ENABLE_SHORTCUTS}" == "yes"
             StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
         ${Else}
             StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
+    ${If} $Ana_AddCondabinToPath_State == ""
+        StrCpy $Ana_AddCondabinToPath_State ${BST_UNCHECKED}
     ${EndIf}
 FunctionEnd
 
@@ -82,6 +88,22 @@ Function mui_AnaCustomOptions_Show
         Pop $mui_AnaCustomOptions.CreateShortcuts
         ${NSD_SetState} $mui_AnaCustomOptions.CreateShortcuts $Ana_CreateShortcuts_State
         ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
+    ${EndIf}
+
+    ${If} "${SHOW_ADD_CONDABIN_TO_PATH}" == "yes"
+        # AddCondabinToPath is only an option for JustMe installations; it is disabled for AllUsers
+        # installations. (Addresses CVE-2022-26526)
+        ${If} $InstMode = ${JUST_ME}
+            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add condabin to my &PATH environment variable"
+            IntOp $5 $5 + 11
+            Pop $mui_AnaCustomOptions.AddCondabinToPath
+            ${NSD_SetState} $mui_AnaCustomOptions.AddCondabinToPath $Ana_AddCondabinToPath_State
+            ${NSD_OnClick} $mui_AnaCustomOptions.AddCondabinToPath AddCondabinToPath_OnClick
+            ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+                "Adds conda executables to PATH."
+            IntOp $5 $5 + 20
+            Pop $Ana_AddCondabinToPath_Label
+        ${EndIf}
     ${EndIf}
 
     ${If} "${SHOW_ADD_TO_PATH}" == "yes"

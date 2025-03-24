@@ -315,6 +315,25 @@
       "title": "$Schema",
       "type": "string"
     },
+    "add_condabin_to_path": {
+      "default": true,
+      "description": "Add an option to the installer so the user can choose whether to add the `condabin/` directory to PATH. Only applicable if `conda` is part of the installation. See also `add_condabin_to_path_default`.",
+      "title": "Add Condabin To Path",
+      "type": "boolean"
+    },
+    "add_condabin_to_path_default": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Default value for the option added by `add_condabin_to_path`. The default is true for GUI installers (EXE, PKG) and false for shell installers. The user is able to change the default during interactive installation. NOTE: For Windows, `AddCondabinToPath` is disabled when `InstallationType=AllUsers`.\nOnly applies if `add_condabin_to_path` is true.",
+      "title": "Add Condabin To Path Default"
+    },
     "attempt_hardlinks": {
       "anyOf": [
         {
