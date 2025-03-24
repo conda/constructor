@@ -92,6 +92,16 @@ class ExtraEnv(BaseModel):
     """
 
 
+class BuildOutputs(StrEnum):
+    "Allowed keys in 'build_outputs' setting."
+
+    HASH = "hash"
+    INFO_JSON = "info.json"
+    LICENSES = "licenses"
+    LOCKFILE = "lockfile"
+    PKGS_LIST = "pkgs_list"
+
+
 class ConstructorConfiguration(BaseModel):
     """
     Schema for constructor.yaml input files.
@@ -671,7 +681,7 @@ class ConstructorConfiguration(BaseModel):
 
     Supports the same values as `extra_files`.
     """
-    build_outputs: list[NonEmptyStr | dict[NonEmptyStr, Any]] = []
+    build_outputs: list[BuildOutputs | dict[BuildOutputs, dict | None]] = []
     """
     Additional artifacts to be produced after building the installer.
     It expects either a list of strings or single-key dictionaries:
@@ -715,6 +725,19 @@ def fix_descriptions(obj):
     return obj
 
 
+def checks():
+    from constructor.build_outputs import OUTPUT_HANDLERS
+
+    if sorted(BuildOutputs.__members__.values()) != sorted(OUTPUT_HANDLERS.keys()):
+        print(sorted(BuildOutputs.__members__.values()))
+        print("!=")
+        print(sorted(OUTPUT_HANDLERS.keys()))
+        raise AssertionError(
+            "Need to sync constructor.build_outputs.OUTPUT_HANDLERS "
+            "with constructor._schema.BuildOutputs enum."
+        )
+
+
 def dump_schema():
     model = ConstructorConfiguration(name="doesnotmatter", version="0.0.0")
     obj = model.model_json_schema()
@@ -725,4 +748,5 @@ def dump_schema():
 
 
 if __name__ == "__main__":
+    checks()
     dump_schema()

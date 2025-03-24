@@ -1,5 +1,17 @@
 {
   "$defs": {
+    "BuildOutputs": {
+      "description": "Allowed keys in 'build_outputs' setting.",
+      "enum": [
+        "hash",
+        "info.json",
+        "licenses",
+        "lockfile",
+        "pkgs_list"
+      ],
+      "title": "BuildOutputs",
+      "type": "string"
+    },
     "ChannelRemap": {
       "additionalProperties": false,
       "properties": {
@@ -219,12 +231,21 @@
       "items": {
         "anyOf": [
           {
-            "minLength": 1,
-            "type": "string"
+            "$ref": "#/$defs/BuildOutputs"
           },
           {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "propertyNames": {
-              "minLength": 1
+              "$ref": "#/$defs/BuildOutputs"
             },
             "type": "object"
           }
