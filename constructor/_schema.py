@@ -158,11 +158,11 @@ class _LicensesBuildOutputOptions(BaseModel):
 
 
 BuildOutputConfigs: TypeAlias = Union[
-    dict[Literal["hash"], _HashBuildOutputOptions],
-    dict[Literal["info.json"], _InfoJsonBuildOutputOptions],
-    dict[Literal["pkgs_list"], _PkgsListBuildOutputOptions],
-    dict[Literal["lockfile"], _LockfileBuildOutputOptions],
-    dict[Literal["licenses"], _LicensesBuildOutputOptions],
+    Annotated[dict[Literal["hash"], _HashBuildOutputOptions], Field(title="hash")],
+    Annotated[dict[Literal["info.json"], _InfoJsonBuildOutputOptions], Field(title="info.json")],
+    Annotated[dict[Literal["pkgs_list"], _PkgsListBuildOutputOptions], Field(title="pkgs_list")],
+    Annotated[dict[Literal["lockfile"], _LockfileBuildOutputOptions], Field(title="lockfile")],
+    Annotated[dict[Literal["licenses"], _LicensesBuildOutputOptions], Field(title="licenses")],
 ]
 
 

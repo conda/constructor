@@ -350,6 +350,7 @@
             "propertyNames": {
               "const": "hash"
             },
+            "title": "hash",
             "type": "object"
           },
           {
@@ -359,6 +360,7 @@
             "propertyNames": {
               "const": "info.json"
             },
+            "title": "info.json",
             "type": "object"
           },
           {
@@ -368,6 +370,7 @@
             "propertyNames": {
               "const": "pkgs_list"
             },
+            "title": "pkgs_list",
             "type": "object"
           },
           {
@@ -377,6 +380,7 @@
             "propertyNames": {
               "const": "lockfile"
             },
+            "title": "lockfile",
             "type": "object"
           },
           {
@@ -386,6 +390,7 @@
             "propertyNames": {
               "const": "licenses"
             },
+            "title": "licenses",
             "type": "object"
           }
         ]
