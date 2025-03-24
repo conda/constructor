@@ -12,7 +12,7 @@
 
 ### Docs
 
-* Removed inaccurate typing information from the `construct.yml` fields documetation. Full and accurate details are now available in the JSON Schema. (#943)
+* Remove inaccurate typing information from the `construct.yml` fields documentation. Full and accurate details are now available in the JSON Schema. (#943)
 
 ### Other
 
