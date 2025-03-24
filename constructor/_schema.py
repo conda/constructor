@@ -78,12 +78,12 @@ class ExtraEnv(BaseModel):
     user_requested_specs: list[NonEmptyStr] | None = None
     """
     Same as the global option, but for this env.
-    If not provided, global value is _not_ used
+    If not provided, global value is _not_ used.
     """
     menu_packages: list[NonEmptyStr] | None = None
     """
     Same as the global option, but for this env.
-    If not provided, global value is _not_ used
+    If not provided, global value is _not_ used.
     """
     exclude: list[NonEmptyStr] | None = None
     """
@@ -131,7 +131,7 @@ class ConstructorConfiguration(BaseModel):
       - src: file:///tmp/a3/conda-bld              # [unix]
         dest: https://repo.anaconda.com/pkgs/main  # [unix]
       - src: file:///D:/tmp/a3/conda-bld           # [win]
-        dest: https://repo.anaconda.com/pkgs/main  # [unix]
+        dest: https://repo.anaconda.com/pkgs/main  # [win]
     ```
 
     At least one channel must be supplied, either in `channels` or `channels_remap`.
@@ -141,7 +141,7 @@ class ConstructorConfiguration(BaseModel):
     A list of package specifications; e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
     The specifications are identical in form and purpose to those that would be
     included in a `conda create --file` command. Packages may also be specified
-    by an exact URL; e.g.,
+    by an exact URL, e.g.,
     `https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.
     This key can also take a `str` pointing to a requirements file with the same syntax.
 
@@ -157,7 +157,7 @@ class ConstructorConfiguration(BaseModel):
     initial environment in conda's history file. This information is used by newer
     versions of conda to better filter its package choices on subsequent installs;
     for example, if `python=3.6` is included, then conda will always seek versions
-    of packages compatible with Python 3.6. If this is option is not provided, it
+    of packages compatible with Python 3.6. If this option is not provided, it
     will be set equal to the value of `specs`.
     """
     virtual_specs: list[Annotated[str, Field(min_length=3, pattern=r"^__\S+.*$")]] = []
@@ -214,18 +214,17 @@ class ConstructorConfiguration(BaseModel):
     """
     Path to an environment file (TXT or YAML) to construct from. If this option
     is present, the `specs` argument will be ignored. Instead, constructor will
-    call conda to create a temporary environment, constructor will build and
+    call conda to create a temporary environment, constructor will build an
     installer from that, and the temporary environment will be removed.
     This ensures that constructor is using the precise local conda configuration
     to discover and install the packages. The created environment MUST include
     `python`.
 
-    Read notes about the solver in the `specs` field.
+    See notes about the solver in the `specs` field for more information.
     """
     transmute_file_type: Literal[".conda"] | None = None
     """
-    File type extension for the files to be transmuted into. Currently supports
-    only '.conda'. See conda-package-handling for supported extension names.
+    File type extension for the files to be transmuted into.
     If left empty, no transmuting is done.
     """
     conda_default_channels: list[NonEmptyStr] = []
@@ -262,12 +261,12 @@ class ConstructorConfiguration(BaseModel):
     installer_filename: NonEmptyStr | None = None
     """
     The filename of the installer being created. If not supplied, a reasonable
-    default will determined by the `name`, `version`, platform, and installer type.
+    default will be determined by the `name`, `version`, `platform`, and `installer_type`.
     """
     installer_type: InstallerTypes | list[InstallerTypes] | None = None
     """
-    The type of the installer being created.  Possible values are:
-    - `sh`: shell-based installer for Linux or macOS;
+    The type of the installer being created. Possible values are:
+    - `sh`: shell-based installer for Linux or macOS
     - `pkg`: macOS GUI installer built with Apple's `pkgbuild`
     - `exe`: Windows GUI installer built with NSIS
 
@@ -278,10 +277,10 @@ class ConstructorConfiguration(BaseModel):
     Notes for silent mode `/S` on Windows EXEs:
     - NSIS Silent mode will not print any error message, but will silently abort the installation.
       If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which
-      can be searched for `::error::` strings. Pre- and post- install scripts will only throw
+      can be searched for `::error::` strings. Pre- and post-install scripts will only throw
       an error if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
     - The `/D` flag can be used to specify the target location. It must be the last argument in
-      the command and should NEVER be quoted, even if it contains spaces. For example:
+      the command and must NOT be quoted, even if it contains spaces. For example:
       `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.
 
     [nsis-log]: https://nsis.sourceforge.io/Special_Builds
@@ -289,20 +288,20 @@ class ConstructorConfiguration(BaseModel):
     license_file: NonEmptyStr | None = None
     """
     Path to the license file being displayed by the installer during the install
-    process. It must be plain text (.txt) for shell-based installers. On PKG,
+    process. It must be plain text (.txt) for shell-based installers. For PKG,
     .txt, .rtf and .html are supported. On Windows, .txt and .rtf are supported.
     """
     keep_pkgs: bool = False
     """
-    If `False` (default), the package cache in the `pkgs` subdirectory is removed
+    If `False`, the package cache in the `pkgs` subdirectory is removed
     when the installation process is complete. If `True`, this subdirectory and
-    its contents are preserved. If `keep_pkgs` is `False`, Unix `.sh` and Windows `.msi`
+    its contents are preserved. If `keep_pkgs` is `False`, Unix `.sh` and Windows `.exe`
     installers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)
     to preserve the package cache.
     """
     batch_mode: bool = False
     """
-    Only affects `.sh` installers. If `False` (default), the installer launches
+    Only affects `.sh` installers. If `False`, the installer launches
     an interactive wizard guiding the user through the available options. If
     `True`, the installer runs automatically as if `-b` was passed.
     """
@@ -346,7 +345,7 @@ class ConstructorConfiguration(BaseModel):
     write_condarc: bool = False
     """
     By default, no `.condarc` file is written. If set, a `.condarc` file is written to
-    the base environment if there are any channels or `conda_default_channels` is set.
+    the installation directory if there are any channels or `conda_default_channels` is set.
     """
     condarc: NonEmptyStr | dict | None = None
     """
@@ -358,7 +357,7 @@ class ConstructorConfiguration(BaseModel):
     """
     company: NonEmptyStr | None = None
     """
-    Name of the company/entity who is responsible for the installer.
+    Name of the company/entity responsible for the installer.
     """
     reverse_domain_identifier: NonEmptyStr | None = None
     """
@@ -403,7 +402,7 @@ class ConstructorConfiguration(BaseModel):
     """
     A description of the purpose of the supplied `pre_install` script. If this
     string is supplied and non-empty, then the Windows and macOS GUI installers
-    will display it along with checkbox to enable or disable the execution of the
+    will display it along with a checkbox to enable or disable the execution of the
     script. If this string is not supplied, it is assumed that the script
     is compulsory and the option to disable it will not be offered.
 
@@ -439,7 +438,7 @@ class ConstructorConfiguration(BaseModel):
     """
     A description of the purpose of the supplied `post_install` script. If this
     string is supplied and non-empty, then the Windows and macOS GUI installers
-    will display it along with checkbox to enable or disable the execution of the
+    will display it along with a checkbox to enable or disable the execution of the
     script. If this string is not supplied, it is assumed that the script
     is compulsory and the option to disable it will not be offered.
 
@@ -447,7 +446,7 @@ class ConstructorConfiguration(BaseModel):
     """
     pre_uninstall: NonEmptyStr | None = None
     """
-    Path to a pre uninstall script. This is only supported for on Windows,
+    Path to a pre uninstall script. This is only supported on Windows,
     and must be a `.bat` file. Installation path is available as `%PREFIX%`.
     Metadata about the installer can be found in the `%INSTALLER_NAME%`,
     `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
@@ -457,25 +456,24 @@ class ConstructorConfiguration(BaseModel):
     """
     Set default install prefix. On Linux, if not provided, the default prefix
     is `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows,
-    this is used only for "Just Me" installation; for "All Users" installation,
+    this is used only for "Just Me" installations; for "All Users" installations,
     use the `default_prefix_all_users` key. If not provided, the default prefix
     is `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at
-    installation time.
+    install time.
     """
     default_prefix_domain_user: NonEmptyStr | None = None
     """
-    Set default installation prefix for domain user. If not provided, the
-    installation prefix for domain user will be `%LOCALAPPDATA%\\<NAME>`.
+    Set default installation prefix for domain users. If not provided, the
+    installation prefix for domain users will be `%LOCALAPPDATA%\\<NAME>`.
     By default, it is different from the `default_prefix` value to avoid installing
-    the distribution in the roaming profile. Environment variables will be expanded
-    at installation time. Windows only.
+    the distribution into the roaming profile. Environment variables will be expanded
+    at install time. Windows only.
     """
     default_prefix_all_users: NonEmptyStr | None = None
     """
-    Set default installation prefix for All Users installation. If not provided,
-    the installation prefix for all users installation will be
-    `%ALLUSERSPROFILE%\\<NAME>`. Environment variables will be expanded at installation
-    time. Windows only.
+    Set default installation prefix for All Users installations. If not provided,
+    the installation prefix will be `%ALLUSERSPROFILE%\\<NAME>`.
+    Environment variables will be expanded at install time. Windows only.
     """
     default_location_pkg: NonEmptyStr | None = None
     """
@@ -502,7 +500,7 @@ class ConstructorConfiguration(BaseModel):
     """
     Internal identifier for the installer. This is used in the build prefix and will
     determine part of the default location path. Combine with `default_location_pkg`
-    for more flexibility. If not provided, the value of `name` will be used.  (MacOS only)
+    for more flexibility. If not provided, the value of `name` will be used.  (macOS only)
     """
     install_path_exists_error_text: NonEmptyStr | None = None
     """
@@ -513,7 +511,7 @@ class ConstructorConfiguration(BaseModel):
     > '{CHOSEN_PATH}' already exists. Please, relaunch the installer and
     > choose another location in the Destination Select step.
 
-    (MacOS only)
+    (macOS only)
     """
     progress_notifications: bool = False
     """
@@ -527,8 +525,8 @@ class ConstructorConfiguration(BaseModel):
     """
     Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
     to be used as the welcome image for the Windows and PKG installers.
-    The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on Macos.
-    By default, an image is automatically generated on Windows. On MacOS, Anaconda's
+    The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on macOS.
+    By default, an image is automatically generated on Windows. On macOS, Anaconda's
     logo is shown if this key is not provided. If you don't want a background on
     PKG installers, set this key to `""` (empty string).
     """
@@ -543,8 +541,7 @@ class ConstructorConfiguration(BaseModel):
     default_image_color: Literal["red", "green", "blue", "yellow"] = "blue"
     """
     The color of the default images (when not providing explicit image files)
-    used on Windows. Possible values are `red`, `green`, `blue`, `yellow`.
-    The default is `blue`.
+    used on Windows.
     """
     welcome_image_text: NonEmptyStr | None = None
     """
@@ -559,7 +556,7 @@ class ConstructorConfiguration(BaseModel):
     initialize_conda: bool = True
     """
     Add an option to the installer so the user can choose whether to run `conda init`
-    after the install. See also `initialize_by_default`.
+    after the installation. See also `initialize_by_default`.
     """
     initialize_by_default: bool | None = None
     """
@@ -582,65 +579,53 @@ class ConstructorConfiguration(BaseModel):
     check_path_length: bool | None = None
     """
     Check the length of the path where the distribution is installed to ensure nodejs
-    can be installed.  Raise a message to request shorter path (less than 46 character)
-    or enable long path on windows > 10 (require admin right). Default is True. (Windows only).
-
-    Read notes about the particularities of Windows silent mode `/S` in the
-    `installer_type` documentation.
+    can be installed.  Raise a message to request shorter paths (less than 46 character)
+    or enable long paths on windows > 10 (require admin right). Default is True. (Windows only).
     """
     check_path_spaces: bool = True
     """
-    Check if the path where the distribution is installed contains spaces. Default is True.
+    Check if the path where the distribution is installed contains spaces.
     To allow installations with spaces, change to False. Note that:
 
     - A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.
     - `conda` cannot be present in the `base` environment
-
-    Read notes about the particularities of Windows silent mode `/S` in the
-    `installer_type` documentation.
     """
     nsis_template: NonEmptyStr | None = None
     """
-    If `nsis_template` is not provided, constructor uses its default
-    NSIS template. For more complete customization for the installation experience,
-    provide an NSIS template file. (Windows only).
+    Path to an NSIS template file to use instead of the default template. (Windows only)
     """
     welcome_file: NonEmptyStr | None = None
     """
-    If `installer_type` is `pkg` on MacOS, this message will be
+    If `installer_type` is `pkg` on macOS, this message will be
     shown before the license information, right after the introduction.
     File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
     both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
-    (MacOS only).
 
-    If the installer is for windows and welcome file type is nsi,
+    If the installer is for Windows and the welcome file type is nsi,
     it will use the nsi script to add in extra pages before the installer
     begins the installation process.
     """
     welcome_text: str | None = None
     """
-    If `installer_type` is `pkg` on MacOS, this message will be
+    If `installer_type` is `pkg` on macOS, this message will be
     shown before the license information, right after the introduction.
     If this key is missing, it defaults to a message about Anaconda Cloud.
     You can disable it altogether so it defaults to the system message
     if you set this key to `""` (empty string).
-    (MacOS only).
     """
     readme_file: NonEmptyStr | None = None
     """
-    If `installer_type` is `pkg` on MacOS, this message will be
+    If `installer_type` is `pkg` on macOS, this message will be
     shown before the license information, right after the welcome screen.
     File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
     both `readme_file` and `readme_text` are provided, `readme_file` takes precedence.
-    (MacOS only).
     """
     readme_text: str | None = None
     """
-    If `installer_type` is `pkg` on MacOS, this message will be
+    If `installer_type` is `pkg` on macOS, this message will be
     shown before the license information, right after the welcome screen.
     If this key is missing, it defaults to a message about Anaconda Cloud.
     You can disable it altogether if you set this key to `""` (empty string).
-    (MacOS only).
     """
     post_install_pages: NonEmptyStr | list[NonEmptyStr] | None = None
     """
@@ -655,11 +640,11 @@ class ConstructorConfiguration(BaseModel):
     """
     conclusion_file: NonEmptyStr | None = None
     """
-    If `installer_type` is `pkg` on MacOS, this message will be
+    If `installer_type` is `pkg` on macOS, this message will be
     shown at the end of the installer upon success. File can be
     plain text (.txt), rich text (.rtf) or HTML (.html). If both
     `conclusion_file` and `conclusion_text` are provided,
-    `conclusion_file` takes precedence. (MacOS only).
+    `conclusion_file` takes precedence.
 
     If the installer is for Windows, the file type must be nsi.
     """
@@ -671,7 +656,6 @@ class ConstructorConfiguration(BaseModel):
       You can disable it altogether so it defaults to the system message if you set this
       key to `""` (empty string).
     - EXE: The first line will be used as a title. The following lines will be used as text.
-    (macOS PKG and Windows only).
     """
     extra_files: list[NonEmptyStr | dict[NonEmptyStr, NonEmptyStr]] = []
     """
@@ -687,7 +671,7 @@ class ConstructorConfiguration(BaseModel):
     `welcome_file` and `conclusion_file` (see above)) . Should be a list of
     file paths, relative to the directory where `construct.yaml` is. In Windows, these
     files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
-    install process (Windows only).
+    the install process (Windows only).
 
     Supports the same values as `extra_files`.
     """
@@ -715,7 +699,7 @@ class ConstructorConfiguration(BaseModel):
     """
     uninstall_with_conda_exe: bool | None = None
     """
-    Use the standalone binary to perform the uninstallation.
+    Use the standalone binary to perform the uninstallation on Windows.
     Requires conda-standalone 24.11.0 or newer.
     """
 
