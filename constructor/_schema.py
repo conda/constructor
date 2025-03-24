@@ -698,8 +698,8 @@ def dump_schema():
     model = ConstructorConfiguration(name="doesnotmatter", version="0.0.0")
     obj = model.model_json_schema()
     obj["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-    SCHEMA_PATH.write_text(json.dumps(obj, indent=2) + "\n")
-    print(json.dumps(obj, indent=2))
+    SCHEMA_PATH.write_text(json.dumps(obj, sort_keys=True, indent=2) + "\n")
+    print(json.dumps(obj, sort_keys=True, indent=2))
 
 
 if __name__ == "__main__":
