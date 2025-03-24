@@ -948,6 +948,12 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
         condarc = tmp_path / "conda" / ".condarc"
     condarc.parent.mkdir(parents=True, exist_ok=True)
     condarc.write_text("safety_checks:\n  - very safe\n")
+
+    # If CONDARC or MAMBARC are set, micromamba will break when --no-rc is used.
+    # Installers should ignore those environment variables.
+    monkeypatch.setenv("CONDARC", str(condarc))
+    monkeypatch.setenv("MAMBARC", str(condarc))
+
     recipe_path = _example_path("customize_controls")
     input_path = tmp_path / "input"
     shutil.copytree(str(recipe_path), str(input_path))
