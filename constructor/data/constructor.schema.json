@@ -154,10 +154,10 @@
     },
     "InstallerTypes": {
       "enum": [
-        "sh",
-        "pkg",
+        "all",
         "exe",
-        "all"
+        "pkg",
+        "sh"
       ],
       "title": "InstallerTypes",
       "type": "string"
@@ -174,8 +174,8 @@
     "WinSignTools": {
       "enum": [
         "azuresigntool",
-        "signtool",
         "azuresigntool.exe",
+        "signtool",
         "signtool.exe"
       ],
       "title": "WinSignTools",

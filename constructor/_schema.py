@@ -29,16 +29,16 @@ _base_config_dict = ConfigDict(
 
 class WinSignTools(StrEnum):
     AZURESIGNTOOL = "azuresigntool"
-    SIGNTOOL = "signtool"
     AZURESIGNTOOL_EXE = "azuresigntool.exe"
+    SIGNTOOL = "signtool"
     SIGNTOOL_EXE = "signtool.exe"
 
 
 class InstallerTypes(StrEnum):
-    SH = "sh"
-    PKG = "pkg"
-    EXE = "exe"
     ALL = "all"
+    EXE = "exe"
+    PKG = "pkg"
+    SH = "sh"
 
 
 class PkgDomains(StrEnum):
