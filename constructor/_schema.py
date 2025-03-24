@@ -17,7 +17,7 @@ from typing import Annotated, Any, Literal  # noqa
 from pydantic import BaseModel, ConfigDict, Field
 
 HERE = Path(__file__).parent
-SCHEMA_PATH = HERE / "data" / "constructor.schema.json"
+SCHEMA_PATH = HERE / "data" / "construct.schema.json"
 NAME_REGEX = VERSION_REGEX = r"^[a-zA-Z0-9_]([a-zA-Z0-9._-]*[a-zA-Z0-9_])?$"
 ENV_NAME_REGEX = r"^[^/:# ]+$"
 NonEmptyStr = Annotated[str, Field(min_length=1)]
@@ -99,6 +99,12 @@ class ConstructorConfiguration(BaseModel):
 
     model_config: ConfigDict = _base_config_dict
 
+    schema: Annotated[str, Field(min_length=1, alias="$schema")] = (
+        "https://schemas.conda.org/constructor/v0/construct.schema.json"
+    )
+    """
+    JSON Schema URL or path used to validate this input file.
+    """
     name: Annotated[str, Field(min_length=1, pattern=NAME_REGEX)] = ...
     """
     Name of the installer. Names may be composed of letters, numbers,

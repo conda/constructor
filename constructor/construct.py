@@ -27,7 +27,7 @@ from constructor.utils import yaml
 logger = logging.getLogger(__name__)
 
 HERE = Path(__file__).parent
-SCHEMA_PATH = HERE / "data" / "constructor.schema.json"
+SCHEMA_PATH = HERE / "data" / "construct.schema.json"
 
 
 def ns_platform(platform):

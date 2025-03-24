@@ -186,6 +186,13 @@
   "additionalProperties": false,
   "description": "Schema for constructor.yaml input files.",
   "properties": {
+    "$schema": {
+      "default": "https://schemas.conda.org/constructor/v0/construct.schema.json",
+      "description": "JSON Schema URL or path used to validate this input file.",
+      "minLength": 1,
+      "title": "$Schema",
+      "type": "string"
+    },
     "attempt_hardlinks": {
       "anyOf": [
         {

@@ -36,8 +36,12 @@ are not available here.
 ## Available keys
 
 > This is only a name and description render of the `constructor` JSON Schema.
-> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstructor.schema.json)
+> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstruct.schema.json)
 
+
+### `$schema`
+
+JSON Schema URL or path used to validate this input file.
 
 ### `name`
 
@@ -597,7 +601,7 @@ This setting can be passed as a list of:
 ### `temp_extra_files`
 
 Temporary files that could be referenced in the installation process (i.e. customized
-`welcome_file` and `conclusion_file` (see above)) . Should be a list of
+`welcome_file` and `conclusion_file`). Should be a list of
 file paths, relative to the directory where `construct.yaml` is. In Windows, these
 files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
 the install process (Windows only).

@@ -56,7 +56,7 @@ are not available here.
 ## Available keys
 
 > This is only a name and description render of the `constructor` JSON Schema.
-> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstructor.schema.json)
+> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstruct.schema.json)
 
 {% for name, description in key_info_dict.items() %}
 ### `{{ name }}`
@@ -80,7 +80,8 @@ Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argume
 
 def generate_key_info_dict():
     return {
-        name: field.description for name, field in ConstructorConfiguration.model_fields.items()
+        (field.alias or name): field.description
+        for name, field in ConstructorConfiguration.model_fields.items()
     }
 
 

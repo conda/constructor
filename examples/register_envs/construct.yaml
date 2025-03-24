@@ -1,4 +1,5 @@
-# yaml-language-server: $schema=../../constructor/data/constructor.schema.json
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
 
 name: RegisterEnvs
 version: X
