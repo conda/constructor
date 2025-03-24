@@ -111,7 +111,7 @@
             }
           ],
           "default": null,
-          "description": "Same as the global option, but for this env.\nIf not provided, global value is _not_ used",
+          "description": "Same as the global option, but for this env.\nIf not provided, global value is _not_ used.",
           "title": "User Requested Specs"
         },
         "menu_packages": {
@@ -128,7 +128,7 @@
             }
           ],
           "default": null,
-          "description": "Same as the global option, but for this env.\nIf not provided, global value is _not_ used",
+          "description": "Same as the global option, but for this env.\nIf not provided, global value is _not_ used.",
           "title": "Menu Packages"
         },
         "exclude": {
@@ -211,7 +211,7 @@
     },
     "channels_remap": {
       "default": [],
-      "description": "A list of `src/dest` channel URL pairs. When building the installer, conda will\nuse the `src` channels to solve and fetch the packages. However, the resulting\ninstallation will see the packages as coming from the `dest` equivalent.\nThis allows an installer to be built against a different set of channels than\nwill be present when the installer is actually used. Example use:\n\n```yaml\nchannels_remap:\n  - src: file:///tmp/a3/conda-bld              # [unix]\n    dest: https://repo.anaconda.com/pkgs/main  # [unix]\n  - src: file:///D:/tmp/a3/conda-bld           # [win]\n    dest: https://repo.anaconda.com/pkgs/main  # [unix]\n```\n\nAt least one channel must be supplied, either in `channels` or `channels_remap`.",
+      "description": "A list of `src/dest` channel URL pairs. When building the installer, conda will\nuse the `src` channels to solve and fetch the packages. However, the resulting\ninstallation will see the packages as coming from the `dest` equivalent.\nThis allows an installer to be built against a different set of channels than\nwill be present when the installer is actually used. Example use:\n\n```yaml\nchannels_remap:\n  - src: file:///tmp/a3/conda-bld              # [unix]\n    dest: https://repo.anaconda.com/pkgs/main  # [unix]\n  - src: file:///D:/tmp/a3/conda-bld           # [win]\n    dest: https://repo.anaconda.com/pkgs/main  # [win]\n```\n\nAt least one channel must be supplied, either in `channels` or `channels_remap`.",
       "items": {
         "$ref": "#/$defs/ChannelRemap"
       },
@@ -233,12 +233,12 @@
         }
       ],
       "default": [],
-      "description": "A list of package specifications; e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.\nThe specifications are identical in form and purpose to those that would be\nincluded in a `conda create --file` command. Packages may also be specified\nby an exact URL; e.g.,\n`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.\nThis key can also take a `str` pointing to a requirements file with the same syntax.\n\nNote: `constructor` relies on `conda`'s Python API to solve the passed\nspecifications. You can still set the `CONDA_SOLVER` environment variable\nto override system-wide settings for `constructor`. If you are using\n`constructor` from a non-`base` environment, make sure the\nconfigured solver plugin is also installed in that environment.",
+      "description": "A list of package specifications; e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.\nThe specifications are identical in form and purpose to those that would be\nincluded in a `conda create --file` command. Packages may also be specified\nby an exact URL, e.g.,\n`https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2o-h26aff7b_0.tar.bz2`.\nThis key can also take a `str` pointing to a requirements file with the same syntax.\n\nNote: `constructor` relies on `conda`'s Python API to solve the passed\nspecifications. You can still set the `CONDA_SOLVER` environment variable\nto override system-wide settings for `constructor`. If you are using\n`constructor` from a non-`base` environment, make sure the\nconfigured solver plugin is also installed in that environment.",
       "title": "Specs"
     },
     "user_requested_specs": {
       "default": [],
-      "description": "A list of package specifications to be recorded as \"user-requested\" for the\ninitial environment in conda's history file. This information is used by newer\nversions of conda to better filter its package choices on subsequent installs;\nfor example, if `python=3.6` is included, then conda will always seek versions\nof packages compatible with Python 3.6. If this is option is not provided, it\nwill be set equal to the value of `specs`.",
+      "description": "A list of package specifications to be recorded as \"user-requested\" for the\ninitial environment in conda's history file. This information is used by newer\nversions of conda to better filter its package choices on subsequent installs;\nfor example, if `python=3.6` is included, then conda will always seek versions\nof packages compatible with Python 3.6. If this option is not provided, it\nwill be set equal to the value of `specs`.",
       "items": {
         "minLength": 1,
         "type": "string"
@@ -329,7 +329,7 @@
         }
       ],
       "default": null,
-      "description": "Path to an environment file (TXT or YAML) to construct from. If this option\nis present, the `specs` argument will be ignored. Instead, constructor will\ncall conda to create a temporary environment, constructor will build and\ninstaller from that, and the temporary environment will be removed.\nThis ensures that constructor is using the precise local conda configuration\nto discover and install the packages. The created environment MUST include\n`python`.\n\nRead notes about the solver in the `specs` field.",
+      "description": "Path to an environment file (TXT or YAML) to construct from. If this option\nis present, the `specs` argument will be ignored. Instead, constructor will\ncall conda to create a temporary environment, constructor will build an\ninstaller from that, and the temporary environment will be removed.\nThis ensures that constructor is using the precise local conda configuration\nto discover and install the packages. The created environment MUST include\n`python`.\n\nSee notes about the solver in the `specs` field for more information.",
       "title": "Environment File"
     },
     "transmute_file_type": {
@@ -343,7 +343,7 @@
         }
       ],
       "default": null,
-      "description": "File type extension for the files to be transmuted into. Currently supports\nonly '.conda'. See conda-package-handling for supported extension names.\nIf left empty, no transmuting is done.",
+      "description": "File type extension for the files to be transmuted into.\nIf left empty, no transmuting is done.",
       "title": "Transmute File Type"
     },
     "conda_default_channels": {
@@ -401,7 +401,7 @@
         }
       ],
       "default": null,
-      "description": "The filename of the installer being created. If not supplied, a reasonable\ndefault will determined by the `name`, `version`, platform, and installer type.",
+      "description": "The filename of the installer being created. If not supplied, a reasonable\ndefault will be determined by the `name`, `version`, `platform`, and `installer_type`.",
       "title": "Installer Filename"
     },
     "installer_type": {
@@ -420,7 +420,7 @@
         }
       ],
       "default": null,
-      "description": "The type of the installer being created.  Possible values are:\n- `sh`: shell-based installer for Linux or macOS;\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special\nvalue of `all` builds _both_ `sh` and `pkg` installers on macOS, as well\nas `sh` on Linux and `exe` on Windows.\n\nNotes for silent mode `/S` on Windows EXEs:\n- NSIS Silent mode will not print any error message, but will silently abort the installation.\n  If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which\n  can be searched for `::error::` strings. Pre- and post- install scripts will only throw\n  an error if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.\n- The `/D` flag can be used to specify the target location. It must be the last argument in\n  the command and should NEVER be quoted, even if it contains spaces. For example:\n  `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.\n\n[nsis-log]: https://nsis.sourceforge.io/Special_Builds",
+      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special\nvalue of `all` builds _both_ `sh` and `pkg` installers on macOS, as well\nas `sh` on Linux and `exe` on Windows.",
       "title": "Installer Type"
     },
     "license_file": {
@@ -434,18 +434,18 @@
         }
       ],
       "default": null,
-      "description": "Path to the license file being displayed by the installer during the install\nprocess. It must be plain text (.txt) for shell-based installers. On PKG,\n.txt, .rtf and .html are supported. On Windows, .txt and .rtf are supported.",
+      "description": "Path to the license file being displayed by the installer during the install\nprocess. It must be plain text (.txt) for shell-based installers. For PKG,\n.txt, .rtf and .html are supported. On Windows, .txt and .rtf are supported.",
       "title": "License File"
     },
     "keep_pkgs": {
       "default": false,
-      "description": "If `False` (default), the package cache in the `pkgs` subdirectory is removed\nwhen the installation process is complete. If `True`, this subdirectory and\nits contents are preserved. If `keep_pkgs` is `False`, Unix `.sh` and Windows `.msi`\ninstallers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)\nto preserve the package cache.",
+      "description": "If `False`, the package cache in the `pkgs` subdirectory is removed\nwhen the installation process is complete. If `True`, this subdirectory and\nits contents are preserved. If `keep_pkgs` is `False`, Unix `.sh` and Windows `.exe`\ninstallers offer a command-line option (`-k` and `/KeepPkgCache`, respectively)\nto preserve the package cache.",
       "title": "Keep Pkgs",
       "type": "boolean"
     },
     "batch_mode": {
       "default": false,
-      "description": "Only affects `.sh` installers. If `False` (default), the installer launches\nan interactive wizard guiding the user through the available options. If\n`True`, the installer runs automatically as if `-b` was passed.",
+      "description": "Only affects `.sh` installers. If `False`, the installer launches\nan interactive wizard guiding the user through the available options. If\n`True`, the installer runs automatically as if `-b` was passed.",
       "title": "Batch Mode",
       "type": "boolean"
     },
@@ -519,7 +519,7 @@
     },
     "write_condarc": {
       "default": false,
-      "description": "By default, no `.condarc` file is written. If set, a `.condarc` file is written to\nthe base environment if there are any channels or `conda_default_channels` is set.",
+      "description": "By default, no `.condarc` file is written. If set, a `.condarc` file is written to\nthe installation directory if there are any channels or `conda_default_channels` is set.",
       "title": "Write Condarc",
       "type": "boolean"
     },
@@ -551,7 +551,7 @@
         }
       ],
       "default": null,
-      "description": "Name of the company/entity who is responsible for the installer.",
+      "description": "Name of the company/entity responsible for the installer.",
       "title": "Company"
     },
     "reverse_domain_identifier": {
@@ -619,7 +619,7 @@
         }
       ],
       "default": null,
-      "description": "A description of the purpose of the supplied `pre_install` script. If this\nstring is supplied and non-empty, then the Windows and macOS GUI installers\nwill display it along with checkbox to enable or disable the execution of the\nscript. If this string is not supplied, it is assumed that the script\nis compulsory and the option to disable it will not be offered.\n\nThis option has no effect on `SH` installers.",
+      "description": "A description of the purpose of the supplied `pre_install` script. If this\nstring is supplied and non-empty, then the Windows and macOS GUI installers\nwill display it along with a checkbox to enable or disable the execution of the\nscript. If this string is not supplied, it is assumed that the script\nis compulsory and the option to disable it will not be offered.\n\nThis option has no effect on `SH` installers.",
       "title": "Pre Install Desc"
     },
     "post_install": {
@@ -633,7 +633,7 @@
         }
       ],
       "default": null,
-      "description": "Path to a post-install script. Some notes:\n\n- For Unix `.sh` installers, the shebang line is respected if present;\n  otherwise, the script is run by the POSIX shell `sh`. Note that the use\n  of a shebang can reduce the portability of the installer. The\n  installation path is available as `${PREFIX}`. Installer metadata is\n  available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`\n  environment variables. `${INSTALLER_TYPE}` is set to `SH`.\n  `${INSTALLER_UNATTENDED}` will be `\"1\"` in batch mode (`-b`), `\"0\"` otherwise.\n- For PKG installers, the shebang line is respected if present;\n  otherwise, `bash` is used. The same variables mentioned for `sh`\n  installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.\n  `${INSTALLER_UNATTENDED}` will be `\"1\"` for command line installs, `\"0\"` otherwise.\n- For Windows `.exe` installers, the script must be a `.bat` file.\n  Installation path is available as `%PREFIX%`. Metadata about\n  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,\n  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.\n  `%INSTALLER_UNATTENDED%` will be `\"1\"` in silent mode (`/S`), `\"0\"` otherwise.\n\nIf necessary, you can activate the installed `base` environment like this:\n\n- Unix: `source \"$PREFIX/etc/profile.d/conda.sh\" && conda activate \"$PREFIX\"`\n- Windows: `call \"%PREFIX%\\Scripts\\activate.bat\"`",
+      "description": "Path to a post-install script. Some notes:\n\n- For Unix `.sh` installers, the shebang line is respected if present;\n  otherwise, the script is run by the POSIX shell `sh`. Note that the use\n  of a shebang can reduce the portability of the installer. The\n  installation path is available as `${PREFIX}`. Installer metadata is\n  available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`\n  environment variables. `${INSTALLER_TYPE}` is set to `SH`.\n  `${INSTALLER_UNATTENDED}` will be `\"1\"` in batch mode (`-b`), `\"0\"` otherwise.\n- For PKG installers, the shebang line is respected if present;\n  otherwise, `bash` is used. The same variables mentioned for `sh`\n  installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.\n  `${INSTALLER_UNATTENDED}` will be `\"1\"` for command line installs, `\"0\"` otherwise.\n- For Windows `.exe` installers, the script must be a `.bat` file.\n  Installation path is available as `%PREFIX%`. Metadata about\n  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,\n  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.\n  `%INSTALLER_UNATTENDED%` will be `\"1\"` in silent mode (`/S`), `\"0\"` otherwise.\n\nIf necessary, you can activate the installed `base` environment like this:\n\n- Unix: `. \"$PREFIX/etc/profile.d/conda.sh\" && conda activate \"$PREFIX\"`\n- Windows: `call \"%PREFIX%\\Scripts\\activate.bat\"`",
       "title": "Post Install"
     },
     "post_install_desc": {
@@ -647,7 +647,7 @@
         }
       ],
       "default": null,
-      "description": "A description of the purpose of the supplied `post_install` script. If this\nstring is supplied and non-empty, then the Windows and macOS GUI installers\nwill display it along with checkbox to enable or disable the execution of the\nscript. If this string is not supplied, it is assumed that the script\nis compulsory and the option to disable it will not be offered.\n\nThis option has no effect on `SH` installers.",
+      "description": "A description of the purpose of the supplied `post_install` script. If this\nstring is supplied and non-empty, then the Windows and macOS GUI installers\nwill display it along with a checkbox to enable or disable the execution of the\nscript. If this string is not supplied, it is assumed that the script\nis compulsory and the option to disable it will not be offered.\n\nThis option has no effect on `SH` installers.",
       "title": "Post Install Desc"
     },
     "pre_uninstall": {
@@ -661,7 +661,7 @@
         }
       ],
       "default": null,
-      "description": "Path to a pre uninstall script. This is only supported for on Windows,\nand must be a `.bat` file. Installation path is available as `%PREFIX%`.\nMetadata about the installer can be found in the `%INSTALLER_NAME%`,\n`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.\n`%INSTALLER_TYPE%` is set to `EXE`.",
+      "description": "Path to a pre uninstall script. This is only supported on Windows,\nand must be a `.bat` file. Installation path is available as `%PREFIX%`.\nMetadata about the installer can be found in the `%INSTALLER_NAME%`,\n`%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.\n`%INSTALLER_TYPE%` is set to `EXE`.",
       "title": "Pre Uninstall"
     },
     "default_prefix": {
@@ -675,7 +675,7 @@
         }
       ],
       "default": null,
-      "description": "Set default install prefix. On Linux, if not provided, the default prefix\nis `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows,\nthis is used only for \"Just Me\" installation; for \"All Users\" installation,\nuse the `default_prefix_all_users` key. If not provided, the default prefix\nis `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at\ninstallation time.",
+      "description": "Set default install prefix. On Linux, if not provided, the default prefix\nis `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows,\nthis is used only for \"Just Me\" installations; for \"All Users\" installations,\nuse the `default_prefix_all_users` key. If not provided, the default prefix\nis `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at\ninstall time.",
       "title": "Default Prefix"
     },
     "default_prefix_domain_user": {
@@ -689,7 +689,7 @@
         }
       ],
       "default": null,
-      "description": "Set default installation prefix for domain user. If not provided, the\ninstallation prefix for domain user will be `%LOCALAPPDATA%\\<NAME>`.\nBy default, it is different from the `default_prefix` value to avoid installing\nthe distribution in the roaming profile. Environment variables will be expanded\nat installation time. Windows only.",
+      "description": "Set default installation prefix for domain users. If not provided, the\ninstallation prefix for domain users will be `%LOCALAPPDATA%\\<NAME>`.\nBy default, it is different from the `default_prefix` value to avoid installing\nthe distribution into the roaming profile. Environment variables will be expanded\nat install time. Windows only.",
       "title": "Default Prefix Domain User"
     },
     "default_prefix_all_users": {
@@ -703,7 +703,7 @@
         }
       ],
       "default": null,
-      "description": "Set default installation prefix for All Users installation. If not provided,\nthe installation prefix for all users installation will be\n`%ALLUSERSPROFILE%\\<NAME>`. Environment variables will be expanded at installation\ntime. Windows only.",
+      "description": "Set default installation prefix for All Users installations. If not provided,\nthe installation prefix will be `%ALLUSERSPROFILE%\\<NAME>`.\nEnvironment variables will be expanded at install time. Windows only.",
       "title": "Default Prefix All Users"
     },
     "default_location_pkg": {
@@ -746,7 +746,7 @@
         }
       ],
       "default": null,
-      "description": "Internal identifier for the installer. This is used in the build prefix and will\ndetermine part of the default location path. Combine with `default_location_pkg`\nfor more flexibility. If not provided, the value of `name` will be used.  (MacOS only)",
+      "description": "Internal identifier for the installer. This is used in the build prefix and will\ndetermine part of the default location path. Combine with `default_location_pkg`\nfor more flexibility. If not provided, the value of `name` will be used.  (macOS only)",
       "title": "Pkg Name"
     },
     "install_path_exists_error_text": {
@@ -760,7 +760,7 @@
         }
       ],
       "default": null,
-      "description": "Error message that will be shown if the installation path already exists.\nYou cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is\navailable and set to the destination causing the error. Defaults to:\n\n> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and\n> choose another location in the Destination Select step.\n\n(MacOS only)",
+      "description": "Error message that will be shown if the installation path already exists.\nYou cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is\navailable and set to the destination causing the error. Defaults to:\n\n> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and\n> choose another location in the Destination Select step.\n\n(macOS only)",
       "title": "Install Path Exists Error Text"
     },
     "progress_notifications": {
@@ -779,7 +779,7 @@
         }
       ],
       "default": null,
-      "description": "Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)\nto be used as the welcome image for the Windows and PKG installers.\nThe image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on Macos.\nBy default, an image is automatically generated on Windows. On MacOS, Anaconda's\nlogo is shown if this key is not provided. If you don't want a background on\nPKG installers, set this key to `\"\"` (empty string).",
+      "description": "Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)\nto be used as the welcome image for the Windows and PKG installers.\nThe image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on macOS.\nBy default, an image is automatically generated on Windows. On macOS, Anaconda's\nlogo is shown if this key is not provided. If you don't want a background on\nPKG installers, set this key to `\"\"` (empty string).",
       "title": "Welcome Image"
     },
     "header_image": {
@@ -810,7 +810,7 @@
     },
     "default_image_color": {
       "default": "blue",
-      "description": "The color of the default images (when not providing explicit image files)\nused on Windows. Possible values are `red`, `green`, `blue`, `yellow`.\nThe default is `blue`.",
+      "description": "The color of the default images (when not providing explicit image files)\nused on Windows.",
       "enum": [
         "red",
         "green",
@@ -850,7 +850,7 @@
     },
     "initialize_conda": {
       "default": true,
-      "description": "Add an option to the installer so the user can choose whether to run `conda init`\nafter the install. See also `initialize_by_default`.",
+      "description": "Add an option to the installer so the user can choose whether to run `conda init`\nafter the installation. See also `initialize_by_default`.",
       "title": "Initialize Conda",
       "type": "boolean"
     },
@@ -896,12 +896,12 @@
         }
       ],
       "default": null,
-      "description": "Check the length of the path where the distribution is installed to ensure nodejs\ncan be installed.  Raise a message to request shorter path (less than 46 character)\nor enable long path on windows > 10 (require admin right). Default is True. (Windows only).\n\nRead notes about the particularities of Windows silent mode `/S` in the\n`installer_type` documentation.",
+      "description": "Check the length of the path where the distribution is installed to ensure nodejs\ncan be installed.  Raise a message to request shorter paths (less than 46 character)\nor enable long paths on windows > 10 (require admin right). Default is True. (Windows only).",
       "title": "Check Path Length"
     },
     "check_path_spaces": {
       "default": true,
-      "description": "Check if the path where the distribution is installed contains spaces. Default is True.\nTo allow installations with spaces, change to False. Note that:\n\n- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.\n- `conda` cannot be present in the `base` environment\n\nRead notes about the particularities of Windows silent mode `/S` in the\n`installer_type` documentation.",
+      "description": "Check if the path where the distribution is installed contains spaces.\nTo allow installations with spaces, change to False. Note that:\n\n- A recent conda-standalone (>=22.11.1) or equivalent is needed for full support.\n- `conda` cannot be present in the `base` environment",
       "title": "Check Path Spaces",
       "type": "boolean"
     },
@@ -916,7 +916,7 @@
         }
       ],
       "default": null,
-      "description": "If `nsis_template` is not provided, constructor uses its default\nNSIS template. For more complete customization for the installation experience,\nprovide an NSIS template file. (Windows only).",
+      "description": "Path to an NSIS template file to use instead of the default template. (Windows only)",
       "title": "Nsis Template"
     },
     "welcome_file": {
@@ -930,7 +930,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the introduction.\nFile can be plain text (.txt), rich text (.rtf) or HTML (.html). If\nboth `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\n(MacOS only).\n\nIf the installer is for windows and welcome file type is nsi,\nit will use the nsi script to add in extra pages before the installer\nbegins the installation process.",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be\nshown before the license information, right after the introduction.\nFile can be plain text (.txt), rich text (.rtf) or HTML (.html). If\nboth `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\n\nIf the installer is for Windows and the welcome file type is nsi,\nit will use the nsi script to add in extra pages before the installer\nbegins the installation process.",
       "title": "Welcome File"
     },
     "welcome_text": {
@@ -943,7 +943,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the introduction.\nIf this key is missing, it defaults to a message about Anaconda Cloud.\nYou can disable it altogether so it defaults to the system message\nif you set this key to `\"\"` (empty string).\n(MacOS only).",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be\nshown before the license information, right after the introduction.\nIf this key is missing, it defaults to a message about Anaconda Cloud.\nYou can disable it altogether so it defaults to the system message\nif you set this key to `\"\"` (empty string).",
       "title": "Welcome Text"
     },
     "readme_file": {
@@ -957,7 +957,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the welcome screen.\nFile can be plain text (.txt), rich text (.rtf) or HTML (.html). If\nboth `readme_file` and `readme_text` are provided, `readme_file` takes precedence.\n(MacOS only).",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be\nshown before the license information, right after the welcome screen.\nFile can be plain text (.txt), rich text (.rtf) or HTML (.html). If\nboth `readme_file` and `readme_text` are provided, `readme_file` takes precedence.",
       "title": "Readme File"
     },
     "readme_text": {
@@ -970,7 +970,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown before the license information, right after the welcome screen.\nIf this key is missing, it defaults to a message about Anaconda Cloud.\nYou can disable it altogether if you set this key to `\"\"` (empty string).\n(MacOS only).",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be\nshown before the license information, right after the welcome screen.\nIf this key is missing, it defaults to a message about Anaconda Cloud.\nYou can disable it altogether if you set this key to `\"\"` (empty string).",
       "title": "Readme Text"
     },
     "post_install_pages": {
@@ -1005,7 +1005,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on MacOS, this message will be\nshown at the end of the installer upon success. File can be\nplain text (.txt), rich text (.rtf) or HTML (.html). If both\n`conclusion_file` and `conclusion_text` are provided,\n`conclusion_file` takes precedence. (MacOS only).\n\nIf the installer is for Windows, the file type must be nsi.",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be\nshown at the end of the installer upon success. File can be\nplain text (.txt), rich text (.rtf) or HTML (.html). If both\n`conclusion_file` and `conclusion_text` are provided,\n`conclusion_file` takes precedence.\n\nIf the installer is for Windows, the file type must be nsi.",
       "title": "Conclusion File"
     },
     "conclusion_text": {
@@ -1018,7 +1018,7 @@
         }
       ],
       "default": null,
-      "description": "A message that will be shown at the end of the installer upon success.\nThe behaviour is slightly different across installer types:\n- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.\n  You can disable it altogether so it defaults to the system message if you set this\n  key to `\"\"` (empty string).\n- EXE: The first line will be used as a title. The following lines will be used as text.\n(macOS PKG and Windows only).",
+      "description": "A message that will be shown at the end of the installer upon success.\nThe behaviour is slightly different across installer types:\n- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.\n  You can disable it altogether so it defaults to the system message if you set this\n  key to `\"\"` (empty string).\n- EXE: The first line will be used as a title. The following lines will be used as text.",
       "title": "Conclusion Text"
     },
     "extra_files": {
@@ -1047,7 +1047,7 @@
     },
     "temp_extra_files": {
       "default": [],
-      "description": "Temporary files that could be referenced in the installation process (i.e. customized\n`welcome_file` and `conclusion_file` (see above)) . Should be a list of\nfile paths, relative to the directory where `construct.yaml` is. In Windows, these\nfiles will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during\ninstall process (Windows only).\n\nSupports the same values as `extra_files`.",
+      "description": "Temporary files that could be referenced in the installation process (i.e. customized\n`welcome_file` and `conclusion_file` (see above)) . Should be a list of\nfile paths, relative to the directory where `construct.yaml` is. In Windows, these\nfiles will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during\nthe install process (Windows only).\n\nSupports the same values as `extra_files`.",
       "items": {
         "anyOf": [
           {
@@ -1099,7 +1099,7 @@
         }
       ],
       "default": null,
-      "description": "Use the standalone binary to perform the uninstallation.\nRequires conda-standalone 24.11.0 or newer.",
+      "description": "Use the standalone binary to perform the uninstallation on Windows.\nRequires conda-standalone 24.11.0 or newer.",
       "title": "Uninstall With Conda Exe"
     }
   },
