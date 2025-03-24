@@ -105,7 +105,7 @@ class BuildOutputs(StrEnum):
 
 _GuaranteedAlgorithmsEnum = StrEnum(
     "GuaranteedAlgorithmsEnum",
-    ((value, value) for value in algorithms_guaranteed),
+    tuple(sorted((value, value) for value in algorithms_guaranteed)),
 )
 
 
