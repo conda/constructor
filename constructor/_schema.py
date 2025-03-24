@@ -11,8 +11,9 @@ from __future__ import annotations
 
 import json
 from enum import StrEnum
+from hashlib import algorithms_guaranteed
 from pathlib import Path
-from typing import Annotated, Any, Literal  # noqa
+from typing import Annotated, Literal, TypeAlias, Union  # noqa
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -102,6 +103,69 @@ class BuildOutputs(StrEnum):
     PKGS_LIST = "pkgs_list"
 
 
+_GuaranteedAlgorithmsEnum = StrEnum(
+    "GuaranteedAlgorithmsEnum",
+    ((value, value) for value in algorithms_guaranteed),
+)
+
+
+class _HashBuildOutputOptions(BaseModel):
+    """
+    The hash of the installer files. The output file is designed to work with the `shasum`
+    command and thus has POSIX line endings, including on Windows
+    """
+
+    model_config: ConfigDict = _base_config_dict
+
+    algorithm: _GuaranteedAlgorithmsEnum | list[_GuaranteedAlgorithmsEnum]
+    "The hash algorithm. Must be one of `hashlib.algorithms_guaranteed`."
+
+
+class _InfoJsonBuildOutputOptions(BaseModel):
+    "The internal `info` object, serialized to JSON. Takes no options."
+
+    model_config: ConfigDict = _base_config_dict
+
+
+class _PkgsListBuildOutputOptions(BaseModel):
+    "The list of packages contained in a given environment."
+
+    model_config: ConfigDict = _base_config_dict
+    env: NonEmptyStr = "base"
+    "Name of an environment in 'extra_envs' to be exported."
+
+
+class _LockfileBuildOutputOptions(BaseModel):
+    "An `@EXPLICIT` lockfile for a given environment."
+
+    model_config: ConfigDict = _base_config_dict
+    env: NonEmptyStr = "base"
+    "Name of an environment in 'extra_envs' to be exported."
+
+
+class _LicensesBuildOutputOptions(BaseModel):
+    "Generate a JSON file with the licensing details of all included packages."
+
+    model_config: ConfigDict = _base_config_dict
+    include_text: bool = False
+    "Whether to dump the license text in the JSON. If false, only the path will be included."
+    text_errors: str | None = None
+    """
+    How to handle decoding errors when reading the license text. Only relevant if `include_text` is
+    True. Any str accepted by `open()`'s 'errors' argument is valid. See
+    https://docs.python.org/3/library/functions.html#open.
+    """
+
+
+BuildOutputConfigs: TypeAlias = Union[
+    dict[Literal["hash"], _HashBuildOutputOptions],
+    dict[Literal["info.json"], _InfoJsonBuildOutputOptions],
+    dict[Literal["pkgs_list"], _PkgsListBuildOutputOptions],
+    dict[Literal["lockfile"], _LockfileBuildOutputOptions],
+    dict[Literal["licenses"], _LicensesBuildOutputOptions],
+]
+
+
 class ConstructorConfiguration(BaseModel):
     """
     Schema for constructor.yaml input files.
@@ -109,7 +173,7 @@ class ConstructorConfiguration(BaseModel):
 
     model_config: ConfigDict = _base_config_dict
 
-    schema: Annotated[str, Field(min_length=1, alias="$schema")] = (
+    schema_: Annotated[str, Field(min_length=1, alias="$schema")] = (
         "https://schemas.conda.org/constructor/v0/construct.schema.json"
     )
     """
@@ -681,27 +745,10 @@ class ConstructorConfiguration(BaseModel):
 
     Supports the same values as `extra_files`.
     """
-    build_outputs: list[BuildOutputs | dict[BuildOutputs, dict | None]] = []
+    build_outputs: list[BuildOutputs | BuildOutputConfigs] = []
     """
     Additional artifacts to be produced after building the installer.
-    It expects either a list of strings or single-key dictionaries:
-    Allowed keys are:
-    - `hash`: The hash of the installer files. The output file is designed to work with the `shasum`
-      command and thus has POSIX line endings, including on Windows. Options:
-        - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available
-           algorithms:
-           https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available
-    - `info.json`: The internal `info` object, serialized to JSON. Takes no options.
-    - `pkgs_list`: The list of packages contained in a given environment. Options:
-        - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
-    - `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:
-        - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
-    - `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
-        - `include_text` (optional bool, default=`False`): Whether to dump the license text in the
-          JSON. If false, only the path will be included.
-        - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading
-          the license text. Only relevant if include_text is True. Any str accepted by open()'s
-          'errors' argument is valid. See https://docs.python.org/3/library/functions.html#open.
+    It expects either a list of strings or single-key dictionaries.
     """
     uninstall_with_conda_exe: bool | None = None
     """

@@ -611,24 +611,7 @@ Supports the same values as `extra_files`.
 ### `build_outputs`
 
 Additional artifacts to be produced after building the installer.
-It expects either a list of strings or single-key dictionaries:
-Allowed keys are:
-- `hash`: The hash of the installer files. The output file is designed to work with the `shasum`
-  command and thus has POSIX line endings, including on Windows. Options:
-    - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s available
-       algorithms:
-       https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_available
-- `info.json`: The internal `info` object, serialized to JSON. Takes no options.
-- `pkgs_list`: The list of packages contained in a given environment. Options:
-    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
-- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:
-    - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.
-- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:
-    - `include_text` (optional bool, default=`False`): Whether to dump the license text in the
-      JSON. If false, only the path will be included.
-    - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading
-      the license text. Only relevant if include_text is True. Any str accepted by open()'s
-      'errors' argument is valid. See https://docs.python.org/3/library/functions.html#open.
+It expects either a list of strings or single-key dictionaries.
 
 ### `uninstall_with_conda_exe`
 
