@@ -157,12 +157,50 @@ class _LicensesBuildOutputOptions(BaseModel):
     """
 
 
+class HashBuildOutput(BaseModel):
+    """
+    The hash of the installer files. The output file is designed to work with the `shasum`
+    command and thus has POSIX line endings, including on Windows
+    """
+
+    model_config: ConfigDict = _base_config_dict
+    hash_: _HashBuildOutputOptions
+
+
+class InfoJsonBuildOutput(BaseModel):
+    "The internal `info` object, serialized to JSON. Takes no options."
+
+    model_config: ConfigDict = _base_config_dict
+    info_json: _InfoJsonBuildOutputOptions
+
+
+class PkgsListBuildOutput(BaseModel):
+    "The list of packages contained in a given environment."
+
+    model_config: ConfigDict = _base_config_dict
+    pkgs_list: _PkgsListBuildOutputOptions
+
+
+class LockfileBuildOutput(BaseModel):
+    "An `@EXPLICIT` lockfile for a given environment."
+
+    model_config: ConfigDict = _base_config_dict
+    lockfile: _LockfileBuildOutputOptions
+
+
+class LicensesBuildOutput(BaseModel):
+    "Generate a JSON file with the licensing details of all included packages."
+
+    model_config: ConfigDict = _base_config_dict
+    licenses: _LicensesBuildOutputOptions
+
+
 BuildOutputConfigs: TypeAlias = Union[
-    Annotated[dict[Literal["hash"], _HashBuildOutputOptions], Field(title="hash")],
-    Annotated[dict[Literal["info.json"], _InfoJsonBuildOutputOptions], Field(title="info.json")],
-    Annotated[dict[Literal["pkgs_list"], _PkgsListBuildOutputOptions], Field(title="pkgs_list")],
-    Annotated[dict[Literal["lockfile"], _LockfileBuildOutputOptions], Field(title="lockfile")],
-    Annotated[dict[Literal["licenses"], _LicensesBuildOutputOptions], Field(title="licenses")],
+    HashBuildOutput,
+    InfoJsonBuildOutput,
+    PkgsListBuildOutput,
+    LockfileBuildOutput,
+    LicensesBuildOutput,
 ]
 
 

@@ -184,6 +184,34 @@
       "title": "GuaranteedAlgorithmsEnum",
       "type": "string"
     },
+    "HashBuildOutput": {
+      "additionalProperties": false,
+      "description": "The hash of the installer files. The output file is designed to work with the `shasum` command and thus has POSIX line endings, including on Windows",
+      "properties": {
+        "hash_": {
+          "$ref": "#/$defs/_HashBuildOutputOptions"
+        }
+      },
+      "required": [
+        "hash_"
+      ],
+      "title": "HashBuildOutput",
+      "type": "object"
+    },
+    "InfoJsonBuildOutput": {
+      "additionalProperties": false,
+      "description": "The internal `info` object, serialized to JSON. Takes no options.",
+      "properties": {
+        "info_json": {
+          "$ref": "#/$defs/_InfoJsonBuildOutputOptions"
+        }
+      },
+      "required": [
+        "info_json"
+      ],
+      "title": "InfoJsonBuildOutput",
+      "type": "object"
+    },
     "InstallerTypes": {
       "enum": [
         "all",
@@ -194,6 +222,34 @@
       "title": "InstallerTypes",
       "type": "string"
     },
+    "LicensesBuildOutput": {
+      "additionalProperties": false,
+      "description": "Generate a JSON file with the licensing details of all included packages.",
+      "properties": {
+        "licenses": {
+          "$ref": "#/$defs/_LicensesBuildOutputOptions"
+        }
+      },
+      "required": [
+        "licenses"
+      ],
+      "title": "LicensesBuildOutput",
+      "type": "object"
+    },
+    "LockfileBuildOutput": {
+      "additionalProperties": false,
+      "description": "An `@EXPLICIT` lockfile for a given environment.",
+      "properties": {
+        "lockfile": {
+          "$ref": "#/$defs/_LockfileBuildOutputOptions"
+        }
+      },
+      "required": [
+        "lockfile"
+      ],
+      "title": "LockfileBuildOutput",
+      "type": "object"
+    },
     "PkgDomains": {
       "enum": [
         "enable_anywhere",
@@ -202,6 +258,20 @@
       ],
       "title": "PkgDomains",
       "type": "string"
+    },
+    "PkgsListBuildOutput": {
+      "additionalProperties": false,
+      "description": "The list of packages contained in a given environment.",
+      "properties": {
+        "pkgs_list": {
+          "$ref": "#/$defs/_PkgsListBuildOutputOptions"
+        }
+      },
+      "required": [
+        "pkgs_list"
+      ],
+      "title": "PkgsListBuildOutput",
+      "type": "object"
     },
     "WinSignTools": {
       "enum": [
@@ -344,54 +414,19 @@
             "$ref": "#/$defs/BuildOutputs"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/$defs/_HashBuildOutputOptions"
-            },
-            "propertyNames": {
-              "const": "hash"
-            },
-            "title": "hash",
-            "type": "object"
+            "$ref": "#/$defs/HashBuildOutput"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/$defs/_InfoJsonBuildOutputOptions"
-            },
-            "propertyNames": {
-              "const": "info.json"
-            },
-            "title": "info.json",
-            "type": "object"
+            "$ref": "#/$defs/InfoJsonBuildOutput"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/$defs/_PkgsListBuildOutputOptions"
-            },
-            "propertyNames": {
-              "const": "pkgs_list"
-            },
-            "title": "pkgs_list",
-            "type": "object"
+            "$ref": "#/$defs/PkgsListBuildOutput"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/$defs/_LockfileBuildOutputOptions"
-            },
-            "propertyNames": {
-              "const": "lockfile"
-            },
-            "title": "lockfile",
-            "type": "object"
+            "$ref": "#/$defs/LockfileBuildOutput"
           },
           {
-            "additionalProperties": {
-              "$ref": "#/$defs/_LicensesBuildOutputOptions"
-            },
-            "propertyNames": {
-              "const": "licenses"
-            },
-            "title": "licenses",
-            "type": "object"
+            "$ref": "#/$defs/LicensesBuildOutput"
           }
         ]
       },
