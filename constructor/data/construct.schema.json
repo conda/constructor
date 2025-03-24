@@ -166,20 +166,20 @@
     },
     "GuaranteedAlgorithmsEnum": {
       "enum": [
-        "shake_128",
-        "sha512",
+        "md5",
         "shake_256",
-        "sha1",
-        "sha384",
-        "sha256",
-        "sha224",
-        "blake2s",
-        "sha3_512",
-        "sha3_224",
-        "blake2b",
         "sha3_256",
+        "sha224",
+        "sha256",
+        "sha384",
+        "sha1",
         "sha3_384",
-        "md5"
+        "sha512",
+        "sha3_512",
+        "blake2s",
+        "shake_128",
+        "sha3_224",
+        "blake2b"
       ],
       "title": "GuaranteedAlgorithmsEnum",
       "type": "string"
@@ -337,7 +337,7 @@
     },
     "build_outputs": {
       "default": [],
-      "description": "Additional artifacts to be produced after building the installer. It expects either a list of strings or single-key dictionaries: Allowed keys are:\n- `hash`: The hash of the installer files. The output file is designed to work with the `shasum`  command and thus has POSIX line endings, including on Windows. Options:   - `algorithm` (str or list): The hash algorithm. Must be among `hashlib`'s guaranteed    algorithms:    https://docs.python.org/3/library/hashlib.html#hashlib.algorithms_guaranteed\n- `info.json`: The internal `info` object, serialized to JSON. Takes no options.\n- `pkgs_list`: The list of packages contained in a given environment. Options:   - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `lockfile`: An `@EXPLICIT` lockfile for a given environment. Options:   - `env` (optional, default=`base`): Name of an environment in `extra_envs` to export.\n- `licenses`: Generate a JSON file with the licensing details of all included packages. Options:   - `include_text` (optional bool, default=`False`): Whether to dump the license text in the    JSON. If false, only the path will be included.   - `text_errors` (optional str, default=`None`): How to handle decoding errors when reading    the license text. Only relevant if include_text is True. Any str accepted by open()'s    'errors' argument is valid. See https://docs.python.org/3/library/functions.html#open.",
+      "description": "Additional artifacts to be produced after building the installer. It expects either a list of strings or single-key dictionaries.",
       "items": {
         "anyOf": [
           {
