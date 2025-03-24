@@ -274,16 +274,6 @@ class ConstructorConfiguration(BaseModel):
     value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
     as `sh` on Linux and `exe` on Windows.
 
-    Notes for silent mode `/S` on Windows EXEs:
-    - NSIS Silent mode will not print any error message, but will silently abort the installation.
-      If needed, [NSIS log-builds][nsis-log] can be used to print to `%PREFIX%\\install.log`, which
-      can be searched for `::error::` strings. Pre- and post-install scripts will only throw
-      an error if the environment variable `NSIS_SCRIPTS_RAISE_ERRORS` is set.
-    - The `/D` flag can be used to specify the target location. It must be the last argument in
-      the command and must NOT be quoted, even if it contains spaces. For example:
-      `CMD.EXE /C START /WAIT myproject.exe /S /D=C:\\path with spaces\\my project`.
-
-    [nsis-log]: https://nsis.sourceforge.io/Special_Builds
     """
     license_file: NonEmptyStr | None = None
     """
@@ -431,7 +421,7 @@ class ConstructorConfiguration(BaseModel):
 
     If necessary, you can activate the installed `base` environment like this:
 
-    - Unix: `source "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
+    - Unix: `. "$PREFIX/etc/profile.d/conda.sh" && conda activate "$PREFIX"`
     - Windows: `call "%PREFIX%\\Scripts\\activate.bat"`
     """
     post_install_desc: NonEmptyStr | None = None
