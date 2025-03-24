@@ -8,7 +8,7 @@
 
 ### Deprecations
 
-* <news item>
+* Remove deprecated `constructor.construct.generate_docs()` function. Use `scripts/make_docs.py` instead. (#943)
 
 ### Docs
 
