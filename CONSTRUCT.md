@@ -489,14 +489,17 @@ If `header_image` is not provided, use this text when generating the image
 ### `initialize_conda`
 
 Add an option to the installer so the user can choose whether to run `conda init`
-after the installation. See also `initialize_by_default`.
+after the installation (Unix), or to add certain subdirectories of the installation
+to PATH (Windows). See also `initialize_by_default`.
 
 ### `initialize_by_default`
 
-Whether to add the installation to the PATH environment variable. The default
-is true for GUI installers (msi, pkg) and False for shell installers. The user
+Default value for the option added by `initialize_conda`. The default
+is true for GUI installers (EXE, PKG) and false for shell installers. The user
 is able to change the default during interactive installation. NOTE: For Windows,
 `AddToPath` is disabled when `InstallationType=AllUsers`.
+
+Only applies if `initialize_conda` is true.
 
 ### `register_python`
 
@@ -508,6 +511,8 @@ system's default Python. (Windows only)
 Default choice for whether to register the installed Python instance as the
 system's default Python. The user is still able to change this during
 interactive installation. (Windows only).
+
+Only applies if `register_python` is true.
 
 ### `check_path_length`
 

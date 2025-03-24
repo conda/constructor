@@ -713,12 +713,12 @@
         }
       ],
       "default": null,
-      "description": "Whether to add the installation to the PATH environment variable. The default is true for GUI installers (msi, pkg) and False for shell installers. The user is able to change the default during interactive installation. NOTE: For Windows, `AddToPath` is disabled when `InstallationType=AllUsers`.",
+      "description": "Default value for the option added by `initialize_conda`. The default is true for GUI installers (EXE, PKG) and false for shell installers. The user is able to change the default during interactive installation. NOTE: For Windows, `AddToPath` is disabled when `InstallationType=AllUsers`.\nOnly applies if `initialize_conda` is true.",
       "title": "Initialize By Default"
     },
     "initialize_conda": {
       "default": true,
-      "description": "Add an option to the installer so the user can choose whether to run `conda init` after the installation. See also `initialize_by_default`.",
+      "description": "Add an option to the installer so the user can choose whether to run `conda init` after the installation (Unix), or to add certain subdirectories of the installation to PATH (Windows). See also `initialize_by_default`.",
       "title": "Initialize Conda",
       "type": "boolean"
     },
@@ -1030,7 +1030,7 @@
         }
       ],
       "default": false,
-      "description": "Default choice for whether to register the installed Python instance as the system's default Python. The user is still able to change this during interactive installation. (Windows only).",
+      "description": "Default choice for whether to register the installed Python instance as the system's default Python. The user is still able to change this during interactive installation. (Windows only).\nOnly applies if `register_python` is true.",
       "title": "Register Python Default"
     },
     "reverse_domain_identifier": {
