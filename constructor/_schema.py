@@ -658,7 +658,7 @@ class ConstructorConfiguration(BaseModel):
     temp_extra_files: list[NonEmptyStr | dict[NonEmptyStr, NonEmptyStr]] = []
     """
     Temporary files that could be referenced in the installation process (i.e. customized
-    `welcome_file` and `conclusion_file` (see above)) . Should be a list of
+    `welcome_file` and `conclusion_file`). Should be a list of
     file paths, relative to the directory where `construct.yaml` is. In Windows, these
     files will be copied into a temporary folder, the NSIS `$PLUGINSDIR`, during
     the install process (Windows only).
@@ -694,9 +694,25 @@ class ConstructorConfiguration(BaseModel):
     """
 
 
+def fix_descriptions(obj):
+    for key, value in obj.items():
+        if isinstance(value, dict):
+            obj[key] = fix_descriptions(value)
+        if key == "description" and isinstance(value, str):
+            obj[key] = (
+                value.replace("\n\n", "__NEWLINE__")
+                .replace("\n-", "__NEWLINE__-")
+                .replace("\n", " ")
+                .replace("  ", " ")
+                .replace("__NEWLINE__", "\n")
+            )
+    return obj
+
+
 def dump_schema():
     model = ConstructorConfiguration(name="doesnotmatter", version="0.0.0")
     obj = model.model_json_schema()
+    obj = fix_descriptions(obj)
     obj["$schema"] = "https://json-schema.org/draft/2020-12/schema"
     SCHEMA_PATH.write_text(json.dumps(obj, sort_keys=True, indent=2) + "\n")
     print(json.dumps(obj, sort_keys=True, indent=2))
