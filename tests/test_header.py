@@ -137,6 +137,8 @@ def test_template_shellcheck(
             "direct_execute_post_install": direct_execute_post_install,
             "initialize_conda": initialize_conda,
             "initialize_by_default": initialize_by_default,
+            "add_condabin_to_path": add_condabin_to_path,
+            "add_condabin_to_path_default": add_condabin_to_path_default,
             "check_path_spaces": check_path_spaces,
             "enable_shortcuts": enable_shortcuts,
             "min_glibc_version": min_glibc_version,
