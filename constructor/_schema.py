@@ -605,9 +605,9 @@ class ConstructorConfiguration(BaseModel):
     available and set to the destination causing the error. Defaults to:
 
     > '{CHOSEN_PATH}' already exists. Please, relaunch the installer and
-    > choose another location in the Destination Select step.
+    choose another location in the Destination Select step.
 
-    (macOS only)
+    (PKG only)
     """
     progress_notifications: bool = False
     """

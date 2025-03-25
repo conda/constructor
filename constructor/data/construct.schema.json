@@ -782,7 +782,7 @@
         }
       ],
       "default": null,
-      "description": "Error message that will be shown if the installation path already exists. You cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is available and set to the destination causing the error. Defaults to:\n> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and > choose another location in the Destination Select step.\n(macOS only)",
+      "description": "Error message that will be shown if the installation path already exists. You cannot use double quotes or newlines. The placeholder `{CHOSEN_PATH}` is available and set to the destination causing the error. Defaults to:\n> '{CHOSEN_PATH}' already exists. Please, relaunch the installer and choose another location in the Destination Select step.\n(PKG only)",
       "title": "Install Path Exists Error Text"
     },
     "installer_filename": {
