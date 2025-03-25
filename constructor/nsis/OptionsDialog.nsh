@@ -181,8 +181,8 @@ Function AddCondabinToPath_OnClick
     Pop $0
 
     ShowWindow $Ana_AddCondabinToPath_Label ${SW_HIDE}
-    ${NSD_GetState} $0 $Ana_AddCondaToPath_State
-    ${If} $Ana_AddCondaToPath_State == ${BST_UNCHECKED}
+    ${NSD_GetState} $0 $Ana_AddCondabinToPath_State
+    ${If} $Ana_AddCondabinToPath_State == ${BST_UNCHECKED}
         SetCtlColors $Ana_AddCondabinToPath_Label 000000 transparent
     ${Else}
         SetCtlColors $Ana_AddCondabinToPath_Label 000000 transparent
