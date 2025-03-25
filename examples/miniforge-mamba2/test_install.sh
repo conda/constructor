@@ -19,7 +19,7 @@ echo "+ Testing conda channels"
 conda config --show --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert 'conda-forge' in info['channels'], info"
 echo "  OK"
 
-EXPECTED_MAMBA_VERSION="2.0.5"
+EXPECTED_MAMBA_VERSION="2.0.8"
 
 # Get versions with conda
 MAMBA_VERSION=$(conda list "^mamba$" --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); print(info[0]['version'])")
