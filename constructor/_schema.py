@@ -10,8 +10,10 @@ Logic to generate the JSON Schema for construct.yaml, using Pydantic.
 from __future__ import annotations
 
 import json
+import re
 from enum import StrEnum
 from hashlib import algorithms_guaranteed
+from inspect import cleandoc
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias, Union  # noqa
 
@@ -110,42 +112,28 @@ _GuaranteedAlgorithmsEnum = StrEnum(
 
 
 class _HashBuildOutputOptions(BaseModel):
-    """
-    The hash of the installer files. The output file is designed to work with the `shasum`
-    command and thus has POSIX line endings, including on Windows
-    """
-
     model_config: ConfigDict = _base_config_dict
-
     algorithm: _GuaranteedAlgorithmsEnum | list[_GuaranteedAlgorithmsEnum]
     "The hash algorithm. Must be one of `hashlib.algorithms_guaranteed`."
 
 
 class _InfoJsonBuildOutputOptions(BaseModel):
-    "The internal `info` object, serialized to JSON. Takes no options."
-
     model_config: ConfigDict = _base_config_dict
 
 
 class _PkgsListBuildOutputOptions(BaseModel):
-    "The list of packages contained in a given environment."
-
     model_config: ConfigDict = _base_config_dict
     env: NonEmptyStr = "base"
     "Name of an environment in 'extra_envs' to be exported."
 
 
 class _LockfileBuildOutputOptions(BaseModel):
-    "An `@EXPLICIT` lockfile for a given environment."
-
     model_config: ConfigDict = _base_config_dict
     env: NonEmptyStr = "base"
     "Name of an environment in 'extra_envs' to be exported."
 
 
 class _LicensesBuildOutputOptions(BaseModel):
-    "Generate a JSON file with the licensing details of all included packages."
-
     model_config: ConfigDict = _base_config_dict
     include_text: bool = False
     "Whether to dump the license text in the JSON. If false, only the path will be included."
@@ -157,12 +145,50 @@ class _LicensesBuildOutputOptions(BaseModel):
     """
 
 
+class HashBuildOutput(BaseModel):
+    """
+    The hash of the installer files. The output file is designed to work with the `shasum`
+    command and thus has POSIX line endings, including on Windows
+    """
+
+    model_config: ConfigDict = _base_config_dict
+    hash_: _HashBuildOutputOptions
+
+
+class InfoJsonBuildOutput(BaseModel):
+    "The internal `info` object, serialized to JSON. Takes no options."
+
+    model_config: ConfigDict = _base_config_dict
+    info_json: _InfoJsonBuildOutputOptions
+
+
+class PkgsListBuildOutput(BaseModel):
+    "The list of packages contained in a given environment."
+
+    model_config: ConfigDict = _base_config_dict
+    pkgs_list: _PkgsListBuildOutputOptions
+
+
+class LockfileBuildOutput(BaseModel):
+    "An `@EXPLICIT` lockfile for a given environment."
+
+    model_config: ConfigDict = _base_config_dict
+    lockfile: _LockfileBuildOutputOptions
+
+
+class LicensesBuildOutput(BaseModel):
+    "Generate a JSON file with the licensing details of all included packages."
+
+    model_config: ConfigDict = _base_config_dict
+    licenses: _LicensesBuildOutputOptions
+
+
 BuildOutputConfigs: TypeAlias = Union[
-    dict[Literal["hash"], _HashBuildOutputOptions],
-    dict[Literal["info.json"], _InfoJsonBuildOutputOptions],
-    dict[Literal["pkgs_list"], _PkgsListBuildOutputOptions],
-    dict[Literal["lockfile"], _LockfileBuildOutputOptions],
-    dict[Literal["licenses"], _LicensesBuildOutputOptions],
+    HashBuildOutput,
+    InfoJsonBuildOutput,
+    PkgsListBuildOutput,
+    LockfileBuildOutput,
+    LicensesBuildOutput,
 ]
 
 
@@ -260,7 +286,7 @@ class ConstructorConfiguration(BaseModel):
     menu_packages: list[NonEmptyStr] | None = None
     """
     A list of packages with menu items to be installed. The packages must have
-    necessary metadata in `Menu/<package name>.json`). By default, all menu items
+    necessary metadata in `Menu/<package name>.json`. By default, all menu items
     found in the installation will be created; supplying this list allows a
     subset to be selected instead. If an empty list is supplied, no shortcuts will
     be created.
@@ -579,9 +605,9 @@ class ConstructorConfiguration(BaseModel):
     available and set to the destination causing the error. Defaults to:
 
     > '{CHOSEN_PATH}' already exists. Please, relaunch the installer and
-    > choose another location in the Destination Select step.
+    choose another location in the Destination Select step.
 
-    (macOS only)
+    (PKG only)
     """
     progress_notifications: bool = False
     """
@@ -765,11 +791,18 @@ class ConstructorConfiguration(BaseModel):
 
     Supports the same values as `extra_files`.
     """
-    build_outputs: list[BuildOutputs | BuildOutputConfigs] = []
-    """
-    Additional artifacts to be produced after building the installer.
-    It expects either a list of strings or single-key dictionaries.
-    """
+    build_outputs: list[BuildOutputs | BuildOutputConfigs] = Field(
+        # Need a Field to render the description docstring dynamically
+        [],
+        description=cleandoc(
+            """
+            Additional artifacts to be produced after building the installer.
+            It expects either a list of strings or single-key dictionaries.
+
+            Allowed strings / keys: {}.
+            """.format(", ".join([f"`{v}`" for v in BuildOutputs.__members__.values()])),
+        ),
+    )
     uninstall_with_conda_exe: bool | None = None
     """
     Use the standalone binary to perform the uninstallation on Windows.
@@ -782,13 +815,20 @@ def fix_descriptions(obj):
         if isinstance(value, dict):
             obj[key] = fix_descriptions(value)
         if key == "description" and isinstance(value, str):
-            obj[key] = (
+            codeblocks = re.findall(r"```.*```", value, flags=re.MULTILINE | re.DOTALL)
+            for i, codeblock in enumerate(codeblocks):
+                value = value.replace(codeblock, f"__CODEBLOCK_{i}__")
+            value = (
                 value.replace("\n\n", "__NEWLINE__")
                 .replace("\n-", "__NEWLINE__-")
                 .replace("\n", " ")
                 .replace("  ", " ")
                 .replace("__NEWLINE__", "\n")
             )
+            for i, codeblock in enumerate(codeblocks):
+                value = value.replace(f"__CODEBLOCK_{i}__", codeblock)
+            obj[key] = value
+
     return obj
 
 
