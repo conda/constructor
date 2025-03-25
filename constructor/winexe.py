@@ -165,7 +165,7 @@ def make_nsi(
         "enable_shortcuts": "yes" if info["_enable_shortcuts"] is True else "no",
         "show_register_python": "yes" if info.get("register_python", True) else "no",
         "show_add_to_path": "yes" if info.get("initialize_conda", True) else "no",
-        "add_condabin_to_path": (
+        "show_add_condabin_to_path": (
             "yes"
             if info.get("add_condabin_to_path", True) and info.get("_has_conda", False)
             else "no"
