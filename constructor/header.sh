@@ -712,11 +712,12 @@ if [ "$BATCH" = "0" ]; then
             fi
         fi
     fi
-    {%- if add_conda_bin_to_path %}
-    DEFAULT={{ 'yes' if add_conda_bin_to_path_default else 'no' }}
+    {%- endif %}
+    {%- if add_condabin_to_path %}
+    DEFAULT={{ 'yes' if add_condabin_to_path_default else 'no' }}
     # Interactive mode.
 
-    printf "Do you wish to update your shell profile to add $PREFIX/condabin to PATH?\\n"
+    printf "Do you wish to update your shell profile to add '%s/condabin' to PATH?\\n" "$PREFIX"
     printf "This will enable you to run 'conda' anywhere, without injecting a shell function.\\n"
     printf "You can undo this by running \`conda register-condabin --reverse? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
@@ -728,13 +729,15 @@ if [ "$BATCH" = "0" ]; then
     if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
     then
         printf "\\n"
-        printf "$PREFIX/condabin will not be added to PATH.\\n"
+        printf "'%s/condabin' will not be added to PATH.\\n" "$PREFIX"
     else
         case $SHELL in
             # We call the module directly to avoid issues with spaces in shebang
             *zsh) "$PREFIX/bin/python" -m conda register-condabin zsh ;;
             *) "$PREFIX/bin/python" -m conda register-condabin ;;
         esac
+    fi
+    {%- endif %}
 {%- endif %}
 
     printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"

@@ -68,7 +68,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         register_envs=True,
         virtual_specs="__osx>=10.13",
         no_rcs_arg="",
-        script_env_variables="",
+        script_env_variables={},
     )
 
     findings, returncode = run_shellcheck(processed)
