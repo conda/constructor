@@ -59,8 +59,8 @@ are not available here.
 > For more details, consider using an online viewer like
 > [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstruct.schema.json)
 
-{% for name, description in key_info_dict.items() %}
-### `{{ name }}`
+{% for name, (description, deprecated) in key_info_dict.items() %}
+### {{ '~~' if deprecated }}`{{ name }}`{{ '~~' if deprecated }}
 
 {{ description }}
 {% endfor %}
@@ -82,7 +82,7 @@ If provided, this argument must be formated as `<platform>-<architecture>`, e.g.
 
 def generate_key_info_dict():
     return {
-        (field.alias or name): field.description
+        (field.alias or name): (field.description, field.deprecated)
         for name, field in ConstructorConfiguration.model_fields.items()
     }
 

@@ -440,7 +440,7 @@
     },
     "channels_remap": {
       "default": [],
-      "description": "A list of `src/dest` channel URL pairs. When building the installer, conda will use the `src` channels to solve and fetch the packages. However, the resulting installation will see the packages as coming from the `dest` equivalent. This allows an installer to be built against a different set of channels than will be present when the installer is actually used. Example use:\n```yaml channels_remap:  - src: file:///tmp/a3/conda-bld       # [unix]   dest: https://repo.anaconda.com/pkgs/main # [unix]  - src: file:///D:/tmp/a3/conda-bld      # [win]   dest: https://repo.anaconda.com/pkgs/main # [win] ```\nAt least one channel must be supplied, either in `channels` or `channels_remap`.",
+      "description": "A list of `src/dest` channel URL pairs. When building the installer, conda will use the `src` channels to solve and fetch the packages. However, the resulting installation will see the packages as coming from the `dest` equivalent. This allows an installer to be built against a different set of channels than will be present when the installer is actually used. Example use:\n```yaml\nchannels_remap:\n  - src: file:///tmp/a3/conda-bld              # [unix]\n    dest: https://repo.anaconda.com/pkgs/main  # [unix]\n  - src: file:///D:/tmp/a3/conda-bld           # [win]\n    dest: https://repo.anaconda.com/pkgs/main  # [win]\n```\nAt least one channel must be supplied, either in `channels` or `channels_remap`.",
       "items": {
         "$ref": "#/$defs/ChannelRemap"
       },

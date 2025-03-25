@@ -10,6 +10,7 @@ Logic to generate the JSON Schema for construct.yaml, using Pydantic.
 from __future__ import annotations
 
 import json
+import re
 from enum import StrEnum
 from hashlib import algorithms_guaranteed
 from inspect import cleandoc
@@ -799,13 +800,20 @@ def fix_descriptions(obj):
         if isinstance(value, dict):
             obj[key] = fix_descriptions(value)
         if key == "description" and isinstance(value, str):
-            obj[key] = (
+            codeblocks = re.findall(r"```.*```", value, flags=re.MULTILINE | re.DOTALL)
+            for i, codeblock in enumerate(codeblocks):
+                value = value.replace(codeblock, f"__CODEBLOCK_{i}__")
+            value = (
                 value.replace("\n\n", "__NEWLINE__")
                 .replace("\n-", "__NEWLINE__-")
                 .replace("\n", " ")
                 .replace("  ", " ")
                 .replace("__NEWLINE__", "\n")
             )
+            for i, codeblock in enumerate(codeblocks):
+                value = value.replace(f"__CODEBLOCK_{i}__", codeblock)
+            obj[key] = value
+
     return obj
 
 

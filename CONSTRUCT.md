@@ -36,7 +36,8 @@ are not available here.
 ## Available keys
 
 > This is only a name and description render of the `constructor` JSON Schema.
-> For more details, consider using an online viewer like [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstruct.schema.json)
+> For more details, consider using an online viewer like
+> [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstruct.schema.json)
 
 
 ### `$schema`
@@ -140,7 +141,7 @@ the `--conda-exe` binary. The only accepted value is an empty list (`[]`).
 By default, constructor will warn you when adding packages with duplicate
 files in them. Setting this option to false will raise an error instead.
 
-### `install_in_dependency_order`
+### ~~`install_in_dependency_order`~~
 
 _Obsolete_. The current version of constructor relies on the standalone
 conda executable for its installation behavior. This option is now
@@ -269,7 +270,7 @@ https://conda.github.io/constructor/howto/#signing-exe-installers
 On Windows only, set this key to the path of the certificate file to be used
 with the `windows_signing_tool`.
 
-### `attempt_hardlinks`
+### ~~`attempt_hardlinks`~~
 
 _Obsolete_. The current version of constructor relies on the standalone
 conda executable for its installation behavior. This option is now
@@ -644,7 +645,8 @@ Requires conda-standalone 24.11.0 or newer.
 - `x86_64`
 
 ## Available Platforms
-Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
+Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument.
+If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
 - `linux-64`
 - `linux-aarch64`
 - `linux-ppc64le`

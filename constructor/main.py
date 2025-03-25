@@ -15,7 +15,7 @@ import logging
 import os
 import sys
 from os.path import abspath, expanduser, isdir, join
-from textwrap import dedent, indent
+from textwrap import dedent
 
 from . import __version__
 from .build_outputs import process_build_outputs
@@ -344,9 +344,11 @@ class _HelpConstructAction(argparse.Action):
         available_keys = [f"> Check full details in {SCHEMA_PATH}", ""]
         schema = json.loads(SCHEMA_PATH.read_text())
         for name, prop in schema["properties"].items():
+            if prop.get("deprecated"):
+                continue
             available_keys.append(f"{name}")
             available_keys.append("·" * len(name))
-            available_keys.append(indent(prop.get("description", "No description found."), "  "))
+            available_keys.append(prop.get("description", "No description found."))
             available_keys.append("")
 
         available_selectors = [f"- {sel}" for sel in sorted(ns_platform(sys.platform).keys())]
