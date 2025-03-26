@@ -1,3 +1,6 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
 {% if os.environ.get("POST_INSTALL_PAGES_LIST") %}
 {% set name = "extraPages" %}
 {% else %}

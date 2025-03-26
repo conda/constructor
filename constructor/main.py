@@ -10,17 +10,18 @@ CLI logic and main functions to run constructor on a given input file.
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
 from os.path import abspath, expanduser, isdir, join
-from textwrap import dedent, indent
+from textwrap import dedent
 
 from . import __version__
 from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
-from .construct import generate_key_info_list, ns_platform
+from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
@@ -160,13 +161,6 @@ def main_build(
             continue
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
-        if key == "virtual_specs":
-            for value in info[key]:
-                if not value.startswith("__"):
-                    raise ValueError(
-                        "'virtual_specs' can only include virtual package names like '__name', "
-                        f"but you supplied: {value}."
-                    )
 
     # normalize paths to be copied; if they are relative, they must be to
     # construct.yaml's parent (dir_path)
@@ -178,10 +172,9 @@ def main_build(
             if isinstance(path, str):
                 new_extras.append(abspath(join(dir_path, path)))
             elif isinstance(path, dict):
-                assert len(path) == 1
-                orig, dest = next(iter(path.items()))
-                orig = abspath(join(dir_path, orig))
-                new_extras.append({orig: dest})
+                for orig, dest in path.items():
+                    orig = abspath(join(dir_path, orig))
+                    new_extras.append({orig: dest})
         info[extra_type] = new_extras
 
     for key in "channels", "specs", "exclude", "packages", "menu_packages", "virtual_specs":
@@ -239,14 +232,6 @@ def main_build(
     if "pkg" in itypes:
         if (domains := info.get("pkg_domains")) is not None:
             domains = {key: str(val).lower() for key, val in domains.items()}
-            allowed_fields = ["enable_anywhere", "enable_currentUserHome", "enable_localSystem"]
-            if any(key not in allowed_fields for key in domains.keys()):
-                sys.exit(
-                    "Error: unrecognized field name(s) for pkg_domains."
-                    f" Allowed fields are {', '.join(allowed_fields)}"
-                )
-            if any(val != "true" and val != "false" for val in domains.values()):
-                sys.exit("Error: values for pkg_domains must be boolean.")
             if str(domains.get("enable_localSystem", "")).lower() == "true" and not info.get(
                 "default_location_pkg"
             ):
@@ -350,31 +335,27 @@ class _HelpConstructAction(argparse.Action):
 
             Available selectors
             -------------------
-
             Constructor can use the same Selector enhancement of the YAML format
             used in conda-build ('# [selector]'). Available keywords are:
 
             {available_selectors}
             """
         )
-        available_keys_list = []
-        for key, required, key_types, help_msg, plural in generate_key_info_list():
-            available_keys_list.append(
-                "\n".join(
-                    [
-                        key,
-                        "·" * len(key),
-                        indent(f"Required: {required}, type{plural}: {key_types}", "    "),
-                        indent(help_msg.strip(), "    "),
-                        "",
-                    ]
-                )
-            )
-        available_selectors_list = [f"- {sel}" for sel in sorted(ns_platform(sys.platform).keys())]
+        available_keys = [f"> Check full details in {SCHEMA_PATH}", ""]
+        schema = json.loads(SCHEMA_PATH.read_text())
+        for name, prop in schema["properties"].items():
+            if prop.get("deprecated"):
+                continue
+            available_keys.append(f"{name}")
+            available_keys.append("·" * len(name))
+            available_keys.append(prop.get("description", "No description found."))
+            available_keys.append("")
+
+        available_selectors = [f"- {sel}" for sel in sorted(ns_platform(sys.platform).keys())]
         return msg.format(
             version=__version__,
-            available_keys="\n".join(available_keys_list),
-            available_selectors="\n".join(available_selectors_list),
+            available_keys="\n".join(available_keys),
+            available_selectors="\n".join(available_selectors),
         )
 
 

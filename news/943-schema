@@ -1,0 +1,19 @@
+### Enhancements
+
+* Add JSON Schema for `construct.yml`, defined with a Pydantic model (not used at runtime). (#943)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* Remove deprecated `constructor.construct.generate_docs()` function. Use `scripts/make_docs.py` instead. (#943)
+
+### Docs
+
+* Remove inaccurate typing information from the `construct.yml` fields documentation. Full and accurate details are now available in the JSON Schema. (#943)
+
+### Other
+
+* <news item>

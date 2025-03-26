@@ -7,15 +7,16 @@ from os.path import dirname, join
 
 import jinja2
 
-from constructor import construct
+from constructor._schema import ConstructorConfiguration
 from constructor.conda_interface import SUPPORTED_PLATFORMS
+from constructor.construct import ns_platform
 
 REPO_ROOT = dirname(dirname(__file__))
 
 sys.path.insert(0, REPO_ROOT)
 
 
-valid_selectors = construct.ns_platform(sys.platform)
+valid_selectors = ns_platform(sys.platform)
 
 template = """
 <!--
@@ -54,13 +55,15 @@ are not available here.
 
 ## Available keys
 
-{%- for key_info in keys %}
-### `{{key_info[0]}}`
+> This is only a name and description render of the `constructor` JSON Schema.
+> For more details, consider using an online viewer like
+> [json-schema.app](https://json-schema.app/view/%23?url=https%3A%2F%2Fraw.githubusercontent.com%2Fconda%2Fconstructor%2Frefs%2Fheads%2Fmain%2Fconstructor%2Fdata%2Fconstruct.schema.json)
 
-_required:_ {{key_info[1]}}<br/>
-_type{{key_info[4]}}:_ {{key_info[2]}}<br/>
-{{key_info[3]}}
-{%- endfor %}
+{% for name, (description, deprecated) in key_info_dict.items() %}
+### {{ '~~' if deprecated }}`{{ name }}`{{ '~~' if deprecated }}
+
+{{ description }}
+{% endfor %}
 
 ## Available selectors
 
@@ -69,17 +72,24 @@ _type{{key_info[4]}}:_ {{key_info[2]}}<br/>
 {%- endfor %}
 
 ## Available Platforms
-Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument. If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
+Specify which platform (`CONDA_SUBDIR`) to build for via the `--platform` argument.
+If provided, this argument must be formated as `<platform>-<architecture>`, e.g.:
 {%- for platform in supported_platforms %}
 - `{{platform}}`
 {%- endfor %}
 """
 
-key_info_list = construct.generate_key_info_list()
+
+def generate_key_info_dict():
+    return {
+        (field.alias or name): (field.description, field.deprecated)
+        for name, field in ConstructorConfiguration.model_fields.items()
+    }
+
 
 output = jinja2.Template(template).render(
     selectors=valid_selectors,
-    keys=key_info_list,
+    key_info_dict=generate_key_info_dict(),
     supported_platforms=SUPPORTED_PLATFORMS,
 )
 

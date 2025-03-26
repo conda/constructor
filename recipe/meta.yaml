@@ -25,11 +25,13 @@ requirements:
     - ruamel.yaml >=0.11.14,<0.19
     - conda-standalone
     - jinja2
+    - jsonschema >=4
     - pillow >=3.1     # [win or osx]
     - nsis >=3.08      # [win]
   run_constrained:     # [unix]
     - nsis >=3.08      # [unix]
     - conda-libmamba-solver !=24.11.0
+    - pydantic >=2
 
 test:
   source_files:

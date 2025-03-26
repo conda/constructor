@@ -42,7 +42,6 @@ jobs:
           - os: ubuntu-latest
             python-version: "3.9"
             conda-standalone: conda-standalone
-            check-docs: true
           - os: ubuntu-latest
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
@@ -52,6 +51,7 @@ jobs:
           - os: ubuntu-latest
             python-version: "3.12"
             conda-standalone: conda-standalone
+            check-docs-schema: true
           # MACOS
           - os: macos-13
             python-version: "3.9"
@@ -156,10 +156,11 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
-      - name: Check docs are up-to-date
-        if: matrix.check-docs
+      - name: Check docs and schema are up-to-date
+        if: matrix.check-docs-schema
         run: |
           python scripts/make_docs.py
+          python constructor/_schema.py
           git diff --exit-code
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.python-version == '3.9'

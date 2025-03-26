@@ -1,3 +1,6 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
 name: Signed
 version: X
 installer_type: all
