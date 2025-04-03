@@ -16,4 +16,4 @@
 
 ### Other
 
-* Pin `pydantic` to `v3.11.*` in test environment for consistent schema output. (#971 via #972)
+* Pin `pydantic` to `v2.11.*` in test environment for consistent schema output. (#971 via #972)

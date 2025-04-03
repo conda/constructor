@@ -104,12 +104,6 @@ jobs:
           test -f dev/extra-requirements-${{ runner.os }}.txt \
             && files+=(--file "dev/extra-requirements-${{ runner.os }}.txt")
           conda install ${files[@]} -y
-          # Pin pydantic to 3.11.* for Linux to get consistent schema output.
-          # This cannot be done in the environment file because builds for
-          # pydantic 3.x are not available on macOS and Windows
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            conda install -y pydantic==3.11.*
-          fi
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
           echo "NSIS_SCRIPTS_RAISE_ERRORS=1" >> $GITHUB_ENV
           pip install -e . --no-deps --no-build-isolation
