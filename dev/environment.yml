@@ -9,4 +9,5 @@ dependencies:
   - pillow >=3.1  # [osx or win]
   - jinja2
   - jsonschema >=4
-  - pydantic ==3.11.*
+  - pydantic ==3.11.*  # [linux-64]
+  - pydantic >=2  # [not linux-64]

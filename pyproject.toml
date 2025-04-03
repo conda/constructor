@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-schema = ["pydantic ==3.11.*"]
+schema = ["pydantic >=2"]
 
 [project.scripts]
 constructor = "constructor.main:main"

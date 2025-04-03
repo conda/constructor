@@ -31,7 +31,7 @@ requirements:
   run_constrained:     # [unix]
     - nsis >=3.08      # [unix]
     - conda-libmamba-solver !=24.11.0
-    - pydantic ==3.11.*
+    - pydantic >=2
 
 test:
   source_files:
