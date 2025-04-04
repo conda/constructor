@@ -89,6 +89,7 @@ var /global StdOutHandleSet
 !define ENABLE_SHORTCUTS {{ enable_shortcuts }}
 !define SHOW_REGISTER_PYTHON {{ show_register_python }}
 !define SHOW_ADD_TO_PATH {{ show_add_to_path }}
+!define SHOW_ADD_CONDABIN_TO_PATH {{ show_add_condabin_to_path }}
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "{{ UNINSTALL_NAME }}"
 !define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
@@ -107,6 +108,7 @@ var /global ARGV
 var /global ARGV_Help
 var /global ARGV_InstallationType
 var /global ARGV_AddToPath
+var /global ARGV_AddCondabinToPath
 var /global ARGV_KeepPkgCache
 var /global ARGV_RegisterPython
 var /global ARGV_NoRegistry
@@ -413,6 +415,24 @@ Function OnInit_Release
             StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
+
+    ClearErrors
+    ${GetOptions} $ARGV "/AddCondabinToPath=" $ARGV_AddCondabinToPath
+    ${IfNot} ${Errors}
+        ${If} $ARGV_AddCondabinToPath = "1"
+            ${If} $InstMode == ${ALL_USERS}
+                # To address CVE-2022-26526.
+                # In AllUsers install mode, do not allow AddToPath as an option.
+                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                ${Print} "/AddToPath=1 is disabled and ignored in 'All Users' installations"
+                StrCpy $Ana_AddCondabinToPath_State ${BST_UNCHECKED}
+            ${Else}
+                StrCpy $Ana_AddCondabinToPath_State ${BST_CHECKED}
+            ${EndIf}
+        ${ElseIf} $ARGV_AddCondabinToPath = "0"
+            StrCpy $Ana_AddCondabinToPath_State ${BST_UNCHECKED}
+        ${EndIf}
+    ${EndIf}
 FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
@@ -702,7 +722,7 @@ Function .onInit
 
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
-    # Override custom options with explicitly given values from contruct.yaml.
+    # Override custom options with explicitly given values from construct.yaml.
     # If initialize_by_default (register_python_default) is None, do nothing.
 {%- if initialize_conda %}
     {%- if initialize_by_default %}
@@ -711,6 +731,16 @@ Function .onInit
     ${EndIf}
     {%- else %}
     StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+    {%- endif %}
+{%- endif %}
+
+{%- if add_condabin_to_path %}
+    {%- if add_condabin_to_path_default %}
+    ${If} $InstMode == ${JUST_ME}
+        StrCpy $Ana_AddCondabinToPath_State ${BST_CHECKED}
+    ${EndIf}
+    {%- else %}
+    StrCpy $Ana_AddCondabinToPath_State ${BST_UNCHECKED}
     {%- endif %}
 {%- endif %}
 
@@ -1439,9 +1469,17 @@ Section "Install"
     ${EndIf}
 
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-        ${Print} "Adding to PATH..."
+        ${Print} "Adding Scripts & Library/bin to PATH..."
         push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
-        push 'Failed to add {{ NAME }} to the system PATH'
+        push 'Failed to add {{ NAME }} to PATH'
+        push 'WithLog'
+        call AbortRetryNSExecWait
+    ${EndIf}
+
+    ${If} $Ana_AddCondabinToPath_State = ${BST_CHECKED}
+        ${Print} "Adding condabin to PATH..."
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addcondabinpath'
+        push 'Failed to add $INSTDIR\condabin to PATH'
         push 'WithLog'
         call AbortRetryNSExecWait
     ${EndIf}

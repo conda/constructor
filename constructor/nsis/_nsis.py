@@ -296,6 +296,16 @@ def add_to_path(pyversion, arch):
     broadcast_environment_settings_change()
 
 
+def add_condabin_to_path():
+    from _system_path import (
+        add_to_system_path,
+        broadcast_environment_settings_change,
+    )
+
+    add_to_system_path(os.path.normpath(os.path.join(ROOT_PREFIX, "condabin")), allusers)
+    broadcast_environment_settings_change()
+
+
 def rm_regkeys():
     cmdproc_reg_entry = NSISReg(r'Software\Microsoft\Command Processor')
     cmdproc_autorun_val = cmdproc_reg_entry.get('AutoRun')
@@ -373,6 +383,8 @@ def main():
         else:
             arch = '32-bit' if tuple.__itemsize__ == 4 else '64-bit'
         add_to_path(pyver, arch)
+    elif cmd == 'addcondabinpath':
+        add_condabin_to_path()
     elif cmd == 'rmpath':
         remove_from_path()
     elif cmd == 'pre_uninstall':
