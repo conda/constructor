@@ -152,7 +152,7 @@ class HashBuildOutput(BaseModel):
     """
 
     model_config: ConfigDict = _base_config_dict
-    hash_: _HashBuildOutputOptions
+    hash: _HashBuildOutputOptions
 
 
 class InfoJsonBuildOutput(BaseModel):
