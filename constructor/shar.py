@@ -110,6 +110,11 @@ def get_header(conda_exec, tarball, info):
     variables["min_glibc_version"] = min_glibc_version
 
     variables["script_env_variables"] = info.get("script_env_variables", {})
+    header_template = info.get("header_template", None)
+    if header_template is None:
+        template = read_header_template()
+    else:
+        header_template = str(header_template)
 
     return render_template(read_header_template(), **variables)
 
