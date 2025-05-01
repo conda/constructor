@@ -1,6 +1,7 @@
 [//]: # (current developments)
 
 ## 2025-03-20   3.11.3:
+
 ### Bug fixes
 
 * Unset `CONDARC` and `MAMBARC` to prevent pre-existing configuration files from influencing the installation. (#962)

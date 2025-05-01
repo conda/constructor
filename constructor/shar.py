@@ -63,6 +63,7 @@ def get_header(conda_exec, tarball, info):
     variables = ns_platform(info["_platform"])
     variables["keep_pkgs"] = bool(info.get("keep_pkgs", False))
     variables["batch_mode"] = bool(info.get("batch_mode", False))
+    variables["force_by_default"] = bool(info.get("force_by_default", False))
     variables["has_license"] = has_license
     if variables["batch_mode"] and has_license:
         raise Exception(

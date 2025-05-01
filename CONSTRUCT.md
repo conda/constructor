@@ -239,6 +239,13 @@ Only affects `.sh` installers. If `False`, the installer launches
 an interactive wizard guiding the user through the available options. If
 `True`, the installer runs automatically as if `-b` was passed.
 
+### `force_by_default`
+
+Only affects `.sh` installers. If `True`, the installer will remove
+the existing installation without prompting the user. If `False`, the
+installer will stop if the installation path already exists. The user can
+override this option by passing `-f` to the installer.
+
 ### `signing_identity_name`
 
 By default, the MacOS pkg installer isn't signed. If an identity name is specified
