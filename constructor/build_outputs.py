@@ -47,7 +47,7 @@ def process_build_outputs(info):
 
 def dump_hash(info, algorithm=None):
     if not algorithm:
-        logger.warning("`hash` requires an algorithm. No has files will be output.")
+        logger.warning("`hash` requires an algorithm. No hash files will be output.")
         return ""
     if isinstance(algorithm, str):
         algorithm = [algorithm]
