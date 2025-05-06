@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add JSON Schema for `construct.yml`, defined with a Pydantic model (not used at runtime). (#943)
+* Add JSON Schema for `construct.yml`, defined with a Pydantic model (not used at runtime). (#943, #979)
 
 ### Bug fixes
 

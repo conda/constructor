@@ -1057,6 +1057,30 @@ def test_uninstallation_standalone(
             shutil.rmtree(system_rc.parent)
 
 
+def test_output_files(tmp_path):
+    input_path = _example_path("outputs")
+    for installer, _ in create_installer(input_path, tmp_path):
+        files_expected = [
+            f"{installer.name}.md5",
+            f"{installer.name}.sha256",
+            "info.json",
+            "licenses.json",
+            "pkg-list.base.txt",
+            "pkg-list.py310.txt",
+            "lockfile.base.txt",
+            "lockfile.py310.txt",
+        ]
+        files_not_expected = [
+            "pkg-list.py311.txt",
+            "lockfile.py311.txt",
+        ]
+        root_path = installer.parent
+        files_exist = [file for file in files_expected if (root_path / file).exists()]
+        assert sorted(files_exist) == sorted(files_expected)
+        files_exist = [file for file in files_not_expected if (root_path / file).exists()]
+        assert files_exist == []
+
+
 def test_regressions(tmp_path, request):
     input_path = _example_path("regressions")
     for installer, install_dir in create_installer(input_path, tmp_path):
