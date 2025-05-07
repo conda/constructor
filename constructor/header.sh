@@ -87,7 +87,7 @@ THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
 PREFIX="{{ default_prefix }}"
 BATCH={{ 1 if batch_mode else 0 }}
-FORCE=0
+FORCE={{ 1 if force_by_default else 0 }}
 KEEP_PKGS={{ 1 if keep_pkgs else 0 }}
 SKIP_SCRIPTS=0
 {%- if enable_shortcuts == "true" %}
@@ -106,7 +106,11 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 -b           run install in batch mode (without manual intervention),
              it is expected the license terms (if any) are agreed upon
 {%- endif %}
+{%- if force_by_default %}
 -f           no error if install prefix already exists
+{%- else %}
+-e           error if install prefix already exists
+{%- endif %}
 -h           print this help message and exit
 {%- if not keep_pkgs %}
 -k           do not clear the package cache after installation

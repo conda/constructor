@@ -400,6 +400,12 @@
       "title": "Batch Mode",
       "type": "boolean"
     },
+    "force_by_default": {
+      "default": false,
+      "description": "Only affects `.sh` installers. If `True`, the installer will remove the existing installation without prompting the user. If set, the user can disable this option with the `-e` option. If `False`, the installer will stop if the installation path already exists. The user can override this option by passing `-f` to the installer.",
+      "title": "Force By Default",
+      "type": "boolean"
+    },
     "build_outputs": {
       "default": [],
       "description": "Additional artifacts to be produced after building the installer. It expects either a list of strings or single-key dictionaries.\nAllowed strings / keys: `hash`, `info.json`, `licenses`, `lockfile`, `pkgs_list`.",

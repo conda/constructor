@@ -40,7 +40,7 @@ def run_shellcheck(script):
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="Only on MacOS")
-@pytest.mark.skipif(available_command("shellcheck") is False, reason="requires shellcheck")
+@pytest.mark.skipif(not available_command("shellcheck"), reason="requires shellcheck")
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])
 @pytest.mark.parametrize(
@@ -77,11 +77,12 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
     assert returncode == 0
 
 
-@pytest.mark.skipif(available_command("shellcheck") is False, reason="requires shellcheck")
+@pytest.mark.skipif(not available_command("shellcheck"), reason="requires shellcheck")
 @pytest.mark.parametrize("osx", [False, True])
 @pytest.mark.parametrize("direct_execute_post_install", [True])
 @pytest.mark.parametrize("direct_execute_pre_install", [True])
 @pytest.mark.parametrize("batch_mode", [True])
+@pytest.mark.parametrize("force_by_default", [True, False])
 @pytest.mark.parametrize("keep_pkgs", [True])
 @pytest.mark.parametrize("has_conda", [False, True])
 @pytest.mark.parametrize("has_license", [True])
@@ -105,6 +106,7 @@ def test_template_shellcheck(
     has_conda,
     keep_pkgs,
     batch_mode,
+    force_by_default,
     direct_execute_pre_install,
     direct_execute_post_install,
     check_path_spaces,
@@ -119,6 +121,7 @@ def test_template_shellcheck(
             "has_license": has_license,
             "osx": osx,
             "batch_mode": batch_mode,
+            "force_by_default": force_by_default,
             "keep_pkgs": keep_pkgs,
             "has_conda": has_conda,
             "x86": arch == "x86",
