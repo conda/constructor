@@ -1,8 +1,6 @@
 ### Enhancements
 
-* shell based installers (Linux and macOS) now a configuration
-  option `force_by_default`, which will override existing
-  installations without prompting the user.
+* `SH` installers now accept the configuration option `force_by_default`, which will override existing   installations without prompting the user. (#982)
 
 ### Bug fixes
 
