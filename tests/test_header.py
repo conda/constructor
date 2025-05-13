@@ -68,7 +68,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         register_envs=True,
         virtual_specs="__osx>=10.13",
         no_rcs_arg="",
-        script_env_variables="",
+        script_env_variables={},
     )
 
     findings, returncode = run_shellcheck(processed)
@@ -87,6 +87,8 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("has_license", [True])
 @pytest.mark.parametrize("initialize_conda", [True])
 @pytest.mark.parametrize("initialize_by_default", [True])
+@pytest.mark.parametrize("add_condabin_to_path", [True])
+@pytest.mark.parametrize("add_condabin_to_path_default", [True])
 @pytest.mark.parametrize("has_post_install", [True])
 @pytest.mark.parametrize("has_pre_install", [False])
 @pytest.mark.parametrize("arch", ["x86_64", "aarch64"])
@@ -101,6 +103,8 @@ def test_template_shellcheck(
     has_post_install,
     initialize_conda,
     initialize_by_default,
+    add_condabin_to_path,
+    add_condabin_to_path_default,
     has_license,
     has_conda,
     keep_pkgs,
@@ -133,6 +137,8 @@ def test_template_shellcheck(
             "direct_execute_post_install": direct_execute_post_install,
             "initialize_conda": initialize_conda,
             "initialize_by_default": initialize_by_default,
+            "add_condabin_to_path": add_condabin_to_path,
+            "add_condabin_to_path_default": add_condabin_to_path_default,
             "check_path_spaces": check_path_spaces,
             "enable_shortcuts": enable_shortcuts,
             "min_glibc_version": min_glibc_version,

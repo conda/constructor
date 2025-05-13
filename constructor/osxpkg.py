@@ -626,11 +626,16 @@ def create(info, verbose=False):
         names.append("user_post_install")
 
     # 5. The script to run conda init
-    if info.get("initialize_conda", True):
-        pkgbuild_script("pathupdate", info, "update_path.sh")
-        names.append("pathupdate")
+    if info.get("_has_conda") and info.get("initialize_conda", True):
+        pkgbuild_script("run_conda_init", info, "run_conda_init.sh")
+        names.append("run_conda_init")
 
-    # 6. The script to clear the package cache
+    # 6. The script to add condabin/ to PATH
+    if info.get("_has_conda") and info.get("add_condabin_to_path", True):
+        pkgbuild_script("add_condabin_to_path", info, "add_condabin_to_path.sh")
+        names.append("add_condabin_to_path")
+
+    # 7. The script to clear the package cache
     if not info.get("keep_pkgs"):
         pkgbuild_script("cacheclean", info, "clean_cache.sh")
         names.append("cacheclean")
