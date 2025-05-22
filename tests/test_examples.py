@@ -1038,6 +1038,9 @@ def test_allusers_exe(tmp_path, request):
         # Test the installation directory
         dacl = _get_dacl_information(install_dir)
         assert dacl["protected"], "Installation directory must not inherit permissions."
+        assert len(dacl["permissions"].keys()) > 0, (
+            "Directory permission must include either domain or built-in users"
+        )
         for acct in SDDL_ABBREVIATIONS:
             permissions = dacl["permissions"].get(acct)
             if permissions is None:
@@ -1057,6 +1060,7 @@ def test_allusers_exe(tmp_path, request):
             "not_inherited": [],
             "write_access": {acct: [] for acct in SDDL_ABBREVIATIONS},
             "bad_read_exec": {acct: [] for acct in SDDL_ABBREVIATIONS if acct != "AU"},
+            "not_set": [],
         }
         for file in install_dir.glob("**/*"):
             dacl = _get_dacl_information(file)
@@ -1064,6 +1068,9 @@ def test_allusers_exe(tmp_path, request):
                 incorrect_permissions["protected"].append(file)
             if not dacl["inherited"]:
                 incorrect_permissions["not_inherited"].append(file)
+            if len(dacl["permissions"].keys()) == 0:
+                incorrect_permissions["not_set"].append(file)
+                continue
             for acct, files in incorrect_permissions["write_access"].items():
                 permissions = dacl["permissions"].get(acct)
                 if permissions is not None and permissions["write_access"]:
@@ -1079,6 +1086,9 @@ def test_allusers_exe(tmp_path, request):
         )
         assert incorrect_permissions["not_inherited"] == [], (
             "Files must inherit from installation directory"
+        )
+        assert incorrect_permissions["not_set"] == [], (
+            "File permission must include either domain or built-in users"
         )
         for acct, files in incorrect_permissions["write_access"].items():
             assert files == [], f"Files must not have write access for {acct}"
