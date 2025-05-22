@@ -122,7 +122,7 @@ def _run_installer_exe(
     installer_input=None,
     timeout=420,
     check=True,
-    options: list = [],
+    options: list | None = None,
 ):
     """
     NSIS manual:
@@ -149,6 +149,7 @@ def _run_installer_exe(
             "to generate an 'install.log' file this script will search for errors "
             "after completion."
         )
+    options = options or []
     cmd = [
         "cmd.exe",
         "/c",
@@ -223,11 +224,12 @@ def _run_installer_sh(
     installer_input=None,
     timeout=420,
     check=True,
-    options: list = [],
+    options: list | None = None,
 ):
     if installer_input:
         cmd = ["/bin/sh", installer]
     else:
+        options = options or []
         cmd = ["/bin/sh"]
         if CONSTRUCTOR_DEBUG:
             cmd.append("-x")
@@ -291,7 +293,7 @@ def _run_installer(
     request=None,
     uninstall=True,
     timeout=420,
-    options: list = [],
+    options: list | None = None,
 ) -> subprocess.CompletedProcess:
     if installer.suffix == ".exe":
         process = _run_installer_exe(
