@@ -1493,7 +1493,16 @@ Section "Install"
         AccessControl::DisableFileInheritance "$INSTDIR"
         # Enable inheritance on all files inside $INSTDIR.
         # Use icacls because it is much faster than custom NSIS solutions.
-        push 'icacls "$INSTDIR\*" /inheritance:e /t /q'
+        ReadEnvStr $0 SystemRoot
+        ReadEnvStr $1 windir
+        ${If} ${FileExists} "$0"
+            push '"$0\System32\icacls.exe" "$INSTDIR\*" /inheritance:e /T /Q'
+        ${ElseIf} ${FileExists} "$1"
+            push '"$1\System32\icacls.exe" "$INSTDIR\*" /inheritance:e /T /Q'
+        ${Else}
+            # Cross our fingers icacls is in PATH
+            push 'icacls.exe "$INSTDIR\*" /inheritance:e /T /Q'
+        ${EndIf}
         push 'Failed to enable inheritance for all files in the installation directory.'
         push 'NoLog'
         call AbortRetryNSExecWait
