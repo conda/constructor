@@ -1491,6 +1491,12 @@ Section "Install"
     ${If} ${UAC_IsAdmin}
         ${Print} "Setting installation directory permissions..."
         AccessControl::DisableFileInheritance "$INSTDIR"
+        # Enable inheritance on all files inside $INSTDIR.
+        # Use icacls because it is much faster than custom NSIS solutions.
+        push 'icacls "$INSTDIR\*" /inheritance:e /t /q'
+        push 'Failed to enable inheritance for all files in the installation directory.'
+        push 'NoLog'
+        call AbortRetryNSExecWait
         AccessControl::RevokeOnFile "$INSTDIR" "(AU)" "GenericWrite"
         AccessControl::RevokeOnFile "$INSTDIR" "(DU)" "GenericWrite"
         AccessControl::RevokeOnFile "$INSTDIR" "(BU)" "GenericWrite"
