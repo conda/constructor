@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: Outputs
+version: X
+installer_type: sh  # [unix]
+installer_type: exe  # [win]
+channels:
+  - https://conda.anaconda.org/conda-forge
+specs:
+  - python=3.12
+  - conda # conda is required for extra_envs
+extra_envs:
+  py310:
+    specs:
+      - python=3.10
+  py311:
+    specs:
+      - python=3.11
+
+
+build_outputs:
+  - info.json
+  - pkgs_list
+  - pkgs_list:
+      env: py310
+  - lockfile
+  - lockfile:
+      env: py310
+  - licenses:
+      include_text: True
+      text_errors: replace
+  - hash:
+      algorithm:
+        - sha256
+        - md5
+initialize_by_default: false
+register_python: False
