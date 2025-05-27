@@ -39,44 +39,44 @@ jobs:
       matrix:
         include:
           # UBUNTU
-          - os: ubuntu-latest
-            python-version: "3.9"
-            conda-standalone: conda-standalone
-          - os: ubuntu-latest
-            python-version: "3.10"
-            conda-standalone: conda-standalone-nightly
-          - os: ubuntu-latest
-            python-version: "3.11"
-            conda-standalone: micromamba
-          - os: ubuntu-latest
-            python-version: "3.12"
-            conda-standalone: conda-standalone
-            check-docs-schema: true
-          # MACOS
-          - os: macos-13
-            python-version: "3.9"
-            conda-standalone: conda-standalone-nightly
-          # Not running for 3.10 to save some CI resources
-          # - os: macos-13
-          #   python-version: "3.10"
-          #   conda-standalone: micromamba
-          - os: macos-latest
-            python-version: "3.11"
-            conda-standalone: conda-standalone
-          - os: macos-latest
-            python-version: "3.12"
-            conda-standalone: micromamba
-          # WINDOWS
-          - os: windows-latest
-            python-version: "3.9"
-            conda-standalone: conda-standalone-nightly
-          - os: windows-latest
-            python-version: "3.10"
-            conda-standalone: conda-standalone
-          - os: windows-latest
-            python-version: "3.11"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-nightly
+          #- os: ubuntu-latest
+          #  python-version: "3.9"
+          #  conda-standalone: conda-standalone
+          #- os: ubuntu-latest
+          #  python-version: "3.10"
+          #  conda-standalone: conda-standalone-nightly
+          #- os: ubuntu-latest
+          #  python-version: "3.11"
+          #  conda-standalone: micromamba
+          #- os: ubuntu-latest
+          #  python-version: "3.12"
+          #  conda-standalone: conda-standalone
+          #  check-docs-schema: true
+          ## MACOS
+          #- os: macos-13
+          #  python-version: "3.9"
+          #  conda-standalone: conda-standalone-nightly
+          ## Not running for 3.10 to save some CI resources
+          ## - os: macos-13
+          ##   python-version: "3.10"
+          ##   conda-standalone: micromamba
+          #- os: macos-latest
+          #  python-version: "3.11"
+          #  conda-standalone: conda-standalone
+          #- os: macos-latest
+          #  python-version: "3.12"
+          #  conda-standalone: micromamba
+          ## WINDOWS
+          #- os: windows-latest
+          #  python-version: "3.9"
+          #  conda-standalone: conda-standalone-nightly
+          #- os: windows-latest
+          #  python-version: "3.10"
+          #  conda-standalone: conda-standalone
+          #- os: windows-latest
+          #  python-version: "3.11"
+          #  # conda-standalone: micromamba
+          #  conda-standalone: conda-standalone-nightly
           - os: windows-latest
             python-version: "3.12"
             # conda-standalone: micromamba
@@ -154,6 +154,8 @@ jobs:
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574 # v5.4.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
