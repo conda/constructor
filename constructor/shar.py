@@ -26,6 +26,7 @@ from .preconda import write_files as preconda_write_files
 from .utils import (
     add_condarc,
     approx_size_kb,
+    copy_conda_exe,
     filename_dist,
     get_final_channels,
     hash_files,
@@ -90,6 +91,7 @@ def get_header(conda_exec, tarball, info):
     variables["default_prefix"] = info.get("default_prefix", "${HOME:-/opt}/%s" % name.lower())
     variables["first_payload_size"] = getsize(conda_exec)
     variables["second_payload_size"] = getsize(tarball)
+    variables["bootstrap_with_tar"] = info.get("_use_tar", False)
     variables["write_condarc"] = list(add_condarc(info))
     variables["final_channels"] = get_final_channels(info)
     variables["conclusion_text"] = info.get("conclusion_text", "installation finished.")
@@ -189,8 +191,12 @@ def create(info, verbose=False):
     for dist in all_dists:
         fn = filename_dist(dist)
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
+    internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
+    for path in internal_conda_files:
+        tarball.add(path, path.relative_to(tmp_dir))
     t.close()
 
+    info["_use_tar"] = bool(internal_conda_files)
     conda_exec = info["_conda_exe"]
     header = get_header(conda_exec, tarball, info)
     shar_path = info["_outpath"]

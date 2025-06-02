@@ -494,8 +494,14 @@ fi
 
 # the second binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
+{%- if bootstrap_with_tar %}
+{#- we only use tar for conda-standalone onedir builds, because otherwise conda cannot extract itself #}
+extract_range "${boundary1}" "${boundary2}" | \
+    tar -C "$PREFIX" -xf -
+{%- else %}
 extract_range "${boundary1}" "${boundary2}" | \
     CONDA_QUIET="$BATCH" "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
+{%- endif %}
 
 PRECONDA="$PREFIX/preconda.tar.bz2"
 CONDA_QUIET="$BATCH" \
