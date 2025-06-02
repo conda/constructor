@@ -305,7 +305,7 @@ def copy_conda_exe(
     if (internal_dir := Path(conda_exe).parent / "_internal").is_dir():
         # onedir conda-standalone variant, copy that too
         shutil.copytree(internal_dir, Path(target_directory, "_internal"), dirs_exist_ok=True)
-        return sorted(Path(target_directory, "_internal").glob("**"))
+        return sorted([p for p in Path(target_directory, "_internal").glob("**") if p.is_file()])
     return []
 
 
