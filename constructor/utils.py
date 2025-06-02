@@ -108,7 +108,7 @@ def read_ascii_only(path):
 
 
 if_pat = re.compile(
-    r"^#if ([ \S]+)$\n" r"(.*?)" r"(^#else\s*$\n(.*?))?" r"^#endif\s*$\n",
+    r"^#if ([ \S]+)$\n(.*?)(^#else\s*$\n(.*?))?^#endif\s*$\n",
     re.M | re.S,
 )
 
