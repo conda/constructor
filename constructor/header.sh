@@ -719,7 +719,7 @@ if [ "$BATCH" = "0" ]; then
 
     printf "Do you wish to update your shell profile to add '%s/condabin' to PATH?\\n" "$PREFIX"
     printf "This will enable you to run 'conda' anywhere, without injecting a shell function.\\n"
-    printf "You can undo this by running \`conda register-condabin --reverse? [yes|no]\\n"
+    printf "You can undo this by running \`conda init --condabin --reverse? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
     read -r ans
     if [ "$ans" = "" ]; then
@@ -733,8 +733,8 @@ if [ "$BATCH" = "0" ]; then
     else
         case $SHELL in
             # We call the module directly to avoid issues with spaces in shebang
-            *zsh) "$PREFIX/bin/python" -m conda register-condabin zsh ;;
-            *) "$PREFIX/bin/python" -m conda register-condabin ;;
+            *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
+            *) "$PREFIX/bin/python" -m conda init --condabin ;;
         esac
     fi
     {%- endif %}
