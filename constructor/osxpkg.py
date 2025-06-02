@@ -23,6 +23,7 @@ from .signing import CodeSign
 from .utils import (
     add_condarc,
     approx_size_kb,
+    copy_conda_exe,
     explained_check_call,
     get_final_channels,
     parse_virtual_specs,
@@ -575,7 +576,7 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    shutil.copyfile(info["_conda_exe"], join(prefix, "_conda"))
+    copy_conda_exe(prefix, "_conda", info["_conda_exe"])
 
     # Sign conda-standalone so it can pass notarization
     codesigner = None
