@@ -41,11 +41,14 @@ def process_build_outputs(info):
                 f"Available keys: {tuple(OUTPUT_HANDLERS.keys())}"
             )
         outpath = handler(info, **config)
-        logger.info("build_outputs: '%s' created '%s'.", name, outpath)
+        if outpath:
+            logger.info("build_outputs: '%s' created '%s'.", name, outpath)
 
 
 def dump_hash(info, algorithm=None):
-    algorithm = algorithm or []
+    if not algorithm:
+        logger.warning("`hash` requires an algorithm. No hash files will be output.")
+        return ""
     if isinstance(algorithm, str):
         algorithm = [algorithm]
     algorithms = set(algorithm)

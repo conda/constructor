@@ -188,12 +188,12 @@
       "additionalProperties": false,
       "description": "The hash of the installer files. The output file is designed to work with the `shasum` command and thus has POSIX line endings, including on Windows",
       "properties": {
-        "hash_": {
+        "hash": {
           "$ref": "#/$defs/_HashBuildOutputOptions"
         }
       },
       "required": [
-        "hash_"
+        "hash"
       ],
       "title": "HashBuildOutput",
       "type": "object"
