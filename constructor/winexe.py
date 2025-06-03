@@ -27,6 +27,7 @@ from .signing import AzureSignTool, WindowsSignTool
 from .utils import (
     add_condarc,
     approx_size_kb,
+    copy_conda_exe,
     filename_dist,
     get_final_channels,
     make_VIProductVersion,
@@ -351,7 +352,7 @@ def create(info, verbose=False):
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
-    shutil.copyfile(info["_conda_exe"], join(tmp_dir, "_conda.exe"))
+    extra_conda_exe_files = copy_conda_exe(tmp_dir, "_conda.exe", info["_conda_exe"])
 
     pre_dst = join(tmp_dir, "pre_install.bat")
     pre_install_script = info.get("pre_install")
@@ -376,7 +377,7 @@ def create(info, verbose=False):
     nsi = make_nsi(
         info,
         tmp_dir,
-        extra_files=copied_extra_files,
+        extra_files=extra_conda_exe_files + copied_extra_files,
         temp_extra_files=copied_temp_extra_files,
         signing_tool=signing_tool,
     )
