@@ -94,6 +94,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("enable_shortcuts", ["true"])
 @pytest.mark.parametrize("min_glibc_version", ["2.17"])
 @pytest.mark.parametrize("min_osx_version", ["10.13"])
+@pytest.mark.parametrize("bootstrap_with_tar", [True, False])
 def test_template_shellcheck(
     osx,
     arch,
@@ -111,6 +112,7 @@ def test_template_shellcheck(
     enable_shortcuts,
     min_glibc_version,
     min_osx_version,
+    bootstrap_with_tar,
 ):
     template = read_header_template()
     processed = render_template(
@@ -157,6 +159,7 @@ def test_template_shellcheck(
             "conclusion_text": "Something",
             "final_channels": "",
             "write_condarc": "",
+            "bootstrap_with_tar": bootstrap_with_tar,
         },
     )
 
