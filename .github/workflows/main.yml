@@ -117,7 +117,7 @@ jobs:
               echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/bin/micromamba" >> $GITHUB_ENV
             fi
           elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-nightly" ]]; then
-            conda create -yqp "${{ runner.temp }}/conda-standalone-nightly" -c conda-canary/label/dev conda-standalone
+            conda create -yqp "${{ runner.temp }}/conda-standalone-nightly" -c conda-canary/label/dev "conda-standalone=*=*py312_0"
             echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/conda-standalone-nightly/standalone_conda/conda.exe" >> $GITHUB_ENV
           else
             conda activate constructor-dev
