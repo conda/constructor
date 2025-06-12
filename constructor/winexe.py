@@ -56,7 +56,7 @@ def get_extra_files(paths, common_parent):
         output_path = f"$INSTDIR\\{relative_parent}"
         if output_path not in extra_files:
             extra_files[output_path] = []
-        extra_files[output_path].append(str(path))
+        extra_files[output_path].append(f"\"{str(path)}\"")
     return extra_files
 
 
