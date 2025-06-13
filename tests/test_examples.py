@@ -963,6 +963,20 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 @pytest.mark.skipif(not ON_CI, reason="CI only")
 @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
 def test_allusers_exe(tmp_path, request):
+    """Ensure that AllUsers installations have the correct permissions for built-in users,
+    domain users, and authenticated users.
+
+    For AllUsers installations, these users should only have read and execute permissions,
+    but no write permissions. Addtionally, the installation directory must not inherit from
+    its parent directory (to prevent write access from being propagated). The files inside,
+    however, must have inheritance enabled because the installation process relies on permission
+    inheritance.
+
+    Note that this test is limited to the accounts that the installer changes the permissions for.
+    A more complete test would check all users that have permissions attached to each file and
+    ensure that only local administrators have write access.
+    """
+
     # See WinNT.h for definitions.
     # Check the expanded flags because FILE_GENERIC_EXECUTE/READ/WRITE contain flags like
     # SYNCHRONIZE and READ_CONTROL, which should be set regardless of what the permissions are.
