@@ -50,16 +50,15 @@ jobs:
             conda-standalone: micromamba
           - os: ubuntu-latest
             python-version: "3.12"
-            conda-standalone: conda-standalone
+            conda-standalone: conda-standalone-onedir
             check-docs-schema: true
           # MACOS
           - os: macos-13
             python-version: "3.9"
             conda-standalone: conda-standalone-nightly
-          # Not running for 3.10 to save some CI resources
-          # - os: macos-13
-          #   python-version: "3.10"
-          #   conda-standalone: micromamba
+          - os: macos-13
+            python-version: "3.10"
+            conda-standalone: conda-standalone-onedir
           - os: macos-latest
             python-version: "3.11"
             conda-standalone: conda-standalone
@@ -80,7 +79,7 @@ jobs:
           - os: windows-latest
             python-version: "3.12"
             # conda-standalone: micromamba
-            conda-standalone: conda-standalone
+            conda-standalone: conda-standalone-onedir
 
     env:
       PYTHONUNBUFFERED: "1"
@@ -119,6 +118,9 @@ jobs:
           elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-nightly" ]]; then
             conda create -yqp "${{ runner.temp }}/conda-standalone-nightly" -c conda-canary/label/dev conda-standalone
             echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/conda-standalone-nightly/standalone_conda/conda.exe" >> $GITHUB_ENV
+          elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-onedir" ]]; then
+            conda create -yqp "${{ runner.temp }}/conda-standalone-onedir" -c conda-canary/label/dev "conda-standalone=*=*onedir*"
+            echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/conda-standalone-onedir/standalone_conda/conda.exe" >> $GITHUB_ENV
           else
             conda activate constructor-dev
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
