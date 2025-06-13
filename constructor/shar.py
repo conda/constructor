@@ -193,7 +193,7 @@ def create(info, verbose=False):
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
     internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
     for path in internal_conda_files:
-        tarball.add(path, path.relative_to(tmp_dir))
+        t.add(path, path.relative_to(tmp_dir))
     t.close()
 
     info["_use_tar"] = bool(internal_conda_files)
