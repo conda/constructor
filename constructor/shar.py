@@ -91,7 +91,8 @@ def get_header(conda_exec, tarball, info):
     variables["default_prefix"] = info.get("default_prefix", "${HOME:-/opt}/%s" % name.lower())
     variables["first_payload_size"] = getsize(conda_exec)
     variables["second_payload_size"] = getsize(tarball)
-    variables["bootstrap_with_tar"] = info.get("_use_tar", False)
+    variables["conda_exe_payloads"] = info.get("_conda_exe_payloads", {})
+    variables["conda_exe_payloads_size"] = info.get("_conda_exe_payloads_size", 0)
     variables["write_condarc"] = list(add_condarc(info))
     variables["final_channels"] = get_final_channels(info)
     variables["conclusion_text"] = info.get("conclusion_text", "installation finished.")
@@ -192,11 +193,20 @@ def create(info, verbose=False):
         fn = filename_dist(dist)
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
     internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
+    conda_exe_payloads: dict[str, tuple[int, int]] = {}
+    start = 0
+    end = 0
     for path in internal_conda_files:
-        t.add(path, path.relative_to(tmp_dir))
+        relative_path = str(path.relative_to(tmp_dir))
+        t.add(path, relative_path)
+        size = os.path.getsize(path)
+        end = start + size
+        conda_exe_payloads[relative_path] = (start, end)
+        start = end + 1
     t.close()
 
-    info["_use_tar"] = bool(internal_conda_files)
+    info["_conda_exe_payloads"] = conda_exe_payloads
+    info["_conda_exe_payloads_size"] = end
     conda_exec = info["_conda_exe"]
     header = get_header(conda_exec, tarball, info)
     shar_path = info["_outpath"]
