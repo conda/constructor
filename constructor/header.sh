@@ -428,6 +428,10 @@ extract_range () {
     blk_siz=16384
     dd1_beg=$1
     dd3_end=$2
+    range_size=$(( dd3_end - dd1_beg ))
+    if [ $blk_siz -gt $range_size ]; then
+        blk_siz=$range_size
+    fi
     dd1_end=$(( ( dd1_beg / blk_siz + 1 ) * blk_siz ))
     dd1_cnt=$(( dd1_end - dd1_beg ))
     dd2_end=$(( dd3_end / blk_siz ))
@@ -475,7 +479,11 @@ extract_range "${boundary0}" "${boundary1}" > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 {%- for filename, (start, end) in conda_exe_payloads|items %}
 mkdir -p "$(dirname "$PREFIX/{{ filename }}")"
-extract_range (( boundary1 + {{ start }} )) (( boundary1 + {{ end }} ))  > "$PREFIX/{{ filename }}"
+{%- if start == end %}
+touch "$PREFIX/{{ filename }}"
+{%- else %}
+extract_range $(( boundary1 + {{ start }} )) $(( boundary1 + {{ end }} ))  > "$PREFIX/{{ filename }}"
+{%- endif %}
 {%- endfor %}
 
 export TMP_BACKUP="${TMP:-}"

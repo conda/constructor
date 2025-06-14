@@ -16,6 +16,8 @@ import shutil
 import stat
 import tarfile
 import tempfile
+from contextlib import nullcontext
+from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
 
 from .construct import ns_platform
@@ -192,28 +194,35 @@ def create(info, verbose=False):
     for dist in all_dists:
         fn = filename_dist(dist)
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
-    internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
-    conda_exe_payloads: dict[str, tuple[int, int]] = {}
-    start = 0
-    end = 0
-    for path in internal_conda_files:
-        relative_path = str(path.relative_to(tmp_dir))
-        t.add(path, relative_path)
-        size = os.path.getsize(path)
-        end = start + size
-        conda_exe_payloads[relative_path] = (start, end)
-        start = end + 1
     t.close()
 
-    info["_conda_exe_payloads"] = conda_exe_payloads
-    info["_conda_exe_payloads_size"] = end
+    internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
+    if internal_conda_files:
+        conda_exe_payloads: dict[str, tuple[int, int]] = {}
+        memfile = BytesIO()
+        start = 0
+        end = 0
+        for path in internal_conda_files:
+            relative_path = str(path.relative_to(tmp_dir))
+            memfile.write(path.read_bytes())
+            size = os.path.getsize(path)
+            end = start + size
+            conda_exe_payloads[relative_path] = (start, end)
+            start = end
+
+        info["_conda_exe_payloads"] = conda_exe_payloads
+        info["_conda_exe_payloads_size"] = end
+        memfile.seek(0)
+        maybe_memfile = (memfile,)
+    else:
+        maybe_memfile = ()
     conda_exec = info["_conda_exe"]
     header = get_header(conda_exec, tarball, info)
     shar_path = info["_outpath"]
     with open(shar_path, "wb") as fo:
         fo.write(header.encode("utf-8"))
-        for payload in [conda_exec, tarball]:
-            with open(payload, "rb") as fi:
+        for payload in [conda_exec, *maybe_memfile, tarball]:
+            with open(payload, "rb") if isinstance(payload, str) else nullcontext(payload) as fi:
                 while True:
                     chunk = fi.read(262144)
                     if not chunk:
