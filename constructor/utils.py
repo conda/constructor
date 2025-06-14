@@ -13,6 +13,7 @@ import hashlib
 import logging
 import math
 import re
+import shutil
 import sys
 import warnings
 from io import StringIO
@@ -107,10 +108,7 @@ def read_ascii_only(path):
 
 
 if_pat = re.compile(
-    r"^#if ([ \S]+)$\n"
-    r"(.*?)"
-    r"(^#else\s*$\n(.*?))?"
-    r"^#endif\s*$\n",
+    r"^#if ([ \S]+)$\n(.*?)(^#else\s*$\n(.*?))?^#endif\s*$\n",
     re.M | re.S,
 )
 
@@ -292,6 +290,23 @@ def approx_size_kb(info, which="pkgs"):
 
     # division by 10^3 instead of 2^10 is deliberate here. gives us more room
     return int(math.ceil(size_bytes / 1000))
+
+
+def copy_conda_exe(
+    target_directory: str | Path,
+    target_conda_exe_name: str | None = None,
+    conda_exe: str | Path | None = None,
+) -> list[Path]:
+    if conda_exe is None:
+        conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
+    if target_conda_exe_name is None:
+        target_conda_exe_name = Path(conda_exe).name
+    shutil.copyfile(conda_exe, join(target_directory, target_conda_exe_name))
+    if (internal_dir := Path(conda_exe).parent / "_internal").is_dir():
+        # onedir conda-standalone variant, copy that too
+        shutil.copytree(internal_dir, Path(target_directory, "_internal"), dirs_exist_ok=True)
+        return sorted([p for p in Path(target_directory, "_internal").glob("**/*") if p.is_file()])
+    return []
 
 
 def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneExe, str]:
