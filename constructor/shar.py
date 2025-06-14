@@ -74,10 +74,12 @@ def get_header(conda_exec, tarball, info):
             variables["direct_execute_%s" % key] = has_shebang(info[key])
     variables["initialize_conda"] = info.get("initialize_conda", True)
     variables["initialize_by_default"] = info.get("initialize_by_default", False)
+    variables["add_condabin_to_path"] = info.get("add_condabin_to_path", True)
+    variables["add_condabin_to_path_default"] = info.get("add_condabin_to_path_default", False)
     variables["has_conda"] = info["_has_conda"]
     variables["enable_shortcuts"] = str(info["_enable_shortcuts"]).lower()
     variables["check_path_spaces"] = info.get("check_path_spaces", True)
-    # Omit __osx and __glibc because those are tested with shell code direcly
+    # Omit __osx and __glibc because those are tested with shell code directly
     virtual_specs = [
         spec
         for spec in info.get("virtual_specs", ())

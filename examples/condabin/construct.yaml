@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: condabin
+
+version: 0.0.1
+
+keep_pkgs: True
+
+channels:
+  - conda-forge
+
+specs:
+  - conda
+
+add_condabin_to_path: true
+add_condabin_to_path_default: true
+initialize_conda: false
+register_python: false
+check_path_spaces: false
+check_path_length: false
+installer_type: all
