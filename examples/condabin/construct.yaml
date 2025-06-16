@@ -11,7 +11,7 @@ channels:
   - conda-forge
 
 specs:
-  - conda
+  - conda >=25.5.0
 
 add_condabin_to_path: true
 add_condabin_to_path_default: true

@@ -668,7 +668,7 @@ class ConstructorConfiguration(BaseModel):
     """
     Add an option to the installer so the user can choose whether to add the `condabin/`
     directory to PATH. Only applicable if `conda` is part of the installation.
-    See also `add_condabin_to_path_default`.
+    On Linux and macOS, `conda >=25.5.0` is required. See also `add_condabin_to_path_default`.
     """
     add_condabin_to_path_default: bool | None = None
     """
