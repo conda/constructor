@@ -94,13 +94,14 @@ Function mui_AnaCustomOptions_Show
         # AddCondabinToPath is only an option for JustMe installations; it is disabled for AllUsers
         # installations. (Addresses CVE-2022-26526)
         ${If} $InstMode = ${JUST_ME}
-            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add conda to my &PATH environment variable"
+            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add only condabin/ to my &PATH environment variable"
             IntOp $5 $5 + 11
             Pop $mui_AnaCustomOptions.AddCondabinToPath
             ${NSD_SetState} $mui_AnaCustomOptions.AddCondabinToPath $Ana_AddCondabinToPath_State
             ${NSD_OnClick} $mui_AnaCustomOptions.AddCondabinToPath AddCondabinToPath_OnClick
             ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-                "Adds condabin/ in the installation directory to PATH."
+                "Preferred way to make conda available in PATH. Does not require special shortcuts \
+                but activation needs to be performed manually."
             IntOp $5 $5 + 20
             Pop $Ana_AddCondabinToPath_Label
         ${EndIf}
@@ -110,7 +111,7 @@ Function mui_AnaCustomOptions_Show
         # AddToPath is only an option for JustMe installations; it is disabled for AllUsers
         # installations. (Addresses CVE-2022-26526)
         ${If} $InstMode = ${JUST_ME}
-            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add ${NAME} to my &PATH environment variable"
+            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add installation to my &PATH environment variable"
             IntOp $5 $5 + 11
             Pop $mui_AnaCustomOptions.AddToPath
             ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
@@ -135,7 +136,7 @@ Function mui_AnaCustomOptions_Show
         ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython $Ana_RegisterSystemPython_State
         ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython RegisterSystemPython_OnClick
         ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-            "Recommended. Allows other programs, such as VSCode, PyCharm, etc. to automatically \
+            "Allows other programs, such as VSCode, PyCharm, etc. to automatically \
             detect ${NAME} as the primary Python ${PY_VER} on the system."
         IntOp $5 $5 + 20
         Pop $Ana_RegisterSystemPython_Label
