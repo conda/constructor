@@ -664,7 +664,7 @@ class ConstructorConfiguration(BaseModel):
 
     Only applies if `initialize_conda` is true.
     """
-    add_condabin_to_path: bool = True
+    add_condabin_to_path: bool = False
     """
     Add an option to the installer so the user can choose whether to add the `condabin/`
     directory to PATH. Only applicable if `conda` is part of the installation.
