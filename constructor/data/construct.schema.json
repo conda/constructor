@@ -557,6 +557,7 @@
           "type": "string"
         },
         {
+          "additionalProperties": true,
           "type": "object"
         },
         {
