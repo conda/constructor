@@ -198,7 +198,7 @@ def create(info, verbose=False):
 
     internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
     if internal_conda_files:
-        conda_exe_payloads: dict[str, tuple[int, int]] = {}
+        conda_exe_payloads: dict[str, tuple[int, int, bool]] = {}
         memfile = BytesIO()
         start = 0
         end = 0
@@ -207,7 +207,8 @@ def create(info, verbose=False):
             memfile.write(path.read_bytes())
             size = os.path.getsize(path)
             end = start + size
-            conda_exe_payloads[relative_path] = (start, end)
+            executable = os.access(path, os.X_OK)
+            conda_exe_payloads[relative_path] = (start, end, executable)
             start = end
 
         info["_conda_exe_payloads"] = conda_exe_payloads

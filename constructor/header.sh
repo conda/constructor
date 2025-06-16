@@ -477,12 +477,15 @@ printf "Unpacking bootstrapper ...\n"
 CONDA_EXEC="$PREFIX/_conda"
 extract_range "${boundary0}" "${boundary1}" > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
-{%- for filename, (start, end) in conda_exe_payloads|items %}
+{%- for filename, (start, end, executable) in conda_exe_payloads|items %}
 mkdir -p "$(dirname "$PREFIX/{{ filename }}")"
 {%- if start == end %}
 touch "$PREFIX/{{ filename }}"
 {%- else %}
 extract_range $(( boundary1 + {{ start }} )) $(( boundary1 + {{ end }} ))  > "$PREFIX/{{ filename }}"
+{%- endif %}
+{%- if executable %}
+chmod +x "$PREFIX/{{ filename }}"
 {%- endif %}
 {%- endfor %}
 
