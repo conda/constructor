@@ -258,7 +258,7 @@ def modify_xml(xml_path, info):
             path_choice.set("visible", "true")
             path_choice.set("title", "Run the post-install script")
             path_choice.set("description", " ".join(info["post_install_desc"].split()))
-        elif ident.endswith("pathupdate"):
+        elif ident.endswith("run_conda_init"):
             has_conda = info.get("_has_conda", True)
             path_choice.set("visible", "true" if has_conda else "false")
             path_choice.set(
@@ -272,8 +272,25 @@ def modify_xml(xml_path, info):
             activated. If your prefer that conda's base environment not be activated
             on startup, run `conda config --set auto_activate_base false`. You can
             undo this by running `conda init --reverse ${SHELL}`.
-            If unchecked, you must this initialization yourself or activate the
+            If unchecked, you must run this initialization yourself or activate the
             environment manually for each shell in which you wish to use it."""
+            path_choice.set("description", " ".join(path_description.split()))
+        elif ident.endswith("add_condabin_to_path"):
+            has_conda = info.get("_has_conda", True)
+            path_choice.set("visible", "true" if has_conda else "false")
+            path_choice.set(
+                "start_selected",
+                "true" if has_conda and info.get("add_condabin_to_path_default", True) else "false",
+            )
+            path_choice.set("title", "Add condabin/ to PATH")
+            path_description = """
+            If this box is checked, this will enable you to run 'conda' anywhere,
+            without injecting a shell function. This will NOT change the command prompt
+            or activate your environment on shell startup. You can undo this by running
+            `conda init --condabin --reverse`. If unchecked, you must run this initialization
+            yourself or activate the environment manually for each shell in which you wish
+            to use it.
+            """
             path_choice.set("description", " ".join(path_description.split()))
         elif ident.endswith("cacheclean"):
             path_choice.set("visible", "true")
@@ -631,7 +648,7 @@ def create(info, verbose=False):
         names.append("run_conda_init")
 
     # 6. The script to add condabin/ to PATH
-    if info.get("_has_conda") and info.get("add_condabin_to_path", True):
+    if info.get("_has_conda") and info.get("add_condabin_to_path"):
         pkgbuild_script("add_condabin_to_path", info, "add_condabin_to_path.sh")
         names.append("add_condabin_to_path")
 
