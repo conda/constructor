@@ -17,6 +17,6 @@ add_condabin_to_path: true
 add_condabin_to_path_default: true
 initialize_conda: false
 register_python: false
-check_path_spaces: false
+check_path_spaces: true
 check_path_length: false
 installer_type: all
