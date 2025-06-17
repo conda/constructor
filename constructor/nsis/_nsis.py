@@ -313,7 +313,7 @@ def add_condabin_to_path():
         add_to_system_path,
         broadcast_environment_settings_change,
     )
-    
+
     add_to_system_path(os.path.normpath(os.path.join(ROOT_PREFIX, "condabin")), allusers)
     broadcast_environment_settings_change()
 

@@ -943,7 +943,7 @@ def test_condabin(tmp_path, request, monkeypatch):
         )
         if sys.platform.startswith(("linux", "darwin")):
             out = subprocess.check_output(
-                f"'{os.environ.get("SHELL", "bash")}' -lc 'echo $PATH'",
+                f"'{os.environ.get('SHELL', 'bash')}' -lc 'echo $PATH'",
                 shell=True,
                 text=True,
             )

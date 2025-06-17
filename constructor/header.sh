@@ -134,7 +134,7 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 {%- endif %}
 "
 
-{#- 
+{#-
 # We used to have a getopt version here, falling back to getopts if needed
 # However getopt is not standardized and the version on Mac has different
 # behaviour. getopts is good enough for what we need :)
@@ -192,7 +192,7 @@ while getopts "{{ getopts_str }}" x; do
         z)
             ADD_CONDABIN=0
             ;;
-{%-     else %}        
+{%-     else %}
         c)
             ADD_CONDABIN=1
             ;;
@@ -554,7 +554,7 @@ MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
 
-{#- 
+{#-
 # original issue report:
 # https://github.com/ContinuumIO/anaconda-issues/issues/11148
 # First try to fix it (this apparently didn't work; QA reported the issue again)
@@ -786,7 +786,7 @@ else
     {%- endif %}
 {%- endif %}
 {#- End of Batch mode #}
-fi 
+fi
 
 
 {%- if has_conda %}
