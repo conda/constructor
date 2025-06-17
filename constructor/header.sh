@@ -774,7 +774,7 @@ else
 {#- Batch mode #}
 {%- if has_conda %}
     {%- if add_condabin_to_path and add_condabin_to_path_default %}
-    if [ "$ADD_CONDABIN" == "1" ]
+    if [ "$ADD_CONDABIN" = "1" ]
     then
         case $SHELL in
             # We call the module directly to avoid issues with spaces in shebang
