@@ -770,9 +770,9 @@ if [ "$BATCH" = "0" ]; then
 
     printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"
 {#- End of Interactive mode #}
-else
 {#- Batch mode #}
 {%- if has_conda %}
+else
     {%- if add_condabin_to_path and add_condabin_to_path_default %}
     if [ "$ADD_CONDABIN" = "1" ]
     then
