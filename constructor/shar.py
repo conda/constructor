@@ -16,6 +16,8 @@ import shutil
 import stat
 import tarfile
 import tempfile
+from contextlib import nullcontext
+from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
 
 from .construct import ns_platform
@@ -26,6 +28,7 @@ from .preconda import write_files as preconda_write_files
 from .utils import (
     add_condarc,
     approx_size_kb,
+    copy_conda_exe,
     filename_dist,
     get_final_channels,
     hash_files,
@@ -90,6 +93,8 @@ def get_header(conda_exec, tarball, info):
     variables["default_prefix"] = info.get("default_prefix", "${HOME:-/opt}/%s" % name.lower())
     variables["first_payload_size"] = getsize(conda_exec)
     variables["second_payload_size"] = getsize(tarball)
+    variables["conda_exe_payloads"] = info.get("_conda_exe_payloads", {})
+    variables["conda_exe_payloads_size"] = info.get("_conda_exe_payloads_size", 0)
     variables["write_condarc"] = list(add_condarc(info))
     variables["final_channels"] = get_final_channels(info)
     variables["conclusion_text"] = info.get("conclusion_text", "installation finished.")
@@ -191,13 +196,34 @@ def create(info, verbose=False):
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
     t.close()
 
+    internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
+    if internal_conda_files:
+        conda_exe_payloads: dict[str, tuple[int, int, bool]] = {}
+        memfile = BytesIO()
+        start = 0
+        end = 0
+        for path in internal_conda_files:
+            relative_path = str(path.relative_to(tmp_dir))
+            memfile.write(path.read_bytes())
+            size = os.path.getsize(path)
+            end = start + size
+            executable = os.access(path, os.X_OK)
+            conda_exe_payloads[relative_path] = (start, end, executable)
+            start = end
+
+        info["_conda_exe_payloads"] = conda_exe_payloads
+        info["_conda_exe_payloads_size"] = end
+        memfile.seek(0)
+        maybe_memfile = (memfile,)
+    else:
+        maybe_memfile = ()
     conda_exec = info["_conda_exe"]
     header = get_header(conda_exec, tarball, info)
     shar_path = info["_outpath"]
     with open(shar_path, "wb") as fo:
         fo.write(header.encode("utf-8"))
-        for payload in [conda_exec, tarball]:
-            with open(payload, "rb") as fi:
+        for payload in [conda_exec, *maybe_memfile, tarball]:
+            with open(payload, "rb") if isinstance(payload, str) else nullcontext(payload) as fi:
                 while True:
                     chunk = fi.read(262144)
                     if not chunk:
