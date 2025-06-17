@@ -94,6 +94,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("enable_shortcuts", ["true"])
 @pytest.mark.parametrize("min_glibc_version", ["2.17"])
 @pytest.mark.parametrize("min_osx_version", ["10.13"])
+@pytest.mark.parametrize("conda_exe_payloads_and_size", [({"path": (0, 10, False)}, 10)])
 def test_template_shellcheck(
     osx,
     arch,
@@ -111,6 +112,7 @@ def test_template_shellcheck(
     enable_shortcuts,
     min_glibc_version,
     min_osx_version,
+    conda_exe_payloads_and_size,
 ):
     template = read_header_template()
     processed = render_template(
@@ -157,6 +159,8 @@ def test_template_shellcheck(
             "conclusion_text": "Something",
             "final_channels": "",
             "write_condarc": "",
+            "conda_exe_payloads": conda_exe_payloads_and_size[0],
+            "conda_exe_payloads_size": conda_exe_payloads_and_size[1],
         },
     )
 
