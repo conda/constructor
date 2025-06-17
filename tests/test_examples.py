@@ -950,7 +950,7 @@ def test_condabin(tmp_path, request, monkeypatch):
         else:  # Windows
             try:
                 out = subprocess.check_output(
-                    'cmd /C "echo %PATH%"',
+                    'cmd /V:ON /C "echo !PATH!"',
                     shell=True,
                     text=True,
                 )
