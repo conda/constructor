@@ -967,7 +967,7 @@ def test_allusers_exe(tmp_path, request):
     domain users, and authenticated users.
 
     For AllUsers installations, these users should only have read and execute permissions,
-    but no write permissions. Addtionally, the installation directory must not inherit from
+    but no write permissions. Additionally, the installation directory must not inherit from
     its parent directory (to prevent write access from being propagated). The files inside,
     however, must have inheritance enabled because the installation process relies on permission
     inheritance.
