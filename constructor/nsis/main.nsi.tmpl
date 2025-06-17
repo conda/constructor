@@ -283,6 +283,9 @@ FunctionEnd
             $\n\
                 /InstallationType=AllUsers [default: JustMe]$\n\
                 /AddToPath=[0|1] [default: 0]$\n\
+{%- if add_condabin_to_path %}
+                /AddCondabinToPath=[0|1] [default: 0]$\n\
+{%- endif %}
                 /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
@@ -415,7 +418,7 @@ Function OnInit_Release
             StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
-
+{% if add_condabin_to_path %}
     ClearErrors
     ${GetOptions} $ARGV "/AddCondabinToPath=" $ARGV_AddCondabinToPath
     ${IfNot} ${Errors}
@@ -433,6 +436,7 @@ Function OnInit_Release
             StrCpy $Ana_AddCondabinToPath_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
+{% endif %}
 FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
@@ -723,7 +727,9 @@ Function .onInit
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from construct.yaml.
-    # If initialize_by_default (register_python_default) is None, do nothing.
+    # If initialize_by_default / register_python_default / add_condabin_to_path_default
+    # are None, do nothing. Note that these variables exist even when the construct.yaml
+    # settings are disabled, and the installer will respect them later!
 {%- if initialize_conda %}
     {%- if initialize_by_default %}
     ${If} $InstMode == ${JUST_ME}
