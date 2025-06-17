@@ -428,6 +428,10 @@ extract_range () {
     blk_siz=16384
     dd1_beg=$1
     dd3_end=$2
+    range_size=$(( dd3_end - dd1_beg ))
+    if [ $blk_siz -gt $range_size ]; then
+        blk_siz=$range_size
+    fi
     dd1_end=$(( ( dd1_beg / blk_siz + 1 ) * blk_siz ))
     dd1_cnt=$(( dd1_end - dd1_beg ))
     dd2_end=$(( dd3_end / blk_siz ))
@@ -442,15 +446,20 @@ extract_range () {
 
 # the line marking the end of the shell header and the beginning of the payload
 last_line=$(grep -anm 1 '^@@END_HEADER@@' "$THIS_PATH" | sed 's/:.*//')
+# first payload: conda.exe
+# second payload (optional): supporting files for conda.exe (only in conda-standalone onedir)
+# third payload: conda packages
 # the start of the first payload, in bytes, indexed from zero
 boundary0=$(head -n "${last_line}" "${THIS_PATH}" | wc -c | sed 's/ //g')
 # the start of the second payload / the end of the first payload, plus one
 boundary1=$(( boundary0 + {{ first_payload_size }} ))
-# the end of the second payload, plus one
-boundary2=$(( boundary1 + {{ second_payload_size }} ))
+# the start of the third payload / the end of the second payload, plus one
+boundary2=$(( boundary1 + {{ conda_exe_payloads_size }} ))
+# the end of the third payload, plus one
+boundary3=$(( boundary2 + {{ second_payload_size }} ))
 
 # verify the MD5 sum of the tarball appended to this header
-MD5=$(extract_range "${boundary0}" "${boundary2}" | {{ "md5" if osx else "md5sum -" }})
+MD5=$(extract_range "${boundary0}" "${boundary3}" | {{ "md5" if osx else "md5sum -" }})
 
 if ! echo "$MD5" | grep {{ installer_md5 }} >/dev/null; then
     printf "WARNING: md5sum mismatch of tar archive\\n" >&2
@@ -464,9 +473,21 @@ cd "$PREFIX"
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
 # the first binary payload: the standalone conda executable
+printf "Unpacking bootstrapper ...\n"
 CONDA_EXEC="$PREFIX/_conda"
 extract_range "${boundary0}" "${boundary1}" > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
+{%- for filename, (start, end, executable) in conda_exe_payloads|items %}
+mkdir -p "$(dirname "$PREFIX/{{ filename }}")"
+{%- if start == end %}
+touch "$PREFIX/{{ filename }}"
+{%- else %}
+extract_range $(( boundary1 + {{ start }} )) $(( boundary1 + {{ end }} ))  > "$PREFIX/{{ filename }}"
+{%- endif %}
+{%- if executable %}
+chmod +x "$PREFIX/{{ filename }}"
+{%- endif %}
+{%- endfor %}
 
 export TMP_BACKUP="${TMP:-}"
 export TMP="$PREFIX/install_tmp"
@@ -492,9 +513,9 @@ if [ "$(id -u)" -ne 0 ]; then
     touch "$PREFIX/.nonadmin"
 fi
 
-# the second binary payload: the tarball of packages
+# the third binary payload: the tarball of packages
 printf "Unpacking payload ...\n"
-extract_range "${boundary1}" "${boundary2}" | \
+extract_range "${boundary2}" "${boundary3}" | \
     CONDA_QUIET="$BATCH" "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
 PRECONDA="$PREFIX/preconda.tar.bz2"
