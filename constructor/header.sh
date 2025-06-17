@@ -93,6 +93,7 @@ SKIP_SCRIPTS=0
 {%- if enable_shortcuts == "true" %}
 SKIP_SHORTCUTS=0
 {%- endif %}
+ADD_CONDABIN={{ 1 if add_condabin_to_path_default else 0 }}
 TEST=0
 REINSTALL=0
 USAGE="
@@ -123,18 +124,34 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 -u           update an existing installation
 {%- if has_conda %}
 -t           run package tests after installation (may install conda-build)
+{%-   if add_condabin_to_path %}
+{%-     if add_condabin_to_path_default %}
+-z           do not add PREFIX/condabin to PATH; ignored in interactive mode
+{%-     else %}
+-c           add PREFIX/condabin to PATH; ignored in interactive mode
+{%-     endif %}
+{%-   endif %}
 {%- endif %}
 "
 
+{#- 
 # We used to have a getopt version here, falling back to getopts if needed
 # However getopt is not standardized and the version on Mac has different
 # behaviour. getopts is good enough for what we need :)
 # More info: https://unix.stackexchange.com/questions/62950/
+#}
+{%- set getopts_str = "bifhkp:s" %}
 {%- if enable_shortcuts == "true" %}
-while getopts "bifhkp:smut" x; do
-{%- else %}
-while getopts "bifhkp:sut" x; do
+{%- set getopts_str = getopts_str ~ "m" %}
 {%- endif %}
+{%- set getopts_str = getopts_str ~ "u" %}
+{%- if has_conda %}
+{%- set getopts_str = getopts_str ~ "t" %}
+{%- if add_condabin_to_path %}
+{%- set getopts_str = getopts_str ~ ("z" if add_condabin_to_path_default else "c") %}
+{%- endif %}
+{%- endif %}
+while getopts "{{ getopts_str }}" x; do
     case "$x" in
         h)
             printf "%s\\n" "$USAGE"
@@ -170,6 +187,17 @@ while getopts "bifhkp:sut" x; do
         t)
             TEST=1
             ;;
+{%-   if add_condabin_to_path %}
+{%-     if add_condabin_to_path_default %}
+        z)
+            ADD_CONDABIN=0
+            ;;
+{%-     else %}        
+        c)
+            ADD_CONDABIN=1
+            ;;
+{%-     endif %}
+{%-   endif %}
 {%- endif %}
         ?)
             printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
@@ -526,12 +554,14 @@ MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
 
+{#- 
 # original issue report:
 # https://github.com/ContinuumIO/anaconda-issues/issues/11148
 # First try to fix it (this apparently didn't work; QA reported the issue again)
 # https://github.com/conda/conda/pull/9073
 # Avoid silent errors when $HOME is not writable
 # https://github.com/conda/constructor/pull/669
+#}
 test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda || mkdir ~/.conda
 
 printf "\nInstalling base environment...\n\n"
@@ -614,7 +644,6 @@ rm -rf "$PREFIX/install_tmp"
 export TMP="$TMP_BACKUP"
 
 
-#The templating doesn't support nested if statements
 {%- if has_post_install %}
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     printf "WARNING: skipping post_install.sh by user request\\n" >&2
@@ -715,7 +744,6 @@ if [ "$BATCH" = "0" ]; then
     {%- endif %}
     {%- if add_condabin_to_path %}
     DEFAULT={{ 'yes' if add_condabin_to_path_default else 'no' }}
-    # Interactive mode.
 
     printf "Do you wish to update your shell profile to add '%s/condabin' to PATH?\\n" "$PREFIX"
     printf "This will enable you to run 'conda' anywhere, without injecting a shell function.\\n"
@@ -741,7 +769,24 @@ if [ "$BATCH" = "0" ]; then
 {%- endif %}
 
     printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"
-fi # !BATCH
+{#- End of Interactive mode #}
+else
+{#- Batch mode #}
+{%- if has_conda %}
+    {%- if add_condabin_to_path and add_condabin_to_path_default %}
+    if [ "$ADD_CONDABIN" == "1" ]
+    then
+        case $SHELL in
+            # We call the module directly to avoid issues with spaces in shebang
+            *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
+            *) "$PREFIX/bin/python" -m conda init --condabin ;;
+        esac
+        printf "Added '%s/condabin' to PATH\\n" "$PREFIX"
+    fi
+    {%- endif %}
+{%- endif %}
+{#- End of Batch mode #}
+fi 
 
 
 {%- if has_conda %}
