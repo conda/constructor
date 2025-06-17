@@ -939,8 +939,24 @@ def test_condabin(tmp_path, request, monkeypatch):
             install_dir,
             request=request,
             check_subprocess=True,
-            uninstall=True,
+            uninstall=False,
         )
+        if sys.platform.startswith(("linux", "darwin")):
+            out = subprocess.check_output(
+                f"'{os.environ.get("SHELL", "bash")}' -lc 'echo $PATH'",
+                shell=True,
+                text=True,
+            )
+        else:  # Windows
+            try:
+                out = subprocess.check_output(
+                    'cmd /C "echo %PATH%"',
+                    shell=True,
+                    text=True,
+                )
+                assert str(install_dir / "condabin") in out.split(os.pathsep)
+            finally:
+                _run_uninstaller_exe(install_dir, check=True)
 
 
 @pytest.mark.xfail(
