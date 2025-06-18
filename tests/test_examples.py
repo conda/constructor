@@ -453,8 +453,8 @@ def test_example_miniforge(tmp_path, request, example):
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             # try both batch and interactive installations
-            install_dirs = install_dir / "batch", install_dir / "interactive"
-            installer_inputs = None, f"\nyes\n{install_dir / 'interactive'}\nno\n"
+            install_dirs = (install_dir / "batch", install_dir / "interactive")
+            installer_inputs = (None, f"\nyes\n{install_dir / 'interactive'}\nno\nno\n")
         else:
             install_dirs = (install_dir,)
             installer_inputs = (None,)
@@ -927,6 +927,36 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
             check_subprocess=True,
             uninstall=True,
         )
+
+
+@pytest.mark.skipif(not ON_CI, reason="Run on CI only")
+def test_condabin(tmp_path, request, monkeypatch):
+    input_path = _example_path("condabin")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=False,
+        )
+        if sys.platform.startswith(("linux", "darwin")):
+            out = subprocess.check_output(
+                f"'{os.environ.get('SHELL', 'bash')}' -lc 'echo $PATH'",
+                shell=True,
+                text=True,
+            )
+        else:  # Windows
+            try:
+                out = subprocess.check_output(
+                    'cmd /V:ON /C "echo !PATH!"',
+                    shell=True,
+                    text=True,
+                )
+                assert str(install_dir / "condabin") in out.split(os.pathsep)
+            finally:
+                _run_uninstaller_exe(install_dir, check=True)
 
 
 @pytest.mark.xfail(
