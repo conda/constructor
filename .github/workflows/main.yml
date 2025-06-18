@@ -102,6 +102,8 @@ jobs:
           files=(--file "tests/requirements.txt")
           test -f dev/extra-requirements-${{ runner.os }}.txt \
             && files+=(--file "dev/extra-requirements-${{ runner.os }}.txt")
+          test -f tests/extra-requirements-${{ runner.os }}.txt \
+            && files+=(--file "tests/extra-requirements-${{ runner.os }}.txt")
           conda install ${files[@]} -y
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
           echo "NSIS_SCRIPTS_RAISE_ERRORS=1" >> $GITHUB_ENV
