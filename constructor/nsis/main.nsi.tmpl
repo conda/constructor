@@ -284,7 +284,7 @@ FunctionEnd
                 /InstallationType=AllUsers [default: JustMe]$\n\
                 /AddToPath=[0|1] [default: 0]$\n\
 {%- if add_condabin_to_path %}
-                /AddCondabinToPath=[0|1] [default: 0]$\n\
+                /AddCondabinToPath=[0|1] [default: {{1 if add_condabin_to_path_default else 0}}]$\n\
 {%- endif %}
                 /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
