@@ -167,7 +167,7 @@ def make_nsi(
         "show_add_to_path": "yes" if info.get("initialize_conda", True) else "no",
         "show_add_condabin_to_path": (
             "yes"
-            if info.get("add_condabin_to_path", True) and info.get("_has_conda", False)
+            if info.get("add_condabin_to_path", False) and info.get("_has_conda", False)
             else "no"
         ),
         "outfile": info["_outpath"],

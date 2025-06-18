@@ -264,7 +264,7 @@ def main_build(
 
     if info.get("add_condabin_to_path"):
         if not info.get("_has_conda"):
-            sys.exit("Error: 'add_condabin_to_path' requires 'conda' in the base env.")
+            sys.exit("Error: 'add_condabin_to_path' requires 'conda' in the base environment.")
         if platform.startswith(("linux-", "osx-")):
             conda = next(record for record in info.get("_records", ()) if record.name == "conda")
             if Version(conda.version) < Version("25.5.0"):
