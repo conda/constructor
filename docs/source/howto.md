@@ -223,31 +223,28 @@ $INSTDIR/bin/conda init --all
 `````
 
 On most shells, `conda init` will modify your shell configuration (`.bashrc` and similar files) to
-inject some shell functions so you can run `conda` from anywhere. That is, the `conda` executable
-you usually run is not the Python entry point, but a shell function that ends up calling that entry
-point. This wrapper is needed by `conda (de)activate` to operate correctly, since it needs to
-modify the currently running shell session. You can find mode details in the [activation deep dive
-guide](https://docs.conda.io/projects/conda/en/stable/dev-guide/deep-dives/activation.html).
+inject a `conda` shell function that wraps the actual Python `conda` modules (see [activation deep
+dive guide][activation-deepdive] for more details). This is needed so that `conda activate` and
+`conda deactivate` can modify the state of the current shell session.
 
-The convenience of `conda activate` makes for the extra complexity required at installation time.
-However, some folks might prefer not to modify their shell scripts at all. For those users, an
-alternative initialization method is provided with `conda 25.5.0` and later.
+While very convenient, this shell logic requires significant modifications in the shell profiles
+and also adds a runtime overhead everytime a shell session starts. For users that prefer a simpler
+`PATH`-based initialization strategy, a alternative method is provided with `conda 25.5.0` and
+later:
 
 ```
 conda init --condabin
 ````
 
-This new option only adds `$INSTDIR/condabin` to PATH, which is a minimally invasive change to your
-shell configuration and has no runtime overhead. This directory is special because it is guaranteed
-to only contain the `conda` executables and nothing else.
+This new option only adds `$INSTDIR/condabin` to `PATH`, which is a minimally invasive change to
+your shell configuration and has no runtime overhead. This directory is special because it is
+guaranteed to only contain the `conda` executables and nothing else.
 
 As an installer author, you can control which of these options are made available to the end user:
 
-- `initialize_conda`: the classic initialization logic. On by default.
-- `add_condabin_to_path`: the new, lightweight PATH-only logic. Off by default.
+- `initialize_conda: classic`: the classic, shell-function-based initialization logic. Default.
+- `initialize_conda: condabin`: the new, lightweight PATH-only logic.
 
-We do NOT recommend enabling both! The default value for each option is controlled by
-`initialize_by_default` and `add_condabin_to_path_default`, respectively.
 
 :::{note}
 The `--condabin` initialization won't be sufficient to run `conda activate`, and `conda` will error
@@ -256,3 +253,5 @@ for now, you can rely on an experimental plugin to use a different activation st
 require shell modifications: [`conda-spawn`](https://github.com/conda-incubator/conda-spawn). Add
 it to your `specs` definition and it will be available in your installations as `conda spawn`.
 :::
+
+[activation-deepdive]: https://docs.conda.io/projects/conda/en/stable/dev-guide/deep-dives/activation.html

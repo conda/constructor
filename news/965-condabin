@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add support for `conda init --condabin`. (#960 via #965)
+* Add support for `conda init --condabin` in `initialize_conda` option. (#960 via #965)
 
 ### Bug fixes
 

@@ -13,9 +13,8 @@ channels:
 specs:
   - conda >=25.5.0
 
-add_condabin_to_path: true
-add_condabin_to_path_default: true
-initialize_conda: false
+initialize_conda: "condabin"
+initialize_by_default: true
 register_python: false
 check_path_spaces: true
 check_path_length: false
