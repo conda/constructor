@@ -125,7 +125,7 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 {%- if has_conda %}
 -t           run package tests after installation (may install conda-build)
 {%-   if initialize_conda %}
--c           run 'conda init{{ ' --condabin' if initialize_conda == 'condabin' else ''}}' after installation
+-c           run 'conda init{{ ' --condabin' if initialize_conda == 'condabin' else ''}}' after installation (only applies to batch mode)
 {%-   endif %}
 {%- endif %}
 "
@@ -511,7 +511,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # the second binary payload: the tarball of packages
-printf "Unpacking payload ...\n"
+printf "Unpacking payload...\n"
 extract_range "${boundary1}" "${boundary2}" | \
     CONDA_QUIET="$BATCH" "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
@@ -770,11 +770,11 @@ if [ "$BATCH" = "0" ]; then
 {%- if has_conda and initialize_conda %}
 elif [ "$INIT_CONDA" = "1" ]; then
 {%-     if initialize_conda == 'condabin' %}
+        printf "Adding '%s/condabin' to PATH...\\n" "$PREFIX"
         _maybe_run_conda_init_condabin
-        printf "Added '%s/condabin' to PATH\\n" "$PREFIX"
 {%-     else %}
+        printf "Initializing '%s' with 'conda init'...\\n" "$PREFIX"
         _maybe_run_conda_init
-        printf "Initialized '%s' with 'conda init'\\n" "$PREFIX"
 {%-     endif %}
 {%- endif %}
 {#- End of Batch mode #}
