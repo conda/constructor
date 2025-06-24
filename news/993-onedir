@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add compatibility for `onedir` variants of `conda-standalone`, which are pre-extracted and have smaller start overheads. (#993)
+* Add compatibility for `onedir` variants of `conda-standalone`, which are pre-extracted and have smaller start overheads. (#993, #1007)
 
 ### Bug fixes
 
