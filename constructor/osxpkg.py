@@ -261,37 +261,32 @@ def modify_xml(xml_path, info):
             path_choice.set("description", " ".join(info["post_install_desc"].split()))
         elif ident.endswith("run_conda_init"):
             has_conda = info.get("_has_conda", True)
+            initialize_conda = info.get("initialize_conda", "classic")
             path_choice.set("visible", "true" if has_conda else "false")
             path_choice.set(
                 "start_selected",
                 "true" if has_conda and info.get("initialize_by_default", True) else "false",
             )
-            path_choice.set("title", "Add conda initialization to the shell")
-            path_description = """
-            If this box is checked, conda will be automatically activated in your
-            preferred shell on startup. This will change the command prompt when
-            activated. If your prefer that conda's base environment not be activated
-            on startup, run `conda config --set auto_activate_base false`. You can
-            undo this by running `conda init --reverse ${SHELL}`.
-            If unchecked, you must run this initialization yourself or activate the
-            environment manually for each shell in which you wish to use it."""
-            path_choice.set("description", " ".join(path_description.split()))
-        elif ident.endswith("add_condabin_to_path"):
-            has_conda = info.get("_has_conda", True)
-            path_choice.set("visible", "true" if has_conda else "false")
-            path_choice.set(
-                "start_selected",
-                "true" if has_conda and info.get("initialize_by_default", True) else "false",
-            )
-            path_choice.set("title", "Add condabin/ to PATH")
-            path_description = """
-            If this box is checked, this will enable you to run 'conda' anywhere,
-            without injecting a shell function. This will NOT change the command prompt
-            or activate your environment on shell startup. You can undo this by running
-            `conda init --condabin --reverse`. If unchecked, you must run this initialization
-            yourself or activate the environment manually for each shell in which you wish
-            to use it.
-            """
+            if initialize_conda == "condabin":
+                path_choice.set("title", "Add condabin/ to PATH")
+                path_description = """
+                If this box is checked, this will enable you to run 'conda' anywhere,
+                without injecting a shell function. This will NOT change the command prompt
+                or activate your environment on shell startup. You can undo this by running
+                `conda init --condabin --reverse`. If unchecked, you must run this initialization
+                yourself or activate the environment manually for each shell in which you wish
+                to use it.
+                """
+            else:
+                path_choice.set("title", "Add conda initialization to the shell")
+                path_description = """
+                If this box is checked, conda will be automatically activated in your
+                preferred shell on startup. This will change the command prompt when
+                activated. If your prefer that conda's base environment not be activated
+                on startup, run `conda config --set auto_activate_base false`. You can
+                undo this by running `conda init --reverse ${SHELL}`.
+                If unchecked, you must run this initialization yourself or activate the
+                environment manually for each shell in which you wish to use it."""
             path_choice.set("description", " ".join(path_description.split()))
         elif ident.endswith("cacheclean"):
             path_choice.set("visible", "true")
@@ -368,6 +363,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["virtual_specs"] = shlex.join(virtual_specs)
     variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     variables["script_env_variables"] = info.get("script_env_variables", {})
+    variables["initialize_conda"] = info.get("initialize_conda", "classic")
 
     data = render_template(data, **variables)
 
@@ -644,13 +640,9 @@ def create(info, verbose=False):
         names.append("user_post_install")
 
     # 5. The script to run conda init
-    if info.get("_has_conda") and (initialize_conda := info.get("initialize_conda", "classic")):
-        if initialize_conda == "condabin":
-            pkgbuild_script("add_condabin_to_path", info, "add_condabin_to_path.sh")
-            names.append("add_condabin_to_path")
-        else:
-            pkgbuild_script("run_conda_init", info, "run_conda_init.sh")
-            names.append("run_conda_init")
+    if info.get("_has_conda") and info.get("initialize_conda", "classic"):
+        pkgbuild_script("run_conda_init", info, "run_conda_init.sh")
+        names.append("run_conda_init")
 
     # 6. The script to clear the package cache
     if not info.get("keep_pkgs"):

@@ -69,6 +69,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         virtual_specs="__osx>=10.13",
         no_rcs_arg="",
         script_env_variables={},
+        initialize_conda="condabin",
     )
 
     findings, returncode = run_shellcheck(processed)
