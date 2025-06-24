@@ -280,7 +280,7 @@ def modify_xml(xml_path, info):
             path_choice.set("visible", "true" if has_conda else "false")
             path_choice.set(
                 "start_selected",
-                "true" if has_conda and info.get("add_condabin_to_path_default", True) else "false",
+                "true" if has_conda and info.get("initialize_by_default", True) else "false",
             )
             path_choice.set("title", "Add condabin/ to PATH")
             path_description = """
@@ -643,16 +643,15 @@ def create(info, verbose=False):
         names.append("user_post_install")
 
     # 5. The script to run conda init
-    if info.get("_has_conda") and info.get("initialize_conda", True):
-        pkgbuild_script("run_conda_init", info, "run_conda_init.sh")
-        names.append("run_conda_init")
+    if info.get("_has_conda") and (initialize_conda := info.get("initialize_conda", "classic")):
+        if initialize_conda == "condabin":
+            pkgbuild_script("add_condabin_to_path", info, "add_condabin_to_path.sh")
+            names.append("add_condabin_to_path")
+        else:
+            pkgbuild_script("run_conda_init", info, "run_conda_init.sh")
+            names.append("run_conda_init")
 
-    # 6. The script to add condabin/ to PATH
-    if info.get("_has_conda") and info.get("add_condabin_to_path"):
-        pkgbuild_script("add_condabin_to_path", info, "add_condabin_to_path.sh")
-        names.append("add_condabin_to_path")
-
-    # 7. The script to clear the package cache
+    # 6. The script to clear the package cache
     if not info.get("keep_pkgs"):
         pkgbuild_script("cacheclean", info, "clean_cache.sh")
         names.append("cacheclean")
