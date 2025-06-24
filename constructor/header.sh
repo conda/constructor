@@ -694,7 +694,16 @@ if [ "${PYTHONPATH:-}" != "" ]; then
     printf "    directories of packages that are compatible with the Python interpreter\\n"
     printf "    in %s: %s\\n" "${INSTALLER_NAME}" "$PREFIX"
 fi
-
+{% if has_conda %}
+{%- if initialize_conda == 'condabin'%}
+_maybe_run_conda_init_condabin() {
+    case $SHELL in
+        # We call the module directly to avoid issues with spaces in shebang
+        *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
+        *) "$PREFIX/bin/python" -m conda init --condabin ;;
+    esac
+}
+{%- elif initialize_conda %}
 _maybe_run_conda_init() {
     case $SHELL in
         # We call the module directly to avoid issues with spaces in shebang
@@ -720,14 +729,9 @@ _maybe_run_conda_init() {
         fi
     fi
 }
+{%- endif %}
+{%- endif %}
 
-_maybe_run_conda_init_condabin() {
-    case $SHELL in
-        # We call the module directly to avoid issues with spaces in shebang
-        *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
-        *) "$PREFIX/bin/python" -m conda init --condabin ;;
-    esac
-}
 if [ "$BATCH" = "0" ]; then
 {%- if has_conda %}
 {%-     if initialize_conda == 'condabin' %}
