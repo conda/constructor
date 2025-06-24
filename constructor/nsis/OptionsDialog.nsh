@@ -88,18 +88,22 @@ Function mui_AnaCustomOptions_Show
         # AddToPath is only an option for JustMe installations; it is disabled for AllUsers
         # installations. (Addresses CVE-2022-26526)
         ${If} $InstMode = ${JUST_ME}
-            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add installation to my &PATH environment variable"
+            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add installation to my &PATH \
+                environment variable"
             IntOp $5 $5 + 11
             Pop $mui_AnaCustomOptions.AddToPath
             ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
             ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
-            ${NSD_CreateLabel} 5% "$5u" 90% 20u \
             ${If} "${SHOW_ADD_TO_PATH}" == "condabin"
-                "Adds condabin/, which only contains the 'conda' executables, to PATH. Does not require\
-                special shortcuts but activation needs to be performed manually."
+                ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+                    "Adds condabin/, which only contains the 'conda' executables, to PATH. \
+                    Does not require special shortcuts but activation needs \
+                    to be performed manually."
             ${Else}
-                "NOT recommended. This can lead to conflicts with other applications. Instead, use \
-                the Commmand Prompt and Powershell menus added to the Windows Start Menu."
+                ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+                    "NOT recommended. This can lead to conflicts with other applications. \
+                    Instead, use the Commmand Prompt and Powershell menus added \
+                    to the Windows Start Menu."
             ${EndIf}
             IntOp $5 $5 + 20
             Pop $Ana_AddToPath_Label
