@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Add data type to unsetting environment variables in NSIS. (#1005)
+* Ensure environment variables are properly unset in NSIS by passing the data type explicitly. (#1005)
 
 ### Deprecations
 
