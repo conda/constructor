@@ -93,7 +93,7 @@ SKIP_SCRIPTS=0
 {%- if enable_shortcuts == "true" %}
 SKIP_SHORTCUTS=0
 {%- endif %}
-ADD_CONDABIN={{ 1 if add_condabin_to_path_default else 0 }}
+INIT_CONDA=0
 TEST=0
 REINSTALL=0
 USAGE="
@@ -124,12 +124,8 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 -u           update an existing installation
 {%- if has_conda %}
 -t           run package tests after installation (may install conda-build)
-{%-   if add_condabin_to_path %}
-{%-     if add_condabin_to_path_default %}
--z           do not add PREFIX/condabin to PATH; ignored in interactive mode
-{%-     else %}
--c           add PREFIX/condabin to PATH; ignored in interactive mode
-{%-     endif %}
+{%-   if initialize_conda %}
+-c           run 'conda init{{ ' --condabin' if initialize_conda == 'condabin' else ''}}' after installation
 {%-   endif %}
 {%- endif %}
 "
@@ -142,14 +138,14 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 #}
 {%- set getopts_str = "bifhkp:s" %}
 {%- if enable_shortcuts == "true" %}
-{%- set getopts_str = getopts_str ~ "m" %}
+{%-   set getopts_str = getopts_str ~ "m" %}
 {%- endif %}
 {%- set getopts_str = getopts_str ~ "u" %}
 {%- if has_conda %}
-{%- set getopts_str = getopts_str ~ "t" %}
-{%- if add_condabin_to_path %}
-{%- set getopts_str = getopts_str ~ ("z" if add_condabin_to_path_default else "c") %}
-{%- endif %}
+{%-   set getopts_str = getopts_str ~ "t" %}
+{%-     if initialize_conda %}
+{%-       set getopts_str = getopts_str ~ "c" %}
+{%-     endif %}
 {%- endif %}
 while getopts "{{ getopts_str }}" x; do
     case "$x" in
@@ -187,16 +183,10 @@ while getopts "{{ getopts_str }}" x; do
         t)
             TEST=1
             ;;
-{%-   if add_condabin_to_path %}
-{%-     if add_condabin_to_path_default %}
-        z)
-            ADD_CONDABIN=0
-            ;;
-{%-     else %}
+{%-   if initialize_conda %}
         c)
-            ADD_CONDABIN=1
+            INIT_CONDA=1
             ;;
-{%-     endif %}
 {%-   endif %}
 {%- endif %}
         ?)
@@ -684,9 +674,61 @@ if [ "${PYTHONPATH:-}" != "" ]; then
     printf "    in %s: %s\\n" "${INSTALLER_NAME}" "$PREFIX"
 fi
 
+_maybe_run_conda_init() {
+    case $SHELL in
+        # We call the module directly to avoid issues with spaces in shebang
+        *zsh) "$PREFIX/bin/python" -m conda init zsh ;;
+        *) "$PREFIX/bin/python" -m conda init ;;
+    esac
+    if [ -f "$PREFIX/bin/mamba" ]; then
+        # If the version of mamba is <2.0.0, we preferably use the `mamba` python module
+        # to perform the initialization.
+        #
+        # Otherwise (i.e. as of 2.0.0), we use the `mamba shell init` command
+        if [ "$("$PREFIX/bin/mamba" --version | head -n 1 | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then
+            case $SHELL in
+                # We call the module directly to avoid issues with spaces in shebang
+                *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
+                *) "$PREFIX/bin/python" -m mamba.mamba init ;;
+            esac
+        else
+            case $SHELL in
+                *zsh) "$PREFIX/bin/mamba" shell init --shell zsh ;;
+                *) "$PREFIX/bin/mamba" shell init ;;
+            esac
+        fi
+    fi
+}
+
+_maybe_run_conda_init_condabin() {
+    case $SHELL in
+        # We call the module directly to avoid issues with spaces in shebang
+        *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
+        *) "$PREFIX/bin/python" -m conda init --condabin ;;
+    esac
+}
 if [ "$BATCH" = "0" ]; then
 {%- if has_conda %}
-    {%- if initialize_conda %}
+{%-     if initialize_conda == 'condabin' %}
+    DEFAULT={{ 'yes' if initialize_by_default else 'no' }}
+
+    printf "Do you wish to update your shell profile to add '%s/condabin' to PATH?\\n" "$PREFIX"
+    printf "This will enable you to run 'conda' anywhere, without injecting a shell function.\\n"
+    printf "You can undo this by running \`conda init --condabin --reverse? [yes|no]\\n"
+    printf "[%s] >>> " "$DEFAULT"
+    read -r ans
+    if [ "$ans" = "" ]; then
+        ans=$DEFAULT
+    fi
+    ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+    if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
+    then
+        printf "\\n"
+        printf "'%s/condabin' will not be added to PATH.\\n" "$PREFIX"
+    else
+        _maybe_run_conda_init_condabin
+    fi
+{%-     elif initialize_conda %}
     DEFAULT={{ 'yes' if initialize_by_default else 'no' }}
     # Interactive mode.
 
@@ -717,71 +759,23 @@ if [ "$BATCH" = "0" ]; then
         printf "conda init\\n"
         printf "\\n"
     else
-        case $SHELL in
-            # We call the module directly to avoid issues with spaces in shebang
-            *zsh) "$PREFIX/bin/python" -m conda init zsh ;;
-            *) "$PREFIX/bin/python" -m conda init ;;
-        esac
-        if [ -f "$PREFIX/bin/mamba" ]; then
-            # If the version of mamba is <2.0.0, we preferably use the `mamba` python module
-            # to perform the initialization.
-            #
-            # Otherwise (i.e. as of 2.0.0), we use the `mamba shell init` command
-            if [ "$("$PREFIX/bin/mamba" --version | head -n 1 | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then
-                case $SHELL in
-                    # We call the module directly to avoid issues with spaces in shebang
-                    *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
-                    *) "$PREFIX/bin/python" -m mamba.mamba init ;;
-                esac
-            else
-                case $SHELL in
-                    *zsh) "$PREFIX/bin/mamba" shell init --shell zsh ;;
-                    *) "$PREFIX/bin/mamba" shell init ;;
-                esac
-            fi
-        fi
+        _maybe_run_conda_init
     fi
-    {%- endif %}
-    {%- if add_condabin_to_path %}
-    DEFAULT={{ 'yes' if add_condabin_to_path_default else 'no' }}
-
-    printf "Do you wish to update your shell profile to add '%s/condabin' to PATH?\\n" "$PREFIX"
-    printf "This will enable you to run 'conda' anywhere, without injecting a shell function.\\n"
-    printf "You can undo this by running \`conda init --condabin --reverse? [yes|no]\\n"
-    printf "[%s] >>> " "$DEFAULT"
-    read -r ans
-    if [ "$ans" = "" ]; then
-        ans=$DEFAULT
-    fi
-    ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
-    if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
-    then
-        printf "\\n"
-        printf "'%s/condabin' will not be added to PATH.\\n" "$PREFIX"
-    else
-        case $SHELL in
-            # We call the module directly to avoid issues with spaces in shebang
-            *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
-            *) "$PREFIX/bin/python" -m conda init --condabin ;;
-        esac
-    fi
-    {%- endif %}
+{%-     endif %}
 {%- endif %}
 
     printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"
 {#- End of Interactive mode #}
 {#- Batch mode #}
-{%- if has_conda and add_condabin_to_path %}
-else
-    if [ "$ADD_CONDABIN" = "1" ]
-    then
-        case $SHELL in
-            # We call the module directly to avoid issues with spaces in shebang
-            *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
-            *) "$PREFIX/bin/python" -m conda init --condabin ;;
-        esac
+{%- if has_conda and initialize_conda %}
+elif [ "$INIT_CONDA" = "1" ]; then
+{%-     if initialize_conda == 'condabin' %}
+        _maybe_run_conda_init_condabin
         printf "Added '%s/condabin' to PATH\\n" "$PREFIX"
-    fi
+{%-     else %}
+        _maybe_run_conda_init
+        printf "Initialized '%s' with 'conda init'\\n" "$PREFIX"
+{%-     endif %}
 {%- endif %}
 {#- End of Batch mode #}
 fi

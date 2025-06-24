@@ -72,10 +72,8 @@ def get_header(conda_exec, tarball, info):
         variables["has_%s" % key] = bool(key in info)
         if key in info:
             variables["direct_execute_%s" % key] = has_shebang(info[key])
-    variables["initialize_conda"] = info.get("initialize_conda", True)
+    variables["initialize_conda"] = info.get("initialize_conda", "classic")
     variables["initialize_by_default"] = info.get("initialize_by_default", False)
-    variables["add_condabin_to_path"] = info.get("add_condabin_to_path", False)
-    variables["add_condabin_to_path_default"] = info.get("add_condabin_to_path_default", False)
     variables["has_conda"] = info["_has_conda"]
     variables["enable_shortcuts"] = str(info["_enable_shortcuts"]).lower()
     variables["check_path_spaces"] = info.get("check_path_spaces", True)
