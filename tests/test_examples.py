@@ -27,6 +27,9 @@ if TYPE_CHECKING:
 
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
+elif sys.platform.startswith("win"):
+    import ntsecuritycon as con
+    import win32security
 
 try:
     import coverage  # noqa
@@ -113,7 +116,14 @@ def _check_installer_log(install_dir):
         raise AssertionError("\n".join(error_lines))
 
 
-def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420, check=True):
+def _run_installer_exe(
+    installer,
+    install_dir,
+    installer_input=None,
+    timeout=420,
+    check=True,
+    options: list | None = None,
+):
     """
     NSIS manual:
     > /D sets the default installation directory ($INSTDIR), overriding InstallDir
@@ -139,7 +149,17 @@ def _run_installer_exe(installer, install_dir, installer_input=None, timeout=420
             "to generate an 'install.log' file this script will search for errors "
             "after completion."
         )
-    cmd = ["cmd.exe", "/c", "start", "/wait", installer, "/S", *f"/D={install_dir}".split()]
+    options = options or []
+    cmd = [
+        "cmd.exe",
+        "/c",
+        "start",
+        "/wait",
+        installer,
+        "/S",
+        *options,
+        *f"/D={install_dir}".split(),
+    ]
     process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
     if check:
         _check_installer_log(install_dir)
@@ -198,14 +218,22 @@ def _run_uninstaller_exe(
     return process
 
 
-def _run_installer_sh(installer, install_dir, installer_input=None, timeout=420, check=True):
+def _run_installer_sh(
+    installer,
+    install_dir,
+    installer_input=None,
+    timeout=420,
+    check=True,
+    options: list | None = None,
+):
     if installer_input:
         cmd = ["/bin/sh", installer]
     else:
+        options = options or []
         cmd = ["/bin/sh"]
         if CONSTRUCTOR_DEBUG:
             cmd.append("-x")
-        cmd += [installer, "-b", "-p", install_dir]
+        cmd += [installer, "-b", *options, "-p", install_dir]
     return _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
 
 
@@ -265,6 +293,7 @@ def _run_installer(
     request=None,
     uninstall=True,
     timeout=420,
+    options: list | None = None,
 ) -> subprocess.CompletedProcess:
     if installer.suffix == ".exe":
         process = _run_installer_exe(
@@ -273,6 +302,7 @@ def _run_installer(
             installer_input=installer_input,
             timeout=timeout,
             check=check_subprocess,
+            options=options,
         )
     elif installer.suffix == ".sh":
         process = _run_installer_sh(
@@ -281,6 +311,7 @@ def _run_installer(
             installer_input=installer_input,
             timeout=timeout,
             check=check_subprocess,
+            options=options,
         )
     elif installer.suffix == ".pkg":
         if request and ON_CI:
@@ -957,6 +988,158 @@ def test_condabin(tmp_path, request, monkeypatch):
                 assert str(install_dir / "condabin") in out.split(os.pathsep)
             finally:
                 _run_uninstaller_exe(install_dir, check=True)
+
+
+@pytest.mark.skipif(not ON_CI, reason="CI only")
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_allusers_exe(tmp_path, request):
+    """Ensure that AllUsers installations have the correct permissions for built-in users,
+    domain users, and authenticated users.
+
+    For AllUsers installations, these users should only have read and execute permissions,
+    but no write permissions. Additionally, the installation directory must not inherit from
+    its parent directory (to prevent write access from being propagated). The files inside,
+    however, must have inheritance enabled because the installation process relies on permission
+    inheritance.
+
+    Note that this test is limited to the accounts that the installer changes the permissions for.
+    A more complete test would check all users that have permissions attached to each file and
+    ensure that only local administrators have write access.
+    """
+
+    # See WinNT.h for definitions.
+    # Check the expanded flags because FILE_GENERIC_EXECUTE/READ/WRITE contain flags like
+    # SYNCHRONIZE and READ_CONTROL, which should be set regardless of what the permissions are.
+    # Some flags are duplicates to allow for more fine-grained error messages.
+    # WRITE_FLAGS contains additional flags that are not part of FILE_GENERIC_WRITE, but still
+    # allow for manipulating files.
+    EXECUTE_FLAGS = (
+        con.FILE_EXECUTE,
+        con.FILE_READ_ATTRIBUTES,
+        con.READ_CONTROL,
+        con.SYNCHRONIZE,
+    )
+    READ_FLAGS = (
+        con.FILE_READ_DATA,
+        con.FILE_READ_ATTRIBUTES,
+        con.FILE_READ_EA,
+        con.READ_CONTROL,
+        con.SYNCHRONIZE,
+    )
+    WRITE_FLAGS = (
+        con.DELETE,
+        con.FILE_ADD_FILE,
+        con.FILE_APPEND_DATA,
+        con.FILE_WRITE_DATA,
+        con.FILE_WRITE_EA,
+        con.FILE_WRITE_ATTRIBUTES,
+        con.WRITE_DAC,
+        con.WRITE_OWNER,
+        con.GENERIC_ALL,
+    )
+    SDDL_ABBREVIATIONS = ("AU", "BU", "DU")
+
+    def _get_dacl_information(filepath: Path) -> dict:
+        sd = win32security.GetFileSecurity(str(filepath), win32security.DACL_SECURITY_INFORMATION)
+        dacl_flags = sd.GetSecurityDescriptorControl()[0]
+        dacl_info = {
+            "protected": bool(dacl_flags & win32security.SE_DACL_PROTECTED),
+            "inherited": bool(dacl_flags & win32security.SE_DACL_AUTO_INHERITED),
+            "permissions": {},
+        }
+        dacl = sd.GetSecurityDescriptorDacl()
+        for a in range(dacl.GetAceCount()):
+            ace = dacl.GetAce(a)
+            name, domain, _ = win32security.LookupAccountSid(None, ace[2])
+            name = name.upper()
+            domain = domain.upper()
+            if name == "DOMAIN USERS":
+                sddl_abbreviation = "DU"
+            elif domain == "BUILTIN" and name == "USERS":
+                sddl_abbreviation = "BU"
+            elif domain == "NT AUTHORITY" and name == "AUTHENTICATED USERS":
+                sddl_abbreviation = "AU"
+            else:
+                continue
+            dacl_info["permissions"][sddl_abbreviation] = {
+                "generic_execute": all(ace[1] & flag for flag in READ_FLAGS),
+                "generic_read": all(ace[1] & flag for flag in EXECUTE_FLAGS),
+                "write_access": any(ace[1] & flag for flag in WRITE_FLAGS),
+            }
+
+        return dacl_info
+
+    input_path = _example_path("miniforge")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=False,
+            options=["/InstallationType=AllUsers"],
+        )
+
+        # Test the installation directory
+        dacl = _get_dacl_information(install_dir)
+        assert dacl["protected"], "Installation directory must not inherit permissions."
+        assert len(dacl["permissions"].keys()) > 0, (
+            "Directory permission must include either domain or built-in users"
+        )
+        for acct in SDDL_ABBREVIATIONS:
+            permissions = dacl["permissions"].get(acct)
+            if permissions is None:
+                continue
+            assert not permissions["write_access"], (
+                f"Installation directory must not be writable by {acct}."
+            )
+            if acct == "AU":
+                continue
+            assert permissions["generic_execute"] and permissions["generic_read"], (
+                f"Installation directory must be readable and executable by {acct}"
+            )
+
+        # Test all files inside installation directory
+        incorrect_permissions = {
+            "protected": [],
+            "not_inherited": [],
+            "write_access": {acct: [] for acct in SDDL_ABBREVIATIONS},
+            "bad_read_exec": {acct: [] for acct in SDDL_ABBREVIATIONS if acct != "AU"},
+            "not_set": [],
+        }
+        for file in install_dir.glob("**/*"):
+            dacl = _get_dacl_information(file)
+            if dacl["protected"]:
+                incorrect_permissions["protected"].append(file)
+            if not dacl["inherited"]:
+                incorrect_permissions["not_inherited"].append(file)
+            if len(dacl["permissions"].keys()) == 0:
+                incorrect_permissions["not_set"].append(file)
+                continue
+            for acct, files in incorrect_permissions["write_access"].items():
+                permissions = dacl["permissions"].get(acct)
+                if permissions is not None and permissions["write_access"]:
+                    files.append(file)
+            for acct, files in incorrect_permissions["bad_read_exec"].items():
+                permissions = dacl["permissions"].get(acct)
+                if permissions is not None and not (
+                    permissions["generic_execute"] and permissions["generic_read"]
+                ):
+                    files.append(file)
+        assert incorrect_permissions["protected"] == [], (
+            "Files must not be protected from inheriting permissions"
+        )
+        assert incorrect_permissions["not_inherited"] == [], (
+            "Files must inherit from installation directory"
+        )
+        assert incorrect_permissions["not_set"] == [], (
+            "File permission must include either domain or built-in users"
+        )
+        for acct, files in incorrect_permissions["write_access"].items():
+            assert files == [], f"Files must not have write access for {acct}"
+        for acct, files in incorrect_permissions["bad_read_exec"].items():
+            assert files == [], f"Files must have generic execute and read for {acct}"
 
 
 @pytest.mark.xfail(
