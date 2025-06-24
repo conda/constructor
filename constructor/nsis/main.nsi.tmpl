@@ -703,7 +703,7 @@ Function .onInit
     # Initialize the default settings for the anaconda custom options
     Call mui_AnaCustomOptions_InitDefaults
     # Override custom options with explicitly given values from construct.yaml.
-    # If initialize_by_default / register_python_default / add_condabin_to_path_default
+    # If initialize_by_default / register_python_default
     # are None, do nothing. Note that these variables exist even when the construct.yaml
     # settings are disabled, and the installer will respect them later!
 {%- if initialize_conda %}
