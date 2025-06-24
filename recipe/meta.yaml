@@ -39,6 +39,7 @@ test:
   requires:
     - pip
     - pytest
+    - pywin32  # [win]
   imports:
     - constructor
   commands:
