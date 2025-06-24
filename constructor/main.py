@@ -264,11 +264,13 @@ def main_build(
 
     if initialize_conda := info.get("initialize_conda"):
         if not info.get("_has_conda"):
-            sys.exit("Error: 'add_condabin_to_path' requires 'conda' in the base environment.")
+            sys.exit("Error: 'initialize_conda' requires 'conda' in the base environment.")
         if initialize_conda == "condabin" and platform.startswith(("linux-", "osx-")):
             conda = next(record for record in info.get("_records", ()) if record.name == "conda")
             if Version(conda.version) < Version("25.5.0"):
-                sys.exit("Error: 'add_condabin_to_path' requires 'conda >=25.5.0' in base env.")
+                sys.exit(
+                    "Error: 'initialize_conda == condabin' requires 'conda >=25.5.0' in base env."
+                )
 
     os.makedirs(output_dir, exist_ok=True)
     info_dicts = []
