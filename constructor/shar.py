@@ -89,7 +89,7 @@ def get_header(conda_exec, tarball, info):
     variables["installer_name"] = name
     variables["installer_version"] = info["version"]
     variables["installer_platform"] = info["_platform"]
-    variables["installer_md5"] = hash_files([conda_exec, tarball])
+    variables["installer_md5"] = hash_files([conda_exec, *info["_internal_conda_files"], tarball])
     variables["default_prefix"] = info.get("default_prefix", "${HOME:-/opt}/%s" % name.lower())
     variables["first_payload_size"] = getsize(conda_exec)
     variables["second_payload_size"] = getsize(tarball)
@@ -196,13 +196,13 @@ def create(info, verbose=False):
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
     t.close()
 
-    internal_conda_files = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
-    if internal_conda_files:
+    info["_internal_conda_files"] = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
+    if info["_internal_conda_files"]:
         conda_exe_payloads: dict[str, tuple[int, int, bool]] = {}
         memfile = BytesIO()
         start = 0
         end = 0
-        for path in internal_conda_files:
+        for path in info["_internal_conda_files"]:
             relative_path = str(path.relative_to(tmp_dir))
             memfile.write(path.read_bytes())
             size = os.path.getsize(path)

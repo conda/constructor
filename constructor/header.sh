@@ -473,7 +473,7 @@ cd "$PREFIX"
 unset PYTHON_SYSCONFIGDATA_NAME _CONDA_PYTHON_SYSCONFIGDATA_NAME
 
 # the first binary payload: the standalone conda executable
-printf "Unpacking bootstrapper ...\n"
+printf "Unpacking bootstrapper...\n"
 CONDA_EXEC="$PREFIX/_conda"
 extract_range "${boundary0}" "${boundary1}" > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
