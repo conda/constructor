@@ -1,6 +1,7 @@
 ### Enhancements
 
 * Add support for `conda init --condabin` in `initialize_conda` option. (#960 via #965)
+* SH installers: Add `-c` flag to control whether to run conda initialization in batch mode. (#965)
 
 ### Bug fixes
 
@@ -12,7 +13,7 @@
 
 ### Docs
 
-* <news item>
+* Add new howto section explaining the differences between types of conda initialization. (#965)
 
 ### Other
 
