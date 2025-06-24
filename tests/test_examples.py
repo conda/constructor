@@ -964,6 +964,12 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 def test_condabin(tmp_path, request, monkeypatch):
     input_path = _example_path("condabin")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".exe":
+            options = ["/AddToPath=1"]
+        elif installer.suffix == ".sh":
+            options = ["-c"]
+        else:
+            options = []
         _run_installer(
             input_path,
             installer,
@@ -971,6 +977,7 @@ def test_condabin(tmp_path, request, monkeypatch):
             request=request,
             check_subprocess=True,
             uninstall=False,
+            options=options,
         )
         if sys.platform.startswith(("linux", "darwin")):
             out = subprocess.check_output(
