@@ -7,7 +7,6 @@
 
 Var mui_AnaCustomOptions
 Var mui_AnaCustomOptions.AddToPath
-Var mui_AnaCustomOptions.AddCondabinToPath
 Var mui_AnaCustomOptions.RegisterSystemPython
 Var mui_AnaCustomOptions.PostInstall
 Var mui_AnaCustomOptions.PreInstall
@@ -16,7 +15,6 @@ Var mui_AnaCustomOptions.CreateShortcuts
 
 # These are the checkbox states, to be used by the installer
 Var Ana_AddToPath_State
-Var Ana_AddCondabinToPath_State
 Var Ana_RegisterSystemPython_State
 Var Ana_PostInstall_State
 Var Ana_PreInstall_State
@@ -24,7 +22,6 @@ Var Ana_ClearPkgCache_State
 Var Ana_CreateShortcuts_State
 
 Var Ana_AddToPath_Label
-Var Ana_AddCondabinToPath_Label
 Var Ana_RegisterSystemPython_Label
 Var Ana_ClearPkgCache_Label
 Var Ana_PostInstall_Label
@@ -52,9 +49,6 @@ Function mui_AnaCustomOptions_InitDefaults
         ${Else}
             StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
         ${EndIf}
-    ${EndIf}
-    ${If} $Ana_AddCondabinToPath_State == ""
-        StrCpy $Ana_AddCondabinToPath_State ${BST_UNCHECKED}
     ${EndIf}
 FunctionEnd
 
@@ -90,24 +84,7 @@ Function mui_AnaCustomOptions_Show
         ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
     ${EndIf}
 
-    ${If} "${SHOW_ADD_CONDABIN_TO_PATH}" == "yes"
-        # AddCondabinToPath is only an option for JustMe installations; it is disabled for AllUsers
-        # installations. (Addresses CVE-2022-26526)
-        ${If} $InstMode = ${JUST_ME}
-            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add only condabin/ to my &PATH environment variable"
-            IntOp $5 $5 + 11
-            Pop $mui_AnaCustomOptions.AddCondabinToPath
-            ${NSD_SetState} $mui_AnaCustomOptions.AddCondabinToPath $Ana_AddCondabinToPath_State
-            ${NSD_OnClick} $mui_AnaCustomOptions.AddCondabinToPath AddCondabinToPath_OnClick
-            ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-                "Preferred way to make conda available in PATH. Does not require special shortcuts \
-                but activation needs to be performed manually."
-            IntOp $5 $5 + 20
-            Pop $Ana_AddCondabinToPath_Label
-        ${EndIf}
-    ${EndIf}
-
-    ${If} "${SHOW_ADD_TO_PATH}" == "yes"
+    ${If} "${SHOW_ADD_TO_PATH}" != "no"
         # AddToPath is only an option for JustMe installations; it is disabled for AllUsers
         # installations. (Addresses CVE-2022-26526)
         ${If} $InstMode = ${JUST_ME}
@@ -117,8 +94,13 @@ Function mui_AnaCustomOptions_Show
             ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
             ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
             ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+            ${If} "${SHOW_ADD_TO_PATH}" == "condabin"
+                "Adds condabin/, which only contains the 'conda' executables, to PATH. Does not require\
+                special shortcuts but activation needs to be performed manually."
+            ${Else}
                 "NOT recommended. This can lead to conflicts with other applications. Instead, use \
                 the Commmand Prompt and Powershell menus added to the Windows Start Menu."
+            ${EndIf}
             IntOp $5 $5 + 20
             Pop $Ana_AddToPath_Label
         ${EndIf}
@@ -178,28 +160,18 @@ Function mui_AnaCustomOptions_Show
     nsDialogs::Show
 FunctionEnd
 
-Function AddCondabinToPath_OnClick
-    Pop $0
-
-    ShowWindow $Ana_AddCondabinToPath_Label ${SW_HIDE}
-    ${NSD_GetState} $0 $Ana_AddCondabinToPath_State
-    ${If} $Ana_AddCondabinToPath_State == ${BST_UNCHECKED}
-        SetCtlColors $Ana_AddCondabinToPath_Label 000000 transparent
-    ${Else}
-        SetCtlColors $Ana_AddCondabinToPath_Label 000000 transparent
-    ${EndIf}
-    ShowWindow $Ana_AddCondabinToPath_Label ${SW_SHOW}
-FunctionEnd
-
 Function AddToPath_OnClick
     Pop $0
 
     ShowWindow $Ana_AddToPath_Label ${SW_HIDE}
     ${NSD_GetState} $0 $Ana_AddToPath_State
     ${If} $Ana_AddToPath_State == ${BST_UNCHECKED}
-        SetCtlColors $Ana_AddToPath_Label 000000 transparent
     ${Else}
-        SetCtlColors $Ana_AddToPath_Label ff0000 transparent
+        ${If} "${SHOW_ADD_TO_PATH}" == "condabin"
+            SetCtlColors $Ana_AddToPath_Label 000000 transparent
+        ${Else}
+            SetCtlColors $Ana_AddToPath_Label ff0000 transparent
+        ${EndIf}
     ${EndIf}
     ShowWindow $Ana_AddToPath_Label ${SW_SHOW}
 FunctionEnd
