@@ -1314,8 +1314,10 @@ Section "Install"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
     ${EndIf}
     # Installers should ignore pre-existing configuration files.
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDARC", 0).r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("MAMBARC", 0).r0'
+    # Note: We want to _unset_ these environment variables, not set them to `0`.
+    # This requires passing `0` as an integer, hence the `i` in front.
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDARC", i 0).r0'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("MAMBARC", i 0).r0'
 
     ${If} '{{ VIRTUAL_SPECS }}' != ''
     # We need to specify CONDA_SOLVER=classic for conda-standalone
