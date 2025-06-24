@@ -560,7 +560,7 @@ Function .onInit
 {%- if TEMP_EXTRA_FILES | length != 0 %}
     SetOutPath $PLUGINSDIR
 {%- for file in TEMP_EXTRA_FILES %}
-    File {{ file }}
+    File "{{ file }}"
 {%- endfor %}
 {%- endif %}
     !insertmacro ParseCommandLineArgs
@@ -1268,9 +1268,9 @@ Section "Install"
     File {{ pre_uninstall }}
 
 {%- for path, files in EXTRA_FILES | items %}
-    SetOutPath {{ path }}
+    SetOutPath "{{ path }}"
 {%- for file in files %}
-    File {{ file }}
+    File "{{ file }}"
 {%- endfor %}
 {%- endfor %}
 
