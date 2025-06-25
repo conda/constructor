@@ -961,6 +961,10 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 
 
 @pytest.mark.skipif(not ON_CI, reason="Run on CI only")
+@pytest.mark.skipif(
+    ON_CI and sys.platform == "win32",
+    reason="PATH modification only allowed on non-admin accounts, but CI runs on an admin account."
+)
 def test_condabin(tmp_path, request, monkeypatch):
     input_path = _example_path("condabin")
     for installer, install_dir in create_installer(input_path, tmp_path):
