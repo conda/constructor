@@ -163,11 +163,11 @@ jobs:
           set -x
           rm -rf coverage.json
           # Run pytest with new regular user
-          paexec.exe -u regular -p tBV+V-EKV6 -lo output.txt \
-            $CONDA_PREFIX\python.exe -m pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user" \
-            || cat output.exe
-          cat output.txt
-          grep -q "0 failed" output.txt
+          echo "cd $PWD" > runtest.bat
+          echo "$CONDA_PREFIX\python.exe -m pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m requires_windows_user > pytest-output.txt" >> runtest.bat
+          paexec.exe -u regular -p tBV+V-EKV6 runtest.bat
+          cat pytest-output.txt
+          grep -q "0 failed" pytest-output.txt
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
