@@ -157,6 +157,7 @@ jobs:
           # Cleanup
           rm -rf coverage.json
           # Download paexec (psexec alternative)
+          choco install wget --no-progress 
           wget -q https://www.poweradmin.com/paexec/paexec.exe
           # Add user
           net user regular p@ssw0rd /add
