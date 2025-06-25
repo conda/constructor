@@ -147,7 +147,7 @@ jobs:
         if: startswith(matrix.os, 'windows')
         shell: powershell
         run: |
-          Invoke-WebRequest https://www.poweradmin.com/paexec/paexec.exe -OutFile paexec.exe
+          Invoke-WebRequest https://www.poweradmin.com/paexec/paexec.exe -OutFile "C:\Windows\System32\paexec.exe"
           net user regular tBV+V-EKV6 /add
       - name: Run examples that need specific Windows users
         if: startswith(matrix.os, 'windows')
@@ -162,7 +162,7 @@ jobs:
         run: |
           rm -rf coverage.json
           # Run pytest with new regular user
-          ./paexec.exe -u regular -p tBV+V-EKV6 -lo output.txt -w . \
+          paexec.exe -u regular -p tBV+V-EKV6 -lo output.txt -w . \
             pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user"
           cat output.txt
           grep -q "0 failed" output.txt
