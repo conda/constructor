@@ -160,10 +160,12 @@ jobs:
           CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
+          set -x
           rm -rf coverage.json
           # Run pytest with new regular user
-          paexec.exe -u regular -p tBV+V-EKV6 -lo output.txt -w . \
-            $CONDA_PREFIX/python.exe -m pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user"
+          paexec.exe -u regular -p tBV+V-EKV6 -lo output.txt \
+            $CONDA_PREFIX\python.exe -m pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user" \
+            || cat output.exe
           cat output.txt
           grep -q "0 failed" output.txt
           coverage run --branch --append -m constructor -V
