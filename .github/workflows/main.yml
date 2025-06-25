@@ -163,7 +163,7 @@ jobs:
           rm -rf coverage.json
           # Run pytest with new regular user
           paexec.exe -u regular -p tBV+V-EKV6 -lo output.txt -w . \
-            pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user"
+            $CONDA_PREFIX/python.exe -m pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user"
           cat output.txt
           grep -q "0 failed" output.txt
           coverage run --branch --append -m constructor -V
