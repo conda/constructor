@@ -164,7 +164,8 @@ jobs:
         run: |
           # Run pytest with new regular user
           echo "$env:CONDA_PREFIX\python.exe -m pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m requires_windows_user > pytest-output.txt" > runtest.bat
-          paexec -u regular -p tBV+V-EKV6 -lo paexec-output.txt runtest.bat || cat paexec-output.txt
+          paexec -u regular -p tBV+V-EKV6 -lo paexec-output.txt runtest.bat
+          cat paexec-output.txt
           cat pytest-output.txt
           grep -q "0 failed" pytest-output.txt
       - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
