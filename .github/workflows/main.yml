@@ -142,9 +142,15 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
-      - name: Run examples that need specific Windows users
+      - name: Set up regular Windows user
         # See https://stackoverflow.com/a/74259961
         if: startswith(matrix.os, 'windows')
+        shell: powershell
+        run: |
+          choco install wget --no-progress
+          wget -q https://www.poweradmin.com/paexec/paexec.exe
+          net user regular p4ssw0rd /add
+      - name: Run examples that need specific Windows users
         env:
           AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE }}
           AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID }}
@@ -154,13 +160,7 @@ jobs:
           CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
-          # Cleanup
           rm -rf coverage.json
-          # Download paexec (psexec alternative)
-          choco install wget --no-progress 
-          wget -q https://www.poweradmin.com/paexec/paexec.exe
-          # Add user
-          cmd.exe /C "net user regular p4ssw0rd /add"
           # Run pytest with new regular user
           ./paexec.exe -u regular -p p4ssw0rd -lo output.txt -w . \
             pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user"
@@ -168,6 +168,10 @@ jobs:
           grep -q "0 failed" output.txt
           coverage run --branch --append -m constructor -V
           coverage json
+      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: integration-windows-regular-user
       - name: Run examples
         env:
           AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE }}
