@@ -961,13 +961,13 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 
 
 @pytest.mark.skipif(not ON_CI, reason="Run on CI only")
-@pytest.mark.skipif(not ON_CI, reason="Run on CI only")
-@pytest.mark.skipif(not sys.platform.startswith(("linux", "darwin")), reason="Unix only")
-def test_condabin_unix(tmp_path, request, monkeypatch):
+def test_condabin(tmp_path, request, monkeypatch):
     input_path = _example_path("condabin")
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             options = ["-c"]
+        elif installer.suffix == ".exe":
+            options = ["/AddToPath=1"]
         else:
             options = []
         _run_installer(
@@ -979,38 +979,31 @@ def test_condabin_unix(tmp_path, request, monkeypatch):
             uninstall=False,
             options=options,
         )
-        out = subprocess.check_output(
-            f"'{os.environ.get('SHELL', 'bash')}' -lc 'echo $PATH'",
-            shell=True,
-            text=True,
-        )
-        assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
+        if installer.suffix == ".exe":
+            try:
+                import winreg
 
-
-@pytest.mark.skipif(not ON_CI, reason="Run on CI only")
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
-@pytest.mark.requires_windows_user
-def test_condabin_windows(tmp_path, request, monkeypatch):
-    input_path = _example_path("condabin")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            check_subprocess=True,
-            uninstall=False,
-            options=["/AddToPath=1"],
-        )
-        try:
+                paths = []
+                for root, keyname in (
+                    (winreg.HKEY_CURRENT_USER, r"Environment"),
+                    (
+                        winreg.HKEY_LOCAL_MACHINE,
+                        r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
+                    ),
+                ):
+                    with winreg.OpenKey(root, keyname, 0, winreg.KEY_QUERY_VALUE) as key:
+                        value = winreg.QueryValueEx(key, "PATH")[0]
+                        paths += value.strip().split(os.pathsep)
+                assert str(install_dir / "condabin") in paths
+            finally:
+                _run_uninstaller_exe(install_dir, check=True)
+        else:
             out = subprocess.check_output(
-                'cmd /V:ON /C "echo !PATH!"',
+                f"'{os.environ.get('SHELL', 'bash')}' -lc 'echo $PATH'",
                 shell=True,
                 text=True,
             )
             assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
-        finally:
-            _run_uninstaller_exe(install_dir, check=True)
 
 
 @pytest.mark.skipif(not ON_CI, reason="CI only")

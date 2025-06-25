@@ -86,5 +86,4 @@ select = [
 [tool.pytest.ini_options]
 markers = [
     "examples",
-    "requires_windows_user",
 ]
