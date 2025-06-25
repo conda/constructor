@@ -151,6 +151,7 @@ jobs:
           wget -q https://www.poweradmin.com/paexec/paexec.exe
           net user regular p4ssw0rd /add
       - name: Run examples that need specific Windows users
+        if: startswith(matrix.os, 'windows')
         env:
           AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE }}
           AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID }}
