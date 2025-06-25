@@ -142,6 +142,31 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
+      - name: Run examples that need specific Windows users
+        # See https://stackoverflow.com/a/74259961
+        if: startswith(matrix.os, 'windows')
+        env:
+          AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE }}
+          AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID }}
+          AZURE_SIGNTOOL_KEY_VAULT_SECRET: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_SECRET }}
+          AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID }}
+          AZURE_SIGNTOOL_KEY_VAULT_URL: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_URL }}
+          CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
+          CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
+        run: |
+          # Cleanup
+          rm -rf coverage.json
+          # Download paexec (psexec alternative)
+          wget -q https://www.poweradmin.com/paexec/paexec.exe
+          # Add user
+          net user regular p@ssw0rd /add
+          # Run pytest with new regular user
+          ./paexec.exe -u regular -p p@ssw0rd -lo output.txt -w . \
+            pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "requires_windows_user"
+          cat output.txt
+          grep -q "0 failed" output.txt
+          coverage run --branch --append -m constructor -V
+          coverage json
       - name: Run examples
         env:
           AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE }}
@@ -153,7 +178,7 @@ jobs:
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
-          pytest -vv --cov=constructor --cov-branch tests/test_examples.py
+          pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m "not requires_windows_user"
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3

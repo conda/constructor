@@ -961,12 +961,12 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 
 
 @pytest.mark.skipif(not ON_CI, reason="Run on CI only")
-def test_condabin(tmp_path, request, monkeypatch):
+@pytest.mark.skipif(not ON_CI, reason="Run on CI only")
+@pytest.mark.skipif(not sys.platform.startswith(("linux", "darwin")), reason="Unix only")
+def test_condabin_unix(tmp_path, request, monkeypatch):
     input_path = _example_path("condabin")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        if installer.suffix == ".exe":
-            options = ["/AddToPath=1"]
-        elif installer.suffix == ".sh":
+        if installer.suffix == ".sh":
             options = ["-c"]
         else:
             options = []
@@ -979,22 +979,38 @@ def test_condabin(tmp_path, request, monkeypatch):
             uninstall=False,
             options=options,
         )
-        if sys.platform.startswith(("linux", "darwin")):
+        out = subprocess.check_output(
+            f"'{os.environ.get('SHELL', 'bash')}' -lc 'echo $PATH'",
+            shell=True,
+            text=True,
+        )
+        assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
+
+
+@pytest.mark.skipif(not ON_CI, reason="Run on CI only")
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+@pytest.mark.requires_windows_user
+def test_condabin_windows(tmp_path, request, monkeypatch):
+    input_path = _example_path("condabin")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=False,
+            options=["/AddToPath=1"],
+        )
+        try:
             out = subprocess.check_output(
-                f"'{os.environ.get('SHELL', 'bash')}' -lc 'echo $PATH'",
+                'cmd /V:ON /C "echo !PATH!"',
                 shell=True,
                 text=True,
             )
-        else:  # Windows
-            try:
-                out = subprocess.check_output(
-                    'cmd /V:ON /C "echo !PATH!"',
-                    shell=True,
-                    text=True,
-                )
-                assert str(install_dir / "condabin") in out.split(os.pathsep)
-            finally:
-                _run_uninstaller_exe(install_dir, check=True)
+            assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
+        finally:
+            _run_uninstaller_exe(install_dir, check=True)
 
 
 @pytest.mark.skipif(not ON_CI, reason="CI only")
