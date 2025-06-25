@@ -147,8 +147,7 @@ jobs:
         if: startswith(matrix.os, 'windows')
         shell: powershell
         run: |
-          choco install wget --no-progress
-          wget -q https://www.poweradmin.com/paexec/paexec.exe
+          Invoke-WebRequest https://www.poweradmin.com/paexec/paexec.exe -OutFile paexec.exe
           net user regular p4ssw0rd /add
       - name: Run examples that need specific Windows users
         if: startswith(matrix.os, 'windows')
