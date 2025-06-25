@@ -695,7 +695,7 @@ if [ "${PYTHONPATH:-}" != "" ]; then
     printf "    in %s: %s\\n" "${INSTALLER_NAME}" "$PREFIX"
 fi
 {% if has_conda %}
-{%- if initialize_conda == 'condabin'%}
+{%- if initialize_conda == 'condabin' %}
 _maybe_run_conda_init_condabin() {
     case $SHELL in
         # We call the module directly to avoid issues with spaces in shebang
