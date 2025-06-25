@@ -165,7 +165,7 @@ jobs:
           # Run pytest with new regular user
           echo "cd $PWD" > runtest.bat
           echo "$CONDA_PREFIX\python.exe -m pytest -vv --cov=constructor --cov-branch tests/test_examples.py -m requires_windows_user > pytest-output.txt" >> runtest.bat
-          paexec.exe -u regular -p tBV+V-EKV6 -lo paexec-output.txt runtest.bat || cat paexec-output.txt pytest-output.txt && exit 1
+          paexec -u regular -p tBV+V-EKV6 -lo paexec-output.txt runtest.bat || cat paexec-output.txt pytest-output.txt && exit 1
           cat pytest-output.txt
           grep -q "0 failed" pytest-output.txt
           coverage run --branch --append -m constructor -V
