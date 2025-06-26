@@ -856,6 +856,20 @@
       "description": "A list of packages with menu items to be installed. The packages must have necessary metadata in `Menu/<package name>.json`. By default, all menu items found in the installation will be created; supplying this list allows a subset to be selected instead. If an empty list is supplied, no shortcuts will be created.\nIf all environments (`extra_envs` included) set `menu_packages` to an empty list, no UI options about shortcuts will be offered to the user.\nNote: This option is not fully implemented when `micromamba` is used as the `--conda-exe` binary. The only accepted value is an empty list (`[]`).",
       "title": "Menu Packages"
     },
+    "mirrored_channels": {
+      "default": {},
+      "type": "object",
+      "description": "A mapping of channels to their mirror URLs. Each channel maps to a list of mirror URLs that will be used as fallbacks.",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "uri",
+          "description": "Mirror URL for the channel"
+        },
+        "minItems": 1
+      }
+    },
     "name": {
       "description": "Name of the installer. Names may be composed of letters, numbers, underscores, dashes, and periods, but must not begin or end with a dash or period.",
       "minLength": 1,
