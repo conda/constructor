@@ -375,7 +375,7 @@
   "properties": {
     "$schema": {
       "default": "https://schemas.conda.org/constructor/v0/construct.schema.json",
-      "description": "JSONmmmmmmmmm Schema URL or path used to validate this input file.",
+      "description": "JSON Schema URL or path used to validate this input file.",
       "minLength": 1,
       "title": "$Schema",
       "type": "string"
