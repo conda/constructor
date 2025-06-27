@@ -9,6 +9,11 @@ license_file: EULA.txt
 channels:
   - conda-forge
 
+mirrored_channels:
+  conda-forge:
+    - "https://conda.anaconda.org/conda-forge"
+    - "https://repo.prefix.dev/conda-forge"
+
 write_condarc: True
 keep_pkgs: True
 transmute_file_type: .conda
