@@ -137,6 +137,7 @@ def add_condarc(info):
         default_channels = info.get("conda_default_channels")
         channel_alias = info.get("conda_channel_alias")
         channels = info.get("channels")
+        mirrored_channels = info.get("mirrored_channels")
         if not (write_condarc and (default_channels or channels or channel_alias)):
             return
         condarc = {}
@@ -146,6 +147,8 @@ def add_condarc(info):
             condarc["channels"] = channels
         if channel_alias:
             condarc["channel_alias"] = channel_alias
+        if mirrored_channels and info.get("_conda_exe_type") == StandaloneExe.MAMBA:
+            condarc["mirrored_channels"] = mirrored_channels
     if isinstance(condarc, dict):
         condarc = yaml_to_string(condarc)
     yield "# ----- add condarc"
