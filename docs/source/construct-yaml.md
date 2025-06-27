@@ -89,11 +89,11 @@ mirror URLs that will be used as fallbacks. Example use:
 ```yaml
 mirrored_channels:
   conda-forge:
-    - https://conda.anaconda.org/conda-forge
-    - https://conda.anaconda.org/conda-forge-mirror
+    - "https://conda.anaconda.org/conda-forge"
+    - "https://conda.anaconda.org/conda-forge-mirror"
   defaults:
-    - https://repo.anaconda.com/pkgs/main
-    - https://repo.anaconda.com/pkgs/main-mirror
+    - "https://repo.anaconda.com/pkgs/main"
+    - "https://repo.anaconda.com/pkgs/main-mirror"
 ```
 
 ### `specs`
