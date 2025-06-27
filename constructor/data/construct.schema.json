@@ -375,7 +375,7 @@
   "properties": {
     "$schema": {
       "default": "https://schemas.conda.org/constructor/v0/construct.schema.json",
-      "description": "JSON Schema URL or path used to validate this input file.",
+      "description": "JSONmmmmmmmmm Schema URL or path used to validate this input file.",
       "minLength": 1,
       "title": "$Schema",
       "type": "string"
@@ -859,7 +859,7 @@
     "mirrored_channels": {
       "default": {},
       "type": "object",
-      "description": "A mapping of channels to their mirror URLs. Each channel maps to a list of mirror URLs that will be used as fallbacks.",
+      "description": "A mapping of channels to their mirror URLs. Each channel maps to a list of mirror URLs that will be used as fallbacks. Example use:\n\n```yaml\nmirrored_channels:\n  conda-forge:\n    - https://conda.anaconda.org/conda-forge\n    - https://conda.anaconda.org/conda-forge-mirror\n  defaults:\n    - https://repo.anaconda.com/pkgs/main\n    - https://repo.anaconda.com/pkgs/main-mirror\n```",
       "additionalProperties": {
         "type": "array",
         "items": {

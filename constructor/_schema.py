@@ -242,6 +242,21 @@ class ConstructorConfiguration(BaseModel):
 
     At least one channel must be supplied, either in `channels` or `channels_remap`.
     """
+    mirrored_channels: dict[NonEmptyStr, list[NonEmptyStr]] = {}
+    """
+    A mapping of channels to their mirror URLs. Each channel maps to a list of
+    mirror URLs that will be used as fallbacks. Example use:
+
+    ```yaml
+    mirrored_channels:
+        conda-forge:
+            - https://conda.anaconda.org/conda-forge
+            - https://conda.anaconda.org/conda-forge-mirror
+        defaults:
+            - https://repo.anaconda.com/pkgs/main
+            - https://repo.anaconda.com/pkgs/main-mirror
+    ```
+    """
     specs: list[NonEmptyStr] | NonEmptyStr = []
     """
     A list of package specifications; e.g. `python 2.7*`, `pyzmq` or `numpy >=1.8`.
