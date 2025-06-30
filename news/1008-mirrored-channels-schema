@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add support for `mirrored_channels` in `construct.yaml`. These mirrored channels are included in the resulting `.condarc` if one is created. (#1008)
+* Add support for `mirrored_channels` in `construct.yaml`. These mirrored channels are included in the resulting `.condarc` file if one is created. (#1008)
 
 ### Bug fixes
 
