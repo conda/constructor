@@ -473,6 +473,12 @@ def test_example_extra_files(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
+def test_example_mirrored_channels(tmp_path, request):
+    input_path = _example_path("mirrored_channels")
+    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
+        _run_installer(input_path, installer, install_dir, request=request)
+
+
 @pytest.mark.xfail(
     (
         CONDA_EXE == StandaloneExe.CONDA
