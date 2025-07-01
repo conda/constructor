@@ -147,7 +147,8 @@ def add_condarc(info):
             condarc["channels"] = channels
         if channel_alias:
             condarc["channel_alias"] = channel_alias
-        if mirrored_channels and info.get("_conda_exe_type") == StandaloneExe.MAMBA:
+        # The mirrored_channels key is only supported by mamba
+        if mirrored_channels and "mamba" in info.get("specs", []):
             condarc["mirrored_channels"] = mirrored_channels
     if isinstance(condarc, dict):
         condarc = yaml_to_string(condarc)
