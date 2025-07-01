@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: Mirrors
+version: X
+
+channels:
+  - conda-forge
+
+mirrored_channels:
+  conda-forge:
+    - "https://conda.anaconda.org/conda-forge"
+    - "https://repo.prefix.dev/conda-forge"
+
+write_condarc: True
+
+specs:
+  - python
+  - mamba
+
+post_install: test_install.sh   # [unix]
+post_install: test_install.bat  # [win]
