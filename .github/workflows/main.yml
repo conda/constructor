@@ -91,7 +91,6 @@ jobs:
       - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
         with:
           activate-environment: constructor-dev
-          auto-update-conda: true
           environment-file: dev/environment.yml
           python-version: ${{ matrix.python-version }}
       - name: Install AzureSignTool
@@ -100,6 +99,9 @@ jobs:
         shell: pwsh
       - name: Supply extra dependencies and install constructor
         run: |
+          # Update conda in the base environment.
+          # Do not use auto-update-conda in setup-miniconda to allow for hotfixes.
+          conda update conda -n base -y
           files=(--file "tests/requirements.txt")
           test -f dev/extra-requirements-${{ runner.os }}.txt \
             && files+=(--file "dev/extra-requirements-${{ runner.os }}.txt")
