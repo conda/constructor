@@ -271,6 +271,12 @@ def remove_from_path(root_prefix=None):
 
 
 def add_to_path(pyversion, arch):
+    if allusers:
+        # To address CVE-2022-26526.
+        # In AllUsers install mode, do not allow PATH manipulation.
+        print("PATH manipulation is disabled in All Users mode.", file=sys.stderr)
+        return
+
     from _system_path import (
         add_to_system_path,
         broadcast_environment_settings_change,
@@ -293,6 +299,22 @@ def add_to_path(pyversion, arch):
     # add Anaconda to the path
     add_to_system_path([os.path.normpath(os.path.join(ROOT_PREFIX, path_suffix))
                         for path_suffix in PATH_SUFFIXES], allusers)
+    broadcast_environment_settings_change()
+
+
+def add_condabin_to_path():
+    if allusers:
+        # To address CVE-2022-26526.
+        # In AllUsers install mode, do not allow PATH manipulation.
+        print("PATH manipulation is disabled in All Users mode.", file=sys.stderr)
+        return
+
+    from _system_path import (
+        add_to_system_path,
+        broadcast_environment_settings_change,
+    )
+
+    add_to_system_path(os.path.normpath(os.path.join(ROOT_PREFIX, "condabin")), allusers)
     broadcast_environment_settings_change()
 
 
@@ -373,6 +395,8 @@ def main():
         else:
             arch = '32-bit' if tuple.__itemsize__ == 4 else '64-bit'
         add_to_path(pyver, arch)
+    elif cmd == 'addcondabinpath':
+        add_condabin_to_path()
     elif cmd == 'rmpath':
         remove_from_path()
     elif cmd == 'pre_uninstall':

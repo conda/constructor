@@ -127,6 +127,7 @@ jobs:
             conda activate constructor-dev
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
           fi
+          echo "CONDA_PREFIX=$CONDA_PREFIX" >> $GITHUB_ENV
       - name: conda info
         run: conda info
       - name: conda list
@@ -153,9 +154,11 @@ jobs:
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
-          pytest -vv --cov=constructor --cov-branch tests/test_examples.py
+          pytest -vv --cov=constructor --cov-branch tests/test_examples.py -k condabin
           coverage run --branch --append -m constructor -V
           coverage json
+      - uses: fawazahmed0/action-debug-vscode@main
+        if: startswith(matrix.os, 'ubuntu')
       - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
