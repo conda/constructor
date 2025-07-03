@@ -477,6 +477,25 @@ def test_example_mirrored_channels(tmp_path, request):
     input_path = _example_path("mirrored_channels")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+        expected_condarc = (
+            "channels:"
+            "- conda-forge"
+            "mirrored_channels:"
+            "conda-forge:"
+            "- https://conda.anaconda.org/conda-forge"
+            "- https://conda.anaconda.org/mirror1"
+            "- https://conda.anaconda.org/mirror2"
+        )
+        with open(install_dir / ".condarc") as f:
+            condarc = f.read()
+
+        # Remove whitespaces for comparison
+        condarc_plain = "".join(condarc.split())
+        expected_condarc_plain = "".join(expected_condarc.split())
+
+        assert condarc_plain == expected_condarc_plain, (
+            f"Expected:\n{expected_condarc}\nGot:\n{condarc}\nin {install_dir / '.condarc'}"
+        )
 
 
 @pytest.mark.xfail(
