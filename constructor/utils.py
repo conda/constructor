@@ -138,7 +138,7 @@ def add_condarc(info):
         channel_alias = info.get("conda_channel_alias")
         channels = info.get("channels")
         mirrored_channels = info.get("mirrored_channels")
-        if not (write_condarc and (default_channels or channels or channel_alias)):
+        if not (write_condarc and (default_channels or channels or channel_alias or mirrored_channels)):
             return
         condarc = {}
         if default_channels:
