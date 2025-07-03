@@ -147,9 +147,14 @@ def add_condarc(info):
             condarc["channels"] = channels
         if channel_alias:
             condarc["channel_alias"] = channel_alias
-        # The mirrored_channels key is only supported by mamba
-        if mirrored_channels and "mamba" in info.get("specs", []):
-            condarc["mirrored_channels"] = mirrored_channels
+        if mirrored_channels:
+            if "mamba" in info.get("specs", []):
+                condarc["mirrored_channels"] = mirrored_channels
+            else:
+                logger.warning(
+                    "The 'mirrored_channels' key is only supported by mamba. "
+                    "It will not be included in the installer."
+                )
     if isinstance(condarc, dict):
         condarc = yaml_to_string(condarc)
     yield "# ----- add condarc"
