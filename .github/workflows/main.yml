@@ -99,9 +99,6 @@ jobs:
         shell: pwsh
       - name: Supply extra dependencies and install constructor
         run: |
-          # Update conda in the base environment.
-          # Do not use auto-update-conda in setup-miniconda to allow for hotfixes.
-          conda update conda -n base -y
           files=(--file "tests/requirements.txt")
           test -f dev/extra-requirements-${{ runner.os }}.txt \
             && files+=(--file "dev/extra-requirements-${{ runner.os }}.txt")
@@ -112,6 +109,8 @@ jobs:
           echo "NSIS_SCRIPTS_RAISE_ERRORS=1" >> $GITHUB_ENV
           pip install -e . --no-deps --no-build-isolation
       - name: Set up conda executable
+        env:
+          CONDA_DEBUG: 1
         run: |
           if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
             conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge micromamba
