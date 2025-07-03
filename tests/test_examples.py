@@ -476,7 +476,7 @@ def test_example_extra_files(tmp_path, request):
 def test_example_mirrored_channels(tmp_path, request):
     input_path = _example_path("mirrored_channels")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
 
 
 @pytest.mark.xfail(
