@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: Mirrors
+version: X
+
+channels:
+  - conda-forge
+
+mirrored_channels:
+  conda-forge:
+    - "https://conda.anaconda.org/conda-forge"
+    - "https://conda.anaconda.org/mirror1"
+    - "https://conda.anaconda.org/mirror2"
+
+write_condarc: True
+
+specs:
+  - python
+  - mamba
