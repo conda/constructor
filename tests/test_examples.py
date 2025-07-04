@@ -13,6 +13,7 @@ from datetime import timedelta
 from functools import cache
 from pathlib import Path
 from plistlib import load as plist_load
+from ruamel.yaml import YAML
 from typing import TYPE_CHECKING
 
 import pytest
@@ -477,28 +478,25 @@ def test_example_mirrored_channels(tmp_path, request):
     input_path = _example_path("mirrored_channels")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
-        expected_condarc = (
-            "channels:"
-            "- conda-forge"
-            "mirrored_channels:"
-            "conda-forge:"
-            "- https://conda.anaconda.org/conda-forge"
-            "- https://conda.anaconda.org/mirror1"
-            "- https://conda.anaconda.org/mirror2"
-        )
+
+        expected_condarc = {
+            "channels": ["conda-forge"],
+            "mirrored_channels": {
+            "conda-forge": [
+                "https://conda.anaconda.org/conda-forge",
+                "https://conda.anaconda.org/mirror1",
+                "https://conda.anaconda.org/mirror2",
+            ]
+            },
+        }
+
         condarc_file = install_dir / ".condarc"
         assert condarc_file.exists()
-        with open(condarc_file) as f:
-            condarc = f.read()
 
-        # Remove whitespaces for comparison
-        condarc_plain = "".join(condarc.split())
-        expected_condarc_plain = "".join(expected_condarc.split())
+        with open(condarc_file) as file:
+            condarc_data = YAML().load(file)
 
-        assert condarc_plain == expected_condarc_plain, (
-            f"Expected:\n{expected_condarc}\nGot:\n{condarc}\nin {install_dir / '.condarc'}"
-        )
-
+        assert condarc_data == expected_condarc
 
 @pytest.mark.xfail(
     (
