@@ -486,7 +486,9 @@ def test_example_mirrored_channels(tmp_path, request):
             "- https://conda.anaconda.org/mirror1"
             "- https://conda.anaconda.org/mirror2"
         )
-        with open(install_dir / ".condarc") as f:
+        condarc_file = install_dir / ".condarc"
+        assert condarc_file.exists()
+        with open(condarc_file) as f:
             condarc = f.read()
 
         # Remove whitespaces for comparison
