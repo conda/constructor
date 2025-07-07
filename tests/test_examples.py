@@ -1017,10 +1017,16 @@ def test_initialization(tmp_path, request, monkeypatch, method):
             finally:
                 _run_uninstaller_exe(install_dir, check=True)
         else:
-            out = subprocess.check_output(
-                [os.environ.get("SHELL", "bash"), "-lc", "echo $PATH"],
-                text=True,
-            )
+            if sys.platform.startswith("linux"):
+                out = subprocess.check_output(
+                    ["bash", "--rcfile", f"{os.environ['HOME']}/.bashrc", "-c", "echo $PATH"],
+                    text=True,
+                )
+            else:
+                out = subprocess.check_output(
+                    [os.environ.get("SHELL", "bash"), "-lc", "echo $PATH"],
+                    text=True,
+                )
             if method == "condabin":
                 assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
             else:
