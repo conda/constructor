@@ -963,7 +963,7 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 
 @pytest.mark.skipif(not ON_CI, reason="Run on CI only")
 @pytest.mark.parametrize("method", ("classic", "condabin"))
-def test_init(tmp_path, request, monkeypatch, method):
+def test_initialization(tmp_path, request, monkeypatch, method):
     if sys.platform.startswith("win"):
         request.applymarker(
             pytest.mark.xfail(
