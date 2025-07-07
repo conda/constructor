@@ -150,7 +150,7 @@ def add_condarc(info):
         if channel_alias:
             condarc["channel_alias"] = channel_alias
         if mirrored_channels:
-            if "mamba" in info.get("specs", []):
+            if "mamba" in {MatchSpec(spec).name for spec in info.get("specs", ())}:
                 condarc["mirrored_channels"] = mirrored_channels
             else:
                 logger.warning(
