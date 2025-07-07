@@ -971,6 +971,9 @@ def test_initialization(tmp_path, request, monkeypatch, method):
                 reason="not supported for admin accounts",
             )
         )
+    request.addfinalizer(
+        lambda: subprocess.run([sys.executable, "-m", "conda", "init", "--reverse"])
+    )
     monkeypatch.setenv("initialization_method", method)
     input_path = _example_path("initialization")
     for installer, install_dir in create_installer(input_path, tmp_path):
