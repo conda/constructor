@@ -245,10 +245,12 @@ class ConstructorConfiguration(BaseModel):
     mirrored_channels: dict[NonEmptyStr, list[NonEmptyStr]] = {}
     """
     A mapping of channels to their mirror URLs. Each channel maps to a list of
-    mirror URLs that will be used as fallbacks.
-    
-    Requires `mamba` in the `base` environment.
-    
+    mirror URLs that will be used as fallbacks. The mirrored channels will be
+    included in the `.condarc` file of the installer.
+
+    Requires `mamba` to be listed in the `base` environment, and `write_condarc`
+    to be `True`.
+
     Example use:
 
     ```yaml
