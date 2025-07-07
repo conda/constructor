@@ -964,13 +964,6 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 @pytest.mark.skipif(not ON_CI, reason="Run on CI only")
 @pytest.mark.parametrize("method", ("classic", "condabin"))
 def test_initialization(tmp_path, request, monkeypatch, method):
-    if sys.platform.startswith("win"):
-        request.applymarker(
-            pytest.mark.xfail(
-                ctypes.windll.shell32.IsUserAnAdmin(),
-                reason="not supported for admin accounts",
-            )
-        )
     request.addfinalizer(
         lambda: subprocess.run([sys.executable, "-m", "conda", "init", "--reverse"])
     )
@@ -980,6 +973,8 @@ def test_initialization(tmp_path, request, monkeypatch, method):
         if installer.suffix == ".sh":
             options = ["-c"]
         elif installer.suffix == ".exe":
+            # GHA runs on an admin user account, but AllUsers (admin) installs
+            # do not add to PATH due to CVE-2022-26526, so force single user install
             options = ["/AddToPath=1", "/InstallationType=JustMe"]
         else:
             options = []
