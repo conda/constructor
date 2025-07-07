@@ -865,7 +865,7 @@
         "type": "array"
       },
       "default": {},
-      "description": "A mapping of channels to their mirror URLs. Each channel maps to a list of mirror URLs that will be used as fallbacks. Example use:\n```yaml\nmirrored_channels:\n  conda-forge:\n    - \"https://conda.anaconda.org/conda-forge\"\n    - \"https://conda.anaconda.org/conda-forge-mirror\"\n  defaults:\n    - \"https://repo.anaconda.com/pkgs/main\"\n    - \"https://repo.anaconda.com/pkgs/main-mirror\"\n```",
+      "description": "A mapping of channels to their mirror URLs. Each channel maps to a list of mirror URLs that will be used as fallbacks. The mirrored channels will be included in the `.condarc` file of the installer.\nRequires `mamba` to be listed in the `base` environment, and `write_condarc` to be `True`.\nExample use:\n```yaml\nmirrored_channels:\n  conda-forge:\n    - \"https://conda.anaconda.org/conda-forge\"\n    - \"https://conda.anaconda.org/conda-forge-mirror\"\n  defaults:\n    - \"https://repo.anaconda.com/pkgs/main\"\n    - \"https://repo.anaconda.com/pkgs/main-mirror\"\n```",
       "propertyNames": {
         "minLength": 1
       },
