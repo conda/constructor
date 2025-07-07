@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import getpass
 import json
 import os
@@ -961,17 +962,22 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
 
 
 @pytest.mark.skipif(not ON_CI, reason="Run on CI only")
-@pytest.mark.skipif(
-    ON_CI and sys.platform == "win32",
-    reason="PATH modification only allowed on non-admin accounts, but CI runs on an admin account.",
-)
-def test_condabin(tmp_path, request, monkeypatch):
-    input_path = _example_path("condabin")
+@pytest.mark.parametrize("method", ("classic", "condabin"))
+def test_init(tmp_path, request, monkeypatch, method):
+    if sys.platform.startswith("win"):
+        request.applymarker(
+            pytest.mark.xfail(
+                ctypes.windll.shell32.IsUserAnAdmin(),
+                reason="not supported for admin accounts",
+            )
+        )
+    monkeypatch.setenv("initialization_method", method)
+    input_path = _example_path("initialization")
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             options = ["-c"]
         elif installer.suffix == ".exe":
-            options = ["/AddToPath=1"]
+            options = ["/AddToPath=1", "/InstallationType=JustMe"]
         else:
             options = []
         _run_installer(
@@ -998,7 +1004,13 @@ def test_condabin(tmp_path, request, monkeypatch):
                     with winreg.OpenKey(root, keyname, 0, winreg.KEY_QUERY_VALUE) as key:
                         value = winreg.QueryValueEx(key, "PATH")[0]
                         paths += value.strip().split(os.pathsep)
-                assert str(install_dir / "condabin") in paths
+                if method == "condabin":
+                    assert str(install_dir / "condabin") in paths
+                else:
+                    assert str(install_dir) in paths
+                    assert str(install_dir / "Scripts") in paths
+                    assert str(install_dir / "Library" / "bin") in paths
+
             finally:
                 _run_uninstaller_exe(install_dir, check=True)
         else:
@@ -1007,7 +1019,10 @@ def test_condabin(tmp_path, request, monkeypatch):
                 shell=True,
                 text=True,
             )
-            assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
+            if method == "condabin":
+                assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
+            else:
+                assert str(install_dir / "bin") in out.strip().split(os.pathsep)
 
 
 @pytest.mark.skipif(not ON_CI, reason="CI only")

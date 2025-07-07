@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=../../constructor/data/construct.schema.json
 "$schema": "../../constructor/data/construct.schema.json"
 
-name: condabin
+name: initialization
 
 version: 0.0.1
 
@@ -13,7 +13,7 @@ channels:
 specs:
   - conda >=25.5.0
 
-initialize_conda: "condabin"
+initialize_conda: '{{ os.environ.get("initialization_method", "condabin") }}'
 initialize_by_default: true
 register_python: false
 check_path_spaces: true
