@@ -13,7 +13,7 @@ channels:
 specs:
   - conda >=25.5.0
 
-initialize_conda: '{{ os.environ.get("initialization_method", "condabin") }}'
+initialize_conda: {{ os.environ.get("initialization_method", "condabin") }}
 initialize_by_default: true
 register_python: false
 check_path_spaces: true
