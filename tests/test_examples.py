@@ -1017,8 +1017,10 @@ def test_initialization(tmp_path, request, monkeypatch, method):
             finally:
                 _run_uninstaller_exe(install_dir, check=True)
         else:
+            # GHA's Ubuntu needs interactive, but macOS wants login :shrug:
+            login_flag = "-i" if sys.platform.startswith("linux") else "-l"
             out = subprocess.check_output(
-                [os.environ.get("SHELL", "bash"), "-ic", "echo $PATH"],
+                [os.environ.get("SHELL", "bash"), login_flag, "-c", "echo $PATH"],
                 text=True,
             )
             if method == "condabin":
