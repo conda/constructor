@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ctypes
 import getpass
 import json
 import os
