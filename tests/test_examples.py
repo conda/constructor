@@ -13,13 +13,13 @@ from datetime import timedelta
 from functools import cache
 from pathlib import Path
 from plistlib import load as plist_load
-from ruamel.yaml import YAML
 from typing import TYPE_CHECKING
 
 import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
+from ruamel.yaml import YAML
 
 from constructor.utils import StandaloneExe, identify_conda_exe
 
@@ -482,11 +482,11 @@ def test_example_mirrored_channels(tmp_path, request):
         expected_condarc = {
             "channels": ["conda-forge"],
             "mirrored_channels": {
-            "conda-forge": [
-                "https://conda.anaconda.org/conda-forge",
-                "https://conda.anaconda.org/mirror1",
-                "https://conda.anaconda.org/mirror2",
-            ]
+                "conda-forge": [
+                    "https://conda.anaconda.org/conda-forge",
+                    "https://conda.anaconda.org/mirror1",
+                    "https://conda.anaconda.org/mirror2",
+                ]
             },
         }
 
@@ -497,6 +497,7 @@ def test_example_mirrored_channels(tmp_path, request):
             condarc_data = YAML().load(file)
 
         assert condarc_data == expected_condarc
+
 
 @pytest.mark.xfail(
     (
