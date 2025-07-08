@@ -16,4 +16,4 @@
 
 ### Other
 
-* Always use the latest `conda` version for tests. (#1011)
+* Use Miniforge to install test dependencies. (#1011)
