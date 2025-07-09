@@ -130,6 +130,8 @@ def preprocess(data, namespace):
 
 
 def add_condarc(info):
+    from .conda_interface import MatchSpec  # prevent circular import
+
     condarc = info.get("condarc")
     if condarc is None:
         # The legacy approach
