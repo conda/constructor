@@ -234,7 +234,10 @@ def _run_installer_sh(
         if CONSTRUCTOR_DEBUG:
             cmd.append("-x")
         cmd += [installer, "-b", *options, "-p", install_dir]
-    return _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
+    process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
+    if "WARNING: md5sum mismatch of tar archive" in process.stdout + process.stderr:
+        raise AssertionError("MD5 mismatch in SH payload!")
+    return process
 
 
 def _run_installer_pkg(
