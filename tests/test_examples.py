@@ -19,6 +19,7 @@ import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
+from ruamel.yaml import YAML
 
 from constructor.utils import StandaloneExe, identify_conda_exe
 
@@ -471,6 +472,31 @@ def test_example_extra_files(tmp_path, request):
     input_path = _example_path("extra_files")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
         _run_installer(input_path, installer, install_dir, request=request)
+
+
+def test_example_mirrored_channels(tmp_path, request):
+    input_path = _example_path("mirrored_channels")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+
+        expected_condarc = {
+            "channels": ["conda-forge"],
+            "mirrored_channels": {
+                "conda-forge": [
+                    "https://conda.anaconda.org/conda-forge",
+                    "https://conda.anaconda.org/mirror1",
+                    "https://conda.anaconda.org/mirror2",
+                ]
+            },
+        }
+
+        condarc_file = install_dir / ".condarc"
+        assert condarc_file.exists()
+
+        with open(condarc_file) as file:
+            condarc_data = YAML().load(file)
+
+        assert condarc_data == expected_condarc
 
 
 @pytest.mark.xfail(

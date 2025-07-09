@@ -130,6 +130,8 @@ def preprocess(data, namespace):
 
 
 def add_condarc(info):
+    from .conda_interface import MatchSpec  # prevent circular import
+
     condarc = info.get("condarc")
     if condarc is None:
         # The legacy approach
@@ -137,7 +139,10 @@ def add_condarc(info):
         default_channels = info.get("conda_default_channels")
         channel_alias = info.get("conda_channel_alias")
         channels = info.get("channels")
-        if not (write_condarc and (default_channels or channels or channel_alias)):
+        mirrored_channels = info.get("mirrored_channels")
+        if not (
+            write_condarc and (default_channels or channels or channel_alias or mirrored_channels)
+        ):
             return
         condarc = {}
         if default_channels:
@@ -146,6 +151,14 @@ def add_condarc(info):
             condarc["channels"] = channels
         if channel_alias:
             condarc["channel_alias"] = channel_alias
+        if mirrored_channels:
+            if "mamba" in {MatchSpec(spec).name for spec in info.get("specs", ())}:
+                condarc["mirrored_channels"] = mirrored_channels
+            else:
+                logger.warning(
+                    "The 'mirrored_channels' key is only supported by mamba. "
+                    "It will not be included in the installer."
+                )
     if isinstance(condarc, dict):
         condarc = yaml_to_string(condarc)
     yield "# ----- add condarc"
