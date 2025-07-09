@@ -93,6 +93,7 @@ SKIP_SCRIPTS=0
 {%- if enable_shortcuts == "true" %}
 SKIP_SHORTCUTS=0
 {%- endif %}
+INIT_CONDA=0
 TEST=0
 REINSTALL=0
 USAGE="
@@ -123,18 +124,30 @@ Installs ${INSTALLER_NAME} ${INSTALLER_VER}
 -u           update an existing installation
 {%- if has_conda %}
 -t           run package tests after installation (may install conda-build)
+{%-   if initialize_conda %}
+-c           run 'conda init{{ ' --condabin' if initialize_conda == 'condabin' else ''}}' after installation (only applies to batch mode)
+{%-   endif %}
 {%- endif %}
 "
 
+{#-
 # We used to have a getopt version here, falling back to getopts if needed
 # However getopt is not standardized and the version on Mac has different
 # behaviour. getopts is good enough for what we need :)
 # More info: https://unix.stackexchange.com/questions/62950/
+#}
+{%- set getopts_str = "bifhkp:s" %}
 {%- if enable_shortcuts == "true" %}
-while getopts "bifhkp:smut" x; do
-{%- else %}
-while getopts "bifhkp:sut" x; do
+{%-   set getopts_str = getopts_str ~ "m" %}
 {%- endif %}
+{%- set getopts_str = getopts_str ~ "u" %}
+{%- if has_conda %}
+{%-   set getopts_str = getopts_str ~ "t" %}
+{%-     if initialize_conda %}
+{%-       set getopts_str = getopts_str ~ "c" %}
+{%-     endif %}
+{%- endif %}
+while getopts "{{ getopts_str }}" x; do
     case "$x" in
         h)
             printf "%s\\n" "$USAGE"
@@ -170,6 +183,11 @@ while getopts "bifhkp:sut" x; do
         t)
             TEST=1
             ;;
+{%-   if initialize_conda %}
+        c)
+            INIT_CONDA=1
+            ;;
+{%-   endif %}
 {%- endif %}
         ?)
             printf "ERROR: did not recognize option '%s', please try -h\\n" "$x"
@@ -514,7 +532,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # the third binary payload: the tarball of packages
-printf "Unpacking payload ...\n"
+printf "Unpacking payload...\n"
 extract_range "${boundary2}" "${boundary3}" | \
     CONDA_QUIET="$BATCH" "$CONDA_EXEC" constructor --extract-tarball --prefix "$PREFIX"
 
@@ -547,12 +565,14 @@ MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
 export FORCE
 
+{#-
 # original issue report:
 # https://github.com/ContinuumIO/anaconda-issues/issues/11148
 # First try to fix it (this apparently didn't work; QA reported the issue again)
 # https://github.com/conda/conda/pull/9073
 # Avoid silent errors when $HOME is not writable
 # https://github.com/conda/constructor/pull/669
+#}
 test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda || mkdir ~/.conda
 
 printf "\nInstalling base environment...\n\n"
@@ -635,7 +655,6 @@ rm -rf "$PREFIX/install_tmp"
 export TMP="$TMP_BACKUP"
 
 
-#The templating doesn't support nested if statements
 {%- if has_post_install %}
 if [ "$SKIP_SCRIPTS" = "1" ]; then
     printf "WARNING: skipping post_install.sh by user request\\n" >&2
@@ -675,9 +694,66 @@ if [ "${PYTHONPATH:-}" != "" ]; then
     printf "    directories of packages that are compatible with the Python interpreter\\n"
     printf "    in %s: %s\\n" "${INSTALLER_NAME}" "$PREFIX"
 fi
+{% if has_conda %}
+{%- if initialize_conda == 'condabin' %}
+_maybe_run_conda_init_condabin() {
+    case $SHELL in
+        # We call the module directly to avoid issues with spaces in shebang
+        *zsh) "$PREFIX/bin/python" -m conda init --condabin zsh ;;
+        *) "$PREFIX/bin/python" -m conda init --condabin ;;
+    esac
+}
+{%- elif initialize_conda %}
+_maybe_run_conda_init() {
+    case $SHELL in
+        # We call the module directly to avoid issues with spaces in shebang
+        *zsh) "$PREFIX/bin/python" -m conda init zsh ;;
+        *) "$PREFIX/bin/python" -m conda init ;;
+    esac
+    if [ -f "$PREFIX/bin/mamba" ]; then
+        # If the version of mamba is <2.0.0, we preferably use the `mamba` python module
+        # to perform the initialization.
+        #
+        # Otherwise (i.e. as of 2.0.0), we use the `mamba shell init` command
+        if [ "$("$PREFIX/bin/mamba" --version | head -n 1 | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then
+            case $SHELL in
+                # We call the module directly to avoid issues with spaces in shebang
+                *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
+                *) "$PREFIX/bin/python" -m mamba.mamba init ;;
+            esac
+        else
+            case $SHELL in
+                *zsh) "$PREFIX/bin/mamba" shell init --shell zsh ;;
+                *) "$PREFIX/bin/mamba" shell init ;;
+            esac
+        fi
+    fi
+}
+{%- endif %}
+{%- endif %}
 
 if [ "$BATCH" = "0" ]; then
-{%- if has_conda and initialize_conda %}
+{%- if has_conda %}
+{%-     if initialize_conda == 'condabin' %}
+    DEFAULT={{ 'yes' if initialize_by_default else 'no' }}
+
+    printf "Do you wish to update your shell profile to add '%s/condabin' to PATH?\\n" "$PREFIX"
+    printf "This will enable you to run 'conda' anywhere, without injecting a shell function.\\n"
+    printf "You can undo this by running \`conda init --condabin --reverse? [yes|no]\\n"
+    printf "[%s] >>> " "$DEFAULT"
+    read -r ans
+    if [ "$ans" = "" ]; then
+        ans=$DEFAULT
+    fi
+    ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+    if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
+    then
+        printf "\\n"
+        printf "'%s/condabin' will not be added to PATH.\\n" "$PREFIX"
+    else
+        _maybe_run_conda_init_condabin
+    fi
+{%-     elif initialize_conda %}
     DEFAULT={{ 'yes' if initialize_by_default else 'no' }}
     # Interactive mode.
 
@@ -708,34 +784,26 @@ if [ "$BATCH" = "0" ]; then
         printf "conda init\\n"
         printf "\\n"
     else
-        case $SHELL in
-            # We call the module directly to avoid issues with spaces in shebang
-            *zsh) "$PREFIX/bin/python" -m conda init zsh ;;
-            *) "$PREFIX/bin/python" -m conda init ;;
-        esac
-        if [ -f "$PREFIX/bin/mamba" ]; then
-            # If the version of mamba is <2.0.0, we preferably use the `mamba` python module
-            # to perform the initialization.
-            #
-            # Otherwise (i.e. as of 2.0.0), we use the `mamba shell init` command
-            if [ "$("$PREFIX/bin/mamba" --version | head -n 1 | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then
-                case $SHELL in
-                    # We call the module directly to avoid issues with spaces in shebang
-                    *zsh) "$PREFIX/bin/python" -m mamba.mamba init zsh ;;
-                    *) "$PREFIX/bin/python" -m mamba.mamba init ;;
-                esac
-            else
-                case $SHELL in
-                    *zsh) "$PREFIX/bin/mamba" shell init --shell zsh ;;
-                    *) "$PREFIX/bin/mamba" shell init ;;
-                esac
-            fi
-        fi
+        _maybe_run_conda_init
     fi
+{%-     endif %}
 {%- endif %}
 
     printf "Thank you for installing %s!\\n" "${INSTALLER_NAME}"
-fi # !BATCH
+{#- End of Interactive mode #}
+{#- Batch mode #}
+{%- if has_conda and initialize_conda %}
+elif [ "$INIT_CONDA" = "1" ]; then
+{%-     if initialize_conda == 'condabin' %}
+        printf "Adding '%s/condabin' to PATH...\\n" "$PREFIX"
+        _maybe_run_conda_init_condabin
+{%-     else %}
+        printf "Initializing '%s' with 'conda init'...\\n" "$PREFIX"
+        _maybe_run_conda_init
+{%-     endif %}
+{%- endif %}
+{#- End of Batch mode #}
+fi
 
 
 {%- if has_conda %}
