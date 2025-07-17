@@ -20,6 +20,7 @@ Authors are sorted alphabetically.
 * Gonzalo Pena-Castellanos
 * Ian Henriksen
 * Ilan Schnell
+* Isabel Paredes
 * Isuru Fernando
 * Jaime Rodríguez-Guerra
 * Jannis Leidel
@@ -67,5 +68,8 @@ Authors are sorted alphabetically.
 * XuehaiPan
 * astaric
 * bkreider
+* conda-bot
+* dependabot[bot]
 * guimondmm
+* pre-commit-ci[bot]
 * y2kbugger
