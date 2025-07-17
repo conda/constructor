@@ -487,8 +487,8 @@ def test_example_miniforge(tmp_path, request, example):
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
             # try both batch and interactive installations
-            install_dirs = install_dir / "batch", install_dir / "interactive"
-            installer_inputs = None, f"\nyes\n{install_dir / 'interactive'}\nno\n"
+            install_dirs = (install_dir / "batch", install_dir / "interactive")
+            installer_inputs = (None, f"\nyes\n{install_dir / 'interactive'}\nno\nno\n")
         else:
             install_dirs = (install_dir,)
             installer_inputs = (None,)
@@ -961,6 +961,69 @@ def test_virtual_specs_override(tmp_path, request, monkeypatch):
             check_subprocess=True,
             uninstall=True,
         )
+
+
+@pytest.mark.skipif(not ON_CI, reason="Run on CI only")
+@pytest.mark.parametrize("method", ("classic", "condabin"))
+def test_initialization(tmp_path, request, monkeypatch, method):
+    request.addfinalizer(
+        lambda: subprocess.run([sys.executable, "-m", "conda", "init", "--reverse"])
+    )
+    monkeypatch.setenv("initialization_method", method)
+    input_path = _example_path("initialization")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".sh":
+            options = ["-c"]
+        elif installer.suffix == ".exe":
+            # GHA runs on an admin user account, but AllUsers (admin) installs
+            # do not add to PATH due to CVE-2022-26526, so force single user install
+            options = ["/AddToPath=1", "/InstallationType=JustMe"]
+        else:
+            options = []
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=False,
+            options=options,
+        )
+        if installer.suffix == ".exe":
+            try:
+                import winreg
+
+                paths = []
+                for root, keyname in (
+                    (winreg.HKEY_CURRENT_USER, r"Environment"),
+                    (
+                        winreg.HKEY_LOCAL_MACHINE,
+                        r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
+                    ),
+                ):
+                    with winreg.OpenKey(root, keyname, 0, winreg.KEY_QUERY_VALUE) as key:
+                        value = winreg.QueryValueEx(key, "PATH")[0]
+                        paths += value.strip().split(os.pathsep)
+                if method == "condabin":
+                    assert str(install_dir / "condabin") in paths
+                else:
+                    assert str(install_dir) in paths
+                    assert str(install_dir / "Scripts") in paths
+                    assert str(install_dir / "Library" / "bin") in paths
+
+            finally:
+                _run_uninstaller_exe(install_dir, check=True)
+        else:
+            # GHA's Ubuntu needs interactive, but macOS wants login :shrug:
+            login_flag = "-i" if sys.platform.startswith("linux") else "-l"
+            out = subprocess.check_output(
+                [os.environ.get("SHELL", "bash"), login_flag, "-c", "echo $PATH"],
+                text=True,
+            )
+            if method == "condabin":
+                assert str(install_dir / "condabin") in out.strip().split(os.pathsep)
+            else:
+                assert str(install_dir / "bin") in out.strip().split(os.pathsep)
 
 
 @pytest.mark.skipif(not ON_CI, reason="CI only")

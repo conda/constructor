@@ -35,6 +35,14 @@
       "title": "ChannelRemap",
       "type": "object"
     },
+    "CondaInitialization": {
+      "enum": [
+        "classic",
+        "condabin"
+      ],
+      "title": "CondaInitialization",
+      "type": "string"
+    },
     "ExtraEnv": {
       "additionalProperties": false,
       "properties": {
@@ -749,14 +757,21 @@
         }
       ],
       "default": null,
-      "description": "Default value for the option added by `initialize_conda`. The default is true for GUI installers (EXE, PKG) and false for shell installers. The user is able to change the default during interactive installation. NOTE: For Windows, `AddToPath` is disabled when `InstallationType=AllUsers`.\nOnly applies if `initialize_conda` is true.",
+      "description": "Default value for the option added by `initialize_conda`. The default is true for GUI installers (EXE, PKG) and false for shell installers. The user is able to change the default during interactive installation. NOTE: For Windows, `AddToPath` is disabled when `InstallationType=AllUsers`.\nOnly applies if `initialize_conda` is not false.",
       "title": "Initialize By Default"
     },
     "initialize_conda": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CondaInitialization"
+        },
+        {
+          "type": "boolean"
+        }
+      ],
       "default": true,
-      "description": "Add an option to the installer so the user can choose whether to run `conda init` after the installation (Unix), or to add certain subdirectories of the installation to PATH (Windows). See also `initialize_by_default`.",
-      "title": "Initialize Conda",
-      "type": "boolean"
+      "description": "Add an option to the installer so the user can choose whether to run `conda init` after the installation (Unix), or to add certain subdirectories of the installation to PATH (Windows). Requires `conda` to be part of the `base` environment. Valid options:\n- `classic` or `True`: runs `conda init` on Unix, which injects a shell function in the  shell profiles. On Windows, it adds `$INSTDIR`, `$INSTDIR/Scripts`, `$INSTDIR/Library/bin`  to `PATH`. This is the default.\n- `condabin`: only adds `$INSTDIR/condabin` to `PATH`. On Unix, `conda>=25.5.0` is required  in `base`.\n- `False`: the installer doesn't perform initialization.\nSee also `initialize_by_default`.",
+      "title": "Initialize Conda"
     },
     "install_in_dependency_order": {
       "anyOf": [

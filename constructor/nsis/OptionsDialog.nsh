@@ -42,13 +42,13 @@ Function mui_AnaCustomOptions_InitDefaults
         ${Else}
             StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
         ${EndIf}
-	${If} $Ana_CreateShortcuts_State == ""
+    ${EndIf}
+    ${If} $Ana_CreateShortcuts_State == ""
         ${If} "${ENABLE_SHORTCUTS}" == "yes"
             StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
         ${Else}
             StrCpy $Ana_CreateShortcuts_State ${BST_UNCHECKED}
         ${EndIf}
-    ${EndIf}
     ${EndIf}
 FunctionEnd
 
@@ -84,18 +84,27 @@ Function mui_AnaCustomOptions_Show
         ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
     ${EndIf}
 
-    ${If} "${SHOW_ADD_TO_PATH}" == "yes"
+    ${If} "${SHOW_ADD_TO_PATH}" != "no"
         # AddToPath is only an option for JustMe installations; it is disabled for AllUsers
         # installations. (Addresses CVE-2022-26526)
         ${If} $InstMode = ${JUST_ME}
-            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add ${NAME} to my &PATH environment variable"
+            ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Add installation to my &PATH \
+                environment variable"
             IntOp $5 $5 + 11
             Pop $mui_AnaCustomOptions.AddToPath
             ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
             ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
-            ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-                "NOT recommended. This can lead to conflicts with other applications. Instead, use \
-                the Commmand Prompt and Powershell menus added to the Windows Start Menu."
+            ${If} "${SHOW_ADD_TO_PATH}" == "condabin"
+                ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+                    "Adds condabin/, which only contains the 'conda' executables, to PATH. \
+                    Does not require special shortcuts but activation needs \
+                    to be performed manually."
+            ${Else}
+                ${NSD_CreateLabel} 5% "$5u" 90% 20u \
+                    "NOT recommended. This can lead to conflicts with other applications. \
+                    Instead, use the Commmand Prompt and Powershell menus added \
+                    to the Windows Start Menu."
+            ${EndIf}
             IntOp $5 $5 + 20
             Pop $Ana_AddToPath_Label
         ${EndIf}
@@ -113,7 +122,7 @@ Function mui_AnaCustomOptions_Show
         ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython $Ana_RegisterSystemPython_State
         ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython RegisterSystemPython_OnClick
         ${NSD_CreateLabel} 5% "$5u" 90% 20u \
-            "Recommended. Allows other programs, such as VSCode, PyCharm, etc. to automatically \
+            "Allows other programs, such as VSCode, PyCharm, etc. to automatically \
             detect ${NAME} as the primary Python ${PY_VER} on the system."
         IntOp $5 $5 + 20
         Pop $Ana_RegisterSystemPython_Label
@@ -161,9 +170,12 @@ Function AddToPath_OnClick
     ShowWindow $Ana_AddToPath_Label ${SW_HIDE}
     ${NSD_GetState} $0 $Ana_AddToPath_State
     ${If} $Ana_AddToPath_State == ${BST_UNCHECKED}
-        SetCtlColors $Ana_AddToPath_Label 000000 transparent
     ${Else}
-        SetCtlColors $Ana_AddToPath_Label ff0000 transparent
+        ${If} "${SHOW_ADD_TO_PATH}" == "condabin"
+            SetCtlColors $Ana_AddToPath_Label 000000 transparent
+        ${Else}
+            SetCtlColors $Ana_AddToPath_Label ff0000 transparent
+        ${EndIf}
     ${EndIf}
     ShowWindow $Ana_AddToPath_Label ${SW_SHOW}
 FunctionEnd

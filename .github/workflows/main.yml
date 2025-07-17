@@ -127,6 +127,7 @@ jobs:
             conda activate constructor-dev
             echo "CONSTRUCTOR_CONDA_EXE=$CONDA_PREFIX/standalone_conda/conda.exe" >> $GITHUB_ENV
           fi
+          echo "CONDA_PREFIX=$CONDA_PREFIX" >> $GITHUB_ENV
       - name: conda info
         run: conda info
       - name: conda list

@@ -68,7 +68,8 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         register_envs=True,
         virtual_specs="__osx>=10.13",
         no_rcs_arg="",
-        script_env_variables="",
+        script_env_variables={},
+        initialize_conda="condabin",
     )
 
     findings, returncode = run_shellcheck(processed)
@@ -85,7 +86,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("keep_pkgs", [True])
 @pytest.mark.parametrize("has_conda", [False, True])
 @pytest.mark.parametrize("has_license", [True])
-@pytest.mark.parametrize("initialize_conda", [True])
+@pytest.mark.parametrize("initialize_conda", [True, "classic", "condabin", False])
 @pytest.mark.parametrize("initialize_by_default", [True])
 @pytest.mark.parametrize("has_post_install", [True])
 @pytest.mark.parametrize("has_pre_install", [False])

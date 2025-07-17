@@ -201,3 +201,57 @@ finding these files may rely on environment variables, especially `$HOME`.
 For more detailed implementation notes, see the documentation of the standalone application:
 
 * [conda-standalone](https://github.com/conda/conda-standalone)
+
+
+## Control how `conda` runs on your machine
+
+The traditional installation mechanism for `conda` is for the `constructor`-generated installer to
+run the initialization logic once the files have been copied into the target directory `$INSTDIR`:
+
+
+`````{tab-set}
+````{tab-item} Windows
+```pwsh
+%INSTDIR%\_conda.exe init --all
+```
+````
+````{tab-item} Linux & macOS
+```bash
+$INSTDIR/bin/conda init --all
+```
+````
+`````
+
+On most shells, `conda init` will modify your shell configuration (`.bashrc` and similar files) to
+inject a `conda` shell function that wraps the actual Python `conda` modules (see [activation deep
+dive guide][activation-deepdive] for more details). This is needed so that `conda activate` and
+`conda deactivate` can modify the state of the current shell session.
+
+While very convenient, this shell logic requires significant modifications in the shell profiles
+and also adds a runtime overhead everytime a shell session starts. For users that prefer a simpler
+`PATH`-based initialization strategy, a alternative method is provided with `conda 25.5.0` and
+later:
+
+```
+conda init --condabin
+````
+
+This new option only adds `$INSTDIR/condabin` to `PATH`, which is a minimally invasive change to
+your shell configuration and has no runtime overhead. This directory is special because it is
+guaranteed to only contain the `conda` executables and nothing else.
+
+As an installer author, you can control which of these options are made available to the end user:
+
+- `initialize_conda: classic`: the classic, shell-function-based initialization logic. Default.
+- `initialize_conda: condabin`: the new, lightweight PATH-only logic.
+
+
+:::{note}
+The `--condabin` initialization won't be sufficient to run `conda activate`, and `conda` will error
+out saying you need to fully initialize your installation. This might get fixed in the future, but
+for now, you can rely on an experimental plugin to use a different activation strategy that doesn't
+require shell modifications: [`conda-spawn`](https://github.com/conda-incubator/conda-spawn). Add
+it to your `specs` definition and it will be available in your installations as `conda spawn`.
+:::
+
+[activation-deepdive]: https://docs.conda.io/projects/conda/en/stable/dev-guide/deep-dives/activation.html

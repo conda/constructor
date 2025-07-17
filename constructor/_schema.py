@@ -50,6 +50,11 @@ class PkgDomains(StrEnum):
     LOCAL_SYSTEM = "enable_localSystem"
 
 
+class CondaInitialization(StrEnum):
+    CLASSIC = "classic"
+    CONDABIN = "condabin"
+
+
 class ChannelRemap(BaseModel):
     model_config: ConfigDict = _base_config_dict
 
@@ -649,11 +654,20 @@ class ConstructorConfiguration(BaseModel):
     If `header_image` is not provided, use this text when generating the image
     (Windows only). Defaults to `name`.
     """
-    initialize_conda: bool = True
+    initialize_conda: CondaInitialization | bool = True
     """
     Add an option to the installer so the user can choose whether to run `conda init`
     after the installation (Unix), or to add certain subdirectories of the installation
-    to PATH (Windows). See also `initialize_by_default`.
+    to PATH (Windows). Requires `conda` to be part of the `base` environment. Valid options:
+
+    - `classic` or `True`: runs `conda init` on Unix, which injects a shell function in the
+      shell profiles. On Windows, it adds `$INSTDIR`, `$INSTDIR/Scripts`, `$INSTDIR/Library/bin`
+      to `PATH`. This is the default.
+    - `condabin`: only adds `$INSTDIR/condabin` to `PATH`. On Unix, `conda>=25.5.0` is required
+      in `base`.
+    - `False`: the installer doesn't perform initialization.
+
+    See also `initialize_by_default`.
     """
     initialize_by_default: bool | None = None
     """
@@ -662,7 +676,7 @@ class ConstructorConfiguration(BaseModel):
     is able to change the default during interactive installation. NOTE: For Windows,
     `AddToPath` is disabled when `InstallationType=AllUsers`.
 
-    Only applies if `initialize_conda` is true.
+    Only applies if `initialize_conda` is not false.
     """
     register_python: bool = True
     """
