@@ -1,5 +1,35 @@
 [//]: # (current developments)
 
+## 2025-07-17   3.12.0:
+### Enhancements
+
+* Add support for `mirrored_channels` in `construct.yaml`. These mirrored channels are included in the resulting `.condarc` file if one is created. (#1008)
+* Add JSON Schema for `construct.yml`, defined with a Pydantic model (not used at runtime). (#943, #979)
+* Add support for `conda init --condabin` in `initialize_conda` option. (#960 via #965)
+* SH installers: Add `-c` flag to control whether to run conda initialization in batch mode. (#1004 via #965)
+* Add compatibility for `onedir` variants of `conda-standalone`, which are pre-extracted and have smaller start overheads. (#993, #1007)
+
+### Bug fixes
+
+* Ensure environment variables are properly unset in NSIS by passing the data type explicitly. (#1005)
+* EXE installers: Enable inheriting permissions of all files inside the installation directory
+  for `AllUsers` installations. (#828 via #991)
+
+### Deprecations
+
+* Remove deprecated `constructor.construct.generate_docs()` function. Use `scripts/make_docs.py` instead. (#943)
+
+### Docs
+
+* Remove inaccurate typing information from the `construct.yml` fields documentation. Full and accurate details are now available in the JSON Schema. (#943)
+* Add new howto section explaining the differences between types of conda initialization. (#965)
+
+### Other
+
+* Pin `pydantic` to `v2.11.*` in test environment for consistent schema output. (#971 via #972)
+
+
+
 ## 2025-03-20   3.11.3:
 ### Bug fixes
 
