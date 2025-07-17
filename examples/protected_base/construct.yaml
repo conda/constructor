@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: ProtectedBaseEnv
+version: X
+installer_type: all
+
+channels:
+  - conda-forge
+
+specs:
+  - python=3.10
+  - conda
+  - conda-self
+  - miniforge_console_shortcut  # [win]
+
+extra_envs:
+  default:
+    specs:
+      - python=3.10
+      - pip
+
+write_condarc: true
+condarc:
+  channels: 
+    - conda-forge
+  default_activation_env: default
+
+extra_files:
+  - frozen.json: conda-meta/frozen
