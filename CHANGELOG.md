@@ -3,7 +3,7 @@
 ## 2025-07-17   3.12.0:
 ### Enhancements
 
-* Add support for `mirrored_channels` in `construct.yaml`. These mirrored channels are included in the resulting `.condarc` file if one is created. (#1008)
+* Add support for `mirrored_channels` in `construct.yaml`. These mirrored channels are included in the resulting `.condarc` file if one is created. `mamba` only. (#1008)
 * Add JSON Schema for `construct.yml`, defined with a Pydantic model (not used at runtime). (#943, #979)
 * Add support for `conda init --condabin` in `initialize_conda` option. (#960 via #965)
 * SH installers: Add `-c` flag to control whether to run conda initialization in batch mode. (#1004 via #965)
@@ -27,6 +27,16 @@
 ### Other
 
 * Pin `pydantic` to `v2.11.*` in test environment for consistent schema output. (#971 via #972)
+
+### Contributors
+
+* @IsabelParedes
+* @jaimergp
+* @marcoesters
+
+### New contributors
+
+* @IsabelParedes made their first contribution in https://github.com/conda/constructor/pull/1008
 
 
 
