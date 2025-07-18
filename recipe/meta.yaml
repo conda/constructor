@@ -47,6 +47,8 @@ test:
     - constructor --help
     # Run unit tests
     - pytest -v tests -k "not examples"
+    # Run _one_ example as a smoke integration test
+    - pytest -v tests/test_examples.py::test_example_miniforge
 
 about:
   home: https://conda.io
