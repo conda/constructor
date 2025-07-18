@@ -1,0 +1,20 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* Include `construct.schema.json` file as part of the source distribution. (#740)
+* Fix return value when running `constructor --dry-run` mode. (#740)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
