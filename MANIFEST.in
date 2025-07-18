@@ -1,2 +1,2 @@
-include versioneer.py
 include constructor/_version.py
+include constructor/data/construct.schema.json
