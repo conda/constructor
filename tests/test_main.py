@@ -17,4 +17,3 @@ def test_dry_run(tmp_path):
     )
     (tmp_path / "construct.yaml").write_text(inputfile)
     main([str(tmp_path), "--dry-run"])
-
