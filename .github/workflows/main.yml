@@ -197,18 +197,13 @@ jobs:
   build:
     name: Canary Build
     needs: [tests]
-    # only build canary build if
-    # only build canary build if
+    # only upload canary build if
     # - prior steps succeeded,
     # - this is the main repo, and
     # - we are on the main (or feature) branch
     if: >-
       success()
       && !github.event.repository.fork
-      && (
-        github.ref_name == 'main'
-        || startsWith(github.ref_name, 'feature/')
-      )
     strategy:
       matrix:
         include:
@@ -229,8 +224,16 @@ jobs:
           ref: ${{ github.ref }}
           clean: true
           fetch-depth: 0
+      
+      - uses: actions/setup-python@v5
+      - name: Build Python sdist and wheel
+        run: |
+          python -m pip install build
+          python -m build --sdist --wheel . --outdir dist
+
       - name: Create and upload canary build
         uses: conda/actions/canary-release@eb545bb8ab48d499b31c057a6df3cf46753fdbcb # v25.3.1
+        if: github.ref_name == 'main' || startsWith(github.ref_name, 'feature/')
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}
