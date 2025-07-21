@@ -22,7 +22,7 @@ extra_envs:
 
 write_condarc: true
 condarc:
-  channels: 
+  channels:
     - conda-forge
   default_activation_env: default
 
