@@ -93,6 +93,7 @@ jobs:
           activate-environment: constructor-dev
           environment-file: dev/environment.yml
           python-version: ${{ matrix.python-version }}
+          miniconda-version: latest
       - name: Install AzureSignTool
         if: startswith(matrix.os, 'windows')
         run: dotnet.exe tool install --global AzureSignTool
