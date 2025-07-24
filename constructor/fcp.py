@@ -443,7 +443,7 @@ def _main(
             input_dir=input_dir,
         )
     if dry_run:
-        return None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None
     pc_recs, _urls, dists, has_conda = _fetch_precs(
         precs, download_dir, transmute_file_type=transmute_file_type
     )

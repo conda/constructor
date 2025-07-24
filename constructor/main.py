@@ -369,7 +369,7 @@ class _HelpConstructAction(argparse.Action):
         )
 
 
-def main():
+def main(argv=None):
     logging.basicConfig(level=logging.INFO)
     p = argparse.ArgumentParser(description="build an installer from <DIRECTORY>/construct.yaml")
 
@@ -448,7 +448,7 @@ def main():
         metavar="DIRECTORY",
     )
 
-    args = p.parse_args()
+    args = p.parse_args(argv)
     logger.info("Got the following cli arguments: '%s'", args)
 
     if args.verbose or args.debug:
