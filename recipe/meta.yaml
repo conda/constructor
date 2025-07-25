@@ -35,6 +35,7 @@ requirements:
 
 test:
   source_files:
+    - examples
     - tests
   requires:
     - pip
