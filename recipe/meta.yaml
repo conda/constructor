@@ -35,7 +35,7 @@ requirements:
 
 test:
   source_files:
-    - examples
+    - examples/miniforge
     - tests
   requires:
     - pip
