@@ -36,6 +36,7 @@ requirements:
 test:
   source_files:
     - examples/miniforge
+    - examples/miniforge-mamba2
     - tests
   requires:
     - pip
