@@ -41,9 +41,10 @@ test:
     - examples/miniforge-mamba2
     - tests
   requires:
+    - nsis =*=*log*  # [win]
     - pip
     - pytest
-    - pywin32  # [win]
+    - pywin32        # [win]
   imports:
     - constructor
   commands:
