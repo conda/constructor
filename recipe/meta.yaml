@@ -34,6 +34,8 @@ requirements:
     - pydantic >=2
 
 test:
+  script_env:                  # [win]
+    - NSIS_USING_BUILD_LOG: 1  # [win]
   source_files:
     - examples/miniforge
     - examples/miniforge-mamba2
