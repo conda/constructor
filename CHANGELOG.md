@@ -21,9 +21,6 @@
 * @NixM0nk3y
 * @RahulARanger
 * @EisW
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
