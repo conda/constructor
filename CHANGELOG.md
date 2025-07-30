@@ -8,19 +8,8 @@
 
 ### Contributors
 
-* @dlmiles
-* @deepeshaburse
-* @IsabelParedes
 * @jaimergp
-* @jezdez
-* @jlstevens
-* @jjerphan
 * @marcoesters
-* @m-kuhn
-* @mcg1969
-* @NixM0nk3y
-* @RahulARanger
-* @EisW
 
 
 
