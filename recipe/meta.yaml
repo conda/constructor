@@ -12,6 +12,8 @@ build:
     - python -m pip install --no-deps --ignore-installed .
   entry_points:
     - constructor = constructor.main:main
+  script_env:                  # [win]
+    - NSIS_USING_LOG_BUILD=1   # [win]
 
 requirements:
   host:
@@ -34,8 +36,6 @@ requirements:
     - pydantic >=2
 
 test:
-  script_env:                  # [win]
-    - NSIS_USING_LOG_BUILD: 1  # [win]
   source_files:
     - examples/miniforge
     - examples/miniforge-mamba2
