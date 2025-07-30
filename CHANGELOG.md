@@ -1,5 +1,18 @@
 [//]: # (current developments)
 
+## 2025-07-30   3.12.1:
+### Bug fixes
+
+* Include `construct.schema.json` file as part of the source distribution. (#740)
+* Fix return value when running `constructor --dry-run` mode. (#740)
+
+### Contributors
+
+* @jaimergp
+* @marcoesters
+
+
+
 ## 2025-07-17   3.12.0:
 ### Enhancements
 
