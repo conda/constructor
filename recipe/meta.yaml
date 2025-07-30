@@ -1,6 +1,6 @@
 package:
   name: constructor
-  version: "{{ GIT_DESCRIBE_TAG }}.{{ GIT_BUILD_STR }}"
+  version: 3.12.1
 
 source:
   # git_url is nice in that it won't capture devenv stuff.  However, it only
