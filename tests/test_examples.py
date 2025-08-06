@@ -999,7 +999,7 @@ def test_initialization(tmp_path, request, monkeypatch, method):
     input_path = _example_path("initialization")
     initialize = method is not False
     for installer, install_dir in create_installer(input_path, tmp_path):
-        if installer.suffix == ".sh":
+        if installer.suffix == ".sh" and initialize:
             options = ["-c"]
         elif installer.suffix == ".exe":
             # GHA runs on an admin user account, but AllUsers (admin) installs
@@ -1032,11 +1032,11 @@ def test_initialization(tmp_path, request, monkeypatch, method):
                         value = winreg.QueryValueEx(key, "PATH")[0]
                         paths += value.strip().split(os.pathsep)
                 if method == "condabin":
-                    assert str(install_dir / "condabin") in paths == initialize
+                    assert (str(install_dir / "condabin") in paths) == initialize
                 else:
-                    assert str(install_dir) in paths == initialize
-                    assert str(install_dir / "Scripts") in paths == initialize
-                    assert str(install_dir / "Library" / "bin") in paths == initialize
+                    assert (str(install_dir) in paths) == initialize
+                    assert (str(install_dir / "Scripts") in paths) == initialize
+                    assert (str(install_dir / "Library" / "bin") in paths) == initialize
 
             finally:
                 _run_uninstaller_exe(install_dir, check=True)
@@ -1048,9 +1048,11 @@ def test_initialization(tmp_path, request, monkeypatch, method):
                 text=True,
             )
             if method == "condabin":
-                assert str(install_dir / "condabin") in out.strip().split(os.pathsep) == initialize
+                assert (
+                    str(install_dir / "condabin") in out.strip().split(os.pathsep)
+                ) == initialize
             else:
-                assert str(install_dir / "bin") in out.strip().split(os.pathsep) == initialize
+                assert (str(install_dir / "bin") in out.strip().split(os.pathsep)) == initialize
 
 
 @pytest.mark.skipif(not ON_CI, reason="CI only")
