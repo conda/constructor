@@ -22,6 +22,7 @@ Authors are sorted alphabetically.
 * Ilan Schnell
 * Isabel Paredes
 * Isuru Fernando
+* Jaida Rice
 * Jaime Rodríguez-Guerra
 * Jannis Leidel
 * Jean-Luc Stevens
