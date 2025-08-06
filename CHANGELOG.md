@@ -7,23 +7,7 @@
 
 ### Contributors
 
-* @dlmiles
-* @deepeshaburse
-* @IsabelParedes
-* @Jrice1317
-* @jaimergp
-* @jezdez
-* @jlstevens
-* @jjerphan
 * @marcoesters
-* @m-kuhn
-* @mcg1969
-* @NixM0nk3y
-* @RahulARanger
-* @EisW
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
