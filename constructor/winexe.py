@@ -217,7 +217,7 @@ def make_nsi(
                 info[key] = valid_values
 
     for key, value in variables.items():
-        if value.startswith("@"):
+        if isinstance(value, str) and value.startswith("@"):
             value = join(dir_path, value[1:])
         variables[key] = win_str_esc(value)
 
