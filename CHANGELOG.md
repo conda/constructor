@@ -1,5 +1,16 @@
 [//]: # (current developments)
 
+## 2025-08-06   3.12.2:
+### Bug fixes
+
+* Re-enable boolean values for `initialize_conda` on Windows. (#1032)
+
+### Contributors
+
+* @marcoesters
+
+
+
 ## 2025-07-30   3.12.1:
 ### Bug fixes
 

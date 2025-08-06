@@ -357,7 +357,7 @@
   github: RahulARanger
 - name: Marco Esters
   email: mesters@anaconda.com
-  num_commits: 48
+  num_commits: 49
   first_commit: 2023-05-12 11:44:12
   github: marcoesters
 - name: Darryl Miles
@@ -372,7 +372,7 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 52
+  num_commits: 53
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
 - name: Matthias Kuhn
@@ -400,3 +400,10 @@
   email: iparedes314@gmail.com
   num_commits: 1
   first_commit: 2025-07-17 12:38:55
+- name: Jaida Rice
+  email: jaidarice@gmail.com
+  github: Jrice1317
+  alternate_emails:
+  - 100002667+Jrice1317@users.noreply.github.com
+  num_commits: 2
+  first_commit: 2025-07-30 14:27:00
