@@ -401,6 +401,9 @@
   num_commits: 1
   first_commit: 2025-07-17 12:38:55
 - name: Jaida Rice
-  email: 100002667+Jrice1317@users.noreply.github.com
-  num_commits: 1
+  email: jaidarice@gmail.com
+  github: Jrice1317
+  alternate_emails:
+  - 100002667+Jrice1317@users.noreply.github.com
+  num_commits: 2
   first_commit: 2025-07-30 14:27:00
