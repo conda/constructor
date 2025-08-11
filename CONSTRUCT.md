@@ -549,7 +549,7 @@ Only applies if `register_python` is true.
 
 Check the length of the path where the distribution is installed to ensure nodejs
 can be installed.  Raise a message to request shorter paths (less than 46 character)
-or enable long paths on windows > 10 (require admin right). Default is True. (Windows only).
+or enable long paths on windows > 10 (require admin right). Default is False. (Windows only).
 
 ### `check_path_spaces`
 

@@ -456,17 +456,10 @@
       "type": "array"
     },
     "check_path_length": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Check the length of the path where the distribution is installed to ensure nodejs can be installed. Raise a message to request shorter paths (less than 46 character) or enable long paths on windows > 10 (require admin right). Default is True. (Windows only).",
-      "title": "Check Path Length"
+      "default": false,
+      "description": "Check the length of the path where the distribution is installed to ensure nodejs can be installed. Raise a message to request shorter paths (less than 46 character) or enable long paths on windows > 10 (require admin right). Default is False. (Windows only).",
+      "title": "Check Path Length",
+      "type": "boolean"
     },
     "check_path_spaces": {
       "default": true,
