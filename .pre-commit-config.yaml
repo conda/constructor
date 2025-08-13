@@ -4,7 +4,7 @@ ci:
 exclude: ^(versioneer.py|constructor/_version.py|CONSTRUCT.md|docs/source/construct-yaml.md)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -18,7 +18,7 @@ repos:
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.12.7
+    rev: v0.12.8
     hooks:
       # Run the linter.
       - id: ruff
@@ -26,7 +26,7 @@ repos:
       # Run the formatter.
       - id: ruff-format
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
         exclude: ^(constructor/header.sh|constructor/osx/.*sh)
