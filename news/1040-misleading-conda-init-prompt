@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fixed misleading wording for shell initialization in installation prompt.
+* SH: Fixed misleading wording for shell initialization in installation prompt. (#1039 via #1340)
 
 ### Deprecations
 
