@@ -739,9 +739,9 @@ if [ "$BATCH" = "0" ]; then
 
     printf "Do you wish to update your shell profile to add '%s/condabin' to PATH?\\n" "$PREFIX"
     printf "This will enable you to run 'conda' anywhere, without injecting a shell function.\\n"
-    printf "You can undo this by running \`conda init --condabin --reverse\`\\n"
+    printf "Note: You can undo this by running \`conda init --condabin --reverse\`\\n"
     printf "\\n"
-    printf "Do you wish to update your shell profile? [yes|no]\\n"
+    printf "Proceed with initialization? [yes|no]\\n"
     printf "[%s] >>> " "$DEFAULT"
     read -r ans
     if [ "$ans" = "" ]; then
