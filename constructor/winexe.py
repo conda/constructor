@@ -233,7 +233,7 @@ def make_nsi(
     variables["initialize_by_default"] = info.get("initialize_by_default", None)
     variables["register_python"] = info.get("register_python", True)
     variables["register_python_default"] = info.get("register_python_default", None)
-    variables["check_path_length"] = info.get("check_path_length", None)
+    variables["check_path_length"] = info.get("check_path_length", False)
     variables["check_path_spaces"] = info.get("check_path_spaces", True)
     variables["keep_pkgs"] = info.get("keep_pkgs") or False
     variables["pre_install_exists"] = bool(info.get("pre_install"))
