@@ -343,7 +343,7 @@ EOF
     ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
     while [ "$ans" != "YES" ] && [ "$ans" != "NO" ]
     do
-        printf "Please answer 'yes' or 'no':'\\n"
+        printf "Please answer 'yes' or 'no':\\n"
         printf ">>> "
         read -r ans
         ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
