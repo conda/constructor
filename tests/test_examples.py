@@ -1370,3 +1370,18 @@ def test_regressions(tmp_path, request):
             check_subprocess=True,
             uninstall=True,
         )
+
+def test_frozen_environment(tmp_path, request):
+    input_path = _example_path("protected_base")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        frozen_file = install_dir / "conda-meta" / "frozen"
+        assert frozen_file.exists()
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True
+        )
+        assert frozen_file.exists()
