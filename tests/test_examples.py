@@ -1502,3 +1502,39 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
     assert is_in_installed_apps_menu == (no_registry == 0), (
         f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
     )
+
+
+@pytest.mark.xfail(
+    condition=(
+        CONDA_EXE == StandaloneExe.CONDA
+        and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
+    ),
+    reason="conda-standalone 25.5.x fails with protected environments and older versions ignore frozen files",
+    strict=True,
+)
+def test_frozen_environment(tmp_path, request):
+    input_path = _example_path("protected_base")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            uninstall=False,
+        )
+
+        expected_frozen_paths = {
+            install_dir / "conda-meta" / "frozen",
+            install_dir / "envs" / "default" / "conda-meta" / "frozen",
+        }
+
+        actual_frozen_paths = set()
+        for env in install_dir.glob("**/conda-meta/history"):
+            frozen_file = env.parent / "frozen"
+            assert frozen_file.exists()
+            actual_frozen_paths.add(frozen_file)
+
+        assert expected_frozen_paths == actual_frozen_paths, (
+            f"Expected: {sorted(str(p) for p in expected_frozen_paths)}\n"
+            f"Found: {sorted(str(p) for p in actual_frozen_paths)}"
+        )
