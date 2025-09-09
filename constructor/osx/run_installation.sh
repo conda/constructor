@@ -47,6 +47,7 @@ fi
 notify "Installing packages. This might take a few minutes."
 # shellcheck disable=SC2086
 if ! \
+CONDA_PROTECT_FROZEN_ENVS="0" \
 CONDA_REGISTER_ENVS="{{ register_envs }}" \
 CONDA_ROOT_PREFIX="$PREFIX" \
 CONDA_SAFETY_CHECKS=disabled \
@@ -93,6 +94,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     fi
 
     # shellcheck disable=SC2086
+    CONDA_PROTECT_FROZEN_ENVS="0" \
     CONDA_ROOT_PREFIX="$PREFIX" \
     CONDA_REGISTER_ENVS="{{ register_envs }}" \
     CONDA_SAFETY_CHECKS=disabled \
