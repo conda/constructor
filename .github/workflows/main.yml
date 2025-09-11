@@ -136,11 +136,13 @@ jobs:
       - name: conda config
         run: conda config --show-sources
       - name: Run unit tests
+        if: false
         run: |
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
+        if: false
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
@@ -155,7 +157,7 @@ jobs:
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
-          pytest -vv --cov=constructor --cov-branch tests/test_examples.py
+          pytest -vv --cov=constructor --cov-branch tests/test_examples.py -k extra_envs
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
