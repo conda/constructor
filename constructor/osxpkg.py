@@ -562,8 +562,18 @@ def create(info, verbose=False):
     fresh_dir(PACKAGE_ROOT)
     fresh_dir(SCRIPTS_DIR)
     pkgs_dir = join(prefix, "pkgs")
+    conda_meta = join(prefix, "conda-meta")
     os.makedirs(pkgs_dir)
+    os.makedirs(conda_meta)
     preconda.write_files(info, pkgs_dir)
+    # We need to move the initial-state.explicit.txt files from pkgs/ to their conda-meta targets
+    shutil.move(join(pkgs_dir, "initial-state.explicit.txt"), conda_meta)
+    if isdir(join(pkgs_dir, "envs")):
+        for envname in os.listdir(join(pkgs_dir, "envs")):
+            lockfile = join(pkgs_dir, "envs", envname, "initial-state.explicit.txt")
+            env_conda_meta = join(prefix, "envs", envname, "conda-meta")
+            os.makedirs(env_conda_meta)
+            shutil.move(lockfile, env_conda_meta)
     preconda.copy_extra_files(info.get("extra_files", []), prefix)
     # These are the user-provided scripts, maybe patched to have a shebang
     # They will be called by a wrapping script added later, if present
