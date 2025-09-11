@@ -1,0 +1,19 @@
+### Enhancements
+
+* Ship `conda-meta/env.txt` as a lockfile that provisions the initial state of the environment. (#1052 via #1059)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
