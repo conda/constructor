@@ -232,7 +232,7 @@ jobs:
           python -m build --sdist --wheel . --outdir dist
 
       - name: Create and upload canary build
-        uses: conda/actions/canary-release@eb545bb8ab48d499b31c057a6df3cf46753fdbcb # v25.3.1
+        uses: conda/actions/canary-release@87cb4b58e6a169cb41db8af4d49ace6275f7b213 # v25.9.0
         if: github.ref_name == 'main' || startsWith(github.ref_name, 'feature/')
         with:
           package-name: ${{ github.event.repository.name }}
