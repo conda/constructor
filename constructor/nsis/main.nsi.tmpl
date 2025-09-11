@@ -1262,6 +1262,8 @@ Section "Install"
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
     File {{ conda_history }}
+    # Place copy of env.txt as a lockfile that can be used to restore the env
+    File {{ env_txt_abspath }}
 
     SetOutPath "$INSTDIR"
     File {{ conda_exe }}
@@ -1382,6 +1384,8 @@ Section "Install"
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "{{ env.conda_meta }}"
     File "{{ env.history_abspath }}"
+    # We also place a copy of the env.txt file here, as a lockfile
+    File "{{ env.env_txt_abspath }}"
 
     # Set channels
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{{ channels }}").r0'

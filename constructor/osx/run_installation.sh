@@ -60,6 +60,8 @@ fi
 
 # Move the prepackaged history file into place
 mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
+# Place a copy of the lockfile in conda-meta for future, potential restoring
+cp "$PREFIX/pkgs/env.txt" "$PREFIX/conda-meta/env.txt"
 rm -f "$PREFIX/env.txt"
 
 # Same, but for the extra environments
@@ -102,7 +104,8 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
     # Move the prepackaged history file into place
     mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
-    rm -f "${env_pkgs}env.txt"
+    # Move the input lockfile in conda-meta for future, potential restoring
+    mv "${env_pkgs}env.txt" "$PREFIX/envs/$env_name/conda-meta/env.txt"
 done
 
 # Cleanup!

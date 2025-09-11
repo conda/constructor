@@ -83,9 +83,8 @@ def setup_envs_commands(info, dir_path):
             "prefix": r"$INSTDIR",
             "env_txt": r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
             "env_txt_dir": r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
-            "env_txt_abspath": join(
-                dir_path, "env.txt"
-            ),  # env.txt path while building the installer
+            # env.txt path while building the installer
+            "env_txt_abspath": join(dir_path, "env.txt"),
             "conda_meta": r"$INSTDIR\conda-meta",
             "history_abspath": join(dir_path, "conda-meta", "history"),
             "final_channels": get_final_channels(info),
