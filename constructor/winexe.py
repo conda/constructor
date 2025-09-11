@@ -82,7 +82,7 @@ def setup_envs_commands(info, dir_path):
             "name": "base",
             "prefix": r"$INSTDIR",
             # initial-state.explicit.txt as seen by the running installer
-            "lockfile_txt": r"$INSTDIR\pkgs\initial-state.explicit.txt",
+            "lockfile_txt": r"$INSTDIR\conda-meta\initial-state.explicit.txt",
             # initial-state.explicit.txt path while building the installer
             "lockfile_txt_abspath": join(dir_path, "initial-state.explicit.txt"),
             "conda_meta": r"$INSTDIR\conda-meta",
