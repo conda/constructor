@@ -1375,15 +1375,12 @@ Section "Install"
     ${Print} "Setting up the {{ env.name }} environment..."
     SetDetailsPrint listonly
 
-    # List of packages to install
-    SetOutPath "{{ env.env_txt_dir }}"
-    File "{{ env.env_txt_abspath }}"
 
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "{{ env.conda_meta }}"
     File "{{ env.history_abspath }}"
-    # We also place a copy of the env.txt file here, as a lockfile
-    File /oname=initial-state.lockfile.txt "{{ env.env_txt_abspath }}"
+    # List of packages to install, as a lockfile
+    File "{{ env.lockfile_txt_abspath }}"
 
     # Set channels
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{{ channels }}").r0'
@@ -1393,20 +1390,16 @@ Section "Install"
     # Run conda install
     ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
         ${Print} "Installing packages for {{ env.name }}, creating shortcuts if necessary..."
-        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.env_txt }}" {{ env.shortcuts }} {{ env.no_rcs_arg }}'
+        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile_txt }}" {{ env.shortcuts }} {{ env.no_rcs_arg }}'
     ${Else}
         ${Print} "Installing packages for {{ env.name }}..."
-        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.env_txt }}" --no-shortcuts {{ env.no_rcs_arg }}'
+        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile_txt }}" --no-shortcuts {{ env.no_rcs_arg }}'
     ${EndIf}
     push 'Failed to link extracted packages to {{ env.prefix }}!'
     push 'WithLog'
     SetDetailsPrint listonly
     call AbortRetryNSExecWait
     SetDetailsPrint both
-
-    # Cleanup {{ env.name }} env.txt
-    SetOutPath "$INSTDIR"
-    Delete "{{ env.env_txt }}"
 
     # Restore shipped conda-meta\history for remapped
     # channels and retain only the first transaction

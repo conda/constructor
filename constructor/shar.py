@@ -133,10 +133,16 @@ def create(info, verbose=False):
     post_t = tarfile.open(postconda_tarball, "w:bz2")
     for dist in preconda_files:
         fn = filename_dist(dist)
-        pre_t.add(join(tmp_dir, fn), "pkgs/" + fn)
+        pre_t.add(
+            join(tmp_dir, fn),
+            f"conda-meta/{fn}" if dist == "initial-state.explicit.txt" else f"pkgs/{fn}",
+        )
 
     for env_name in info.get("_extra_envs_info", ()):
-        pre_t.add(join(tmp_dir, "envs", env_name, "env.txt"), f"pkgs/envs/{env_name}/env.txt")
+        pre_t.add(
+            join(tmp_dir, "envs", env_name, "initial-state.explicit.txt"),
+            f"envs/{env_name}/conda-meta/initial-state.explicit.txt",
+        )
         pre_t.add(
             join(tmp_dir, "envs", env_name, "shortcuts.txt"), f"pkgs/envs/{env_name}/shortcuts.txt"
         )
@@ -170,19 +176,12 @@ def create(info, verbose=False):
         pre_t.add(record_file_src, record_file_dest)
     pre_t.addfile(tarinfo=tarfile.TarInfo("conda-meta/history"))
     post_t.add(join(tmp_dir, "conda-meta", "history"), "conda-meta/history")
-    # Place a copy of the lockfile in conda-meta for future, potential restoring
-    post_t.add(join(tmp_dir, "env.txt"), "conda-meta/initial-state.lockfile.txt")
 
     for env_name in info.get("_extra_envs_info", {}):
         pre_t.addfile(tarinfo=tarfile.TarInfo(f"envs/{env_name}/conda-meta/history"))
         post_t.add(
             join(tmp_dir, "envs", env_name, "conda-meta", "history"),
             f"envs/{env_name}/conda-meta/history",
-        )
-        # Place a copy of the lockfile in conda-meta for future, potential restoring
-        post_t.add(
-            join(tmp_dir, "envs", env_name, "env.txt"),
-            f"envs/{env_name}/conda-meta/initial-state.lockfile.txt",
         )
 
     extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)

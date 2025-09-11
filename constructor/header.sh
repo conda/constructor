@@ -598,8 +598,7 @@ CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="{{ channels }}" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 CONDA_QUIET="$BATCH" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }} || exit 1
-rm -f "$PREFIX/pkgs/env.txt"
+"$CONDA_EXEC" install --offline --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }} || exit 1
 
 {%- if has_conda %}
 mkdir -p "$PREFIX/envs"
@@ -638,8 +637,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     CONDA_QUIET="$BATCH" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
-    rm -f "${env_pkgs}env.txt"
+    "$CONDA_EXEC" install --offline --file "$PREFIX/envs/$env_name/conda-meta/initial-state.explicit.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
 done
 {%- endif %}
 

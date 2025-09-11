@@ -53,16 +53,13 @@ CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS={{ channels }} \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/pkgs/env.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }}; then
+"$CONDA_EXEC" install --offline --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }}; then
     echo "ERROR: could not complete the conda install"
     exit 1
 fi
 
 # Move the prepackaged history file into place
 mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
-# Place a copy of the input lockfile in conda-meta for future, potential restoring
-cp "$PREFIX/pkgs/env.txt" "$PREFIX/conda-meta/initial-state.lockfile.txt"
-rm -f "$PREFIX/env.txt"
 
 # Same, but for the extra environments
 
@@ -101,11 +98,9 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-    "$CONDA_EXEC" install --offline --file "${env_pkgs}env.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
+    "$CONDA_EXEC" install --offline --file "$PREFIX/envs/$env_name/conda-meta/initial-state.explicit.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
     # Move the prepackaged history file into place
     mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
-    # Move the input lockfile in conda-meta for future, potential restoring
-    mv "${env_pkgs}env.txt" "$PREFIX/envs/$env_name/conda-meta/initial-state.lockfile.txt"
 done
 
 # Cleanup!

@@ -48,7 +48,7 @@ try:
 except ImportError:
     import ruamel_json as json
 
-files = ".constructor-build.info", "urls", "urls.txt", "env.txt"
+files = ".constructor-build.info", "urls", "urls.txt", "initial-state.explicit.txt"
 
 
 def write_index_cache(info, dst_dir, used_packages):
@@ -172,7 +172,7 @@ def write_files(info, dst_dir):
 
     # base environment file used with conda install --file
     # (list of specs/dists to install)
-    write_env_txt(info, dst_dir, final_urls_md5s)
+    write_initial_state_lockfile_txt(info, dst_dir, final_urls_md5s)
 
     for fn in files:
         os.chmod(join(dst_dir, fn), 0o664)
@@ -185,7 +185,7 @@ def write_files(info, dst_dir):
         user_requested_specs = env_config.get("user_requested_specs", env_config.get("specs", ()))
         write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
         # environment installation list
-        write_env_txt(info, env_dst_dir, env_urls_md5)
+        write_initial_state_lockfile_txt(info, env_dst_dir, env_urls_md5)
         # channels
         write_channels_txt(info, env_dst_dir, env_config)
         # shortcuts
@@ -245,7 +245,7 @@ def write_repodata_record(info, dst_dir):
             json.dump(rr_json, rf, indent=2, sort_keys=True)
 
 
-def write_env_txt(info, dst_dir, urls):
+def write_initial_state_lockfile_txt(info, dst_dir, urls):
     """
     urls is an iterable of tuples with url and md5 values
     """
@@ -257,7 +257,7 @@ def write_env_txt(info, dst_dir, urls):
         @EXPLICIT
         """
     ).lstrip()
-    with open(join(dst_dir, "env.txt"), "w") as envf:
+    with open(join(dst_dir, "initial-state.explicit.txt"), "w") as envf:
         envf.write(header)
         for url, md5 in urls:
             maybe_different_url = ensure_transmuted_ext(info, url)

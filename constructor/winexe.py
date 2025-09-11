@@ -81,10 +81,10 @@ def setup_envs_commands(info, dir_path):
         {
             "name": "base",
             "prefix": r"$INSTDIR",
-            "env_txt": r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
-            "env_txt_dir": r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
-            # env.txt path while building the installer
-            "env_txt_abspath": join(dir_path, "env.txt"),
+            # initial-state.explicit.txt as seen by the running installer
+            "lockfile_txt": r"$INSTDIR\pkgs\initial-state.explicit.txt",
+            # initial-state.explicit.txt path while building the installer
+            "lockfile_txt_abspath": join(dir_path, "initial-state.explicit.txt"),
             "conda_meta": r"$INSTDIR\conda-meta",
             "history_abspath": join(dir_path, "conda-meta", "history"),
             "final_channels": get_final_channels(info),
@@ -107,9 +107,12 @@ def setup_envs_commands(info, dir_path):
             {
                 "name": env_name,
                 "prefix": join("$INSTDIR", "envs", env_name),
-                "env_txt": join("$INSTDIR", "pkgs", "envs", env_name, "env.txt"),
-                "env_txt_dir": join("$INSTDIR", "pkgs", "envs", env_name),
-                "env_txt_abspath": join(dir_path, "envs", env_name, "env.txt"),
+                "lockfile_txt": join(
+                    "$INSTDIR", "envs", env_name, "conda-meta", "initial-state.explicit.txt"
+                ),
+                "lockfile_txt_abspath": join(
+                    dir_path, "envs", env_name, "initial-state.explicit.txt"
+                ),
                 "conda_meta": join("$INSTDIR", "envs", env_name, "conda-meta"),
                 "history_abspath": join(dir_path, "envs", env_name, "conda-meta", "history"),
                 "final_channels": get_final_channels(channel_info),
@@ -174,7 +177,6 @@ def make_nsi(
         "licensefile": abspath(info.get("license_file", join(NSIS_DIR, "placeholder_license.txt"))),
         "conda_history": "@" + join("conda-meta", "history"),
         "conda_exe": "@_conda.exe",
-        "env_txt": "@env.txt",
         "urls_file": "@urls",
         "urls_txt_file": "@urls.txt",
         "pre_install": "@pre_install.bat",

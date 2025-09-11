@@ -467,9 +467,9 @@ def test_example_extra_envs(tmp_path, request):
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         assert (
-            "@EXPLICIT" in (install_dir / "conda-meta" / "initial-state.lockfile.txt").read_text()
+            "@EXPLICIT" in (install_dir / "conda-meta" / "initial-state.explicit.txt").read_text()
         )
-        for envtxt in install_dir.glob("envs/*/conda-meta/initial-state.lockfile.txt"):
+        for envtxt in install_dir.glob("envs/*/conda-meta/initial-state.explicit.txt"):
             assert "@EXPLICIT" in envtxt.read_text()
 
         if sys.platform.startswith("win"):
