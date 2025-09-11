@@ -1262,8 +1262,6 @@ Section "Install"
     # A conda-meta\history file is required for a valid conda prefix
     SetOutPath "$INSTDIR\conda-meta"
     File {{ conda_history }}
-    # Place copy of env.txt as a lockfile that can be used to restore the env
-    File {{ env_txt_abspath }}
 
     SetOutPath "$INSTDIR"
     File {{ conda_exe }}
