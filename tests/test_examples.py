@@ -466,6 +466,9 @@ def test_example_extra_envs(tmp_path, request):
     input_path = _example_path("extra_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request)
+        assert "@EXPLICIT" in (install_dir / "conda-meta" / "env.txt").read_text()
+        for envtxt in install_dir.glob("envs/*/conda-meta/env.txt"):
+            assert "@EXPLICIT" in envtxt.read_text()
 
 
 def test_example_extra_files(tmp_path, request):
