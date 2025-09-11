@@ -1383,7 +1383,7 @@ Section "Install"
     SetOutPath "{{ env.conda_meta }}"
     File "{{ env.history_abspath }}"
     # We also place a copy of the env.txt file here, as a lockfile
-    File "{{ env.env_txt_abspath }}"
+    File /oname=initial-state.lockfile.txt "{{ env.env_txt_abspath }}"
 
     # Set channels
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_CHANNELS", "{{ channels }}").r0'

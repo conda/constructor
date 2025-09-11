@@ -60,8 +60,8 @@ fi
 
 # Move the prepackaged history file into place
 mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
-# Place a copy of the lockfile in conda-meta for future, potential restoring
-cp "$PREFIX/pkgs/env.txt" "$PREFIX/conda-meta/env.txt"
+# Place a copy of the input lockfile in conda-meta for future, potential restoring
+cp "$PREFIX/pkgs/env.txt" "$PREFIX/conda-meta/initial-state.lockfile.txt"
 rm -f "$PREFIX/env.txt"
 
 # Same, but for the extra environments
@@ -105,7 +105,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     # Move the prepackaged history file into place
     mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
     # Move the input lockfile in conda-meta for future, potential restoring
-    mv "${env_pkgs}env.txt" "$PREFIX/envs/$env_name/conda-meta/env.txt"
+    mv "${env_pkgs}env.txt" "$PREFIX/envs/$env_name/conda-meta/initial-state.lockfile.txt"
 done
 
 # Cleanup!
