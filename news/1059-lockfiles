@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Ship `conda-meta/env.txt` as a lockfile that provisions the initial state of the environment. (#1052 via #1059)
+* Ship `conda-meta/initial-state.lockfile.txt` as a copy of the lockfile that provisions the initial state of each environment. (#1052 via #1059)
 
 ### Bug fixes
 
