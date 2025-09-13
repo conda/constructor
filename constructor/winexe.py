@@ -178,13 +178,13 @@ def make_nsi(
         "licensefile": abspath(info.get("license_file", join(NSIS_DIR, "placeholder_license.txt"))),
         "conda_history": "@" + join("conda-meta", "history"),
         "conda_exe": "@_conda.exe",
-        "urls_file": "@urls",
-        "urls_txt_file": "@urls.txt",
+        "urls_file": "@" + join("pkgs", "urls"),
+        "urls_txt_file": "@" + join("pkgs", "urls.txt"),
         "pre_install": "@pre_install.bat",
         "post_install": "@post_install.bat",
         "pre_uninstall": "@pre_uninstall.bat",
-        "index_cache": "@cache",
-        "repodata_record": "@repodata_record.json",
+        "index_cache": "@" + join("pkgs", "cache"),
+        "repodata_record": "@" + join("pkgs", "repodata_record.json"),
     }
 
     conclusion_text = info.get("conclusion_text", "")
