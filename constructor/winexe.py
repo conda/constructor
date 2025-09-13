@@ -84,7 +84,7 @@ def setup_envs_commands(info, dir_path):
             # initial-state.explicit.txt as seen by the running installer
             "lockfile_txt": r"$INSTDIR\conda-meta\initial-state.explicit.txt",
             # initial-state.explicit.txt path while building the installer
-            "lockfile_txt_abspath": join(dir_path, "initial-state.explicit.txt"),
+            "lockfile_txt_abspath": join(dir_path, "conda-meta", "initial-state.explicit.txt"),
             "conda_meta": r"$INSTDIR\conda-meta",
             "history_abspath": join(dir_path, "conda-meta", "history"),
             "final_channels": get_final_channels(info),
@@ -111,7 +111,7 @@ def setup_envs_commands(info, dir_path):
                     "$INSTDIR", "envs", env_name, "conda-meta", "initial-state.explicit.txt"
                 ),
                 "lockfile_txt_abspath": join(
-                    dir_path, "envs", env_name, "initial-state.explicit.txt"
+                    dir_path, "envs", env_name, "conda-meta", "initial-state.explicit.txt"
                 ),
                 "conda_meta": join("$INSTDIR", "envs", env_name, "conda-meta"),
                 "history_abspath": join(dir_path, "envs", env_name, "conda-meta", "history"),
@@ -171,6 +171,7 @@ def make_nsi(
         "outfile": info["_outpath"],
         "vipv": make_VIProductVersion(info["version"]),
         "constructor_version": info["CONSTRUCTOR_VERSION"],
+        # @-prefixed paths point to {dir_path}
         "iconfile": "@icon.ico",
         "headerimage": "@header.bmp",
         "welcomeimage": "@welcome.bmp",

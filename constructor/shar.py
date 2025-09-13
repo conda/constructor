@@ -131,21 +131,15 @@ def create(info, verbose=False):
     postconda_tarball = join(tmp_dir, "postconda.tar.bz2")
     pre_t = tarfile.open(preconda_tarball, "w:bz2")
     post_t = tarfile.open(postconda_tarball, "w:bz2")
-    for dist in preconda_files:
-        fn = filename_dist(dist)
-        pre_t.add(
-            join(tmp_dir, fn),
-            f"conda-meta/{fn}" if dist == "initial-state.explicit.txt" else f"pkgs/{fn}",
-        )
+    for rel_path in preconda_files:
+        pre_t.add(join(tmp_dir, rel_path), rel_path)
 
     for env_name in info.get("_extra_envs_info", ()):
-        pre_t.add(
-            join(tmp_dir, "envs", env_name, "initial-state.explicit.txt"),
+        for rel_path in (
+            f"pkgs/envs/{env_name}/shortcuts.txt",
             f"envs/{env_name}/conda-meta/initial-state.explicit.txt",
-        )
-        pre_t.add(
-            join(tmp_dir, "envs", env_name, "shortcuts.txt"), f"pkgs/envs/{env_name}/shortcuts.txt"
-        )
+        ):
+            pre_t.add(join(tmp_dir, rel_path), rel_path)
 
     for key in "pre_install", "post_install":
         if key in info:
@@ -171,7 +165,7 @@ def create(info, verbose=False):
         elif filename_dist(dist).endswith(".tar.bz2"):
             _dist = filename_dist(dist)[:-8]
         record_file = join(_dist, "info", "repodata_record.json")
-        record_file_src = join(tmp_dir, record_file)
+        record_file_src = join(tmp_dir, "pkgs", record_file)
         record_file_dest = join("pkgs", record_file)
         pre_t.add(record_file_src, record_file_dest)
     pre_t.addfile(tarinfo=tarfile.TarInfo("conda-meta/history"))
@@ -191,7 +185,7 @@ def create(info, verbose=False):
     pre_t.close()
     post_t.close()
 
-    tarball = join(tmp_dir, "tmp.tar")
+    tarball = join(tmp_dir, "pkgs", "tmp.tar")
     t = tarfile.open(tarball, "w")
     t.add(preconda_tarball, basename(preconda_tarball))
     t.add(postconda_tarball, basename(postconda_tarball))

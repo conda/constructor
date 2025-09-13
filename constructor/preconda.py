@@ -48,7 +48,12 @@ try:
 except ImportError:
     import ruamel_json as json
 
-files = ".constructor-build.info", "urls", "urls.txt", "initial-state.explicit.txt"
+files = (
+    "pkgs/.constructor-build.info",
+    "pkgs/urls",
+    "pkgs/urls.txt",
+    "conda-meta/initial-state.explicit.txt",
+)
 
 
 def write_index_cache(info, dst_dir, used_packages):
@@ -135,8 +140,19 @@ def system_info():
     return out
 
 
-def write_files(info, dst_dir):
-    with open(join(dst_dir, ".constructor-build.info"), "w") as fo:
+def write_files(info: dict, workspace: str):
+    """
+    Prepare files on disk to be shipped as part of the pre-conda payload.
+
+    Contents:
+
+    - `conda-meta/initial-state.explicit.txt`
+    - `pkgs/`:
+    """
+    os.makedirs(join(workspace, "conda-meta"), exist_ok=True)
+    pkgs_dir = join(workspace, "pkgs")
+    os.makedirs(pkgs_dir, exist_ok=True)
+    with open(join(pkgs_dir, ".constructor-build.info"), "w") as fo:
         json.dump(system_info(), fo)
 
     all_urls = info["_urls"].copy()
@@ -146,7 +162,7 @@ def write_files(info, dst_dir):
     final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in info["_urls"])
     all_final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in all_urls)
 
-    with open(join(dst_dir, "urls"), "w") as fo:
+    with open(join(pkgs_dir, "urls"), "w") as fo:
         for url, md5 in all_final_urls_md5s:
             maybe_different_url = ensure_transmuted_ext(info, url)
             if maybe_different_url != url:  # transmuted, no md5
@@ -154,7 +170,7 @@ def write_files(info, dst_dir):
             else:
                 fo.write(f"{url}#{md5}\n")
 
-    with open(join(dst_dir, "urls.txt"), "w") as fo:
+    with open(join(pkgs_dir, "urls.txt"), "w") as fo:
         for url, _ in all_final_urls_md5s:
             fo.write("%s\n" % url)
 
@@ -163,33 +179,37 @@ def write_files(info, dst_dir):
         all_dists += env_info["_dists"]
     all_dists = list({dist: None for dist in all_dists})  # de-duplicate
 
-    write_index_cache(info, dst_dir, all_dists)
+    write_index_cache(info, pkgs_dir, all_dists)
 
     # base environment conda-meta
-    write_conda_meta(info, dst_dir, final_urls_md5s)
+    write_conda_meta(info, join(workspace, "conda-meta"), final_urls_md5s)
 
-    write_repodata_record(info, dst_dir)
+    write_repodata_record(info, pkgs_dir)
 
     # base environment file used with conda install --file
     # (list of specs/dists to install)
-    write_initial_state_explicit_txt(info, dst_dir, final_urls_md5s)
-
-    for fn in files:
-        os.chmod(join(dst_dir, fn), 0o664)
+    write_initial_state_explicit_txt(info, join(workspace, "conda-meta"), final_urls_md5s)
 
     for env_name, env_info in info.get("_extra_envs_info", {}).items():
         env_config = info["extra_envs"][env_name]
-        env_dst_dir = os.path.join(dst_dir, "envs", env_name)
+        env_pkgs = os.path.join(workspace, "pkgs", "envs", env_name)
+        env_conda_meta = os.path.join(workspace, "envs", env_name, "conda-meta")
+        os.makedirs(env_pkgs, exist_ok=True)
+        os.makedirs(env_conda_meta, exist_ok=True)
         # environment conda-meta
         env_urls_md5 = tuple((get_final_url(info, url), md5) for url, md5 in env_info["_urls"])
         user_requested_specs = env_config.get("user_requested_specs", env_config.get("specs", ()))
-        write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
+        write_conda_meta(info, env_conda_meta, env_urls_md5, user_requested_specs)
         # environment installation list
-        write_initial_state_explicit_txt(info, env_dst_dir, env_urls_md5)
+        write_initial_state_explicit_txt(info, env_conda_meta, env_urls_md5)
         # channels
-        write_channels_txt(info, env_dst_dir, env_config)
+        write_channels_txt(info, env_pkgs, env_config)
         # shortcuts
-        write_shortcuts_txt(info, env_dst_dir, env_config)
+        write_shortcuts_txt(info, env_pkgs, env_config)
+
+    for dirpath, _, filenames in os.walk(workspace):
+        for filename in filenames:
+            os.chmod(join(dirpath, filename), 0o664)
 
 
 def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
@@ -212,9 +232,7 @@ def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
         builder.append("# update specs: %s" % update_specs)
     builder.append("\n")
 
-    if not isdir(join(dst_dir, "conda-meta")):
-        os.makedirs(join(dst_dir, "conda-meta"))
-    with open(join(dst_dir, "conda-meta", "history"), "w") as fh:
+    with open(join(dst_dir, "history"), "w") as fh:
         fh.write("\n".join(builder))
 
 

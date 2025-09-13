@@ -45,6 +45,11 @@ fi
 
 # Perform the conda install
 notify "Installing packages. This might take a few minutes."
+
+# 'install' below will modify the history file in a way we don't want;
+# keep a copy to restore later
+cp "$PREFIX/conda-meta/history" "$PREFIX/conda-meta/history.bak"
+
 # shellcheck disable=SC2086
 if ! \
 CONDA_REGISTER_ENVS="{{ register_envs }}" \
@@ -58,8 +63,8 @@ CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     exit 1
 fi
 
-# Move the prepackaged history file into place
-mv "$PREFIX/pkgs/conda-meta/history" "$PREFIX/conda-meta/history"
+# Restore history file as provided by installer
+mv "$PREFIX/conda-meta/history.bak" "$PREFIX/conda-meta/history"
 
 # Same, but for the extra environments
 
@@ -72,8 +77,9 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     fi
 
     notify "Installing ${env_name} packages..."
-    mkdir -p "$PREFIX/envs/$env_name/conda-meta"
-    touch "$PREFIX/envs/$env_name/conda-meta/history"
+    # 'install' below will modify the history file in a way we don't want;
+    # keep a copy to restore later
+    cp "$PREFIX/envs/$env_name/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history.bak"
 
     if [[ -f "${env_pkgs}channels.txt" ]]; then
         env_channels="$(cat "${env_pkgs}channels.txt")"
@@ -99,8 +105,9 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     "$CONDA_EXEC" install --offline --file "$PREFIX/envs/$env_name/conda-meta/initial-state.explicit.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
-    # Move the prepackaged history file into place
-    mv "${env_pkgs}/conda-meta/history" "$PREFIX/envs/$env_name/conda-meta/history"
+
+    # Restore history file as provided by installer
+    mv "$PREFIX/envs/$env_name/conda-meta/history.bak" "$PREFIX/envs/$env_name/conda-meta/history"
 done
 
 # Cleanup!
