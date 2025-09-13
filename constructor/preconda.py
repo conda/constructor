@@ -142,12 +142,21 @@ def system_info():
 
 def write_files(info: dict, workspace: str):
     """
-    Prepare files on disk to be shipped as part of the pre-conda payload.
+    Prepare files on disk to be shipped as part of the pre-conda payload, mostly
+    configuration and metadata files:
 
-    Contents:
+    - `conda-meta/initial-state.explicit.txt`: Lockfile to provision the base environment.
+    - `conda-meta/history`: Prepared history file with the right requested specs in input file.
+    - `pkgs/urls` and `pkgs/urls.txt`: Direct URLs of packages used, with and without MD5 hashes.
+    - `pkgs/cache/*.json`: Trimmed repodata to mock offline channels in use.
+    - `pkgs/channels.txt`: Channels in use.
+    - `pkgs/shortcuts.txt`: Which packages should have their shortcuts created, if any.
 
-    - `conda-meta/initial-state.explicit.txt`
-    - `pkgs/`:
+    If extra envs are requested, this will also write:
+
+    - Their corresponding `envs/<env-name>/conda-meta/` files.
+    - Their corresponding `pkgs/channels.txt` and `pkgs/shortcuts.txt` under 
+      `pkgs/envs/<env-name>`.
     """
     os.makedirs(join(workspace, "conda-meta"), exist_ok=True)
     pkgs_dir = join(workspace, "pkgs")
@@ -190,6 +199,9 @@ def write_files(info: dict, workspace: str):
     # (list of specs/dists to install)
     write_initial_state_explicit_txt(info, join(workspace, "conda-meta"), final_urls_md5s)
 
+    for fn in files:
+        os.chmod(join(workspace, fn), 0o664)
+
     for env_name, env_info in info.get("_extra_envs_info", {}).items():
         env_config = info["extra_envs"][env_name]
         env_pkgs = os.path.join(workspace, "pkgs", "envs", env_name)
@@ -206,10 +218,6 @@ def write_files(info: dict, workspace: str):
         write_channels_txt(info, env_pkgs, env_config)
         # shortcuts
         write_shortcuts_txt(info, env_pkgs, env_config)
-
-    for dirpath, _, filenames in os.walk(workspace):
-        for filename in filenames:
-            os.chmod(join(dirpath, filename), 0o664)
 
 
 def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
