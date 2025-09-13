@@ -155,7 +155,7 @@ def write_files(info: dict, workspace: str):
     If extra envs are requested, this will also write:
 
     - Their corresponding `envs/<env-name>/conda-meta/` files.
-    - Their corresponding `pkgs/channels.txt` and `pkgs/shortcuts.txt` under 
+    - Their corresponding `pkgs/channels.txt` and `pkgs/shortcuts.txt` under
       `pkgs/envs/<env-name>`.
     """
     os.makedirs(join(workspace, "conda-meta"), exist_ok=True)
