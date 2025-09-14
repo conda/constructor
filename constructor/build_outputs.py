@@ -7,6 +7,7 @@ Update documentation in `construct.py` if any changes are made.
 import hashlib
 import json
 import logging
+import os
 from collections import defaultdict
 from pathlib import Path
 
@@ -55,7 +56,7 @@ def dump_hash(info, algorithm=None):
         invalid = algorithms.difference(set(hashlib.algorithms_available))
         raise ValueError(f"Invalid algorithm: {', '.join(invalid)}")
     BUFFER_SIZE = 65536
-    if isinstance(info["_outpath"], str):
+    if isinstance(info["_outpath"], (str, Path)):
         installers = [Path(info["_outpath"])]
     else:
         installers = [Path(outpath) for outpath in info["_outpath"]]
@@ -162,7 +163,8 @@ def dump_licenses(info, include_text=False, text_errors=None):
         if not licenses_dir.is_dir():
             continue
 
-        for directory, _, files in licenses_dir.walk():
+        # FUTURE: pathlib.Path() has .walk() in Python 3.12+
+        for directory, _, files in os.walk(licenses_dir):
             for filepath in files:
                 license_path = Path(directory, filepath)
                 license_file = {"path": str(license_path), "text": None}
