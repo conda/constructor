@@ -270,13 +270,13 @@ def _solve_precs(
                 sys.exit("CONDA_EXE env variable is empty. Need to activate a conda env.")
     # make the environment, if needed
     if environment_file:
-        environment = tempfile.mkdtemp()
+        environment = Path(tempfile.mkdtemp())
         new_env = os.environ.copy()
         new_env["CONDA_SUBDIR"] = platform
         # use conda env for yaml, and standard conda create otherwise
         subcommand = (
             ["env", "create"]
-            if environment_file.endswith((".yml", ".yaml"))
+            if environment_file.suffix in (".yml", ".yaml")
             else ["create", "--yes"]
         )
         if channel_urls:
