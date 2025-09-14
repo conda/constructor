@@ -133,9 +133,9 @@ def create(info, verbose: bool = False):
         pre_t.add(tmp_dir / fn, "pkgs/" + fn)
 
     for env_name in info.get("_extra_envs_info", ()):
-        pre_t.add(tmp_dir / "envs"/ env_name/ "env.txt", f"pkgs/envs/{env_name}/env.txt")
+        pre_t.add(tmp_dir / "envs" / env_name / "env.txt", f"pkgs/envs/{env_name}/env.txt")
         pre_t.add(
-            tmp_dir / "envs"/ env_name/ "shortcuts.txt", f"pkgs/envs/{env_name}/shortcuts.txt"
+            tmp_dir / "envs" / env_name / "shortcuts.txt", f"pkgs/envs/{env_name}/shortcuts.txt"
         )
 
     for key in "pre_install", "post_install":
