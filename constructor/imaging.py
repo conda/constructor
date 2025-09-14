@@ -98,7 +98,7 @@ def add_color_info(info):
         sys.exit("Error: color '%s' not defined" % color_name)
 
 
-def write_images(info, dir_path, os="windows"):
+def write_images(info, dir_path: Path, os="windows"):
     if os == "windows":
         instructions = [
             ("welcome", welcome_size, mk_welcome_image, ".bmp"),
