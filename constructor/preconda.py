@@ -15,7 +15,6 @@ import sys
 import time
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING
 
 from . import __version__ as CONSTRUCTOR_VERSION
 from .conda_interface import (
@@ -36,10 +35,6 @@ from .utils import (
     get_final_url,
     shortcuts_flags,
 )
-
-if TYPE_CHECKING:
-    import os
-    from collections.abc import Mapping
 
 try:
     import json
@@ -272,7 +267,9 @@ def write_shortcuts_txt(info, dst_dir, env_config):
     (dst_dir / "shortcuts.txt").write_text(contents)
 
 
-def copy_extra_files(extra_files: list[os.PathLike | Mapping], workdir: os.PathLike) -> list[Path]:
+def copy_extra_files(
+    extra_files: list[str | Path | dict[str | Path, str]], workdir: Path
+) -> list[Path]:
     """Copy list of extra files to a working directory
 
     Args:
@@ -288,8 +285,9 @@ def copy_extra_files(extra_files: list[os.PathLike | Mapping], workdir: os.PathL
     if not extra_files:
         return []
     copied = []
+    workdir = Path(workdir)
     for path in extra_files:
-        if isinstance(path, str):
+        if isinstance(path, (str, Path)):
             copied.append(shutil.copy(path, workdir))
         elif isinstance(path, dict):
             assert len(path) == 1
