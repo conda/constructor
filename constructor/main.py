@@ -145,7 +145,7 @@ def main_build(
         "post_install_pages",
     ):
         if value := info.get(key):  # only join if there's a truthy value set
-            if isinstance(value, str):
+            if isinstance(value, (str, Path)):
                 info[key] = Path(dir_path, info[key]).resolve()
             elif isinstance(value, list):
                 info[key] = [Path(dir_path, val).resolve() for val in value]
@@ -169,7 +169,7 @@ def main_build(
         extras = info.get(extra_type, ())
         new_extras = []
         for path in extras:
-            if isinstance(path, str):
+            if isinstance(path, (str, Path)):
                 new_extras.append(Path(dir_path, path).resolve())
             elif isinstance(path, dict):
                 for orig, dest in path.items():

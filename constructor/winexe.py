@@ -196,7 +196,7 @@ def make_nsi(
         value = info.get(key, "")
         if not value:
             continue
-        if isinstance(value, str) and not value.endswith(".nsi"):
+        if isinstance(value, (str, Path)) and not value.endswith(".nsi"):
             logger.warning(
                 "On Windows, %s must be an .nsi file; %s will be ignored.",
                 key,
