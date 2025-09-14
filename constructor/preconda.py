@@ -9,13 +9,10 @@ Common logic to prepare the tarball payloads shipped in some installers.
 
 from __future__ import annotations
 
-import os
 import platform
 import shutil
 import sys
 import time
-from os.path import isdir, join
-from os.path import split as path_split
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
@@ -41,6 +38,7 @@ from .utils import (
 )
 
 if TYPE_CHECKING:
+    import os
     from collections.abc import Mapping
 
 try:
@@ -51,11 +49,9 @@ except ImportError:
 files = ".constructor-build.info", "urls", "urls.txt", "env.txt"
 
 
-def write_index_cache(info, dst_dir, used_packages):
-    cache_dir = join(dst_dir, "cache")
-
-    if not isdir(cache_dir):
-        os.makedirs(cache_dir)
+def write_index_cache(info, dst_dir: Path, used_packages):
+    cache_dir = dst_dir / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
 
     _platforms = info["_platform"], "noarch"
     _remap_configs = list(info.get("channels_remap", []))
@@ -103,9 +99,9 @@ def write_index_cache(info, dst_dir, used_packages):
         if repodata is not None:
             write_repodata(cache_dir, url, repodata, used_packages, info)
 
-    for cache_file in os.listdir(cache_dir):
-        if not cache_file.endswith(".json"):
-            os.unlink(join(cache_dir, cache_file))
+    for cache_file in cache_dir.glob("*"):
+        if not cache_file.name.endswith(".json"):
+            cache_file.unlink()
 
 
 def system_info():
@@ -135,9 +131,8 @@ def system_info():
     return out
 
 
-def write_files(info, dst_dir):
-    with open(join(dst_dir, ".constructor-build.info"), "w") as fo:
-        json.dump(system_info(), fo)
+def write_files(info, dst_dir: Path):
+    (dst_dir / ".constructor-build.info").write_text(json.dumps(system_info()))
 
     all_urls = info["_urls"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
@@ -146,7 +141,7 @@ def write_files(info, dst_dir):
     final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in info["_urls"])
     all_final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in all_urls)
 
-    with open(join(dst_dir, "urls"), "w") as fo:
+    with open(dst_dir / "urls", "w") as fo:
         for url, md5 in all_final_urls_md5s:
             maybe_different_url = ensure_transmuted_ext(info, url)
             if maybe_different_url != url:  # transmuted, no md5
@@ -154,7 +149,7 @@ def write_files(info, dst_dir):
             else:
                 fo.write(f"{url}#{md5}\n")
 
-    with open(join(dst_dir, "urls.txt"), "w") as fo:
+    with open(dst_dir / "urls.txt", "w") as fo:
         for url, _ in all_final_urls_md5s:
             fo.write("%s\n" % url)
 
@@ -175,11 +170,11 @@ def write_files(info, dst_dir):
     write_env_txt(info, dst_dir, final_urls_md5s)
 
     for fn in files:
-        os.chmod(join(dst_dir, fn), 0o664)
+        (dst_dir / fn).chmod(0o644)
 
     for env_name, env_info in info.get("_extra_envs_info", {}).items():
         env_config = info["extra_envs"][env_name]
-        env_dst_dir = os.path.join(dst_dir, "envs", env_name)
+        env_dst_dir = dst_dir / "envs" / env_name
         # environment conda-meta
         env_urls_md5 = tuple((get_final_url(info, url), md5) for url, md5 in env_info["_urls"])
         user_requested_specs = env_config.get("user_requested_specs", env_config.get("specs", ()))
@@ -192,11 +187,11 @@ def write_files(info, dst_dir):
         write_shortcuts_txt(info, env_dst_dir, env_config)
 
 
-def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
+def write_conda_meta(info, dst_dir: Path, final_urls_md5s, user_requested_specs=None):
     if user_requested_specs is None:
         user_requested_specs = info.get("user_requested_specs", info.get("specs", ()))
 
-    cmd = path_split(sys.argv[0])[-1]
+    cmd = Path(sys.argv[0]).name
     if len(sys.argv) > 1:
         cmd = "%s %s" % (cmd, " ".join(sys.argv[1:]))
 
@@ -212,13 +207,11 @@ def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
         builder.append("# update specs: %s" % update_specs)
     builder.append("\n")
 
-    if not isdir(join(dst_dir, "conda-meta")):
-        os.makedirs(join(dst_dir, "conda-meta"))
-    with open(join(dst_dir, "conda-meta", "history"), "w") as fh:
-        fh.write("\n".join(builder))
+    (dst_dir / "conda-meta").mkdir(parents=True, exist_ok=True)
+    (dst_dir / "conda-meta" / "history").write_text("\n".join(builder))
 
 
-def write_repodata_record(info, dst_dir):
+def write_repodata_record(info, dst_dir: Path):
     all_dists = info["_dists"].copy()
     for env_data in info.get("_extra_envs_info", {}).values():
         all_dists += env_data["_dists"]
@@ -227,25 +220,19 @@ def write_repodata_record(info, dst_dir):
             _dist = filename_dist(dist)[:-6]
         elif filename_dist(dist).endswith(".tar.bz2"):
             _dist = filename_dist(dist)[:-8]
-        record_file = join(_dist, "info", "repodata_record.json")
-        record_file_src = join(info["_download_dir"], record_file)
+        record_file = Path(_dist, "info", "repodata_record.json")
+        record_file_src = info["_download_dir"] / record_file
 
-        with open(record_file_src) as rf:
-            rr_json = json.load(rf)
-
+        rr_json = json.loads(record_file_src.read_text())
         rr_json["url"] = get_final_url(info, rr_json["url"])
         rr_json["channel"] = get_final_url(info, rr_json["channel"])
 
-        if not isdir(join(dst_dir, _dist, "info")):
-            os.makedirs(join(dst_dir, _dist, "info"))
-
-        record_file_dest = join(dst_dir, record_file)
-
-        with open(record_file_dest, "w") as rf:
-            json.dump(rr_json, rf, indent=2, sort_keys=True)
+        record_file_dst = dst_dir / record_file
+        record_file_dst.parent.mkdir(parents=True, exist_ok=True)
+        record_file_dst.write_text(json.dumps(rr_json, indent=2, sort_keys=True))
 
 
-def write_env_txt(info, dst_dir, urls):
+def write_env_txt(info, dst_dir: Path, urls):
     """
     urls is an iterable of tuples with url and md5 values
     """
@@ -257,7 +244,7 @@ def write_env_txt(info, dst_dir, urls):
         @EXPLICIT
         """
     ).lstrip()
-    with open(join(dst_dir, "env.txt"), "w") as envf:
+    with open(dst_dir / "env.txt", "w") as envf:
         envf.write(header)
         for url, md5 in urls:
             maybe_different_url = ensure_transmuted_ext(info, url)
@@ -267,15 +254,14 @@ def write_env_txt(info, dst_dir, urls):
                 envf.write(f"{url}#{md5}\n")
 
 
-def write_channels_txt(info, dst_dir, env_config):
+def write_channels_txt(info, dst_dir: Path, env_config):
     env_config = env_config.copy()
     if "channels" not in env_config:
         env_config["channels"] = info.get("channels", ())
     if "channels_remap" not in env_config:
         env_config["channels_remap"] = info.get("channels_remap", ())
 
-    with open(join(dst_dir, "channels.txt"), "w") as f:
-        f.write(",".join(get_final_channels(env_config)))
+    (dst_dir / "channels.txt").write_text(",".join(get_final_channels(env_config)))
 
 
 def write_shortcuts_txt(info, dst_dir, env_config):
@@ -283,13 +269,10 @@ def write_shortcuts_txt(info, dst_dir, env_config):
         contents = shortcuts_flags(env_config)
     else:
         contents = shortcuts_flags(info)
-    with open(join(dst_dir, "shortcuts.txt"), "w") as f:
-        f.write(contents)
+    (dst_dir / "shortcuts.txt").write_text(contents)
 
 
-def copy_extra_files(
-    extra_files: list[os.PathLike | Mapping], workdir: os.PathLike
-) -> list[os.PathLike]:
+def copy_extra_files(extra_files: list[os.PathLike | Mapping], workdir: os.PathLike) -> list[Path]:
     """Copy list of extra files to a working directory
 
     Args:
@@ -300,7 +283,7 @@ def copy_extra_files(
         FileNotFoundError: Raises when the file isn't found.
 
     Returns:
-        list[os.PathLike]: List of normalized paths of copied locations.
+        list[Path]: List of normalized paths of copied locations.
     """
     if not extra_files:
         return []

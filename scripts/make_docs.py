@@ -3,7 +3,7 @@ Generates the documentation for construct.yaml input files
 """
 
 import sys
-from os.path import dirname, join
+from pathlib import Path
 
 import jinja2
 
@@ -11,9 +11,8 @@ from constructor._schema import ConstructorConfiguration
 from constructor.conda_interface import SUPPORTED_PLATFORMS
 from constructor.construct import ns_platform
 
-REPO_ROOT = dirname(dirname(__file__))
-
-sys.path.insert(0, REPO_ROOT)
+REPO_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(REPO_ROOT))
 
 
 valid_selectors = ns_platform(sys.platform)
@@ -93,8 +92,5 @@ output = jinja2.Template(template).render(
     supported_platforms=SUPPORTED_PLATFORMS,
 )
 
-with open(join(REPO_ROOT, "CONSTRUCT.md"), "w") as f:
-    f.write(output)
-
-with open(join(REPO_ROOT, "docs", "source", "construct-yaml.md"), "w") as f:
-    f.write(output)
+(REPO_ROOT / "CONSTRUCT.md").write_text(output)
+(REPO_ROOT / "docs" / "source" / "construct-yaml.md").write_text(output)

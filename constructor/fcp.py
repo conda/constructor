@@ -7,6 +7,8 @@
 fcp (fetch conda packages) module
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
@@ -14,7 +16,7 @@ import sys
 import tempfile
 from collections import defaultdict
 from itertools import groupby
-from os.path import abspath, expanduser, isdir, join
+from pathlib import Path
 from subprocess import check_call
 from typing import TYPE_CHECKING
 
@@ -133,10 +135,10 @@ platform: %(platform)s""",
             logger.debug("    %s", prec.fn)
 
 
-def _fetch(download_dir, precs):
-    assert conda_context.pkgs_dirs[0] == download_dir
+def _fetch(download_dir: Path, precs):
+    assert Path(conda_context.pkgs_dirs[0]) == download_dir
     pc = PackageCacheData.first_writable()
-    assert pc.pkgs_dir == download_dir
+    assert Path(pc.pkgs_dir) == download_dir
     assert pc.is_writable, f"{download_dir} does not exist or is not writable"
 
     ProgressiveFetchExtract(precs).execute()
@@ -156,7 +158,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
 
     for pc_rec in pc_recs:
         fn = pc_rec.fn
-        extracted_package_dir = pc_rec.extracted_package_dir
+        extracted_package_dir = Path(pc_rec.extracted_package_dir)
 
         total_tarball_size += int(pc_rec.get("size", 0))
 
@@ -164,9 +166,9 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
         for path_data in paths_data:
             short_path = path_data.path
             try:
-                size = path_data.size_in_bytes or getsize(join(extracted_package_dir, short_path))
+                size = path_data.size_in_bytes or getsize(extracted_package_dir / short_path)
             except AttributeError:
-                size = getsize(join(extracted_package_dir, short_path))
+                size = getsize(extracted_package_dir / short_path)
             total_extracted_pkgs_size += size
 
             map_members_scase[short_path].add(fn)
@@ -204,13 +206,14 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     return total_tarball_size, total_extracted_pkgs_size
 
 
-def _precs_from_environment(environment, input_dir):
-    if not isdir(environment) and ("/" in environment or "\\" in environment):
-        env2 = join(input_dir, environment)
-        if isdir(env2):
+def _precs_from_environment(environment: Path, input_dir: Path):
+    environment = Path(environment)
+    if not environment.is_dir() and len(environment.parts) > 1:
+        env2 = input_dir / environment
+        if env2.is_dir():
             environment = env2
-    if isdir(environment):
-        environment = abspath(join(input_dir, expanduser(environment)))
+    if environment.is_dir():
+        environment = (input_dir / environment.expanduser()).resolve()
     else:
         environment = locate_prefix_by_name(environment)
     pdata = PrefixData(environment)
@@ -356,14 +359,14 @@ def _fetch_precs(precs, download_dir, transmute_file_type=""):
                 dist = filename_dist(dist)
                 new_file_name = "%s%s" % (dist[:-8], transmute_file_type)
                 new_dists.append(new_file_name)
-                new_file_name = join(download_dir, new_file_name)
-                if os.path.exists(new_file_name):
+                new_file_name = Path(download_dir, new_file_name)
+                if new_file_name.exists():
                     continue
                 logger.info("transmuting %s", dist)
                 conda_package_handling.api.transmute(
-                    os.path.join(download_dir, dist),
+                    str(download_dir / dist),
                     transmute_file_type,
-                    out_folder=download_dir,
+                    out_folder=str(download_dir),
                 )
             else:
                 new_dists.append(dist)
@@ -375,7 +378,7 @@ def _fetch_precs(precs, download_dir, transmute_file_type=""):
 def _main(
     name,
     version,
-    download_dir,
+    download_dir: Path,
     platform,
     channel_urls=(),
     channels_remap=(),
@@ -384,14 +387,14 @@ def _main(
     menu_packages=None,
     ignore_duplicate_files=True,
     environment=None,
-    environment_file=None,
+    environment_file: Path | None = None,
     verbose=True,
     dry_run=False,
-    conda_exe="conda.exe",
+    conda_exe: Path = Path("conda.exe"),
     transmute_file_type="",
     extra_envs=None,
     check_path_spaces=True,
-    input_dir="",
+    input_dir: Path = Path.cwd(),
 ):
     precs = _solve_precs(
         name,
@@ -481,9 +484,9 @@ def _main(
 
 def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
-    input_dir = info["_input_dir"]
+    input_dir: Path = info["_input_dir"]
     version = info["version"]
-    download_dir = info["_download_dir"]
+    download_dir: Path = info["_download_dir"]
     platform = info["_platform"]
     channel_urls = all_channel_urls(info.get("channels", ()), subdirs=[platform, "noarch"])
     channels_remap = info.get("channels_remap", ())
@@ -492,7 +495,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     menu_packages = info.get("menu_packages")
     ignore_duplicate_files = info.get("ignore_duplicate_files", True)
     environment = info.get("environment", None)
-    environment_file = info.get("environment_file", None)
+    environment_file: Path = info.get("environment_file", None)
     transmute_file_type = info.get("transmute_file_type", "")
     extra_envs = info.get("extra_envs", {})
     check_path_spaces = info.get("check_path_spaces", True)
@@ -517,7 +520,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
         # Restoring the state for "proxy_servers" to what it was before
         conda_context.proxy_servers = proxy_servers
         assert conda_context.ssl_verify == _ssl_verify
-        assert conda_context.pkgs_dirs and conda_context.pkgs_dirs[0] == download_dir
+        assert conda_context.pkgs_dirs and Path(conda_context.pkgs_dirs[0]) == download_dir
 
         (
             pkg_records,

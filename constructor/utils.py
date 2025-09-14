@@ -17,8 +17,7 @@ import shutil
 import sys
 import warnings
 from io import StringIO
-from os import environ, sep, unlink
-from os.path import isdir, isfile, islink, join, normpath
+from os import environ
 from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
@@ -40,11 +39,11 @@ def explained_check_call(args):
     """
     Execute a system process and debug the invocation
     """
-    logger.debug("Executing: %s", " ".join(args))
+    logger.debug("Executing: %s", " ".join(map(str, args)))
     return check_call(args)
 
 
-def filename_dist(dist):
+def filename_dist(dist) -> str:
     """Return the filename of a distribution."""
     if hasattr(dist, "to_filename"):
         return dist.to_filename()
@@ -242,22 +241,17 @@ def get_final_channels(info):
     return mapped_channels
 
 
-def normalize_path(path):
-    new_path = normpath(path)
-    return new_path.replace(sep + sep, sep)
-
-
-def rm_rf(path):
+def rm_rf(path: Path):
     """
     try to delete path, but never fail
     """
     try:
-        if islink(path) or isfile(path):
+        if path.is_symlink() or path.is_file():
             # Note that we have to check if the destination is a link because
             # exists('/path/to/dead-link') will return False, although
             # islink('/path/to/dead-link') is True.
-            unlink(path)
-        elif isdir(path):
+            path.unlink()
+        elif path.is_dir():
             rmtree(path)
     except OSError:
         pass
@@ -306,15 +300,15 @@ def approx_size_kb(info, which="pkgs"):
 
 
 def copy_conda_exe(
-    target_directory: str | Path,
+    target_directory: Path,
     target_conda_exe_name: str | None = None,
-    conda_exe: str | Path | None = None,
+    conda_exe: Path | None = None,
 ) -> list[Path]:
     if conda_exe is None:
-        conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
+        conda_exe = Path(sys.prefix, "standalone_conda", "conda.exe")
     if target_conda_exe_name is None:
         target_conda_exe_name = Path(conda_exe).name
-    shutil.copyfile(conda_exe, join(target_directory, target_conda_exe_name))
+    shutil.copyfile(conda_exe, target_directory / target_conda_exe_name)
     if (internal_dir := Path(conda_exe).parent / "_internal").is_dir():
         # onedir conda-standalone variant, copy that too
         shutil.copytree(internal_dir, Path(target_directory, "_internal"), dirs_exist_ok=True)
@@ -322,11 +316,9 @@ def copy_conda_exe(
     return []
 
 
-def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneExe, str]:
+def identify_conda_exe(conda_exe: Path | None = None) -> tuple[StandaloneExe, str]:
     if conda_exe is None:
-        conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
-    if isinstance(conda_exe, Path):
-        conda_exe = str(conda_exe)
+        conda_exe = Path(sys.prefix, "standalone_conda", "conda.exe")
     try:
         output_version = check_output([conda_exe, "--version"], text=True)
         output_version = output_version.strip()
