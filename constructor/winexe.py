@@ -273,7 +273,7 @@ def make_nsi(
         if variables["custom_conclusion"]
         else ""
     )
-    if isinstance(info.get("post_install_pages"), str):
+    if isinstance(info.get("post_install_pages"), (str, Path)):
         variables["POST_INSTALL_PAGES"] = [custom_nsi_insert_from_file(info["post_install_pages"])]
     else:
         variables["POST_INSTALL_PAGES"] = [
