@@ -288,7 +288,7 @@ def copy_extra_files(
     workdir = Path(workdir)
     for path in extra_files:
         if isinstance(path, (str, Path)):
-            copied.append(shutil.copy(path, workdir))
+            copied.append(Path(shutil.copy(path, workdir)))
         elif isinstance(path, dict):
             assert len(path) == 1
             origin, destination = next(iter(path.items()))
@@ -297,5 +297,5 @@ def copy_extra_files(
                 raise FileNotFoundError(f"File {origin} does not exist.")
             dest_path = Path(workdir) / destination
             dest_path.parent.mkdir(parents=True, exist_ok=True)
-            copied.append(shutil.copy(orig_path, dest_path))
+            copied.append(Path(shutil.copy(orig_path, dest_path)))
     return copied
