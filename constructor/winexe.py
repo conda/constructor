@@ -346,7 +346,10 @@ def create(info, verbose=False):
         else:
             raise ValueError(f"Unknown signing tool: {signing_tool_name}")
         signing_tool.verify_signing_tool()
-    tmp_dir = tempfile.mkdtemp()
+
+    tmp_dir_base_path = info["_outpath"].parent / "tmp"
+    tmp_dir_base_path.mkdir(parents=True, exist_ok=True)
+    tmp_dir = Path(tempfile.mkdtemp(dir=tmp_dir_base_path))
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
