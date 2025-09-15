@@ -160,7 +160,7 @@ def create(info, verbose: bool = False):
             _dist = filename_dist(dist)[:-6]
         elif filename_dist(dist).endswith(".tar.bz2"):
             _dist = filename_dist(dist)[:-8]
-        record_file = Path(tmp_dir, _dist, "info", "repodata_record.json")
+        record_file = Path(_dist, "info", "repodata_record.json")
         record_file_src = tmp_dir / record_file
         record_file_dest = f"pkgs/{record_file}"
         pre_t.add(record_file_src, record_file_dest)

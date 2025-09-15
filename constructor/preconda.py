@@ -95,7 +95,7 @@ def write_index_cache(info, dst_dir: Path, used_packages):
             write_repodata(cache_dir, url, repodata, used_packages, info)
 
     for cache_file in cache_dir.glob("*"):
-        if not cache_file.name.endswith(".json"):
+        if not cache_file.suffix == ".json":
             cache_file.unlink()
 
 
@@ -217,12 +217,11 @@ def write_repodata_record(info, dst_dir: Path):
             _dist = filename_dist(dist)[:-8]
         record_file = Path(_dist, "info", "repodata_record.json")
         record_file_src = info["_download_dir"] / record_file
-
+        record_file_dst = dst_dir / record_file
         rr_json = json.loads(record_file_src.read_text())
         rr_json["url"] = get_final_url(info, rr_json["url"])
         rr_json["channel"] = get_final_url(info, rr_json["channel"])
 
-        record_file_dst = dst_dir / record_file
         record_file_dst.parent.mkdir(parents=True, exist_ok=True)
         record_file_dst.write_text(json.dumps(rr_json, indent=2, sort_keys=True))
 
