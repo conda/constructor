@@ -1371,6 +1371,14 @@ def test_regressions(tmp_path, request):
             uninstall=True,
         )
 
+@pytest.mark.xfail(
+    condition=(CONDA_EXE == StandaloneExe.CONDA and
+               CONDA_EXE_VERSION and
+               CONDA_EXE_VERSION >= Version("25.5.0") and
+               CONDA_EXE_VERSION < Version("25.7.0")),
+    reason="conda-standalone 25.5.x fails with protected base environments and older versions are ignored",
+    strict=True
+)
 def test_frozen_environment(tmp_path, request):
     input_path = _example_path("protected_base")
     for installer, install_dir in create_installer(input_path, tmp_path):

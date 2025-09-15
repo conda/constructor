@@ -177,7 +177,7 @@ def main_build(
                     new_extras.append({orig: dest})
         info[extra_type] = new_extras
 
-    if ("conda-meta/frozen" in info.get("extra_type", {})
+    if any(str(path).endswith("conda-meta/frozen") for path in info.get("extra_files", [])
         and exe_type == StandaloneExe.CONDA
         and exe_version
         and exe_version >= Version("25.5.0") and exe_version < Version("25.7.0")):
