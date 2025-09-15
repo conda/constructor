@@ -41,7 +41,12 @@ try:
 except ImportError:
     import ruamel_json as json
 
-files = ".constructor-build.info", "urls", "urls.txt", "env.txt"
+files = (
+    "pkgs/.constructor-build.info",
+    "pkgs/urls",
+    "pkgs/urls.txt",
+    "conda-meta/initial-state.explicit.txt",
+)
 
 
 def write_index_cache(info, dst_dir: Path, used_packages):
@@ -126,8 +131,28 @@ def system_info():
     return out
 
 
-def write_files(info, dst_dir: Path):
-    (dst_dir / ".constructor-build.info").write_text(json.dumps(system_info()))
+def write_files(info: dict, workspace: Path):
+    """
+    Prepare files on disk to be shipped as part of the pre-conda payload, mostly
+    configuration and metadata files:
+
+    - `conda-meta/initial-state.explicit.txt`: Lockfile to provision the base environment.
+    - `conda-meta/history`: Prepared history file with the right requested specs in input file.
+    - `pkgs/urls` and `pkgs/urls.txt`: Direct URLs of packages used, with and without MD5 hashes.
+    - `pkgs/cache/*.json`: Trimmed repodata to mock offline channels in use.
+    - `pkgs/channels.txt`: Channels in use.
+    - `pkgs/shortcuts.txt`: Which packages should have their shortcuts created, if any.
+
+    If extra envs are requested, this will also write:
+
+    - Their corresponding `envs/<env-name>/conda-meta/` files.
+    - Their corresponding `pkgs/channels.txt` and `pkgs/shortcuts.txt` under
+      `pkgs/envs/<env-name>`.
+    """
+    (workspace / "conda-meta").mkdir(exist_ok=True)
+    pkgs_dir = workspace / "pkgs"
+    pkgs_dir.mkdir(exist_ok=True)
+    (pkgs_dir / ".constructor-build.info").write_text(json.dumps(system_info()))
 
     all_urls = info["_urls"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
@@ -136,7 +161,7 @@ def write_files(info, dst_dir: Path):
     final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in info["_urls"])
     all_final_urls_md5s = tuple((get_final_url(info, url), md5) for url, md5 in all_urls)
 
-    with open(dst_dir / "urls", "w") as fo:
+    with open(pkgs_dir / "urls", "w") as fo:
         for url, md5 in all_final_urls_md5s:
             maybe_different_url = ensure_transmuted_ext(info, url)
             if maybe_different_url != url:  # transmuted, no md5
@@ -144,42 +169,43 @@ def write_files(info, dst_dir: Path):
             else:
                 fo.write(f"{url}#{md5}\n")
 
-    with open(dst_dir / "urls.txt", "w") as fo:
-        for url, _ in all_final_urls_md5s:
-            fo.write("%s\n" % url)
+    (pkgs_dir / "urls.txt").write_text("".join([f"{url}\n" for url, _ in all_final_urls_md5s]))
 
     all_dists = info["_dists"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
         all_dists += env_info["_dists"]
     all_dists = list({dist: None for dist in all_dists})  # de-duplicate
 
-    write_index_cache(info, dst_dir, all_dists)
+    write_index_cache(info, pkgs_dir, all_dists)
 
     # base environment conda-meta
-    write_conda_meta(info, dst_dir, final_urls_md5s)
+    write_conda_meta(info, workspace / "conda-meta", final_urls_md5s)
 
-    write_repodata_record(info, dst_dir)
+    write_repodata_record(info, pkgs_dir)
 
     # base environment file used with conda install --file
     # (list of specs/dists to install)
-    write_env_txt(info, dst_dir, final_urls_md5s)
+    write_initial_state_explicit_txt(info, workspace / "conda-meta", final_urls_md5s)
 
     for fn in files:
-        (dst_dir / fn).chmod(0o644)
+        (workspace / fn).chmod(0o664)
 
     for env_name, env_info in info.get("_extra_envs_info", {}).items():
         env_config = info["extra_envs"][env_name]
-        env_dst_dir = dst_dir / "envs" / env_name
+        env_pkgs = workspace / "pkgs" / "envs" / env_name
+        env_conda_meta = workspace / "envs" / env_name / "conda-meta"
+        env_pkgs.mkdir(parents=True, exist_ok=True)
+        env_conda_meta.mkdir(parents=True, exist_ok=True)
         # environment conda-meta
         env_urls_md5 = tuple((get_final_url(info, url), md5) for url, md5 in env_info["_urls"])
         user_requested_specs = env_config.get("user_requested_specs", env_config.get("specs", ()))
-        write_conda_meta(info, env_dst_dir, env_urls_md5, user_requested_specs)
+        write_conda_meta(info, env_conda_meta, env_urls_md5, user_requested_specs)
         # environment installation list
-        write_env_txt(info, env_dst_dir, env_urls_md5)
+        write_initial_state_explicit_txt(info, env_conda_meta, env_urls_md5)
         # channels
-        write_channels_txt(info, env_dst_dir, env_config)
+        write_channels_txt(info, env_pkgs, env_config)
         # shortcuts
-        write_shortcuts_txt(info, env_dst_dir, env_config)
+        write_shortcuts_txt(info, env_pkgs, env_config)
 
 
 def write_conda_meta(info, dst_dir: Path, final_urls_md5s, user_requested_specs=None):
@@ -202,8 +228,7 @@ def write_conda_meta(info, dst_dir: Path, final_urls_md5s, user_requested_specs=
         builder.append("# update specs: %s" % update_specs)
     builder.append("\n")
 
-    (dst_dir / "conda-meta").mkdir(parents=True, exist_ok=True)
-    (dst_dir / "conda-meta" / "history").write_text("\n".join(builder))
+    (dst_dir / "history").write_text("\n".join(builder))
 
 
 def write_repodata_record(info, dst_dir: Path):
@@ -226,7 +251,7 @@ def write_repodata_record(info, dst_dir: Path):
         record_file_dst.write_text(json.dumps(rr_json, indent=2, sort_keys=True))
 
 
-def write_env_txt(info, dst_dir: Path, urls):
+def write_initial_state_explicit_txt(info, dst_dir, urls):
     """
     urls is an iterable of tuples with url and md5 values
     """
@@ -238,7 +263,7 @@ def write_env_txt(info, dst_dir: Path, urls):
         @EXPLICIT
         """
     ).lstrip()
-    with open(dst_dir / "env.txt", "w") as envf:
+    with open(dst_dir / "initial-state.explicit.txt", "w") as envf:
         envf.write(header)
         for url, md5 in urls:
             maybe_different_url = ensure_transmuted_ext(info, url)

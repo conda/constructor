@@ -81,10 +81,10 @@ def setup_envs_commands(info, dir_path):
         {
             "name": "base",
             "prefix": r"$INSTDIR",
-            "env_txt": r"$INSTDIR\pkgs\env.txt",  # env.txt as seen by the running installer
-            "env_txt_dir": r"$INSTDIR\pkgs",  # env.txt location in the installer filesystem
-            # env.txt path while building the installer
-            "env_txt_abspath": dir_path / "env.txt",
+            # initial-state.explicit.txt as seen by the running installer
+            "lockfile_txt": r"$INSTDIR\conda-meta\initial-state.explicit.txt",
+            # initial-state.explicit.txt path while building the installer
+            "lockfile_txt_abspath": dir_path / "conda-meta" / "initial-state.explicit.txt",
             "conda_meta": r"$INSTDIR\conda-meta",
             "history_abspath": dir_path / "conda-meta" / "history",
             "final_channels": get_final_channels(info),
@@ -107,9 +107,12 @@ def setup_envs_commands(info, dir_path):
             {
                 "name": env_name,
                 "prefix": join("$INSTDIR", "envs", env_name),
-                "env_txt": join("$INSTDIR", "pkgs", "envs", env_name, "env.txt"),
-                "env_txt_dir": join("$INSTDIR", "pkgs", "envs", env_name),
-                "env_txt_abspath": dir_path / "envs" / env_name / "env.txt",
+                "lockfile_txt": Path(
+                    "$INSTDIR", "envs", env_name, "conda-meta", "initial-state.explicit.txt"
+                ),
+                "lockfile_txt_abspath": Path(
+                    dir_path, "envs", env_name, "conda-meta", "initial-state.explicit.txt"
+                ),
                 "conda_meta": join("$INSTDIR", "envs", env_name, "conda-meta"),
                 "history_abspath": dir_path / "envs" / env_name / "conda-meta" / "history",
                 "final_channels": get_final_channels(channel_info),
@@ -168,20 +171,20 @@ def make_nsi(
         "outfile": info["_outpath"],
         "vipv": make_VIProductVersion(info["version"]),
         "constructor_version": info["CONSTRUCTOR_VERSION"],
+        # @-prefixed paths point to {dir_path}
         "iconfile": "@icon.ico",
         "headerimage": "@header.bmp",
         "welcomeimage": "@welcome.bmp",
         "licensefile": info.get("license_file", NSIS_DIR / "placeholder_license.txt").resolve(),
         "conda_history": "@" + join("conda-meta", "history"),
         "conda_exe": "@_conda.exe",
-        "env_txt": "@env.txt",
-        "urls_file": "@urls",
-        "urls_txt_file": "@urls.txt",
+        "urls_file": "@" + join("pkgs", "urls"),
+        "urls_txt_file": "@" + join("pkgs", "urls.txt"),
         "pre_install": "@pre_install.bat",
         "post_install": "@post_install.bat",
         "pre_uninstall": "@pre_uninstall.bat",
-        "index_cache": "@cache",
-        "repodata_record": "@repodata_record.json",
+        "index_cache": "@" + join("pkgs", "cache"),
+        "repodata_record": "@" + join("pkgs", "repodata_record.json"),
     }
 
     conclusion_text = info.get("conclusion_text", "")
