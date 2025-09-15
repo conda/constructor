@@ -218,7 +218,7 @@ def make_nsi(
     for key, value in variables.items():
         if isinstance(value, str) and value.startswith("@"):
             value = dir_path / value[1:]
-        variables[key] = win_str_esc(value)
+        variables[key] = win_str_esc(str(value))
 
     # From now on, the items added to variables will NOT be escaped
 
