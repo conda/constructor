@@ -563,7 +563,7 @@ def create(info, verbose=False):
     fresh_dir(SCRIPTS_DIR)
     pkgs_dir = join(prefix, "pkgs")
     os.makedirs(pkgs_dir)
-    preconda.write_files(info, pkgs_dir)
+    preconda.write_files(info, prefix)
     preconda.copy_extra_files(info.get("extra_files", []), prefix)
     # These are the user-provided scripts, maybe patched to have a shebang
     # They will be called by a wrapping script added later, if present
