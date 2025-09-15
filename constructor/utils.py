@@ -335,13 +335,14 @@ def identify_conda_exe(conda_exe: Path | None = None) -> tuple[StandaloneExe, st
     return None, None
 
 
-def win_str_esc(s, newlines=True):
+def win_str_esc(s, newlines=True) -> str:
+    s = str(s)
     maps = [("$", "$$"), ('"', '$\\"'), ("\t", "$\\t")]
     if newlines:
         maps.extend([("\n", "$\\n"), ("\r", "$\\r")])
     for a, b in maps:
         s = s.replace(a, b)
-    return '"%s"' % s
+    return f'"{s}"'
 
 
 def check_required_env_vars(env_vars):
