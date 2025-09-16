@@ -21,7 +21,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
-from constructor.utils import StandaloneExe, identify_conda_exe
+from constructor.utils import StandaloneExe, check_version, identify_conda_exe
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
@@ -502,8 +502,7 @@ def test_example_mirrored_channels(tmp_path, request):
 @pytest.mark.xfail(
     (
         CONDA_EXE == StandaloneExe.CONDA
-        and CONDA_EXE_VERSION is not None
-        and CONDA_EXE_VERSION < Version("23.11.0a0")
+        and not check_version(CONDA_EXE_VERSION, min_version="23.11.0a0")
     ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
@@ -683,8 +682,7 @@ def test_example_scripts(tmp_path, request):
 @pytest.mark.skipif(
     (
         CONDA_EXE == StandaloneExe.MAMBA
-        or CONDA_EXE_VERSION is None
-        or CONDA_EXE_VERSION < Version("23.11.0a0")
+        and not check_version(CONDA_EXE_VERSION, min_version="23.11.0a0")
     ),
     reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
 )
@@ -1208,7 +1206,7 @@ def test_allusers_exe(tmp_path, request):
 
 
 @pytest.mark.xfail(
-    CONDA_EXE == StandaloneExe.CONDA and CONDA_EXE_VERSION < Version("24.9.0"),
+    CONDA_EXE == StandaloneExe.CONDA and not check_version(CONDA_EXE_VERSION, min_version="24.9.0"),
     reason="Pre-existing .condarc breaks installation",
 )
 def test_ignore_condarc_files(tmp_path, monkeypatch, request):
@@ -1258,7 +1256,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
 
 
 @pytest.mark.skipif(
-    CONDA_EXE == StandaloneExe.CONDA and CONDA_EXE_VERSION < Version("24.11.0"),
+    CONDA_EXE == StandaloneExe.CONDA and check_version(CONDA_EXE_VERSION, min_version="24.11.0"),
     reason="Requires conda-standalone 24.11.x or newer",
 )
 @pytest.mark.skipif(not sys.platform == "win32", reason="Windows only")
@@ -1375,9 +1373,7 @@ def test_regressions(tmp_path, request):
 @pytest.mark.xfail(
     condition=(
         CONDA_EXE == StandaloneExe.CONDA
-        and CONDA_EXE_VERSION
-        and CONDA_EXE_VERSION >= Version("25.5.0")
-        and CONDA_EXE_VERSION < Version("25.7.0")
+        and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
     ),
     reason="conda-standalone 25.5.x fails with protected base environments and older versions are ignored",
     strict=True,
