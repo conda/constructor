@@ -208,7 +208,7 @@ def make_nsi(
         elif isinstance(value, list):
             valid_values = []
             for val in value:
-                if val.endswith(".nsi"):
+                if val.suffix == ".nsi":
                     valid_values.append(val)
                 else:
                     logger.warning(
