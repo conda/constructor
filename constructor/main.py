@@ -228,7 +228,7 @@ def main_build(
                 "Will assume it is compatible with shortcuts."
             )
         elif sys.platform != "win32" and (
-            exe_type != StandaloneExe.CONDA or not check_version(exe_version, min_version="23.11.0")
+            exe_type != StandaloneExe.CONDA or check_version(exe_version, max_version="23.11.0")
         ):
             logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
             info["_enable_shortcuts"] = "incompatible"
