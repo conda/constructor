@@ -25,7 +25,7 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
-from .utils import StandaloneExe, identify_conda_exe, normalize_path, yield_lines
+from .utils import StandaloneExe, check_version, identify_conda_exe, normalize_path, yield_lines
 
 DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
 
@@ -118,7 +118,7 @@ def main_build(
         sys.exit("Error: micromamba is not supported on Windows installers.")
 
     if info.get("uninstall_with_conda_exe") and not (
-        exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.11.0")
+        exe_type == StandaloneExe.CONDA and check_version(exe_version, min_version="24.11.0")
     ):
         sys.exit("Error: uninstalling with conda.exe requires conda-standalone 24.11.0 or newer.")
 
@@ -177,13 +177,18 @@ def main_build(
                     new_extras.append({orig: dest})
         info[extra_type] = new_extras
 
-    if (any((isinstance(path, str) and "/conda-meta/frozen" in path) or
-        (isinstance(path, dict) and any("conda-meta/frozen" in v for v in path.values()))
-        for path in info.get("extra_files", []))
+    if (
+        any(
+            (isinstance(path, str) and "/conda-meta/frozen" in path)
+            or (isinstance(path, dict) and any("conda-meta/frozen" in v for v in path.values()))
+            for path in info.get("extra_files", [])
+        )
         and exe_type == StandaloneExe.CONDA
-        and exe_version
-        and exe_version >= Version("25.5.0") and exe_version < Version("25.7.0")):
-            sys.exit("Error: installing with protected base environment requires conda-standalone newer than 25.5.x")
+        and check_version(exe_version, min_version="25.5.0", max_version="25.7.0")
+    ):
+        sys.exit(
+            "Error: installing with protected base environment requires conda-standalone newer than 25.5.x"
+        )
 
     for key in "channels", "specs", "exclude", "packages", "menu_packages", "virtual_specs":
         if key in info:
@@ -223,14 +228,14 @@ def main_build(
                 "Will assume it is compatible with shortcuts."
             )
         elif sys.platform != "win32" and (
-            exe_type != StandaloneExe.CONDA or (exe_version and exe_version < Version("23.11.0"))
+            exe_type != StandaloneExe.CONDA or not check_version(exe_version, min_version="23.11.0")
         ):
             logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
             info["_enable_shortcuts"] = "incompatible"
 
     # Add --no-rc option to CONDA_EXE command so that existing
     # .condarc files do not pollute the installation process.
-    if exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.9.0"):
+    if exe_type == StandaloneExe.CONDA and check_version(exe_version, min_version="24.9.0"):
         info["_ignore_condarcs_arg"] = "--no-rc"
     elif exe_type == StandaloneExe.MAMBA:
         info["_ignore_condarcs_arg"] = "--no-rc"
