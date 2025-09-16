@@ -18,7 +18,8 @@ import tarfile
 import tempfile
 from contextlib import nullcontext
 from io import BytesIO
-from os.path import basename, dirname, getsize, isdir, join, relpath
+from os.path import getsize
+from pathlib import Path
 
 from .construct import ns_platform
 from .jinja import render_template
@@ -37,7 +38,7 @@ from .utils import (
     shortcuts_flags,
 )
 
-THIS_DIR = dirname(__file__)
+THIS_DIR = Path(__file__).parent
 
 logger = logging.getLogger(__name__)
 
@@ -53,10 +54,9 @@ def make_executable(tarinfo):
 
 
 def read_header_template():
-    path = join(THIS_DIR, "header.sh")
+    path = THIS_DIR / "header.sh"
     logger.info("Reading: %s", path)
-    with open(path) as fi:
-        return fi.read()
+    return path.read_text()
 
 
 def get_header(conda_exec, tarball, info):
@@ -118,28 +118,25 @@ def get_header(conda_exec, tarball, info):
     return render_template(read_header_template(), **variables)
 
 
-def create(info, verbose=False):
-    tmp_dir_base_path = join(dirname(info["_outpath"]), "tmp")
-    try:
-        os.makedirs(tmp_dir_base_path)
-    except Exception:
-        pass
-    tmp_dir = tempfile.mkdtemp(dir=tmp_dir_base_path)
+def create(info, verbose: bool = False):
+    tmp_dir_base_path = info["_outpath"].parent / "tmp"
+    tmp_dir_base_path.mkdir(parents=True, exist_ok=True)
+    tmp_dir = Path(tempfile.mkdtemp(dir=tmp_dir_base_path))
     preconda_write_files(info, tmp_dir)
 
-    preconda_tarball = join(tmp_dir, "preconda.tar.bz2")
-    postconda_tarball = join(tmp_dir, "postconda.tar.bz2")
+    preconda_tarball = tmp_dir / "preconda.tar.bz2"
+    postconda_tarball = tmp_dir / "postconda.tar.bz2"
     pre_t = tarfile.open(preconda_tarball, "w:bz2")
     post_t = tarfile.open(postconda_tarball, "w:bz2")
     for rel_path in preconda_files:
-        pre_t.add(join(tmp_dir, rel_path), rel_path)
+        pre_t.add(tmp_dir / rel_path, rel_path)
 
     for env_name in info.get("_extra_envs_info", ()):
         for rel_path in (
             f"pkgs/envs/{env_name}/shortcuts.txt",
             f"envs/{env_name}/conda-meta/initial-state.explicit.txt",
         ):
-            pre_t.add(join(tmp_dir, rel_path), rel_path)
+            pre_t.add(tmp_dir / rel_path, rel_path)
 
     for key in "pre_install", "post_install":
         if key in info:
@@ -148,11 +145,10 @@ def create(info, verbose=False):
                 "pkgs/%s.sh" % key,
                 filter=make_executable if has_shebang(info[key]) else None,
             )
-    cache_dir = join(tmp_dir, "cache")
-    if isdir(cache_dir):
-        for cf in os.listdir(cache_dir):
-            if cf.endswith(".json"):
-                pre_t.add(join(cache_dir, cf), "pkgs/cache/" + cf)
+    cache_dir = tmp_dir / "cache"
+    if cache_dir.is_dir():
+        for cf in cache_dir.glob("*.json"):
+            pre_t.add(cf, "pkgs/cache/" + cf.name)
 
     all_dists = info["_dists"].copy()
     for env_data in info.get("_extra_envs_info", {}).values():
@@ -164,36 +160,36 @@ def create(info, verbose=False):
             _dist = filename_dist(dist)[:-6]
         elif filename_dist(dist).endswith(".tar.bz2"):
             _dist = filename_dist(dist)[:-8]
-        record_file = join(_dist, "info", "repodata_record.json")
-        record_file_src = join(tmp_dir, "pkgs", record_file)
-        record_file_dest = join("pkgs", record_file)
+        record_file = f"{_dist}/info/repodata_record.json"
+        record_file_src = tmp_dir / "pkgs" / record_file
+        record_file_dest = f"pkgs/{record_file}"
         pre_t.add(record_file_src, record_file_dest)
     pre_t.addfile(tarinfo=tarfile.TarInfo("conda-meta/history"))
-    post_t.add(join(tmp_dir, "conda-meta", "history"), "conda-meta/history")
+    post_t.add(tmp_dir / "conda-meta" / "history", "conda-meta/history")
 
     for env_name in info.get("_extra_envs_info", {}):
         pre_t.addfile(tarinfo=tarfile.TarInfo(f"envs/{env_name}/conda-meta/history"))
         post_t.add(
-            join(tmp_dir, "envs", env_name, "conda-meta", "history"),
+            tmp_dir / "envs" / env_name / "conda-meta" / "history",
             f"envs/{env_name}/conda-meta/history",
         )
 
     extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     for path in extra_files:
-        post_t.add(path, relpath(path, tmp_dir))
+        post_t.add(path, path.relative_to(tmp_dir))
 
     pre_t.close()
     post_t.close()
 
-    tarball = join(tmp_dir, "pkgs", "tmp.tar")
+    tarball = tmp_dir / "pkgs" / "tmp.tar"
     t = tarfile.open(tarball, "w")
-    t.add(preconda_tarball, basename(preconda_tarball))
-    t.add(postconda_tarball, basename(postconda_tarball))
+    t.add(preconda_tarball, preconda_tarball.name)
+    t.add(postconda_tarball, postconda_tarball.name)
     if "license_file" in info:
         t.add(info["license_file"], "LICENSE.txt")
     for dist in all_dists:
         fn = filename_dist(dist)
-        t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
+        t.add(info["_download_dir"] / fn, f"pkgs/{fn}")
     t.close()
 
     info["_internal_conda_files"] = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
@@ -205,7 +201,7 @@ def create(info, verbose=False):
         for path in info["_internal_conda_files"]:
             relative_path = str(path.relative_to(tmp_dir))
             memfile.write(path.read_bytes())
-            size = os.path.getsize(path)
+            size = getsize(path)
             end = start + size
             executable = os.access(path, os.X_OK)
             conda_exe_payloads[relative_path] = (start, end, executable)
@@ -223,7 +219,11 @@ def create(info, verbose=False):
     with open(shar_path, "wb") as fo:
         fo.write(header.encode("utf-8"))
         for payload in [conda_exec, *maybe_memfile, tarball]:
-            with open(payload, "rb") if isinstance(payload, str) else nullcontext(payload) as fi:
+            with (
+                open(payload, "rb")
+                if isinstance(payload, (str, Path))
+                else nullcontext(payload) as fi
+            ):
                 while True:
                     chunk = fi.read(262144)
                     if not chunk:

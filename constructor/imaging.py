@@ -10,14 +10,13 @@ Utilities to generate images out of text, used in GUI installers as logo replace
 
 import sys
 from io import BytesIO
-from os.path import dirname, join
+from pathlib import Path
 from random import randint
 
 from PIL import Image, ImageDraw, ImageFont
 
-ttf_path = join(dirname(__file__), "ttf", "Vera.ttf")
-with open(ttf_path, "rb") as f:
-    ttf_bytes = f.read()
+ttf_path = Path(__file__).parent / "ttf" / "Vera.ttf"
+ttf_bytes = ttf_path.read_bytes()
 white = 0xFF, 0xFF, 0xFF
 # These are for Windows
 welcome_size = 164, 314
@@ -99,7 +98,7 @@ def add_color_info(info):
         sys.exit("Error: color '%s' not defined" % color_name)
 
 
-def write_images(info, dir_path, os="windows"):
+def write_images(info, dir_path: Path, os="windows"):
     if os == "windows":
         instructions = [
             ("welcome", welcome_size, mk_welcome_image, ".bmp"),
@@ -122,7 +121,7 @@ def write_images(info, dir_path, os="windows"):
             add_color_info(info)
             im = function(info)
         assert im.size == size
-        im.save(join(dir_path, name + ext))
+        im.save(dir_path / f"{name}{ext}")
 
 
 if __name__ == "__main__":

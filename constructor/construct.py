@@ -14,7 +14,6 @@ import logging
 import re
 import sys
 from functools import partial
-from os.path import dirname
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, validators
@@ -108,16 +107,15 @@ def yamlize(data, directory, content_filter):
         return yaml.load(data)
 
 
-def parse(path, platform):
+def parse(path: Path, platform):
     try:
-        with open(path) as fi:
-            data = fi.read()
+        data = path.read_text()
     except OSError:
         sys.exit("Error: could not open '%s' for reading" % path)
-    directory = dirname(path)
+    directory = path.parent
     content_filter = partial(select_lines, namespace=ns_platform(platform))
     try:
-        res = yamlize(data, directory, content_filter)
+        res = yamlize(data, str(directory), content_filter)
     except YamlParsingError as e:
         sys.exit(e.error_msg())
 

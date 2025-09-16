@@ -90,12 +90,12 @@ def _execute(
         print("Took", timedelta(seconds=time.time() - t0))
 
 
-def _check_installer_log(install_dir):
+def _check_installer_log(install_dir: Path):
     # Windows installers won't raise exit codes so we need to check the log file
     error_lines = []
     try:
         log_is_empty = True
-        with open(os.path.join(install_dir, "install.log"), encoding="utf-16-le") as f:
+        with open(install_dir / "install.log", encoding="utf-16-le") as f:
             print("Installer log:", file=sys.stderr)
             for line in f:
                 log_is_empty = False

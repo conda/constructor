@@ -2,6 +2,8 @@
 Logic to build PKG installers for macOS.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shlex
@@ -9,7 +11,6 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
-from os.path import abspath, dirname, exists, isdir, join
 from pathlib import Path
 from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
@@ -31,7 +32,7 @@ from .utils import (
     shortcuts_flags,
 )
 
-OSX_DIR = join(dirname(__file__), "osx")
+OSX_DIR = (Path(__file__).parent / "osx").resolve()
 CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
 
 logger = logging.getLogger(__name__)
@@ -49,9 +50,8 @@ def calculate_install_dir(yaml_file, subdir=None):
 
 
 def write_readme(dst, info):
-    src = join(OSX_DIR, "readme_header.rtf")
-    with open(src) as fi:
-        data = fi.read()
+    src = OSX_DIR / "readme_header.rtf"
+    data = src.read_text()
 
     # This is necessary for when installing on case-sensitive macOS filesystems.
     data = data.replace("__NAME_LOWER__", info.get("pkg_name", info["name"]).lower())
@@ -99,7 +99,7 @@ def modify_xml(xml_path, info):
     title.text = f"{info['name']} {info['version']}"
     root.append(title)
 
-    license = ET.Element("license", file=info.get("license_file", "No license"))
+    license = ET.Element("license", file=str(info.get("license_file", "No license")))
     root.append(license)
 
     # -- BACKGROUND -- #
@@ -113,19 +113,19 @@ def modify_xml(xml_path, info):
             background_path = None
         else:
             write_images(info, PACKAGES_DIR, os="osx")
-            background_path = os.path.join(PACKAGES_DIR, "welcome.png")
+            background_path = PACKAGES_DIR / "welcome.png"
     elif "welcome_image_text" in info:
         write_images(info, PACKAGES_DIR, os="osx")
-        background_path = os.path.join(PACKAGES_DIR, "welcome.png")
+        background_path = PACKAGES_DIR / "welcome.png"
     else:
         # Default to Anaconda's logo if the keys above were not specified
-        background_path = join(OSX_DIR, "MacInstaller.png")
+        background_path = OSX_DIR / "MacInstaller.png"
 
     if background_path:
         logger.info("Using background image: %s", background_path)
         for key in ("background", "background-darkAqua"):
             background = ET.Element(
-                key, file=background_path, scaling="proportional", alignment="center"
+                key, file=str(background_path), scaling="proportional", alignment="center"
             )
             root.append(background)
 
@@ -135,9 +135,8 @@ def modify_xml(xml_path, info):
     if "welcome_file" in info and not info["welcome_file"].endswith(".nsi"):
         welcome_path = info["welcome_file"]
     elif "welcome_text" in info and info["welcome_text"]:
-        welcome_path = join(PACKAGES_DIR, "welcome.txt")
-        with open(welcome_path, "w") as f:
-            f.write(info["welcome_text"])
+        welcome_path = PACKAGES_DIR / "welcome.txt"
+        welcome_path.write_text(info["welcome_text"])
     else:
         welcome_path = None
         if info.get("welcome_file", "").endswith(".nsi"):
@@ -145,7 +144,7 @@ def modify_xml(xml_path, info):
 
     if welcome_path:
         welcome = ET.Element(
-            "welcome", file=welcome_path, attrib={"mime-type": _detect_mimetype(welcome_path)}
+            "welcome", file=str(welcome_path), attrib={"mime-type": _detect_mimetype(welcome_path)}
         )
         root.append(welcome)
 
@@ -158,17 +157,16 @@ def modify_xml(xml_path, info):
         if not info["conclusion_text"]:
             conclusion_path = None
         else:
-            conclusion_path = join(PACKAGES_DIR, "conclusion.txt")
-            with open(conclusion_path, "w") as f:
-                f.write(info["conclusion_text"])
+            conclusion_path = PACKAGES_DIR / "conclusion.txt"
+            conclusion_path.write_text(info["conclusion_text"])
     else:
-        conclusion_path = join(OSX_DIR, "acloud.rtf")
-        if info.get("conclusion_file", "").endswith(".nsi"):
+        conclusion_path = OSX_DIR / "acloud.rtf"
+        if info.get("conclusion_file", Path()).name.endswith(".nsi"):
             logger.warning("NSI conclusion_file '%s' is ignored.", info["conclusion_file"])
     if conclusion_path:
         conclusion = ET.Element(
             "conclusion",
-            file=conclusion_path,
+            file=str(conclusion_path),
             attrib={"mime-type": _detect_mimetype(conclusion_path)},
         )
         root.append(conclusion)
@@ -181,16 +179,15 @@ def modify_xml(xml_path, info):
         if not info["readme_text"]:
             readme_path = None
         else:
-            readme_path = join(PACKAGES_DIR, "readme.txt")
-            with open(readme_path, "w") as f:
-                f.write(info["readme_text"])
+            readme_path = PACKAGES_DIR / "readme.txt"
+            readme_path.write_text(info["readme_text"])
     else:
-        readme_path = join(PACKAGES_DIR, "readme.rtf")
+        readme_path = PACKAGES_DIR / "readme.rtf"
         write_readme(readme_path, info)
 
     if readme_path:
         readme = ET.Element(
-            "readme", file=readme_path, attrib={"mime-type": _detect_mimetype(readme_path)}
+            "readme", file=str(readme_path), attrib={"mime-type": _detect_mimetype(readme_path)}
         )
         root.append(readme)
 
@@ -226,14 +223,14 @@ def modify_xml(xml_path, info):
             root.remove(path_choice)
         elif ident.endswith("prepare_installation"):
             path_choice.set("visible", "true")
-            path_choice.set("title", "Install {}".format(info["name"]))
+            path_choice.set("title", f"Install {info['name']}")
             path_choice.set("enabled", "false")
         elif ident.endswith("run_installation"):
             # We leave this one out on purpose! The user does not need to
             # know we separated the installation in two steps to accommodate
             # for the pre-install scripts optionality
             path_choice.set("visible", "false")
-            path_choice.set("title", "Apply {}".format(info["name"]))
+            path_choice.set("title", f"Apply {info['name']}")
             path_choice.set("enabled", "false")
         elif ident.endswith("shortcuts"):
             # Show this option if menu_packages was set to a non-empty value
@@ -323,14 +320,13 @@ def modify_xml(xml_path, info):
     tree.write(xml_path)
 
 
-def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
+def move_script(src: Path, dst: Path, info, ensure_shebang=False, user_script_type=None):
     """
     Fill template scripts checks_before_install.sh, prepare_installation.sh and others,
     and move them to the installer workspace.
     """
     assert user_script_type in (None, "pre_install", "post_install")
-    with open(src) as fi:
-        data = fi.read()
+    data = src.read_text()
 
     # ppd hosts the conditions for the #if/#else/#endif preprocessors on scripts
     variables = ns_platform(info["_platform"])
@@ -370,7 +366,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     with open(dst, "w") as fo:
         if (
             ensure_shebang
-            and os.path.splitext(dst)[1] in ("", ".sh")
+            and dst.suffix in ("", ".sh")
             and not data.startswith(("#!/bin/bash", "#!/bin/sh"))
         ):
             # Shell scripts provided by the user require a shebang, otherwise it
@@ -378,13 +374,13 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
             # We only handle shell scripts this way
             fo.write("#!/bin/bash\n")
         fo.write(data)
-    os.chmod(dst, 0o755)
+    dst.chmod(0o755)
 
 
-def fresh_dir(dir_path):
+def fresh_dir(dir_path: Path):
     rm_rf(dir_path)
-    assert not exists(dir_path)
-    os.mkdir(dir_path)
+    assert not dir_path.exists()
+    dir_path.mkdir()
 
 
 def pkgbuild(name, identifier=None, version=None, install_location=None):
@@ -401,14 +397,14 @@ def pkgbuild(name, identifier=None, version=None, install_location=None):
         "preserve",
     ]
 
-    if isdir(SCRIPTS_DIR) and os.listdir(SCRIPTS_DIR):
+    if SCRIPTS_DIR.is_dir() and os.listdir(SCRIPTS_DIR):
         args += ["--scripts", SCRIPTS_DIR]
     if version:
         args += ["--version", version]
     if install_location is not None:
         args += ["--install-location", install_location]
-    output = os.path.join(PACKAGES_DIR, f"{name}.pkg")
-    args += [output]
+    output = PACKAGES_DIR / f"{name}.pkg"
+    args.append(output)
     explained_check_call(args)
     return output
 
@@ -430,7 +426,7 @@ def pkgbuild_prepare_installation(info):
     try:
         # expand to apply patches
         explained_check_call(["pkgutil", "--expand", pkg, f"{pkg}.expanded"])
-        payload_xml = os.path.join(f"{pkg}.expanded", "PackageInfo")
+        payload_xml = f"{pkg}.expanded/PackageInfo"
         tree = ET.parse(payload_xml)
         root = tree.getroot()
         payload = root.find("payload")
@@ -443,7 +439,7 @@ def pkgbuild_prepare_installation(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
-def create_plugins(pages: list = None, codesigner: CodeSign = None):
+def create_plugins(pages: list[Path] | None = None, codesigner: CodeSign = None):
     def _build_xcode_projects(xcodeporj_dirs: list[Path]):
         xcodebuild = shutil.which("xcodebuild")
         if not xcodebuild:
@@ -470,20 +466,18 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
 
     if not pages:
         return
-    elif isinstance(pages, str):
+    if isinstance(pages, Path):
         pages = [pages]
 
     fresh_dir(PLUGINS_DIR)
 
     for page in pages:
-        xcodeproj_dirs = [
-            file.resolve() for file in Path(page).iterdir() if file.suffix == ".xcodeproj"
-        ]
+        xcodeproj_dirs = [file.resolve() for file in page.iterdir() if file.suffix == ".xcodeproj"]
         if xcodeproj_dirs:
             _build_xcode_projects(xcodeproj_dirs)
         else:
-            plugin_name = os.path.basename(page)
-            page_in_plugins = join(PLUGINS_DIR, plugin_name)
+            plugin_name = page.name
+            page_in_plugins = PLUGINS_DIR / plugin_name
             shutil.copytree(page, page_in_plugins)
 
     if codesigner:
@@ -499,7 +493,7 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
         os.unlink(entitlements.name)
 
     plugins = [file.name for file in Path(PLUGINS_DIR).iterdir()]
-    with open(join(PLUGINS_DIR, "InstallerSections.plist"), "wb") as f:
+    with open(PLUGINS_DIR / "InstallerSections.plist", "wb") as f:
         plist = {
             "SectionOrder": [
                 "Introduction",
@@ -517,7 +511,7 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
 def pkgbuild_script(name, info, src, dst="postinstall", **kwargs):
     fresh_dir(SCRIPTS_DIR)
     fresh_dir(PACKAGE_ROOT)
-    move_script(join(OSX_DIR, src), join(SCRIPTS_DIR, dst), info, **kwargs)
+    move_script(OSX_DIR / src, SCRIPTS_DIR / dst, info, **kwargs)
     pkgbuild(
         name,
         identifier=info.get("reverse_domain_identifier"),
@@ -541,13 +535,13 @@ def create(info, verbose=False):
     global CACHE_DIR, PACKAGE_ROOT, PACKAGES_DIR, PLUGINS_DIR, SCRIPTS_DIR
 
     CACHE_DIR = info["_download_dir"]
-    SCRIPTS_DIR = join(CACHE_DIR, "scripts")
-    PACKAGE_ROOT = join(CACHE_DIR, "package_root")
-    PACKAGES_DIR = join(CACHE_DIR, "built_pkgs")
-    PLUGINS_DIR = join(CACHE_DIR, "plugins")
+    SCRIPTS_DIR = CACHE_DIR / "scripts"
+    PACKAGE_ROOT = CACHE_DIR / "package_root"
+    PACKAGES_DIR = CACHE_DIR / "built_pkgs"
+    PLUGINS_DIR = CACHE_DIR / "plugins"
 
     fresh_dir(PACKAGES_DIR)
-    prefix = join(PACKAGE_ROOT, info.get("pkg_name", info["name"]).lower())
+    prefix = PACKAGE_ROOT / info.get("pkg_name", info["name"]).lower()
 
     # We need to split tasks in sub-PKGs so the GUI allows the user to enable/disable
     # the ones marked as optional. Optionality is controlled in modify_xml() by
@@ -561,23 +555,23 @@ def create(info, verbose=False):
     # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
     fresh_dir(SCRIPTS_DIR)
-    pkgs_dir = join(prefix, "pkgs")
-    os.makedirs(pkgs_dir)
+    pkgs_dir = prefix / "pkgs"
+    pkgs_dir.mkdir(parents=True, exist_ok=True)
     preconda.write_files(info, prefix)
     preconda.copy_extra_files(info.get("extra_files", []), prefix)
     # These are the user-provided scripts, maybe patched to have a shebang
     # They will be called by a wrapping script added later, if present
     if info.get("pre_install"):
         move_script(
-            abspath(info["pre_install"]),
-            abspath(join(pkgs_dir, "user_pre_install")),
+            info["pre_install"].resolve(),
+            (pkgs_dir / "user_pre_install").resolve(),
             info,
             ensure_shebang=True,
         )
     if info.get("post_install"):
         move_script(
-            abspath(info["post_install"]),
-            abspath(join(pkgs_dir, "user_post_install")),
+            info["post_install"].resolve(),
+            (pkgs_dir / "user_post_install").resolve(),
             info,
             ensure_shebang=True,
         )
@@ -585,9 +579,9 @@ def create(info, verbose=False):
     all_dists = info["_dists"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
         all_dists += env_info["_dists"]
-    all_dists = list({dist: None for dist in all_dists})  # de-duplicate
+    all_dists = list(dict.fromkeys(all_dists))  # de-duplicate
     for dist in all_dists:
-        os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
+        os.link(CACHE_DIR / dist, pkgs_dir / dist)
 
     copy_conda_exe(prefix, "_conda", info["_conda_exe"])
 
@@ -604,13 +598,13 @@ def create(info, verbose=False):
             "com.apple.security.cs.disable-library-validation": True,
             "com.apple.security.cs.allow-dyld-environment-variables": True,
         }
-        codesigner.sign_bundle(join(prefix, "_conda"), entitlements=entitlements)
+        codesigner.sign_bundle(prefix / "_conda", entitlements=entitlements)
 
     # This script checks to see if the install location already exists and/or contains spaces
     # Not to be confused with the user-provided pre_install!
-    move_script(join(OSX_DIR, "checks_before_install.sh"), join(SCRIPTS_DIR, "preinstall"), info)
+    move_script(OSX_DIR / "checks_before_install.sh", SCRIPTS_DIR / "preinstall", info)
     # This script populates the cache, mainly
-    move_script(join(OSX_DIR, "prepare_installation.sh"), join(SCRIPTS_DIR, "postinstall"), info)
+    move_script(OSX_DIR / "prepare_installation.sh", SCRIPTS_DIR / "postinstall", info)
     pkgbuild_prepare_installation(info)
     names = ["prepare_installation"]
 
@@ -651,11 +645,11 @@ def create(info, verbose=False):
 
     # The default distribution file needs to be modified, so we create
     # it to a temporary location, edit it, and supply it to the final call.
-    xml_path = join(PACKAGES_DIR, "distribution.xml")
+    xml_path = PACKAGES_DIR / "distribution.xml"
     # hardcode to system location to avoid accidental clobber in PATH
     args = ["/usr/bin/productbuild", "--synthesize"]
     for name in names:
-        args.extend(["--package", join(PACKAGES_DIR, "%s.pkg" % name)])
+        args.extend(["--package", PACKAGES_DIR / f"{name}.pkg"])
     args.append(xml_path)
     explained_check_call(args)
     modify_xml(xml_path, info)
