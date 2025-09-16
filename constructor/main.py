@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 from os.path import abspath, expanduser, isdir, join
+from pathlib import Path
 from textwrap import dedent
 
 from . import __version__
@@ -177,12 +178,19 @@ def main_build(
                     new_extras.append({orig: dest})
         info[extra_type] = new_extras
 
-    if (
-        any(
-            (isinstance(path, str) and "/conda-meta/frozen" in path)
-            or (isinstance(path, dict) and any("conda-meta/frozen" in v for v in path.values()))
-            for path in info.get("extra_files", [])
-        )
+    def has_frozen_file(extra_files: list[str | dict[str, str]]) -> bool:
+        def check_path(path_str: str) -> bool:
+            path = Path(path_str)
+            return path.name == "frozen" and path.parent.name == "conda-meta"
+
+        for file in extra_files:
+            if isinstance(file, str) and check_path(file):
+                return True
+            elif isinstance(file, dict) and any(check_path(val) for val in file.values()):
+                return True
+        return False
+
+    if (has_frozen_file(info.get("extra_files", []))
         and exe_type == StandaloneExe.CONDA
         and check_version(exe_version, min_version="25.5.0", max_version="25.7.0")
     ):
