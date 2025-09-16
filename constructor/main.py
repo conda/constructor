@@ -122,12 +122,6 @@ def main_build(
     ):
         sys.exit("Error: uninstalling with conda.exe requires conda-standalone 24.11.0 or newer.")
 
-    if (info.get("CONDA_PROTECT_FROZEN_ENVS")
-        and exe_type == StandaloneExe.CONDA
-        and exe_version
-        and exe_version <= Version("25.5.1")):
-        sys.exit("Error: installing with protected base environment requires conda-standalone newer than 25.5.1.")
-
     logger.debug("conda packages download: %s", info["_download_dir"])
 
     for key in ("welcome_image_text", "header_image_text"):
@@ -182,6 +176,14 @@ def main_build(
                     orig = abspath(join(dir_path, orig))
                     new_extras.append({orig: dest})
         info[extra_type] = new_extras
+
+    if (any((isinstance(path, str) and "/conda-meta/frozen" in path) or
+        (isinstance(path, dict) and any("conda-meta/frozen" in v for v in path.values()))
+        for path in info.get("extra_files", []))
+        and exe_type == StandaloneExe.CONDA
+        and exe_version
+        and exe_version >= Version("25.5.0") and exe_version < Version("25.7.0")):
+            sys.exit("Error: installing with protected base environment requires conda-standalone newer than 25.5.x")
 
     for key in "channels", "specs", "exclude", "packages", "menu_packages", "virtual_specs":
         if key in info:
