@@ -25,12 +25,7 @@ from subprocess import CalledProcessError, check_call, check_output
 
 from ruamel.yaml import YAML
 
-try:
-    from conda.models.version import VersionOrder
-
-    has_conda_interface = True
-except ImportError:
-    has_conda_interface = False
+from conda.models.version import VersionOrder
 
 logger = logging.getLogger(__name__)
 yaml = YAML(typ="rt")
@@ -359,7 +354,7 @@ def check_version(
 
     The minimum version is assumed to be inclusive, the maximum version is not inclusive.
     """
-    if not exe_version or not has_conda_interface:
+    if not exe_version:
         return False
     if isinstance(exe_version, str):
         exe_version = VersionOrder(exe_version)

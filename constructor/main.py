@@ -181,14 +181,14 @@ def main_build(
         info[extra_type] = new_extras
 
     def has_frozen_file(extra_files: list[str | dict[str, str]]) -> bool:
-        def check_path(path_str: str) -> bool:
+        def is_conda_meta_frozen(path_str: str) -> bool:
             path = Path(path_str)
-            return path.name == "frozen" and path.parent.name == "conda-meta"
+            return path.parts == ("conda-meta", "frozen") or (len(path.parts) == 4 and path.parts[0] == "envs" and path.parts[-2:] == ("conda-meta", "frozen"))
 
         for file in extra_files:
-            if isinstance(file, str) and check_path(file):
+            if isinstance(file, str) and is_conda_meta_frozen(file):
                 return True
-            elif isinstance(file, dict) and any(check_path(val) for val in file.values()):
+            elif isinstance(file, dict) and any(is_conda_meta_frozen(val) for val in file.values()):
                 return True
         return False
 
@@ -198,7 +198,7 @@ def main_build(
         and check_version(exe_version, min_version="25.5.0", max_version="25.7.0")
     ):
         sys.exit(
-            "Error: installing with protected base environment requires conda-standalone newer than 25.5.x"
+            "Error: handling conda-meta/frozen marker files requires conda-standalone newer than 25.7.x"
         )
 
     for key in "channels", "specs", "exclude", "packages", "menu_packages", "virtual_specs":
