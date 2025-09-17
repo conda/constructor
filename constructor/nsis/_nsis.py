@@ -10,10 +10,7 @@
 import os
 import re
 import sys
-import traceback
-from os import environ
-from os.path import basename, exists, isfile, join
-from subprocess import STDOUT, CalledProcessError, check_output
+from os.path import exists, isfile, join
 
 try:
     import winreg
@@ -26,20 +23,6 @@ ROOT_PREFIX = sys.prefix
 # Ideally, exceptions will get returned to NSIS and logged there,
 # etc, but this is a stopgap solution for now.
 old_excepthook = sys.excepthook
-
-
-# this sucks.  It is copied from _nsis.py because it can't be a relative import.
-# _nsis.py must be standalone.
-def ensure_comspec_set():
-    if basename(environ.get("COMSPEC", "")).lower() != "cmd.exe":
-        cmd_exe = join(environ.get('SystemRoot'), 'System32', 'cmd.exe')
-        if not isfile(cmd_exe):
-            cmd_exe = join(environ.get('windir'), 'System32', 'cmd.exe')
-        if not isfile(cmd_exe):
-            print("cmd.exe could not be found. "
-                  "Looked in SystemRoot and windir env vars.\n")
-        else:
-            environ['COMSPEC'] = cmd_exe
 
 
 def gui_excepthook(exctype, value, tb):
@@ -104,94 +87,10 @@ class NSISReg:
             return None
 
 
-def mk_menus(remove=False, prefix=None, pkg_names=None, root_prefix=None):
-    err(
-        "Deprecation warning: mk_menus is deprecated and will be removed in the future."
-        " Please use menuinst v2 directly or via conda-standalone 23.XXXX+ instead.\n"
-    )
-    try:
-        import menuinst
-    except (ImportError, OSError):
-        return
-    if prefix is None:
-        prefix = sys.prefix
-    if root_prefix is None:
-        root_prefix = sys.prefix
-    menu_dir = join(prefix, 'Menu')
-    if not os.path.isdir(menu_dir):
-        return
-    for fn in os.listdir(menu_dir):
-        if not fn.endswith('.json'):
-            continue
-        if pkg_names is not None and len(pkg_names) > 0 and fn[:-5] not in pkg_names:
-            # skip when not in the list of menus to create
-            # when installing, the pkg_names list is specified, otherwise not
-            # and we don't skip to try to remove shortcuts
-            continue
-        shortcut = join(menu_dir, fn)
-        try:
-            menuinst.install(shortcut, remove, prefix=prefix,
-                             root_prefix=root_prefix)
-        except Exception as e:
-            out("Failed to process %s...\n" % shortcut)
-            err("Error: %s\n" % str(e))
-            err("Traceback:\n%s\n" % traceback.format_exc(20))
-        else:
-            out("Processed %s successfully.\n" % shortcut)
-
-
 def mk_dirs():
     envs_dir = join(ROOT_PREFIX, 'envs')
     if not exists(envs_dir):
         os.mkdir(envs_dir)
-
-
-def get_conda_envs_from_python_api():
-    try:
-        from conda.cli.python_api import Commands, run_command
-    except (ImportError, OSError):
-        return
-    from json import loads
-    c_stdout, c_stderr, return_code = run_command(Commands.INFO, "--json")
-    json_conda_info = loads(c_stdout)
-    return json_conda_info["envs"]
-
-
-get_conda_envs = get_conda_envs_from_python_api
-
-
-def rm_menus(prefix=None, root_prefix=None):
-    err(
-        "Deprecation warning: rm_menus is deprecated and will be removed in the future."
-        " Please use menuinst v2 directly or via conda-standalone 23.XXXX+ instead.\n"
-    )
-    try:
-        import menuinst  # noqa
-        from conda.base.context import context
-    except (ImportError, OSError):
-        return
-    try:
-        envs = get_conda_envs()
-        envs = list(envs)  # make sure `envs` is iterable
-    except Exception as e:
-        out("Failed to get conda environments list\n")
-        err("Error: %s\n" % str(e))
-        err("Traceback:\n%s\n" % traceback.format_exc(20))
-        if prefix is not None:
-            out("Will only remove shortcuts created from '%s'" % prefix)
-            mk_menus(remove=True, prefix=prefix, root_prefix=root_prefix)
-    else:
-        envs_dirs = list(context.envs_dirs)
-        if prefix is not None:
-            envs_dirs.append(prefix)
-        for env in envs:
-            env = str(env)  # force `str` so that `os.path.join` doesn't fail
-            for envs_dir in envs_dirs:
-                # Make sure the environment is from one of the directory in
-                # `envs_dirs` to avoid picking up environment from other
-                # distributions. Not perfect but better than no checking
-                if envs_dir in env:
-                    mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
 
 
 def run_post_install():
@@ -332,51 +231,10 @@ def rm_regkeys():
             pass
 
 
-def win_del(dirname):
-    # check_output uses comspec as the default shell when setting the parameter `shell=True`
-    ensure_comspec_set()
-    out = "unknown error (exception not caught)"
-    # first, remove all files
-    try:
-        out = check_output('DEL /F/Q/S *.* > NUL', shell=True, stderr=STDOUT, cwd=dirname)
-    except CalledProcessError as e:
-        # error code 5 indicates a permission error.  We ignore those, but raise for anything else
-        if e.returncode != 5:
-            print("Removing folder {} the fast way failed. "
-                  "Output was: {}".format(dirname, out))
-            raise
-        else:
-            print("removing dir contents the fast way failed. "
-                  "Output was: {}".format(out))
-    else:
-        print("Unexpected error removing dirname {}. "
-              "Uninstall was probably not successful".format(dirname))
-    # next, remove folder hierarchy
-    try:
-        out = check_output('RD /S /Q "{}" > NUL'.format(dirname), shell=True, stderr=STDOUT)
-    except CalledProcessError as e:
-        # error code 5 indicates a permission error.  We ignore those, but raise for anything else
-        if e.returncode != 5:
-            print("Removing folder {} the fast way failed. "
-                  "Output was: {}".format(dirname, out))
-            raise
-        else:
-            print("Removing directory folders the fast way failed. "
-                  "Output was: {}".format(out))
-    else:
-        print("Unexpected error removing dirname {}. "
-              "Uninstall was probably not successful".format(dirname))
-
-
 def main():
     cmd = sys.argv[1].strip()
-    if cmd == 'mkmenus':
-        pkg_names = [s.strip() for s in sys.argv[2:]]
-        mk_menus(remove=False, pkg_names=pkg_names)
-    elif cmd == 'post_install':
+    if cmd == 'post_install':
         run_post_install()
-    elif cmd == 'rmmenus':
-        rm_menus()
     elif cmd == 'rmreg':
         rm_regkeys()
     elif cmd == 'mkdirs':
@@ -401,9 +259,6 @@ def main():
         remove_from_path()
     elif cmd == 'pre_uninstall':
         run_pre_uninstall()
-    elif cmd == 'del':
-        assert len(sys.argv) == 3
-        win_del(sys.argv[2].strip())
     else:
         sys.exit("ERROR: did not expect %r" % cmd)
 
