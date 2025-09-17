@@ -215,44 +215,6 @@ def run_post_install():
             sys.exit(1)
 
 
-def run_pre_uninstall():
-    """
-    call the pre uninstall script, if the file exists
-    """
-    path = join(ROOT_PREFIX, 'pre_uninstall.bat')
-    if not isfile(path):
-        return
-    env = os.environ.copy()
-    env.setdefault('PREFIX', str(ROOT_PREFIX))
-    cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        err("Error: running %s failed.  cmd.exe could not be found.  "
-            "Looked in SystemRoot and windir env vars.\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
-    args = [cmd_exe, '/d', '/c', path]
-    import subprocess
-    try:
-        subprocess.check_call(args, env=env)
-    except subprocess.CalledProcessError:
-        err("Error: running %s failed\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
-
-
-allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
-# out('allusers is %s\n' % allusers)
-
-# This must be the same as conda's binpath_from_arg() in conda/cli/activate.py
-PATH_SUFFIXES = ('',
-                 os.path.join('Library', 'mingw-w64', 'bin'),
-                 os.path.join('Library', 'usr', 'bin'),
-                 os.path.join('Library', 'bin'),
-                 'Scripts')
-
-
 def remove_from_path(root_prefix=None):
     from _system_path import broadcast_environment_settings_change, remove_from_system_path
 
@@ -391,8 +353,6 @@ def main():
         add_condabin_to_path()
     elif cmd == 'rmpath':
         remove_from_path()
-    elif cmd == 'pre_uninstall':
-        run_pre_uninstall()
     elif cmd == 'del':
         assert len(sys.argv) == 3
         win_del(sys.argv[2].strip())

@@ -1600,7 +1600,12 @@ Section "Uninstall"
     ${EndIf}
 
 {%- if uninstall_with_conda_exe %}
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    ${If} ${FilExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+        ${Print} "Running pre_uninstall scripts..."
+        push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push "Failed to run pre_uninstall"
+        push 'WithLog'
+    ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
@@ -1650,7 +1655,12 @@ Section "Uninstall"
     call un.AbortRetryNSExecWait
     SetDetailsPrint both
 {%- endfor %}
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    ${If} ${FilExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+        ${Print} "Running pre_uninstall scripts..."
+        push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push "Failed to run pre_uninstall"
+        push 'WithLog'
+    ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
