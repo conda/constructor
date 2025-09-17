@@ -88,42 +88,6 @@ class NSISReg:
             return None
 
 
-def mk_menus(remove=False, prefix=None, pkg_names=None, root_prefix=None):
-    err(
-        "Deprecation warning: mk_menus is deprecated and will be removed in the future."
-        " Please use menuinst v2 directly or via conda-standalone 23.XXXX+ instead.\n"
-    )
-    try:
-        import menuinst
-    except (ImportError, OSError):
-        return
-    if prefix is None:
-        prefix = sys.prefix
-    if root_prefix is None:
-        root_prefix = sys.prefix
-    menu_dir = join(prefix, 'Menu')
-    if not os.path.isdir(menu_dir):
-        return
-    for fn in os.listdir(menu_dir):
-        if not fn.endswith('.json'):
-            continue
-        if pkg_names is not None and len(pkg_names) > 0 and fn[:-5] not in pkg_names:
-            # skip when not in the list of menus to create
-            # when installing, the pkg_names list is specified, otherwise not
-            # and we don't skip to try to remove shortcuts
-            continue
-        shortcut = join(menu_dir, fn)
-        try:
-            menuinst.install(shortcut, remove, prefix=prefix,
-                             root_prefix=root_prefix)
-        except Exception as e:
-            out("Failed to process %s...\n" % shortcut)
-            err("Error: %s\n" % str(e))
-            err("Traceback:\n%s\n" % traceback.format_exc(20))
-        else:
-            out("Processed %s successfully.\n" % shortcut)
-
-
 def mk_dirs():
     envs_dir = join(ROOT_PREFIX, 'envs')
     if not exists(envs_dir):
@@ -142,40 +106,6 @@ def get_conda_envs_from_python_api():
 
 
 get_conda_envs = get_conda_envs_from_python_api
-
-
-def rm_menus(prefix=None, root_prefix=None):
-    err(
-        "Deprecation warning: rm_menus is deprecated and will be removed in the future."
-        " Please use menuinst v2 directly or via conda-standalone 23.XXXX+ instead.\n"
-    )
-    try:
-        import menuinst  # noqa
-        from conda.base.context import context
-    except (ImportError, OSError):
-        return
-    try:
-        envs = get_conda_envs()
-        envs = list(envs)  # make sure `envs` is iterable
-    except Exception as e:
-        out("Failed to get conda environments list\n")
-        err("Error: %s\n" % str(e))
-        err("Traceback:\n%s\n" % traceback.format_exc(20))
-        if prefix is not None:
-            out("Will only remove shortcuts created from '%s'" % prefix)
-            mk_menus(remove=True, prefix=prefix, root_prefix=root_prefix)
-    else:
-        envs_dirs = list(context.envs_dirs)
-        if prefix is not None:
-            envs_dirs.append(prefix)
-        for env in envs:
-            env = str(env)  # force `str` so that `os.path.join` doesn't fail
-            for envs_dir in envs_dirs:
-                # Make sure the environment is from one of the directory in
-                # `envs_dirs` to avoid picking up environment from other
-                # distributions. Not perfect but better than no checking
-                if envs_dir in env:
-                    mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
 
 
 def run_post_install():
@@ -318,13 +248,8 @@ def rm_regkeys():
 
 def main():
     cmd = sys.argv[1].strip()
-    if cmd == 'mkmenus':
-        pkg_names = [s.strip() for s in sys.argv[2:]]
-        mk_menus(remove=False, pkg_names=pkg_names)
-    elif cmd == 'post_install':
+    if cmd == 'post_install':
         run_post_install()
-    elif cmd == 'rmmenus':
-        rm_menus()
     elif cmd == 'rmreg':
         rm_regkeys()
     elif cmd == 'mkdirs':
