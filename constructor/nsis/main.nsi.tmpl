@@ -132,6 +132,19 @@ var /global InstMode # 0 = Just Me, 1 = All Users.
 !define JUST_ME 0
 !define ALL_USERS 1
 
+# Find cmd.exe
+var /global CMD_EXE
+ReadEnvStr $R0 SystemRoot
+ReadEnvStr $R1 windir
+${If} ${FileExists} "$R0"
+    StrCpy $CMD_EXE "$R0\System32\cmd.exe"
+${ElseIf} ${FileExists} "$R1"
+    StrCpy $CMD_EXE "$R1\System32\cmd.exe"
+${Else}
+    # Cross our fingers CMD is in PATH
+    StrCpy $CMD_EXE "cmd.exe"
+${EndIf}
+
 # Include this one after our defines
 !include "OptionsDialog.nsh"
 
@@ -1352,17 +1365,7 @@ Section "Install"
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
         ${Print} "Running pre_install scripts..."
-        ReadEnvStr $5 SystemRoot
-        ReadEnvStr $6 windir
-        # This 'FileExists' also returns True for directories
-        ${If} ${FileExists} "$5"
-            push '"$5\System32\cmd.exe" /D /C "$INSTDIR\pkgs\pre_install.bat"'
-        ${ElseIf} ${FileExists} "$6"
-            push '"$6\System32\cmd.exe" /D /C "$INSTDIR\pkgs\pre_install.bat"'
-        ${Else}
-            # Cross our fingers CMD is in PATH
-            push 'cmd.exe /D /C "$INSTDIR\pkgs\pre_install.bat"'
-        ${EndIf}
+        push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_install.bat"'
         push "Failed to run pre_install"
         push 'WithLog'
         call AbortRetryNSExecWait
