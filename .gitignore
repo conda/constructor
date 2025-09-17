@@ -159,3 +159,6 @@ build/
 
 # setuptools-scm
 constructor/_version.py
+
+# Temporary workspaces
+tmp/

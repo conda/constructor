@@ -465,7 +465,17 @@ def test_example_extra_pages_win(tmp_path, request, extra_pages, monkeypatch):
 def test_example_extra_envs(tmp_path, request):
     input_path = _example_path("extra_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+        assert (
+            "@EXPLICIT" in (install_dir / "conda-meta" / "initial-state.explicit.txt").read_text()
+        )
+        for env in install_dir.glob("envs/*/conda-meta/"):
+            envtxt = env / "initial-state.explicit.txt"
+            assert envtxt.exists()
+            assert "@EXPLICIT" in envtxt.read_text()
+
+        if sys.platform.startswith("win"):
+            _run_uninstaller_exe(install_dir=install_dir)
 
 
 def test_example_extra_files(tmp_path, request):
