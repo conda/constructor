@@ -11,9 +11,7 @@ import os
 import re
 import sys
 import traceback
-from os import environ
-from os.path import basename, exists, isfile, join
-from subprocess import STDOUT, CalledProcessError, check_output
+from os.path import exists, isfile, join
 
 try:
     import winreg
@@ -26,20 +24,6 @@ ROOT_PREFIX = sys.prefix
 # Ideally, exceptions will get returned to NSIS and logged there,
 # etc, but this is a stopgap solution for now.
 old_excepthook = sys.excepthook
-
-
-# this sucks.  It is copied from _nsis.py because it can't be a relative import.
-# _nsis.py must be standalone.
-def ensure_comspec_set():
-    if basename(environ.get("COMSPEC", "")).lower() != "cmd.exe":
-        cmd_exe = join(environ.get('SystemRoot'), 'System32', 'cmd.exe')
-        if not isfile(cmd_exe):
-            cmd_exe = join(environ.get('windir'), 'System32', 'cmd.exe')
-        if not isfile(cmd_exe):
-            print("cmd.exe could not be found. "
-                  "Looked in SystemRoot and windir env vars.\n")
-        else:
-            environ['COMSPEC'] = cmd_exe
 
 
 def gui_excepthook(exctype, value, tb):
@@ -332,42 +316,6 @@ def rm_regkeys():
             pass
 
 
-def win_del(dirname):
-    # check_output uses comspec as the default shell when setting the parameter `shell=True`
-    ensure_comspec_set()
-    out = "unknown error (exception not caught)"
-    # first, remove all files
-    try:
-        out = check_output('DEL /F/Q/S *.* > NUL', shell=True, stderr=STDOUT, cwd=dirname)
-    except CalledProcessError as e:
-        # error code 5 indicates a permission error.  We ignore those, but raise for anything else
-        if e.returncode != 5:
-            print("Removing folder {} the fast way failed. "
-                  "Output was: {}".format(dirname, out))
-            raise
-        else:
-            print("removing dir contents the fast way failed. "
-                  "Output was: {}".format(out))
-    else:
-        print("Unexpected error removing dirname {}. "
-              "Uninstall was probably not successful".format(dirname))
-    # next, remove folder hierarchy
-    try:
-        out = check_output('RD /S /Q "{}" > NUL'.format(dirname), shell=True, stderr=STDOUT)
-    except CalledProcessError as e:
-        # error code 5 indicates a permission error.  We ignore those, but raise for anything else
-        if e.returncode != 5:
-            print("Removing folder {} the fast way failed. "
-                  "Output was: {}".format(dirname, out))
-            raise
-        else:
-            print("Removing directory folders the fast way failed. "
-                  "Output was: {}".format(out))
-    else:
-        print("Unexpected error removing dirname {}. "
-              "Uninstall was probably not successful".format(dirname))
-
-
 def main():
     cmd = sys.argv[1].strip()
     if cmd == 'mkmenus':
@@ -401,9 +349,6 @@ def main():
         remove_from_path()
     elif cmd == 'pre_uninstall':
         run_pre_uninstall()
-    elif cmd == 'del':
-        assert len(sys.argv) == 3
-        win_del(sys.argv[2].strip())
     else:
         sys.exit("ERROR: did not expect %r" % cmd)
 
