@@ -94,20 +94,6 @@ def mk_dirs():
         os.mkdir(envs_dir)
 
 
-def get_conda_envs_from_python_api():
-    try:
-        from conda.cli.python_api import Commands, run_command
-    except (ImportError, OSError):
-        return
-    from json import loads
-    c_stdout, c_stderr, return_code = run_command(Commands.INFO, "--json")
-    json_conda_info = loads(c_stdout)
-    return json_conda_info["envs"]
-
-
-get_conda_envs = get_conda_envs_from_python_api
-
-
 def run_post_install():
     """
     call the post install script, if the file exists
