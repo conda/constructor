@@ -1414,11 +1414,10 @@ Section "Install"
     AddSize {{ SIZE }}
 
 {%- if has_conda %}
-    ${Print} "Initializing conda directories..."
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
-    push 'Failed to initialize conda directories'
-    push 'WithLog'
-    call AbortRetryNSExecWait
+    StrCpy $R0 "$INSTDIR\envs"
+    ${IfNot} ${FileExists} "$R0"
+        CreateDirectory "$R0"
+    ${EndIf}
 {%- endif %}
 
     ${If} $Ana_PostInstall_State = ${BST_CHECKED}
