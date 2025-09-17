@@ -1423,12 +1423,14 @@ Section "Install"
     ${EndIf}
 {%- endif %}
 
-    ${If} $Ana_PostInstall_State = ${BST_CHECKED}
-        ${Print} "Running post install..."
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
-        push 'Failed to run post install script'
-        push 'WithLog'
-        call AbortRetryNSExecWait
+    ${If} ${FileExists} "$INSTDIR\pkgs\post_install.bat"
+        ${If} $Ana_PostInstall_State = ${BST_CHECKED}
+            ${Print} "Running post install..."
+            push '${CMD_EXE} /D /C "$INSTDIR\pkgs\post_install.bat"'
+            push "Failed to run post_install"
+            push 'WithLog'
+            call AbortRetryNSExecWait
+        ${EndIf}
     ${EndIf}
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
@@ -1605,6 +1607,7 @@ Section "Uninstall"
         push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
         push "Failed to run pre_uninstall"
         push 'WithLog'
+        call un.AbortRetryNSExecWait
     ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
@@ -1660,6 +1663,7 @@ Section "Uninstall"
         push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
         push "Failed to run pre_uninstall"
         push 'WithLog'
+        call un.AbortRetryNSExecWait
     ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"

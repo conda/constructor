@@ -188,33 +188,6 @@ def rm_menus(prefix=None, root_prefix=None):
                     mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
 
 
-def run_post_install():
-    """
-    call the post install script, if the file exists
-    """
-    path = join(ROOT_PREFIX, 'pkgs', 'post_install.bat')
-    if not isfile(path):
-        return
-    env = os.environ.copy()
-    env.setdefault('PREFIX', str(ROOT_PREFIX))
-    cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        err("Error: running %s failed.  cmd.exe could not be found.  "
-            "Looked in SystemRoot and windir env vars.\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
-    args = [cmd_exe, '/d', '/c', path]
-    import subprocess
-    try:
-        subprocess.check_call(args, env=env)
-    except subprocess.CalledProcessError:
-        err("Error: running %s failed\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
-
-
 def remove_from_path(root_prefix=None):
     from _system_path import broadcast_environment_settings_change, remove_from_system_path
 
@@ -329,8 +302,6 @@ def main():
     if cmd == 'mkmenus':
         pkg_names = [s.strip() for s in sys.argv[2:]]
         mk_menus(remove=False, pkg_names=pkg_names)
-    elif cmd == 'post_install':
-        run_post_install()
     elif cmd == 'rmmenus':
         rm_menus()
     elif cmd == 'rmreg':
