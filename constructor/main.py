@@ -9,6 +9,8 @@ Application layer.
 CLI logic and main functions to run constructor on a given input file.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging
@@ -190,7 +192,8 @@ def main_build(
                 return True
         return False
 
-    if (has_frozen_file(info.get("extra_files", []))
+    if (
+        has_frozen_file(info.get("extra_files", []))
         and exe_type == StandaloneExe.CONDA
         and check_version(exe_version, min_version="25.5.0", max_version="25.7.0")
     ):
