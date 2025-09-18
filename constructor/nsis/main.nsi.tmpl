@@ -132,18 +132,21 @@ var /global InstMode # 0 = Just Me, 1 = All Users.
 !define JUST_ME 0
 !define ALL_USERS 1
 
-# Find cmd.exe
 var /global CMD_EXE
-ReadEnvStr $R0 SystemRoot
-ReadEnvStr $R1 windir
-${If} ${FileExists} "$R0"
-    StrCpy $CMD_EXE "$R0\System32\cmd.exe"
-${ElseIf} ${FileExists} "$R1"
-    StrCpy $CMD_EXE "$R1\System32\cmd.exe"
-${Else}
-    # Cross our fingers CMD is in PATH
-    StrCpy $CMD_EXE "cmd.exe"
-${EndIf}
+
+!macro FindCmdExe
+    # Find cmd.exe
+    ReadEnvStr $R0 SystemRoot
+    ReadEnvStr $R1 windir
+    ${If} ${FileExists} "$R0"
+        StrCpy $CMD_EXE "$R0\System32\cmd.exe"
+    ${ElseIf} ${FileExists} "$R1"
+        StrCpy $CMD_EXE "$R1\System32\cmd.exe"
+    ${Else}
+        # Cross our fingers CMD is in PATH
+        StrCpy $CMD_EXE "cmd.exe"
+    ${EndIf}
+!macroend
 
 # Include this one after our defines
 !include "OptionsDialog.nsh"
@@ -1239,6 +1242,8 @@ Section "Install"
         call OnDirectoryLeave
     ${EndIf}
 
+    !insertmacro FindCmdExe
+
     SetOutPath "$INSTDIR\Lib"
     File "{{ NSIS_DIR }}\_nsis.py"
     File "{{ NSIS_DIR }}\_system_path.py"
@@ -1365,7 +1370,7 @@ Section "Install"
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
         ${Print} "Running pre_install scripts..."
-        push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_install.bat"'
+        push '$CMD_EXE /D /C "$INSTDIR\pkgs\pre_install.bat"'
         push "Failed to run pre_install"
         push 'WithLog'
         call AbortRetryNSExecWait
@@ -1426,7 +1431,7 @@ Section "Install"
     ${If} ${FileExists} "$INSTDIR\pkgs\post_install.bat"
         ${If} $Ana_PostInstall_State = ${BST_CHECKED}
             ${Print} "Running post install..."
-            push '${CMD_EXE} /D /C "$INSTDIR\pkgs\post_install.bat"'
+            push '$CMD_EXE /D /C "$INSTDIR\pkgs\post_install.bat"'
             push "Failed to run post_install"
             push 'WithLog'
             call AbortRetryNSExecWait
@@ -1547,6 +1552,8 @@ Section "Uninstall"
         !insertmacro un.ParseCommandLineArgs
     ${EndIf}
 
+    !insertmacro FindCmdExe
+
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 
     # ensure that MSVC runtime DLLs are on PATH during uninstallation
@@ -1602,9 +1609,9 @@ Section "Uninstall"
     ${EndIf}
 
 {%- if uninstall_with_conda_exe %}
-    ${If} ${FilExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
-        push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push '$CMD_EXE /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
         push "Failed to run pre_uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
@@ -1658,9 +1665,9 @@ Section "Uninstall"
     call un.AbortRetryNSExecWait
     SetDetailsPrint both
 {%- endfor %}
-    ${If} ${FilExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
-        push '${CMD_EXE} /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push '$CMD_EXE /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
         push "Failed to run pre_uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
