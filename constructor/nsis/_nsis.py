@@ -188,6 +188,17 @@ def rm_menus(prefix=None, root_prefix=None):
                     mk_menus(remove=True, prefix=env, root_prefix=root_prefix)
 
 
+allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
+# out('allusers is %s\n' % allusers)
+
+# This must be the same as conda's binpath_from_arg() in conda/cli/activate.py
+PATH_SUFFIXES = ('',
+                 os.path.join('Library', 'mingw-w64', 'bin'),
+                 os.path.join('Library', 'usr', 'bin'),
+                 os.path.join('Library', 'bin'),
+                 'Scripts')
+
+
 def remove_from_path(root_prefix=None):
     from _system_path import broadcast_environment_settings_change, remove_from_system_path
 
