@@ -1617,7 +1617,6 @@ Section "Uninstall"
         call un.AbortRetryNSExecWait
     ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
     # Parse arguments
     StrCpy $R0 ""
