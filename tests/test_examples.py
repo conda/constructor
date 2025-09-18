@@ -1385,7 +1385,7 @@ def test_regressions(tmp_path, request):
         CONDA_EXE == StandaloneExe.CONDA
         and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
     ),
-    reason="conda-standalone 25.5.x fails with protected base environments and older versions are ignored",
+    reason="conda-standalone 25.5.x fails with protected environments",
     strict=True,
 )
 def test_frozen_environment(tmp_path, request):

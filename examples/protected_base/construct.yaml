@@ -20,3 +20,4 @@ extra_envs:
 
 extra_files:
   - frozen.json: conda-meta/frozen
+  - frozen.json: envs/defaults/conda-meta/frozen
