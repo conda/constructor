@@ -23,9 +23,8 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
 
-from ruamel.yaml import YAML
-
 from conda.models.version import VersionOrder
+from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
 yaml = YAML(typ="rt")

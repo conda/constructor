@@ -183,7 +183,11 @@ def main_build(
     def has_frozen_file(extra_files: list[str | dict[str, str]]) -> bool:
         def is_conda_meta_frozen(path_str: str) -> bool:
             path = Path(path_str)
-            return path.parts == ("conda-meta", "frozen") or (len(path.parts) == 4 and path.parts[0] == "envs" and path.parts[-2:] == ("conda-meta", "frozen"))
+            return path.parts == ("conda-meta", "frozen") or (
+                len(path.parts) == 4
+                and path.parts[0] == "envs"
+                and path.parts[-2:] == ("conda-meta", "frozen")
+            )
 
         for file in extra_files:
             if isinstance(file, str) and is_conda_meta_frozen(file):
