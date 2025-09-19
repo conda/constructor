@@ -23,6 +23,7 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
 
+from conda.models.version import VersionOrder
 from ruamel.yaml import YAML
 
 logger = logging.getLogger(__name__)
@@ -341,6 +342,26 @@ def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneE
         logger.debug("Exception while identifying binary", exc_info=exc)
         logger.warning("Could not identify standalone binary: %s", exc)
     return None, None
+
+
+def check_version(
+    exe_version: str | VersionOrder | None = None,
+    min_version: str | None = None,
+    max_version: str | None = None,
+) -> bool:
+    """Check if a version is within a version range.
+
+    The minimum version is assumed to be inclusive, the maximum version is not inclusive.
+    """
+    if not exe_version:
+        return False
+    if isinstance(exe_version, str):
+        exe_version = VersionOrder(exe_version)
+    if min_version and exe_version < VersionOrder(min_version):
+        return False
+    if max_version and exe_version >= VersionOrder(max_version):
+        return False
+    return True
 
 
 def win_str_esc(s, newlines=True):
