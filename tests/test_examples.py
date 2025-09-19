@@ -1391,13 +1391,28 @@ def test_regressions(tmp_path, request):
 def test_frozen_environment(tmp_path, request):
     input_path = _example_path("protected_base")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        frozen_file = install_dir / "conda-meta" / "frozen"
         _run_installer(
             input_path,
             installer,
             install_dir,
             request=request,
-            check_subprocess=True,
             uninstall=False,
         )
-        assert frozen_file.exists()
+
+        expected_frozen_paths = {
+            install_dir / "conda-meta" / "frozen",
+            install_dir / "envs" / "default" / "conda-meta" / "frozen",
+        }
+
+        actual_frozen_paths = set()
+        for env in install_dir.glob("**/conda-meta/history"):
+            frozen_file = env.parent / "frozen"
+            assert frozen_file.exists()
+            actual_frozen_paths.add(frozen_file)
+
+        assert expected_frozen_paths == actual_frozen_paths, (
+            f"Expected: {sorted(str(p) for p in expected_frozen_paths)}\n"
+            f"Found: {sorted(str(p) for p in actual_frozen_paths)}"
+        )
+
+
