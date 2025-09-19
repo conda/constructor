@@ -17,7 +17,8 @@ extra_envs:
     specs:
       - python
       - pip
+      - conda
 
 extra_files:
   - frozen.json: conda-meta/frozen
-  - frozen.json: envs/defaults/conda-meta/frozen
+  - frozen.json: envs/default/conda-meta/frozen
