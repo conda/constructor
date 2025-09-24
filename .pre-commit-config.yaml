@@ -18,7 +18,7 @@ repos:
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.13.0
+    rev: v0.13.1
     hooks:
       # Run the linter.
       - id: ruff
@@ -31,6 +31,6 @@ repos:
       - id: shellcheck
         exclude: ^(constructor/header.sh|constructor/osx/.*sh)
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.3
+    rev: 0.34.0
     hooks:
       - id: check-github-workflows
