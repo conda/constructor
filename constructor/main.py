@@ -165,21 +165,6 @@ def main_build(
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
 
-    # normalize paths to be copied; if they are relative, they must be to
-    # construct.yaml's parent (dir_path)
-    extras_types = ["extra_files", "temp_extra_files"]
-    for extra_type in extras_types:
-        extras = info.get(extra_type, ())
-        new_extras = []
-        for path in extras:
-            if isinstance(path, str):
-                new_extras.append(abspath(join(dir_path, path)))
-            elif isinstance(path, dict):
-                for orig, dest in path.items():
-                    orig = abspath(join(dir_path, orig))
-                    new_extras.append({orig: dest})
-        info[extra_type] = new_extras
-
     def has_frozen_file(extra_files: list[str | dict[str, str]]) -> bool:
         def is_conda_meta_frozen(path_str: str) -> bool:
             path = Path(path_str)
@@ -204,6 +189,21 @@ def main_build(
         sys.exit(
             "Error: handling conda-meta/frozen marker files requires conda-standalone newer than 25.7.x"
         )
+
+    # normalize paths to be copied; if they are relative, they must be to
+    # construct.yaml's parent (dir_path)
+    extras_types = ["extra_files", "temp_extra_files"]
+    for extra_type in extras_types:
+        extras = info.get(extra_type, ())
+        new_extras = []
+        for path in extras:
+            if isinstance(path, str):
+                new_extras.append(abspath(join(dir_path, path)))
+            elif isinstance(path, dict):
+                for orig, dest in path.items():
+                    orig = abspath(join(dir_path, orig))
+                    new_extras.append({orig: dest})
+        info[extra_type] = new_extras
 
     for key in "channels", "specs", "exclude", "packages", "menu_packages", "virtual_specs":
         if key in info:
