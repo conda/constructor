@@ -658,6 +658,12 @@ Allowed strings / keys: `hash`, `info.json`, `licenses`, `lockfile`, `pkgs_list`
 Use the standalone binary to perform the uninstallation on Windows.
 Requires conda-standalone 24.11.0 or newer.
 
+### `frozen_file`
+
+Protect the base environment with a `frozen` marker file. Requires conda 25.5.0 or newer. This setting can be:
+
+`dict`: If set, the dictionary will be output into a `frozen` marker file to protect the `base` environment. If not used, the `base` environment will not be protected. See CEP-22 for the specification of the `frozen` file.
+
 
 ## Available selectors
 - `aarch64`
