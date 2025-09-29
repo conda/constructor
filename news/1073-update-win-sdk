@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix missing signtool.exe by updating SDK from Windows 2022 to Windows 2025 (#1073)
+* <news item>
 
 ### Deprecations
 
@@ -15,5 +15,4 @@
 * <news item>
 
 ### Other
-
-* <news item>
+* Update signtool.exe path for Windows 2025 runner images (SDK 10.0.26100.0) (#1073)
