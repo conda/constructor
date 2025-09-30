@@ -66,17 +66,17 @@ jobs:
             python-version: "3.12"
             conda-standalone: micromamba
           # WINDOWS
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.9"
             conda-standalone: conda-standalone-nightly
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.10"
             conda-standalone: conda-standalone
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.11"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-nightly
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.12"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-onedir
@@ -152,7 +152,7 @@ jobs:
           AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID }}
           AZURE_SIGNTOOL_KEY_VAULT_URL: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_URL }}
           CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
-          CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
+          CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
@@ -213,7 +213,7 @@ jobs:
             subdir: osx-64
           - runner: macos-latest
             subdir: osx-arm64
-          - runner: windows-latest
+          - runner: windows-2022
             subdir: win-64
     runs-on: ${{ matrix.runner }}
     steps:
