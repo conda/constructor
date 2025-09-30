@@ -151,7 +151,7 @@ jobs:
           AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID }}
           AZURE_SIGNTOOL_KEY_VAULT_URL: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_URL }}
           CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
-          CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe"
+          CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
           pytest -vv --cov=constructor --cov-branch tests/test_examples.py
@@ -231,7 +231,7 @@ jobs:
           python -m build --sdist --wheel . --outdir dist
 
       - name: Create and upload canary build
-        uses: conda/actions/canary-release@87cb4b58e6a169cb41db8af4d49ace6275f7b213 # v25.9.0
+        uses: conda/actions/canary-release@f05161c6e6e37a49b17c8e0b436197b53830318a # v25.9.2
         if: github.ref_name == 'main' || startsWith(github.ref_name, 'feature/')
         with:
           package-name: ${{ github.event.repository.name }}
