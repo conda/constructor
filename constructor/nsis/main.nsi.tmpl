@@ -1370,7 +1370,7 @@ Section "Install"
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
         ${Print} "Running pre_install scripts..."
-        push '$CMD_EXE /D /C "$INSTDIR\pkgs\pre_install.bat"'
+        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_install.bat"'
         push "Failed to run pre_install"
         push 'WithLog'
         call AbortRetryNSExecWait
@@ -1431,7 +1431,7 @@ Section "Install"
     ${If} ${FileExists} "$INSTDIR\pkgs\post_install.bat"
         ${If} $Ana_PostInstall_State = ${BST_CHECKED}
             ${Print} "Running post install..."
-            push '$CMD_EXE /D /C "$INSTDIR\pkgs\post_install.bat"'
+            push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\post_install.bat"'
             push "Failed to run post_install"
             push 'WithLog'
             call AbortRetryNSExecWait
@@ -1611,7 +1611,7 @@ Section "Uninstall"
 {%- if uninstall_with_conda_exe %}
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
-        push '$CMD_EXE /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
         push "Failed to run pre_uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
@@ -1666,7 +1666,7 @@ Section "Uninstall"
 {%- endfor %}
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
-        push '$CMD_EXE /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
         push "Failed to run pre_uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
