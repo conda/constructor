@@ -66,17 +66,17 @@ jobs:
             python-version: "3.12"
             conda-standalone: micromamba
           # WINDOWS
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.9"
             conda-standalone: conda-standalone-nightly
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.10"
             conda-standalone: conda-standalone
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.11"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-nightly
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.12"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-onedir
@@ -213,7 +213,7 @@ jobs:
             subdir: osx-64
           - runner: macos-latest
             subdir: osx-arm64
-          - runner: windows-latest
+          - runner: windows-2022
             subdir: win-64
     runs-on: ${{ matrix.runner }}
     steps:
