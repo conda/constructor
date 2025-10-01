@@ -1391,9 +1391,11 @@ def test_frozen_environment(tmp_path, request):
             install_dir / "envs" / "default" / "conda-meta" / "frozen",
         }
 
-        actual_frozen_paths = {
-            frozen_file for frozen_file in expected_frozen_paths if frozen_file.exists()
-        }
+        actual_frozen_paths = set()
+        for env in install_dir.glob("**/conda-meta/history"):
+            frozen_file = env.parent / "frozen"
+            if frozen_file.exists():
+                actual_frozen_paths.add(frozen_file)
 
         assert expected_frozen_paths == actual_frozen_paths
 
