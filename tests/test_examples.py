@@ -1367,19 +1367,6 @@ def test_output_files(tmp_path):
         assert files_exist == []
 
 
-def test_regressions(tmp_path, request):
-    input_path = _example_path("regressions")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            check_subprocess=True,
-            uninstall=True,
-        )
-
-
 @pytest.mark.xfail(
     condition=(
         CONDA_EXE == StandaloneExe.CONDA
@@ -1409,3 +1396,16 @@ def test_frozen_environment(tmp_path, request):
         }
 
         assert expected_frozen_paths == actual_frozen_paths
+
+
+def test_regressions(tmp_path, request):
+    input_path = _example_path("regressions")
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=True,
+        )
