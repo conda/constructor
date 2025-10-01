@@ -317,6 +317,8 @@ def _run_installer(
             check=check_subprocess,
             options=options,
         )
+        if request and ON_CI:
+            request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
     elif installer.suffix == ".pkg":
         if request and ON_CI:
             request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
