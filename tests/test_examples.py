@@ -318,6 +318,7 @@ def _run_installer(
             options=options,
         )
         if request and ON_CI:
+            # GitHub runners run out of disk space if installation directories are not cleaned up
             request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
     elif installer.suffix == ".pkg":
         if request and ON_CI:
