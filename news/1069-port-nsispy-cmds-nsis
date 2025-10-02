@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Port script execution and directory creation functions from `_nsis.py` to NSIS. (#1069)
+* Port script execution, AutoRun manipulation, and directory creation functions from `_nsis.py` to NSIS. (#1069)
 
 ### Bug fixes
 

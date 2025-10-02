@@ -8,14 +8,8 @@
 # be tested in an installation.
 
 import os
-import re
 import sys
-from os.path import exists, isfile, join
-
-try:
-    import winreg
-except ImportError:
-    import _winreg as winreg
+from os.path import exists, join
 
 ROOT_PREFIX = sys.prefix
 
@@ -55,36 +49,6 @@ else:
 
     def err(x):
         OutputDebugString('_nsis.py: Error: ' + x)
-
-
-class NSISReg:
-    def __init__(self, reg_path):
-        self.reg_path = reg_path
-        if exists(join(ROOT_PREFIX, '.nonadmin')):
-            self.main_key = winreg.HKEY_CURRENT_USER
-        else:
-            self.main_key = winreg.HKEY_LOCAL_MACHINE
-
-    def set(self, name, value):
-        try:
-            winreg.CreateKey(self.main_key, self.reg_path)
-            registry_key = winreg.OpenKey(self.main_key, self.reg_path, 0,
-                                          winreg.KEY_WRITE)
-            winreg.SetValueEx(registry_key, name, 0, winreg.REG_SZ, value)
-            winreg.CloseKey(registry_key)
-            return True
-        except WindowsError:
-            return False
-
-    def get(self, name):
-        try:
-            registry_key = winreg.OpenKey(self.main_key, self.reg_path, 0,
-                                          winreg.KEY_READ)
-            value, regtype = winreg.QueryValueEx(registry_key, name)
-            winreg.CloseKey(registry_key)
-            return value
-        except WindowsError:
-            return None
 
 
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
@@ -157,25 +121,9 @@ def add_condabin_to_path():
     broadcast_environment_settings_change()
 
 
-def rm_regkeys():
-    cmdproc_reg_entry = NSISReg(r'Software\Microsoft\Command Processor')
-    cmdproc_autorun_val = cmdproc_reg_entry.get('AutoRun')
-    conda_hook_regex_pat = r'((\s+&\s+)?(if +exist)?(\s*?\"[^\"]*?conda[-_]hook\.bat\"))'
-    if join(ROOT_PREFIX, 'condabin') in (cmdproc_autorun_val or ''):
-        cmdproc_autorun_newval = re.sub(conda_hook_regex_pat, '',
-                                        cmdproc_autorun_val)
-        try:
-            cmdproc_reg_entry.set('AutoRun', cmdproc_autorun_newval)
-        except Exception:
-            # Hey, at least we made an attempt to cleanup
-            pass
-
-
 def main():
     cmd = sys.argv[1].strip()
-    if cmd == 'rmreg':
-        rm_regkeys()
-    elif cmd == 'addpath':
+    if cmd == 'addpath':
         # These checks are probably overkill, but could be useful
         # if I forget to update something that uses this code.
         if len(sys.argv) > 2:
