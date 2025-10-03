@@ -9,12 +9,15 @@ Application layer.
 CLI logic and main functions to run constructor on a given input file.
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import logging
 import os
 import sys
 from os.path import abspath, expanduser, isdir, join
+from pathlib import Path
 from textwrap import dedent
 
 from . import __version__
@@ -25,7 +28,7 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
-from .utils import StandaloneExe, identify_conda_exe, normalize_path, yield_lines
+from .utils import StandaloneExe, check_version, identify_conda_exe, normalize_path, yield_lines
 
 DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
 
@@ -118,7 +121,7 @@ def main_build(
         sys.exit("Error: micromamba is not supported on Windows installers.")
 
     if info.get("uninstall_with_conda_exe") and not (
-        exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.11.0")
+        exe_type == StandaloneExe.CONDA and check_version(exe_version, min_version="24.11.0")
     ):
         sys.exit("Error: uninstalling with conda.exe requires conda-standalone 24.11.0 or newer.")
 
@@ -161,6 +164,31 @@ def main_build(
             continue
         if isinstance(info[key], str):
             info[key] = list(yield_lines(join(dir_path, info[key])))
+
+    def has_frozen_file(extra_files: list[str | dict[str, str]]) -> bool:
+        def is_conda_meta_frozen(path_str: str) -> bool:
+            path = Path(path_str)
+            return path.parts == ("conda-meta", "frozen") or (
+                len(path.parts) == 4
+                and path.parts[0] == "envs"
+                and path.parts[-2:] == ("conda-meta", "frozen")
+            )
+
+        for file in extra_files:
+            if isinstance(file, str) and is_conda_meta_frozen(file):
+                return True
+            elif isinstance(file, dict) and any(is_conda_meta_frozen(val) for val in file.values()):
+                return True
+        return False
+
+    if (
+        has_frozen_file(info.get("extra_files", []))
+        and exe_type == StandaloneExe.CONDA
+        and check_version(exe_version, min_version="25.5.0", max_version="25.7.0")
+    ):
+        sys.exit(
+            "Error: handling conda-meta/frozen marker files requires conda-standalone newer than 25.7.x"
+        )
 
     # normalize paths to be copied; if they are relative, they must be to
     # construct.yaml's parent (dir_path)
@@ -215,14 +243,14 @@ def main_build(
                 "Will assume it is compatible with shortcuts."
             )
         elif sys.platform != "win32" and (
-            exe_type != StandaloneExe.CONDA or (exe_version and exe_version < Version("23.11.0"))
+            exe_type != StandaloneExe.CONDA or check_version(exe_version, max_version="23.11.0")
         ):
             logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
             info["_enable_shortcuts"] = "incompatible"
 
     # Add --no-rc option to CONDA_EXE command so that existing
     # .condarc files do not pollute the installation process.
-    if exe_type == StandaloneExe.CONDA and exe_version and exe_version >= Version("24.9.0"):
+    if exe_type == StandaloneExe.CONDA and check_version(exe_version, min_version="24.9.0"):
         info["_ignore_condarcs_arg"] = "--no-rc"
     elif exe_type == StandaloneExe.MAMBA:
         info["_ignore_condarcs_arg"] = "--no-rc"

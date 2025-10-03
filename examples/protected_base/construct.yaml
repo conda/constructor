@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../../constructor/data/construct.schema.json
+"$schema": "../../constructor/data/construct.schema.json"
+
+name: ProtectedBaseEnv
+version: X
+installer_type: all
+
+channels:
+  - defaults
+
+specs:
+  - python
+  - conda
+
+extra_envs:
+  default:
+    specs:
+      - python
+      - pip
+      - conda
+
+extra_files:
+  - frozen.json: conda-meta/frozen
+  - frozen.json: envs/default/conda-meta/frozen
