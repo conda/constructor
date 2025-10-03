@@ -10,7 +10,7 @@ import os
 import sys
 from copy import deepcopy
 from itertools import chain
-from os.path import join
+from pathlib import Path
 
 from conda.gateways.disk import mkdir_p_sudo_safe
 
@@ -163,7 +163,7 @@ if conda_interface_type == "conda":
                 raise NotImplementedError("Package type is unknown for: %s" % package)
             if original_package in full_repodata.get(original_key, {}):
                 data = deepcopy(full_repodata[original_key][original_package])
-                pkg_fn = join(info["_download_dir"], package)
+                pkg_fn = info["_download_dir"] / package
                 data["size"] = os.stat(pkg_fn).st_size
                 data["sha256"] = hash_files([pkg_fn], algorithm="sha256")
                 data["md5"] = hash_files([pkg_fn])
@@ -183,7 +183,7 @@ if conda_interface_type == "conda":
             }
         )
         repodata = repodata_header[:-1] + "," + repodata[1:]
-        repodata_filepath = join(cache_dir, _cache_fn_url(repodata_url))
+        repodata_filepath = cache_dir / _cache_fn_url(repodata_url)
         with open(repodata_filepath, "w") as fh:
             fh.write(repodata)
 
@@ -196,6 +196,6 @@ if conda_interface_type == "conda":
         # Maybe it's not needed anymore.
 
     def write_cache_dir():
-        cache_dir = join(PackageCacheData.first_writable().pkgs_dir, "cache")
+        cache_dir = Path(PackageCacheData.first_writable().pkgs_dir, "cache")
         mkdir_p_sudo_safe(cache_dir)
         return cache_dir

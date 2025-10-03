@@ -14,7 +14,7 @@ import json
 import logging
 import os
 import sys
-from os.path import abspath, expanduser, isdir, join
+from pathlib import Path
 from textwrap import dedent
 
 from . import __version__
@@ -25,9 +25,9 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
-from .utils import StandaloneExe, identify_conda_exe, normalize_path, yield_lines
+from .utils import StandaloneExe, identify_conda_exe, yield_lines
 
-DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
+DEFAULT_CACHE_DIR = Path(os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor"))
 
 logger = logging.getLogger(__name__)
 
@@ -74,34 +74,34 @@ def get_output_filename(info):
 
 
 def main_build(
-    dir_path,
-    output_dir=".",
+    dir_path: Path,
+    output_dir: Path = Path("."),
     platform=cc_platform,
     verbose=True,
-    cache_dir=DEFAULT_CACHE_DIR,
+    cache_dir: Path = DEFAULT_CACHE_DIR,
     dry_run=False,
-    conda_exe="conda.exe",
+    conda_exe: Path = Path("conda.exe"),
     config_filename="construct.yaml",
     debug=False,
 ):
     logger.info("platform: %s", platform)
-    if not os.path.isfile(conda_exe):
+    if not conda_exe.is_file():
         sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
-    cache_dir = abspath(expanduser(cache_dir))
+    cache_dir = cache_dir.expanduser().resolve()
     try:
         osname, unused_arch = platform.split("-")
     except ValueError:
         sys.exit("Error: invalid platform string '%s'" % platform)
 
-    construct_path = join(dir_path, config_filename)
+    construct_path = Path(dir_path, config_filename)
     info = construct_parse(construct_path, platform)
     construct_verify(info)
     info["CONSTRUCTOR_VERSION"] = __version__
     info["_input_dir"] = dir_path
     info["_output_dir"] = output_dir
     info["_platform"] = platform
-    info["_download_dir"] = join(cache_dir, platform)
-    info["_conda_exe"] = abspath(conda_exe)
+    info["_download_dir"] = Path(cache_dir, platform)
+    info["_conda_exe"] = conda_exe.resolve()
     info["_debug"] = debug
     itypes = get_installer_type(info)
 
@@ -145,10 +145,10 @@ def main_build(
         "post_install_pages",
     ):
         if value := info.get(key):  # only join if there's a truthy value set
-            if isinstance(value, str):
-                info[key] = abspath(join(dir_path, info[key]))
+            if isinstance(value, (str, Path)):
+                info[key] = Path(dir_path, info[key]).resolve()
             elif isinstance(value, list):
-                info[key] = [abspath(join(dir_path, val)) for val in value]
+                info[key] = [Path(dir_path, val).resolve() for val in value]
 
     # Normalize name and set default value
     if info.get("windows_signing_tool"):
@@ -160,7 +160,7 @@ def main_build(
         if key not in info:
             continue
         if isinstance(info[key], str):
-            info[key] = list(yield_lines(join(dir_path, info[key])))
+            info[key] = list(yield_lines(Path(dir_path, info[key])))
 
     # normalize paths to be copied; if they are relative, they must be to
     # construct.yaml's parent (dir_path)
@@ -169,11 +169,11 @@ def main_build(
         extras = info.get(extra_type, ())
         new_extras = []
         for path in extras:
-            if isinstance(path, str):
-                new_extras.append(abspath(join(dir_path, path)))
+            if isinstance(path, (str, Path)):
+                new_extras.append(Path(dir_path, path).resolve())
             elif isinstance(path, dict):
                 for orig, dest in path.items():
-                    orig = abspath(join(dir_path, orig))
+                    orig = Path(dir_path, orig).resolve()
                     new_extras.append({orig: dest})
         info[extra_type] = new_extras
 
@@ -190,7 +190,7 @@ def main_build(
             raise ValueError(f"Environment name '{env_name}' cannot be used")
         for config_key, value in env_config.copy().items():
             if config_key == "environment_file":
-                env_config[config_key] = abspath(join(dir_path, value))
+                env_config[config_key] = Path(dir_path, value).resolve()
             elif config_key == "channels_remap":
                 env_config[config_key] = [
                     {"src": item["src"].strip(), "dest": item["dest"].strip()} for item in value
@@ -274,7 +274,7 @@ def main_build(
                     "Error: 'initialize_conda == condabin' requires 'conda >=25.5.0' in base env."
                 )
 
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     info_dicts = []
     for itype in itypes:
         if itype == "sh":
@@ -290,7 +290,7 @@ def main_build(
 
             create = winexe_create
         info["installer_type"] = itype
-        info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
+        info["_outpath"] = Path(output_dir, get_output_filename(info)).resolve()
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())
@@ -382,9 +382,9 @@ def main(argv=None):
     p.add_argument(
         "--output-dir",
         action="store",
-        default=os.getcwd(),
+        default=Path.cwd(),
         help="path to directory in which output installer is written "
-        f"to, defaults to CWD ('{os.getcwd()}')",
+        f"to, defaults to CWD ('{Path.cwd()}')",
         metavar="PATH",
     )
 
@@ -446,7 +446,7 @@ def main(argv=None):
         help="directory containing construct.yaml",
         action="store",
         nargs="?",
-        default=os.getcwd(),
+        default=Path.cwd(),
         metavar="DIRECTORY",
     )
 
@@ -459,44 +459,45 @@ def main(argv=None):
     if args.clean:
         import shutil
 
-        cache_dir = abspath(expanduser(args.cache_dir))
+        cache_dir = Path(args.cache_dir).expanduser().resolve()
         logger.info("cleaning cache: '%s'", cache_dir)
-        if isdir(cache_dir):
+        if cache_dir.is_dir():
             shutil.rmtree(cache_dir)
         return
 
-    dir_path = args.dir_path
-    if not isdir(dir_path):
+    dir_path = Path(args.dir_path)
+    if not dir_path.is_dir():
         p.error("no such directory: %s" % dir_path)
     if os.sep in args.config_filename:
         p.error("--config-filename can only be a filename, not a path")
-    full_config_path = os.path.join(dir_path, args.config_filename)
-    if not os.path.isfile(full_config_path):
+    full_config_path = dir_path / args.config_filename
+    if not full_config_path.is_file():
         p.error("no such file: %s" % full_config_path)
 
-    conda_exe = args.conda_exe
-    conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
-    conda_exe_default_path = normalize_path(conda_exe_default_path)
-    if conda_exe:
-        conda_exe = normalize_path(os.path.abspath(conda_exe))
+    conda_exe_default_path = Path(sys.prefix, "standalone_conda", "conda.exe").resolve()
+    if args.conda_exe:
+        conda_exe = Path(args.conda_exe)
     elif args.platform != cc_platform:
         p.error("setting --conda-exe is required for building a non-native installer")
     else:
         conda_exe = conda_exe_default_path
-    if not os.path.isfile(conda_exe):
+    if not conda_exe.is_file():
         if conda_exe != conda_exe_default_path:
             p.error("file not found: %s" % args.conda_exe)
         p.error(
-            """
-no standalone conda executable was found. The
-easiest way to obtain one is to install the 'conda-standalone' package.
-Alternatively, you can download an executable manually and supply its
-path with the --conda-exe argument. Self-contained executables can be
-downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/ and/or
-https://github.com/conda/conda-standalone/releases""".lstrip()
+            dedent(
+                """
+                no standalone conda executable was found. The
+                easiest way to obtain one is to install the 'conda-standalone' package.
+                Alternatively, you can download an executable manually and supply its
+                path with the --conda-exe argument. Self-contained executables can be
+                downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/ and/or
+                https://github.com/conda/conda-standalone/releases
+                """
+            ).lstrip()
         )
-
-    out_dir = normalize_path(args.output_dir)
+    conda_exe = conda_exe.resolve()
+    out_dir = Path(args.output_dir)
     main_build(
         dir_path,
         output_dir=out_dir,

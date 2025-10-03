@@ -14,9 +14,10 @@ import os
 import shutil
 import sys
 import tempfile
-from os.path import abspath, basename, dirname, isfile, join
+from os.path import join
 from pathlib import Path
 from subprocess import check_output, run
+from textwrap import dedent
 
 from .construct import ns_platform
 from .imaging import write_images
@@ -35,17 +36,16 @@ from .utils import (
     win_str_esc,
 )
 
-NSIS_DIR = join(abspath(dirname(__file__)), "nsis")
-MAKENSIS_EXE = abspath(join(sys.prefix, "NSIS", "makensis.exe"))
+NSIS_DIR = (Path(__file__).parent / "nsis").resolve()
+MAKENSIS_EXE = Path(sys.prefix, "NSIS", "makensis.exe").resolve()
 
 logger = logging.getLogger(__name__)
 
 
 def read_nsi_tmpl(info) -> str:
-    path = abspath(info.get("nsis_template", join(NSIS_DIR, "main.nsi.tmpl")))
+    path = Path(info.get("nsis_template", NSIS_DIR / "main.nsi.tmpl")).resolve()
     logger.info("Reading: %s", path)
-    with open(path) as fi:
-        return fi.read()
+    return path.read_text()
 
 
 def get_extra_files(paths, common_parent):
@@ -84,9 +84,9 @@ def setup_envs_commands(info, dir_path):
             # initial-state.explicit.txt as seen by the running installer
             "lockfile_txt": r"$INSTDIR\conda-meta\initial-state.explicit.txt",
             # initial-state.explicit.txt path while building the installer
-            "lockfile_txt_abspath": join(dir_path, "conda-meta", "initial-state.explicit.txt"),
+            "lockfile_txt_abspath": dir_path / "conda-meta" / "initial-state.explicit.txt",
             "conda_meta": r"$INSTDIR\conda-meta",
-            "history_abspath": join(dir_path, "conda-meta", "history"),
+            "history_abspath": dir_path / "conda-meta" / "history",
             "final_channels": get_final_channels(info),
             "shortcuts": shortcuts_flags(info),
             "register_envs": str(info.get("register_envs", True)).lower(),
@@ -107,14 +107,14 @@ def setup_envs_commands(info, dir_path):
             {
                 "name": env_name,
                 "prefix": join("$INSTDIR", "envs", env_name),
-                "lockfile_txt": join(
+                "lockfile_txt": Path(
                     "$INSTDIR", "envs", env_name, "conda-meta", "initial-state.explicit.txt"
                 ),
-                "lockfile_txt_abspath": join(
+                "lockfile_txt_abspath": Path(
                     dir_path, "envs", env_name, "conda-meta", "initial-state.explicit.txt"
                 ),
                 "conda_meta": join("$INSTDIR", "envs", env_name, "conda-meta"),
-                "history_abspath": join(dir_path, "envs", env_name, "conda-meta", "history"),
+                "history_abspath": dir_path / "envs" / env_name / "conda-meta" / "history",
                 "final_channels": get_final_channels(channel_info),
                 "shortcuts": shortcuts_flags(env_info),
                 "register_envs": str(info.get("register_envs", True)).lower(),
@@ -175,7 +175,7 @@ def make_nsi(
         "iconfile": "@icon.ico",
         "headerimage": "@header.bmp",
         "welcomeimage": "@welcome.bmp",
-        "licensefile": abspath(info.get("license_file", join(NSIS_DIR, "placeholder_license.txt"))),
+        "licensefile": info.get("license_file", NSIS_DIR / "placeholder_license.txt").resolve(),
         "conda_history": "@" + join("conda-meta", "history"),
         "conda_exe": "@_conda.exe",
         "urls_file": "@" + join("pkgs", "urls"),
@@ -199,7 +199,7 @@ def make_nsi(
         value = info.get(key, "")
         if not value:
             continue
-        if isinstance(value, str) and not value.endswith(".nsi"):
+        if isinstance(value, (str, Path)) and not value.endswith(".nsi"):
             logger.warning(
                 "On Windows, %s must be an .nsi file; %s will be ignored.",
                 key,
@@ -208,7 +208,7 @@ def make_nsi(
         elif isinstance(value, list):
             valid_values = []
             for val in value:
-                if val.endswith(".nsi"):
+                if val.suffix == ".nsi":
                     valid_values.append(val)
                 else:
                     logger.warning(
@@ -220,7 +220,7 @@ def make_nsi(
 
     for key, value in variables.items():
         if isinstance(value, str) and value.startswith("@"):
-            value = join(dir_path, value[1:])
+            value = dir_path / value[1:]
         variables[key] = win_str_esc(value)
 
     # From now on, the items added to variables will NOT be escaped
@@ -276,7 +276,7 @@ def make_nsi(
         if variables["custom_conclusion"]
         else ""
     )
-    if isinstance(info.get("post_install_pages"), str):
+    if isinstance(info.get("post_install_pages"), (str, Path)):
         variables["POST_INSTALL_PAGES"] = [custom_nsi_insert_from_file(info["post_install_pages"])]
     else:
         variables["POST_INSTALL_PAGES"] = [
@@ -286,7 +286,7 @@ def make_nsi(
     variables["VIRTUAL_SPECS"] = " ".join([f'"{spec}"' for spec in info.get("virtual_specs", ())])
     # This is the same but without quotes so we can print it fine
     variables["VIRTUAL_SPECS_DEBUG"] = " ".join([spec for spec in info.get("virtual_specs", ())])
-    variables["LICENSEFILENAME"] = basename(info.get("license_file", "placeholder_license.txt"))
+    variables["LICENSEFILENAME"] = Path(info.get("license_file", "placeholder_license.txt")).name
     variables["NO_RCS_ARG"] = info.get("_ignore_condarcs_arg", "")
 
     data = render_template(read_nsi_tmpl(info), **variables)
@@ -299,16 +299,14 @@ def make_nsi(
                 break
         data = "\n".join(data_lines)
 
-    nsi_path = join(dir_path, "main.nsi")
-    with open(nsi_path, "w") as fo:
-        fo.write(data)
+    nsi_path = dir_path / "main.nsi"
+    nsi_path.write_text(data)
     # Uncomment to see the file for debugging
     # with open('main.nsi', 'w') as fo:
     #     fo.write(data)
     # Copy all the NSIS header files (*.nsh)
-    for fn in os.listdir(NSIS_DIR):
-        if fn.endswith(".nsh"):
-            shutil.copy(join(NSIS_DIR, fn), join(dir_path, fn))
+    for nsh in NSIS_DIR.glob("*.nsh"):
+        shutil.copy(nsh, dir_path / nsh.name)
 
     logger.info("Created %s file", nsi_path)
     return nsi_path
@@ -316,14 +314,15 @@ def make_nsi(
 
 def verify_nsis_install():
     logger.info("Checking for '%s'", MAKENSIS_EXE)
-    if not isfile(MAKENSIS_EXE):
+    if not MAKENSIS_EXE.is_file():
         sys.exit(
-            """
-Error: no file %s
-    please make sure nsis is installed:
-    > conda install nsis
-"""
-            % MAKENSIS_EXE
+            dedent(
+                f"""
+                Error: no file {MAKENSIS_EXE}
+                    please make sure nsis is installed:
+                    > conda install nsis
+                """
+            ).lstrip()
         )
     if sys.platform == "win32":
         out = check_output([MAKENSIS_EXE, "/VERSION"])
@@ -332,8 +331,8 @@ Error: no file %s
     out = out.decode("utf-8").strip()
     logger.info("NSIS version: %s", out)
     for dn in "x86-unicode", "x86-ansi", ".":
-        untgz_dll = abspath(join(sys.prefix, "NSIS", "Plugins", dn, "untgz.dll"))
-        if isfile(untgz_dll):
+        untgz_dll = Path(sys.prefix, "NSIS", "Plugins", dn, "untgz.dll").resolve()
+        if untgz_dll.is_file():
             break
     else:
         sys.exit("Error: no file untgz.dll")
@@ -350,30 +349,31 @@ def create(info, verbose=False):
         else:
             raise ValueError(f"Unknown signing tool: {signing_tool_name}")
         signing_tool.verify_signing_tool()
-    tmp_dir = tempfile.mkdtemp()
+
+    tmp_dir_base_path = info["_outpath"].parent / "tmp"
+    tmp_dir_base_path.mkdir(parents=True, exist_ok=True)
+    tmp_dir = Path(tempfile.mkdtemp(dir=tmp_dir_base_path))
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
     extra_conda_exe_files = copy_conda_exe(tmp_dir, "_conda.exe", info["_conda_exe"])
 
-    pre_dst = join(tmp_dir, "pre_install.bat")
+    pre_dst = tmp_dir / "pre_install.bat"
     pre_install_script = info.get("pre_install")
     if pre_install_script:
         shutil.copy(pre_install_script, pre_dst)
 
-    post_dst = join(tmp_dir, "post_install.bat")
+    post_dst = tmp_dir / "post_install.bat"
     try:
         shutil.copy(info["post_install"], post_dst)
     except KeyError:
-        with open(post_dst, "w") as fo:
-            fo.write(":: this is an empty post install .bat script\n")
+        post_dst.write_text(":: this is an empty post install .bat script\n")
 
-    preun_dst = join(tmp_dir, "pre_uninstall.bat")
+    preun_dst = tmp_dir / "pre_uninstall.bat"
     try:
         shutil.copy(info["pre_uninstall"], preun_dst)
     except KeyError:
-        with open(preun_dst, "w") as fo:
-            fo.write(":: this is an empty pre uninstall .bat script\n")
+        preun_dst.write_text(":: this is an empty pre uninstall .bat script\n")
 
     write_images(info, tmp_dir)
     nsi = make_nsi(

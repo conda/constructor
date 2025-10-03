@@ -56,7 +56,7 @@ def dump_hash(info, algorithm=None):
         invalid = algorithms.difference(set(hashlib.algorithms_available))
         raise ValueError(f"Invalid algorithm: {', '.join(invalid)}")
     BUFFER_SIZE = 65536
-    if isinstance(info["_outpath"], str):
+    if isinstance(info["_outpath"], (str, Path)):
         installers = [Path(info["_outpath"])]
     else:
         installers = [Path(outpath) for outpath in info["_outpath"]]
@@ -75,14 +75,13 @@ def dump_hash(info, algorithm=None):
     return ", ".join(outpaths)
 
 
-def dump_info(info):
-    outpath = os.path.join(info["_output_dir"], "info.json")
-    with open(outpath, "w") as f:
-        json.dump(info, f, indent=2, default=repr)
-    return os.path.abspath(outpath)
+def dump_info(info) -> Path:
+    outpath = (info["_output_dir"] / "info.json").resolve()
+    outpath.write_text(json.dumps(info, indent=2, default=repr))
+    return outpath
 
 
-def dump_packages_list(info, env="base"):
+def dump_packages_list(info, env="base") -> Path:
     if env == "base":
         dists = info["_dists"]
     elif env in info["_extra_envs_info"]:
@@ -90,11 +89,11 @@ def dump_packages_list(info, env="base"):
     else:
         raise ValueError(f"env='{env}' is not a valid env name.")
 
-    outpath = os.path.join(info["_output_dir"], f"pkg-list.{env}.txt")
+    outpath = (info["_output_dir"] / f"pkg-list.{env}.txt").resolve()
     with open(outpath, "w") as fo:
         fo.write(f"# {info['name']} {info['version']}, env={env}\n")
         fo.write("\n".join(dists))
-    return os.path.abspath(outpath)
+    return outpath
 
 
 def dump_lockfile(info, env="base"):
@@ -123,10 +122,9 @@ def dump_lockfile(info, env="base"):
         hash_value = record.get("md5")
         lines.append(url + (f"#{hash_value}" if hash_value else ""))
 
-    outpath = os.path.join(info["_output_dir"], f"lockfile.{env}.txt")
-    with open(outpath, "w") as f:
-        f.write("\n".join(lines))
-    return os.path.abspath(outpath)
+    outpath = (info["_output_dir"] / f"lockfile.{env}.txt").resolve()
+    outpath.write_text("\n".join(lines))
+    return outpath
 
 
 def dump_licenses(info, include_text=False, text_errors=None):
@@ -159,24 +157,24 @@ def dump_licenses(info, include_text=False, text_errors=None):
     licenses = defaultdict(dict)
     for pkg_record in info["_all_pkg_records"]:
         extracted_package_dir = pkg_record.extracted_package_dir
-        licenses_dir = os.path.join(extracted_package_dir, "info", "licenses")
+        licenses_dir = Path(extracted_package_dir, "info", "licenses")
         licenses[pkg_record.dist_str()]["type"] = pkg_record.license
         licenses[pkg_record.dist_str()]["files"] = license_files = []
-        if not os.path.isdir(licenses_dir):
+        if not licenses_dir.is_dir():
             continue
 
+        # FUTURE: pathlib.Path() has .walk() in Python 3.12+
         for directory, _, files in os.walk(licenses_dir):
             for filepath in files:
-                license_path = os.path.join(directory, filepath)
-                license_file = {"path": license_path, "text": None}
+                license_path = Path(directory, filepath)
+                license_file = {"path": str(license_path), "text": None}
                 if include_text:
-                    license_file["text"] = Path(license_path).read_text(errors=text_errors)
+                    license_file["text"] = license_path.read_text(errors=text_errors)
                 license_files.append(license_file)
 
-    outpath = os.path.join(info["_output_dir"], "licenses.json")
-    with open(outpath, "w") as f:
-        json.dump(licenses, f, indent=2, default=repr)
-    return os.path.abspath(outpath)
+    outpath = (info["_output_dir"] / "licenses.json").resolve()
+    outpath.write_text(json.dumps(licenses, indent=2, default=repr))
+    return outpath
 
 
 OUTPUT_HANDLERS = {
