@@ -1235,6 +1235,36 @@ FunctionEnd
 !insertmacro AbortRetryNSExecWaitMacro ""
 !insertmacro AbortRetryNSExecWaitMacro "un."
 
+{% if not base_needs_python %}
+!macro AddRemovePath add_remove un
+{%-     if initialize_conda == 'condabin' %}
+    push '"$INSTDIR\_conda.exe" constructor windows path --${add_remove}=user --prefix "$INSTDIR\condabin"'
+    push 'Failed to add condabin to PATH'
+    push 'WithLog'
+    call ${un}AbortRetryNSExecWait
+{%-     else %}
+    StrCpy $R0 "Library\mingw-w64\bin Library\usr\bin Library\bin Scripts"
+    StrCpy $R1 0
+    loop_add_remove_path:
+        # Add INSTDIR first
+        ${If} $R1 == 0
+            StrCpy $R2 "$INSTDIR"
+        ${Else}
+            ${WordFind} $R0 " " "E+$R1" $R2
+            IfErrors endloop_add_remove_path
+            StrCpy $R2 "$INSTDIR\$R2"
+        ${EndIf}
+        push '"$INSTDIR\_conda.exe" constructor windows path --${add_remove}=user --prefix "$R2"'
+        push 'Failed to add $R2 to PATH'
+        push 'WithLog'
+        call ${un}AbortRetryNSExecWait
+        IntOp $R1 $R1 + 1
+        goto loop_add_remove_path
+    endloop_add_remove_path:
+{% endif %}
+!macroend
+{% endif %}
+
 # Installer sections
 Section "Install"
     ${LogSet} on
@@ -1244,6 +1274,7 @@ Section "Install"
 
     !insertmacro FindCmdExe
 
+    SetOutPath "$INSTDIR"
 {% if base_needs_python %}
     SetOutPath "$INSTDIR\Lib"
     File "{{ NSIS_DIR }}\_nsis.py"
@@ -1452,7 +1483,7 @@ Section "Install"
 {% if initialize_conda %}
     ${If} ${FileExists} "$INSTDIR\.nonadmin"
         ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-{% if base_needs_python %}
+{%- if base_needs_python %}
 {%-     if initialize_conda == 'condabin' %}
             ${Print} "Adding $INSTDIR\condabin to PATH..."
             push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addcondabinpath'
@@ -1463,14 +1494,14 @@ Section "Install"
             push 'Failed to add {{ NAME }} to PATH'
             push 'WithLog'
             call AbortRetryNSExecWait
-{% else %}
+{%- else %}
 {%-     if initialize_conda == 'condabin' %}
             ${Print} "Adding $INSTDIR\condabin to PATH..."
 {%-     else %}
             ${Print} "Adding $INSTDIR\Scripts & Library\bin to PATH..."
 {%-     endif %}
-        !insertmacro AddRemovePath "prepend"
-{% endif %}
+            !insertmacro AddRemovePath "prepend" ""
+{%- endif %}
         ${EndIf}
     ${EndIf}
 {%- endif %}
@@ -1562,27 +1593,6 @@ SectionEnd
 !macroend
 {% endif %}
 
-{% if not base_needs_python %}
-!macro AddRemovePath add_remove
-{%-     if initialize_conda == 'condabin' %}
-    StrCpy $R0 "condabin"
-{%-     else %}
-    # The leading space is important to get `$INSTDIR`
-    StrCpy $R0 " Library\mingw-w64\bin Library\usr\bin Library\bin Scripts"
-{% endif %}
-    StrCpy $R1 1
-    loop_path:
-        ${WordFind} $R0 " " "+$R1" $R2
-        IfErrors endloop_path
-        push '"$INSTDIR\_conda.exe" constructor windows path --${add_remove}=user --prefix "$R2"'
-        push 'Failed to add $R2 to PATH'
-        push 'WithLog'
-        call AbortRetryNSExecWait
-        IntOp $R1 $R1 + 1
-        goto loop_path
-    endloop_path:
-{% endif %}
-
 Section "Uninstall"
     ${LogSet} on
     ${If} ${Silent}
@@ -1657,7 +1667,7 @@ Section "Uninstall"
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
 {% else %}
     ${If} ${FileExists} "$INSTDIR\.nonadmin"
-        !insertmacro AddRemovePath "remove"
+        !insertmacro AddRemovePath "remove" "un."
     ${EndIf}
 {% endif %}
 
@@ -1714,8 +1724,11 @@ Section "Uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
     ${EndIf}
-{% if base_needs_python %}
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+    ${If} ${FileExists} "$INSTDIR\.nonadmin"
+        StrCpy $R0 "user"
+    ${Else}
+        StrCpy $R0 "system"
+    ${EndIf}
 {%- if has_conda %}
     ${If} ${FileExists} "$INSTDIR\.nonadmin"
         StrCpy $R0 "user"
@@ -1731,17 +1744,10 @@ Section "Uninstall"
     push 'WithLog'
     call un.AbortRetryNSExecWait
 {%- endif %}
+{% if base_needs_python %}
+    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
 {% else %}
-    ${If} ${FileExists} "$INSTDIR\.nonadmin"
-        !insertmacro AddRemovePath "remove"
-        StrCpy $R0 "user"
-    ${Else}
-        StrCpy $R0 "system"
-    ${EndIf}
-    push '"$INSTDIR\_conda.exe" constructor windows autorun --remove=$0 --prefix "$INSTDIR"'
-    push 'Failed to clean AutoRun entry'
-    push 'WithLog'
-    call AbortRetryNSExecWait
+    !insertmacro AddRemovePath "remove" "un."
 {% endif %}
 
     ${Print} "Removing files and folders..."
