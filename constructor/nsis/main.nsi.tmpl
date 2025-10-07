@@ -1673,11 +1673,16 @@ Section "Uninstall"
     ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
 {%- if has_conda %}
+    ${If} ${FileExists} "$INSTDIR\.nonadmin"
+        StrCpy $R0 "user"
+    ${Else}
+        StrCpy $R0 "system"
+    ${EndIf}
     # When running conda.bat directly, there is a non-fatal error
     # that DOSKEY (called by conda_hook.bat) is not a valid command.
     # While the operation still succeeds, this error is confusing.
     # Calling via cmd.exe fixes that.
-    push '"$CMD_EXE" /D /C "$INSTDIR\condabin\conda.bat" init cmd.exe --reverse'
+    push '"$CMD_EXE" /D /C "$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0'
     push 'Failed to clean AutoRun'
     push 'WithLog'
     call un.AbortRetryNSExecWait
