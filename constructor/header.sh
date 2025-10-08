@@ -10,10 +10,10 @@
 set -eu
 
 {%- if osx %}
-unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH
+unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH DYLD_INSERT_LIBRARIES DYLD_FRAMEWORK_PATH
 {%- else %}
 export OLD_LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
-unset LD_LIBRARY_PATH
+unset LD_LIBRARY_PATH LD_PRELOAD LD_AUDIT
 {%- endif %}
 
 if ! echo "$0" | grep '\.sh$' > /dev/null; then
