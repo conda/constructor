@@ -23,13 +23,25 @@ test "${CUSTOM_VARIABLE_2}" = '$ECOND-CUSTOM_'\''STRING'\'' WITH SPACES AND @*! 
 
 test "${INSTALLER_UNATTENDED}" = "1"
 
+# Print to stderr if any of the input variables are set, and returns 1 - otherwise 0.
+# Note that variables that are set but are empty strings will also trigger an error.
+# All input variables are checked before exit.
+verify_var_is_unset() {
+    local failed=0
+    for var in "$@"; do
+        if [[ -n "${!var+x}" ]]; then
+            echo "Error: environment variable $var must be unset." >&2
+            failed=1
+        fi
+    done
+    return $failed
+}
+
 if [[ $(uname -s) == Linux ]]; then
-    if [[ ${INSTALLER_PLAT} != linux-* ]]; then
-        exit 1
-    fi
+    [[ ${INSTALLER_PLAT} != linux-* ]] || exit 1
+    verify_var_is_unset LD_LIBRARY_PATH LD_PRELOAD LD_AUDIT || exit 1
 else  # macOS
-    if [[ ${INSTALLER_PLAT} != osx-* ]]; then
-        exit 1
-    fi
+    [[ ${INSTALLER_PLAT} != osx-* ]] || exit 1
+    verify_var_is_unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH DYLD_INSERT_LIBRARIES DYLD_FRAMEWORK_PATH  || exit 1
 fi
 test -f "${PREFIX}/pre_install_sentinel.txt"
