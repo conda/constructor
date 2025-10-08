@@ -8,14 +8,8 @@
 # be tested in an installation.
 
 import os
-import re
 import sys
-from os.path import exists, isfile, join
-
-try:
-    import winreg
-except ImportError:
-    import _winreg as winreg
+from os.path import exists, join
 
 ROOT_PREFIX = sys.prefix
 
@@ -55,96 +49,6 @@ else:
 
     def err(x):
         OutputDebugString('_nsis.py: Error: ' + x)
-
-
-class NSISReg:
-    def __init__(self, reg_path):
-        self.reg_path = reg_path
-        if exists(join(ROOT_PREFIX, '.nonadmin')):
-            self.main_key = winreg.HKEY_CURRENT_USER
-        else:
-            self.main_key = winreg.HKEY_LOCAL_MACHINE
-
-    def set(self, name, value):
-        try:
-            winreg.CreateKey(self.main_key, self.reg_path)
-            registry_key = winreg.OpenKey(self.main_key, self.reg_path, 0,
-                                          winreg.KEY_WRITE)
-            winreg.SetValueEx(registry_key, name, 0, winreg.REG_SZ, value)
-            winreg.CloseKey(registry_key)
-            return True
-        except WindowsError:
-            return False
-
-    def get(self, name):
-        try:
-            registry_key = winreg.OpenKey(self.main_key, self.reg_path, 0,
-                                          winreg.KEY_READ)
-            value, regtype = winreg.QueryValueEx(registry_key, name)
-            winreg.CloseKey(registry_key)
-            return value
-        except WindowsError:
-            return None
-
-
-def mk_dirs():
-    envs_dir = join(ROOT_PREFIX, 'envs')
-    if not exists(envs_dir):
-        os.mkdir(envs_dir)
-
-
-def run_post_install():
-    """
-    call the post install script, if the file exists
-    """
-    path = join(ROOT_PREFIX, 'pkgs', 'post_install.bat')
-    if not isfile(path):
-        return
-    env = os.environ.copy()
-    env.setdefault('PREFIX', str(ROOT_PREFIX))
-    cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        err("Error: running %s failed.  cmd.exe could not be found.  "
-            "Looked in SystemRoot and windir env vars.\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
-    args = [cmd_exe, '/d', '/c', path]
-    import subprocess
-    try:
-        subprocess.check_call(args, env=env)
-    except subprocess.CalledProcessError:
-        err("Error: running %s failed\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
-
-
-def run_pre_uninstall():
-    """
-    call the pre uninstall script, if the file exists
-    """
-    path = join(ROOT_PREFIX, 'pre_uninstall.bat')
-    if not isfile(path):
-        return
-    env = os.environ.copy()
-    env.setdefault('PREFIX', str(ROOT_PREFIX))
-    cmd_exe = os.path.join(os.environ['SystemRoot'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        cmd_exe = os.path.join(os.environ['windir'], 'System32', 'cmd.exe')
-    if not os.path.isfile(cmd_exe):
-        err("Error: running %s failed.  cmd.exe could not be found.  "
-            "Looked in SystemRoot and windir env vars.\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
-    args = [cmd_exe, '/d', '/c', path]
-    import subprocess
-    try:
-        subprocess.check_call(args, env=env)
-    except subprocess.CalledProcessError:
-        err("Error: running %s failed\n" % path)
-        if os.environ.get("NSIS_SCRIPTS_RAISE_ERRORS"):
-            sys.exit(1)
 
 
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
@@ -217,29 +121,9 @@ def add_condabin_to_path():
     broadcast_environment_settings_change()
 
 
-def rm_regkeys():
-    cmdproc_reg_entry = NSISReg(r'Software\Microsoft\Command Processor')
-    cmdproc_autorun_val = cmdproc_reg_entry.get('AutoRun')
-    conda_hook_regex_pat = r'((\s+&\s+)?(if +exist)?(\s*?\"[^\"]*?conda[-_]hook\.bat\"))'
-    if join(ROOT_PREFIX, 'condabin') in (cmdproc_autorun_val or ''):
-        cmdproc_autorun_newval = re.sub(conda_hook_regex_pat, '',
-                                        cmdproc_autorun_val)
-        try:
-            cmdproc_reg_entry.set('AutoRun', cmdproc_autorun_newval)
-        except Exception:
-            # Hey, at least we made an attempt to cleanup
-            pass
-
-
 def main():
     cmd = sys.argv[1].strip()
-    if cmd == 'post_install':
-        run_post_install()
-    elif cmd == 'rmreg':
-        rm_regkeys()
-    elif cmd == 'mkdirs':
-        mk_dirs()
-    elif cmd == 'addpath':
+    if cmd == 'addpath':
         # These checks are probably overkill, but could be useful
         # if I forget to update something that uses this code.
         if len(sys.argv) > 2:
@@ -257,8 +141,6 @@ def main():
         add_condabin_to_path()
     elif cmd == 'rmpath':
         remove_from_path()
-    elif cmd == 'pre_uninstall':
-        run_pre_uninstall()
     else:
         sys.exit("ERROR: did not expect %r" % cmd)
 
