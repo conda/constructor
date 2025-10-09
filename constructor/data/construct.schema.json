@@ -224,6 +224,7 @@
       "enum": [
         "all",
         "exe",
+        "msi",
         "pkg",
         "sh"
       ],
