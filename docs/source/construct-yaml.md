@@ -235,6 +235,7 @@ The type of the installer being created. Possible values are:
 - `sh`: shell-based installer for Linux or macOS
 - `pkg`: macOS GUI installer built with Apple's `pkgbuild`
 - `exe`: Windows GUI installer built with NSIS
+- `msi`: Windows GUI installer built with Briefcase and WiX
 
 The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
 value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
@@ -317,8 +318,11 @@ Name of the company/entity responsible for the installer.
 ### `reverse_domain_identifier`
 
 Unique identifier for this package, formatted with reverse domain notation. This is
-used internally in the PKG installers to handle future updates and others. If not
-provided, it will default to `io.continuum`. (MacOS only)
+used internally in the MSI and PKG installers to handle future updates and others. If
+not provided, it will default to:
+
+* In MSI installers: `io.continuum` followed by an ID derived from the `name`.
+* In PKG installers: `io.continuum`.
 
 ### `uninstall_name`
 

@@ -21,6 +21,7 @@ from .imaging import write_images
 from .jinja import render_template
 from .signing import CodeSign
 from .utils import (
+    DEFAULT_REVERSE_DOMAIN_ID,
     add_condarc,
     approx_size_kb,
     copy_conda_exe,
@@ -390,7 +391,7 @@ def fresh_dir(dir_path):
 def pkgbuild(name, identifier=None, version=None, install_location=None):
     "see `man pkgbuild` for the meaning of optional arguments"
     if identifier is None:
-        identifier = "io.continuum"
+        identifier = DEFAULT_REVERSE_DOMAIN_ID
     args = [
         "pkgbuild",
         "--root",

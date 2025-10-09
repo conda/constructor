@@ -16,7 +16,8 @@ dependencies = [
     "ruamel.yaml >=0.11.14,<0.19",
     "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
     "jinja2",
-    "jsonschema >=4"
+    "jsonschema >=4",
+    "tomli-w >=1.2.0",
 ]
 
 [project.optional-dependencies]
