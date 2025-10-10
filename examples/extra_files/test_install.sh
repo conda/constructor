@@ -7,4 +7,9 @@ test -f "$PREFIX/something2.txt"
 # Ideally we should test the .pkg and .sh installers separately since
 # the current behavior for .sh-installers is to include but also rename the license file to LICENSE.txt,
 # but for macOS the name of the provided license file remains unchanged.
-test -f "$PREFIX/LICENSE.txt"
+
+if [ "$INSTALLER_TYPE" = "SH" ]; then
+    test -f "$PREFIX/LICENSE.txt"
+else # .pkg
+    test -f "$PREFIX/TEST_LICENSE.txt"
+fi
