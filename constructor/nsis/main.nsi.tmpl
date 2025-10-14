@@ -132,6 +132,22 @@ var /global InstMode # 0 = Just Me, 1 = All Users.
 !define JUST_ME 0
 !define ALL_USERS 1
 
+var /global CMD_EXE
+
+!macro FindCmdExe
+    # Find cmd.exe
+    ReadEnvStr $R0 SystemRoot
+    ReadEnvStr $R1 windir
+    ${If} ${FileExists} "$R0"
+        StrCpy $CMD_EXE "$R0\System32\cmd.exe"
+    ${ElseIf} ${FileExists} "$R1"
+        StrCpy $CMD_EXE "$R1\System32\cmd.exe"
+    ${Else}
+        # Cross our fingers CMD is in PATH
+        StrCpy $CMD_EXE "cmd.exe"
+    ${EndIf}
+!macroend
+
 # Include this one after our defines
 !include "OptionsDialog.nsh"
 
@@ -1226,6 +1242,8 @@ Section "Install"
         call OnDirectoryLeave
     ${EndIf}
 
+    !insertmacro FindCmdExe
+
     SetOutPath "$INSTDIR\Lib"
     File "{{ NSIS_DIR }}\_nsis.py"
     File "{{ NSIS_DIR }}\_system_path.py"
@@ -1353,17 +1371,7 @@ Section "Install"
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
         ${Print} "Running pre_install scripts..."
-        ReadEnvStr $5 SystemRoot
-        ReadEnvStr $6 windir
-        # This 'FileExists' also returns True for directories
-        ${If} ${FileExists} "$5"
-            push '"$5\System32\cmd.exe" /D /C "$INSTDIR\pkgs\pre_install.bat"'
-        ${ElseIf} ${FileExists} "$6"
-            push '"$6\System32\cmd.exe" /D /C "$INSTDIR\pkgs\pre_install.bat"'
-        ${Else}
-            # Cross our fingers CMD is in PATH
-            push 'cmd.exe /D /C "$INSTDIR\pkgs\pre_install.bat"'
-        ${EndIf}
+        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_install.bat"'
         push "Failed to run pre_install"
         push 'WithLog'
         call AbortRetryNSExecWait
@@ -1415,19 +1423,20 @@ Section "Install"
     AddSize {{ SIZE }}
 
 {%- if has_conda %}
-    ${Print} "Initializing conda directories..."
-    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" mkdirs'
-    push 'Failed to initialize conda directories'
-    push 'WithLog'
-    call AbortRetryNSExecWait
+    StrCpy $R0 "$INSTDIR\envs"
+    ${IfNot} ${FileExists} "$R0"
+        CreateDirectory "$R0"
+    ${EndIf}
 {%- endif %}
 
-    ${If} $Ana_PostInstall_State = ${BST_CHECKED}
-        ${Print} "Running post install..."
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" post_install'
-        push 'Failed to run post install script'
-        push 'WithLog'
-        call AbortRetryNSExecWait
+    ${If} ${FileExists} "$INSTDIR\pkgs\post_install.bat"
+        ${If} $Ana_PostInstall_State = ${BST_CHECKED}
+            ${Print} "Running post install..."
+            push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\post_install.bat"'
+            push "Failed to run post_install"
+            push 'WithLog'
+            call AbortRetryNSExecWait
+        ${EndIf}
     ${EndIf}
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
@@ -1544,6 +1553,8 @@ Section "Uninstall"
         !insertmacro un.ParseCommandLineArgs
     ${EndIf}
 
+    !insertmacro FindCmdExe
+
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 
     # ensure that MSVC runtime DLLs are on PATH during uninstallation
@@ -1599,9 +1610,14 @@ Section "Uninstall"
     ${EndIf}
 
 {%- if uninstall_with_conda_exe %}
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+        ${Print} "Running pre_uninstall scripts..."
+        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push "Failed to run pre_uninstall"
+        push 'WithLog'
+        call un.AbortRetryNSExecWait
+    ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
 
     # Parse arguments
     StrCpy $R0 ""
@@ -1649,9 +1665,29 @@ Section "Uninstall"
     call un.AbortRetryNSExecWait
     SetDetailsPrint both
 {%- endfor %}
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "pre_uninstall"
+    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+        ${Print} "Running pre_uninstall scripts..."
+        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        push "Failed to run pre_uninstall"
+        push 'WithLog'
+        call un.AbortRetryNSExecWait
+    ${EndIf}
     !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmreg"
+{%- if has_conda %}
+    ${If} ${FileExists} "$INSTDIR\.nonadmin"
+        StrCpy $R0 "user"
+    ${Else}
+        StrCpy $R0 "system"
+    ${EndIf}
+    # When running conda.bat directly, there is a non-fatal error
+    # that DOSKEY (called by conda_hook.bat) is not a valid command.
+    # While the operation still succeeds, this error is confusing.
+    # Calling via cmd.exe fixes that.
+    push '"$CMD_EXE" /D /C "$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0'
+    push 'Failed to clean AutoRun'
+    push 'WithLog'
+    call un.AbortRetryNSExecWait
+{%- endif %}
 
     ${Print} "Removing files and folders..."
     nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
