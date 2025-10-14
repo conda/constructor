@@ -38,10 +38,10 @@ verify_var_is_unset() {
 }
 
 if [[ $(uname -s) == Linux ]]; then
-    [[ ${INSTALLER_PLAT} != linux-* ]] || exit 1
+    [[ ${INSTALLER_PLAT} != linux-* ]] && exit 1
     verify_var_is_unset LD_LIBRARY_PATH LD_PRELOAD LD_AUDIT || exit 1
 else  # macOS
-    [[ ${INSTALLER_PLAT} != osx-* ]] || exit 1
+    [[ ${INSTALLER_PLAT} != osx-* ]] && exit 1
     verify_var_is_unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH DYLD_INSERT_LIBRARIES DYLD_FRAMEWORK_PATH  || exit 1
 fi
 test -f "${PREFIX}/pre_install_sentinel.txt"
