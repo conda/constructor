@@ -328,11 +328,13 @@ def copy_extra_files(
     Returns:
         list[os.PathLike]: List of normalized paths of copied locations.
     """
+
     def check_file_exists(file_path):
         fpath = Path(file_path)
         if not fpath.exists():
             raise FileNotFoundError(f"File {file_path} does not exist.")
         return fpath
+
     if not extra_files:
         return []
     copied = []
