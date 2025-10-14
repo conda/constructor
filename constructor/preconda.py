@@ -328,18 +328,23 @@ def copy_extra_files(
     Returns:
         list[os.PathLike]: List of normalized paths of copied locations.
     """
+    def check_file_exists(file_path):
+        fpath = Path(file_path)
+        if not fpath.exists():
+            raise FileNotFoundError(f"File {file_path} does not exist.")
+        return fpath
     if not extra_files:
         return []
     copied = []
     for path in extra_files:
         if isinstance(path, str):
-            copied.append(shutil.copy(path, workdir))
+            orig_path = check_file_exists(path)
+            copied.append(shutil.copy(orig_path, workdir))
         elif isinstance(path, dict):
             assert len(path) == 1
             origin, destination = next(iter(path.items()))
-            orig_path = Path(origin)
-            if not orig_path.exists():
-                raise FileNotFoundError(f"File {origin} does not exist.")
+
+            orig_path = check_file_exists(origin)
             dest_path = Path(workdir) / destination
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             copied.append(shutil.copy(orig_path, dest_path))
