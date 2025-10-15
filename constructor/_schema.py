@@ -610,7 +610,7 @@ class ConstructorConfiguration(BaseModel):
     Internally, this is passed to `pkgbuild --install-location`.
     macOS only.
     """
-    pkg_domains: dict[PkgDomains, bool] = {"enable_anywhere": True, "enable_currentUserHome": False}
+    pkg_domains: dict[PkgDomains, bool] = {"enable_anywhere": True, "enable_currentUserHome": True}
     """
     The domains the package can be installed into. For a detailed explanation, see:
     https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
