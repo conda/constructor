@@ -310,7 +310,7 @@ def _solve_precs(
     if python_prec:
         precs.remove(python_prec)
         precs.insert(0, python_prec)
-    elif not extra_env:
+    elif not extra_env and base_needs_python:
         # the base environment must always have python; this has been addressed
         # at the beginning of _main() but we can still get here through the
         # environment_file option
