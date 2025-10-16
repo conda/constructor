@@ -16,10 +16,10 @@ import shutil
 import stat
 import tarfile
 import tempfile
-from pathlib import Path
 from contextlib import nullcontext
 from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
+from pathlib import Path
 
 from .construct import ns_platform
 from .jinja import render_template
