@@ -364,6 +364,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     variables["script_env_variables"] = info.get("script_env_variables", {})
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
+    variables["conda_exe_name"] = Path(info["_conda_exe"]).name
 
     data = render_template(data, **variables)
 
