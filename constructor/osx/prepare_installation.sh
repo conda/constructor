@@ -22,13 +22,18 @@ PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-CONDA_EXEC="$PREFIX/_conda"
+CONDA_EXEC="$PREFIX/{{ conda_exe_name }}"
 # Installers should ignore pre-existing configuration files.
 unset CONDARC
 unset MAMBARC
 # /COMMON UTILS
 
 chmod +x "$CONDA_EXEC"
+
+{%- if conda_exe_name != "_conda" %}
+# In case there are packages that depend on _conda
+ln -s $CONDA_EXEC $PREFIX/_conda
+{%- endif %}
 
 # Create a blank history file so conda thinks this is an existing env
 mkdir -p "$PREFIX/conda-meta"

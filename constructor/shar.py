@@ -19,6 +19,7 @@ import tempfile
 from contextlib import nullcontext
 from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
+from pathlib import Path
 
 from .construct import ns_platform
 from .jinja import render_template
@@ -110,6 +111,7 @@ def get_header(conda_exec, tarball, info):
     virtual_specs = parse_virtual_specs(info)
     min_osx_version = virtual_specs.get("__osx", {}).get("min") or ""
     variables["min_osx_version"] = min_osx_version
+    variables["conda_exe_name"] = Path(info["_conda_exe"]).name
     min_glibc_version = virtual_specs.get("__glibc", {}).get("min") or ""
     variables["min_glibc_version"] = min_glibc_version
 
