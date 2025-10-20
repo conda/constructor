@@ -664,7 +664,7 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     cmd = ["pkgutil", "--expand-full", installer, expanded_path]
     _execute(cmd)
     components = [
-        Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", "_conda"),
+        Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", "conda.exe"),
         Path(expanded_path, "Plugins", "ExtraPage.bundle"),
     ]
     validated_signatures = []
