@@ -77,10 +77,12 @@ var /global StdOutHandleSet
 !define ARCH {{ arch }}
 !define PLATFORM {{ installer_platform }}
 !define CONSTRUCTOR_VERSION {{ constructor_version }}
+{%- if has_python %}
 !define PY_VER {{ pyver_components[:2] | join(".") }}
 !define PYVERSION_JUSTDIGITS {{ pyver_components | join("") }}
 !define PYVERSION {{ pyver_components | join(".") }}
 !define PYVERSION_MAJOR {{ pyver_components[0] }}
+{%- endif %}
 !define DEFAULT_PREFIX {{ default_prefix }}
 !define DEFAULT_PREFIX_DOMAIN_USER {{ default_prefix_domain_user }}
 !define DEFAULT_PREFIX_ALL_USERS {{ default_prefix_all_users }}
@@ -298,7 +300,9 @@ FunctionEnd
                 /InstallationType=AllUsers [default: JustMe]$\n\
                 /AddToPath=[0|1] [default: 0]$\n\
                 /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
+{%- if has_python %}
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
+{%- endif %}
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
                 /NoScripts=[0|1] [default: 0]$\n\
                 /NoShortcuts=[0|1] [default: 0]$\n\
@@ -317,8 +321,13 @@ FunctionEnd
                 Install for all users, but don't add to PATH env var:$\n\
                     > $EXEFILE /InstallationType=AllUsers$\n\
                 $\n\
+{%- if has_python %}
                 Install for just me, add to PATH and register as system Python:$\n\
                     > $EXEFILE /RegisterPython=1 /AddToPath=1$\n\
+{%- else %}
+                Install for just me and add to PATH:$\n\
+                    > $EXEFILE /AddToPath=1$\n\
+{%- endif %}
                 $\n\
                 Install for just me, with no registry modification (for CI):$\n\
                     > $EXEFILE /NoRegistry=1$\n\
@@ -343,6 +352,7 @@ FunctionEnd
     ${EndIf}
 
     ClearErrors
+{%- if has_python %}
     ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
     ${IfNot} ${Errors}
         ${If} $ARGV_RegisterPython = "1"
@@ -351,6 +361,7 @@ FunctionEnd
             StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
+{%- endif %}
 
     ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
@@ -1136,6 +1147,7 @@ Function OnDirectoryLeave
       UnicodePathTest::UnicodePathTest $INSTDIR
       Pop $R1
 
+{%- if has_python %}
       # Python 3 can be installed in a CP_ACP path until MKL is Unicode capable.
       # (mkl_rt.dll calls LoadLibraryA() to load mkl_intel_thread.dll)
       # Python 2 can only be installed to an ASCII path.
@@ -1153,6 +1165,7 @@ Function OnDirectoryLeave
           abort
 
       valid_path:
+{%- endif %}
 
     Push $R1
     ${IsWritable} $INSTDIR $R1
@@ -1506,6 +1519,7 @@ Section "Install"
     ${EndIf}
 {%- endif %}
 
+{%- if has_python %}
     # Create registry entries saying this is the system Python
     # (for this version)
     !define PYREG "Software\Python\PythonCore\${PY_VER}"
@@ -1523,6 +1537,7 @@ Section "Install"
         WriteRegStr SHCTX "${PYREG}\PythonPath" \
             "" "$INSTDIR\Lib;$INSTDIR\DLLs"
     ${EndIf}
+{%- endif %}
 
     ${If} $ARGV_NoRegistry == "0"
         # Registry uninstall info
