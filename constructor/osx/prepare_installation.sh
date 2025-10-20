@@ -30,9 +30,9 @@ unset MAMBARC
 
 chmod +x "$CONDA_EXEC"
 
-{%- if conda_exe_name != "_conda" %}
+{%- if conda_exe_name != "_conda" or conda_exe_name != conda.exe %}
 # In case there are packages that depend on _conda
-ln -s $CONDA_EXEC $PREFIX/_conda
+ln -s "$CONDA_EXEC" "$PREFIX"/_conda
 {%- endif %}
 
 # Create a blank history file so conda thinks this is an existing env
