@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* Resolved an issue when specifying `--conda-exe` with `micromamba` or `mamba`. The conda executable now maintain its original filename.
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
