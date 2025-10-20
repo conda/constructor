@@ -557,7 +557,7 @@ def create(info, verbose=False):
 
     # 1. Prepare installation
     # The 'prepare_installation' package contains the prepopulated package cache, the modified
-    # conda-meta metadata staged into pkgs/conda-meta, _conda (conda-standalone),
+    # conda-meta metadata staged into pkgs/conda-meta, _conda (conda-standalone, [--conda-exe]),
     # Optionally, extra files and the user-provided scripts.
     # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
@@ -590,7 +590,11 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    copy_conda_exe(prefix, "_conda", info["_conda_exe"])
+    # Note also that this is handled differently between .sh-installers (via header.sh)
+    # and .pkg-installers (via prepare_installation.sh)
+    # since because of differences in unpacking the bootstrapper
+    exe_name = Path(info["_conda_exe"]).name
+    copy_conda_exe(prefix, exe_name, info["_conda_exe"])
 
     # Sign conda-standalone so it can pass notarization
     codesigner = None
@@ -605,7 +609,7 @@ def create(info, verbose=False):
             "com.apple.security.cs.disable-library-validation": True,
             "com.apple.security.cs.allow-dyld-environment-variables": True,
         }
-        codesigner.sign_bundle(join(prefix, "_conda"), entitlements=entitlements)
+        codesigner.sign_bundle(join(prefix, exe_name), entitlements=entitlements)
 
     # This script checks to see if the install location already exists and/or contains spaces
     # Not to be confused with the user-provided pre_install!
