@@ -565,6 +565,10 @@ def create(info, verbose=False):
     os.makedirs(pkgs_dir)
     preconda.write_files(info, prefix)
     preconda.copy_extra_files(info.get("extra_files", []), prefix)
+
+    # Add potential license file
+    if license_file := info.get("license_file"):
+        preconda.copy_extra_files([license_file], prefix)
     # These are the user-provided scripts, maybe patched to have a shebang
     # They will be called by a wrapping script added later, if present
     if info.get("pre_install"):
