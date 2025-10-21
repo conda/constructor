@@ -329,7 +329,7 @@ def copy_extra_files(
         list[os.PathLike]: List of normalized paths of copied locations.
     """
 
-    def check_file_exists(file_path):
+    def validate_file_path(file_path: str) -> Path:
         fpath = Path(file_path)
         if not fpath.exists():
             raise FileNotFoundError(f"File {file_path} does not exist.")
@@ -340,13 +340,12 @@ def copy_extra_files(
     copied = []
     for path in extra_files:
         if isinstance(path, str):
-            orig_path = check_file_exists(path)
+            orig_path = validate_file_path(path)
             copied.append(shutil.copy(orig_path, workdir))
         elif isinstance(path, dict):
             assert len(path) == 1
             origin, destination = next(iter(path.items()))
-
-            orig_path = check_file_exists(origin)
+            orig_path = validate_file_path(origin)
             dest_path = Path(workdir) / destination
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             copied.append(shutil.copy(orig_path, dest_path))

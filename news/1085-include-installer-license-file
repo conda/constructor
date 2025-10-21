@@ -1,6 +1,6 @@
 ### Enhancements
 
-* The license file is now also included in the installation directory for macOS package (.pkg) installers.
+* Include the license file in PKG installers. (#1074 via #1085)
 
 ### Bug fixes
 

@@ -187,13 +187,10 @@ def create(info, verbose=False):
 
     tarball = join(tmp_dir, "pkgs", "tmp.tar")
     t = tarfile.open(tarball, "w")
-
     t.add(preconda_tarball, basename(preconda_tarball))
     t.add(postconda_tarball, basename(postconda_tarball))
-
     if "license_file" in info:
         t.add(info["license_file"], "LICENSE.txt")
-
     for dist in all_dists:
         fn = filename_dist(dist)
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
