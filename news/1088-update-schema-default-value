@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* The default value for `enable_currentUserHome` has been changed from `false` to `true` to properly reflect the documentation. This change only affects `.pkg` installers.
+* PKG: Restore the default value of `enable_currentUserHome` to the old default value (`true`). (#1070 via #1088)
 
 ### Deprecations
 
@@ -12,7 +12,7 @@
 
 ### Docs
 
-* The displayed text during installation of `.pkg` installers has been updated to clarify affected shells with default installer behavior.
+* PKG: Clarify that the profile of all available shells will be modified by default. (#1070 via #1088)
 
 ### Other
 
