@@ -1,6 +1,6 @@
 ### Enhancements
 
-* The shell-based installers now sanitize additional environment variables for consistency with security best practices.
+* The shell-based installers now sanitize additional environment variables for consistency with security best practices. (#1082)
 
 ### Bug fixes
 
