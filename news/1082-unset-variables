@@ -1,6 +1,6 @@
 ### Enhancements
 
-* The shell-based installers now sanitize additional environment variables for consistency with security best practices. (#1082)
+* Unset additional environment variables in shell-based installers to avoid accidental loading of external libraries. (#1082)
 
 ### Bug fixes
 
