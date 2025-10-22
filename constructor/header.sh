@@ -496,7 +496,7 @@ CONDA_EXEC="$PREFIX/{{ conda_exe_name }}"
 extract_range "${boundary0}" "${boundary1}" > "$CONDA_EXEC"
 chmod +x "$CONDA_EXEC"
 
-{%- if conda_exe_name != "_conda" or conda_exe_name != "conda.exe" %}
+{%- if conda_exe_name != "_conda" %}
 # In case there are packages that depend on _conda
 ln -s "$CONDA_EXEC" "$PREFIX"/_conda
 {%- endif %}

@@ -21,7 +21,12 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
-from constructor.utils import StandaloneExe, check_version, identify_conda_exe
+from constructor.utils import (
+    StandaloneExe,
+    check_version,
+    format_conda_exe_name,
+    identify_conda_exe,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
@@ -663,7 +668,7 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     # including binary archives like the PlugIns file
     cmd = ["pkgutil", "--expand-full", installer, expanded_path]
     _execute(cmd)
-    conda_exe_name = "micromamba" if _is_micromamba(CONSTRUCTOR_CONDA_EXE) else "conda.exe"
+    conda_exe_name = format_conda_exe_name(CONSTRUCTOR_CONDA_EXE)
     components = [
         Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", conda_exe_name),
         Path(expanded_path, "Plugins", "ExtraPage.bundle"),
