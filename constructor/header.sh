@@ -21,49 +21,53 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
 fi
 
 {%- if osx and min_osx_version %}
-min_osx_version="{{ min_osx_version }}"
-system_osx_version="${CONDA_OVERRIDE_OSX:-$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)}"
-# shellcheck disable=SC2183 disable=SC2046
-int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))"
-# shellcheck disable=SC2183 disable=SC2046
-int_system_osx_version="$(printf "%02d%02d%02d" $(echo "$system_osx_version" | sed 's/\./ /g'))"
-if [ "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
-    echo "Installer requires macOS >=${min_osx_version}, but system has ${system_osx_version}."
-    exit 1
+if [ "$(uname)" = "Darwin" ]; then
+    min_osx_version="{{ min_osx_version }}"
+    system_osx_version="${CONDA_OVERRIDE_OSX:-$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)}"
+    # shellcheck disable=SC2183 disable=SC2046
+    int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))"
+    # shellcheck disable=SC2183 disable=SC2046
+    int_system_osx_version="$(printf "%02d%02d%02d" $(echo "$system_osx_version" | sed 's/\./ /g'))"
+    if [ "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
+        echo "Installer requires macOS >=${min_osx_version}, but system has ${system_osx_version}."
+        exit 1
+    fi
 fi
 {%- elif linux and min_glibc_version %}
-min_glibc_version="{{ min_glibc_version }}"
-system_glibc_version="${CONDA_OVERRIDE_GLIBC:-}"
-if [ "${system_glibc_version}" = "" ]; then
-    case "$(ldd --version 2>&1)" in
-        *musl*)
-            # musl ldd will report musl version; call libc.so directly
-            # see https://github.com/conda/constructor/issues/850#issuecomment-2343756454
-            libc_so="$(find /lib /usr/local/lib /usr/lib -name 'libc.so.*' -print -quit 2>/dev/null)"
-            if [ -z "${libc_so}" ]; then
-                libc_so="$(strings /etc/ld.so.cache | grep '^/.*/libc\.so.*' | head -1)"
-            fi
-            if [ -z "${libc_so}" ]; then
-                echo "Warning: Couldn't find libc.so; won't be able to determine GLIBC version!" >&2
-                echo "Override by setting CONDA_OVERRIDE_GLIBC" >&2
-                system_glibc_version="0.0"
-            else
-                system_glibc_version=$("${libc_so}" --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
-            fi
-        ;;
-        *)
-            # ldd reports glibc in the last field of the first line
-            system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
-        ;;
-    esac
-fi
-# shellcheck disable=SC2183 disable=SC2046
-int_min_glibc_version="$(printf "%02d%02d%02d" $(echo "$min_glibc_version" | sed 's/\./ /g'))"
-# shellcheck disable=SC2183 disable=SC2046
-int_system_glibc_version="$(printf "%02d%02d%02d" $(echo "$system_glibc_version" | sed 's/\./ /g'))"
-if [ "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
-    echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
-    exit 1
+if [ "$(uname)" = "Linux" ]; then
+    min_glibc_version="{{ min_glibc_version }}"
+    system_glibc_version="${CONDA_OVERRIDE_GLIBC:-}"
+    if [ "${system_glibc_version}" = "" ]; then
+        case "$(ldd --version 2>&1)" in
+            *musl*)
+                # musl ldd will report musl version; call libc.so directly
+                # see https://github.com/conda/constructor/issues/850#issuecomment-2343756454
+                libc_so="$(find /lib /usr/local/lib /usr/lib -name 'libc.so.*' -print -quit 2>/dev/null)"
+                if [ -z "${libc_so}" ]; then
+                    libc_so="$(strings /etc/ld.so.cache | grep '^/.*/libc\.so.*' | head -1)"
+                fi
+                if [ -z "${libc_so}" ]; then
+                    echo "Warning: Couldn't find libc.so; won't be able to determine GLIBC version!" >&2
+                    echo "Override by setting CONDA_OVERRIDE_GLIBC" >&2
+                    system_glibc_version="0.0"
+                else
+                    system_glibc_version=$("${libc_so}" --version | awk 'NR==1{ sub(/\.$/, ""); print $NF}')
+                fi
+            ;;
+            *)
+                # ldd reports glibc in the last field of the first line
+                system_glibc_version=$(ldd --version | awk 'NR==1{print $NF}')
+            ;;
+        esac
+    fi
+    # shellcheck disable=SC2183 disable=SC2046
+    int_min_glibc_version="$(printf "%02d%02d%02d" $(echo "$min_glibc_version" | sed 's/\./ /g'))"
+    # shellcheck disable=SC2183 disable=SC2046
+    int_system_glibc_version="$(printf "%02d%02d%02d" $(echo "$system_glibc_version" | sed 's/\./ /g'))"
+    if [ "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
+        echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
+        exit 1
+    fi
 fi
 {%- endif %}
 
