@@ -26,7 +26,7 @@ PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-CONDA_EXEC="$PREFIX/_conda"
+CONDA_EXEC="$PREFIX/{{ conda_exe_name }}"
 # Installers should ignore pre-existing configuration files.
 unset CONDARC
 unset MAMBARC
