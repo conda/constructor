@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Resolve an issue when specifying `--conda-exe` with `micromamba` or `mamba`, ensuring that the conda executable maintains its original filename. (#1033 via #1090)
+* Resolve an issue when specifying `--conda-exe` with `micromamba` or `mamba`, mamba-based standalone binaries are now renamed to `micromamba` and a symbolic link to `_conda` is added for backwards compatibility. (#1033 via #1090)
 
 ### Deprecations
 
