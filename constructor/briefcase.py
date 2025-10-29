@@ -144,7 +144,10 @@ def create(info, verbose=False):
     msi_paths = list(dist_dir.glob("*.msi"))
     if len(msi_paths) != 1:
         raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}")
-    shutil.copy(msi_paths[0], info["_outpath"])
+
+    outpath = Path(info["_outpath"])
+    outpath.unlink(missing_ok=True)
+    shutil.move(msi_paths[0], outpath)
 
     if not info.get("_debug"):
         shutil.rmtree(tmp_dir)
