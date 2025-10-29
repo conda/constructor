@@ -103,8 +103,8 @@ def write_pyproject_toml(tmp_dir, info):
                 "formal_name": f"{info['name']} {info['version']}",
                 "description": "",  # Required, but not used in the installer.
                 "external_package_path": EXTERNAL_PACKAGE_PATH,
-                "external_package_executable_path": "",
                 "use_full_install_path": False,
+                "install_launcher": False,
                 "post_install_script": str(BRIEFCASE_DIR / "run_installation.bat"),
             }
         },
