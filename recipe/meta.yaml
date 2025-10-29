@@ -30,6 +30,7 @@ requirements:
     - jsonschema >=4
     - pillow >=3.1     # [win or osx]
     - nsis >=3.08      # [win]
+    - tomli-w >=1.2.0
   run_constrained:     # [unix]
     - nsis >=3.08      # [unix]
     - conda-libmamba-solver !=24.11.0

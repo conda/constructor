@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 def get_installer_type(info):
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe",)}
+    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe", "msi")}
     all_allowed = set(sum(os_allowed.values(), ("all",)))
 
     itype = info.get("installer_type")
@@ -317,6 +317,10 @@ def main_build(
             from .winexe import create as winexe_create
 
             create = winexe_create
+        elif itype == "msi":
+            from .briefcase import create as briefcase_create
+
+            create = briefcase_create
         info["installer_type"] = itype
         info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
