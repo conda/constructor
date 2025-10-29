@@ -169,7 +169,7 @@ jobs:
           git diff --exit-code
       - name: Upload the example installers as artifacts
         if: github.event_name == 'pull_request' && matrix.python-version == '3.9'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
           path: "${{ runner.temp }}/examples_artifacts"
