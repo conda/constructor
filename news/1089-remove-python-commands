@@ -1,0 +1,19 @@
+### Enhancements
+
+* Replace custom Python script with `conda-standalone` calls. (#549 via #1089)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>

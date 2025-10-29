@@ -15,20 +15,25 @@ import argparse
 import json
 import logging
 import os
+import subprocess
 import sys
 from os.path import abspath, expanduser, isdir, join
 from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
+from .conda_interface import SUPPORTED_PLATFORMS, MatchSpec, cc_platform
 from .conda_interface import VersionOrder as Version
 from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
 from .utils import StandaloneExe, check_version, identify_conda_exe, normalize_path, yield_lines
+
+if TYPE_CHECKING:
+    from typing import Any
 
 DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
 
@@ -74,6 +79,24 @@ def get_output_filename(info):
         arch_name_map.get(arch, arch),
         ext,
     )
+
+
+def _base_needs_python(info: dict[str, Any]) -> bool:
+    if sys.platform == "win32" and info.get("_conda_exe_type") == StandaloneExe.CONDA:
+        conda_exe = info["_conda_exe"]
+        results = subprocess.run(
+            [conda_exe, "constructor", "windows", "--help"],
+            capture_output=True,
+            check=False,
+        )
+        if results.returncode == 2:
+            return True
+    specs = {MatchSpec(spec) for spec in info.get("specs", ())}
+    # mamba 2 and newer does not need Python. However, without running the solver,
+    # we won't know for sure which version of mamba is requested
+    if sys.platform == "linux" and "mamba" in {spec.name for spec in specs}:
+        return True
+    return False
 
 
 def main_build(
@@ -274,6 +297,8 @@ def main_build(
                 "enable_anywhere": "true",
                 "enable_currentUserHome": "true",
             }
+
+    info["_base_needs_python"] = _base_needs_python(info)
 
     info["installer_type"] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
