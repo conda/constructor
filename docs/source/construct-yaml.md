@@ -318,8 +318,8 @@ Name of the company/entity responsible for the installer.
 ### `reverse_domain_identifier`
 
 Unique identifier for this package, formatted with reverse domain notation. This is
-used internally in the MSI and PKG installers to handle future updates and others. If
-not provided, it will default to:
+used internally in the MSI and PKG installers to handle future updates and others.
+If not provided, it will default to:
 
 * In MSI installers: `io.continuum` followed by an ID derived from the `name`.
 * In PKG installers: `io.continuum`.
