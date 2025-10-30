@@ -241,6 +241,7 @@ def make_nsi(
         default_uninstall_name += " (Python ${PYVERSION} ${ARCH})"
     else:
         variables["register_python"] = False
+        variables["register_python_default"] = None
 
     variables.update(ns_platform(info["_platform"]))
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
