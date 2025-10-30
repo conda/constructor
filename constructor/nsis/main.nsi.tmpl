@@ -1715,11 +1715,6 @@ Section "Uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
     ${EndIf}
-    ${If} ${FileExists} "$INSTDIR\.nonadmin"
-        StrCpy $R0 "user"
-    ${Else}
-        StrCpy $R0 "system"
-    ${EndIf}
 {%- if has_conda %}
     ${If} ${FileExists} "$INSTDIR\.nonadmin"
         StrCpy $R0 "user"
