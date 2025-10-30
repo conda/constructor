@@ -89,6 +89,9 @@ def _base_needs_python(info: dict[str, Any]) -> bool:
             capture_output=True,
             check=False,
         )
+        # Argparse uses return code 2 if a subcommand does not exist
+        # If the windows subcommand does not exist, python.exe is still
+        # required in the base environment.
         if results.returncode == 2:
             return True
     specs = {MatchSpec(spec) for spec in info.get("specs", ())}
