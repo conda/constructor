@@ -1639,7 +1639,7 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     StrCpy $0 ${VERSION}
     ${If} $INSTALLER_VERSION != ""
-	StrCpy $0 $INSTALLER_VERSION
+      StrCpy $0 $INSTALLER_VERSION
     ${EndIf}
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "$0").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
@@ -1650,7 +1650,6 @@ Section "Uninstall"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
     ${EndIf}
 
-{%- if uninstall_with_conda_exe %}
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
         push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
@@ -1662,6 +1661,7 @@ Section "Uninstall"
         !insertmacro AddRemovePath "remove" "un."
     ${EndIf}
 
+{%- if uninstall_with_conda_exe %}
     # Parse arguments
     StrCpy $R0 ""
 
@@ -1708,13 +1708,6 @@ Section "Uninstall"
     call un.AbortRetryNSExecWait
     SetDetailsPrint both
 {%- endfor %}
-    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
-        ${Print} "Running pre_uninstall scripts..."
-        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
-        push "Failed to run pre_uninstall"
-        push 'WithLog'
-        call un.AbortRetryNSExecWait
-    ${EndIf}
 {%- if has_conda %}
     ${If} ${FileExists} "$INSTDIR\.nonadmin"
         StrCpy $R0 "user"
@@ -1730,7 +1723,6 @@ Section "Uninstall"
     push 'WithLog'
     call un.AbortRetryNSExecWait
 {%- endif %}
-    !insertmacro AddRemovePath "remove" "un."
 
     ${Print} "Removing files and folders..."
     nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
