@@ -324,10 +324,10 @@ FunctionEnd
 {%- if has_python %}
                 Install for just me, add to PATH and register as system Python:$\n\
                     > $EXEFILE /RegisterPython=1 /AddToPath=1$\n\
-{%- else %}
+                $\n\
+{%- endif %}
                 Install for just me and add to PATH:$\n\
                     > $EXEFILE /AddToPath=1$\n\
-{%- endif %}
                 $\n\
                 Install for just me, with no registry modification (for CI):$\n\
                     > $EXEFILE /NoRegistry=1$\n\
