@@ -20,20 +20,16 @@ import sys
 from os.path import abspath, expanduser, isdir, join
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING
 
 from . import __version__
 from .build_outputs import process_build_outputs
-from .conda_interface import SUPPORTED_PLATFORMS, MatchSpec, cc_platform
+from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
 from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
 from .utils import StandaloneExe, check_version, identify_conda_exe, normalize_path, yield_lines
-
-if TYPE_CHECKING:
-    from typing import Any
 
 DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
 
@@ -81,25 +77,16 @@ def get_output_filename(info):
     )
 
 
-def _base_needs_python(info: dict[str, Any]) -> bool:
-    if sys.platform == "win32" and info.get("_conda_exe_type") == StandaloneExe.CONDA:
-        conda_exe = info["_conda_exe"]
-        results = subprocess.run(
-            [conda_exe, "constructor", "windows", "--help"],
-            capture_output=True,
-            check=False,
-        )
-        # Argparse uses return code 2 if a subcommand does not exist
-        # If the windows subcommand does not exist, python.exe is still
-        # required in the base environment.
-        if results.returncode == 2:
-            return True
-    specs = {MatchSpec(spec) for spec in info.get("specs", ())}
-    # mamba 2 and newer does not need Python. However, without running the solver,
-    # we won't know for sure which version of mamba is requested
-    if sys.platform == "linux" and "mamba" in {spec.name for spec in specs}:
-        return True
-    return False
+def _win_install_needs_python_exe(conda_exe: str) -> bool:
+    results = subprocess.run(
+        [conda_exe, "constructor", "windows", "--help"],
+        capture_output=True,
+        check=False,
+    )
+    # Argparse uses return code 2 if a subcommand does not exist
+    # If the windows subcommand does not exist, python.exe is still
+    # required in the base environment.
+    return results.returncode == 2
 
 
 def main_build(
@@ -301,7 +288,8 @@ def main_build(
                 "enable_currentUserHome": "true",
             }
 
-    info["_base_needs_python"] = _base_needs_python(info)
+    if osname == "win":
+        info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(info["_conda_exe"])
 
     info["installer_type"] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)

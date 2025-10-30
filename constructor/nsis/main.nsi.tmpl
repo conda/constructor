@@ -1249,7 +1249,7 @@ FunctionEnd
 !insertmacro AbortRetryNSExecWaitMacro "un."
 
 {%- set pathname = "$INSTDIR\\condabin" if initialize_conda == "condabin" else "$INSTDIR\\Scripts & Library\\bin" %}
-{%- if base_needs_python %}
+{%- if needs_python_exe %}
 !macro AddRemovePath add_remove un
     ${If} ${add_remove} == "add"
 {%-     if initialize_conda == 'condabin' %}
@@ -1303,7 +1303,7 @@ Section "Install"
     !insertmacro FindCmdExe
 
     SetOutPath "$INSTDIR"
-{% if base_needs_python %}
+{% if needs_python_exe %}
     SetOutPath "$INSTDIR\Lib"
     File "{{ NSIS_DIR }}\_nsis.py"
     File "{{ NSIS_DIR }}\_system_path.py"

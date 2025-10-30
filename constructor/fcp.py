@@ -234,10 +234,7 @@ def _solve_precs(
     conda_exe="conda.exe",
     extra_env=False,
     input_dir="",
-    base_needs_python=True,
 ):
-    if not extra_env and base_needs_python:
-        specs = (*specs, "python")
     if environment:
         logger.debug("specs: <from existing environment '%s'>", environment)
     elif environment_file:
@@ -310,11 +307,6 @@ def _solve_precs(
     if python_prec:
         precs.remove(python_prec)
         precs.insert(0, python_prec)
-    elif not extra_env and base_needs_python:
-        # the base environment must always have python; this has been addressed
-        # at the beginning of _main() but we can still get here through the
-        # environment_file option
-        sys.exit("python MUST be part of the base environment")
 
     warn_menu_packages_missing(precs, menu_packages)
     check_duplicates(precs)
@@ -375,6 +367,7 @@ def _main(
     version,
     download_dir,
     platform,
+    installer_type,
     channel_urls=(),
     channels_remap=(),
     specs=(),
@@ -390,7 +383,6 @@ def _main(
     extra_envs=None,
     check_path_spaces=True,
     input_dir="",
-    base_needs_python=True,
 ):
     precs = _solve_precs(
         name,
@@ -407,8 +399,13 @@ def _main(
         verbose=verbose,
         conda_exe=conda_exe,
         input_dir=input_dir,
-        base_needs_python=base_needs_python,
     )
+    if installer_type == "sh":
+        mamba_prec = next((prec for prec in precs if prec.name == "mamba"), None)
+        if mamba_prec and VersionOrder(mamba_prec.version) < VersionOrder("2.0.0"):
+            sys.exit(
+                "Python must be added to the base environment if mamba 1.x is in the specs list."
+            )
     extra_envs = extra_envs or {}
     conda_in_base: PackageCacheRecord = next((prec for prec in precs if prec.name == "conda"), None)
     if conda_in_base:
@@ -483,6 +480,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
     input_dir = info["_input_dir"]
     version = info["version"]
+    installer_type = info["installer_type"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
     channel_urls = all_channel_urls(info.get("channels", ()), subdirs=[platform, "noarch"])
@@ -496,7 +494,6 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     transmute_file_type = info.get("transmute_file_type", "")
     extra_envs = info.get("extra_envs", {})
     check_path_spaces = info.get("check_path_spaces", True)
-    base_needs_python = info.get("_base_needs_python", True)
 
     if not channel_urls and not channels_remap and not (environment or environment_file):
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
@@ -534,6 +531,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             version,
             download_dir,
             platform,
+            installer_type,
             channel_urls,
             channels_remap,
             specs,
@@ -549,7 +547,6 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             extra_envs,
             check_path_spaces,
             input_dir,
-            base_needs_python,
         )
 
     info["_all_pkg_records"] = pkg_records  # full PackageRecord objects
