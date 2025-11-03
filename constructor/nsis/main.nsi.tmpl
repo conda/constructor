@@ -1249,8 +1249,9 @@ FunctionEnd
 !insertmacro AbortRetryNSExecWaitMacro "un."
 
 {%- set pathname = "$INSTDIR\\condabin" if initialize_conda == "condabin" else "$INSTDIR\\Scripts & Library\\bin" %}
-{%- if needs_python_exe %}
 !macro AddRemovePath add_remove un
+{# python.exe is required if conda-standalone does not support the windows subcommand (<25.11.x) #}
+{%- if needs_python_exe %}
     ${If} ${add_remove} == "add"
 {%-     if initialize_conda == 'condabin' %}
         ${Print} "Adding {{ pathname }} PATH..."
@@ -1273,10 +1274,8 @@ FunctionEnd
     push $R1
     push 'WithLog'
     call ${un}AbortRetryNSExecWait
-!macroend
 {%- else %}
 {%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
-!macro AddRemovePath add_remove un
     ${If} ${add_remove} == "add"
         ${Print} "Adding {{ pathname }} to PATH..."
         StrCpy $R0 "prepend"
@@ -1286,7 +1285,7 @@ FunctionEnd
         StrCpy $R0 "remove"
         StrCpy $R1 'Failed to remove {{ NAME }} from PATH'
     ${EndIf}
-    push '"$INSTDIR\_conda.exe" constructor windows path --$R0=user --prefix "$INSTDIR\condabin" {{ pathflag }}'
+    push '"$INSTDIR\_conda.exe" constructor windows path --$R0=user --prefix "$INSTDIR" {{ pathflag }}'
     push $R1
     push 'WithLog'
     call ${un}AbortRetryNSExecWait
