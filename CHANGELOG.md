@@ -37,10 +37,7 @@
 * @jaimergp
 * @marcoesters
 * @lrandersson
-* @conda-bot
-* @dependabot[bot]
 * @dionizijefa
-* @pre-commit-ci[bot]
 
 
 
