@@ -367,7 +367,6 @@ def _main(
     version,
     download_dir,
     platform,
-    installer_type,
     channel_urls=(),
     channels_remap=(),
     specs=(),
@@ -474,7 +473,6 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     name = info["name"]
     input_dir = info["_input_dir"]
     version = info["version"]
-    installer_type = info["installer_type"]
     download_dir = info["_download_dir"]
     platform = info["_platform"]
     channel_urls = all_channel_urls(info.get("channels", ()), subdirs=[platform, "noarch"])
@@ -525,7 +523,6 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             version,
             download_dir,
             platform,
-            installer_type,
             channel_urls,
             channels_remap,
             specs,
