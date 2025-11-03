@@ -1,5 +1,49 @@
 [//]: # (current developments)
 
+## 2025-11-03   3.13.0:
+### Enhancements
+
+* Add support for installing [protected conda environments](https://conda.org/learn/ceps/cep-0022#specification). (#1058)
+* Ship `conda-meta/initial-state.explicit.txt` as a copy of the lockfile that provisions the initial state of each environment. (#1052 via #1059)
+* Remove unused functions from `_nsis.py`. (#1068)
+* Port script execution, AutoRun manipulation, and directory creation functions from `_nsis.py` to NSIS. (#1069)
+* Unset additional environment variables in shell-based installers to avoid accidental loading of external libraries. (#1082)
+* Include the license file in PKG installers. (#1074 via #1085)
+
+### Bug fixes
+
+* SH: Fixed misleading wording for shell initialization in installation prompt. (#1039 via #1340)
+* PKG: Restore the default value of `enable_currentUserHome` to the old default value (`true`). (#1070 via #1088)
+* Rename mamba-based standalone binaries to `micromamba` and create a symbolic link to `_conda` for backwards compatibility. (#1033 via #1090)
+* Add guards to macOS and `glibc` version checks. (#1094)
+* EXE: Remove write access for users during the installation process.
+* EXE: Remove write access for users except for the installing user from single-user installations.
+
+### Docs
+
+* Document that `check_path_length` defaults to `False` in line with prior behavior and declare
+  it as `bool` only in the schema. (#1036)
+* PKG: Clarify that the profile of all available shells will be modified by default. (#1070 via #1088)
+
+### Other
+
+* Fix typo in license prompt message for SH installers. (#1035 via $1053)
+* Update signtool.exe path for Windows 2025 runner images (SDK 10.0.26100.0) (#1073)
+* Use `windows-2022` for integration tests. (#1077)
+
+### Contributors
+
+* @Jrice1317
+* @jaimergp
+* @marcoesters
+* @lrandersson
+* @conda-bot
+* @dependabot[bot]
+* @dionizijefa
+* @pre-commit-ci[bot]
+
+
+
 ## 2025-08-06   3.12.2:
 ### Bug fixes
 
