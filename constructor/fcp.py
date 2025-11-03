@@ -400,12 +400,6 @@ def _main(
         conda_exe=conda_exe,
         input_dir=input_dir,
     )
-    if installer_type == "sh":
-        mamba_prec = next((prec for prec in precs if prec.name == "mamba"), None)
-        if mamba_prec and VersionOrder(mamba_prec.version) < VersionOrder("2.0.0"):
-            sys.exit(
-                "Python must be added to the base environment if mamba 1.x is in the specs list."
-            )
     extra_envs = extra_envs or {}
     conda_in_base: PackageCacheRecord = next((prec for prec in precs if prec.name == "conda"), None)
     if conda_in_base:
