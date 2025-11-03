@@ -52,6 +52,7 @@ Authors are sorted alphabetically.
 * Rachel Rigdon
 * Ray Donnelly
 * Richard Höchenberger
+* Robin Andersson
 * Ryan
 * Sai Hanuma Rahul
 * Sophia Castellarin
@@ -71,6 +72,7 @@ Authors are sorted alphabetically.
 * bkreider
 * conda-bot
 * dependabot[bot]
+* dionizijefa
 * guimondmm
 * pre-commit-ci[bot]
 * y2kbugger
