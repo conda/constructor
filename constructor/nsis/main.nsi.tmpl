@@ -59,6 +59,8 @@ var /global StdOutHandleSet
 !include "x64.nsh"
 
 !include "FileFunc.nsh"
+!include "StrFunc.nsh"
+${Using:StrFunc} StrStr
 !insertmacro GetParameters
 !insertmacro GetOptions
 
@@ -133,18 +135,22 @@ var /global InstMode # 0 = Just Me, 1 = All Users.
 !define ALL_USERS 1
 
 var /global CMD_EXE
+var /global ICACLS_EXE
 
-!macro FindCmdExe
+!macro FindWindowsBinaries
     # Find cmd.exe
     ReadEnvStr $R0 SystemRoot
     ReadEnvStr $R1 windir
     ${If} ${FileExists} "$R0"
         StrCpy $CMD_EXE "$R0\System32\cmd.exe"
+        StrCpy $ICACLS_EXE "$R0\System32\icacls.exe"
     ${ElseIf} ${FileExists} "$R1"
         StrCpy $CMD_EXE "$R1\System32\cmd.exe"
+        StrCpy $ICACLS_EXE "$R1\System32\icacls.exe"
     ${Else}
-        # Cross our fingers CMD is in PATH
+        # Cross our fingers binaries are in PATH
         StrCpy $CMD_EXE "cmd.exe"
+        StrCpy $ICACLS_EXE "icacls.exe"
     ${EndIf}
 !macroend
 
@@ -1235,6 +1241,78 @@ FunctionEnd
 !insertmacro AbortRetryNSExecWaitMacro ""
 !insertmacro AbortRetryNSExecWaitMacro "un."
 
+!macro setInstdirPermissions
+    # To address CVE-2022-26526.
+    # Revoke the write permission on directory "$INSTDIR" for Users. Users are:
+    #   AU - authenticated users (NT AUTHORITY\Authenticated Users)
+    #   BU - built-in (local) users (BUILTIN\Users)
+    #   DU - domain users  (<domain name>\DOMAIN USERS)
+    # This also applies for single-user installations to avoid giving other users
+    # full access on shared drives.
+    ${If} ${UAC_IsAdmin}
+        StrCpy $0 "(AU) (BU) (DU)"
+    ${Else}
+        # Not every directory grants write access to Users (e.g., %USERPROFILE%),
+        # so test whether user groups have the necessary rights.
+        nsExec::ExecToStack '"$ICACLS_EXE" "$INSTDIR"'
+        Pop $R0
+        Pop $R1
+        ${If} $R0 != "0"
+          StrCpy $R1 \
+              "Unable to determine the defaults permissions of the installation directory. "\
+              "Ensure that you have read access to $INSTDIR and icacls.exe is in your PATH."
+          ${Print} $R1
+          Abort
+        ${EndIf}
+        StrCpy $0 ""
+        StrCpy $R2 "NT AUTHORITY\Authenticated Users|BUILTIN\Users|\Domain Users"
+        StrCpy $R3 "(AU)|(BU)|(DU)"
+        StrCpy $R4 1
+        loop_single_user_default_access:
+            ${WordFind} $R2 "|" "E+$R4" $R5
+            ${WordFind} $R3 "|" "E+$R4" $R6
+            IfErrors endloop_single_user_default_access
+            ${StrStr} $R7 $R1 $R5
+            ${If} $R7 == ""
+                goto increment_loop_single_user_default_access
+            ${EndIf}
+            # If the user group has a deny permission directive, do not change permissions.
+            # Granting (RX) permissions may increase the permissions that are inherited and
+            # it is very unlikely that a user is granted write permissions but denied others.
+            ${StrStr} $R7 $R1 "$R5:(D)"
+            ${If} $R7 != ""
+                goto increment_loop_single_user_default_access
+            ${EndIf}
+            StrCpy $0 "$0 $R6"
+            increment_loop_single_user_default_access:
+            IntOp $R4 $R4 + 1
+            goto loop_single_user_default_access
+        endloop_single_user_default_access:
+    ${EndIf}
+    AccessControl::DisableFileInheritance "$INSTDIR"
+    ${If} $0 != ""
+        StrCpy $1 1
+        loop_access:
+            ${WordFind} $0 " " "E+$1" $2
+            IfErrors endloop_access
+            AccessControl::RevokeOnFile "$INSTDIR" "$2" "GenericWrite"
+            AccessControl::SetOnFile "$INSTDIR" "$2" "GenericRead + GenericExecute"
+            IntOp $1 $1 + 1
+            goto loop_access
+        endloop_access:
+    ${EndIf}
+    ${IfNot} ${UAC_IsAdmin}
+        # Ensure that creator has full access
+        ReadEnvStr $R0 USERDOMAIN
+        ReadEnvStr $R1 USERNAME
+        ${If} $R0 == ""
+          AccessControl::SetOnFile "$INSTDIR" "$R1" "FullAccess"
+        ${Else}
+          AccessControl::SetOnFile "$INSTDIR" "$R0\$R1" "FullAccess"
+        ${EndIf}
+    ${EndIf}
+!macroend
+
 # Installer sections
 Section "Install"
     ${LogSet} on
@@ -1242,11 +1320,9 @@ Section "Install"
         call OnDirectoryLeave
     ${EndIf}
 
-    !insertmacro FindCmdExe
+    !insertmacro FindWindowsBinaries
 
-    SetOutPath "$INSTDIR\Lib"
-    File "{{ NSIS_DIR }}\_nsis.py"
-    File "{{ NSIS_DIR }}\_system_path.py"
+    SetOutPath "$INSTDIR"
 
     # Resolve INSTDIR so that paths and registry keys do not contain '..' or similar strings.
     # $0 is empty if the directory doesn't exist, but the File commands should have created it already.
@@ -1256,6 +1332,15 @@ Section "Install"
 	Quit
     ${EndIf}
     StrCpy $INSTDIR $0
+
+    # Restrict permissions immediately after creating $INSTDIR
+    # If not, the installation directory may inherit write-permissions
+    # for users even during an all-users installation.
+    !insertmacro setInstdirPermissions
+
+    SetOutPath "$INSTDIR\Lib"
+    File "{{ NSIS_DIR }}\_nsis.py"
+    File "{{ NSIS_DIR }}\_system_path.py"
 
 {%- if has_license %}
     SetOutPath "$INSTDIR"
@@ -1498,37 +1583,14 @@ Section "Install"
 
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
 
-    # To address CVE-2022-26526.
-    # Revoke the write permission on directory "$INSTDIR" for Users if this is
-    # being run with administrative privileges. Users are:
-    #   AU - authenticated users
-    #   BU - built-in (local) users
-    #   DU - domain users
-    ${If} ${UAC_IsAdmin}
-        ${Print} "Setting installation directory permissions..."
-        AccessControl::DisableFileInheritance "$INSTDIR"
-        # Enable inheritance on all files inside $INSTDIR.
-        # Use icacls because it is much faster than custom NSIS solutions.
-        # We continue on error because icacls fails on broken links.
-        ReadEnvStr $0 SystemRoot
-        ReadEnvStr $1 windir
-        ${If} ${FileExists} "$0"
-            push '"$0\System32\icacls.exe" "$INSTDIR\*" /inheritance:e /T /C /Q'
-        ${ElseIf} ${FileExists} "$1"
-            push '"$1\System32\icacls.exe" "$INSTDIR\*" /inheritance:e /T /C /Q'
-        ${Else}
-            # Cross our fingers icacls is in PATH
-            push 'icacls.exe "$INSTDIR\*" /inheritance:e /T /C /Q'
-        ${EndIf}
-        push 'Failed to enable inheritance for all files in the installation directory.'
-        push 'NoLog'
-        call AbortRetryNSExecWait
-        AccessControl::RevokeOnFile "$INSTDIR" "(AU)" "GenericWrite"
-        AccessControl::RevokeOnFile "$INSTDIR" "(DU)" "GenericWrite"
-        AccessControl::RevokeOnFile "$INSTDIR" "(BU)" "GenericWrite"
-        AccessControl::SetOnFile "$INSTDIR" "(BU)" "GenericRead + GenericExecute"
-        AccessControl::SetOnFile "$INSTDIR" "(DU)" "GenericRead + GenericExecute"
-    ${EndIf}
+    ${Print} "Setting installation directory permissions..."
+    # Enable inheritance on all files inside $INSTDIR.
+    # Use icacls because it is much faster than custom NSIS solutions.
+    # We continue on error because icacls fails on broken links.
+    push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q'
+    push 'Failed to enable inheritance for all files in the installation directory.'
+    push 'NoLog'
+    call AbortRetryNSExecWait
     ${Print} "Done!"
 SectionEnd
 
@@ -1553,7 +1615,7 @@ Section "Uninstall"
         !insertmacro un.ParseCommandLineArgs
     ${EndIf}
 
-    !insertmacro FindCmdExe
+    !insertmacro FindWindowsBinaries
 
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")".r0'
 
