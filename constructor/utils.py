@@ -344,6 +344,31 @@ def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneE
     return None, None
 
 
+def format_conda_exe_name(conda_exe: str | Path) -> str:
+    """Return a formatted alias for given stand-alone executable.
+
+      - If given executable cannot be identified, returns the basename of given executable.
+      - If stand-alone conda is identified, returns '_conda'.
+      - If stand-alone mamba/micromamba is identified, returns 'micromamba'.
+
+    Parameters::
+      - conda_exe: str | Path
+      Path to the conda executable to be accounted for.
+    """
+    conda_exe_name, _ = identify_conda_exe(conda_exe)
+    if conda_exe_name is None:
+        # This implies that identify_conda_exe failed
+        return Path(conda_exe).name
+    if conda_exe_name == StandaloneExe.CONDA:
+        return "_conda"
+    elif conda_exe_name == StandaloneExe.MAMBA:
+        return "micromamba"
+    else:
+        # This should never happen, but as a safe-guard in case `identify_conda_exe` is changed without
+        # accounting for this function.
+        raise RuntimeError("Unable to format conda exe name")
+
+
 def check_version(
     exe_version: str | VersionOrder | None = None,
     min_version: str | None = None,

@@ -22,7 +22,7 @@ PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-CONDA_EXEC="$PREFIX/_conda"
+CONDA_EXEC="$PREFIX/{{ conda_exe_name }}"
 # /COMMON UTILS
 
 # Expose these to user scripts as well

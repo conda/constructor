@@ -25,6 +25,7 @@ from .utils import (
     approx_size_kb,
     copy_conda_exe,
     explained_check_call,
+    format_conda_exe_name,
     get_final_channels,
     parse_virtual_specs,
     rm_rf,
@@ -364,6 +365,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     variables["script_env_variables"] = info.get("script_env_variables", {})
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
+    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"])
 
     data = render_template(data, **variables)
 
@@ -556,7 +558,7 @@ def create(info, verbose=False):
 
     # 1. Prepare installation
     # The 'prepare_installation' package contains the prepopulated package cache, the modified
-    # conda-meta metadata staged into pkgs/conda-meta, _conda (conda-standalone),
+    # conda-meta metadata staged into pkgs/conda-meta, _conda (conda-standalone, [--conda-exe]),
     # Optionally, extra files and the user-provided scripts.
     # We first populate PACKAGE_ROOT with everything needed, and then run pkg build on that dir
     fresh_dir(PACKAGE_ROOT)
@@ -565,6 +567,10 @@ def create(info, verbose=False):
     os.makedirs(pkgs_dir)
     preconda.write_files(info, prefix)
     preconda.copy_extra_files(info.get("extra_files", []), prefix)
+
+    # Add potential license file
+    if license_file := info.get("license_file"):
+        preconda.copy_extra_files([license_file], prefix)
     # These are the user-provided scripts, maybe patched to have a shebang
     # They will be called by a wrapping script added later, if present
     if info.get("pre_install"):
@@ -589,7 +595,8 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    copy_conda_exe(prefix, "_conda", info["_conda_exe"])
+    exe_name = format_conda_exe_name(info["_conda_exe"])
+    copy_conda_exe(prefix, exe_name, info["_conda_exe"])
 
     # Sign conda-standalone so it can pass notarization
     codesigner = None
@@ -604,7 +611,7 @@ def create(info, verbose=False):
             "com.apple.security.cs.disable-library-validation": True,
             "com.apple.security.cs.allow-dyld-environment-variables": True,
         }
-        codesigner.sign_bundle(join(prefix, "_conda"), entitlements=entitlements)
+        codesigner.sign_bundle(join(prefix, exe_name), entitlements=entitlements)
 
     # This script checks to see if the install location already exists and/or contains spaces
     # Not to be confused with the user-provided pre_install!

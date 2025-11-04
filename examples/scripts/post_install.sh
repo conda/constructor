@@ -23,12 +23,43 @@ test "${CUSTOM_VARIABLE_2}" = '$ECOND-CUSTOM_'\''STRING'\'' WITH SPACES AND @*! 
 
 test "${INSTALLER_UNATTENDED}" = "1"
 
-if [[ $(uname -s) == Linux ]]; then
+# Print to stderr if any of the input variables are set, and returns 1 - otherwise 0.
+# Note that variables that are set but are empty strings will also trigger an error.
+# All input variables are checked before exit.
+verify_var_is_unset() {
+    local failed=0
+    for var in "$@"; do
+        if [[ -n "${!var+x}" ]]; then
+            echo "Error: environment variable $var must be unset." >&2
+            failed=1
+        fi
+    done
+    return $failed
+}
+
+if [[ $(uname -s) == "Linux" ]]; then
     if [[ ${INSTALLER_PLAT} != linux-* ]]; then
+        echo "Error: INSTALLER_PLAT must match 'linux-*' on Linux systems."
         exit 1
     fi
+
+    if ! verify_var_is_unset LD_LIBRARY_PATH LD_PRELOAD LD_AUDIT; then
+        echo "Error: One or more of LD_LIBRARY_PATH, LD_PRELOAD, or LD_AUDIT are set."
+        exit 1
+    fi
+
 else  # macOS
     if [[ ${INSTALLER_PLAT} != osx-* ]]; then
+        echo "Error: INSTALLER_PLAT must match 'osx-*' on macOS systems."
+        exit 1
+    fi
+
+    if ! verify_var_is_unset \
+        DYLD_LIBRARY_PATH \
+        DYLD_FALLBACK_LIBRARY_PATH \
+        DYLD_INSERT_LIBRARIES \
+        DYLD_FRAMEWORK_PATH; then
+        echo "Error: One or more DYLD_* environment variables are set."
         exit 1
     fi
 fi

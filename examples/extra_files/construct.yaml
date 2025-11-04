@@ -4,6 +4,7 @@
 name: ExtraFiles
 version: X
 installer_type: all
+license_file: TEST_LICENSE.txt
 check_path_spaces: False
 check_path_length: False
 channels:

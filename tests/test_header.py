@@ -70,6 +70,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         no_rcs_arg="",
         script_env_variables={},
         initialize_conda="condabin",
+        conda_exe_name="_conda",
     )
 
     findings, returncode = run_shellcheck(processed)
@@ -162,6 +163,7 @@ def test_template_shellcheck(
             "write_condarc": "",
             "conda_exe_payloads": conda_exe_payloads_and_size[0],
             "conda_exe_payloads_size": conda_exe_payloads_and_size[1],
+            "conda_exe_name": "_conda",
         },
     )
 

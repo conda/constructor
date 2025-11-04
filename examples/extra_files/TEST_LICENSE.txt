@@ -1,0 +1,1 @@
+This file only exists for testing the .sh and .pkg installers.

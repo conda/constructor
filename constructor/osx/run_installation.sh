@@ -20,13 +20,13 @@ logger -p "install.info" "$1" || echo "$1"
 
 {%- set channels = final_channels|join(",") %}
 
-unset DYLD_LIBRARY_PATH
+unset DYLD_LIBRARY_PATH DYLD_FALLBACK_LIBRARY_PATH DYLD_INSERT_LIBRARIES DYLD_FRAMEWORK_PATH
 
 PREFIX="$2/{{ pkg_name_lower }}"
 PREFIX=$(cd "$PREFIX"; pwd)
 export PREFIX
 echo "PREFIX=$PREFIX"
-CONDA_EXEC="$PREFIX/_conda"
+CONDA_EXEC="$PREFIX/{{ conda_exe_name }}"
 # Installers should ignore pre-existing configuration files.
 unset CONDARC
 unset MAMBARC
