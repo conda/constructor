@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* SH: Resolve malformed text displayed during installation.
+* SH: Resolve malformed text displayed during installation. (#1104)
 
 ### Deprecations
 
