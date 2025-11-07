@@ -1709,6 +1709,9 @@ Section "Uninstall"
     # The uninstallation may leave the install.log, the uninstaller,
     # and .conda_trash files behind, so remove those manually.
     ${If} ${FileExists} "$INSTDIR"
+        # Stop logging or the uninstaller will not remove the install.log file
+        # without requiring a reboot
+        LogSet Off
         RMDir /r /REBOOTOK "$INSTDIR"
     ${EndIf}
 {%- else %}
@@ -1750,6 +1753,9 @@ Section "Uninstall"
     ${Print} "Removing files and folders..."
     nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
 
+    # Stop logging or the uninstaller will not remove the install.log file
+    # without requiring a reboot
+    LogSet Off
     # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
 
