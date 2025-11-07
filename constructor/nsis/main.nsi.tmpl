@@ -43,6 +43,9 @@ var /global StdOutHandle
 var /global StdOutHandleSet
 !define Print "!insertmacro PrintMacro"
 !macro PrintMacro INPUT_TEXT
+  Push $0
+  Push $1
+  Push $2
   DetailPrint "${INPUT_TEXT}"
   ${If} ${Silent}
   ${AndIf} $QuietMode != "1"
@@ -59,6 +62,9 @@ var /global StdOutHandleSet
     ${EndIf}
     FileWrite $StdOutHandle "${INPUT_TEXT}$\n"
   ${EndIf}
+  Pop $2
+  Pop $1
+  Pop $0
 !macroend
 
 !include "WinMessages.nsh"
