@@ -17,6 +17,16 @@ Unicode true
 !define LogSet "!insertmacro LogSetMacro"
 !macro LogSetMacro SETTING
   !ifdef ENABLE_LOGGING
+    ${If} ${SETTING} == "on"
+      ${IfNot} ${FileExists} "$INSTDIR\install.log"
+        # Enforce UTF-16 encoding in the log file
+        # NSIS doesn't write the correct BOM to log files,
+        # so each character will be followed by NUL.
+        FileOpen $R0 "$INSTDIR\install.log" w
+        FileWriteUTF16LE $R0 ""
+        FileClose $R0
+      ${EndIf}
+    ${EndIf}
     LogSet ${SETTING}
   !endif
 !macroend
