@@ -1629,6 +1629,9 @@ Section "Uninstall"
     # For long installation times, this may cause a buffer overflow, crashing the installer.
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_QUIET", "1")".r0'
 
+    # Remove registry entries first because they are difficult to clean
+    # up manually if the uninstallation irrecoverably fails.
+
     # Read variables the uninstaller needs from the registry
     StrCpy $R0 "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
     StrLen $R1 "Uninstall-${NAME}.exe"
@@ -1650,6 +1653,27 @@ Section "Uninstall"
         IntOp $0 $0 + 1
         goto loop_path
     endloop_path:
+
+    ${If} $INSTALLER_NAME_FULL != ""
+        DeleteRegKey SHCTX "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTALLER_NAME_FULL"
+    ${EndIf}
+
+    # If Anaconda was registered as the official Python for this version,
+    # remove it from the registry
+    StrCpy $R0 "SOFTWARE\Python\PythonCore"
+    StrCpy $0 0
+    loop_py:
+        EnumRegKey $1 SHCTX $R0 $0
+        StrCmp $1 "" endloop_py
+        ReadRegStr $2 SHCTX "$R0\$1\InstallPath" ""
+        ${If} $2 == $INSTDIR
+            StrCpy $R1 $1
+            DeleteRegKey SHCTX "$R0\$1"
+            goto endloop_py
+        ${EndIf}
+        IntOp $0 $0 + 1
+        goto loop_py
+    endloop_py:
 
     # Extra info for pre_uninstall scripts
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR").r0'
@@ -1760,27 +1784,6 @@ Section "Uninstall"
     RMDir /r /REBOOTOK "$INSTDIR"
 
 {%- endif %}
-
-    ${If} $INSTALLER_NAME_FULL != ""
-        DeleteRegKey SHCTX "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$INSTALLER_NAME_FULL"
-    ${EndIf}
-
-    # If Anaconda was registered as the official Python for this version,
-    # remove it from the registry
-    StrCpy $R0 "SOFTWARE\Python\PythonCore"
-    StrCpy $0 0
-    loop_py:
-        EnumRegKey $1 SHCTX $R0 $0
-        StrCmp $1 "" endloop_py
-        ReadRegStr $2 SHCTX "$R0\$1\InstallPath" ""
-        ${If} $2 == $INSTDIR
-            StrCpy $R1 $1
-            DeleteRegKey SHCTX "$R0\$1"
-            goto endloop_py
-        ${EndIf}
-        IntOp $0 $0 + 1
-        goto loop_py
-    endloop_py:
 
     ${Print} "Done!"
     ${If} ${Silent}
