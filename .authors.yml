@@ -372,7 +372,7 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 65
+  num_commits: 66
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
 - name: Matthias Kuhn
@@ -417,5 +417,5 @@
   - Robin
   github: lrandersson
   email: 34315751+lrandersson@users.noreply.github.com
-  num_commits: 4
+  num_commits: 5
   first_commit: 2025-10-21 08:30:00
