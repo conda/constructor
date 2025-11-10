@@ -116,8 +116,11 @@ ${Using:StrFunc} StrStr
 !define SHOW_ADD_TO_PATH {{ show_add_to_path }}
 !define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
 !define UNINSTALL_NAME "{{ UNINSTALL_NAME }}"
-!define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\
-                   \Uninstall\${UNINSTALL_NAME}"
+!define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_NAME}"
+# Silent installations do not output to the console and outputs to stdout
+# are not written into install.log. STEP_LOG creates an intermittent file
+# that is output into these streams after the commands finish.
+!define STEP_LOG "$INSTDIR\.step.log"
 
 var /global INSTDIR_JUSTME
 var /global INSTALLER_VERSION
