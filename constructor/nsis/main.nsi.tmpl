@@ -41,13 +41,15 @@ Unicode true
 var /global QuietMode # "0" = print normally, "1" = do not print
 var /global StdOutHandle
 var /global StdOutHandleSet
+# Print is macro because it makes the code easier to read.
+# However, that also means that registers must be handled with caution because
+# they will be overwritten in the macro. It is best to use $R* registers if
+# temporary variables need to be used.
 !define Print "!insertmacro PrintMacro"
 !macro PrintMacro INPUT_TEXT
-  Push $0
-  Push $1
-  Push $2
-  DetailPrint "${INPUT_TEXT}"
-  ${If} ${Silent}
+  ${IfNot} ${Silent}
+      DetailPrint "${INPUT_TEXT}"
+  ${ElseIf} ${Silent}
   ${AndIf} $QuietMode != "1"
     ${IfNot} $StdOutHandleSet == "1"
         System::Call 'kernel32::GetStdHandle(i -11)i.r0'
@@ -62,9 +64,6 @@ var /global StdOutHandleSet
     ${EndIf}
     FileWrite $StdOutHandle "${INPUT_TEXT}$\n"
   ${EndIf}
-  Pop $2
-  Pop $1
-  Pop $0
 !macroend
 
 !include "WinMessages.nsh"
@@ -1211,25 +1210,25 @@ FunctionEnd
         # $3: The command to run, quoted
         # Note that the args need to be pushed to the stack in reverse order!
         # Search 'AbortRetryNSExecWait' in this script to see examples
-        Pop $1
-        Pop $2
-        Pop $3
+        Pop $R1
+        Pop $R2
+        Pop $R3
         ${Do}
-            ${If} $1 == "WithLog"
-                nsExec::ExecToLog $3
-            ${ElseIf} $1 == "NoLog"
-                nsExec::Exec $3
+            ${If} $R1 == "WithLog"
+                nsExec::ExecToLog $R3
+            ${ElseIf} $R1 == "NoLog"
+                nsExec::Exec $R3
             ${Else}
-                ${Print} "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $1"
+                ${Print} "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $R1"
                 Abort
             ${EndIf}
-            pop $0
-            ${If} $0 != "0"
-                ${Print} "::error:: $2"
+            pop $R0
+            ${If} $R0 != "0"
+                ${Print} "::error:: $R2"
                 MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
-                        $2 /SD IDIGNORE IDABORT abort IDRETRY retry
+                        $R2 /SD IDIGNORE IDABORT abort IDRETRY retry
                 ; IDIGNORE: Continue anyway
-                StrCpy $0 "0"
+                StrCpy $R0 "0"
                 goto retry
             abort:
                 ; Abort installation
@@ -1237,7 +1236,7 @@ FunctionEnd
             retry:
                 ; Retry the nsExec command
             ${EndIf}
-        ${LoopWhile} $0 != "0"
+        ${LoopWhile} $R0 != "0"
     FunctionEnd
 !macroend
 !insertmacro AbortRetryNSExecWaitMacro ""
