@@ -1207,10 +1207,36 @@ Function un.OnDirectoryLeave
     confirmed_yes:
 FunctionEnd
 
-# Make function available for both installer and uninstaller
+# Make functions available for both installer and uninstaller
 # Uninstaller functions need an `un.` prefix, so we use a macro to do both
 # see https://nsis.sourceforge.io/Sharing_functions_between_Installer_and_Uninstaller
-!macro AbortRetryNSExecWaitMacro un
+!macro FunctionTemplates un
+    Function ${un}PrintFromStepLog
+        Exch $R0
+        Push $R1
+        Push $R2
+        ClearErrors
+        FileOpen $R1 "${STEP_LOG}" r
+        IfErrors close_file
+        read_line:
+            FileRead $R1 $R2
+            IfErrors close_file
+            ${If} $R0 == "ToScreen"
+            ${OrIf} $R0 == "both"
+                ${Print} "$R2"
+            ${EndIf}
+            ${If} $R0 == "ToLog"
+            ${OrIf} $R0 == "both"
+                ${LogText} "$R2"
+            ${EndIf}
+            goto read_line
+        close_file:
+            FileClose $R1
+        Pop $R2
+        Pop $R1
+        Pop $R0
+    FunctionEnd
+
     Function ${un}AbortRetryNSExecWait
         # This function expects three arguments in the stack
         # $R1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
@@ -1231,7 +1257,23 @@ FunctionEnd
                 Abort
             ${EndIf}
             pop $R0
+            ${If} $R1 == "WithLog"
+            ${AndIf} ${FileExists} "${STEP_LOG}"
+                ${If} ${Silent}
+                    push "both"
+                    Call ${un}PrintFromStepLog
+                ${Else}
+                    push "ToLog"
+                    Call ${un}PrintFromStepLog
+                ${EndIf}
+            ${EndIf}
             ${If} $R0 != "0"
+                # Always print on error
+                ${If} $R1 == "NoLog"
+                ${AndIf} ${FileExists} "${STEP_LOG}"
+                    Push "both"
+                    Call ${un}PrintFromStepLog
+                ${EndIf}
                 ${Print} "::error:: $R2"
                 MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
                         $R2 /SD IDIGNORE IDABORT abort IDRETRY retry
@@ -1244,11 +1286,14 @@ FunctionEnd
             retry:
                 ; Retry the nsExec command
             ${EndIf}
+            ${If} ${FileExists} "${STEP_LOG}"
+                Delete "${STEP_LOG}"
+            ${EndIf}
         ${LoopWhile} $R0 != "0"
     FunctionEnd
 !macroend
-!insertmacro AbortRetryNSExecWaitMacro ""
-!insertmacro AbortRetryNSExecWaitMacro "un."
+!insertmacro FunctionTemplates ""
+!insertmacro FunctionTemplates "un."
 
 !macro setInstdirPermissions
     # To address CVE-2022-26526.
