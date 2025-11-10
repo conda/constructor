@@ -1248,6 +1248,7 @@ FunctionEnd
         Pop $R2
         Pop $R3
         ${Do}
+            StrCpy $R3 '"$CMD_EXE" /D /C "$R3"'
             ${If} $R1 == "WithLog"
                 nsExec::ExecToLog $R3
             ${ElseIf} $R1 == "NoLog"
@@ -1498,19 +1499,22 @@ Section "Install"
     File {{ dist }}
 {%- endfor %}
 
-    SetDetailsPrint TextOnly
     ${Print} "Setting up the package cache..."
-    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs'
+    push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs ${CONDA_LOG_OPTION}'
     push 'Failed to extract packages'
-    push 'NoLog'
-    # We use NoLog here because TQDM progress bars are parsed as a single line in NSIS 3.08
-    # These can crash the installer if they get too long (a few packages is enough!)
+    push 'WithLog'
     call AbortRetryNSExecWait
-    SetDetailsPrint both
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
         ${Print} "Running pre_install scripts..."
-        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_install.bat"'
+        # Output into step log if silent so that the output is visible in the console
+        # and the logs. For GUI installers, there is no good way to have live output
+        # and output into logs.
+        ${If} ${Silent}
+            push '"$INSTDIR\pkgs\pre_install.bat" > "${STEP_LOG}" 2>&1'
+        ${Else}
+            push '"$INSTDIR\pkgs\pre_install.bat"'
+        ${EndIf}
         push "Failed to run pre_install"
         push 'WithLog'
         call AbortRetryNSExecWait
@@ -1571,7 +1575,14 @@ Section "Install"
     ${If} ${FileExists} "$INSTDIR\pkgs\post_install.bat"
         ${If} $Ana_PostInstall_State = ${BST_CHECKED}
             ${Print} "Running post install..."
-            push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\post_install.bat"'
+            # Output into step log if silent so that the output is visible in the console
+            # and the logs. For GUI installers, there is no good way to have live output
+            # and output into logs.
+            ${If} ${Silent}
+                push '"$INSTDIR\pkgs\post_install.bat" > "${STEP_LOG}" 2>&1"'
+            ${Else}
+                push '"$INSTDIR\pkgs\post_install.bat"'
+            ${EndIf}
             push "Failed to run post_install"
             push 'WithLog'
             call AbortRetryNSExecWait
@@ -1590,10 +1601,10 @@ Section "Install"
     ${If} $Ana_AddToPath_State = ${BST_CHECKED}
 {%-     if initialize_conda == 'condabin' %}
         ${Print} "Adding $INSTDIR\condabin to PATH..."
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addcondabinpath'
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addcondabinpath > "${STEP_LOG}" 2>&1'
 {%-     else %}
         ${Print} "Adding $INSTDIR\Scripts & Library\bin to PATH..."
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH} > "${STEP_LOG}" 2>&1'
 {%-     endif %}
         push 'Failed to add {{ NAME }} to PATH'
         push 'WithLog'
@@ -1641,9 +1652,16 @@ Section "Install"
     # Enable inheritance on all files inside $INSTDIR.
     # Use icacls because it is much faster than custom NSIS solutions.
     # We continue on error because icacls fails on broken links.
-    push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q'
+    # Output into step log if silent so that the output is visible in the console
+    # and the logs. For GUI installers, there is no good way to have live output
+    # and output into logs.
+    ${If} ${Silent}
+        push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q > "${STEP_LOG}" 2>&1"'
+    ${Else}
+        push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q'
+    ${EndIf}
     push 'Failed to enable inheritance for all files in the installation directory.'
-    push 'NoLog'
+    push 'WithLog'
     call AbortRetryNSExecWait
     ${Print} "Done!"
 SectionEnd
@@ -1752,7 +1770,14 @@ Section "Uninstall"
 {%- if uninstall_with_conda_exe %}
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
-        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        # Output into step log if silent so that the output is visible in the console
+        # and the logs. For GUI installers, there is no good way to have live output
+        # and output into logs.
+        ${If} ${Silent}
+            push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1'
+        ${Else}
+            push '"$INSTDIR\pkgs\pre_uninstall.bat"'
+        ${EndIf}
         push "Failed to run pre_uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
@@ -1810,7 +1835,11 @@ Section "Uninstall"
 {%- endfor %}
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
-        push '"$CMD_EXE" /D /C "$INSTDIR\pkgs\pre_uninstall.bat"'
+        ${If} ${Silent}
+            push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1'
+        ${Else}
+            push '"$INSTDIR\pkgs\pre_uninstall.bat"'
+        ${EndIf}
         push "Failed to run pre_uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
@@ -1826,7 +1855,11 @@ Section "Uninstall"
     # that DOSKEY (called by conda_hook.bat) is not a valid command.
     # While the operation still succeeds, this error is confusing.
     # Calling via cmd.exe fixes that.
-    push '"$CMD_EXE" /D /C "$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0'
+    ${If} ${Silent}
+        push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0 > "${STEP_LOG}" 2>&1'
+    ${Else}
+        push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0'
+    ${EndIf}
     push 'Failed to clean AutoRun'
     push 'WithLog'
     call un.AbortRetryNSExecWait
