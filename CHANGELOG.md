@@ -1,5 +1,17 @@
 [//]: # (current developments)
 
+## 2025-11-10   3.13.1:
+### Bug fixes
+
+* SH: Resolve malformed text displayed during installation. (#1104)
+
+### Contributors
+
+* @lrandersson
+* @pre-commit-ci[bot]
+
+
+
 ## 2025-11-03   3.13.0:
 ### Enhancements
 
