@@ -62,7 +62,15 @@ var /global StdOutHandleSet
         StrCpy $StdOutHandle $0
         StrCpy $StdOutHandleSet "1"
     ${EndIf}
-    FileWrite $StdOutHandle "${INPUT_TEXT}$\n"
+    # Only add newline if input text doesn't have it already
+    StrLen $2 "${INPUT_TEXT}"
+    IntOp $2 $2 - 1
+    StrCpy $2 "${INPUT_TEXT}" 1 $2
+    ${If} $2 == "$\n"
+      FileWrite $StdOutHandle "${INPUT_TEXT}"
+    ${Else}
+      FileWrite $StdOutHandle "${INPUT_TEXT}$\n"
+    ${EndIf}
   ${EndIf}
 !macroend
 
@@ -1205,9 +1213,9 @@ FunctionEnd
 !macro AbortRetryNSExecWaitMacro un
     Function ${un}AbortRetryNSExecWait
         # This function expects three arguments in the stack
-        # $1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
-        # $2: The message to show if an error occurred
-        # $3: The command to run, quoted
+        # $R1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
+        # $R2: The message to show if an error occurred
+        # $R3: The command to run, quoted
         # Note that the args need to be pushed to the stack in reverse order!
         # Search 'AbortRetryNSExecWait' in this script to see examples
         Pop $R1
