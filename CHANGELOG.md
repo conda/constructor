@@ -8,7 +8,6 @@
 ### Contributors
 
 * @lrandersson
-* @pre-commit-ci[bot]
 
 
 
