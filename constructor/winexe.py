@@ -225,16 +225,27 @@ def make_nsi(
 
     # From now on, the items added to variables will NOT be escaped
 
-    py_name, py_version, _ = filename_dist(dists[0]).rsplit("-", 2)
-    assert py_name == "python"
-    variables["pyver_components"] = py_version.split(".")
-
     # These are mostly booleans we use with if-checks
+    default_uninstall_name = "${NAME} ${VERSION}"
+    variables["has_python"] = False
+    for dist in dists:
+        py_name, py_version, _ = filename_dist(dist).rsplit("-", 2)
+        if py_name == "python":
+            variables["has_python"] = True
+            variables["pyver_components"] = py_version.split(".")
+            break
+
+    if variables["has_python"]:
+        variables["register_python"] = info.get("register_python", True)
+        variables["register_python_default"] = info.get("register_python_default", None)
+        default_uninstall_name += " (Python ${PYVERSION} ${ARCH})"
+    else:
+        variables["register_python"] = False
+        variables["register_python_default"] = None
+
     variables.update(ns_platform(info["_platform"]))
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
     variables["initialize_by_default"] = info.get("initialize_by_default", None)
-    variables["register_python"] = info.get("register_python", True)
-    variables["register_python_default"] = info.get("register_python_default", None)
     variables["check_path_length"] = info.get("check_path_length", False)
     variables["check_path_spaces"] = info.get("check_path_spaces", True)
     variables["keep_pkgs"] = info.get("keep_pkgs") or False
@@ -247,6 +258,7 @@ def make_nsi(
     variables["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     variables["has_license"] = bool(info.get("license_file"))
     variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
+    variables["needs_python_exe"] = info.get("_win_install_needs_python_exe", True)
 
     approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
@@ -262,9 +274,7 @@ def make_nsi(
     variables["SETUP_ENVS"] = setup_envs_commands(info, dir_path)
     variables["WRITE_CONDARC"] = list(add_condarc(info))
     variables["SIZE"] = approx_pkgs_size_kb
-    variables["UNINSTALL_NAME"] = info.get(
-        "uninstall_name", "${NAME} ${VERSION} (Python ${PYVERSION} ${ARCH})"
-    )
+    variables["UNINSTALL_NAME"] = info.get("uninstall_name", default_uninstall_name)
     variables["EXTRA_FILES"] = get_extra_files(extra_files, dir_path)
     variables["SCRIPT_ENV_VARIABLES"] = {
         key: win_str_esc(val) for key, val in info.get("script_env_variables", {}).items()

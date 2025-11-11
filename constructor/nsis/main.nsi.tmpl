@@ -102,10 +102,12 @@ ${Using:StrFunc} StrStr
 !define ARCH {{ arch }}
 !define PLATFORM {{ installer_platform }}
 !define CONSTRUCTOR_VERSION {{ constructor_version }}
+{%- if has_python %}
 !define PY_VER {{ pyver_components[:2] | join(".") }}
 !define PYVERSION_JUSTDIGITS {{ pyver_components | join("") }}
 !define PYVERSION {{ pyver_components | join(".") }}
 !define PYVERSION_MAJOR {{ pyver_components[0] }}
+{%- endif %}
 !define DEFAULT_PREFIX {{ default_prefix }}
 !define DEFAULT_PREFIX_DOMAIN_USER {{ default_prefix_domain_user }}
 !define DEFAULT_PREFIX_ALL_USERS {{ default_prefix_all_users }}
@@ -329,7 +331,9 @@ FunctionEnd
                 /InstallationType=AllUsers [default: JustMe]$\n\
                 /AddToPath=[0|1] [default: 0]$\n\
                 /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
+{%- if has_python %}
                 /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
+{%- endif %}
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
                 /NoScripts=[0|1] [default: 0]$\n\
                 /NoShortcuts=[0|1] [default: 0]$\n\
@@ -348,8 +352,13 @@ FunctionEnd
                 Install for all users, but don't add to PATH env var:$\n\
                     > $EXEFILE /InstallationType=AllUsers$\n\
                 $\n\
+{%- if has_python %}
                 Install for just me, add to PATH and register as system Python:$\n\
                     > $EXEFILE /RegisterPython=1 /AddToPath=1$\n\
+                $\n\
+{%- endif %}
+                Install for just me and add to PATH:$\n\
+                    > $EXEFILE /AddToPath=1$\n\
                 $\n\
                 Install for just me, with no registry modification (for CI):$\n\
                     > $EXEFILE /NoRegistry=1$\n\
@@ -374,6 +383,7 @@ FunctionEnd
     ${EndIf}
 
     ClearErrors
+{%- if has_python %}
     ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
     ${IfNot} ${Errors}
         ${If} $ARGV_RegisterPython = "1"
@@ -382,6 +392,7 @@ FunctionEnd
             StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
         ${EndIf}
     ${EndIf}
+{%- endif %}
 
     ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
@@ -1156,6 +1167,7 @@ Function OnDirectoryLeave
       UnicodePathTest::UnicodePathTest $INSTDIR
       Pop $R1
 
+{%- if has_python %}
       # Python 3 can be installed in a CP_ACP path until MKL is Unicode capable.
       # (mkl_rt.dll calls LoadLibraryA() to load mkl_intel_thread.dll)
       # Python 2 can only be installed to an ASCII path.
@@ -1173,6 +1185,7 @@ Function OnDirectoryLeave
           abort
 
       valid_path:
+{%- endif %}
 
     Push $R1
     ${IsWritable} $INSTDIR $R1
@@ -1303,6 +1316,50 @@ FunctionEnd
 !insertmacro FunctionTemplates ""
 !insertmacro FunctionTemplates "un."
 
+{%- set pathname = "$INSTDIR\\condabin" if initialize_conda == "condabin" else "$INSTDIR\\Scripts & Library\\bin" %}
+!macro AddRemovePath add_remove un
+{# python.exe is required if conda-standalone does not support the windows subcommand (<25.11.x) #}
+{%- if needs_python_exe %}
+    ${If} ${add_remove} == "add"
+{%-     if initialize_conda == 'condabin' %}
+        ${Print} "Adding {{ pathname }} PATH..."
+        StrCpy $R0 "addcondabinpath"
+{%-     else %}
+        ${Print} "Adding {{ pathname }} to PATH..."
+        StrCpy $R0 "addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}"
+{%- endif %}
+        StrCpy $R1 "Failed to add {{ NAME }} to PATH"
+    ${Else}
+        ${Print} "Running rmpath script..."
+        StrCpy $R0 "rmpath"
+        StrCpy $R1 "Failed to remove {{ NAME }} from PATH"
+    ${EndIf}
+    ${If} ${Silent}
+        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0 > "${STEP_LOG}" 2>&1'
+    ${Else}
+        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0'
+    ${EndIf}
+    push $R1
+    push 'WithLog'
+    call ${un}AbortRetryNSExecWait
+{%- else %}
+{%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
+    ${If} ${add_remove} == "add"
+        ${Print} "Adding {{ pathname }} to PATH..."
+        StrCpy $R0 "prepend"
+        StrCpy $R1 'Failed to add {{ NAME }} to PATH'
+    ${Else}
+        ${Print} "Removing {{ pathname }} from PATH..."
+        StrCpy $R0 "remove"
+        StrCpy $R1 'Failed to remove {{ NAME }} from PATH'
+    ${EndIf}
+    push '"$INSTDIR\_conda.exe" constructor windows path --$R0=user --prefix "$INSTDIR" {{ pathflag }} {{ CONDA_LOG_ARG }}'
+    push $R1
+    push 'WithLog'
+    call ${un}AbortRetryNSExecWait
+{%- endif %}
+!macroend
+
 !macro setInstdirPermissions
     # To address CVE-2022-26526.
     # Revoke the write permission on directory "$INSTDIR" for Users. Users are:
@@ -1400,9 +1457,11 @@ Section "Install"
     # for users even during an all-users installation.
     !insertmacro setInstdirPermissions
 
+{% if needs_python_exe %}
     SetOutPath "$INSTDIR\Lib"
     File "{{ NSIS_DIR }}\_nsis.py"
     File "{{ NSIS_DIR }}\_system_path.py"
+{% endif %}
 
 {%- if has_license %}
     SetOutPath "$INSTDIR"
@@ -1605,20 +1664,14 @@ Section "Install"
     ${EndIf}
 
 {% if initialize_conda %}
-    ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-{%-     if initialize_conda == 'condabin' %}
-        ${Print} "Adding $INSTDIR\condabin to PATH..."
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addcondabinpath > "${STEP_LOG}" 2>&1'
-{%-     else %}
-        ${Print} "Adding $INSTDIR\Scripts & Library\bin to PATH..."
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH} > "${STEP_LOG}" 2>&1'
-{%-     endif %}
-        push 'Failed to add {{ NAME }} to PATH'
-        push 'WithLog'
-        call AbortRetryNSExecWait
+    ${If} ${FileExists} "$INSTDIR\.nonadmin"
+        ${If} $Ana_AddToPath_State = ${BST_CHECKED}
+            !insertmacro AddRemovePath "add" ""
+        ${EndIf}
     ${EndIf}
 {%- endif %}
 
+{%- if has_python %}
     # Create registry entries saying this is the system Python
     # (for this version)
     !define PYREG "Software\Python\PythonCore\${PY_VER}"
@@ -1636,6 +1689,7 @@ Section "Install"
         WriteRegStr SHCTX "${PYREG}\PythonPath" \
             "" "$INSTDIR\Lib;$INSTDIR\DLLs"
     ${EndIf}
+{%- endif %}
 
     ${If} $ARGV_NoRegistry == "0"
         # Registry uninstall info
@@ -1672,21 +1726,6 @@ Section "Install"
     call AbortRetryNSExecWait
     ${Print} "Done!"
 SectionEnd
-
-!macro AbortRetryNSExecWaitLibNsisCmd cmd
-    SetDetailsPrint both
-    ${Print} "Running ${cmd} scripts..."
-    SetDetailsPrint listonly
-    ${If} ${Silent}
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
-    ${Else}
-        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" ${cmd}'
-    ${EndIf}
-    push "Failed to run ${cmd}"
-    push 'WithLog'
-    call un.AbortRetryNSExecWait
-    SetDetailsPrint both
-!macroend
 
 Section "Uninstall"
     ${LogSet} on
@@ -1763,7 +1802,7 @@ Section "Uninstall"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_NAME", "${NAME}").r0'
     StrCpy $0 ${VERSION}
     ${If} $INSTALLER_VERSION != ""
-	StrCpy $0 $INSTALLER_VERSION
+      StrCpy $0 $INSTALLER_VERSION
     ${EndIf}
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_VER", "$0").r0'
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_PLAT", "${PLATFORM}").r0'
@@ -1774,7 +1813,6 @@ Section "Uninstall"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0").r0'
     ${EndIf}
 
-{%- if uninstall_with_conda_exe %}
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre_uninstall scripts..."
         # Output into step log if silent so that the output is visible in the console
@@ -1789,8 +1827,11 @@ Section "Uninstall"
         push 'WithLog'
         call un.AbortRetryNSExecWait
     ${EndIf}
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
+    ${If} ${FileExists} "$INSTDIR\.nonadmin"
+        !insertmacro AddRemovePath "remove" "un."
+    ${EndIf}
 
+{%- if uninstall_with_conda_exe %}
     # Parse arguments
     StrCpy $R0 ""
 
@@ -1840,18 +1881,6 @@ Section "Uninstall"
     call un.AbortRetryNSExecWait
     SetDetailsPrint both
 {%- endfor %}
-    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
-        ${Print} "Running pre_uninstall scripts..."
-        ${If} ${Silent}
-            push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1'
-        ${Else}
-            push '"$INSTDIR\pkgs\pre_uninstall.bat"'
-        ${EndIf}
-        push "Failed to run pre_uninstall"
-        push 'WithLog'
-        call un.AbortRetryNSExecWait
-    ${EndIf}
-    !insertmacro AbortRetryNSExecWaitLibNsisCmd "rmpath"
 {%- if has_conda %}
     ${If} ${FileExists} "$INSTDIR\.nonadmin"
         StrCpy $R0 "user"
