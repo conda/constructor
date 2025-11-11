@@ -141,9 +141,6 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
         final_value = final_value.replace('"', '')
         # Warn about directories that do not exist.
         directories = final_value.split(';')
-        for directory in directories:
-            if '%' not in directory and not os.path.exists(directory):
-                print("WARNING: Old PATH entry '%s' does not exist\n" % (directory))
         reg.SetValueEx(key, path_env_var, 0, reg_type, final_value)
 
     finally:
