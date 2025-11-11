@@ -15,9 +15,11 @@ import argparse
 import json
 import logging
 import os
+import subprocess
 import sys
 from os.path import abspath, expanduser, isdir, join
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 
 from . import __version__
@@ -74,6 +76,17 @@ def get_output_filename(info):
         arch_name_map.get(arch, arch),
         ext,
     )
+
+
+def _conda_exe_supports_logging(conda_exe: str) -> bool:
+    """Test if the standalone binary supports the the --log-file argument.
+
+    Only available for conda-standalone.
+    """
+    with TemporaryDirectory() as tmpdir:
+        logfile = Path(tmpdir, "conda.log")
+        subprocess.run([conda_exe, "--version", f"--log-file={logfile}"])
+        return logfile.exists()
 
 
 def main_build(
@@ -256,6 +269,8 @@ def main_build(
         info["_ignore_condarcs_arg"] = "--no-rc"
     else:
         info["_ignore_condarcs_arg"] = ""
+
+    info["_conda_exe_supports_logging"] = _conda_exe_supports_logging(info["_conda_exe"])
 
     if "pkg" in itypes:
         if (domains := info.get("pkg_domains")) is not None:
