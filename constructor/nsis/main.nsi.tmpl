@@ -1381,6 +1381,7 @@ FunctionEnd
               "Unable to determine the defaults permissions of the installation directory. "\
               "Ensure that you have read access to $INSTDIR and icacls.exe is in your PATH."
           ${Print} $R1
+          MessageBox MB_OK|MB_ICONEXCLAMATION $R1 /SD IDOK
           Abort
         ${EndIf}
         StrCpy $0 ""
