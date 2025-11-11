@@ -1296,8 +1296,8 @@ FunctionEnd
                     Call ${un}PrintFromStepLog
                 ${EndIf}
                 ${Print} "::error:: $R2"
-                MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON3 \
-                        $R2 /SD IDIGNORE IDABORT abort IDRETRY retry
+                MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON1 \
+                        $R2 /SD IDABORT IDABORT abort IDRETRY retry
                 ; IDIGNORE: Continue anyway
                 StrCpy $R0 "0"
                 goto retry
@@ -1381,7 +1381,7 @@ FunctionEnd
               "Unable to determine the defaults permissions of the installation directory. "\
               "Ensure that you have read access to $INSTDIR and icacls.exe is in your PATH."
           ${Print} $R1
-          MessageBox MB_OK|MB_ICONEXCLAMATION $R1 /SD IDOK
+          MessageBox MB_ICONSTOP $R1
           Abort
         ${EndIf}
         StrCpy $0 ""
