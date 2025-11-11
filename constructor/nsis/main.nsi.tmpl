@@ -1251,6 +1251,10 @@ FunctionEnd
         Pop $R2
         Pop $R3
         ${Do}
+            # Execute command inside a subshell to catch issues with command execution.
+            # When binaries are executed with Exec or ExectToLog, only the output of these
+            # commands are logged. If they do not start successfully (e.g., if they don't exist),
+            # no error messages are returned. Using a subshell reveals these kinds of issues.
             StrCpy $R3 '"$CMD_EXE" /D /C "$R3"'
             ${If} $R1 == "WithLog"
                 nsExec::ExecToLog $R3
@@ -1854,10 +1858,6 @@ Section "Uninstall"
     ${Else}
         StrCpy $R0 "system"
     ${EndIf}
-    # When running conda.bat directly, there is a non-fatal error
-    # that DOSKEY (called by conda_hook.bat) is not a valid command.
-    # While the operation still succeeds, this error is confusing.
-    # Calling via cmd.exe fixes that.
     ${If} ${Silent}
         push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0 > "${STEP_LOG}" 2>&1'
     ${Else}
