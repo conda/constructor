@@ -1335,7 +1335,7 @@ FunctionEnd
         StrCpy $R1 "Failed to remove {{ NAME }} from PATH"
     ${EndIf}
     ${If} ${Silent}
-        push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0 > "${STEP_LOG}" 2>&1'
+        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0 > "${STEP_LOG}" 2>&1'
     ${Else}
         push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0'
     ${EndIf}
@@ -1718,7 +1718,7 @@ Section "Install"
     # and the logs. For GUI installers, there is no good way to have live output
     # and output into logs.
     ${If} ${Silent}
-        push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q > "${STEP_LOG}" 2>&1"'
+        push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q > "${STEP_LOG}" 2>&1'
     ${Else}
         push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q'
     ${EndIf}
