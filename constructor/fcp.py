@@ -234,11 +234,9 @@ def _solve_precs(
     conda_exe="conda.exe",
     extra_env=False,
     input_dir="",
+    base_needs_python=True,
 ):
-    # Add python to specs, since all installers need a python interpreter. In the future we'll
-    # probably want to add conda too.
-    # JRG: This only applies to the `base` environment; `extra_envs` are exempt
-    if not extra_env:
+    if not extra_env and base_needs_python:
         specs = (*specs, "python")
     if environment:
         logger.debug("specs: <from existing environment '%s'>", environment)
@@ -312,8 +310,8 @@ def _solve_precs(
     if python_prec:
         precs.remove(python_prec)
         precs.insert(0, python_prec)
-    elif not extra_env:
-        # the base environment must always have python; this has been addressed
+    elif not extra_env and base_needs_python:
+        # the base environment may require python; this has been addressed
         # at the beginning of _main() but we can still get here through the
         # environment_file option
         sys.exit("python MUST be part of the base environment")
@@ -392,6 +390,7 @@ def _main(
     extra_envs=None,
     check_path_spaces=True,
     input_dir="",
+    base_needs_python=True,
 ):
     precs = _solve_precs(
         name,
@@ -408,6 +407,7 @@ def _main(
         verbose=verbose,
         conda_exe=conda_exe,
         input_dir=input_dir,
+        base_needs_python=base_needs_python,
     )
     extra_envs = extra_envs or {}
     conda_in_base: PackageCacheRecord = next((prec for prec in precs if prec.name == "conda"), None)
@@ -496,6 +496,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     transmute_file_type = info.get("transmute_file_type", "")
     extra_envs = info.get("extra_envs", {})
     check_path_spaces = info.get("check_path_spaces", True)
+    base_needs_python = info.get("_win_install_needs_python_exe", False)
 
     if not channel_urls and not channels_remap and not (environment or environment_file):
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
@@ -548,6 +549,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             extra_envs,
             check_path_spaces,
             input_dir,
+            base_needs_python,
         )
 
     info["_all_pkg_records"] = pkg_records  # full PackageRecord objects

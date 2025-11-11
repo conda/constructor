@@ -15,6 +15,7 @@ import argparse
 import json
 import logging
 import os
+import subprocess
 import sys
 from os.path import abspath, expanduser, isdir, join
 from pathlib import Path
@@ -74,6 +75,18 @@ def get_output_filename(info):
         arch_name_map.get(arch, arch),
         ext,
     )
+
+
+def _win_install_needs_python_exe(conda_exe: str) -> bool:
+    results = subprocess.run(
+        [conda_exe, "constructor", "windows", "--help"],
+        capture_output=True,
+        check=False,
+    )
+    # Argparse uses return code 2 if a subcommand does not exist
+    # If the windows subcommand does not exist, python.exe is still
+    # required in the base environment.
+    return results.returncode == 2
 
 
 def main_build(
@@ -274,6 +287,9 @@ def main_build(
                 "enable_anywhere": "true",
                 "enable_currentUserHome": "true",
             }
+
+    if osname == "win":
+        info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(info["_conda_exe"])
 
     info["installer_type"] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
