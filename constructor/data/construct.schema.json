@@ -124,10 +124,16 @@
           "description": "Same as the global option, but for this env. See global option for notes about overrides.",
           "title": "Exclude"
         },
-        "frozen_file": {
+        "freeze_env": {
           "anyOf": [
             {
-              "additionalProperties": true,
+              "additionalProperties": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "propertyNames": {
+                "const": "conda"
+              },
               "type": "object"
             },
             {
@@ -135,8 +141,8 @@
             }
           ],
           "default": null,
-          "description": "Same as the global option, but for this environment.",
-          "title": "Frozen File"
+          "description": "Same as `freeze_base`, but for this conda environment.",
+          "title": "Freeze Env"
         },
         "menu_packages": {
           "anyOf": [
@@ -708,10 +714,16 @@
       "title": "Extra Files",
       "type": "array"
     },
-    "frozen_file": {
+    "freeze_base": {
       "anyOf": [
         {
-          "additionalProperties": true,
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "propertyNames": {
+            "const": "conda"
+          },
           "type": "object"
         },
         {
@@ -719,8 +731,8 @@
         }
       ],
       "default": null,
-      "description": "Protect the base environment with a `frozen` marker file. Requires conda 25.5.0 or newer. This setting can be:\n`dict`: If set, the dictionary will be output into a `frozen` marker file to protect the `base` environment. If not used, the `base` environment will not be protected. See CEP-22 for the specification of the `frozen` file.",
-      "title": "Frozen File"
+      "description": "Protects the conda base environment against modifications by supported package managers.\nSupported package managers:   - `conda`: Protects against conda modifications\nFor `conda`, the dictionary is written into the `frozen` marker file. See CEP-22 for the `frozen` marker file specification. For example:\n```\nfreeze_base:\n    conda:\n        message: \"This base environment is frozen and cannot be modified.\"\n```",
+      "title": "Freeze Base"
     },
     "header_image": {
       "anyOf": [

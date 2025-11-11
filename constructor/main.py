@@ -106,19 +106,20 @@ def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExe 
 
 
 # Validate frozen environments
-def validate_frozen_envs(info, exe_type, exe_version):
+def validate_frozen_envs(info, exe_type, exe_version) -> bool:
     """Validate frozen environments.
 
         Checks:
         - No conflicts between freeze_base/freeze_env and extra_files for same environment
-        - conda-standalone 25.5.x is not used (has known issues)
-        - Warns if conda-standalone < 25.5.0 (frozen files will be ignored)
-
-        Stores frozen environment info in `_frozen_markers` dict.
+        - Conda-standalone version if frozen environments exist
     """
-    def get_frozen_env_from_path(dest: str) -> str | None:
-        """Extract environment name from frozen marker destination path."""
-        parts = Path(dest).parts
+    def get_frozen_env(path) -> str | None:
+        """Extract environment name from frozen marker destination path.
+
+        Returns:
+            Environment name if frozen marker found in the path, otherwise None.
+        """
+        parts = Path(path).parts
         if parts == ("conda-meta", "frozen"):
             return "base"
         if len(parts) == 4 and parts[0] == "envs" and parts[-2:] == ("conda-meta", "frozen"):
@@ -126,46 +127,43 @@ def validate_frozen_envs(info, exe_type, exe_version):
         return None
 
     # Collect environments using freeze_base/freeze_env
-    frozen_envs = {}
-    if info.get("freeze_base"):
-        frozen_envs["base"] = {
-            "method": "freeze_base",
-            "config": info["freeze_base"],
-        }
+    frozen_envs = set()
+    if info.get("freeze_base", {}).get("conda") is not None:
+        frozen_envs.add("base")
     for env_name, env_config in info.get("extra_envs", {}).items():
-        if env_config.get("freeze_env"):
-            frozen_envs[env_name] = {
-                "method": "freeze_env",
-                "config": env_config["freeze_env"],
-            }
+        if env_config.get("freeze_env", {}).get("conda") is not None:
+            frozen_envs.add(env_name)
+
+    # Collect environments using extra_files frozen markers
+    frozen_envs_extra_files = set()
+    paths = []
+    for file in info.get("extra_files", ()):
+        if isinstance(file, dict):
+            paths.extend(file.values())
+        elif isinstance(file, str):
+            paths.append(file)
+
+    for path in paths:
+        if env := get_frozen_env(path):
+            frozen_envs_extra_files.add(env)
+
+    if not frozen_envs and not frozen_envs_extra_files:
+        return
 
     # Check for conflicts with extra_files
-    for file in info.get("extra_files", []):
-        if isinstance(file, dict):
-            for dest in file.values():
-                env = get_frozen_env_from_path(dest)
-                if env and env in frozen_envs:
-                    raise RuntimeError(
-                        f"Environment '{env}' has frozen markers from both "
-                        f"'{'freeze_base' if env == 'base' else 'freeze_env'}' and 'extra_files'. "
-                        "Please use only one method to provide frozen markers for each environment.")
-
-    info["_frozen_markers"] = frozen_envs
+    if common_envs := frozen_envs.intersection(frozen_envs_extra_files):
+        raise RuntimeError(
+            f"Frozen marker files found from both "
+            f"'freeze_base / freeze_env' and 'extra_files' for the following environments: {', '.join(sorted(common_envs))}")
 
     # Conda-standalone version validation
-    if frozen_envs and exe_type == StandaloneExe.CONDA:
-        # Block conda-standalone 25.5.x (has known issues with frozen environments)
-        if check_version(exe_version, min_version="25.5.0", max_version="25.7.0"):
-            sys.exit(
-                "Error: conda-standalone 25.5.x has known issues with frozen environments. "
-                "Please use conda-standalone 25.7.0 or newer."
-            )
-        # Warn for older versions (will ignore frozen files)
-        elif not check_version(exe_version, min_version="25.5.0"):
-            logger.warning(
-                "conda-standalone older than 25.5.0 does not support frozen environments. "
-                "Frozen marker files will be ignored at install time."
-            )
+    if (exe_type == StandaloneExe.CONDA
+        and check_version(exe_version, min_version="25.5.0", max_version="25.7.0")
+    ):
+        sys.exit(
+            "Error: conda-standalone 25.5.x has known issues with frozen environments. "
+            "Please use conda-standalone 25.7.0 or newer."
+        )
 
 def main_build(
     dir_path,

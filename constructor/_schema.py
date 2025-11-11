@@ -98,9 +98,8 @@ class ExtraEnv(BaseModel):
     Same as the global option, but for this env.
     See global option for notes about overrides.
     """
-    frozen_file: dict | None = None
-    "Same as the global option, but for this environment."
-
+    freeze_env: dict[Literal["conda"], dict] | None = None
+    "Same as `freeze_base`, but for this conda environment."
 
 class BuildOutputs(StrEnum):
     "Allowed keys in 'build_outputs' setting."
@@ -832,11 +831,21 @@ class ConstructorConfiguration(BaseModel):
     Use the standalone binary to perform the uninstallation on Windows.
     Requires conda-standalone 24.11.0 or newer.
     """
-    frozen_file: dict | None = None
+    freeze_base: dict[Literal["conda"], dict] | None = None
     """
-    Protect the base environment with a `frozen` marker file. Requires conda 25.5.0 or newer. This setting can be:
+    Protects the conda base environment against modifications by supported package managers.
 
-    `dict`: If set, the dictionary will be output into a `frozen` marker file to protect the `base` environment. If not used, the `base` environment will not be protected. See CEP-22 for the specification of the `frozen` file.
+    Supported package managers:
+        - `conda`: Protects against conda modifications
+
+    For `conda`, the dictionary is written into the `frozen` marker file.
+    See CEP-22 for the `frozen` marker file specification. For example:
+
+    ```
+    freeze_base:
+        conda:
+            message: "This base environment is frozen and cannot be modified."
+    ```
     """
 
 
