@@ -41,15 +41,13 @@ Unicode true
 var /global QuietMode # "0" = print normally, "1" = do not print
 var /global StdOutHandle
 var /global StdOutHandleSet
-# Print is macro because it makes the code easier to read.
+# Print and PrintToConsole are macros because it makes them easier to call.
 # However, that also means that registers must be handled with caution because
 # they will be overwritten in the macro. It is best to use $R* registers if
 # temporary variables need to be used.
-!define Print "!insertmacro PrintMacro"
-!macro PrintMacro INPUT_TEXT
-  ${IfNot} ${Silent}
-      DetailPrint "${INPUT_TEXT}"
-  ${ElseIf} ${Silent}
+!define PrintToConsole "!insertmacro PrintToConsoleMacro"
+!macro PrintToConsoleMacro INPUT_TEXT
+  ${If} ${Silent}
   ${AndIf} $QuietMode != "1"
     ${IfNot} $StdOutHandleSet == "1"
         System::Call 'kernel32::GetStdHandle(i -11)i.r0'
@@ -72,6 +70,12 @@ var /global StdOutHandleSet
       FileWrite $StdOutHandle "${INPUT_TEXT}$\n"
     ${EndIf}
   ${EndIf}
+!macroend
+
+!define Print "!insertmacro PrintMacro"
+!macro PrintMacro INPUT_TEXT
+  DetailPrint "${INPUT_TEXT}"
+  ${PrintToConsole} "${INPUT_TEXT}"
 !macroend
 
 !include "WinMessages.nsh"
@@ -1237,9 +1241,9 @@ FunctionEnd
         read_line:
             FileRead $R1 $R2
             IfErrors close_file
-            ${If} $R0 == "ToScreen"
+            ${If} $R0 == "ToConsole"
             ${OrIf} $R0 == "both"
-                ${Print} "$R2"
+                ${PrintToConsole} "$R2"
             ${EndIf}
             ${If} $R0 == "ToLog"
             ${OrIf} $R0 == "both"
