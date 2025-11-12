@@ -104,7 +104,7 @@ def write_pyproject_toml(tmp_dir, info):
         "project_name": name,
         "bundle": bundle,
         "version": version,
-        "license": get_license(),
+        "license": get_license(info),
         "app": {
             app_name: {
                 "formal_name": f"{info['name']} {info['version']}",
