@@ -166,6 +166,8 @@ def _run_installer_exe(
         _check_installer_log(install_dir)
     return process
 
+def _run_uninstaller_windows():
+    print("TODO")
 
 def _run_uninstaller_exe(
     install_dir: Path,
