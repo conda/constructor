@@ -133,6 +133,11 @@ def create(info, verbose=False):
     copy_conda_exe(external_dir, "_conda.exe", info["_conda_exe"])
 
     briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
+    if not briefcase.exists():
+        raise FileNotFoundError(
+            f"Dependency 'briefcase' does not seem installed."
+            f"Tried: {briefcase}"
+        )
     logger.info("Building installer")
     run(
         [briefcase, "package"] + (["-v"] if verbose else []),
