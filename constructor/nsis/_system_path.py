@@ -11,28 +11,10 @@ __all__ = ['remove_from_system_path', 'add_to_system_path',
 import ctypes
 import os
 import re
-import sys
 from ctypes import wintypes
 from os import path
 
-if sys.version_info[0] >= 3:
-    import winreg as reg
-else:
-    import _winreg as reg
-
-# If pythonw is being run, there may be no write function
-if sys.stdout and sys.stdout.write:
-    out = sys.stdout.write
-    err = sys.stderr.write
-else:
-    OutputDebugString = ctypes.windll.kernel32.OutputDebugStringW
-    OutputDebugString.argtypes = [ctypes.c_wchar_p]
-
-    def out(x):
-        OutputDebugString('_nsis.py: ' + x)
-
-    def err(x):
-        OutputDebugString('_nsis.py: Error: ' + x)
+import winreg as reg
 
 HWND_BROADCAST = 0xffff
 WM_SETTINGCHANGE = 0x001A
@@ -159,9 +141,6 @@ def add_to_system_path(paths, allusers=True, path_env_var='PATH'):
         final_value = final_value.replace('"', '')
         # Warn about directories that do not exist.
         directories = final_value.split(';')
-        for directory in directories:
-            if '%' not in directory and not os.path.exists(directory):
-                out("WARNING: Old PATH entry '%s' does not exist\n" % (directory))
         reg.SetValueEx(key, path_env_var, 0, reg_type, final_value)
 
     finally:

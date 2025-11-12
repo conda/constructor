@@ -35,24 +35,7 @@ def gui_excepthook(exctype, value, tb):
 
 sys.excepthook = gui_excepthook
 
-# If pythonw is being run, there may be no write function
-if sys.stdout and sys.stdout.write:
-    out = sys.stdout.write
-    err = sys.stderr.write
-else:
-    import ctypes
-    OutputDebugString = ctypes.windll.kernel32.OutputDebugStringW
-    OutputDebugString.argtypes = [ctypes.c_wchar_p]
-
-    def out(x):
-        OutputDebugString('_nsis.py: ' + x)
-
-    def err(x):
-        OutputDebugString('_nsis.py: Error: ' + x)
-
-
 allusers = (not exists(join(ROOT_PREFIX, '.nonadmin')))
-# out('allusers is %s\n' % allusers)
 
 # This must be the same as conda's binpath_from_arg() in conda/cli/activate.py
 PATH_SUFFIXES = ('',
@@ -96,7 +79,7 @@ def add_to_path(pyversion, arch):
     except IOError:
         old_prefixes = []
     for prefix in old_prefixes:
-        out('Removing old installation at %s from PATH (if any entries get found)\n' % (prefix))
+        print('Removing old installation at %s from PATH (if any entries get found)\n' % (prefix))
         remove_from_path(prefix)
 
     # add Anaconda to the path
