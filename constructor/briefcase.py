@@ -86,6 +86,13 @@ def get_bundle_app_name(info, name):
 
     return bundle, app_name
 
+def get_license(info):
+    """ Retrieve the specified license as a dict or return a placeholder if not set. """
+
+    if "license_file" in info:
+        return {"file": info["license_file"]}
+    # We cannot return an empty string because that results in an exception on the briefcase side.
+    return {"text": "TODO"}
 
 # Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
 # template allows us to avoid escaping strings everywhere.
@@ -97,7 +104,7 @@ def write_pyproject_toml(tmp_dir, info):
         "project_name": name,
         "bundle": bundle,
         "version": version,
-        "license": ({"file": info["license_file"]} if "license_file" in info else {"text": ""}),
+        "license": get_license(),
         "app": {
             app_name: {
                 "formal_name": f"{info['name']} {info['version']}",
@@ -135,7 +142,7 @@ def create(info, verbose=False):
     briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
     if not briefcase.exists():
         raise FileNotFoundError(
-            f"Dependency 'briefcase' does not seem installed."
+            f"Dependency 'briefcase' does not seem to be installed.\n"
             f"Tried: {briefcase}"
         )
     logger.info("Building installer")

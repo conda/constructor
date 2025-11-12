@@ -44,6 +44,7 @@ pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
 ON_CI = bool(os.environ.get("CI")) and os.environ.get("CI") != "0"
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
+CONSTRUCTOR_VERBOSE = os.getenv.get("CONSTRUCTOR_VERBOSE")
 CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 if CONDA_EXE_VERSION is not None:
     CONDA_EXE_VERSION = Version(CONDA_EXE_VERSION)
@@ -369,7 +370,7 @@ def create_installer(
     ]
     # This flag will (if enabled) create a lot of output upon test failures for .exe-installers.
     # If debugging generated NSIS templates, it can be worth to enable.
-    if os.getenv("CONSTRUCTOR_VERBOSE"):
+    if CONSTRUCTOR_VERBOSE:
         cmd.insert(2, "-v")
     if conda_exe:
         cmd.extend(["--conda-exe", conda_exe])
@@ -489,7 +490,14 @@ def test_example_extra_envs(tmp_path, request):
 def test_example_extra_files(tmp_path, request):
     input_path = _example_path("extra_files")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_sentinels=CONSTRUCTOR_VERBOSE,
+            check_subprocess=CONSTRUCTOR_VERBOSE
+        )
 
 
 def test_example_mirrored_channels(tmp_path, request):

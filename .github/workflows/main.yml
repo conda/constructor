@@ -135,6 +135,18 @@ jobs:
         run: conda list
       - name: conda config
         run: conda config --show-sources
+
+      - name: Checkout Briefcase (pinned)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: beeware/briefcase
+          ref: efb0e08c2a9ce72dcebd0a62c12f5662fd5eb0e0 # this is a commit with latest necessary changes on the main branch
+          path: briefcase
+          fetch-depth: 1
+
+      - name: Install Briefcase (editable)
+        run: |
+          pip install -e briefcase
       - name: Run unit tests
         run: |
           pytest -vv --cov=constructor --cov-branch tests/ -m "not examples"
