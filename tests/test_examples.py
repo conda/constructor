@@ -361,13 +361,16 @@ def create_installer(
     cmd = [
         *COV_CMD,
         "constructor",
-        "-v",
         str(input_dir),
         "--output-dir",
         str(output_dir),
         "--config-filename",
         config_filename,
     ]
+    # This flag will (if enabled) create a lot of output upon test failures for .exe-installers.
+    # If debugging generated NSIS templates, it can be worth to enable.
+    if os.getenv("CONSTRUCTOR_VERBOSE"):
+        cmd.insert(2, "-v")
     if conda_exe:
         cmd.extend(["--conda-exe", conda_exe])
     if debug:
