@@ -1606,20 +1606,9 @@ Section "Install"
     ${EndIf}
 
     !if ${INIT_CONDA_OPTION} == 1
-        # For consistency with other code, only for "Just Me" installation
         ${If} ${FileExists} "$INSTDIR\.nonadmin"
             ${If} $INIT_CONDA = 1
                 !insertmacro AddRemovePath "add" ""
-                ${If} "${INIT_CONDA_MODE}" == "condabin"
-                    ${Print} "Adding $INSTDIR\condabin to PATH..."
-                    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addcondabinpath'
-                ${Else}
-                    ${Print} "Adding $INSTDIR\Scripts & Library\bin to PATH..."
-                    push '"$INSTDIR\pythonw.exe" -E -s "$INSTDIR\Lib\_nsis.py" addpath ${PYVERSION} ${NAME} ${VERSION} ${ARCH}'
-                ${EndIf}
-                push 'Failed to add ${NAME} to PATH'
-                push 'WithLog'
-                call AbortRetryNSExecWait
             ${EndIf}
         ${EndIf}
     !endif
