@@ -310,13 +310,13 @@ FunctionEnd
             -------$\n\
             $\n\
                 /InstallationType=AllUsers [default: JustMe]$\n\
-{% if initialize_conda %}
+{%- if initialize_conda %}
                 /AddToPath=[0|1] [default: 0]$\n\
-{% endif %}
+{%- endif %}
                 /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
-{% if has_python and register_python %}
+{%- if has_python and register_python %}
                 /RegisterPython=[0|1] [default: 0]$\n\
-{% endif %}
+{%- endif %}
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
                 /NoScripts=[0|1] [default: 0]$\n\
                 /NoShortcuts=[0|1] [default: 0]$\n\
@@ -340,11 +340,11 @@ FunctionEnd
                     > $EXEFILE /RegisterPython=1$\n\
                 $\n\
 {%- endif %}
-{% if initialize_conda %}
+{%- if initialize_conda %}
                 Install for just me and add to PATH:$\n\
                     > $EXEFILE /AddToPath=1$\n\
                 $\n\
-{% endif %}
+{%- endif %}
                 Install for just me, with no registry modification (for CI):$\n\
                     > $EXEFILE /NoRegistry=1$\n\
                 $\n\
