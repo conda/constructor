@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ctypes
 import getpass
 import json
 import os
@@ -14,7 +15,6 @@ from functools import cache
 from pathlib import Path
 from plistlib import load as plist_load
 from typing import TYPE_CHECKING
-import ctypes
 
 import pytest
 from conda.base.context import context
@@ -168,6 +168,7 @@ def _run_installer_exe(
         _check_installer_log(install_dir)
     return process
 
+
 def _run_uninstaller_exe(
     install_dir: Path,
     timeout: int = 420,
@@ -286,22 +287,24 @@ def _sentinel_file_checks(example_path, install_dir):
                 f"{install_dir} contents:\n" + "\n".join(sorted(map(str, install_dir.iterdir())))
             )
 
+
 def is_admin() -> bool:
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
     except Exception:
         return False
 
+
 def calculate_msi_install_path(installer: Path) -> Path:
-    """ This is a temporary solution for now since we cannot choose the install location ourselves.
-        Installers are named <name>-<version>-Windows-x86_64.msi.
+    """This is a temporary solution for now since we cannot choose the install location ourselves.
+    Installers are named <name>-<version>-Windows-x86_64.msi.
     """
-    dir_name = installer.name.replace('-Windows-x86_64.msi', '').replace('-', ' ')
+    dir_name = installer.name.replace("-Windows-x86_64.msi", "").replace("-", " ")
     if is_admin():
-        root_dir = Path(os.environ.get('PROGRAMFILES') or r"C:\Program Files")
+        root_dir = Path(os.environ.get("PROGRAMFILES") or r"C:\Program Files")
     else:
-        local_dir = os.environ.get('LOCALAPPDATA') or str(Path.home() / r"AppData\Local")
-        root_dir = Path(local_dir) / 'Programs'
+        local_dir = os.environ.get("LOCALAPPDATA") or str(Path.home() / r"AppData\Local")
+        root_dir = Path(local_dir) / "Programs"
     return Path(root_dir) / dir_name
 
 
@@ -313,9 +316,7 @@ def _run_installer_msi(
     check=True,
     options: list | None = None,
 ):
-    """
-    TODO
-    """
+    """Runs specified MSI Installer via command line in silent mode. This is work in progress."""
     if not sys.platform.startswith("win"):
         raise ValueError("Can only run .msi installers on Windows")
     options = options or []
@@ -327,19 +328,20 @@ def _run_installer_msi(
         "/qn",
     ]
 
-    log_path = Path(os.environ.get('TEMP')) / (install_dir.name + ".log")
+    log_path = Path(os.environ.get("TEMP")) / (install_dir.name + ".log")
     cmd.extend(["/L*V", str(log_path)])
     process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
     if check:
-        print("post install checks for MSI Installers not yet implemented")
+        print("A check for MSI Installers not yet implemented")
     return process
 
-def _run_uninstaller_msi(installer: Path,
+
+def _run_uninstaller_msi(
+    installer: Path,
     install_dir: Path,
     timeout: int = 420,
     check: bool = True,
 ) -> subprocess.CompletedProcess | None:
-
     cmd = [
         "msiexec.exe",
         "/x",
@@ -353,6 +355,7 @@ def _run_uninstaller_msi(installer: Path,
         pass
 
     return process
+
 
 def _run_installer(
     example_path: Path,
@@ -417,7 +420,7 @@ def _run_installer(
         _sentinel_file_checks(example_path, install_dir)
     if uninstall:
         if installer.suffix == ".msi":
-            if request: #  and ON_CI
+            if request:  #  and ON_CI
                 # We always need to do this currently since uninstall doesnt work fully
                 request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
             _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess)
@@ -442,9 +445,7 @@ def create_installer(
 
     output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        *COV_CMD,
-        "constructor"]
+    cmd = [*COV_CMD, "constructor"]
     # This flag will (if enabled) create a lot of output upon test failures for .exe-installers.
     # If debugging generated NSIS templates, it can be worth to enable.
     if CONSTRUCTOR_VERBOSE:
@@ -478,7 +479,7 @@ def create_installer(
             install_dir = Path("~").expanduser() / calculate_install_dir(
                 input_dir / config_filename
             )
-        elif installer.suffix == '.msi':
+        elif installer.suffix == ".msi":
             install_dir = calculate_msi_install_path(installer)
         else:
             install_dir = (
@@ -573,7 +574,11 @@ def test_example_extra_envs(tmp_path, request):
 
         if sys.platform.startswith("win"):
             if installer.suffix == ".msi":
-                _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess)
+                if request:
+                    request.addfinalizer(
+                        lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
+                    )
+                _run_uninstaller_msi(installer, install_dir)
             else:
                 _run_uninstaller_exe(install_dir=install_dir)
 
@@ -587,7 +592,7 @@ def test_example_extra_files(tmp_path, request):
             install_dir,
             request=request,
             check_sentinels=CONSTRUCTOR_VERBOSE,
-            check_subprocess=CONSTRUCTOR_VERBOSE
+            check_subprocess=CONSTRUCTOR_VERBOSE,
         )
 
 
@@ -662,8 +667,12 @@ def test_example_miniforge(tmp_path, request, example):
                     raise AssertionError("Could not find Start Menu folder for miniforge")
                 _run_uninstaller_exe(install_dir)
                 assert not list(start_menu_dir.glob("Miniforge*.lnk"))
-            elif installer.suffix == '.msi':
+            elif installer.suffix == ".msi":
                 # TODO: Start menus
+                if request:
+                    request.addfinalizer(
+                        lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
+                    )
                 _run_uninstaller_msi(installer, install_dir)
                 raise Exception("Test needs to be implemented")
 
@@ -828,7 +837,11 @@ def test_example_shortcuts(tmp_path, request):
                     break
             else:
                 raise AssertionError("No shortcuts found!")
-            if installer.suffix == '.msi':
+            if installer.suffix == ".msi":
+                if request:
+                    request.addfinalizer(
+                        lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
+                    )
                 _run_uninstaller_msi(installer, install_dir)
             else:
                 _run_uninstaller_exe(install_dir)
@@ -973,8 +986,11 @@ def test_example_from_explicit(tmp_path, request):
 
 
 def test_register_envs(tmp_path, request):
+    """Verify that 'register_envs: False' results in the environment not being registered."""
     input_path = _example_path("register_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".msi":
+            raise Exception("Test for 'register_envs' not yet implemented for MSI")
         _run_installer(input_path, installer, install_dir, request=request)
         environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
         assert str(install_dir) not in environments_txt
@@ -1035,6 +1051,7 @@ def test_cross_osx_building(tmp_path):
     )
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
 def test_cross_build_example(tmp_path, platform_conda_exe):
     platform, conda_exe = platform_conda_exe
     input_path = _example_path("virtual_specs_ok")
@@ -1050,6 +1067,7 @@ def test_cross_build_example(tmp_path, platform_conda_exe):
 
 
 def test_virtual_specs_failed(tmp_path, request):
+    """Verify that virtual packages listed via 'virtual_specs' are satisfied."""
     input_path = _example_path("virtual_specs_failed")
     for installer, install_dir in create_installer(input_path, tmp_path):
         process = _run_installer(
@@ -1065,6 +1083,8 @@ def test_virtual_specs_failed(tmp_path, request):
             with pytest.raises(AssertionError, match="Failed to check virtual specs"):
                 _check_installer_log(install_dir)
             continue
+        elif installer.suffix == ".msi":
+            raise Exception("Test for 'virtual_specs' not yet implemented for MSI")
         elif installer.suffix == ".pkg":
             if not ON_CI:
                 continue
