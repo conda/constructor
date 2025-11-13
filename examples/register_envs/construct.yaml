@@ -2,7 +2,7 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: RegisterEnvs
-version: X
+version: 1.0.0
 installer_type: all
 channels:
   - http://repo.anaconda.com/pkgs/main/

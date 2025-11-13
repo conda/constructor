@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=../../constructor/data/construct.schema.json
 "$schema": "../../constructor/data/construct.schema.json"
 name: Existing
-version: X
+version: 1.0.0
 installer_type: all
 environment: {{ os.environ.get("CONSTRUCTOR_TEST_EXISTING_ENV", os.environ["CONDA_PREFIX"]) }}
 channels:
