@@ -18,7 +18,7 @@ dependencies = [
     "jinja2",
     "jsonschema >=4",
     "tomli-w >=1.2.0",
-    "breifcase"
+    "briefcase"
 ]
 
 [project.optional-dependencies]
