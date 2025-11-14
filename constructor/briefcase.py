@@ -4,6 +4,7 @@ Logic to build installers using Briefcase.
 
 import logging
 import re
+import sys
 import shutil
 import sysconfig
 import tempfile
@@ -22,8 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_name_version(info):
-    name = info["name"]
-    if not name:
+    if not (name := info.get("name")):
         raise ValueError("Name is empty")
 
     # Briefcase requires version numbers to be in the canonical Python format, and some
@@ -124,6 +124,9 @@ def write_pyproject_toml(tmp_dir, info):
 
 
 def create(info, verbose=False):
+    if sys.platform != 'win32':
+        raise Exception(f"Invalid platform '{sys.platform}'. Only Windows is supported.")
+
     tmp_dir = Path(tempfile.mkdtemp())
     write_pyproject_toml(tmp_dir, info)
 
