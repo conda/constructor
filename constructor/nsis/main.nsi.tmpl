@@ -91,7 +91,7 @@ ${Using:StrFunc} StrStr
 !define PRE_INSTALL_DESC              {{ pre_install_desc }}
 !define POST_INSTALL_DESC             {{ post_install_desc }}
 !define ENABLE_SHORTCUTS              {{ enable_shortcuts }}
-!define REGISTER_PYTHON_OPTION        {{ '1' if register_python else '0' }}
+!define REGISTER_PYTHON_OPTION        {{ '1' if register_python and has_python else '0' }}
 !define REGISTER_PYTHON_DEFAULT_VALUE {{ '1' if register_python_default else '0' }}
 !define INIT_CONDA_OPTION             {{ '1' if initialize_conda else '0' }}
 !define INIT_CONDA_MODE               "{{ 'condabin' if initialize_conda == 'condabin' else 'classic' }}"
@@ -370,7 +370,6 @@ FunctionEnd
 
     # Default: don't register Python
     StrCpy $REG_PY 0
-
     !if ${REGISTER_PYTHON_OPTION} == 1
         ClearErrors
         ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
