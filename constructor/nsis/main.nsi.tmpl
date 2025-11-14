@@ -367,8 +367,12 @@ FunctionEnd
         ${EndIf}
     ${EndIf}
 
-    ClearErrors
+
+    # Default: don't register Python
+    StrCpy $REG_PY 0
+
     !if ${REGISTER_PYTHON_OPTION} == 1
+        ClearErrors
         ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
         ${IfNot} ${Errors}
             ${If} $ARGV_RegisterPython == "1"
@@ -377,8 +381,6 @@ FunctionEnd
                 StrCpy $REG_PY 0
             ${EndIf}
         ${EndIf}
-    !else
-        StrCpy $REG_PY 0
     !endif
 
     ClearErrors
