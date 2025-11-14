@@ -1,7 +1,9 @@
 ### Enhancements
 
 * EXE: Improve handling of options `initialize_conda`, `register_python` with their corresponding default values. The behavior of these options
-  with respect to `initialize_conda_default` and `register_python_default` is now consistent with `.sh` and `.pkg` installers. (#1003, #1004 via #1105)
+  with respect to `initialize_by_default` and `register_python_default` is now consistent with `.sh` and `.pkg` installers.
+  The options `initialize_by_default` and `register_python_default` only applies for interactive installations.
+  Note that when installing via the command-line, the corresponding options `AddToPath` and `RegisterPython` are by default set to `0`. (#1003, #1004 via #1105)
 
 ### Bug fixes
 
