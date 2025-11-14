@@ -14,8 +14,6 @@ Var mui_AnaCustomOptions.ClearPkgCache
 Var mui_AnaCustomOptions.CreateShortcuts
 
 # These are the checkbox states, to be used by the installer
-Var Ana_AddToPath_State
-Var Ana_RegisterSystemPython_State
 Var Ana_PostInstall_State
 Var Ana_PreInstall_State
 Var Ana_ClearPkgCache_State
@@ -28,9 +26,18 @@ Var Ana_PostInstall_Label
 Var Ana_PreInstall_Label
 
 Function mui_AnaCustomOptions_InitDefaults
-    # Initialize defaults
-    ${If} $Ana_AddToPath_State == ""
-        StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
+    # AddToPath / conda init default
+    !if ${INIT_CONDA_OPTION} == 1
+        # Ensure we initialize from compile-time default value
+        StrCpy $INIT_CONDA ${INIT_CONDA_DEFAULT_VALUE}
+    !else
+        StrCpy $INIT_CONDA 0
+    !endif
+
+    # Register Python default
+    !if ${REGISTER_PYTHON_OPTION} == 1
+        # Ensure we initialize from compile-time default value
+        StrCpy $REG_PY ${REGISTER_PYTHON_DEFAULT_VALUE}
         # Default whether to register as system python as:
         #   Enabled - if no system python is registered, OR
         #             a system python which does not exist is registered.
@@ -38,11 +45,13 @@ Function mui_AnaCustomOptions_InitDefaults
         ReadRegStr $2 SHCTX "Software\Python\PythonCore\${PY_VER}\InstallPath" ""
         ${If} "$2" != ""
         ${AndIf} ${FileExists} "$2\Python.exe"
-            StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
-        ${Else}
-            StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
+            StrCpy $REG_PY 0
         ${EndIf}
-    ${EndIf}
+    !else
+        StrCpy $REG_PY 0
+    !endif
+
+    # Shortcuts defaults
     ${If} $Ana_CreateShortcuts_State == ""
         ${If} "${ENABLE_SHORTCUTS}" == "yes"
             StrCpy $Ana_CreateShortcuts_State ${BST_CHECKED}
@@ -57,7 +66,7 @@ FunctionEnd
 
 Function mui_AnaCustomOptions_Show
     ; Enforce that the defaults were initialized
-    ${If} $Ana_AddToPath_State == ""
+    ${If} $INIT_CONDA == ""
         Abort
     ${EndIf}
 
@@ -84,7 +93,7 @@ Function mui_AnaCustomOptions_Show
         ${NSD_OnClick} $mui_AnaCustomOptions.CreateShortcuts CreateShortcuts_OnClick
     ${EndIf}
 
-    ${If} "${SHOW_ADD_TO_PATH}" != "no"
+    !if ${INIT_CONDA_OPTION} == 1
         # AddToPath is only an option for JustMe installations; it is disabled for AllUsers
         # installations. (Addresses CVE-2022-26526)
         ${If} $InstMode = ${JUST_ME}
@@ -92,9 +101,18 @@ Function mui_AnaCustomOptions_Show
                 environment variable"
             IntOp $5 $5 + 11
             Pop $mui_AnaCustomOptions.AddToPath
-            ${NSD_SetState} $mui_AnaCustomOptions.AddToPath $Ana_AddToPath_State
+
+            # Set state of check-box
+            ${If} $INIT_CONDA == 1
+                ${NSD_Check} $mui_AnaCustomOptions.AddToPath
+            ${Else}
+                ${NSD_Uncheck} $mui_AnaCustomOptions.AddToPath
+            ${EndIf}
+
             ${NSD_OnClick} $mui_AnaCustomOptions.AddToPath AddToPath_OnClick
-            ${If} "${SHOW_ADD_TO_PATH}" == "condabin"
+
+            # Account for the conda mode
+            ${If} "${INIT_CONDA_MODE}" == "condabin"
                 ${NSD_CreateLabel} 5% "$5u" 90% 20u \
                     "Adds condabin/, which only contains the 'conda' executables, to PATH. \
                     Does not require special shortcuts but activation needs \
@@ -107,26 +125,54 @@ Function mui_AnaCustomOptions_Show
             ${EndIf}
             IntOp $5 $5 + 20
             Pop $Ana_AddToPath_Label
-        ${EndIf}
-    ${EndIf}
 
-    ${If} "${SHOW_REGISTER_PYTHON}" == "yes"
+            # Color the label if needed; even if the user has not interacted with the checkbox yet
+            ${If} $INIT_CONDA = 1
+                ${If} "${INIT_CONDA_MODE}" == "classic"
+                    SetCtlColors $Ana_AddToPath_Label ff0000 transparent
+                ${Else}
+                    # Here INIT_CONDA_MODE equals condabin
+                    SetCtlColors $Ana_AddToPath_Label 000000 transparent
+                ${EndIf}
+            ${Else}
+                SetCtlColors $Ana_AddToPath_Label 000000 transparent
+            ${EndIf}
+        ${EndIf}
+    !endif
+
+    !if ${REGISTER_PYTHON_OPTION} == 1
         ${If} $InstMode = ${JUST_ME}
             StrCpy $1 "my default"
         ${Else}
             StrCpy $1 "the system"
         ${EndIf}
+
         ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "&Register ${NAME} as $1 Python ${PY_VER}"
         IntOp $5 $5 + 11
         Pop $mui_AnaCustomOptions.RegisterSystemPython
-        ${NSD_SetState} $mui_AnaCustomOptions.RegisterSystemPython $Ana_RegisterSystemPython_State
+
+        # Set state of check-box
+        ${If} $REG_PY == 1
+            ${NSD_Check} $mui_AnaCustomOptions.RegisterSystemPython
+        ${Else}
+            ${NSD_Uncheck} $mui_AnaCustomOptions.RegisterSystemPython
+        ${EndIf}
+
         ${NSD_OnClick} $mui_AnaCustomOptions.RegisterSystemPython RegisterSystemPython_OnClick
+
         ${NSD_CreateLabel} 5% "$5u" 90% 20u \
             "Allows other programs, such as VSCode, PyCharm, etc. to automatically \
             detect ${NAME} as the primary Python ${PY_VER} on the system."
         IntOp $5 $5 + 20
         Pop $Ana_RegisterSystemPython_Label
-    ${EndIf}
+
+        # Color the label if needed; even if the user has not interacted with the checkbox yet
+        ${If} $REG_PY = 1
+            SetCtlColors $Ana_RegisterSystemPython_Label ff0000 transparent
+        ${Else}
+            SetCtlColors $Ana_RegisterSystemPython_Label 000000 transparent
+        ${EndIf}
+    !endif
 
 
     ${NSD_CreateCheckbox} 0 "$5u" 100% 11u "Clear the package cache upon completion"
@@ -167,15 +213,22 @@ FunctionEnd
 Function AddToPath_OnClick
     Pop $0
 
-    ShowWindow $Ana_AddToPath_Label ${SW_HIDE}
-    ${NSD_GetState} $0 $Ana_AddToPath_State
-    ${If} $Ana_AddToPath_State == ${BST_UNCHECKED}
+    # Sync UI with variable
+    ${NSD_GetState} $0 $1
+    ${If} $1 == ${BST_CHECKED}
+        StrCpy $INIT_CONDA 1
     ${Else}
-        ${If} "${SHOW_ADD_TO_PATH}" == "condabin"
-            SetCtlColors $Ana_AddToPath_Label 000000 transparent
-        ${Else}
+        StrCpy $INIT_CONDA 0
+    ${EndIf}
+
+    ShowWindow $Ana_AddToPath_Label ${SW_HIDE}
+    # Only color it red if it's classic
+    ${If} $INIT_CONDA == 1
+        ${If} "${INIT_CONDA_MODE}" == "classic"
             SetCtlColors $Ana_AddToPath_Label ff0000 transparent
         ${EndIf}
+    ${Else}
+        SetCtlColors $Ana_AddToPath_Label 000000 transparent
     ${EndIf}
     ShowWindow $Ana_AddToPath_Label ${SW_SHOW}
 FunctionEnd
@@ -183,9 +236,16 @@ FunctionEnd
 Function RegisterSystemPython_OnClick
     Pop $0
 
+    # Sync UI with variable
+    ${NSD_GetState} $0 $1
+    ${If} $1 == ${BST_CHECKED}
+        StrCpy $REG_PY 1
+    ${Else}
+        StrCpy $REG_PY 0
+    ${EndIf}
+
     ShowWindow $Ana_RegisterSystemPython_Label ${SW_HIDE}
-    ${NSD_GetState} $0 $Ana_RegisterSystemPython_State
-    ${If} $Ana_RegisterSystemPython_State == ${BST_UNCHECKED}
+    ${If} $REG_PY == 1
         SetCtlColors $Ana_RegisterSystemPython_Label ff0000 transparent
     ${Else}
         SetCtlColors $Ana_RegisterSystemPython_Label 000000 transparent
@@ -194,7 +254,7 @@ Function RegisterSystemPython_OnClick
 
     # If the button was checked, make sure we're not conflicting
     # with another system installed Python
-    ${If} $Ana_RegisterSystemPython_State == ${BST_CHECKED}
+    ${If} $REG_PY == 1
         # Check if a Python of the version we're installing
         # already exists, in which case warn the user before
         # proceeding.
@@ -213,8 +273,10 @@ Function RegisterSystemPython_OnClick
                 directory manually." \
                 IDOK KeepSettingLabel
         # If they don't click OK, uncheck it
-        StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
-        ${NSD_SetState} $0 $Ana_RegisterSystemPython_State
+        StrCpy $REG_PY 0
+        ${NSD_Uncheck} $0
+        # Change color back to black again otherwise it will be red after user presses cancel
+        SetCtlColors $Ana_RegisterSystemPython_Label 000000 transparent
 KeepSettingLabel:
 
         ${EndIf}
