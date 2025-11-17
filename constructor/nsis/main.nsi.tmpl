@@ -368,8 +368,6 @@ FunctionEnd
     ${EndIf}
 
 
-    # Default: don't register Python
-    StrCpy $REG_PY 0
     !if ${REGISTER_PYTHON_OPTION} == 1
         ClearErrors
         ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
@@ -440,8 +438,6 @@ Function OnInit_Release
     ${LogSet} on
     !insertmacro ParseCommandLineArgs
 
-    # Default: don't initialize conda
-    StrCpy $INIT_CONDA 0
     # Parsing the AddToPath option here (and not in ParseCommandLineArgs) to prevent the MessageBox from showing twice.
     # For more context, see https://github.com/conda/constructor/pull/584#issuecomment-1347688020
     !if ${INIT_CONDA_OPTION} == 1
@@ -609,7 +605,8 @@ Function .onInit
     Push $R1
     Push $R2
 
-    # Assign the runtime variables
+    # Initialize INIT_CONDA and REG_PY, note that they to default 0 if the installer
+    # is not configured to prompt the user with a choice.
     !if ${INIT_CONDA_OPTION} == 1
         StrCpy $INIT_CONDA ${INIT_CONDA_DEFAULT_VALUE}
     !else
