@@ -440,6 +440,8 @@ Function OnInit_Release
     ${LogSet} on
     !insertmacro ParseCommandLineArgs
 
+    # Default: don't initialize conda
+    StrCpy $INIT_CONDA 0
     # Parsing the AddToPath option here (and not in ParseCommandLineArgs) to prevent the MessageBox from showing twice.
     # For more context, see https://github.com/conda/constructor/pull/584#issuecomment-1347688020
     !if ${INIT_CONDA_OPTION} == 1

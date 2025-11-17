@@ -243,7 +243,7 @@ def make_nsi(
 
     variables.update(ns_platform(info["_platform"]))
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
-    variables["initialize_by_default"] = info.get("initialize_by_default", None)
+    variables["initialize_by_default"] = info.get("initialize_by_default", False)
     variables["check_path_length"] = info.get("check_path_length", False)
     variables["check_path_spaces"] = info.get("check_path_spaces", True)
     variables["keep_pkgs"] = info.get("keep_pkgs") or False
