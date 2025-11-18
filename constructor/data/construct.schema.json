@@ -749,7 +749,7 @@
           "type": "null"
         }
       ],
-      "default": false,
+      "default": null,
       "description": "Default value for the option added by `initialize_conda`. The default is true for PKG installers, and false for EXE (GUI and CLI installations) and shell installers. The user is able to change the default during interactive installation. NOTE: For Windows, `AddToPath` is disabled when `InstallationType=AllUsers`.\nOnly applies if `initialize_conda` is not false.",
       "title": "Initialize By Default"
     },

@@ -690,7 +690,7 @@ class ConstructorConfiguration(BaseModel):
 
     See also `initialize_by_default`.
     """
-    initialize_by_default: bool | None = False
+    initialize_by_default: bool | None = None
     """
     Default value for the option added by `initialize_conda`. The default is
     true for PKG installers, and false for EXE (GUI and CLI installations) and shell installers. The user
