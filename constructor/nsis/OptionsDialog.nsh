@@ -7,7 +7,6 @@
 
 Var mui_AnaCustomOptions
 Var mui_AnaCustomOptions.AddToPath
-Var mui_AnaCustomOptions.RegisterSystemPython
 Var mui_AnaCustomOptions.PostInstall
 Var mui_AnaCustomOptions.PreInstall
 Var mui_AnaCustomOptions.ClearPkgCache
@@ -20,10 +19,64 @@ Var Ana_ClearPkgCache_State
 Var Ana_CreateShortcuts_State
 
 Var Ana_AddToPath_Label
-Var Ana_RegisterSystemPython_Label
 Var Ana_ClearPkgCache_Label
 Var Ana_PostInstall_Label
 Var Ana_PreInstall_Label
+
+
+!if ${REGISTER_PYTHON_OPTION} == 1
+    Var mui_AnaCustomOptions.RegisterSystemPython
+    Var Ana_RegisterSystemPython_Label
+
+    Function RegisterSystemPython_OnClick
+        Pop $0
+
+        # Sync UI with variable
+        ${NSD_GetState} $0 $1
+        ${If} $1 == ${BST_CHECKED}
+            StrCpy $REG_PY 1
+        ${Else}
+            StrCpy $REG_PY 0
+        ${EndIf}
+
+        ShowWindow $Ana_RegisterSystemPython_Label ${SW_HIDE}
+        ${If} $REG_PY == 1
+            SetCtlColors $Ana_RegisterSystemPython_Label ff0000 transparent
+        ${Else}
+            SetCtlColors $Ana_RegisterSystemPython_Label 000000 transparent
+        ${EndIf}
+        ShowWindow $Ana_RegisterSystemPython_Label ${SW_SHOW}
+
+        # If the button was checked, make sure we're not conflicting
+        # with another system installed Python
+        ${If} $REG_PY == 1
+            # Check if a Python of the version we're installing
+            # already exists, in which case warn the user before
+            # proceeding.
+            ReadRegStr $2 SHCTX "Software\Python\PythonCore\${PY_VER}\InstallPath" ""
+            ${If} "$2" != ""
+            ${AndIf} ${FileExists} "$2\Python.exe"
+                MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION|MB_DEFBUTTON2 \
+                    "A version of Python ${PY_VER} (${ARCH}) is already at$\n\
+                    $2$\n\
+                    We recommend that if you want ${NAME} registered as your $\n\
+                    system Python, you unregister this Python first. If you really$\n\
+                    know this is what you want, click OK, otherwise$\n\
+                    click cancel to continue.$\n$\n\
+                    NOTE: Anaconda 1.3 and earlier lacked an uninstall, if$\n\
+                    you are upgrading an old Anaconda, please delete the$\n\
+                    directory manually." \
+                    IDOK KeepSettingLabel
+            # If they don't click OK, uncheck it
+            StrCpy $REG_PY 0
+            ${NSD_Uncheck} $0
+
+    KeepSettingLabel:
+
+            ${EndIf}
+        ${EndIf}
+    FunctionEnd
+!endif
 
 Function mui_AnaCustomOptions_InitDefaults
     # AddToPath / conda init default
@@ -34,7 +87,7 @@ Function mui_AnaCustomOptions_InitDefaults
         StrCpy $INIT_CONDA 0
     !endif
 
-    # Register Python default
+    # Register Python default while accounting for existing installations
     !if ${REGISTER_PYTHON_OPTION} == 1
         # Ensure we initialize from compile-time default value
         StrCpy $REG_PY ${REGISTER_PYTHON_DEFAULT_VALUE}
@@ -231,56 +284,6 @@ Function AddToPath_OnClick
         SetCtlColors $Ana_AddToPath_Label 000000 transparent
     ${EndIf}
     ShowWindow $Ana_AddToPath_Label ${SW_SHOW}
-FunctionEnd
-
-Function RegisterSystemPython_OnClick
-    Pop $0
-
-    # Sync UI with variable
-    ${NSD_GetState} $0 $1
-    ${If} $1 == ${BST_CHECKED}
-        StrCpy $REG_PY 1
-    ${Else}
-        StrCpy $REG_PY 0
-    ${EndIf}
-
-    ShowWindow $Ana_RegisterSystemPython_Label ${SW_HIDE}
-    ${If} $REG_PY == 1
-        SetCtlColors $Ana_RegisterSystemPython_Label ff0000 transparent
-    ${Else}
-        SetCtlColors $Ana_RegisterSystemPython_Label 000000 transparent
-    ${EndIf}
-    ShowWindow $Ana_RegisterSystemPython_Label ${SW_SHOW}
-
-    # If the button was checked, make sure we're not conflicting
-    # with another system installed Python
-    ${If} $REG_PY == 1
-        # Check if a Python of the version we're installing
-        # already exists, in which case warn the user before
-        # proceeding.
-        ReadRegStr $2 SHCTX "Software\Python\PythonCore\${PY_VER}\InstallPath" ""
-        ${If} "$2" != ""
-        ${AndIf} ${FileExists} "$2\Python.exe"
-            MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION|MB_DEFBUTTON2 \
-                "A version of Python ${PY_VER} (${ARCH}) is already at$\n\
-                $2$\n\
-                We recommend that if you want ${NAME} registered as your $\n\
-                system Python, you unregister this Python first. If you really$\n\
-                know this is what you want, click OK, otherwise$\n\
-                click cancel to continue.$\n$\n\
-                NOTE: Anaconda 1.3 and earlier lacked an uninstall, if$\n\
-                you are upgrading an old Anaconda, please delete the$\n\
-                directory manually." \
-                IDOK KeepSettingLabel
-        # If they don't click OK, uncheck it
-        StrCpy $REG_PY 0
-        ${NSD_Uncheck} $0
-        # Change color back to black again otherwise it will be red after user presses cancel
-        SetCtlColors $Ana_RegisterSystemPython_Label 000000 transparent
-KeepSettingLabel:
-
-        ${EndIf}
-    ${EndIf}
 FunctionEnd
 
 Function PostInstall_OnClick

@@ -118,7 +118,9 @@ var /global ARGV_Help
 var /global ARGV_InstallationType
 var /global ARGV_AddToPath
 var /global ARGV_KeepPkgCache
+{%- if has_python %}
 var /global ARGV_RegisterPython
+{%- endif %}
 var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
 var /global ARGV_NoShortcuts
@@ -309,7 +311,7 @@ FunctionEnd
             OPTIONS$\n\
             -------$\n\
             $\n\
-                /InstallationType=AllUsers [default: JustMe]$\n\
+                /InstallationType=[AllUsers|JustMe] [default: JustMe]$\n\
 {%- if initialize_conda %}
                 /AddToPath=[0|1] [default: 0]$\n\
 {%- endif %}
@@ -377,6 +379,34 @@ FunctionEnd
             ${ElseIf} $ARGV_RegisterPython == "0"
                 StrCpy $REG_PY 0
             ${EndIf}
+        ${Else}
+            # If we have Errors, i.e. the option is not explicitly set by the user
+            StrCpy $REG_PY 0
+        ${EndIf}
+
+    !endif
+
+    !if ${INIT_CONDA_OPTION} == 1
+        ClearErrors
+        ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
+        ${IfNot} ${Errors}
+            ${If} $ARGV_AddToPath = "1"
+                # To address CVE-2022-26526.
+                # In AllUsers install mode, do not allow AddToPath as an option.
+                ${If} $InstMode == ${ALL_USERS}
+                    MessageBox MB_OK|MB_ICONEXCLAMATION \
+                        "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                    ${Print} "/AddToPath=1 is disabled and ignored in 'All Users' installations"
+                    StrCpy $INIT_CONDA 0
+                ${Else}
+                    StrCpy $INIT_CONDA 1
+                ${EndIf}
+            ${ElseIf} $ARGV_AddToPath = "0"
+                StrCpy $INIT_CONDA 0
+            ${EndIf}
+        ${Else}
+            # If we have Errors, i.e. the option is not explicitly set by the user
+            StrCpy $INIT_CONDA 0
         ${EndIf}
     !endif
 
@@ -433,36 +463,6 @@ FunctionEnd
     ${EndIf}
 
 !macroend
-
-Function OnInit_Release
-    ${LogSet} on
-    !insertmacro ParseCommandLineArgs
-
-    # Parsing the AddToPath option here (and not in ParseCommandLineArgs) to prevent the MessageBox from showing twice.
-    # For more context, see https://github.com/conda/constructor/pull/584#issuecomment-1347688020
-    !if ${INIT_CONDA_OPTION} == 1
-        ClearErrors
-        ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
-        ${IfNot} ${Errors}
-            ${If} $ARGV_AddToPath = "1"
-                # To address CVE-2022-26526.
-                # In AllUsers install mode, do not allow AddToPath as an option.
-                ${If} $InstMode == ${ALL_USERS}
-                    MessageBox MB_OK|MB_ICONEXCLAMATION \
-                        "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
-                    ${Print} "/AddToPath=1 is disabled and ignored in 'All Users' installations"
-                    StrCpy $INIT_CONDA 0
-                ${Else}
-                    StrCpy $INIT_CONDA 1
-                ${EndIf}
-            ${ElseIf} $ARGV_AddToPath = "0"
-                StrCpy $INIT_CONDA 0
-            ${EndIf}
-        ${EndIf}
-    !else
-        StrCpy $INIT_CONDA 0
-    !endif
-FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
     ${LogSet} on
@@ -605,19 +605,13 @@ Function .onInit
     Push $R1
     Push $R2
 
-    # Initialize INIT_CONDA and REG_PY, note that they to default 0 if the installer
-    # is not configured to prompt the user with a choice.
-    !if ${INIT_CONDA_OPTION} == 1
-        StrCpy $INIT_CONDA ${INIT_CONDA_DEFAULT_VALUE}
-    !else
-        StrCpy $INIT_CONDA 0
-    !endif
+    # 1. Initialize core options default values
+    Call mui_AnaCustomOptions_InitDefaults
 
-    !if ${REGISTER_PYTHON_OPTION} == 1
-        StrCpy $REG_PY ${REGISTER_PYTHON_DEFAULT_VALUE}
-    !else
-        StrCpy $REG_PY 0
-    !endif
+    # 2. Account finally for CLI to potentially override core default values
+    ${If} ${Silent}
+        !insertmacro ParseCommandLineArgs
+    ${EndIf}
 
     InitPluginsDir
 {%- if TEMP_EXTRA_FILES | length != 0 %}
@@ -626,7 +620,6 @@ Function .onInit
     File "{{ file }}"
 {%- endfor %}
 {%- endif %}
-    !insertmacro ParseCommandLineArgs
 
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
@@ -763,15 +756,10 @@ Function .onInit
         StrCpy $CheckPathLength "1"
     ${EndIf}
 
-    # Initialize the custom options
-    Call mui_AnaCustomOptions_InitDefaults
-
     StrCpy $CheckPathLength "{{ 1 if check_path_length else 0 }}"
     StrCpy $Ana_ClearPkgCache_State {{ '${BST_UNCHECKED}' if keep_pkgs else '${BST_CHECKED}' }}
     StrCpy $Ana_PreInstall_State {{ '${BST_CHECKED}' if pre_install_exists else '${BST_UNCHECKED}' }}
     StrCpy $Ana_PostInstall_State {{ '${BST_CHECKED}' if post_install_exists else '${BST_UNCHECKED}' }}
-
-    Call OnInit_Release
 
     ${Print} "Welcome to ${NAME} ${VERSION}$\n"
 
