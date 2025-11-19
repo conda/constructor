@@ -2,12 +2,15 @@
 Logic to build installers using Briefcase.
 """
 
+from __future__ import annotations
+
 import logging
 import re
-import sys
 import shutil
+import sys
 import sysconfig
 import tempfile
+from functools import cached_property
 from pathlib import Path
 from subprocess import run
 
@@ -86,17 +89,108 @@ def get_bundle_app_name(info, name):
 
     return bundle, app_name
 
+
 def get_license(info):
-    """ Retrieve the specified license as a dict or return a placeholder if not set. """
+    """Retrieve the specified license as a dict or return a placeholder if not set."""
 
     if "license_file" in info:
         return {"file": info["license_file"]}
     # We cannot return an empty string because that results in an exception on the briefcase side.
     return {"text": "TODO"}
 
+
+class UninstallBat:
+    """Represents a pre-uninstall batch script handler for the MSI installers.
+    This is intended to handle both the user specified 'pre_uninstall' bat script
+    and also the 'pre_uninstall_script' passed to briefcase by merging them into one.
+    """
+
+    def __init__(self, dst: Path, user_script: str | None):
+        """
+        Parameters
+        ----------
+        dst : Path
+            Destination directory where the generated `pre_uninstall.bat` file
+            will be written.
+        user_script : str | None
+            Optional path (string) to a user-provided `.bat` file configured
+            via the `pre_uninstall` setting in the installer configuration.
+            If provided, the file must adhere to the schema.
+        """
+        self._dst = dst
+
+        self.user_script = None
+        if user_script:
+            user_script_path = Path(user_script)
+            if not self.is_bat_file(user_script_path):
+                raise ValueError(
+                    f"The entry '{user_script}' configured via 'pre_uninstall' "
+                    "must be a path to an existing .bat file."
+                )
+            self.user_script = user_script_path
+        self._encoding = "utf-8"  # TODO: Do we want to use utf-8-sig?
+
+    def is_bat_file(self, file_path: Path) -> bool:
+        return file_path.is_file() and file_path.suffix.lower() == ".bat"
+
+    def user_script_as_list(self) -> list[str]:
+        """Read user script."""
+        if not self.user_script:
+            return []
+        with open(self.user_script, encoding=self._encoding, newline=None) as f:
+            return f.read().splitlines()
+
+    def sanitize_input(self, input_list: list[str]) -> list[str]:
+        """Sanitizes the input, adds a safe exit if necessary.
+        Assumes the contents of the input represents the contents of a .bat-file.
+        """
+        return ["exit /b" if line.strip().lower() == "exit" else line for line in input_list]
+
+    def create(self) -> None:
+        """Create the pre uninstall script. This merges includes the 'pre_uninstall' that may
+        may have been specified at installer creation.
+        """
+        header = [
+            "@echo off",
+            "setlocal enableextensions enabledelayedexpansion",
+            'set "_SELF=%~f0"',
+            'set "_HERE=%~dp0"',
+            "",
+            "rem === Pre-uninstall script ===",
+        ]
+
+        # TODO: Create unique labels using uuid to avoid collisions
+
+        user_bat: list[str] = []
+
+        if self.user_script:
+            # user_script: list = self.sanitize(self.user_script_as_list())
+            # TODO: Embed user script and run it as a subroutine.
+            #       Add error handling using unique labels with 'goto'
+            user_bat += [
+                "rem User supplied with a script",
+            ]
+
+        # The main part of the bat-script here
+        tail = [
+            'echo "hello from the script"',
+            "pause",
+        ]
+        final_lines = header + [""] + user_bat + [""] + tail
+
+        with open(self.file_path, "w", encoding=self._encoding, newline="\r\n") as f:
+            # Python will write \n as \r\n since we have set the 'newline' argument above.
+            f.writelines(line + "\n" for line in final_lines)
+
+    @cached_property
+    def file_path(self) -> Path:
+        """The absolute path to the generated `pre_uninstall.bat` file."""
+        return self._dst / "pre_uninstall.bat"
+
+
 # Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
 # template allows us to avoid escaping strings everywhere.
-def write_pyproject_toml(tmp_dir, info):
+def write_pyproject_toml(tmp_dir, info, uninstall_bat):
     name, version = get_name_version(info)
     bundle, app_name = get_bundle_app_name(info, name)
 
@@ -113,6 +207,7 @@ def write_pyproject_toml(tmp_dir, info):
                 "use_full_install_path": False,
                 "install_launcher": False,
                 "post_install_script": str(BRIEFCASE_DIR / "run_installation.bat"),
+                "pre_uninstall_script": uninstall_bat.file_path,
             }
         },
     }
@@ -124,11 +219,15 @@ def write_pyproject_toml(tmp_dir, info):
 
 
 def create(info, verbose=False):
-    if sys.platform != 'win32':
+    if sys.platform != "win32":
         raise Exception(f"Invalid platform '{sys.platform}'. Only Windows is supported.")
 
     tmp_dir = Path(tempfile.mkdtemp())
-    write_pyproject_toml(tmp_dir, info)
+
+    uninstall_bat = UninstallBat(info.get("pre_uninstall", None), tmp_dir)
+    uninstall_bat.create()
+
+    write_pyproject_toml(tmp_dir, info, uninstall_bat)
 
     external_dir = tmp_dir / EXTERNAL_PACKAGE_PATH
     external_dir.mkdir()
@@ -145,8 +244,7 @@ def create(info, verbose=False):
     briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
     if not briefcase.exists():
         raise FileNotFoundError(
-            f"Dependency 'briefcase' does not seem to be installed.\n"
-            f"Tried: {briefcase}"
+            f"Dependency 'briefcase' does not seem to be installed.\nTried: {briefcase}"
         )
     logger.info("Building installer")
     run(
