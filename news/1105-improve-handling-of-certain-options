@@ -2,8 +2,8 @@
 
 * EXE: Improve handling of options `initialize_conda`, `register_python` with their corresponding default values. The behavior of these options
   with respect to `initialize_by_default` and `register_python_default` is now consistent with `.sh` and `.pkg` installers.
-  Windows CLI installations now don't add `conda` to `PATH` or register Python by default, and, command-line arguments are
-  only parsed when installing in silent mode (enabled with the flag `/S`).(#1003, #1004 via #1105)
+  Windows CLI installations now don't add `conda` to `PATH` or register Python by default, and command-line arguments are
+  only parsed when installing in silent mode (enabled with the flag `/S`). (#1003, #1004 via #1105)
 
 ### Bug fixes
 
