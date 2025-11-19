@@ -692,17 +692,19 @@ class ConstructorConfiguration(BaseModel):
     """
     initialize_by_default: bool | None = None
     """
-    Default value for the option added by `initialize_conda`. The default
-    is true for GUI installers (EXE, PKG) and false for shell installers. The user
-    is able to change the default during interactive installation. NOTE: For Windows,
-    `AddToPath` is disabled when `InstallationType=AllUsers`.
+    Default value for the option added by `initialize_conda`. The default is
+    true for PKG installers, and false for EXE and SH shell installers.
+    The user is able to change the default during interactive installations.
+    Non-interactive installations are not affected by this value: users must explicitly request
+    to add to `PATH` via CLI options.
+    NOTE: For Windows, `/AddToPath` is disabled when `/InstallationType=AllUsers`.
 
     Only applies if `initialize_conda` is not false.
     """
     register_python: bool = True
     """
-    Whether to offer the user an option to register the installed Python instance as the
-    system's default Python. (Windows only)
+    If the installer installs a Python instance, offer the user an option to register the installed Python instance as the
+    system's default Python. Defaults to `true` for GUI and `false` for CLI installations. (Windows only)
     """
     register_python_default: bool | None = False
     """

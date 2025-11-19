@@ -72,7 +72,7 @@ Windows installers have the following CLI options available:
 - `/NoShortcuts=[0|1]`: If set to `1`, the installer will not create any shortcuts. Defaults to
   `0`.
 - `/RegisterPython=[0|1]`: Whether to register Python as default in the Windows registry. Defaults
-  to `1`. This is preferred to `AddToPath`.
+  to `0`. This is preferred to `AddToPath`.
 - `/D` (directory): sets the default installation directory. Note that even if the path contains
   spaces, it must be the last parameter used in the command line and must not contain any quotes.
   Only absolute paths are supported.
