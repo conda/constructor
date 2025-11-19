@@ -1637,6 +1637,12 @@ Section "Install"
     # channels and retain only the first transaction
     SetOutPath "{{ env.conda_meta }}"
     File "{{ env.history_abspath }}"
+
+{%- if env.frozen_abspath %}
+    # Add frozen marker file if configured
+    SetOutPath "{{ env.conda_meta }}"
+    File "{{ env.frozen_abspath }}"
+{%- endif %}
 {%- endfor %}
 
 {%- for condarc in WRITE_CONDARC %}

@@ -12,13 +12,18 @@ specs:
   - python
   - conda
 
+freeze_base:
+  conda: {}
+
 extra_envs:
-  default:
+  env1:
     specs:
       - python
       - pip
       - conda
+    freeze_env:
+      conda:
+        message: This environment is frozen.
 
 extra_files:
-  - frozen.json: conda-meta/frozen
-  - frozen.json: envs/default/conda-meta/frozen
+  - frozen.json: envs/env2/conda-meta/frozen

@@ -20,6 +20,7 @@ from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
+from contextlib import nullcontext
 
 from constructor.utils import (
     StandaloneExe,
@@ -1509,32 +1510,42 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
         CONDA_EXE == StandaloneExe.CONDA
         and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
     ),
-    reason="conda-standalone 25.5.x fails with protected environments and older versions ignore frozen files",
+    reason="conda-standalone 25.5.x fails with protected environments",
     strict=True,
 )
-def test_frozen_environment(tmp_path, request):
-    input_path = _example_path("protected_base")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            uninstall=False,
-        )
+@pytest.mark.parametrize(
+    "has_conflict",
+    (
+        pytest.param(True, id="with-conflict"),
+        pytest.param(False, id="without-conflict"),
+    ),
+)
+def test_frozen_environment(tmp_path, request, has_conflict):
+    example_path = _example_path("protected_base")
+    context = pytest.raises(subprocess.CalledProcessError) if has_conflict else nullcontext()
 
-        expected_frozen_paths = {
-            install_dir / "conda-meta" / "frozen",
-            install_dir / "envs" / "default" / "conda-meta" / "frozen",
-        }
+    with context as c:
+        if has_conflict:
+            for installer, install_dir in create_installer(example_path, tmp_path):
+                _run_installer(example_path, installer, install_dir, request=request, uninstall=False)
+        else:
+            input_path = tmp_path / "input"
+            shutil.copytree(str(example_path), str(input_path))
 
-        actual_frozen_paths = set()
-        for env in install_dir.glob("**/conda-meta/history"):
-            frozen_file = env.parent / "frozen"
-            assert frozen_file.exists()
-            actual_frozen_paths.add(frozen_file)
+            with open(input_path / "construct.yaml") as f:
+                modified_config = YAML().load(f)
+            modified_config.pop("extra_files", None)
+            with open(input_path / "construct.yaml", "w") as f:
+                YAML().dump(modified_config, f)
 
-        assert expected_frozen_paths == actual_frozen_paths, (
-            f"Expected: {sorted(str(p) for p in expected_frozen_paths)}\n"
-            f"Found: {sorted(str(p) for p in actual_frozen_paths)}"
-        )
+            for installer, install_dir in create_installer(input_path, tmp_path):
+                _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+
+                expected_frozen = {
+                    install_dir / "conda-meta" / "frozen": modified_config["freeze_base"]["conda"],
+                    install_dir / "envs" / "env1" / "conda-meta" / "frozen": modified_config["extra_envs"]["env1"]["freeze_env"]["conda"],
+                }
+
+                for frozen_path, expected_content in expected_frozen.items():
+                    assert frozen_path.exists()
+                    assert json.loads(frozen_path.read_text()) == expected_content
