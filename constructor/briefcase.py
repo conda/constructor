@@ -159,6 +159,7 @@ class UninstallBat:
             "setlocal enableextensions enabledelayedexpansion",
             'set "_SELF=%~f0"',
             'set "_HERE=%~dp0"',
+            r'set "PREFIX=%_HERE%\..\"',
             "",
             "rem === Pre-uninstall script ===",
         ]
@@ -178,6 +179,8 @@ class UninstallBat:
         # The main part of the bat-script here
         main_bat = [
             'echo "hello from the script"',
+            'echo %_SELF%',
+            'echo %_HERE%',
             "pause",
         ]
         final_lines = header + [""] + user_bat + [""] + main_bat
@@ -211,7 +214,7 @@ def write_pyproject_toml(tmp_dir, info, uninstall_bat):
                 "use_full_install_path": False,
                 "install_launcher": False,
                 "post_install_script": str(BRIEFCASE_DIR / "run_installation.bat"),
-                "pre_uninstall_script": uninstall_bat.file_path,
+                "pre_uninstall_script": str(uninstall_bat.file_path),
             }
         },
     }
@@ -228,7 +231,7 @@ def create(info, verbose=False):
 
     tmp_dir = Path(tempfile.mkdtemp())
 
-    uninstall_bat = UninstallBat(info.get("pre_uninstall", None), tmp_dir)
+    uninstall_bat = UninstallBat(tmp_dir, info.get("pre_uninstall", None))
     uninstall_bat.create()
 
     write_pyproject_toml(tmp_dir, info, uninstall_bat)
