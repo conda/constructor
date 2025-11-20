@@ -147,9 +147,13 @@ class UninstallBat:
         return ["exit /b" if line.strip().lower() == "exit" else line for line in input_list]
 
     def create(self) -> None:
-        """Create the pre uninstall script. This merges includes the 'pre_uninstall' that may
-        may have been specified at installer creation.
+        """Create the bat script for uninstallation. The script will also include the contents from the file the user
+        may have specified in the yaml-file via 'pre_uninstall'.
+        When this function is called, the directory 'dst' specified at class instantiation must exist.
         """
+        if not self._dst.exists():
+            raise FileNotFoundError(f"The directory {self._dst} must exist in order to create the file.")
+
         header = [
             "@echo off",
             "setlocal enableextensions enabledelayedexpansion",
@@ -172,11 +176,11 @@ class UninstallBat:
             ]
 
         # The main part of the bat-script here
-        tail = [
+        main_bat = [
             'echo "hello from the script"',
             "pause",
         ]
-        final_lines = header + [""] + user_bat + [""] + tail
+        final_lines = header + [""] + user_bat + [""] + main_bat
 
         with open(self.file_path, "w", encoding=self._encoding, newline="\r\n") as f:
             # Python will write \n as \r\n since we have set the 'newline' argument above.
