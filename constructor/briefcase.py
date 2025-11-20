@@ -176,6 +176,26 @@ class UninstallBat:
                 "rem User supplied with a script",
             ]
 
+
+        # TODO, this works (almost)
+        """
+        echo "Preparing uninstallation..."
+        echo %_SELF%
+        echo %_HERE%
+        set "INSTDIR=%_HERE%\.."
+        set "CONDA_FLAGS=--remove-config-files=user"
+        set "CONDA_EXE=_conda.exe"
+        "%INSTDIR%\%CONDA_EXE%" constructor uninstall %CONDA_FLAGS% --prefix "%INSTDIR%"
+        if errorlevel 1 (
+            echo [ERROR] %CONDA_EXE% failed with exit code %errorlevel%.
+            pause
+            exit /b %errorlevel%
+        )
+        RMDIR /Q /S "%INSTDIR%"
+        echo [INFO] %CONDA_EXE% completed successfully.
+        pause
+
+        """
         # The main part of the bat-script here
         main_bat = [
             'echo "hello from the script"',
