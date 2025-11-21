@@ -159,14 +159,10 @@ class UninstallBat:
         header = [
             "@echo off",
             "setlocal enableextensions enabledelayedexpansion",
-            'set "_SELF=%~f0"',
             'set "_HERE=%~dp0"',
-            r'set "PREFIX=%_HERE%\..\"',
             "",
             "rem === Pre-uninstall script ===",
         ]
-
-        # TODO: Create unique labels using uuid to avoid collisions
 
         user_bat: list[str] = []
 
@@ -175,27 +171,39 @@ class UninstallBat:
             # TODO: Embed user script and run it as a subroutine.
             #       Add error handling using unique labels with 'goto'
             user_bat += [
-                "rem User supplied with a script",
+                "rem User supplied a script",
             ]
 
-        # TODO, this works (almost)
-        # The main part of the bat-script here
+        """
+         The goal is to remove most of the files except for the directory '_installer' where
+         the bat-files are located. This is because the MSI Installer needs to call these bat-files
+         after 'pre_uninstall_script' is finished, in order to finish with the uninstallation.
+        """
         main_bat = [
             'echo "Preparing uninstallation..."',
-            "echo %_SELF%",
-            "echo %_HERE%",
             r'set "INSTDIR=%_HERE%\.."',
-            'set "CONDA_FLAGS=--remove-config-files=user"',
             'set "CONDA_EXE=_conda.exe"',
-            r'"%INSTDIR%\%CONDA_EXE%" constructor uninstall %CONDA_FLAGS% --prefix "%INSTDIR%"',
+            r'"%INSTDIR%\%CONDA_EXE%" menuinst --prefix "%INSTDIR%" --remove'
+            r'"%INSTDIR%\%CONDA_EXE%" remove -p "%INSTDIR%" --keep-env --all -y',
             "if errorlevel 1 (",
             "    echo [ERROR] %CONDA_EXE% failed with exit code %errorlevel%.",
-            "    pause",
             "    exit /b %errorlevel%",
             ")",
-            'rem RMDIR /Q /S "%INSTDIR%"',
+            "",
             "echo [INFO] %CONDA_EXE% completed successfully.",
-            "pause",
+            r'set "PKGS=%INSTDIR%\pkgs"',
+            'if exist "%PKGS%" (',
+            '    echo [INFO] Removing "%PKGS%" ...',
+            '    rmdir /s /q "%PKGS%"',
+            "    echo [INFO] Done.",
+            ")",
+            "",
+            r'set "NONADMIN=%INSTDIR%\.nonadmin"',
+            'if exist "%NONADMIN%" (',
+            '    echo [INFO] Removing file "%NONADMIN%" ...',
+            '    del /f /q "%NONADMIN%"',
+            ")",
+            "",
         ]
         final_lines = header + [""] + user_bat + [""] + main_bat
 
