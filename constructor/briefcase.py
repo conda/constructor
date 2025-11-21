@@ -183,7 +183,7 @@ class UninstallBat:
             'echo "Preparing uninstallation..."',
             r'set "INSTDIR=%_HERE%\.."',
             'set "CONDA_EXE=_conda.exe"',
-            r'"%INSTDIR%\%CONDA_EXE%" menuinst --prefix "%INSTDIR%" --remove'
+            r'"%INSTDIR%\%CONDA_EXE%" menuinst --prefix "%INSTDIR%" --remove',
             r'"%INSTDIR%\%CONDA_EXE%" remove -p "%INSTDIR%" --keep-env --all -y',
             "if errorlevel 1 (",
             "    echo [ERROR] %CONDA_EXE% failed with exit code %errorlevel%.",
