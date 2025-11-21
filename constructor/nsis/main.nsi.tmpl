@@ -100,33 +100,39 @@ ${Using:StrFunc} StrStr
 !include "StandaloneUninstallerOptions.nsh"
 {%- endif %}
 
-!define NAME {{ installer_name }}
-!define VERSION {{ installer_version }}
-!define COMPANY {{ company }}
-!define ARCH {{ arch }}
-!define PLATFORM {{ installer_platform }}
-!define CONSTRUCTOR_VERSION {{ constructor_version }}
+!define NAME                          {{ installer_name }}
+!define VERSION                       {{ installer_version }}
+!define COMPANY                       {{ company }}
+!define ARCH                          {{ arch }}
+!define PLATFORM                      {{ installer_platform }}
+!define CONSTRUCTOR_VERSION           {{ constructor_version }}
 {%- if has_python %}
-!define PY_VER {{ pyver_components[:2] | join(".") }}
-!define PYVERSION_JUSTDIGITS {{ pyver_components | join("") }}
-!define PYVERSION {{ pyver_components | join(".") }}
-!define PYVERSION_MAJOR {{ pyver_components[0] }}
-{%- endif %}
-!define DEFAULT_PREFIX {{ default_prefix }}
-!define DEFAULT_PREFIX_DOMAIN_USER {{ default_prefix_domain_user }}
-!define DEFAULT_PREFIX_ALL_USERS {{ default_prefix_all_users }}
-!define PRE_INSTALL_DESC {{ pre_install_desc }}
-!define POST_INSTALL_DESC {{ post_install_desc }}
-!define ENABLE_SHORTCUTS {{ enable_shortcuts }}
-!define SHOW_REGISTER_PYTHON {{ show_register_python }}
-!define SHOW_ADD_TO_PATH {{ show_add_to_path }}
-!define PRODUCT_NAME "${NAME} ${VERSION} (${ARCH})"
-!define UNINSTALL_NAME "{{ UNINSTALL_NAME }}"
-!define UNINSTREG "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_NAME}"
+!define PY_VER                        {{ pyver_components[:2] | join(".") }}
+!define PYVERSION_JUSTDIGITS          {{ pyver_components | join("") }}
+!define PYVERSION                     {{ pyver_components | join(".") }}
+!define PYVERSION_MAJOR               {{ pyver_components[0] }}
+{% endif %}
+!define DEFAULT_PREFIX                {{ default_prefix }}
+!define DEFAULT_PREFIX_DOMAIN_USER    {{ default_prefix_domain_user }}
+!define DEFAULT_PREFIX_ALL_USERS      {{ default_prefix_all_users }}
+!define PRE_INSTALL_DESC              {{ pre_install_desc }}
+!define POST_INSTALL_DESC             {{ post_install_desc }}
+!define ENABLE_SHORTCUTS              {{ enable_shortcuts }}
+!define REGISTER_PYTHON_OPTION        {{ '1' if register_python and has_python else '0' }}
+!define REGISTER_PYTHON_DEFAULT_VALUE {{ '1' if register_python_default else '0' }}
+!define INIT_CONDA_OPTION             {{ '1' if initialize_conda else '0' }}
+!define INIT_CONDA_MODE               "{{ 'condabin' if initialize_conda == 'condabin' else 'classic' }}"
+!define INIT_CONDA_DEFAULT_VALUE      {{ '1' if initialize_by_default else '0' }}
+!define PRODUCT_NAME                  "${NAME} ${VERSION} (${ARCH})"
+!define UNINSTALL_NAME                "{{ UNINSTALL_NAME }}"
+!define UNINSTREG                     "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${UNINSTALL_NAME}"
 # Silent installations do not output to the console and outputs to stdout
 # are not written into install.log. STEP_LOG creates an intermittent file
 # that is output into these streams after the commands finish.
-!define STEP_LOG "$INSTDIR\.step.log"
+!define STEP_LOG                      "$INSTDIR\.step.log"
+
+var /global INIT_CONDA
+var /global REG_PY
 
 var /global INSTDIR_JUSTME
 var /global INSTALLER_VERSION
@@ -142,7 +148,9 @@ var /global ARGV_Help
 var /global ARGV_InstallationType
 var /global ARGV_AddToPath
 var /global ARGV_KeepPkgCache
+{%- if has_python %}
 var /global ARGV_RegisterPython
+{%- endif %}
 var /global ARGV_NoRegistry
 var /global ARGV_NoScripts
 var /global ARGV_NoShortcuts
@@ -332,11 +340,13 @@ FunctionEnd
             OPTIONS$\n\
             -------$\n\
             $\n\
-                /InstallationType=AllUsers [default: JustMe]$\n\
+                /InstallationType=[AllUsers|JustMe] [default: JustMe]$\n\
+{%- if initialize_conda %}
                 /AddToPath=[0|1] [default: 0]$\n\
+{%- endif %}
                 /KeepPkgCache=[0|1] [default: {{ 1 if keep_pkgs else 0 }}]$\n\
-{%- if has_python %}
-                /RegisterPython=[0|1] [default: AllUsers: 1, JustMe: 0]$\n\
+{%- if has_python and register_python %}
+                /RegisterPython=[0|1] [default: 0]$\n\
 {%- endif %}
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
                 /NoScripts=[0|1] [default: 0]$\n\
@@ -356,14 +366,16 @@ FunctionEnd
                 Install for all users, but don't add to PATH env var:$\n\
                     > $EXEFILE /InstallationType=AllUsers$\n\
                 $\n\
-{%- if has_python %}
-                Install for just me, add to PATH and register as system Python:$\n\
-                    > $EXEFILE /RegisterPython=1 /AddToPath=1$\n\
+{%- if has_python and register_python %}
+                Install for just me, and register as system Python:$\n\
+                    > $EXEFILE /RegisterPython=1$\n\
                 $\n\
 {%- endif %}
+{%- if initialize_conda %}
                 Install for just me and add to PATH:$\n\
                     > $EXEFILE /AddToPath=1$\n\
                 $\n\
+{%- endif %}
                 Install for just me, with no registry modification (for CI):$\n\
                     > $EXEFILE /NoRegistry=1$\n\
                 $\n\
@@ -386,17 +398,46 @@ FunctionEnd
         ${EndIf}
     ${EndIf}
 
-    ClearErrors
-{%- if has_python %}
-    ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
-    ${IfNot} ${Errors}
-        ${If} $ARGV_RegisterPython = "1"
-            StrCpy $Ana_RegisterSystemPython_State ${BST_CHECKED}
-        ${ElseIf} $ARGV_RegisterPython = "0"
-            StrCpy $Ana_RegisterSystemPython_State ${BST_UNCHECKED}
+
+    !if ${REGISTER_PYTHON_OPTION} == 1
+        ClearErrors
+        ${GetOptions} $ARGV "/RegisterPython=" $ARGV_RegisterPython
+        ${IfNot} ${Errors}
+            ${If} $ARGV_RegisterPython == "1"
+                StrCpy $REG_PY 1
+            ${ElseIf} $ARGV_RegisterPython == "0"
+                StrCpy $REG_PY 0
+            ${EndIf}
+        ${Else}
+            # If we have Errors, the option is not explicitly set by the user
+            StrCpy $REG_PY 0
         ${EndIf}
-    ${EndIf}
-{%- endif %}
+
+    !endif
+
+    !if ${INIT_CONDA_OPTION} == 1
+        ClearErrors
+        ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
+        ${IfNot} ${Errors}
+            ${If} $ARGV_AddToPath = "1"
+                # To address CVE-2022-26526.
+                # In AllUsers install mode, do not allow AddToPath as an option.
+                ${If} $InstMode == ${ALL_USERS}
+                    MessageBox MB_OK|MB_ICONEXCLAMATION \
+                        "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
+                    ${Print} "/AddToPath=1 is disabled and ignored in 'All Users' installations"
+                    StrCpy $INIT_CONDA 0
+                ${Else}
+                    StrCpy $INIT_CONDA 1
+                ${EndIf}
+            ${ElseIf} $ARGV_AddToPath = "0"
+                StrCpy $INIT_CONDA 0
+            ${EndIf}
+        ${Else}
+            # If we have Errors, the option is not explicitly set by the user
+            StrCpy $INIT_CONDA 0
+        ${EndIf}
+    !endif
 
     ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
@@ -451,30 +492,6 @@ FunctionEnd
     ${EndIf}
 
 !macroend
-
-Function OnInit_Release
-    !insertmacro ParseCommandLineArgs
-
-    # Parsing the AddToPath option here (and not in ParseCommandLineArgs) to prevent the MessageBox from showing twice.
-    # For more context, see https://github.com/conda/constructor/pull/584#issuecomment-1347688020
-    ClearErrors
-    ${GetOptions} $ARGV "/AddToPath=" $ARGV_AddToPath
-    ${IfNot} ${Errors}
-        ${If} $ARGV_AddToPath = "1"
-            ${If} $InstMode == ${ALL_USERS}
-                # To address CVE-2022-26526.
-                # In AllUsers install mode, do not allow AddToPath as an option.
-                MessageBox MB_OK|MB_ICONEXCLAMATION "/AddToPath=1 is disabled and ignored in 'All Users' installations" /SD IDOK
-                ${Print} "/AddToPath=1 is disabled and ignored in 'All Users' installations"
-                StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
-            ${Else}
-                StrCpy $Ana_AddToPath_State ${BST_CHECKED}
-            ${EndIf}
-        ${ElseIf} $ARGV_AddToPath = "0"
-            StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
-        ${EndIf}
-    ${EndIf}
-FunctionEnd
 
 Function InstModePage_RadioButton_OnClick
     Exch $0
@@ -610,6 +627,14 @@ Function .onInit
     Push $R1
     Push $R2
 
+    # 1. Initialize core options default values
+    Call mui_AnaCustomOptions_InitDefaults
+
+    # 2. Account finally for CLI to potentially override core default values
+    ${If} ${Silent}
+        !insertmacro ParseCommandLineArgs
+    ${EndIf}
+
     InitPluginsDir
 {%- if TEMP_EXTRA_FILES | length != 0 %}
     SetOutPath $PLUGINSDIR
@@ -617,7 +642,6 @@ Function .onInit
     File "{{ file }}"
 {%- endfor %}
 {%- endif %}
-    !insertmacro ParseCommandLineArgs
 
     # Select the correct registry to look at, depending
     # on whether it's a 32-bit or 64-bit installer
@@ -754,31 +778,10 @@ Function .onInit
         StrCpy $CheckPathLength "1"
     ${EndIf}
 
-    # Initialize the default settings for the anaconda custom options
-    Call mui_AnaCustomOptions_InitDefaults
-    # Override custom options with explicitly given values from construct.yaml.
-    # If initialize_by_default / register_python_default
-    # are None, do nothing. Note that these variables exist even when the construct.yaml
-    # settings are disabled, and the installer will respect them later!
-{%- if initialize_conda %}
-    {%- if initialize_by_default %}
-    ${If} $InstMode == ${JUST_ME}
-        StrCpy $Ana_AddToPath_State ${BST_CHECKED}
-    ${EndIf}
-    {%- else %}
-    StrCpy $Ana_AddToPath_State ${BST_UNCHECKED}
-    {%- endif %}
-{%- endif %}
-
-{%- if register_python %}
-    StrCpy $Ana_RegisterSystemPython_State {{ '${BST_CHECKED}' if register_python_default else '${BST_UNCHECKED}' }}
-{%- endif %}
     StrCpy $CheckPathLength "{{ 1 if check_path_length else 0 }}"
     StrCpy $Ana_ClearPkgCache_State {{ '${BST_UNCHECKED}' if keep_pkgs else '${BST_CHECKED}' }}
     StrCpy $Ana_PreInstall_State {{ '${BST_CHECKED}' if pre_install_exists else '${BST_UNCHECKED}' }}
     StrCpy $Ana_PostInstall_State {{ '${BST_CHECKED}' if post_install_exists else '${BST_UNCHECKED}' }}
-
-    Call OnInit_Release
 
     ${Print} "Welcome to ${NAME} ${VERSION}$\n"
 
@@ -1668,19 +1671,19 @@ Section "Install"
         call AbortRetryNSExecWait
     ${EndIf}
 
-{% if initialize_conda %}
-    ${If} ${FileExists} "$INSTDIR\.nonadmin"
-        ${If} $Ana_AddToPath_State = ${BST_CHECKED}
-            !insertmacro AddRemovePath "add" ""
+    !if ${INIT_CONDA_OPTION} == 1
+        ${If} ${FileExists} "$INSTDIR\.nonadmin"
+            ${If} $INIT_CONDA = 1
+                !insertmacro AddRemovePath "add" ""
+            ${EndIf}
         ${EndIf}
-    ${EndIf}
-{%- endif %}
+    !endif
 
 {%- if has_python %}
     # Create registry entries saying this is the system Python
     # (for this version)
     !define PYREG "Software\Python\PythonCore\${PY_VER}"
-    ${If} $Ana_RegisterSystemPython_State == ${BST_CHECKED}
+    ${If} $REG_PY == 1
         WriteRegStr SHCTX "${PYREG}\Help\Main Python Documentation" \
             "Main Python Documentation" \
             "$INSTDIR\Doc\python${PYVERSION_JUSTDIGITS}.chm"

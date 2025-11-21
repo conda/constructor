@@ -166,8 +166,6 @@ def make_nsi(
         "pre_install_desc": info["pre_install_desc"],
         "post_install_desc": info["post_install_desc"],
         "enable_shortcuts": "yes" if info["_enable_shortcuts"] is True else "no",
-        "show_register_python": "yes" if info.get("register_python", True) else "no",
-        "show_add_to_path": info.get("initialize_conda", "classic") or "no",
         "outfile": info["_outpath"],
         "vipv": make_VIProductVersion(info["version"]),
         "constructor_version": info["CONSTRUCTOR_VERSION"],
