@@ -100,9 +100,10 @@ def get_license(info):
 
 
 class UninstallBat:
-    """Represents a pre-uninstall batch script handler for the MSI installers.
-    This is intended to handle both the user specified 'pre_uninstall' bat script
-    and also the 'pre_uninstall_script' passed to briefcase by merging them into one.
+    """Represents a pre-uninstall batch file handler for the MSI installers.
+    This class handles both an optional user script together with a default uininstallation,
+    by creating one, merged batch file.
+    The created file is designed for the briefcase specific config entry 'pre_uninstall_script'.
     """
 
     def __init__(self, dst: Path, user_script: str | None):
@@ -110,12 +111,11 @@ class UninstallBat:
         Parameters
         ----------
         dst : Path
-            Destination directory where the generated `pre_uninstall.bat` file
-            will be written.
+            Destination directory where the file `pre_uninstall.bat` will be written.
         user_script : str | None
-            Optional path (string) to a user-provided `.bat` file configured
-            via the `pre_uninstall` setting in the installer configuration.
-            If provided, the file must adhere to the schema.
+            Optional path (string) to an existing user-provided batch file.
+            If provided, the file must adhere to the schema, in particular,
+            as 'pre_uninstall' is defined.
         """
         self._dst = dst
 
@@ -134,7 +134,7 @@ class UninstallBat:
         return file_path.is_file() and file_path.suffix.lower() == ".bat"
 
     def user_script_as_list(self) -> list[str]:
-        """Read user script."""
+        """Read user script into a list."""
         if not self.user_script:
             return []
         with open(self.user_script, encoding=self._encoding, newline=None) as f:
@@ -142,12 +142,12 @@ class UninstallBat:
 
     def sanitize_input(self, input_list: list[str]) -> list[str]:
         """Sanitizes the input, adds a safe exit if necessary.
-        Assumes the contents of the input represents the contents of a .bat-file.
+        Assumes the contents of the input represents the contents of a batch file.
         """
         return ["exit /b" if line.strip().lower() == "exit" else line for line in input_list]
 
     def create(self) -> None:
-        """Create the bat script for uninstallation. The script will also include the contents from the file the user
+        """Create the batch file for uninstallation. The script will also include the contents from the file the user
         may have specified in the yaml-file via 'pre_uninstall'.
         When this function is called, the directory 'dst' specified at class instantiation must exist.
         """
@@ -176,8 +176,8 @@ class UninstallBat:
 
         """
          The goal is to remove most of the files except for the directory '_installer' where
-         the bat-files are located. This is because the MSI Installer needs to call these bat-files
-         after 'pre_uninstall_script' is finished, in order to finish with the uninstallation.
+         the batch files are located. This is because the MSI Installer needs these batch files
+         to exist after 'pre_uninstall_script' is finished, in order to finish with the uninstallation.
         """
         main_bat = [
             'echo "Preparing uninstallation..."',
