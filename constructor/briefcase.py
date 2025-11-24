@@ -147,8 +147,8 @@ class UninstallBat:
         return ["exit /b" if line.strip().lower() == "exit" else line for line in input_list]
 
     def create(self) -> None:
-        """Create the batch file for uninstallation. The script will also include the contents from the file the user
-        may have specified in the yaml-file via 'pre_uninstall'.
+        """Create the batch file. If a `user_script` was defined at class instantiation, the batch file
+        will also include the contents from that file.
         When this function is called, the directory 'dst' specified at class instantiation must exist.
         """
         if not self._dst.exists():
@@ -175,14 +175,24 @@ class UninstallBat:
             ]
 
         """
-         The goal is to remove most of the files except for the directory '_installer' where
-         the batch files are located. This is because the MSI Installer needs these batch files
-         to exist after 'pre_uninstall_script' is finished, in order to finish with the uninstallation.
+         The goal is to remove most of the files except for files such as the
+         directory named '_installer' which the MSI installer expects to exist when
+         it performs the uninstallation.
         """
-        main_bat = [
-            'echo "Preparing uninstallation..."',
+        main_bat = [  # Prep
+            "echo Preparing uninstallation...",
             r'set "INSTDIR=%_HERE%\.."',
             'set "CONDA_EXE=_conda.exe"',
+        ]
+        main_bat += [  # Removal of 'envs' directory
+            r'set "ENVS_DIR=%INSTDIR%\envs"',
+            'if exist "%ENVS_DIR%" (',
+            '    echo [INFO] Removing "%ENVS_DIR%" ...',
+            r'    "%INSTDIR%\%CONDA_EXE%" constructor uninstall --prefix "%INSTDIR%\envs"',
+            "    echo [INFO] Done.",
+            ")",
+        ]
+        main_bat += [  # Removal of Start Menus and base env
             r'"%INSTDIR%\%CONDA_EXE%" menuinst --prefix "%INSTDIR%" --remove',
             r'"%INSTDIR%\%CONDA_EXE%" remove -p "%INSTDIR%" --keep-env --all -y',
             "if errorlevel 1 (",
@@ -190,6 +200,8 @@ class UninstallBat:
             "    exit /b %errorlevel%",
             ")",
             "",
+        ]
+        main_bat += [  # Removal of 'pkgs' directory
             "echo [INFO] %CONDA_EXE% completed successfully.",
             r'set "PKGS=%INSTDIR%\pkgs"',
             'if exist "%PKGS%" (',
@@ -198,6 +210,8 @@ class UninstallBat:
             "    echo [INFO] Done.",
             ")",
             "",
+        ]
+        main_bat += [  # Removal of .nonadmin
             r'set "NONADMIN=%INSTDIR%\.nonadmin"',
             'if exist "%NONADMIN%" (',
             '    echo [INFO] Removing file "%NONADMIN%" ...',
@@ -205,8 +219,8 @@ class UninstallBat:
             ")",
             "",
         ]
-        final_lines = header + [""] + user_bat + [""] + main_bat
 
+        final_lines = header + [""] + user_bat + [""] + main_bat
         with open(self.file_path, "w", encoding=self._encoding, newline="\r\n") as f:
             # Python will write \n as \r\n since we have set the 'newline' argument above.
             f.writelines(line + "\n" for line in final_lines)
