@@ -146,6 +146,60 @@ class UninstallBat:
         """
         return ["exit /b" if line.strip().lower() == "exit" else line for line in input_list]
 
+    def _clean_up_pkgs_dir(self) -> list[str]:
+        """This method returns a list of strings that represents the code
+        necessary to clean up the 'pkgs' directory. Unfortunately we have to follow
+        a very strict set of instructions in order to ensure that we clean up the directory
+        such that the MSI installer can continue by removing related Windows Registry Entries.
+        The current behavior is that the MSI installer registers each directory from `pkgs`
+        if it contains the subdirectory 'info'. Therefore we need to clean up the 'pkgs' directory
+        to match that.
+        """
+        return [
+            r'set "PKGS=%INSTDIR%\pkgs"',
+            # Sanity check
+            'if not exist "%PKGS%\" (',
+            '    echo [WARNING] "%PKGS%" does not exist.',
+            '    exit /b 0',
+            ')',
+            '',
+            # Delete plain files directly under pkgs
+            'pushd "%PKGS%" || (echo [ERROR] cannot enter "%PKGS%" & exit /b 1)',
+            'del /f /q * >nul 2>&1',
+            '',
+            # For each subdirectory, delete everything except "info"
+            'for /d %%D in (*) do (',
+            #    Try enter the child directory; if it fails, skip it
+            '    pushd "%%~fD" >nul 2>&1',
+            '    if errorlevel 1 (',
+            '        echo [WARNING] Could not enter "%%~fD"',
+            '    ) else (',
+            #        Delete files in this child dir
+            '        del /f /q * >nul 2>&1',
+            #        Delete all directories except "info"
+            #        If we encounter "info", delete its contents
+            '        for /d %%S in (*) do (',
+            '            if /i "%%S"=="info" (',
+            '                pushd "%%~fS" >nul 2>&1',
+            '                if not errorlevel 1 (',
+            '                    del /f /q * >nul 2>&1',
+            '                    for /d %%I in (*) do rmdir /s /q "%%I"',
+            '                    popd',
+            '                ) else (',
+            '                    echo [WARNING] Could not enter "%%~fS"',
+            '                )',
+            '            ) else (',
+            '                rmdir /s /q "%%S"',
+            '            )',
+            '        )',
+            '        popd',
+            '    )',
+            ')',
+            '',
+            'popd',
+            '',
+        ]
+
     def create(self) -> None:
         """Create the batch file. If a `user_script` was defined at class instantiation, the batch file
         will also include the contents from that file.
@@ -201,16 +255,9 @@ class UninstallBat:
             ")",
             "",
         ]
-        main_bat += [  # Removal of 'pkgs' directory
-            "echo [INFO] %CONDA_EXE% completed successfully.",
-            r'set "PKGS=%INSTDIR%\pkgs"',
-            'if exist "%PKGS%" (',
-            '    echo [INFO] Removing "%PKGS%" ...',
-            '    rmdir /s /q "%PKGS%"',
-            "    echo [INFO] Done.",
-            ")",
-            "",
-        ]
+        # Removal of pkgs
+        main_bat += self._clean_up_pkgs_dir()
+
         main_bat += [  # Removal of .nonadmin
             r'set "NONADMIN=%INSTDIR%\.nonadmin"',
             'if exist "%NONADMIN%" (',
