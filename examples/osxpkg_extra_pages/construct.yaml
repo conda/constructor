@@ -10,7 +10,7 @@ default_location_pkg: Library
 pkg_name: "osx-pkg-test"
 
 channels:
-  - http://repo.anaconda.com/pkgs/main/
+  - https://repo.anaconda.com/pkgs/main/
 
 attempt_hardlinks: True
 

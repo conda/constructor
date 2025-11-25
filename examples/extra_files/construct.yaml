@@ -8,7 +8,7 @@ license_file: TEST_LICENSE.txt
 check_path_spaces: False
 check_path_length: False
 channels:
-  - http://repo.anaconda.com/pkgs/main/
+  - https://repo.anaconda.com/pkgs/main/
 specs:
   - python
 extra_files:

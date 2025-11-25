@@ -10,10 +10,10 @@ keep_pkgs: True
 
 # we just remap the main conda channel, to show the idea of remap
 channels:
-  - http://repo.anaconda.com/pkgs/main/
+  - https://repo.anaconda.com/pkgs/main/
 
 channels_remap:
-  - src: http://repo.anaconda.com/pkgs/main/
+  - src: https://repo.anaconda.com/pkgs/main/
     dest: file:///usr/local/share/private_repo/
 
 specs:
