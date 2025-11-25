@@ -100,6 +100,34 @@ def get_bundle_app_name(info, name):
     return bundle, app_name
 
 
+def create_install_options_list(info: dict) -> list[dict]:
+    """Returns a list of dicts with data formatted for the installation options page."""
+    options = []
+    register_python = info.get("register_python", True)
+    if register_python:
+        options.append(
+            {
+                "name": "register_python",
+                "title": "Register Python as System Default",
+                "description": "TODO: Register Python description",
+                "default": info.get("register_python_default", False),
+            }
+        )
+    initialize_conda = info.get("initialize_conda", "classic")
+    if initialize_conda:
+        # TODO: How would we distinguish between True/classic in the UI? Same for NSIS
+        options.append(
+            {
+                "name": "initialize_conda",
+                "title": "Initialize Conda",
+                "description": "TODO: Initialize conda description",
+                "default": info.get("initialize_by_default", False),
+            }
+        )
+
+    return options
+
+
 # Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
 # template allows us to avoid escaping strings everywhere.
 def write_pyproject_toml(tmp_dir, info):
@@ -119,6 +147,7 @@ def write_pyproject_toml(tmp_dir, info):
                 "use_full_install_path": False,
                 "install_launcher": False,
                 "post_install_script": str(BRIEFCASE_DIR / "run_installation.bat"),
+                "install_option": create_install_options_list(info),
             }
         },
     }
