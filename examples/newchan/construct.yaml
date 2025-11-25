@@ -5,7 +5,7 @@ name: Funnychan
 version: 2.5.5
 
 channels:
-  - http://repo.anaconda.com/pkgs/main/
+  - https://repo.anaconda.com/pkgs/main/
   - https://conda.anaconda.org/ilan
 
 # specifications

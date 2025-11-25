@@ -5,7 +5,7 @@ name: Signed_AzureSignTool
 version: X
 installer_type: exe
 channels:
-  - http://repo.anaconda.com/pkgs/main/
+  - https://repo.anaconda.com/pkgs/main/
 specs:
   - python
 windows_signing_tool: azuresigntool # [win]

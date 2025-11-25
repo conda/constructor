@@ -10,7 +10,7 @@ def test_dry_run(tmp_path):
         version: X
         installer_type: all
         channels:
-          - http://repo.anaconda.com/pkgs/main/
+          - https://repo.anaconda.com/pkgs/main/
         specs:
           - ca-certificates
         """

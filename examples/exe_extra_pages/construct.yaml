@@ -10,7 +10,7 @@ name: {{ name }}
 version: X
 installer_type: all
 channels:
-  - http://repo.anaconda.com/pkgs/main/
+  - https://repo.anaconda.com/pkgs/main/
 specs:
   - python
 {% if os.environ.get("POST_INSTALL_PAGES_LIST") %}
