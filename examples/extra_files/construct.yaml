@@ -7,8 +7,8 @@ installer_type: all
 license_file: TEST_LICENSE.txt
 check_path_spaces: False
 check_path_length: False
-chanhttps://repo.anaconda
-  - http://repo.anaconda.com/pkgs/main/
+channels:
+  - https://repo.anaconda.com/pkgs/main/
 specs:
   - python
 extra_files:
