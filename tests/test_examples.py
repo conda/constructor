@@ -547,6 +547,9 @@ def test_example_miniforge(tmp_path, request, example):
                 check_sentinels=installer.suffix != ".pkg",
                 uninstall=False,
             )
+            # Check that key metadata files are in place
+            assert install_dir.glob("conda-meta/*.json")
+            assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
             if installer.suffix == ".pkg" and ON_CI:
                 basename = "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / basename)

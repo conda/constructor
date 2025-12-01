@@ -150,7 +150,7 @@ def create(info, verbose=False):
                 "pkgs/%s.sh" % key,
                 filter=make_executable if has_shebang(info[key]) else None,
             )
-    cache_dir = join(tmp_dir, "cache")
+    cache_dir = join(tmp_dir, "pkgs", "cache")
     if isdir(cache_dir):
         for cf in os.listdir(cache_dir):
             if cf.endswith(".json"):
