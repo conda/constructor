@@ -1,9 +1,9 @@
 [//]: # (current developments)
 
-## 2025-12-01   4.0.0:
+## 2025-12-02   3.14.0:
 ### Enhancements
 
-* **Breaking change**: Replace custom Python script with `conda-standalone` calls.
+* Replace custom Python script with `conda-standalone` calls.
   This removes Python as an implicit dependency from installers. (#549 via #1089)
 * EXE: Improve handling of options `initialize_conda`, `register_python` with their corresponding default values. The behavior of these options
   with respect to `initialize_by_default` and `register_python_default` is now consistent with `.sh` and `.pkg` installers.
