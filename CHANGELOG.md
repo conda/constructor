@@ -1,6 +1,6 @@
 [//]: # (current developments)
 
-## 2025-12-01   3.13.2:
+## 2025-12-01   4.0.0:
 ### Enhancements
 
 * **Breaking change**: Replace custom Python script with `conda-standalone` calls.
