@@ -1,5 +1,27 @@
 [//]: # (current developments)
 
+## 2025-12-02   3.14.0:
+### Enhancements
+
+* Replace custom Python script with `conda-standalone` calls.
+  This removes Python as an implicit dependency from installers. (#549 via #1089)
+* EXE: Improve handling of options `initialize_conda`, `register_python` with their corresponding default values. The behavior of these options
+  with respect to `initialize_by_default` and `register_python_default` is now consistent with `.sh` and `.pkg` installers.
+  Windows CLI installations now don't add `conda` to `PATH` or register Python by default, and command-line arguments are
+  only parsed when installing in silent mode (enabled with the flag `/S`). (#1003, #1004 via #1105)
+
+### Bug fixes
+
+* Ensure cached repodata files are shipped in SH installers. (#1119 via #1121).
+
+### Contributors
+
+* @jaimergp
+* @marcoesters
+* @lrandersson
+
+
+
 ## 2025-11-10   3.13.1:
 ### Bug fixes
 
