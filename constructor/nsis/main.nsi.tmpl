@@ -23,7 +23,7 @@ Unicode true
         # NSIS doesn't write the correct BOM to log files,
         # so each character will be followed by NUL.
         FileOpen $R0 "$INSTDIR\install.log" w
-        FileWriteUTF16LE $R0 ""
+        FileWrite $R0 ""
         FileClose $R0
       ${EndIf}
     ${EndIf}
