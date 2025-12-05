@@ -210,7 +210,7 @@ def _run_uninstaller_exe(
         f"_?={install_dir}",
     ]
     process = _execute(cmd, timeout=timeout, check=check)
-    if check:
+    if check and Path(install_dir, "install.log").exists():
         _check_installer_log(install_dir)
         remaining_files = list(install_dir.iterdir())
         if len(remaining_files) > 3:

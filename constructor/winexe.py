@@ -261,6 +261,9 @@ def make_nsi(
     approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
     # UPPERCASE variables are unescaped (and unquoted)
+    variables["CONDA_LOG_ARG"] = (
+        '--log-file "${STEP_LOG}"' if info.get("_conda_exe_supports_logging") else ""
+    )
     variables["NAME"] = name
     variables["NSIS_DIR"] = NSIS_DIR
     variables["BITS"] = str(arch)
