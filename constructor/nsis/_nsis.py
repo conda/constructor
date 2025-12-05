@@ -79,7 +79,7 @@ def add_to_path(pyversion, arch):
     except IOError:
         old_prefixes = []
     for prefix in old_prefixes:
-        print('Removing old installation at %s from PATH (if any entries get found)\n' % (prefix))
+        print(f"Removing old installation at {prefix} from PATH (if any entries get found)")
         remove_from_path(prefix)
 
     # add Anaconda to the path
