@@ -605,8 +605,11 @@ Function .onInit
     Push $R1
     Push $R2
 
-    # 1. Initialize core options default values
+    # 1. Initialize core options default values and other variables
     Call mui_AnaCustomOptions_InitDefaults
+
+    StrCpy $ARGV_NoRegistry "0"
+    StrCpy $ARGV_KeepPkgCache "{{ 1 if keep_pkgs else 0 }}"
 
     # 2. Account finally for CLI to potentially override core default values
     ${If} ${Silent}
