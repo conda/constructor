@@ -1,5 +1,17 @@
 [//]: # (current developments)
 
+## 2025-12-08   3.14.1:
+### Bug fixes
+
+* EXE: Fix a regression with uninitialized variables that prevented installations from being added to the "Add/Remove Programs" list. (#1124)
+
+### Contributors
+
+* @marcoesters
+* @lranderssons
+
+
+
 ## 2025-12-02   3.14.0:
 ### Enhancements
 

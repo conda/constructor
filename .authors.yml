@@ -264,7 +264,7 @@
   github: chenghlee
 - name: conda-bot
   email: ad-team+condabot@anaconda.com
-  num_commits: 57
+  num_commits: 58
   first_commit: 2022-01-25 21:38:28
   alternate_emails:
   - 18747875+conda-bot@users.noreply.github.com
@@ -357,7 +357,7 @@
   github: RahulARanger
 - name: Marco Esters
   email: mesters@anaconda.com
-  num_commits: 58
+  num_commits: 59
   first_commit: 2023-05-12 11:44:12
   github: marcoesters
 - name: Darryl Miles
@@ -372,7 +372,7 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 69
+  num_commits: 70
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
 - name: Matthias Kuhn
@@ -382,7 +382,7 @@
   github: m-kuhn
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 55
+  num_commits: 56
   github: dependabot[bot]
   first_commit: 2024-05-07 10:16:05
 - name: Julien Jerphanion
@@ -417,5 +417,5 @@
   - Robin
   github: lrandersson
   email: 34315751+lrandersson@users.noreply.github.com
-  num_commits: 8
+  num_commits: 9
   first_commit: 2025-10-21 08:30:00
