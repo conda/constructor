@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* A regression with uninitialized variables has been fixed, this affected constructor 3.14.0. (#1124)
+* EXE: Fix a regression with uninitialized variables that prevented installations from being added to the "Add/Remove Programs" list. (#1124)
 
 ### Deprecations
 
