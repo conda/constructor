@@ -7,7 +7,6 @@
 
 ### Contributors
 
-* @jaimergp
 * @marcoesters
 * @lranderssons
 
