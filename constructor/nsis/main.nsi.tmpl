@@ -260,6 +260,19 @@ Function SkipPageIfUACInnerInstance
     ${EndIf}
 FunctionEnd
 
+Function InitializeVariables
+    StrCpy $CheckPathLength "{{ 1 if check_path_length else 0 }}"
+    StrCpy $ARGV_NoRegistry "0"
+    StrCpy $ARGV_KeepPkgCache "{{ 1 if keep_pkgs else 0 }}"
+
+    # Package cache option
+    StrCpy $Ana_ClearPkgCache_State {{ '${BST_UNCHECKED}' if keep_pkgs else '${BST_CHECKED}' }}
+
+    # Pre/post install
+    StrCpy $Ana_PreInstall_State {{ '${BST_CHECKED}' if pre_install_exists else '${BST_UNCHECKED}' }}
+    StrCpy $Ana_PostInstall_State {{ '${BST_CHECKED}' if post_install_exists else '${BST_UNCHECKED}' }}
+FunctionEnd
+
 !macro DoElevation
     GetDlgItem $1 $HWNDParent 1
     System::Call user32::GetFocus()i.s
@@ -322,7 +335,7 @@ FunctionEnd
                 /NoRegistry=[0|1] [default: AllUsers: 0, JustMe: 0]$\n\
                 /NoScripts=[0|1] [default: 0]$\n\
                 /NoShortcuts=[0|1] [default: 0]$\n\
-                /CheckPathLength=[0|1] [default: 1]$\n\
+                /CheckPathLength=[0|1] [default: {{ 1 if check_path_length else 0 }}]$\n\
                 /? (show this help message)$\n\
                 /S (run in CLI/headless mode)$\n\
                 /Q (quiet mode, do not print output to console)$\n\
@@ -412,15 +425,9 @@ FunctionEnd
 
     ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
-    ${If} ${Errors}
-        StrCpy $ARGV_KeepPkgCache "{{ 1 if keep_pkgs else 0 }}"
-    ${EndIf}
 
     ClearErrors
     ${GetOptions} $ARGV "/NoRegistry=" $ARGV_NoRegistry
-    ${If} ${Errors}
-        StrCpy $ARGV_NoRegistry "0"
-    ${EndIf}
 
     ClearErrors
     ${GetOptions} $ARGV "/NoScripts=" $ARGV_NoScripts
@@ -605,8 +612,9 @@ Function .onInit
     Push $R1
     Push $R2
 
-    # 1. Initialize core options default values
+    # 1. Initialize core options default values and other variables
     Call mui_AnaCustomOptions_InitDefaults
+    Call InitializeVariables
 
     # 2. Account finally for CLI to potentially override core default values
     ${If} ${Silent}
@@ -750,16 +758,6 @@ Function .onInit
             strcpy $INSTDIR $INSTDIR_JUSTME
         ${EndIf}
     ${EndIf}
-
-    ; Set default value
-    ${If} $CheckPathLength == ""
-        StrCpy $CheckPathLength "1"
-    ${EndIf}
-
-    StrCpy $CheckPathLength "{{ 1 if check_path_length else 0 }}"
-    StrCpy $Ana_ClearPkgCache_State {{ '${BST_UNCHECKED}' if keep_pkgs else '${BST_CHECKED}' }}
-    StrCpy $Ana_PreInstall_State {{ '${BST_CHECKED}' if pre_install_exists else '${BST_UNCHECKED}' }}
-    StrCpy $Ana_PostInstall_State {{ '${BST_CHECKED}' if post_install_exists else '${BST_UNCHECKED}' }}
 
     ${Print} "Welcome to ${NAME} ${VERSION}$\n"
 
