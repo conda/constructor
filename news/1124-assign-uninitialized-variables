@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Resolve a regression with uninitialized variables, this affected constructor 3.14.0. (#1124)
+* A regression with uninitialized variables has been fixed, this affected constructor 3.14.0. (#1124)
 
 ### Deprecations
 
