@@ -1479,9 +1479,22 @@ def test_installed_menu_list(tmp_path, request):
             uninstall=False,
             options=options,
         )
+
+    # Extract name and version from yaml-file
+    # in order to predict parts of the installer name
     with open(input_path / "construct.yaml") as f:
-        data = YAML().load(f)
-    partial_name = f"{data['name']} {data['version']}"
+        contents = f.readlines()
+    name = ""
+    version = ""
+    for line in contents:
+        if 'name: ' in line:
+            name = line.split(':')[-1].strip()
+        if 'version: ' in line:
+            version = line.split(':')[-1].strip()
+        if name and version:
+            break
+    partial_name = f"{name} {version}"
+
     is_in_installed_apps_menu = _is_program_installed(partial_name)
     _run_uninstaller_exe(install_dir)
     assert is_in_installed_apps_menu, (
@@ -1505,9 +1518,22 @@ def test_not_in_installed_menu_list_(tmp_path, request):
             uninstall=False,
             options=options,
         )
+
+    # Extract name and version from yaml-file
+    # in order to predict parts of the installer name
     with open(input_path / "construct.yaml") as f:
-        data = YAML().load(f)
-    partial_name = f"{data['name']} {data['version']}"
+        contents = f.readlines()
+    name = ""
+    version = ""
+    for line in contents:
+        if 'name: ' in line:
+            name = line.split(':')[-1].strip()
+        if 'version: ' in line:
+            version = line.split(':')[-1].strip()
+        if name and version:
+            break
+    partial_name = f"{name} {version}"
+
     is_in_installed_apps_menu = _is_program_installed(partial_name)
     _run_uninstaller_exe(install_dir)
     assert is_in_installed_apps_menu, (
