@@ -43,32 +43,62 @@ def test_name_version(name_in, version_in, name_expected, version_expected):
     assert (name_actual, version_actual) == (name_expected, version_expected)
 
 
-def test_name_empty():
+@pytest.mark.parametrize(
+    "info",
+    [
+        {},
+        {"name": ""},
+    ],
+)
+def test_name_empty(info):
     with pytest.raises(ValueError, match="Name is empty"):
-        get_name_version({"name": ""})
+        get_name_version(info)
 
 
-@pytest.mark.parametrize("version_in", ["", ".", "hello"])
-def test_version_invalid(version_in):
-    with pytest.raises(
-        ValueError, match=f"Version {version_in!r} contains no valid version numbers"
-    ):
-        get_name_version(
-            {"name": "Miniconda3", "version": version_in},
-        )
+@pytest.mark.parametrize(
+    "info",
+    [
+        {"name": "Miniconda"},
+        {"name": "Miniconda", "version": ""},
+    ],
+)
+def test_version_empty(info):
+    with pytest.raises(ValueError, match="Version is empty"):
+        get_name_version(info)
+
+
+@pytest.mark.parametrize("version_in", ["x", ".", " ", "hello"])
+def test_version_invalid(version_in, caplog):
+    name_actual, version_actual = get_name_version(
+        {"name": "Miniconda3", "version": version_in},
+    )
+    assert name_actual == f"Miniconda3 {version_in}"
+    assert version_actual == "0.0.1"
+    assert caplog.messages == [
+        f"Version {version_in!r} contains no valid version numbers; defaulting to 0.0.1"
+    ]
 
 
 @pytest.mark.parametrize(
     "rdi, name, bundle_expected, app_name_expected",
     [
+        # Valid rdi
         ("org.conda", "ignored", "org", "conda"),
         ("org.Conda", "ignored", "org", "Conda"),
         ("org.conda-miniconda", "ignored", "org", "conda-miniconda"),
         ("org.conda_miniconda", "ignored", "org", "conda_miniconda"),
         ("org-conda.miniconda", "ignored", "org-conda", "miniconda"),
         ("org.conda.miniconda", "ignored", "org.conda", "miniconda"),
+        ("org.conda.1", "ignored", "org.conda", "1"),
+        # Invalid rdi
+        ("org.hello-", "Miniconda", "org", "hello"),
+        ("org.-hello", "Miniconda", "org", "hello"),
+        ("org.hello world", "Miniconda", "org", "hello-world"),
+        ("org.hello!world", "Miniconda", "org", "hello-world"),
+        # Missing rdi
         (None, "x", "io.continuum", "x"),
         (None, "X", "io.continuum", "x"),
+        (None, "1", "io.continuum", "1"),
         (None, "Miniconda", "io.continuum", "miniconda"),
         (None, "Miniconda3", "io.continuum", "miniconda3"),
         (None, "Miniconda3 py313", "io.continuum", "miniconda3-py313"),
@@ -86,11 +116,14 @@ def test_rdi_no_dots(rdi):
         get_bundle_app_name({"reverse_domain_identifier": rdi}, "ignored")
 
 
-@pytest.mark.parametrize("rdi", ["org.hello-", "org.-hello", "org.hello world", "org.hello!world"])
+@pytest.mark.parametrize("rdi", ["org.", "org.hello.", "org.hello.-"])
 def test_rdi_invalid_package(rdi):
     with pytest.raises(
         ValueError,
-        match=f"reverse_domain_identifier '{rdi}' doesn't end with a valid package name",
+        match=(
+            f"Last component of reverse_domain_identifier '{rdi}' "
+            f"contains no alphanumeric characters"
+        ),
     ):
         get_bundle_app_name({"reverse_domain_identifier": rdi}, "ignored")
 

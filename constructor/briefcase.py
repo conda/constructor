@@ -18,13 +18,18 @@ from .utils import DEFAULT_REVERSE_DOMAIN_ID, copy_conda_exe, filename_dist
 BRIEFCASE_DIR = Path(__file__).parent / "briefcase"
 EXTERNAL_PACKAGE_PATH = "external"
 
+# Default to a low version, so that if a valid version is provided in the future, it'll
+# be treated as an upgrade.
+DEFAULT_VERSION = "0.0.1"
+
 logger = logging.getLogger(__name__)
 
 
 def get_name_version(info):
-    name = info["name"]
-    if not name:
+    if not (name := info.get("name")):
         raise ValueError("Name is empty")
+    if not (version := info.get("version")):
+        raise ValueError("Version is empty")
 
     # Briefcase requires version numbers to be in the canonical Python format, and some
     # installer types use the version to distinguish between upgrades, downgrades and
@@ -36,14 +41,16 @@ def get_name_version(info):
     matches = list(
         re.finditer(
             r"(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?",
-            info["version"].lower().replace("-", "."),
+            version.lower().replace("-", "."),
         )
     )
     if not matches:
-        raise ValueError(
-            f"Version {info['version']!r} contains no valid version numbers: see "
-            f"https://packaging.python.org/en/latest/specifications/version-specifiers/"
+        logger.warning(
+            f"Version {version!r} contains no valid version numbers; "
+            f"defaulting to {DEFAULT_VERSION}"
         )
+        return f"{name} {version}", DEFAULT_VERSION
+
     match = matches[-1]
     version = match.group()
 
@@ -57,32 +64,38 @@ def get_name_version(info):
     return name, version
 
 
+# Takes an arbitrary string with at least one alphanumeric character, and makes it into
+# a valid Python package name.
+def make_app_name(name, source):
+    app_name = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    if not app_name:
+        raise ValueError(f"{source} contains no alphanumeric characters")
+    return app_name
+
+
 # Some installer types use the reverse domain ID to detect when the product is already
 # installed, so it should be both unique between different products, and stable between
 # different versions of a product.
 def get_bundle_app_name(info, name):
-    # If reverse_domain_identifier is provided, use it as-is, but verify that the last
-    # component is a valid Python package name, as Briefcase requires.
+    # If reverse_domain_identifier is provided, use it as-is,
     if (rdi := info.get("reverse_domain_identifier")) is not None:
         if "." not in rdi:
             raise ValueError(f"reverse_domain_identifier {rdi!r} contains no dots")
         bundle, app_name = rdi.rsplit(".", 1)
 
+        # Ensure that the last component is a valid Python package name, as Briefcase
+        # requires.
         if not re.fullmatch(
             r"[A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9]", app_name, flags=re.IGNORECASE
         ):
-            raise ValueError(
-                f"reverse_domain_identifier {rdi!r} doesn't end with a valid package "
-                f"name: see "
-                f"https://packaging.python.org/en/latest/specifications/name-normalization/"
+            app_name = make_app_name(
+                app_name, f"Last component of reverse_domain_identifier {rdi!r}"
             )
 
     # If reverse_domain_identifier isn't provided, generate it from the name.
     else:
         bundle = DEFAULT_REVERSE_DOMAIN_ID
-        app_name = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
-        if not app_name:
-            raise ValueError(f"Name {name!r} contains no alphanumeric characters")
+        app_name = make_app_name(name, f"Name {name!r}")
 
     return bundle, app_name
 
