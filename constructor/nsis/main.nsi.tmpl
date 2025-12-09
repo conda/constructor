@@ -1341,11 +1341,8 @@ FunctionEnd
         StrCpy $R0 "rmpath"
         StrCpy $R1 "Failed to remove {{ NAME }} from PATH"
     ${EndIf}
-    ${If} ${Silent}
-        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0 > "${STEP_LOG}" 2>&1'
-    ${Else}
-        push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0'
-    ${EndIf}
+    # `type` is used to simulate a `tee`-like output in cmd.exe
+    push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0 > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
     push $R1
     push 'WithLog'
     call ${un}AbortRetryNSExecWait
@@ -1580,16 +1577,10 @@ Section "Install"
     call AbortRetryNSExecWait
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
-        ${Print} "Running pre_install scripts..."
-        # Output into step log if silent so that the output is visible in the console
-        # and the logs. For GUI installers, there is no good way to have live output
-        # and output into logs.
-        ${If} ${Silent}
-            push '"$INSTDIR\pkgs\pre_install.bat" > "${STEP_LOG}" 2>&1'
-        ${Else}
-            push '"$INSTDIR\pkgs\pre_install.bat"'
-        ${EndIf}
-        push "Failed to run pre_install"
+        ${Print} "Running pre-install script..."
+        # `type` is used to simulate a `tee`-like output in cmd.exe
+        push '"$INSTDIR\pkgs\pre_install.bat" > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+        push "Failed to run pre-install script."
         push 'WithLog'
         call AbortRetryNSExecWait
     NoPreInstall:
@@ -1648,16 +1639,10 @@ Section "Install"
 
     ${If} ${FileExists} "$INSTDIR\pkgs\post_install.bat"
         ${If} $Ana_PostInstall_State = ${BST_CHECKED}
-            ${Print} "Running post install..."
-            # Output into step log if silent so that the output is visible in the console
-            # and the logs. For GUI installers, there is no good way to have live output
-            # and output into logs.
-            ${If} ${Silent}
-                push '"$INSTDIR\pkgs\post_install.bat" > "${STEP_LOG}" 2>&1"'
-            ${Else}
-                push '"$INSTDIR\pkgs\post_install.bat"'
-            ${EndIf}
-            push "Failed to run post_install"
+            ${Print} "Running post-install..."
+            # `type` is used to simulate a `tee`-like output in cmd.exe
+            push '"$INSTDIR\pkgs\post_install.bat" > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+            push "Failed to run post-install script."
             push 'WithLog'
             call AbortRetryNSExecWait
         ${EndIf}
@@ -1721,14 +1706,8 @@ Section "Install"
     # Enable inheritance on all files inside $INSTDIR.
     # Use icacls because it is much faster than custom NSIS solutions.
     # We continue on error because icacls fails on broken links.
-    # Output into step log if silent so that the output is visible in the console
-    # and the logs. For GUI installers, there is no good way to have live output
-    # and output into logs.
-    ${If} ${Silent}
-        push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q > "${STEP_LOG}" 2>&1'
-    ${Else}
-        push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q'
-    ${EndIf}
+    # `type` is used to simulate a `tee`-like output in cmd.exe
+    push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
     push 'Failed to enable inheritance for all files in the installation directory.'
     push 'WithLog'
     call AbortRetryNSExecWait
@@ -1822,16 +1801,10 @@ Section "Uninstall"
     ${EndIf}
 
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
-        ${Print} "Running pre_uninstall scripts..."
-        # Output into step log if silent so that the output is visible in the console
-        # and the logs. For GUI installers, there is no good way to have live output
-        # and output into logs.
-        ${If} ${Silent}
-            push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1'
-        ${Else}
-            push '"$INSTDIR\pkgs\pre_uninstall.bat"'
-        ${EndIf}
-        push "Failed to run pre_uninstall"
+        ${Print} "Running pre-uninstall script..."
+        # `type` is used to simulate a `tee`-like output in cmd.exe
+        push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+        push "Failed to run pre-uninstall scripts."
         push 'WithLog'
         call un.AbortRetryNSExecWait
     ${EndIf}
@@ -1895,11 +1868,8 @@ Section "Uninstall"
     ${Else}
         StrCpy $R0 "system"
     ${EndIf}
-    ${If} ${Silent}
-        push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0 > "${STEP_LOG}" 2>&1'
-    ${Else}
-        push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0'
-    ${EndIf}
+    # `type` is used to simulate a `tee`-like output in cmd.exe
+    push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0 > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
     push 'Failed to clean AutoRun'
     push 'WithLog'
     call un.AbortRetryNSExecWait
