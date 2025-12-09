@@ -70,8 +70,8 @@ def _is_program_installed(partial_name: str) -> bool:
     if not sys.platform.startswith("win"):
         return False
 
+    # For its current purpose HKEY_CURRENT_USER is sufficient, but can consider adding more in the future.
     UNINSTALL_PATHS = [
-        # (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
         (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
     ]
     partial_name = partial_name.lower()
@@ -1463,12 +1463,15 @@ def test_regressions(tmp_path, request):
         )
 
 
+@pytest.mark.parametrize("no_registry", (0, 1))
 @pytest.mark.skipif(not ON_CI, reason="CI only")
 @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
-def test_installed_menu_list(tmp_path, request):
-    """Verify app is in Installed Apps Menu, corresponding to '/NoRegistry=0'"""
+def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
+    """Verify the app is Installed Apps Menu (or not), based the CLI arg '/NoRegistry'.
+    If NoRegistry=0, we expect to find the installer in the Menu, otherwise not.
+    """
     input_path = _example_path("extra_files")  # The specific example we use here is not important
-    options = ["/InstallationType=JustMe"]
+    options = ["/InstallationType=JustMe", f"/NoRegistry={no_registry}"]
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(
             input_path,
@@ -1487,55 +1490,16 @@ def test_installed_menu_list(tmp_path, request):
     name = ""
     version = ""
     for line in contents:
-        if 'name: ' in line:
-            name = line.split(':')[-1].strip()
-        if 'version: ' in line:
-            version = line.split(':')[-1].strip()
+        if "name: " in line:
+            name = line.split(":")[-1].strip()
+        if "version: " in line:
+            version = line.split(":")[-1].strip()
         if name and version:
             break
     partial_name = f"{name} {version}"
 
     is_in_installed_apps_menu = _is_program_installed(partial_name)
     _run_uninstaller_exe(install_dir)
-    assert is_in_installed_apps_menu, (
-        f"Unable to find program {partial_name} in the 'Installed apps' menu"
-    )
-
-
-@pytest.mark.skipif(not ON_CI, reason="CI only")
-@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
-def test_not_in_installed_menu_list_(tmp_path, request):
-    """Verify app is not in Installed Apps Menu, corresponding to '/NoRegistry=1'"""
-    input_path = _example_path("extra_files")  # The specific example we use here is not important
-    options = ["/InstallationType=JustMe", "/NoRegistry=1"]
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            check_subprocess=True,
-            uninstall=False,
-            options=options,
-        )
-
-    # Extract name and version from yaml-file
-    # in order to predict parts of the installer name
-    with open(input_path / "construct.yaml") as f:
-        contents = f.readlines()
-    name = ""
-    version = ""
-    for line in contents:
-        if 'name: ' in line:
-            name = line.split(':')[-1].strip()
-        if 'version: ' in line:
-            version = line.split(':')[-1].strip()
-        if name and version:
-            break
-    partial_name = f"{name} {version}"
-
-    is_in_installed_apps_menu = _is_program_installed(partial_name)
-    _run_uninstaller_exe(install_dir)
-    assert not is_in_installed_apps_menu, (
+    assert is_in_installed_apps_menu == (no_registry == 0), (
         f"Unable to find program {partial_name} in the 'Installed apps' menu"
     )
