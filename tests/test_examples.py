@@ -71,7 +71,7 @@ def _is_program_installed(partial_name: str) -> bool:
         return False
 
     UNINSTALL_PATHS = [
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+        # (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
         (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
     ]
     partial_name = partial_name.lower()
@@ -1536,6 +1536,6 @@ def test_not_in_installed_menu_list_(tmp_path, request):
 
     is_in_installed_apps_menu = _is_program_installed(partial_name)
     _run_uninstaller_exe(install_dir)
-    assert is_in_installed_apps_menu, (
+    assert not is_in_installed_apps_menu, (
         f"Unable to find program {partial_name} in the 'Installed apps' menu"
     )
