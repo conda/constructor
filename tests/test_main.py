@@ -7,7 +7,7 @@ def test_dry_run(tmp_path):
     inputfile = dedent(
         """
         name: test_schema_validation
-        version: X
+        version: 1.0.0
         installer_type: all
         channels:
           - http://repo.anaconda.com/pkgs/main/
