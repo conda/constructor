@@ -10,4 +10,5 @@ dependencies:
   - jinja2
   - jsonschema >=4
   - pydantic 2.11.*
-  - tomli-w >=1.2.0
+  - briefcase >=0.3.26  # [win]
+  - tomli-w >=1.2.0  # [win]

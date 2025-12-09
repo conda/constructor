@@ -17,7 +17,8 @@ dependencies = [
     "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
     "jinja2",
     "jsonschema >=4",
-    "tomli-w >=1.2.0",
+    "briefcase >=0.3.26 ; platform_system=='Windows'",
+    "tomli-w >=1.2.0 ; platform_system=='Windows'",
 ]
 
 [project.optional-dependencies]
