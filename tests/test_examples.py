@@ -65,15 +65,19 @@ else:
 def _is_program_installed(partial_name: str) -> bool:
     """
     Checks if a program is listed in the Windows 'Installed apps' menu.
-    We search by looking for a partial name to avoid having to account for Python version and arch."""
+    We search by looking for a partial name to avoid having to account for Python version and arch.
+    Returns True if a match is found, otherwise False.
+    """
 
     if not sys.platform.startswith("win"):
         return False
 
-    # For its current purpose HKEY_CURRENT_USER is sufficient, but can consider adding more in the future.
+    # For its current purpose HKEY_CURRENT_USER is sufficient,
+    # but additional registry locations could be added later.
     UNINSTALL_PATHS = [
         (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
     ]
+
     partial_name = partial_name.lower()
 
     for hive, path in UNINSTALL_PATHS:
@@ -92,12 +96,13 @@ def _is_program_installed(partial_name: str) -> bool:
                 display_name, _ = winreg.QueryValueEx(subkey, "DisplayName")
 
                 if partial_name in display_name.lower():
-                    return display_name  # Full name that Windows uses
+                    return True
 
-            except (FileNotFoundError, OSError):
+            except (FileNotFoundError, OSError, TypeError):
+                # Some keys may lack DisplayName or have unexpected value types
                 continue
 
-    return None
+    return False
 
 
 def _execute(
