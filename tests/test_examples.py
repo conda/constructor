@@ -34,6 +34,8 @@ if TYPE_CHECKING:
 if sys.platform == "darwin":
     from constructor.osxpkg import calculate_install_dir
 elif sys.platform.startswith("win"):
+    import winreg
+
     import ntsecuritycon as con
     import win32security
 
@@ -58,6 +60,44 @@ if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
     KEEP_ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
 else:
     KEEP_ARTIFACTS_PATH = None
+
+
+def _is_program_installed(partial_name: str) -> bool:
+    """
+    Checks if a program is listed in the Windows 'Installed apps' menu.
+    We search by looking for a partial name to avoid having to account for Python version and arch."""
+
+    if not sys.platform.startswith("win"):
+        return False
+
+    UNINSTALL_PATHS = [
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
+    ]
+    partial_name = partial_name.lower()
+
+    for hive, path in UNINSTALL_PATHS:
+        try:
+            reg_key = winreg.OpenKey(hive, path)
+        except FileNotFoundError:
+            continue
+
+        subkey_count = winreg.QueryInfoKey(reg_key)[0]
+
+        for i in range(subkey_count):
+            try:
+                subkey_name = winreg.EnumKey(reg_key, i)
+                subkey = winreg.OpenKey(reg_key, subkey_name)
+
+                display_name, _ = winreg.QueryValueEx(subkey, "DisplayName")
+
+                if partial_name in display_name.lower():
+                    return display_name  # Full name that Windows uses
+
+            except (FileNotFoundError, OSError):
+                continue
+
+    return None
 
 
 def _execute(
@@ -1038,8 +1078,6 @@ def test_initialization(tmp_path, request, monkeypatch, method):
         )
         if installer.suffix == ".exe":
             try:
-                import winreg
-
                 paths = []
                 for root, keyname in (
                     (winreg.HKEY_CURRENT_USER, r"Environment"),
@@ -1423,3 +1461,55 @@ def test_regressions(tmp_path, request):
             check_subprocess=True,
             uninstall=True,
         )
+
+
+@pytest.mark.skipif(not ON_CI, reason="CI only")
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_installed_menu_list(tmp_path, request):
+    """Verify app is in Installed Apps Menu, corresponding to '/NoRegistry=0'"""
+    input_path = _example_path("extra_files")  # The specific example we use here is not important
+    options = ["/InstallationType=JustMe"]
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=False,
+            options=options,
+        )
+    with open(input_path / "construct.yaml") as f:
+        data = YAML().load(f)
+    partial_name = f"{data['name']} {data['version']}"
+    is_in_installed_apps_menu = _is_program_installed(partial_name)
+    _run_uninstaller_exe(install_dir)
+    assert is_in_installed_apps_menu, (
+        f"Unable to find program {partial_name} in the 'Installed apps' menu"
+    )
+
+
+@pytest.mark.skipif(not ON_CI, reason="CI only")
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
+def test_not_in_installed_menu_list_(tmp_path, request):
+    """Verify app is not in Installed Apps Menu, corresponding to '/NoRegistry=1'"""
+    input_path = _example_path("extra_files")  # The specific example we use here is not important
+    options = ["/InstallationType=JustMe", "/NoRegistry=1"]
+    for installer, install_dir in create_installer(input_path, tmp_path):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_subprocess=True,
+            uninstall=False,
+            options=options,
+        )
+    with open(input_path / "construct.yaml") as f:
+        data = YAML().load(f)
+    partial_name = f"{data['name']} {data['version']}"
+    is_in_installed_apps_menu = _is_program_installed(partial_name)
+    _run_uninstaller_exe(install_dir)
+    assert is_in_installed_apps_menu, (
+        f"Unable to find program {partial_name} in the 'Installed apps' menu"
+    )
