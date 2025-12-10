@@ -1488,19 +1488,10 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
             options=options,
         )
 
-    # Extract name and version from yaml-file
-    # in order to predict parts of the installer name
-    with open(input_path / "construct.yaml") as f:
-        contents = f.readlines()
-    name = ""
-    version = ""
-    for line in contents:
-        if "name: " in line:
-            name = line.split(":")[-1].strip()
-        if "version: " in line:
-            version = line.split(":")[-1].strip()
-        if name and version:
-            break
+    # Use the installer file name for the registry search
+    installer_file_name_parts = Path(installer).name.split('-')
+    name = installer_file_name_parts[0]
+    version = installer_file_name_parts[0]
     partial_name = f"{name} {version}"
 
     is_in_installed_apps_menu = _is_program_installed(partial_name)
@@ -1509,5 +1500,5 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
     # If no_registry=0 we expect is_in_installed_apps_menu=True
     # If no_registry=1 we expect is_in_installed_apps_menu=False
     assert is_in_installed_apps_menu == (no_registry == 0), (
-        f"Unable to find program {partial_name} in the 'Installed apps' menu"
+        f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
     )
