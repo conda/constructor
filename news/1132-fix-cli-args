@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* EXE: Fixed an issue for silent installers where command-line argument `/KeepPkgCache` was ignored and `/NoRegistry` would reset the default value.
+* EXE: Fixed an issue for silent installers where command-line argument `/KeepPkgCache` was ignored and `/NoRegistry` would reset the default value. (#1132)
 
 ### Deprecations
 

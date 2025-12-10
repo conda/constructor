@@ -1472,7 +1472,7 @@ def test_regressions(tmp_path, request):
 @pytest.mark.skipif(not ON_CI, reason="CI only")
 @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
 def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
-    """Verify the app is Installed Apps Menu (or not), based the CLI arg '/NoRegistry'.
+    """Verify the app is in the Installed Apps Menu (or not), based on the CLI arg '/NoRegistry'.
     If NoRegistry=0, we expect to find the installer in the Menu, otherwise not.
     """
     input_path = _example_path("extra_files")  # The specific example we use here is not important
@@ -1505,6 +1505,9 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
 
     is_in_installed_apps_menu = _is_program_installed(partial_name)
     _run_uninstaller_exe(install_dir)
+
+    # If no_registry=0 we expect is_in_installed_apps_menu=True
+    # If no_registry=1 we expect is_in_installed_apps_menu=False
     assert is_in_installed_apps_menu == (no_registry == 0), (
         f"Unable to find program {partial_name} in the 'Installed apps' menu"
     )
