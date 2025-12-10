@@ -134,6 +134,8 @@ ${Using:StrFunc} StrStr
 var /global INIT_CONDA
 var /global REG_PY
 
+var /global NO_REGISTRY
+
 var /global INSTDIR_JUSTME
 var /global INSTALLER_VERSION
 var /global INSTALLER_NAME_FULL
@@ -291,8 +293,7 @@ FunctionEnd
 
 Function InitializeVariables
     StrCpy $CheckPathLength "{{ 1 if check_path_length else 0 }}"
-    StrCpy $ARGV_NoRegistry "0"
-    StrCpy $ARGV_KeepPkgCache "{{ 1 if keep_pkgs else 0 }}"
+    StrCpy $NO_REGISTRY "0"
 
     # Package cache option
     StrCpy $Ana_ClearPkgCache_State {{ '${BST_UNCHECKED}' if keep_pkgs else '${BST_CHECKED}' }}
@@ -454,9 +455,23 @@ FunctionEnd
 
     ClearErrors
     ${GetOptions} $ARGV "/KeepPkgCache=" $ARGV_KeepPkgCache
+    ${IfNot} ${Errors}
+        ${If} $ARGV_KeepPkgCache = "1"
+            StrCpy $Ana_ClearPkgCache_State ${BST_UNCHECKED}
+        ${ElseIf} $ARGV_KeepPkgCache = "0"
+            StrCpy $Ana_ClearPkgCache_State ${BST_CHECKED}
+        ${EndIf}
+    ${EndIf}
 
     ClearErrors
     ${GetOptions} $ARGV "/NoRegistry=" $ARGV_NoRegistry
+    ${IfNot} ${Errors}
+        ${If} $ARGV_NoRegistry = "1"
+            StrCpy $NO_REGISTRY "1"
+        ${ElseIf} $ARGV_NoRegistry = "0"
+            StrCpy $NO_REGISTRY "0"
+        ${EndIf}
+    ${EndIf}
 
     ClearErrors
     ${GetOptions} $ARGV "/NoScripts=" $ARGV_NoScripts
@@ -1074,7 +1089,7 @@ Function OnDirectoryLeave
         ; With windows 10, we can enable support for long path, for earlier
         ; version, suggest user to use shorter installation path
         ${If} ${AtLeastWin10}
-        ${AndIfNot} $ARGV_NoRegistry = "1"
+        ${AndIfNot} $NO_REGISTRY = "1"
             ; If we have admin right, we enable long path on windows
             ${If} ${UAC_IsAdmin}
                 WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
@@ -1684,7 +1699,7 @@ Section "Install"
     ${EndIf}
 {%- endif %}
 
-    ${If} $ARGV_NoRegistry == "0"
+    ${If} $NO_REGISTRY == "0"
         # Registry uninstall info
         WriteRegStr SHCTX "${UNINSTREG}" "DisplayName" "${UNINSTALL_NAME}"
         WriteRegStr SHCTX "${UNINSTREG}" "DisplayVersion" "${VERSION}"
