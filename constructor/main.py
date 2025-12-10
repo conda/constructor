@@ -19,6 +19,7 @@ import subprocess
 import sys
 from os.path import abspath, expanduser, isdir, join
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from textwrap import dedent
 
 from . import __version__
@@ -77,7 +78,22 @@ def get_output_filename(info):
     )
 
 
-def _win_install_needs_python_exe(conda_exe: str) -> bool:
+def _conda_exe_supports_logging(conda_exe: str, conda_exe_type: StandaloneExe | None) -> bool:
+    """Test if the standalone binary supports the the --log-file argument.
+
+    Only available for conda-standalone.
+    """
+    if not conda_exe_type:
+        return False
+    with TemporaryDirectory() as tmpdir:
+        logfile = Path(tmpdir, "conda.log")
+        subprocess.run([conda_exe, "--version", f"--log-file={logfile}"])
+        return logfile.exists()
+
+
+def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExe | None) -> bool:
+    if not conda_exe_type:
+        return True
     results = subprocess.run(
         [conda_exe, "constructor", "windows", "--help"],
         capture_output=True,
@@ -270,6 +286,11 @@ def main_build(
     else:
         info["_ignore_condarcs_arg"] = ""
 
+    info["_conda_exe_supports_logging"] = _conda_exe_supports_logging(
+        info["_conda_exe"],
+        info["_conda_exe_type"],
+    )
+
     if "pkg" in itypes:
         if (domains := info.get("pkg_domains")) is not None:
             domains = {key: str(val).lower() for key, val in domains.items()}
@@ -289,7 +310,10 @@ def main_build(
             }
 
     if osname == "win":
-        info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(info["_conda_exe"])
+        info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(
+            info["_conda_exe"],
+            info["_conda_exe_type"],
+        )
 
     info["installer_type"] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
