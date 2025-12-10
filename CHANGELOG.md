@@ -1,5 +1,27 @@
 [//]: # (current developments)
 
+## 2025-12-10   3.14.2:
+### Enhancements
+
+* Improve logging experience for EXE installers: (#1108)
+    - Use `cmd.exe` to run commands so that outputs are captured.
+    - Output command output in CLI installations.
+    - Prevent log builds from writing to log before installation directory exists.
+    - Remove registry entries while installation directory still exists so that errors are logged.
+
+### Bug fixes
+
+* EXE: Fixed an issue for silent installers where command-line argument `/KeepPkgCache` was ignored and `/NoRegistry` would reset the default value. (#1132)
+
+### Contributors
+
+* @marcoesters
+* @lrandersson
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2025-12-08   3.14.1:
 ### Bug fixes
 
