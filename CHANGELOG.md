@@ -17,8 +17,6 @@
 
 * @marcoesters
 * @lrandersson
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
