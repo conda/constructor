@@ -1489,7 +1489,7 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
         )
 
     # Use the installer file name for the registry search
-    installer_file_name_parts = Path(installer).name.split('-')
+    installer_file_name_parts = Path(installer).name.split("-")
     name = installer_file_name_parts[0]
     version = installer_file_name_parts[0]
     partial_name = f"{name} {version}"
