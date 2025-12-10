@@ -1275,7 +1275,9 @@ FunctionEnd
             # When binaries are executed with Exec or ExectToLog, only the output of these
             # commands are logged. If they do not start successfully (e.g., if they don't exist),
             # no error messages are returned. Using a subshell reveals these kinds of issues.
-            StrCpy $R3 '"$CMD_EXE" /D /C "$R3"'
+            # Enable delayed expansion so that error levels are parsed at runtime instead of
+            # parse time.
+            StrCpy $R3 '"$CMD_EXE" /V:ON /D /C "$R3"'
             ${If} $R1 == "WithLog"
                 nsExec::ExecToLog $R3
             ${ElseIf} $R1 == "NoLog"
@@ -1342,7 +1344,7 @@ FunctionEnd
         StrCpy $R1 "Failed to remove {{ NAME }} from PATH"
     ${EndIf}
     # `type` is used to simulate a `tee`-like output in cmd.exe
-    push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0 > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+    push '"$INSTDIR\python.exe" -E -s "$INSTDIR\Lib\_nsis.py" $R0 > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
     push $R1
     push 'WithLog'
     call ${un}AbortRetryNSExecWait
@@ -1579,7 +1581,7 @@ Section "Install"
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
         ${Print} "Running pre-install script..."
         # `type` is used to simulate a `tee`-like output in cmd.exe
-        push '"$INSTDIR\pkgs\pre_install.bat" > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+        push '"$INSTDIR\pkgs\pre_install.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
         push "Failed to run pre-install script."
         push 'WithLog'
         call AbortRetryNSExecWait
@@ -1641,7 +1643,7 @@ Section "Install"
         ${If} $Ana_PostInstall_State = ${BST_CHECKED}
             ${Print} "Running post-install..."
             # `type` is used to simulate a `tee`-like output in cmd.exe
-            push '"$INSTDIR\pkgs\post_install.bat" > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+            push '"$INSTDIR\pkgs\post_install.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & call exit !ERR!'
             push "Failed to run post-install script."
             push 'WithLog'
             call AbortRetryNSExecWait
@@ -1707,7 +1709,7 @@ Section "Install"
     # Use icacls because it is much faster than custom NSIS solutions.
     # We continue on error because icacls fails on broken links.
     # `type` is used to simulate a `tee`-like output in cmd.exe
-    push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+    push '"$ICACLS_EXE" "$INSTDIR\*" /inheritance:e /T /C /Q > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
     push 'Failed to enable inheritance for all files in the installation directory.'
     push 'WithLog'
     call AbortRetryNSExecWait
@@ -1803,7 +1805,7 @@ Section "Uninstall"
     ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
         ${Print} "Running pre-uninstall script..."
         # `type` is used to simulate a `tee`-like output in cmd.exe
-        push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+        push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
         push "Failed to run pre-uninstall scripts."
         push 'WithLog'
         call un.AbortRetryNSExecWait
@@ -1869,7 +1871,7 @@ Section "Uninstall"
         StrCpy $R0 "system"
     ${EndIf}
     # `type` is used to simulate a `tee`-like output in cmd.exe
-    push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0 > "${STEP_LOG}" 2>&1 & type "${STEP_LOG}"'
+    push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0 > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
     push 'Failed to clean AutoRun'
     push 'WithLog'
     call un.AbortRetryNSExecWait
