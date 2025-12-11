@@ -501,7 +501,7 @@ chmod +x "$CONDA_EXEC"
 
 {%- if conda_exe_name != "_conda" %}
 # In case there are packages that depend on _conda
-ln -s "$CONDA_EXEC" "$PREFIX"/_conda
+ln -s -f "$CONDA_EXEC" "$PREFIX"/_conda
 {%- endif %}
 
 {%- for filename, (start, end, executable) in conda_exe_payloads|items %}
