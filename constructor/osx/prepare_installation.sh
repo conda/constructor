@@ -32,7 +32,7 @@ chmod +x "$CONDA_EXEC"
 
 {%- if conda_exe_name != "_conda" %}
 # In case there are packages that depend on _conda
-ln -s "$CONDA_EXEC" "$PREFIX"/_conda
+ln -s -f "$CONDA_EXEC" "$PREFIX"/_conda
 {%- endif %}
 
 # Create a blank history file so conda thinks this is an existing env
