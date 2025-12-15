@@ -1862,7 +1862,7 @@ Section "Uninstall"
     ${If} ${FileExists} "$INSTDIR"
         # Stop logging or the uninstaller will not remove the install.log file
         # without requiring a reboot
-        LogSet Off
+        ${LogSet} off
         RMDir /r /REBOOTOK "$INSTDIR"
     ${EndIf}
 {%- else %}
@@ -1895,7 +1895,7 @@ Section "Uninstall"
 
     # Stop logging or the uninstaller will not remove the install.log file
     # without requiring a reboot
-    LogSet Off
+    ${LogSet} off
     # In case the last command fails, run the slow method to remove leftover
     RMDir /r /REBOOTOK "$INSTDIR"
 
