@@ -1,3 +1,3 @@
 ### Bug fixes
 
-* [#1090](https://github.com/conda/constructor/pull/1090) introduced symbolic linking of `_conda`. This fails the whole installer, if the `_conda` file (or link) exists at the target location. [#1135](https://github.com/conda/constructor/pull/1135) fixes this, by forcing (`-f`) the symlink.
+* Force symbolic linking of `_conda` in SH and PKG installers. This fixes a regression introduced by #1090 that made installations fail if `_conda` already exists in the target location. (#1135)
