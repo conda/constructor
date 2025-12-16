@@ -11,6 +11,7 @@ Authors are sorted alphabetically.
 * Connor Martin
 * Daniel Bast
 * Darryl Miles
+* David Laehnemann
 * Deepesha Burse
 * Eric Dill
 * Eric Prestat
