@@ -1,5 +1,20 @@
 [//]: # (current developments)
 
+## 2025-12-15   3.14.3:
+### Bug fixes
+
+* Force symbolic linking of `_conda` in SH and PKG installers. This fixes a regression introduced by #1090 that made installations fail if `_conda` already exists in the target location. (#1135)
+* EXE: Update calls to built-in function `LogSet` to instead call the intended macro definition `${LogSet}$`. (#1141)
+
+### Contributors
+
+* @dlaehnemann
+* @lrandersson
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2025-12-10   3.14.2:
 ### Enhancements
 
