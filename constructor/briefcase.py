@@ -5,6 +5,7 @@ Logic to build installers using Briefcase.
 import logging
 import re
 import shutil
+import sys
 import sysconfig
 import tempfile
 from pathlib import Path
@@ -100,6 +101,43 @@ def get_bundle_app_name(info, name):
     return bundle, app_name
 
 
+def create_install_options_list(info: dict) -> list[dict]:
+    """Returns a list of dicts with data formatted for the installation options page."""
+    options = []
+    register_python = info.get("register_python", True)
+    if register_python:
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+        options.append(
+            {
+                "name": "register_python",
+                "title": f"Register {info['name']} as my default Python {python_version}.",
+                "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
+                f"detect {info['name']} as the primary Python {python_version} on the system.",
+                "default": info.get("register_python_default", False),
+            }
+        )
+    initialize_conda = info.get("initialize_conda", "classic")
+    if initialize_conda:
+        # TODO: How would we distinguish between condabin/classic in the UI?
+        if initialize_conda == "condabin":
+            description = "Adds condabin, which only contains the 'conda' executables, to PATH. "
+            "Does not require special shortcuts but activation needs "
+            "to be performed manually."
+        else:
+            description = "NOT recommended. This can lead to conflicts with other applications. "
+            "Instead, use the Commmand Prompt and Powershell menus added to the Windows Start Menu."
+        options.append(
+            {
+                "name": "initialize_conda",
+                "title": "Add installation to my PATH environment variable",
+                "description": description,
+                "default": info.get("initialize_by_default", False),
+            }
+        )
+
+    return options
+
+
 # Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
 # template allows us to avoid escaping strings everywhere.
 def write_pyproject_toml(tmp_dir, info):
@@ -119,6 +157,7 @@ def write_pyproject_toml(tmp_dir, info):
                 "use_full_install_path": False,
                 "install_launcher": False,
                 "post_install_script": str(BRIEFCASE_DIR / "run_installation.bat"),
+                "install_option": create_install_options_list(info),
             }
         },
     }
