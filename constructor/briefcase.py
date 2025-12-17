@@ -132,12 +132,18 @@ def create_install_options_list(info: dict) -> list[dict]:
     initialize_conda = info.get("initialize_conda", "classic")
     if initialize_conda:
         # TODO: How would we distinguish between condabin/classic in the UI?
+        if initialize_conda == "condabin":
+            description = "Adds condabin, which only contains the 'conda' executables, to PATH. "
+            "Does not require special shortcuts but activation needs "
+            "to be performed manually."
+        else:
+            description = "NOT recommended. This can lead to conflicts with other applications. "
+            "Instead, use the Commmand Prompt and Powershell menus added to the Windows Start Menu."
         options.append(
             {
                 "name": "initialize_conda",
                 "title": "Add installation to my PATH environment variable",
-                "description": "NOT recommended. This can lead to conflicts with other applications. "
-                "Instead, use the Commmand Prompt and Powershell menus added to the Windows Start Menu.",
+                "description": description,
                 "default": info.get("initialize_by_default", False),
             }
         )
