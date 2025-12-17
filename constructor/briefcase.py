@@ -119,22 +119,25 @@ def create_install_options_list(info: dict) -> list[dict]:
     options = []
     register_python = info.get("register_python", True)
     if register_python:
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
         options.append(
             {
                 "name": "register_python",
-                "title": "Register Python as System Default",
-                "description": "TODO: Register Python description",
+                "title": f"Register {info['name']} as my default Python {python_version}.",
+                "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
+                f"detect {info['name']} as the primary Python {python_version} on the system.",
                 "default": info.get("register_python_default", False),
             }
         )
     initialize_conda = info.get("initialize_conda", "classic")
     if initialize_conda:
-        # TODO: How would we distinguish between True/classic in the UI? Same for NSIS
+        # TODO: How would we distinguish between condabin/classic in the UI?
         options.append(
             {
                 "name": "initialize_conda",
-                "title": "Initialize Conda",
-                "description": "TODO: Initialize conda description",
+                "title": "Add installation to my PATH environment variable",
+                "description": "NOT recommended. This can lead to conflicts with other applications. "
+                "Instead, use the Commmand Prompt and Powershell menus added to the Windows Start Menu.",
                 "default": info.get("initialize_by_default", False),
             }
         )
