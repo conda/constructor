@@ -1,0 +1,171 @@
+"""
+Logic to build installers using Briefcase.
+"""
+
+import logging
+import re
+import shutil
+import sysconfig
+import tempfile
+from pathlib import Path
+from subprocess import run
+
+import tomli_w
+
+from . import preconda
+from .utils import DEFAULT_REVERSE_DOMAIN_ID, copy_conda_exe, filename_dist
+
+BRIEFCASE_DIR = Path(__file__).parent / "briefcase"
+EXTERNAL_PACKAGE_PATH = "external"
+
+# Default to a low version, so that if a valid version is provided in the future, it'll
+# be treated as an upgrade.
+DEFAULT_VERSION = "0.0.1"
+
+logger = logging.getLogger(__name__)
+
+
+def get_name_version(info):
+    if not (name := info.get("name")):
+        raise ValueError("Name is empty")
+    if not (version := info.get("version")):
+        raise ValueError("Version is empty")
+
+    # Briefcase requires version numbers to be in the canonical Python format, and some
+    # installer types use the version to distinguish between upgrades, downgrades and
+    # reinstalls. So try to produce a consistent ordering by extracting the last valid
+    # version from the Constructor version string.
+    #
+    # Hyphens aren't allowed in this format, but for compatibility with Miniconda's
+    # version format, we treat them as dots.
+    matches = list(
+        re.finditer(
+            r"(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?",
+            version.lower().replace("-", "."),
+        )
+    )
+    if not matches:
+        logger.warning(
+            f"Version {version!r} contains no valid version numbers; "
+            f"defaulting to {DEFAULT_VERSION}"
+        )
+        return f"{name} {version}", DEFAULT_VERSION
+
+    match = matches[-1]
+    version = match.group()
+
+    # Treat anything else in the version string as part of the name.
+    start, end = match.span()
+    strip_chars = " .-_"
+    before = info["version"][:start].strip(strip_chars)
+    after = info["version"][end:].strip(strip_chars)
+    name = " ".join(s for s in [name, before, after] if s)
+
+    return name, version
+
+
+# Takes an arbitrary string with at least one alphanumeric character, and makes it into
+# a valid Python package name.
+def make_app_name(name, source):
+    app_name = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    if not app_name:
+        raise ValueError(f"{source} contains no alphanumeric characters")
+    return app_name
+
+
+# Some installer types use the reverse domain ID to detect when the product is already
+# installed, so it should be both unique between different products, and stable between
+# different versions of a product.
+def get_bundle_app_name(info, name):
+    # If reverse_domain_identifier is provided, use it as-is,
+    if (rdi := info.get("reverse_domain_identifier")) is not None:
+        if "." not in rdi:
+            raise ValueError(f"reverse_domain_identifier {rdi!r} contains no dots")
+        bundle, app_name = rdi.rsplit(".", 1)
+
+        # Ensure that the last component is a valid Python package name, as Briefcase
+        # requires.
+        if not re.fullmatch(
+            r"[A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9]", app_name, flags=re.IGNORECASE
+        ):
+            app_name = make_app_name(
+                app_name, f"Last component of reverse_domain_identifier {rdi!r}"
+            )
+
+    # If reverse_domain_identifier isn't provided, generate it from the name.
+    else:
+        bundle = DEFAULT_REVERSE_DOMAIN_ID
+        app_name = make_app_name(name, f"Name {name!r}")
+
+    return bundle, app_name
+
+
+# Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
+# template allows us to avoid escaping strings everywhere.
+def write_pyproject_toml(tmp_dir, info):
+    name, version = get_name_version(info)
+    bundle, app_name = get_bundle_app_name(info, name)
+
+    config = {
+        "project_name": name,
+        "bundle": bundle,
+        "version": version,
+        "license": ({"file": info["license_file"]} if "license_file" in info else {"text": ""}),
+        "app": {
+            app_name: {
+                "formal_name": f"{info['name']} {info['version']}",
+                "description": "",  # Required, but not used in the installer.
+                "external_package_path": EXTERNAL_PACKAGE_PATH,
+                "use_full_install_path": False,
+                "install_launcher": False,
+                "post_install_script": str(BRIEFCASE_DIR / "run_installation.bat"),
+            }
+        },
+    }
+
+    if "company" in info:
+        config["author"] = info["company"]
+
+    (tmp_dir / "pyproject.toml").write_text(tomli_w.dumps({"tool": {"briefcase": config}}))
+
+
+def create(info, verbose=False):
+    tmp_dir = Path(tempfile.mkdtemp())
+    write_pyproject_toml(tmp_dir, info)
+
+    external_dir = tmp_dir / EXTERNAL_PACKAGE_PATH
+    external_dir.mkdir()
+    preconda.write_files(info, external_dir)
+    preconda.copy_extra_files(info.get("extra_files", []), external_dir)
+
+    download_dir = Path(info["_download_dir"])
+    pkgs_dir = external_dir / "pkgs"
+    for dist in info["_dists"]:
+        shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
+
+    copy_conda_exe(external_dir, "_conda.exe", info["_conda_exe"])
+
+    briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
+    if not briefcase.exists():
+        raise FileNotFoundError(
+            f"Dependency 'briefcase' does not seem to be installed.\nTried: {briefcase}"
+        )
+
+    logger.info("Building installer")
+    run(
+        [briefcase, "package"] + (["-v"] if verbose else []),
+        cwd=tmp_dir,
+        check=True,
+    )
+
+    dist_dir = tmp_dir / "dist"
+    msi_paths = list(dist_dir.glob("*.msi"))
+    if len(msi_paths) != 1:
+        raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}")
+
+    outpath = Path(info["_outpath"])
+    outpath.unlink(missing_ok=True)
+    shutil.move(msi_paths[0], outpath)
+
+    if not info.get("_debug"):
+        shutil.rmtree(tmp_dir)
