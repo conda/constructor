@@ -224,6 +224,7 @@
       "enum": [
         "all",
         "exe",
+        "msi",
         "pkg",
         "sh"
       ],
@@ -824,7 +825,7 @@
         }
       ],
       "default": null,
-      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` on Linux and `exe` on Windows.",
+      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n- `msi`: Windows GUI installer built with Briefcase and WiX\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` on Linux and `exe` on Windows.",
       "title": "Installer Type"
     },
     "keep_pkgs": {
@@ -1104,7 +1105,7 @@
         }
       ],
       "default": null,
-      "description": "Unique identifier for this package, formatted with reverse domain notation. This is used internally in the PKG installers to handle future updates and others. If not provided, it will default to `io.continuum`. (MacOS only)",
+      "description": "Unique identifier for this package, formatted with reverse domain notation. This is used internally in the MSI and PKG installers to handle future updates and others. If not provided, it will default to:\n* In MSI installers: `io.continuum` followed by an ID derived from the `name`. * In PKG installers: `io.continuum`.",
       "title": "Reverse Domain Identifier"
     },
     "script_env_variables": {

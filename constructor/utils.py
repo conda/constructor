@@ -26,6 +26,8 @@ from subprocess import CalledProcessError, check_call, check_output
 from conda.models.version import VersionOrder
 from ruamel.yaml import YAML
 
+DEFAULT_REVERSE_DOMAIN_ID = "io.continuum"
+
 logger = logging.getLogger(__name__)
 yaml = YAML(typ="rt")
 yaml.default_flow_style = False
