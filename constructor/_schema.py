@@ -188,13 +188,13 @@ class LicensesBuildOutput(BaseModel):
     licenses: _LicensesBuildOutputOptions
 
 
-BuildOutputConfigs: TypeAlias = Union[
-    HashBuildOutput,
-    InfoJsonBuildOutput,
-    PkgsListBuildOutput,
-    LockfileBuildOutput,
-    LicensesBuildOutput,
-]
+BuildOutputConfigs: TypeAlias = (
+    HashBuildOutput
+    | InfoJsonBuildOutput
+    | PkgsListBuildOutput
+    | LockfileBuildOutput
+    | LicensesBuildOutput
+)
 
 
 class ConstructorConfiguration(BaseModel):
