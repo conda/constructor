@@ -17,13 +17,13 @@ build:
 
 requirements:
   host:
-    - python  # >=3.8
+    - python  # >=3.10
     - pip
     - setuptools >=70.1
     - setuptools_scm >=6.2
   run:
     - conda >=4.6
-    - python  # >=3.8
+    - python  # >=3.10
     - ruamel.yaml >=0.11.14,<0.19
     - conda-standalone >=24.1.2
     - jinja2
