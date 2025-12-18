@@ -4,9 +4,9 @@ set -euxo pipefail
 echo "Added by test-install script" > "$PREFIX/test_install_sentinel.txt"
 
 # tests
-# base environment uses python 3.9 and excludes tk
+# base environment uses python 3.10 and excludes tk
 test -f "$PREFIX/conda-meta/history"
-"$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 9)"
+"$PREFIX/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 10)"
 # we use python -m pip instead of the pip entry point
 # because the spaces break the shebang - this will be fixed
 # with a new conda release, but for now this is the workaround
@@ -16,12 +16,12 @@ test -f "$PREFIX/conda-meta/history"
 "$PREFIX/bin/python" -m conda list -p "$PREFIX" | jq -e '.[] | select(.name == "tk")' && exit 1
 echo "Previous test failed as expected"
 
-# extra env named 'py310' uses python 3.10, has tk, but we removed setuptools
-test -f "$PREFIX/envs/py310/conda-meta/history"
-"$PREFIX/envs/py310/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 10)"
+# extra env named 'py311' uses python 3.11, has tk, but we removed setuptools
+test -f "$PREFIX/envs/py311/conda-meta/history"
+"$PREFIX/envs/py311/bin/python" -c "from sys import version_info; assert version_info[:2] == (3, 11)"
 # setuptools shouldn't be listed by conda!
-"$PREFIX/bin/python" -m conda list -p "$PREFIX/envs/py310" | jq -e '.[] | select(.name == "setuptools")' && exit 1
-"$PREFIX/envs/py310/bin/python" -c "import setuptools" && exit 1
+"$PREFIX/bin/python" -m conda list -p "$PREFIX/envs/py311" | jq -e '.[] | select(.name == "setuptools")' && exit 1
+"$PREFIX/envs/py311/bin/python" -c "import setuptools" && exit 1
 echo "Previous test failed as expected"
 
 # this env only contains dav1d, no python; it should have been created with no errors,
