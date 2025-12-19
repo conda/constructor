@@ -7,15 +7,15 @@ installer_type: all
 channels:
   - https://conda.anaconda.org/conda-forge
 specs:
-  - python=3.9
+  - python=3.10
   - conda # conda is required for extra_envs
   - miniforge_console_shortcut 1.*  # [win]
 exclude:  # [unix]
   - tk  # [unix]
 extra_envs:
-  py310:
+  py311:
     specs:
-      - python=3.10
+      - python=3.11
       - pip
     channels:
       - conda-forge
@@ -33,10 +33,10 @@ build_outputs:
   - info.json
   - pkgs_list
   - pkgs_list:
-      env: py310
+      env: py311
   - lockfile
   - lockfile:
-      env: py310
+      env: py311
   - licenses:
       include_text: True
       text_errors: replace

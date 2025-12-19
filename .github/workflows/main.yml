@@ -40,44 +40,44 @@ jobs:
         include:
           # UBUNTU
           - os: ubuntu-latest
-            python-version: "3.9"
+            python-version: "3.10"
             conda-standalone: conda-standalone
           - os: ubuntu-latest
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone-nightly
           - os: ubuntu-latest
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: micromamba
           - os: ubuntu-latest
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: conda-standalone-onedir
             check-docs-schema: true
           # MACOS
           - os: macos-15-intel
-            python-version: "3.9"
+            python-version: "3.10"
             conda-standalone: conda-standalone-nightly
           - os: macos-15-intel
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone-onedir
           - os: macos-latest
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: conda-standalone
           - os: macos-latest
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: micromamba
           # WINDOWS
           - os: windows-2022
-            python-version: "3.9"
+            python-version: "3.10"
             conda-standalone: conda-standalone-nightly
           - os: windows-2022
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone
           - os: windows-2022
-            python-version: "3.11"
+            python-version: "3.12"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-nightly
           - os: windows-2022
-            python-version: "3.12"
+            python-version: "3.13"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-onedir
 
@@ -168,7 +168,7 @@ jobs:
           python constructor/_schema.py
           git diff --exit-code
       - name: Upload the example installers as artifacts
-        if: github.event_name == 'pull_request' && matrix.python-version == '3.9'
+        if: github.event_name == 'pull_request' && matrix.python-version == '3.10'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
