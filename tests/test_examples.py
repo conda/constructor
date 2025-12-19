@@ -1630,7 +1630,7 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
     """Verify the app is in the Installed Apps Menu (or not), based on the CLI arg '/NoRegistry'.
     If NoRegistry=0, we expect to find the installer in the Menu, otherwise not.
     """
-    input_path = _example_path("extra_files")  # The specific example we use here is not important
+    input_path = _example_path("register_envs")  # The specific example we use here is not important
     options = ["/InstallationType=JustMe", f"/NoRegistry={no_registry}"]
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(
