@@ -12,7 +12,7 @@ echo "CUSTOM_VARIABLE_2=${CUSTOM_VARIABLE_2}"
 echo "PREFIX=${PREFIX}"
 
 test "${INSTALLER_NAME}" = "Scripts"
-test "${INSTALLER_VER}" = "X"
+test "${INSTALLER_VER}" = "1.0.0"
 # shellcheck disable=SC2016 # String interpolation disabling is deliberate
 test "${CUSTOM_VARIABLE_1}" = 'FIR$T-CUSTOM_'\''STRING'\'' WITH SPACES AND @*! "CHARACTERS"'
 # shellcheck disable=SC2016 # String interpolation disabling is deliberate
