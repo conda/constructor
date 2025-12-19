@@ -16,4 +16,4 @@
 
 ### Other
 
-* Removed Python `3.9` from the testing suite, include Python `3.13`. (#1145)
+* Remove Python `3.9` from the testing suite, include Python `3.13`. (#1145)
