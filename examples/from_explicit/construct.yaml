@@ -2,7 +2,7 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: Explicit
-version: X
+version: 1.0.0
 installer_type: all
 environment_file: explicit_linux-64.txt
 initialize_by_default: false

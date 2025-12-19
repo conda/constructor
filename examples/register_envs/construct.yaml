@@ -2,8 +2,8 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: RegisterEnvs
-version: X
-installer_type: all
+version: 1.0.0
+installer_type: {{ "exe" if os.name == "nt" else "all" }}
 channels:
   - https://repo.anaconda.com/pkgs/main/
 specs:

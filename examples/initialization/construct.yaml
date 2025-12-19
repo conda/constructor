@@ -18,4 +18,4 @@ initialize_by_default: true
 register_python: false
 check_path_spaces: true
 check_path_length: false
-installer_type: all
+installer_type: {{ "exe" if os.name == "nt" else "all" }}
