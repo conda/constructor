@@ -2,7 +2,7 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: NoCondaOptions
-version: 1.0.0
+version: X
 installer_type: {{ "exe" if os.name == "nt" else "all" }}
 
 channels:
