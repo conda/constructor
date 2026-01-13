@@ -87,7 +87,9 @@ def setup_envs_commands(info, dir_path):
             "lockfile_txt_abspath": join(dir_path, "conda-meta", "initial-state.explicit.txt"),
             "conda_meta": r"$INSTDIR\conda-meta",
             "history_abspath": join(dir_path, "conda-meta", "history"),
-            "frozen_abspath": join(dir_path, "conda-meta", "frozen") if info.get("freeze_base", {}).get("conda") is not None else "",
+            "frozen_abspath": join(dir_path, "conda-meta", "frozen")
+            if info.get("freeze_base", {}).get("conda") is not None
+            else "",
             "final_channels": get_final_channels(info),
             "shortcuts": shortcuts_flags(info),
             "register_envs": str(info.get("register_envs", True)).lower(),
@@ -116,7 +118,9 @@ def setup_envs_commands(info, dir_path):
                 ),
                 "conda_meta": join("$INSTDIR", "envs", env_name, "conda-meta"),
                 "history_abspath": join(dir_path, "envs", env_name, "conda-meta", "history"),
-                "frozen_abspath": join(dir_path, "envs", env_name, "conda-meta", "frozen") if env_info.get("freeze_env", {}).get("conda") is not None else "",
+                "frozen_abspath": join(dir_path, "envs", env_name, "conda-meta", "frozen")
+                if env_info.get("freeze_env", {}).get("conda") is not None
+                else "",
                 "final_channels": get_final_channels(channel_info),
                 "shortcuts": shortcuts_flags(env_info),
                 "register_envs": str(info.get("register_envs", True)).lower(),

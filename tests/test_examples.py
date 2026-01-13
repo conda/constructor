@@ -9,6 +9,7 @@ import sys
 import time
 import warnings
 import xml.etree.ElementTree as ET
+from contextlib import nullcontext
 from datetime import timedelta
 from functools import cache
 from pathlib import Path
@@ -20,7 +21,6 @@ from conda.base.context import context
 from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
-from contextlib import nullcontext
 
 from constructor.utils import (
     StandaloneExe,
@@ -1543,7 +1543,9 @@ def test_frozen_environment(tmp_path, request, has_conflict):
 
             expected_frozen = {
                 install_dir / "conda-meta" / "frozen": config["freeze_base"]["conda"],
-                install_dir / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"]["env1"]["freeze_env"]["conda"],
+                install_dir / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"][
+                    "env1"
+                ]["freeze_env"]["conda"],
             }
 
             for frozen_path, expected_content in expected_frozen.items():
@@ -1551,4 +1553,7 @@ def test_frozen_environment(tmp_path, request, has_conflict):
                 assert json.loads(frozen_path.read_text()) == expected_content
 
     if has_conflict:
-        assert all(s in c.value.stderr for s in ("RuntimeError", "freeze_base / freeze_env", "extra_files", "base"))
+        assert all(
+            s in c.value.stderr
+            for s in ("RuntimeError", "freeze_base / freeze_env", "extra_files", "base")
+        )

@@ -101,6 +101,7 @@ class ExtraEnv(BaseModel):
     freeze_env: dict[Literal["conda"], dict] | None = None
     "Same as `freeze_base`, but for this conda environment."
 
+
 class BuildOutputs(StrEnum):
     "Allowed keys in 'build_outputs' setting."
 

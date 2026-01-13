@@ -109,10 +109,11 @@ def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExe 
 def validate_frozen_envs(info, exe_type, exe_version) -> bool:
     """Validate frozen environments.
 
-        Checks:
-        - No conflicts between freeze_base/freeze_env and extra_files for same environment
-        - Conda-standalone version if frozen environments exist
+    Checks:
+    - No conflicts between freeze_base/freeze_env and extra_files for same environment
+    - Conda-standalone version if frozen environments exist
     """
+
     def get_frozen_env(path) -> str | None:
         """Extract environment name from frozen marker destination path.
 
@@ -154,16 +155,18 @@ def validate_frozen_envs(info, exe_type, exe_version) -> bool:
     if common_envs := frozen_envs.intersection(frozen_envs_extra_files):
         raise RuntimeError(
             f"Frozen marker files found from both "
-            f"'freeze_base / freeze_env' and 'extra_files' for the following environments: {', '.join(sorted(common_envs))}")
+            f"'freeze_base / freeze_env' and 'extra_files' for the following environments: {', '.join(sorted(common_envs))}"
+        )
 
     # Conda-standalone version validation
-    if (exe_type == StandaloneExe.CONDA
-        and check_version(exe_version, min_version="25.5.0", max_version="25.7.0")
+    if exe_type == StandaloneExe.CONDA and check_version(
+        exe_version, min_version="25.5.0", max_version="25.7.0"
     ):
         sys.exit(
             "Error: conda-standalone 25.5.x has known issues with frozen environments. "
             "Please use conda-standalone 25.7.0 or newer."
         )
+
 
 def main_build(
     dir_path,
