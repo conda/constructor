@@ -3,7 +3,7 @@
 
 name: NoCondaOptions
 version: X
-installer_type: all
+installer_type: {{ "exe" if os.name == "nt" else "all" }}
 
 channels:
   - https://repo.anaconda.com/pkgs/main/

@@ -21,7 +21,7 @@ specs:
   - miniforge_console_shortcut 1.*  # [win]
 
 # Added for extra testing
-installer_type: all
+installer_type: {{ "exe" if os.name == "nt" else "all" }}
 post_install: test_install.sh  # [unix]
 post_install: test_install.bat  # [win]
 initialize_by_default: false

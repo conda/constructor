@@ -2,8 +2,8 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: EnvironmentYAML
-version: X
-installer_type: all
+version: 1.0.0
+installer_type: {{ "exe" if os.name == "nt" else "all" }}
 environment_file: env.yaml
 initialize_by_default: false
 register_python: False
