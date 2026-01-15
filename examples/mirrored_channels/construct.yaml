@@ -2,7 +2,7 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: Mirrors
-version: X
+version: 1.0.0
 
 channels:
   - conda-forge

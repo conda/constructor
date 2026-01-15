@@ -2,7 +2,7 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: ExtraFiles
-version: X
+version: 1.0.0
 installer_type: all
 license_file: TEST_LICENSE.txt
 check_path_spaces: False

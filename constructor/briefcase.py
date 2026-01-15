@@ -5,12 +5,17 @@ Logic to build installers using Briefcase.
 import logging
 import re
 import shutil
+import sys
 import sysconfig
 import tempfile
 from pathlib import Path
 from subprocess import run
 
-import tomli_w
+IS_WINDOWS = sys.platform == "win32"
+if IS_WINDOWS:
+    import tomli_w
+else:
+    tomli_w = None  # This file is only intended for Windows use
 
 from . import preconda
 from .utils import DEFAULT_REVERSE_DOMAIN_ID, copy_conda_exe, filename_dist
@@ -100,6 +105,16 @@ def get_bundle_app_name(info, name):
     return bundle, app_name
 
 
+def get_license(info):
+    """Retrieve the specified license as a dict or return a placeholder if not set."""
+
+    if "license_file" in info:
+        return {"file": info["license_file"]}
+
+    placeholder_license = Path(__file__).parent / "nsis" / "placeholder_license.txt"
+    return {"file": str(placeholder_license)}  # convert to str for TOML serialization
+
+
 # Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
 # template allows us to avoid escaping strings everywhere.
 def write_pyproject_toml(tmp_dir, info):
@@ -110,7 +125,7 @@ def write_pyproject_toml(tmp_dir, info):
         "project_name": name,
         "bundle": bundle,
         "version": version,
-        "license": ({"file": info["license_file"]} if "license_file" in info else {"text": ""}),
+        "license": get_license(info),
         "app": {
             app_name: {
                 "formal_name": f"{info['name']} {info['version']}",
@@ -130,6 +145,9 @@ def write_pyproject_toml(tmp_dir, info):
 
 
 def create(info, verbose=False):
+    if not IS_WINDOWS:
+        raise Exception(f"Invalid platform '{sys.platform}'. Only Windows is supported.")
+
     tmp_dir = Path(tempfile.mkdtemp())
     write_pyproject_toml(tmp_dir, info)
 
@@ -150,7 +168,6 @@ def create(info, verbose=False):
         raise FileNotFoundError(
             f"Dependency 'briefcase' does not seem to be installed.\nTried: {briefcase}"
         )
-
     logger.info("Building installer")
     run(
         [briefcase, "package"] + (["-v"] if verbose else []),

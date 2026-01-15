@@ -2,7 +2,7 @@
 "$schema": "../../constructor/data/construct.schema.json"
 
 name: Outputs
-version: X
+version: 1.0.0
 installer_type: sh  # [unix]
 installer_type: exe  # [win]
 channels:
