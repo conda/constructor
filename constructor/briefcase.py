@@ -111,7 +111,7 @@ def get_license(info):
     if "license_file" in info:
         return {"file": info["license_file"]}
 
-    placeholder_license = Path(__file__).parent / 'nsis' / 'placeholder_license.txt'
+    placeholder_license = Path(__file__).parent / "nsis" / "placeholder_license.txt"
     return {"file": placeholder_license}
 
 

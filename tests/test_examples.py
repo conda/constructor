@@ -356,7 +356,7 @@ def calculate_msi_install_path(installer: Path) -> Path:
         local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
         root_dir = Path(local_dir) / "Programs"
 
-    assert root_dir.is_dir() # Sanity check to avoid strange unexpected errors
+    assert root_dir.is_dir()  # Sanity check to avoid strange unexpected errors
     return Path(root_dir) / dir_name
 
 
@@ -426,9 +426,7 @@ def _run_uninstaller_msi(
         # Check log and if there are remaining files, similar to the exe installers
         pass
     if request:
-        request.addfinalizer(
-            lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
-        )
+        request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
 
     return process
 
@@ -496,7 +494,9 @@ def _run_installer(
         _sentinel_file_checks(example_path, install_dir)
     if uninstall:
         if installer.suffix == ".msi":
-            _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess, request=request)
+            _run_uninstaller_msi(
+                installer, install_dir, timeout=timeout, check=check_subprocess, request=request
+            )
         elif installer.suffix == ".exe":
             _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
     return process
