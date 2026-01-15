@@ -412,7 +412,6 @@ def _run_uninstaller_msi(
     install_dir: Path,
     timeout: int = 420,
     check: bool = True,
-    request: bool = False,
 ) -> subprocess.CompletedProcess | None:
     cmd = [
         "msiexec.exe",
@@ -425,8 +424,8 @@ def _run_uninstaller_msi(
         # TODO:
         # Check log and if there are remaining files, similar to the exe installers
         pass
-    if request:
-        request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
+    # This is temporary until uninstallation works fine
+    shutil.rmtree(str(install_dir), ignore_errors=True)
 
     return process
 
@@ -494,9 +493,7 @@ def _run_installer(
         _sentinel_file_checks(example_path, install_dir)
     if uninstall:
         if installer.suffix == ".msi":
-            _run_uninstaller_msi(
-                installer, install_dir, timeout=timeout, check=check_subprocess, request=request
-            )
+            _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess)
         elif installer.suffix == ".exe":
             _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
     return process
@@ -647,7 +644,7 @@ def test_example_extra_envs(tmp_path, request):
 
         if sys.platform.startswith("win"):
             if installer.suffix == ".msi":
-                _run_uninstaller_msi(installer, install_dir, request=request)
+                _run_uninstaller_msi(installer, install_dir)
             else:
                 _run_uninstaller_exe(install_dir=install_dir)
 
@@ -741,7 +738,7 @@ def test_example_miniforge(tmp_path, request, example):
                 assert not list(start_menu_dir.glob("Miniforge*.lnk"))
             elif installer.suffix == ".msi":
                 # TODO: Start menus
-                _run_uninstaller_msi(installer, install_dir, request=request)
+                _run_uninstaller_msi(installer, install_dir)
                 raise NotImplementedError("Test needs to be implemented")
 
 
@@ -907,7 +904,7 @@ def test_example_shortcuts(tmp_path, request):
             else:
                 raise AssertionError("No shortcuts found!")
             if installer.suffix == ".msi":
-                _run_uninstaller_msi(installer, install_dir, request=request)
+                _run_uninstaller_msi(installer, install_dir)
             else:
                 _run_uninstaller_exe(install_dir)
             assert not (package_1 / "A.lnk").is_file()
