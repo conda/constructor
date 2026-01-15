@@ -110,8 +110,9 @@ def get_license(info):
 
     if "license_file" in info:
         return {"file": info["license_file"]}
-    # We cannot return an empty string because that results in an exception on the briefcase side.
-    return {"text": "TODO"}
+
+    placeholder_license = Path(__file__).parent / 'nsis' / 'placeholder_license.txt'
+    return {"file": placeholder_license}
 
 
 # Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja

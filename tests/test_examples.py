@@ -351,10 +351,12 @@ def calculate_msi_install_path(installer: Path) -> Path:
     """
     dir_name = installer.name.replace("-Windows-x86_64.msi", "").replace("-", " ")
     if is_admin():
-        root_dir = Path(os.environ.get("PROGRAMFILES") or r"C:\Program Files")
+        root_dir = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files"))
     else:
-        local_dir = os.environ.get("LOCALAPPDATA") or str(Path.home() / r"AppData\Local")
+        local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
         root_dir = Path(local_dir) / "Programs"
+
+    assert root_dir.is_dir() # Sanity check to avoid strange unexpected errors
     return Path(root_dir) / dir_name
 
 
@@ -392,7 +394,7 @@ def _run_installer_msi(
         process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
     except subprocess.CalledProcessError as e:
         if log_path.exists():
-            # When running on the CI system, it gets misdecodes a UTF-16 log file as UTF-8,
+            # When running on the CI system, it tries to decode a UTF-16 log file as UTF-8,
             # therefore we need to specify encoding before printing.
             print(f"\n=== MSI LOG {log_path} START ===")
             print(
@@ -410,6 +412,7 @@ def _run_uninstaller_msi(
     install_dir: Path,
     timeout: int = 420,
     check: bool = True,
+    request: bool = False,
 ) -> subprocess.CompletedProcess | None:
     cmd = [
         "msiexec.exe",
@@ -422,6 +425,10 @@ def _run_uninstaller_msi(
         # TODO:
         # Check log and if there are remaining files, similar to the exe installers
         pass
+    if request:
+        request.addfinalizer(
+            lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
+        )
 
     return process
 
@@ -489,10 +496,7 @@ def _run_installer(
         _sentinel_file_checks(example_path, install_dir)
     if uninstall:
         if installer.suffix == ".msi":
-            if request:  #  and ON_CI
-                # We always need to do this currently since uninstall doesnt work fully
-                request.addfinalizer(lambda: shutil.rmtree(str(install_dir), ignore_errors=True))
-            _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess)
+            _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess, request=request)
         elif installer.suffix == ".exe":
             _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
     return process
@@ -643,11 +647,7 @@ def test_example_extra_envs(tmp_path, request):
 
         if sys.platform.startswith("win"):
             if installer.suffix == ".msi":
-                if request:
-                    request.addfinalizer(
-                        lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
-                    )
-                _run_uninstaller_msi(installer, install_dir)
+                _run_uninstaller_msi(installer, install_dir, request=request)
             else:
                 _run_uninstaller_exe(install_dir=install_dir)
 
@@ -741,11 +741,7 @@ def test_example_miniforge(tmp_path, request, example):
                 assert not list(start_menu_dir.glob("Miniforge*.lnk"))
             elif installer.suffix == ".msi":
                 # TODO: Start menus
-                if request:
-                    request.addfinalizer(
-                        lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
-                    )
-                _run_uninstaller_msi(installer, install_dir)
+                _run_uninstaller_msi(installer, install_dir, request=request)
                 raise NotImplementedError("Test needs to be implemented")
 
 
@@ -911,11 +907,7 @@ def test_example_shortcuts(tmp_path, request):
             else:
                 raise AssertionError("No shortcuts found!")
             if installer.suffix == ".msi":
-                if request:
-                    request.addfinalizer(
-                        lambda: shutil.rmtree(str(install_dir), ignore_errors=True)
-                    )
-                _run_uninstaller_msi(installer, install_dir)
+                _run_uninstaller_msi(installer, install_dir, request=request)
             else:
                 _run_uninstaller_exe(install_dir)
             assert not (package_1 / "A.lnk").is_file()
