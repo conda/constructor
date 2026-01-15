@@ -112,7 +112,7 @@ def get_license(info):
         return {"file": info["license_file"]}
 
     placeholder_license = Path(__file__).parent / "nsis" / "placeholder_license.txt"
-    return {"file": placeholder_license}
+    return {"file": str(placeholder_license)} # convert to str for TOML serialization
 
 
 # Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
