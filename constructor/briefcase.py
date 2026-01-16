@@ -115,30 +115,50 @@ def get_license(info):
     return {"file": str(placeholder_license)}  # convert to str for TOML serialization
 
 
+def is_bat_file(self, file_path: Path) -> bool:
+    return file_path.is_file() and file_path.suffix.lower() == ".bat"
+
+
 def create_install_options_list(info: dict) -> list[dict]:
     """Returns a list of dicts with data formatted for the installation options page."""
     options = []
-    register_python = info.get("register_python", True)
-    if register_python:
-        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-        options.append(
-            {
-                "name": "register_python",
-                "title": f"Register {info['name']} as my default Python {python_version}.",
-                "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
-                f"detect {info['name']} as the primary Python {python_version} on the system.",
-                "default": info.get("register_python_default", False),
-            }
-        )
+
+    # Register Python (if Python is bundled)
+    has_python = False
+    for item in info.get("_dists", []):
+        if item.startswith("python-"):
+            components = item.split("-")  # python-x.y.z-<build number>.suffix
+            python_version = ".".join(components[1].split(".")[:-1])  # create the string "x.y"
+            has_python = True
+            break
+
+    if has_python:
+        register_python = info.get("register_python", True)
+        if register_python:
+            options.append(
+                {
+                    "name": "register_python",
+                    "title": f"Register {info['name']} as my default Python {python_version}.",
+                    "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
+                    f"detect {info['name']} as the primary Python {python_version} on the system.",
+                    "default": info.get("register_python_default", False),
+                }
+            )
+
+    # Initialize conda
     initialize_conda = info.get("initialize_conda", "classic")
     if initialize_conda:
         if initialize_conda == "condabin":
-            description = "Adds condabin, which only contains the 'conda' executables, to PATH. "
-            "Does not require special shortcuts but activation needs "
-            "to be performed manually."
+            description = (
+                "Adds condabin, which only contains the 'conda' executables, to PATH. "
+                "Does not require special shortcuts but activation needs "
+                "to be performed manually."
+            )
         else:
-            description = "NOT recommended. This can lead to conflicts with other applications. "
-            "Instead, use the Commmand Prompt and Powershell menus added to the Windows Start Menu."
+            description = (
+                "NOT recommended. This can lead to conflicts with other applications. "
+                "Instead, use the Command Prompt and Powershell menus added to the Windows Start Menu."
+            )
         options.append(
             {
                 "name": "initialize_conda",
@@ -147,6 +167,59 @@ def create_install_options_list(info: dict) -> list[dict]:
                 "default": info.get("initialize_by_default", False),
             }
         )
+
+    # Keep package option (presented to the user as a negation (clear package cache))
+    clear_package_cache = not info.get("keep_pkgs", False)
+    options.append(
+        {
+            "name": "clear_package_cache",
+            "title": "Clear the package cache upon completion",
+            "description": "Recommended. Recovers some disk space without harming functionality.",
+            "default": clear_package_cache,
+        }
+    )
+
+    # Enable shortcuts
+    if info.get("_enable_shortcuts", False) is True:
+        options.append(
+            {
+                "name": "enable_shortcuts",
+                "title": "Create shortcuts",
+                "description": "Create shortcuts (supported packages only).",
+                "default": False,
+            }
+        )
+
+    # Pre/Post install script
+    for script_type in ["pre", "post"]:
+        script_description = info.get(f"{script_type}_install_desc", "")
+        script = info.get(f"{script_type}_install", "")
+        if script_description and not script:
+            raise ValueError(
+                f"{script_type}_install_desc was set, but {script_type}_install was not!"
+            )
+
+        if script:
+            script_path = Path(script)
+            if not script_path.is_file():
+                raise FileNotFoundError(
+                    f"Specified {script_type}-install script '{script}' does not exist."
+                )
+            if not is_bat_file(script_path):
+                raise OSError(
+                    f"Specified {script_type}-install script '{script}' must be a '.bat' file."
+                )
+
+        # The UI option is only displayed if a description is set
+        if script_description:
+            options.append(
+                {
+                    "name": f"{script_type}_install_script",
+                    "title": f"{script_type.capitalize()}-install script",
+                    "description": script_description,
+                    "default": False,
+                }
+            )
 
     return options
 
