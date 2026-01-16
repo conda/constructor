@@ -114,6 +114,7 @@ def get_license(info):
     placeholder_license = Path(__file__).parent / "nsis" / "placeholder_license.txt"
     return {"file": str(placeholder_license)}  # convert to str for TOML serialization
 
+
 def create_install_options_list(info: dict) -> list[dict]:
     """Returns a list of dicts with data formatted for the installation options page."""
     options = []
@@ -131,7 +132,6 @@ def create_install_options_list(info: dict) -> list[dict]:
         )
     initialize_conda = info.get("initialize_conda", "classic")
     if initialize_conda:
-        # TODO: How would we distinguish between condabin/classic in the UI?
         if initialize_conda == "condabin":
             description = "Adds condabin, which only contains the 'conda' executables, to PATH. "
             "Does not require special shortcuts but activation needs "
