@@ -115,7 +115,7 @@ def get_license(info):
     return {"file": str(placeholder_license)}  # convert to str for TOML serialization
 
 
-def is_bat_file(self, file_path: Path) -> bool:
+def is_bat_file(file_path: Path) -> bool:
     return file_path.is_file() and file_path.suffix.lower() == ".bat"
 
 
