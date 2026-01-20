@@ -132,18 +132,16 @@ def create_install_options_list(info: dict) -> list[dict]:
             has_python = True
             break
 
-    if has_python:
-        register_python = info.get("register_python", True)
-        if register_python:
-            options.append(
-                {
-                    "name": "register_python",
-                    "title": f"Register {info['name']} as my default Python {python_version}.",
-                    "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
-                    f"detect {info['name']} as the primary Python {python_version} on the system.",
-                    "default": info.get("register_python_default", False),
-                }
-            )
+    if has_python and info.get("register_python", True):
+        options.append(
+            {
+                "name": "register_python",
+                "title": f"Register {info['name']} as my default Python {python_version}.",
+                "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
+                f"detect {info['name']} as the primary Python {python_version} on the system.",
+                "default": info.get("register_python_default", False),
+            }
+        )
 
     # Initialize conda
     initialize_conda = info.get("initialize_conda", "classic")
@@ -201,13 +199,9 @@ def create_install_options_list(info: dict) -> list[dict]:
 
         if script:
             script_path = Path(script)
-            if not script_path.is_file():
-                raise FileNotFoundError(
-                    f"Specified {script_type}-install script '{script}' does not exist."
-                )
             if not is_bat_file(script_path):
-                raise OSError(
-                    f"Specified {script_type}-install script '{script}' must be a '.bat' file."
+                raise ValueError(
+                    f"Specified {script_type}-install script '{script}' must be an existing '.bat' file."
                 )
 
         # The UI option is only displayed if a description is set
