@@ -649,6 +649,10 @@ Function .onInit
     Push $R1
     Push $R2
 
+{%- if post_install_exists %}
+    System::Call 'Kernel32::SetEnvironmentVariable(t, t) i("INSTALLER_PATH", "$EXEPATH")'
+{%- endif %}
+
     # 1. Initialize core options default values and other variables
     Call mui_AnaCustomOptions_InitDefaults
     Call InitializeVariables
