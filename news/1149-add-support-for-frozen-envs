@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add support for installing [protected conda environments](https://conda.org/learn/ceps/cep-0022#specification). (#1149)
+* Add support for installing [protected (frozen) conda environments](https://conda.org/learn/ceps/cep-0022#specification). (#1149)
 
 ### Bug fixes
 
