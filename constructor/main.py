@@ -106,7 +106,9 @@ def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExe 
 
 
 # Validate frozen environments
-def validate_frozen_envs(info: dict, exe_type: StandaloneExe | None, exe_version: Version | None) -> bool:
+def validate_frozen_envs(
+    info: dict, exe_type: StandaloneExe | None, exe_version: Version | None
+) -> bool:
     """Validate frozen environments.
 
     Checks:
@@ -170,7 +172,7 @@ def validate_frozen_envs(info: dict, exe_type: StandaloneExe | None, exe_version
 
 def main_build(
     dir_path: str,
-    output_dir: str =".",
+    output_dir: str = ".",
     platform: str = cc_platform,
     verbose: bool = True,
     cache_dir: str = DEFAULT_CACHE_DIR,
