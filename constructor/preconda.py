@@ -56,7 +56,7 @@ files = (
 )
 
 
-def write_index_cache(info, dst_dir, used_packages):
+def write_index_cache(info: dict, dst_dir: str, used_packages):
     cache_dir = join(dst_dir, "cache")
 
     if not isdir(cache_dir):
@@ -226,7 +226,7 @@ def write_files(info: dict, workspace: str):
         write_frozen(env_config.get("freeze_env"), env_conda_meta)
 
 
-def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
+def write_conda_meta(info: dict, dst_dir: str, final_urls_md5s: tuple, user_requested_specs=None):
     if user_requested_specs is None:
         user_requested_specs = info.get("user_requested_specs", info.get("specs", ()))
 
@@ -250,7 +250,7 @@ def write_conda_meta(info, dst_dir, final_urls_md5s, user_requested_specs=None):
         fh.write("\n".join(builder))
 
 
-def write_frozen(freeze_info, dst_dir):
+def write_frozen(freeze_info: dict | None, dst_dir: str):
     if not freeze_info or "conda" not in freeze_info:
         return
     frozen_path = join(dst_dir, "frozen")
@@ -258,7 +258,7 @@ def write_frozen(freeze_info, dst_dir):
         json.dump(freeze_info["conda"], ff)
 
 
-def write_repodata_record(info, dst_dir):
+def write_repodata_record(info: dict, dst_dir: str):
     all_dists = info["_dists"].copy()
     for env_data in info.get("_extra_envs_info", {}).values():
         all_dists += env_data["_dists"]
@@ -285,7 +285,7 @@ def write_repodata_record(info, dst_dir):
             json.dump(rr_json, rf, indent=2, sort_keys=True)
 
 
-def write_initial_state_explicit_txt(info, dst_dir, urls):
+def write_initial_state_explicit_txt(info: dict, dst_dir: str, urls: tuple):
     """
     urls is an iterable of tuples with url and md5 values
     """
@@ -307,7 +307,7 @@ def write_initial_state_explicit_txt(info, dst_dir, urls):
                 envf.write(f"{url}#{md5}\n")
 
 
-def write_channels_txt(info, dst_dir, env_config):
+def write_channels_txt(info: dict, dst_dir: str, env_config: dict):
     env_config = env_config.copy()
     if "channels" not in env_config:
         env_config["channels"] = info.get("channels", ())

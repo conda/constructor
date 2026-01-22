@@ -37,7 +37,7 @@ DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
 logger = logging.getLogger(__name__)
 
 
-def get_installer_type(info):
+def get_installer_type(info: dict):
     osname, unused_arch = info["_platform"].split("-")
 
     os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe",)}
@@ -60,7 +60,7 @@ def get_installer_type(info):
         return (itype,)
 
 
-def get_output_filename(info):
+def get_output_filename(info: dict) -> str:
     try:
         return info["installer_filename"]
     except KeyError:
@@ -106,7 +106,7 @@ def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExe 
 
 
 # Validate frozen environments
-def validate_frozen_envs(info, exe_type, exe_version) -> bool:
+def validate_frozen_envs(info: dict, exe_type: StandaloneExe | None, exe_version: Version | None) -> bool:
     """Validate frozen environments.
 
     Checks:
@@ -114,7 +114,7 @@ def validate_frozen_envs(info, exe_type, exe_version) -> bool:
     - Conda-standalone version if frozen environments exist
     """
 
-    def get_frozen_env(path) -> str | None:
+    def get_frozen_env(path: str) -> str | None:
         """Extract environment name from frozen marker destination path.
 
         Returns:
@@ -169,15 +169,15 @@ def validate_frozen_envs(info, exe_type, exe_version) -> bool:
 
 
 def main_build(
-    dir_path,
-    output_dir=".",
-    platform=cc_platform,
-    verbose=True,
-    cache_dir=DEFAULT_CACHE_DIR,
-    dry_run=False,
-    conda_exe="conda.exe",
-    config_filename="construct.yaml",
-    debug=False,
+    dir_path: str,
+    output_dir: str =".",
+    platform: str = cc_platform,
+    verbose: bool = True,
+    cache_dir: str = DEFAULT_CACHE_DIR,
+    dry_run: bool = False,
+    conda_exe: str = "conda.exe",
+    config_filename: str = "construct.yaml",
+    debug: bool = False,
 ):
     logger.info("platform: %s", platform)
     if not os.path.isfile(conda_exe):
