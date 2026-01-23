@@ -649,10 +649,6 @@ Function .onInit
     Push $R1
     Push $R2
 
-{%- if post_install_exists %}
-    System::Call 'Kernel32::SetEnvironmentVariable(t, t) i("INSTALLER_PATH", "$EXEPATH")'
-{%- endif %}
-
     # 1. Initialize core options default values and other variables
     Call mui_AnaCustomOptions_InitDefaults
     Call InitializeVariables
@@ -1538,7 +1534,8 @@ Section "Install"
     File /nonfatal /r {{ index_cache }}
     File /r {{ repodata_record }}
 
-
+    System::Call 'Kernel32::SetEnvironmentVariable(t, t) i("INSTALLER_PLUGINSDIR", "$PLUGINSDIR")'
+    System::Call 'Kernel32::SetEnvironmentVariable(t, t) i("INSTALLER_PATH", "$EXEPATH")'
 {%- for key, escaped_val in SCRIPT_ENV_VARIABLES | items %}
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{{ key }}", {{ escaped_val }}).r0'
 {%- endfor %}

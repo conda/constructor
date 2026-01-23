@@ -13,3 +13,8 @@ if not exist "%INSTALLER_PATH%" (
   echo ERROR: "INSTALLER_PATH=%INSTALLER_PATH%" points to a file that does not exist!
   exit 1
 )
+
+if not exist "%INSTALLER_PLUGINSDIR%" (
+  echo ERROR: "INSTALLER_PLUGINSDIR=%INSTALLER_PLUGINSDIR%" points to a directory that does not exist!
+  exit 1
+)
