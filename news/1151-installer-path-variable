@@ -1,6 +1,6 @@
 ### Enhancements
 
-* EXE: An environment variable `INSTALLER_PATH` is now defined for `post_install` scripts and set to the path of installer executable while the installer is running.
+* EXE: An environment variable `INSTALLER_PATH` is now defined for `post_install` scripts and set to the path of the installer executable while the installer is running.
 * EXE: An environment variable `INSTALLER_PLUGINSDIR` is now also defined, it serves the same purpose as the NSIS variable `PLUGINSDIR`.
 
 ### Bug fixes
