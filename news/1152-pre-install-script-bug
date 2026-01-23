@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* EXE: Resolved an issue where a `pre_install` script was invoked even if the option was unchecked from the installation options page.
+* EXE: Resolved an issue where a `pre_install` script was invoked even if the option was unchecked from the installation options page. (#1152)
 
 ### Deprecations
 
