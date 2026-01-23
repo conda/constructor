@@ -1592,12 +1592,14 @@ Section "Install"
     call AbortRetryNSExecWait
 
     IfFileExists "$INSTDIR\pkgs\pre_install.bat" 0 NoPreInstall
-        ${Print} "Running pre-install script..."
-        # `type` is used to simulate a `tee`-like output in cmd.exe
-        push '"$INSTDIR\pkgs\pre_install.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
-        push "Failed to run pre-install script."
-        push 'WithLog'
-        call AbortRetryNSExecWait
+        ${If} $Ana_PreInstall_State = ${BST_CHECKED}
+            ${Print} "Running pre-install script..."
+            # `type` is used to simulate a `tee`-like output in cmd.exe
+            push '"$INSTDIR\pkgs\pre_install.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
+            push "Failed to run pre-install script."
+            push 'WithLog'
+            call AbortRetryNSExecWait
+        ${EndIf}
     NoPreInstall:
 
 {%- for env in SETUP_ENVS %}
