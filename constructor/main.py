@@ -164,7 +164,7 @@ def validate_frozen_envs(
     if exe_type == StandaloneExe.CONDA and check_version(
         exe_version, min_version="25.5.0", max_version="25.7.0"
     ):
-        sys.exit(
+        raise RuntimeError(
             "Error: conda-standalone 25.5.x has known issues with frozen environments. "
             "Please use conda-standalone 25.7.0 or newer."
         )
