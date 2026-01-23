@@ -91,7 +91,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("initialize_by_default", [True])
 @pytest.mark.parametrize("has_post_install", [True])
 @pytest.mark.parametrize("has_pre_install", [False])
-@pytest.mark.parametrize("arch", ["x86_64", "aarch64"])
+@pytest.mark.parametrize("arch", ["x86_64", "aarch64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [True])
 @pytest.mark.parametrize("enable_shortcuts", ["true"])
 @pytest.mark.parametrize("min_glibc_version", ["2.17"])
@@ -130,6 +130,7 @@ def test_template_shellcheck(
             "ppc64le": arch == "ppc64le",
             "s390x": arch == "s390x",
             "aarch64": arch == "aarch64",
+            "arm64": arch == "arm64",
             "linux": not osx,
             "has_pre_install": has_pre_install,
             "direct_execute_pre_install": direct_execute_pre_install,
