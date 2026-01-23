@@ -250,18 +250,25 @@ def write_pyproject_toml(tmp_dir, info):
 
 def create(info, verbose=False):
     if not IS_WINDOWS:
-        raise Exception(f"Invalid platform '{sys.platform}'. Only Windows is supported.")
+        raise Exception(f"Invalid platform '{sys.platform}'. MSI installers requires Windows.")
 
     tmp_dir = Path(tempfile.mkdtemp())
     write_pyproject_toml(tmp_dir, info)
 
     external_dir = tmp_dir / EXTERNAL_PACKAGE_PATH
     external_dir.mkdir()
-    preconda.write_files(info, external_dir)
+
+    # Create the sub-directory "base",
+    # note that the directory name "base" is also explicitly
+    # defined in `run_installation.bat`
+    base_dir = external_dir / "base"
+    base_dir.mkdir()
+
+    preconda.write_files(info, base_dir)
     preconda.copy_extra_files(info.get("extra_files", []), external_dir)
 
     download_dir = Path(info["_download_dir"])
-    pkgs_dir = external_dir / "pkgs"
+    pkgs_dir = base_dir / "pkgs"
     for dist in info["_dists"]:
         shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
 
@@ -282,7 +289,7 @@ def create(info, verbose=False):
     dist_dir = tmp_dir / "dist"
     msi_paths = list(dist_dir.glob("*.msi"))
     if len(msi_paths) != 1:
-        raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}")
+        raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}, expected 1.")
 
     outpath = Path(info["_outpath"])
     outpath.unlink(missing_ok=True)
