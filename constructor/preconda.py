@@ -56,7 +56,7 @@ files = (
 )
 
 
-def write_index_cache(info: dict, dst_dir: str, used_packages):
+def write_index_cache(info: dict, dst_dir: str, used_packages: list[str]):
     cache_dir = join(dst_dir, "cache")
 
     if not isdir(cache_dir):
@@ -226,7 +226,12 @@ def write_files(info: dict, workspace: str):
         write_frozen(env_config.get("freeze_env"), env_conda_meta)
 
 
-def write_conda_meta(info: dict, dst_dir: str, final_urls_md5s: tuple, user_requested_specs=None):
+def write_conda_meta(
+    info: dict,
+    dst_dir: str,
+    final_urls_md5s: tuple[str, str],
+    user_requested_specs: list[str] | None = None,
+):
     if user_requested_specs is None:
         user_requested_specs = info.get("user_requested_specs", info.get("specs", ()))
 
@@ -285,7 +290,7 @@ def write_repodata_record(info: dict, dst_dir: str):
             json.dump(rr_json, rf, indent=2, sort_keys=True)
 
 
-def write_initial_state_explicit_txt(info: dict, dst_dir: str, urls: tuple):
+def write_initial_state_explicit_txt(info: dict, dst_dir: str, urls: tuple[str, str]):
     """
     urls is an iterable of tuples with url and md5 values
     """
@@ -318,7 +323,7 @@ def write_channels_txt(info: dict, dst_dir: str, env_config: dict):
         f.write(",".join(get_final_channels(env_config)))
 
 
-def write_shortcuts_txt(info, dst_dir, env_config):
+def write_shortcuts_txt(info: dict, dst_dir: str, env_config: dict):
     if "menu_packages" in env_config:
         contents = shortcuts_flags(env_config)
     else:
