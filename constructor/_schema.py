@@ -98,6 +98,8 @@ class ExtraEnv(BaseModel):
     Same as the global option, but for this env.
     See global option for notes about overrides.
     """
+    freeze_env: dict[Literal["conda"], dict] | None = None
+    "Same as `freeze_base`, but for this conda environment."
 
 
 class BuildOutputs(StrEnum):
@@ -829,6 +831,22 @@ class ConstructorConfiguration(BaseModel):
     """
     Use the standalone binary to perform the uninstallation on Windows.
     Requires conda-standalone 24.11.0 or newer.
+    """
+    freeze_base: dict[Literal["conda"], dict] | None = None
+    """
+    Protects the conda base environment against modifications by supported package managers.
+
+    Supported package managers:
+        - `conda`: Protects against conda modifications
+
+    For `conda`, the dictionary is written into the `frozen` marker file.
+    See CEP-22 for the `frozen` marker file specification. For example:
+
+    ```
+    freeze_base:
+        conda:
+            message: "This base environment is frozen and cannot be modified."
+    ```
     """
 
 

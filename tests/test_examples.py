@@ -9,6 +9,7 @@ import sys
 import time
 import warnings
 import xml.etree.ElementTree as ET
+from contextlib import nullcontext
 from datetime import timedelta
 from functools import cache
 from pathlib import Path
@@ -1422,39 +1423,6 @@ def test_output_files(tmp_path):
         assert files_exist == []
 
 
-@pytest.mark.xfail(
-    condition=(
-        CONDA_EXE == StandaloneExe.CONDA
-        and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
-    ),
-    reason="conda-standalone 25.5.x fails with protected environments",
-    strict=True,
-)
-def test_frozen_environment(tmp_path, request):
-    input_path = _example_path("protected_base")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            uninstall=False,
-        )
-
-        expected_frozen_paths = {
-            install_dir / "conda-meta" / "frozen",
-            install_dir / "envs" / "default" / "conda-meta" / "frozen",
-        }
-
-        actual_frozen_paths = set()
-        for env in install_dir.glob("**/conda-meta/history"):
-            frozen_file = env.parent / "frozen"
-            if frozen_file.exists():
-                actual_frozen_paths.add(frozen_file)
-
-        assert expected_frozen_paths == actual_frozen_paths
-
-
 def test_regressions(tmp_path, request):
     input_path = _example_path("regressions")
     for installer, install_dir in create_installer(input_path, tmp_path):
@@ -1502,3 +1470,57 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
     assert is_in_installed_apps_menu == (no_registry == 0), (
         f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
     )
+
+
+@pytest.mark.xfail(
+    condition=(
+        CONDA_EXE == StandaloneExe.CONDA
+        and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
+    ),
+    reason="conda-standalone 25.5.x fails with protected environments",
+    strict=True,
+)
+@pytest.mark.parametrize(
+    "has_conflict",
+    (
+        pytest.param(True, id="with-conflict"),
+        pytest.param(False, id="without-conflict"),
+    ),
+)
+def test_frozen_environment(tmp_path, request, has_conflict):
+    example_path = _example_path("protected_base")
+    input_path = tmp_path / "input"
+
+    context = pytest.raises(subprocess.CalledProcessError) if has_conflict else nullcontext()
+
+    shutil.copytree(str(example_path), str(input_path))
+
+    yaml = YAML()
+    with open(input_path / "construct.yaml") as f:
+        config = yaml.load(f)
+
+    if has_conflict:
+        config.setdefault("extra_files", []).append({"frozen.json": "conda-meta/frozen"})
+        with open(input_path / "construct.yaml", "w") as f:
+            yaml.dump(config, f)
+
+    with context as c:
+        for installer, install_dir in create_installer(input_path, tmp_path):
+            _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+
+            expected_frozen = {
+                install_dir / "conda-meta" / "frozen": config["freeze_base"]["conda"],
+                install_dir / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"][
+                    "env1"
+                ]["freeze_env"]["conda"],
+            }
+
+            for frozen_path, expected_content in expected_frozen.items():
+                assert frozen_path.is_file()
+                assert json.loads(frozen_path.read_text()) == expected_content
+
+    if has_conflict:
+        assert all(
+            s in c.value.stderr
+            for s in ("RuntimeError", "freeze_base / freeze_env", "extra_files", "base")
+        )

@@ -124,6 +124,26 @@
           "description": "Same as the global option, but for this env. See global option for notes about overrides.",
           "title": "Exclude"
         },
+        "freeze_env": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "propertyNames": {
+                "const": "conda"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Same as `freeze_base`, but for this conda environment.",
+          "title": "Freeze Env"
+        },
         "menu_packages": {
           "anyOf": [
             {
@@ -693,6 +713,26 @@
       },
       "title": "Extra Files",
       "type": "array"
+    },
+    "freeze_base": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "propertyNames": {
+            "const": "conda"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Protects the conda base environment against modifications by supported package managers.\nSupported package managers:   - `conda`: Protects against conda modifications\nFor `conda`, the dictionary is written into the `frozen` marker file. See CEP-22 for the `frozen` marker file specification. For example:\n```\nfreeze_base:\n    conda:\n        message: \"This base environment is frozen and cannot be modified.\"\n```",
+      "title": "Freeze Base"
     },
     "header_image": {
       "anyOf": [
