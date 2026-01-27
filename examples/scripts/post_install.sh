@@ -64,3 +64,8 @@ else  # macOS
     fi
 fi
 test -f "${PREFIX}/pre_install_sentinel.txt"
+
+if [ ! -e "$INSTALLER_PATH" ]; then
+    printf 'ERROR: INSTALLER_PATH does not exist: %s\n' "$INSTALLER_PATH" >&2
+    exit 1
+fi

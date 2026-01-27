@@ -8,3 +8,13 @@ if "%PREFIX%" == "" exit 1
 if not "%CUSTOM_VARIABLE_1%" == "FIR$T-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS" exit 1
 if not "%CUSTOM_VARIABLE_2%" == "$ECOND-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS" exit 1
 if not exist "%PREFIX%\pre_install_sentinel.txt" exit 1
+
+if not exist "%INSTALLER_PATH%" (
+  echo ERROR: "INSTALLER_PATH=%INSTALLER_PATH%" points to a file that does not exist!
+  exit 1
+)
+
+if not exist "%INSTALLER_PLUGINSDIR%" (
+  echo ERROR: "INSTALLER_PLUGINSDIR=%INSTALLER_PLUGINSDIR%" points to a directory that does not exist!
+  exit 1
+)

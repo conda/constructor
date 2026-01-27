@@ -30,6 +30,11 @@ export INSTALLER_NAME="{{ installer_name }}"
 export INSTALLER_VER="{{ installer_version }}"
 export INSTALLER_PLAT="{{ installer_platform }}"
 export INSTALLER_TYPE="PKG"
+
+# PACKAGE_PATH is poorly documented, and might not exist across all OS versions
+if [ -n "${PACKAGE_PATH:-}" ]; then
+    export INSTALLER_PATH="$PACKAGE_PATH" # The path to the .pkg installer
+fi
 # The value for COMMAND_LINE_INSTALL is not documented,
 # but it is unset for interactive installations. To be
 # safe, set the variable for non-interactive installation
