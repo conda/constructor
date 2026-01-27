@@ -82,20 +82,6 @@ export INSTALLER_VER='{{ installer_version }}'
 export INSTALLER_PLAT='{{ installer_platform }}'
 export INSTALLER_TYPE="SH"
 
-# Determine how script was invoked (with or without slashes (can be on $PATH))
-case "$0" in
-  */*) SCRIPT_PATH="$0" ;;
-  *)   SCRIPT_PATH="$(command -v -- "$0" 2>/dev/null)" ;;
-esac
-
-[ -z "$SCRIPT_PATH" ] && {
-  echo "ERROR: Cannot determine installer path"
-  exit 1
-}
-# Resolve the directory to an absolute path
-SCRIPT_DIR=$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd)
-INSTALLER_PATH="$SCRIPT_DIR/$(basename -- "$SCRIPT_PATH")"
-export INSTALLER_PATH
 # Installers should ignore pre-existing configuration files.
 unset CONDARC
 unset MAMBARC
@@ -103,6 +89,7 @@ unset MAMBARC
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
+export INSTALLER_PATH="${THIS_PATH}"
 PREFIX="{{ default_prefix }}"
 BATCH={{ 1 if batch_mode else 0 }}
 FORCE=0
