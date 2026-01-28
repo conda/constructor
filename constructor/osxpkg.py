@@ -38,6 +38,25 @@ CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
 logger = logging.getLogger(__name__)
 
 
+# Mach-O binaries start with magic bytes.
+# Definitions:
+#   * https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/loader.h
+#   * https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/fat.h
+# For now, only include little-endian 64-bit and fat binaries
+MACHO_MAGIC_BYTES = (
+    b"\xcf\xfa\xed\xfe",  # 64-bit
+    b"\xbe\xba\xfe\xca",  # universal binary
+)
+
+
+def is_macho_binary(file: Path) -> bool:
+    if not file.is_file():
+        return False
+    with file.open(mode="rb") as f:
+        magic = f.read(4)
+    return magic in MACHO_MAGIC_BYTES
+
+
 def calculate_install_dir(yaml_file, subdir=None):
     contents = parse(yaml_file, subdir or conda_context.subdir)
     if contents.get("installer_type") == "sh":
