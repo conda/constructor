@@ -107,6 +107,26 @@ def _detect_mimetype(path: str):
     return "text/plain"
 
 
+def sign_standalone_binary(
+    exe_path: Path,
+    codesigner: CodeSign,
+):
+    entitlements = {
+        "com.apple.security.cs.allow-jit": True,
+        "com.apple.security.cs.allow-unsigned-executable-memory": True,
+        "com.apple.security.cs.disable-executable-page-protection": True,
+        "com.apple.security.cs.disable-library-validation": True,
+        "com.apple.security.cs.allow-dyld-environment-variables": True,
+    }
+    codesigner.sign_bundle(exe_path, entitlements=entitlements)
+    internal_dir = exe_path.parent / "_internal"
+    if not internal_dir.is_dir():
+        return
+    for file in internal_dir.glob("**"):
+        if is_macho_binary(file):
+            codesigner.sign_bundle(file, entitlements=entitlements)
+
+
 def modify_xml(xml_path, info):
     # See
     # http://developer.apple.com/library/mac/#documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html#//apple_ref/doc/uid/TP40005370-CH100-SW20
@@ -464,8 +484,8 @@ def pkgbuild_prepare_installation(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
-def create_plugins(pages: list = None, codesigner: CodeSign = None):
-    def _build_xcode_projects(xcodeporj_dirs: list[Path]):
+def create_plugins(pages: list[str] | str | None = None, codesigner: CodeSign | None = None):
+    def _build_xcode_projects(xcodeproj_dirs: list[Path]):
         xcodebuild = shutil.which("xcodebuild")
         if not xcodebuild:
             raise RuntimeError(
@@ -473,7 +493,7 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
             )
         try:
             subprocess.run([xcodebuild, "--help"], check=True, capture_output=True)
-        except subprocess.CalledSubprocessError:
+        except subprocess.CalledProcessError:
             raise RuntimeError(
                 "Plugin directory contains an uncompiled project, "
                 "but xcodebuild requires XCode to compile plugins."
@@ -623,14 +643,7 @@ def create(info, verbose=False):
         codesigner = CodeSign(
             notarization_identity_name, prefix=info.get("reverse_domain_identifier", info["name"])
         )
-        entitlements = {
-            "com.apple.security.cs.allow-jit": True,
-            "com.apple.security.cs.allow-unsigned-executable-memory": True,
-            "com.apple.security.cs.disable-executable-page-protection": True,
-            "com.apple.security.cs.disable-library-validation": True,
-            "com.apple.security.cs.allow-dyld-environment-variables": True,
-        }
-        codesigner.sign_bundle(join(prefix, exe_name), entitlements=entitlements)
+        sign_standalone_binary(Path(prefix, exe_name), codesigner)
 
     # This script checks to see if the install location already exists and/or contains spaces
     # Not to be confused with the user-provided pre_install!
