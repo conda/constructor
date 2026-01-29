@@ -120,8 +120,6 @@ def sign_standalone_binary(
     }
     codesigner.sign_bundle(exe_path, entitlements=entitlements)
     internal_dir = exe_path.parent / "_internal"
-    if not internal_dir.is_dir():
-        return
     for file in internal_dir.glob("**"):
         if is_macho_binary(file):
             codesigner.sign_bundle(file, entitlements=entitlements)
