@@ -3,8 +3,6 @@ set "BASE_PATH=%INSTDIR%\base"
 set "PREFIX=%BASE_PATH%"
 set "CONDA_EXE=%INSTDIR%\_conda.exe"
 
-set "MENUINST_BASE_PREFIX=%INSTDIR%"
-set "MENUINST_PREFIX=%INSTDIR%"
 "%INSTDIR%\_conda.exe" constructor --prefix "%BASE_PATH%" --extract-conda-pkgs
 
 set CONDA_PROTECT_FROZEN_ENVS=0
