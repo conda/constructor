@@ -12,5 +12,3 @@ set CONDA_EXTRA_SAFETY_CHECKS=no
 set "CONDA_PKGS_DIRS=%BASE_PATH%\pkgs"
 
 "%INSTDIR%\_conda.exe" install --offline --file "%BASE_PATH%\conda-meta\initial-state.explicit.txt" -yp "%BASE_PATH%"
-echo "Pausing..."
-pause
