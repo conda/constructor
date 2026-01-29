@@ -721,7 +721,9 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
         Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", conda_exe_name),
         Path(expanded_path, "Plugins", "ExtraPage.bundle"),
     ]
-    internal_dir = Path(CONSTRUCTOR_CONDA_EXE) / "_internal"
+    internal_dir = Path(
+        expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", "_internal"
+    )
     if internal_dir.is_dir():
         components.extend([file for file in internal_dir.glob("**") if is_macho_binary(file)])
     validated_signatures = []
