@@ -213,6 +213,10 @@ def modify_xml(xml_path, info):
         options.set("customize", "allow")
         options.set("customLocation", "/")
 
+    arch = "arm64" if info["_platform"] == "osx-arm64" else "x86_64"
+    arch_key = ET.Element("options", hostArchitectures=arch)
+    root.append(arch_key)
+
     # By default, the package builder puts all of our options under
     # a single master choice. This deletes that master choice and
     # allows the user to see all options without effort.

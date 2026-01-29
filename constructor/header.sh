@@ -246,6 +246,21 @@ then
             exit 2
         fi
     fi
+{%- elif arm64 %}
+    if [ "$(uname -m)" != "arm64" ]; then
+        printf "WARNING:\\n"
+        printf "    Your machine hardware does not appear to be arm64, \\n"
+        printf "    but you are trying to install an arm64 version of %s.\\n" "${INSTALLER_NAME}"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
 {%- elif ppc64le %}
     if [ "$(uname -m)" != "ppc64le" ]; then
         printf "WARNING:\\n"
@@ -280,7 +295,7 @@ then
     if [ "$(uname -m)" != "aarch64" ]; then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be aarch64, \\n"
-        printf "    but you are trying to install a aarch64 version of %s.\\n" "${INSTALLER_NAME}"
+        printf "    but you are trying to install an aarch64 version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans
