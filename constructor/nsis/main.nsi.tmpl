@@ -1534,7 +1534,8 @@ Section "Install"
     File /nonfatal /r {{ index_cache }}
     File /r {{ repodata_record }}
 
-
+    System::Call 'Kernel32::SetEnvironmentVariable(t, t) i("INSTALLER_PLUGINSDIR", "$PLUGINSDIR")'
+    System::Call 'Kernel32::SetEnvironmentVariable(t, t) i("INSTALLER_PATH", "$EXEPATH")'
 {%- for key, escaped_val in SCRIPT_ENV_VARIABLES | items %}
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{{ key }}", {{ escaped_val }}).r0'
 {%- endfor %}

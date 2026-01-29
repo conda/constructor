@@ -81,6 +81,7 @@ export INSTALLER_NAME='{{ installer_name }}'
 export INSTALLER_VER='{{ installer_version }}'
 export INSTALLER_PLAT='{{ installer_platform }}'
 export INSTALLER_TYPE="SH"
+
 # Installers should ignore pre-existing configuration files.
 unset CONDARC
 unset MAMBARC
@@ -88,6 +89,7 @@ unset MAMBARC
 THIS_DIR=$(DIRNAME=$(dirname "$0"); cd "$DIRNAME"; pwd)
 THIS_FILE=$(basename "$0")
 THIS_PATH="$THIS_DIR/$THIS_FILE"
+export INSTALLER_PATH="${THIS_PATH}"
 PREFIX="{{ default_prefix }}"
 BATCH={{ 1 if batch_mode else 0 }}
 FORCE=0

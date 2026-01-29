@@ -13,6 +13,11 @@ if not exist "%PREFIX%\envs\dav1d\conda-meta\history" exit 1
 if exist "%PREFIX%\envs\dav1d\python.exe" exit 1
 "%PREFIX%\envs\dav1d\Library\bin\dav1d.exe" --version || goto :error
 
+if not exist "%INSTALLER_PATH%" (
+  echo ERROR: "INSTALLER_PATH=%INSTALLER_PATH%" points to a file that does not exist!
+  exit 1
+)
+
 goto :EOF
 
 :error
