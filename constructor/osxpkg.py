@@ -38,6 +38,25 @@ CACHE_DIR = PACKAGE_ROOT = PACKAGES_DIR = SCRIPTS_DIR = None
 logger = logging.getLogger(__name__)
 
 
+# Mach-O binaries start with magic bytes.
+# Definitions:
+#   * https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/loader.h
+#   * https://github.com/apple-oss-distributions/xnu/blob/main/EXTERNAL_HEADERS/mach-o/fat.h
+# For now, only include little-endian 64-bit and fat binaries
+MACHO_MAGIC_BYTES = (
+    b"\xcf\xfa\xed\xfe",  # 64-bit
+    b"\xbe\xba\xfe\xca",  # universal binary
+)
+
+
+def is_macho_binary(file: Path) -> bool:
+    if not file.is_file():
+        return False
+    with file.open(mode="rb") as f:
+        magic = f.read(4)
+    return magic in MACHO_MAGIC_BYTES
+
+
 def calculate_install_dir(yaml_file, subdir=None):
     contents = parse(yaml_file, subdir or conda_context.subdir)
     if contents.get("installer_type") == "sh":
@@ -86,6 +105,24 @@ def _detect_mimetype(path: str):
         return "text/html"
     # we assume it's plain text
     return "text/plain"
+
+
+def sign_standalone_binary(
+    exe_path: Path,
+    codesigner: CodeSign,
+):
+    entitlements = {
+        "com.apple.security.cs.allow-jit": True,
+        "com.apple.security.cs.allow-unsigned-executable-memory": True,
+        "com.apple.security.cs.disable-executable-page-protection": True,
+        "com.apple.security.cs.disable-library-validation": True,
+        "com.apple.security.cs.allow-dyld-environment-variables": True,
+    }
+    codesigner.sign_bundle(exe_path, entitlements=entitlements)
+    internal_dir = exe_path.parent / "_internal"
+    for file in internal_dir.glob("**"):
+        if is_macho_binary(file):
+            codesigner.sign_bundle(file, entitlements=entitlements)
 
 
 def modify_xml(xml_path, info):
@@ -449,8 +486,8 @@ def pkgbuild_prepare_installation(info):
         shutil.rmtree(f"{pkg}.expanded")
 
 
-def create_plugins(pages: list = None, codesigner: CodeSign = None):
-    def _build_xcode_projects(xcodeporj_dirs: list[Path]):
+def create_plugins(pages: list[str] | str | None = None, codesigner: CodeSign | None = None):
+    def _build_xcode_projects(xcodeproj_dirs: list[Path]):
         xcodebuild = shutil.which("xcodebuild")
         if not xcodebuild:
             raise RuntimeError(
@@ -458,7 +495,7 @@ def create_plugins(pages: list = None, codesigner: CodeSign = None):
             )
         try:
             subprocess.run([xcodebuild, "--help"], check=True, capture_output=True)
-        except subprocess.CalledSubprocessError:
+        except subprocess.CalledProcessError:
             raise RuntimeError(
                 "Plugin directory contains an uncompiled project, "
                 "but xcodebuild requires XCode to compile plugins."
@@ -608,14 +645,7 @@ def create(info, verbose=False):
         codesigner = CodeSign(
             notarization_identity_name, prefix=info.get("reverse_domain_identifier", info["name"])
         )
-        entitlements = {
-            "com.apple.security.cs.allow-jit": True,
-            "com.apple.security.cs.allow-unsigned-executable-memory": True,
-            "com.apple.security.cs.disable-executable-page-protection": True,
-            "com.apple.security.cs.disable-library-validation": True,
-            "com.apple.security.cs.allow-dyld-environment-variables": True,
-        }
-        codesigner.sign_bundle(join(prefix, exe_name), entitlements=entitlements)
+        sign_standalone_binary(Path(prefix, exe_name), codesigner)
 
     # This script checks to see if the install location already exists and/or contains spaces
     # Not to be confused with the user-provided pre_install!

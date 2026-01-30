@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator, Iterable
 
 if sys.platform == "darwin":
-    from constructor.osxpkg import calculate_install_dir
+    from constructor.osxpkg import calculate_install_dir, is_macho_binary
 elif sys.platform.startswith("win"):
     import winreg
 
@@ -709,7 +709,7 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     with open(input_path / "construct.yaml", "a") as f:
         f.write(f"notarization_identity_name: {self_signed_application_certificate_macos}\n")
     output_path = tmp_path / "output"
-    installer, install_dir = next(create_installer(input_path, output_path))
+    installer, _ = next(create_installer(input_path, output_path))
 
     # Check component signatures
     expanded_path = output_path / "expanded"
@@ -722,6 +722,10 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
         Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", conda_exe_name),
         Path(expanded_path, "Plugins", "ExtraPage.bundle"),
     ]
+    internal_dir = Path(
+        expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", "_internal"
+    )
+    components.extend([file for file in internal_dir.glob("**") if is_macho_binary(file)])
     validated_signatures = []
     for component in components:
         p = subprocess.run(

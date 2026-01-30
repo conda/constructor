@@ -228,7 +228,7 @@ class CodeSign(SigningTool):
     def get_signing_command(
         self,
         bundle: str | Path,
-        entitlements: str | Path = None,
+        entitlements: str | Path | None = None,
     ) -> list:
         command = [
             self.executable,
