@@ -250,7 +250,7 @@ def write_pyproject_toml(tmp_dir, info):
 
 def create(info, verbose=False):
     if not IS_WINDOWS:
-        raise Exception(f"Invalid platform '{sys.platform}'. MSI installers requires Windows.")
+        raise Exception(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
 
     tmp_dir = Path(tempfile.mkdtemp())
     write_pyproject_toml(tmp_dir, info)
