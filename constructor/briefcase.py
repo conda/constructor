@@ -8,6 +8,7 @@ import shutil
 import sys
 import sysconfig
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from subprocess import run
 
@@ -246,47 +247,98 @@ def write_pyproject_toml(tmp_dir, info):
         config["author"] = info["company"]
 
     (tmp_dir / "pyproject.toml").write_text(tomli_w.dumps({"tool": {"briefcase": config}}))
+    logger.debug(f"Created TOML file at: {tmp_dir}")
+
+
+@dataclass(frozen=True)
+class PayloadLayout:
+    """A data class with purpose to contain the payload layout."""
+
+    root: Path
+    external: Path
+    base: Path
+    pkgs: Path
+
+
+@dataclass
+class Payload:
+    """
+    This class manages and prepares a payload with a temporary directory.
+    """
+
+    info: dict
+    root: Path | None = None
+
+    def prepare(self) -> PayloadLayout:
+        root = self._ensure_root()
+        self._write_pyproject(root)
+        layout = self._create_layout(root)
+
+        preconda.write_files(self.info, layout.base)
+        preconda.copy_extra_files(self.info.get("extra_files", []), layout.external)
+        self._stage_dists(layout)
+        self._stage_conda(layout)
+        return layout
+
+    def remove(self) -> None:
+        shutil.rmtree(self.root)
+
+    def _write_pyproject(self, root: Path) -> None:
+        write_pyproject_toml(root, self.info)
+
+    def _ensure_root(self) -> Path:
+        if self.root is None:
+            self.root = Path(tempfile.mkdtemp())
+        return self.root
+
+    def _create_layout(self, root: Path) -> PayloadLayout:
+        """The layout is created as:
+        root/
+        └── external/
+            └── base/
+                └── pkgs/
+        """
+        external_dir = root / EXTERNAL_PACKAGE_PATH
+        external_dir.mkdir(parents=True, exist_ok=True)
+
+        # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
+        base_dir = external_dir / "base"
+        base_dir.mkdir()
+
+        pkgs_dir = base_dir / "pkgs"
+        pkgs_dir.mkdir()
+        return PayloadLayout(root=root, external=external_dir, base=base_dir, pkgs=pkgs_dir)
+
+    def _stage_dists(self, layout: PayloadLayout) -> None:
+        download_dir = Path(self.info["_download_dir"])
+        for dist in self.info["_dists"]:
+            shutil.copy(download_dir / filename_dist(dist), layout.pkgs)
+
+    def _stage_conda(self, layout: PayloadLayout) -> None:
+        copy_conda_exe(layout.external, "_conda.exe", self.info["_conda_exe"])
 
 
 def create(info, verbose=False):
     if not IS_WINDOWS:
         raise Exception(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
 
-    tmp_dir = Path(tempfile.mkdtemp())
-    write_pyproject_toml(tmp_dir, info)
-
-    external_dir = tmp_dir / EXTERNAL_PACKAGE_PATH
-    external_dir.mkdir()
-
-    # Create the sub-directory "base",
-    # note that the directory name "base" is also explicitly
-    # defined in `run_installation.bat`
-    base_dir = external_dir / "base"
-    base_dir.mkdir()
-
-    preconda.write_files(info, base_dir)
-    preconda.copy_extra_files(info.get("extra_files", []), external_dir)
-
-    download_dir = Path(info["_download_dir"])
-    pkgs_dir = base_dir / "pkgs"
-    for dist in info["_dists"]:
-        shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
-
-    copy_conda_exe(external_dir, "_conda.exe", info["_conda_exe"])
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
 
     briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
     if not briefcase.exists():
         raise FileNotFoundError(
             f"Dependency 'briefcase' does not seem to be installed.\nTried: {briefcase}"
         )
-    logger.info("Building installer")
+
+    logger.info("Building MSI installer")
     run(
         [briefcase, "package"] + (["-v"] if verbose else []),
-        cwd=tmp_dir,
+        cwd=prepared_payload.root,
         check=True,
     )
 
-    dist_dir = tmp_dir / "dist"
+    dist_dir = prepared_payload.root / "dist"
     msi_paths = list(dist_dir.glob("*.msi"))
     if len(msi_paths) != 1:
         raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}, expected 1.")
@@ -296,4 +348,4 @@ def create(info, verbose=False):
     shutil.move(msi_paths[0], outpath)
 
     if not info.get("_debug"):
-        shutil.rmtree(tmp_dir)
+        payload.remove()

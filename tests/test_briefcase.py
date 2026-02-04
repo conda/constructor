@@ -1,6 +1,24 @@
+import sys
+from pathlib import Path
+
 import pytest
 
-from constructor.briefcase import get_bundle_app_name, get_name_version
+from constructor.briefcase import Payload, get_bundle_app_name, get_name_version
+from constructor.conda_interface import cc_platform
+
+"""
+    Here 'mock_info' is simply a 'mock' of the regular 'info' object that is used to create installers.
+    It contains bare minimum in order to allow simple unit testing.
+"""
+mock_info = {
+    "name": "MockInfo",
+    "version": "1.0.0",
+    "_conda_exe": str(Path(sys.prefix) / "standalone_conda" / "conda.exe"),
+    "_download_dir": "",
+    "_dists": [],
+    "_platform": cc_platform,
+    "_urls": [],
+}
 
 
 @pytest.mark.parametrize(
@@ -132,3 +150,51 @@ def test_rdi_invalid_package(rdi):
 def test_name_no_alphanumeric(name):
     with pytest.raises(ValueError, match=f"Name '{name}' contains no alphanumeric characters"):
         get_bundle_app_name({}, name)
+
+
+def test_prepare_payload():
+    info = mock_info.copy()
+    payload = Payload(info)
+    payload.prepare()
+    assert payload.root.is_dir()
+
+
+def test_payload_layout():
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+
+    external_dir = prepared_payload.root / "external"
+    assert external_dir.is_dir() and external_dir == prepared_payload.external
+
+    base_dir = prepared_payload.root / "external" / "base"
+    assert base_dir.is_dir() and base_dir == prepared_payload.base
+
+    pkgs_dir = prepared_payload.root / "external" / "base" / "pkgs"
+    assert pkgs_dir.is_dir() and pkgs_dir == prepared_payload.pkgs
+
+
+def test_payload_remove():
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+
+    assert prepared_payload.root.is_dir()
+    payload.remove()
+    assert not prepared_payload.root.is_dir()
+
+
+def test_payload_pyproject_toml():
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+    pyproject_toml = prepared_payload.root / "pyproject.toml"
+    assert pyproject_toml.is_file()
+
+
+def test_payload_conda_exe():
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+    conda_exe = prepared_payload.external / "_conda.exe"
+    assert conda_exe.is_file()
