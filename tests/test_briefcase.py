@@ -152,6 +152,7 @@ def test_name_no_alphanumeric(name):
         get_bundle_app_name({}, name)
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_prepare_payload():
     info = mock_info.copy()
     payload = Payload(info)
@@ -159,6 +160,7 @@ def test_prepare_payload():
     assert payload.root.is_dir()
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_layout():
     info = mock_info.copy()
     payload = Payload(info)
@@ -174,6 +176,7 @@ def test_payload_layout():
     assert pkgs_dir.is_dir() and pkgs_dir == prepared_payload.pkgs
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_remove():
     info = mock_info.copy()
     payload = Payload(info)
@@ -184,6 +187,7 @@ def test_payload_remove():
     assert not prepared_payload.root.is_dir()
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_pyproject_toml():
     info = mock_info.copy()
     payload = Payload(info)
@@ -192,6 +196,7 @@ def test_payload_pyproject_toml():
     assert pyproject_toml.is_file()
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_conda_exe():
     info = mock_info.copy()
     payload = Payload(info)
