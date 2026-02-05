@@ -213,6 +213,38 @@ fi
 
 if [ "$BATCH" = "0" ] # interactive mode
 then
+{%- if osx %}
+    if [ "$(uname)" != "Darwin" ]; then
+        printf "WARNING:\\n"
+        printf "    Your operating system does not appear to be macOS, \\n"
+        printf "    but you are trying to install a macOS version of %s.\\n" "${INSTALLER_NAME}"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+{%- elif linux %}
+    if [ "$(uname)" != "Linux" ]; then
+        printf "WARNING:\\n"
+        printf "    Your operating system does not appear to be Linux, \\n"
+        printf "    but you are trying to install a Linux version of %s.\\n" "${INSTALLER_NAME}"
+        printf "    Are sure you want to continue the installation? [yes|no]\\n"
+        printf "[no] >>> "
+        read -r ans
+        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
+        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
+        then
+            printf "Aborting installation\\n"
+            exit 2
+        fi
+    fi
+{%- endif %}
+
 {%- if x86 and not x86_64 %}
     if [ "$(uname -m)" = "x86_64" ]; then
         printf "WARNING:\\n"
@@ -296,38 +328,6 @@ then
         printf "WARNING:\\n"
         printf "    Your machine hardware does not appear to be aarch64, \\n"
         printf "    but you are trying to install an aarch64 version of %s.\\n" "${INSTALLER_NAME}"
-        printf "    Are sure you want to continue the installation? [yes|no]\\n"
-        printf "[no] >>> "
-        read -r ans
-        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
-        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
-        then
-            printf "Aborting installation\\n"
-            exit 2
-        fi
-    fi
-{%- endif %}
-
-{%- if osx %}
-    if [ "$(uname)" != "Darwin" ]; then
-        printf "WARNING:\\n"
-        printf "    Your operating system does not appear to be macOS, \\n"
-        printf "    but you are trying to install a macOS version of %s.\\n" "${INSTALLER_NAME}"
-        printf "    Are sure you want to continue the installation? [yes|no]\\n"
-        printf "[no] >>> "
-        read -r ans
-        ans=$(echo "${ans}" | tr '[:lower:]' '[:upper:]')
-        if [ "$ans" != "YES" ] && [ "$ans" != "Y" ]
-        then
-            printf "Aborting installation\\n"
-            exit 2
-        fi
-    fi
-{%- elif linux %}
-    if [ "$(uname)" != "Linux" ]; then
-        printf "WARNING:\\n"
-        printf "    Your operating system does not appear to be Linux, \\n"
-        printf "    but you are trying to install a Linux version of %s.\\n" "${INSTALLER_NAME}"
         printf "    Are sure you want to continue the installation? [yes|no]\\n"
         printf "[no] >>> "
         read -r ans

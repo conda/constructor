@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add architecture checks to macOS SH and PKG installers. (#1153)
+* Add architecture checks to macOS SH and PKG installers. (#1153, #1165)
 
 ### Bug fixes
 
