@@ -297,6 +297,12 @@ class Payload:
         └── external/
             └── base/
                 └── pkgs/
+        For MSI installers with briefcase, the top level 'root' is used as current
+        working directory while the installer is being built.
+        Furthermore, the directory 'external' is a directory such that if it exists,
+        the installer will bundle all the contents of 'external' (but not 'external' itself)
+        and the contents will be installed into the installation directory, following
+        the same structure as the contents of 'external'.
         """
         external_dir = root / EXTERNAL_PACKAGE_PATH
         external_dir.mkdir(parents=True, exist_ok=True)
