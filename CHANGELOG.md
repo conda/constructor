@@ -22,9 +22,6 @@
 * @Jrice1317
 * @marcoesters
 * @lrandersson
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
