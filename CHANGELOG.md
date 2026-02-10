@@ -1,5 +1,30 @@
 [//]: # (current developments)
 
+## 2026-02-10   3.15.0:
+### Enhancements
+
+* Add support for installing [protected (frozen) conda environments](https://conda.org/learn/ceps/cep-0022#specification). (#1149)
+* An environment variable `INSTALLER_PATH` is now defined for pre-install and post-install scripts, and set to the path of the installer executable while the installer is running. (#1151)
+* EXE: An environment variable `INSTALLER_PLUGINSDIR` is now also defined, it serves the same purpose as the NSIS variable `$PLUGINSDIR`. (#1151)
+* Add architecture checks to macOS SH and PKG installers. (#1153, #1165)
+
+### Bug fixes
+
+* EXE: Resolved an issue where a `pre_install` script was invoked even if the option was unchecked from the installation options page. (#1152)
+* Sign all Mach-O binaries in the `_internal` directory of `conda-standalone` to pass notarization. (#1045 via #1159)
+
+### Other
+
+* Remove Python `3.9` from the testing suite, include Python `3.13`. (#1145)
+
+### Contributors
+
+* @Jrice1317
+* @marcoesters
+* @lrandersson
+
+
+
 ## 2025-12-15   3.14.3:
 ### Bug fixes
 
