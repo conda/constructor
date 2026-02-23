@@ -16,4 +16,4 @@
 
 ### Other
 
-* Canary CI environment using the `onedir` variant of `conda-standalone` now correctly uses the latest version available. (#1173)
+* The canary CI environment using the `onedir` variant of `conda-standalone` now correctly uses the latest version available. (#1173)
