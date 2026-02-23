@@ -123,7 +123,7 @@ jobs:
           elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-onedir" ]]; then
             # Request a version newer than 25.1.1 due to an issue with newer versions getting deprioritized 
             # because they are built with 'track_features'
-            conda create -yqp "${{ runner.temp }}/conda-standalone-onedir" -c conda-canary/label/dev "conda-standalone>25.1.1=*=*onedir*"
+            conda create -yqp "${{ runner.temp }}/conda-standalone-onedir" -c conda-canary/label/dev "conda-standalone>25.1.1=*onedir*"
             echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/conda-standalone-onedir/standalone_conda/conda.exe" >> $GITHUB_ENV
           else
             conda activate constructor-dev
