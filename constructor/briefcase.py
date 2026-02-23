@@ -261,6 +261,7 @@ class Payload:
 
     def remove(self, *, ignore_errors: bool = True) -> None:
         """Remove the root of the payload.
+
         This function requires some extra care due to the root being a cached property.
         """
         root = getattr(self, "root", None)
@@ -275,8 +276,7 @@ class Payload:
             pass
 
     def prepare(self) -> PayloadLayout:
-        """Prepares the payload.
-        """
+        """Prepares the payload."""
         root = self.root
         layout = self._create_layout(root)
         # Render the template files and add them to the necessary config field
