@@ -222,6 +222,7 @@ def create_install_options_list(info: dict) -> list[dict]:
 
     return options
 
+
 @dataclass(frozen=True)
 class TemplateFile:
     """A specification for a single Jinja template to an output file."""
@@ -314,14 +315,14 @@ class Payload:
 
         archive_path = dst / self.archive_name
 
-        archive_type = archive_path.suffix[1:] # since suffix starts with '.'
+        archive_type = archive_path.suffix[1:]  # since suffix starts with '.'
         with tarfile.open(archive_path, mode=f"w:{archive_type}", compresslevel=1) as tar:
             tar.add(src, arcname=src.name)
 
         shutil.rmtree(src)
         return archive_path
 
-    def render_templates(self) -> list[str: TemplateFile]:
+    def render_templates(self) -> list[str:TemplateFile]:
         """Render the configured templates under the payload root."""
         templates = [
             TemplateFile(
@@ -373,7 +374,6 @@ class Payload:
                 }
             },
         }
-
 
         # Add optional content
         if "company" in self.info:
