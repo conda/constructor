@@ -247,8 +247,8 @@ def test_payload_templates_are_rendered(debug_logging):
     rendered_templates = payload.render_templates()
     assert len(rendered_templates) == 2  # There should be at least two files
     for f in rendered_templates:
-        assert f.dst.is_file()
-        text = f.dst.read_text(encoding="utf-8")
+        assert f.is_file()
+        text = f.read_text(encoding="utf-8")
         assert "{{" not in text and "}}" not in text
         assert "{%" not in text and "%}" not in text
         assert "{#" not in text and "#}" not in text
@@ -265,9 +265,9 @@ def test_templates_debug_mode(debug_logging):
     assert len(rendered_templates) == 2  # There should be at least two files
 
     for f in rendered_templates:
-        assert f.dst.is_file()
+        assert f.is_file()
 
-        with open(f.dst) as open_file:
+        with open(f) as open_file:
             lines = open_file.readlines()
 
         # Check the first line.

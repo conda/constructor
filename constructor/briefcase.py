@@ -222,15 +222,6 @@ def create_install_options_list(info: dict) -> list[dict]:
 
     return options
 
-
-@dataclass(frozen=True)
-class TemplateFile:
-    """A specification for a single Jinja template to an output file."""
-
-    src: Path
-    dst: Path
-
-
 @dataclass(frozen=True)
 class PayloadLayout:
     """A data class with purpose to contain the payload layout."""
@@ -322,18 +313,14 @@ class Payload:
         shutil.rmtree(src)
         return archive_path
 
-    def render_templates(self) -> list[str:TemplateFile]:
-        """Render the configured templates under the payload root."""
-        templates = [
-            TemplateFile(
-                src=BRIEFCASE_DIR / "run_installation.bat",
-                dst=self.root / "run_installation.bat",
-            ),
-            TemplateFile(
-                src=BRIEFCASE_DIR / "pre_uninstall.bat",
-                dst=self.root / "pre_uninstall.bat",
-            ),
-        ]
+    def render_templates(self) -> list[Path]:
+        """Render the configured templates under the payload root,
+        returns a list of Paths to the rendered templates.
+        """
+        templates = {
+            Path(BRIEFCASE_DIR / "run_installation.bat"): Path(self.root / "run_installation.bat"),
+            Path(BRIEFCASE_DIR / "pre_uninstall.bat"): Path(self.root / "pre_uninstall.bat"),
+        }
 
         context: dict[str, str] = {
             "archive_name": self.archive_name,
@@ -343,14 +330,14 @@ class Payload:
         }
 
         # Render the templates now using jinja and the defined context
-        for f in templates:
-            if not f.src.exists():
-                raise FileNotFoundError(f.src)
-            rendered = render_template(f.src.read_text(encoding="utf-8"), **context)
-            f.dst.parent.mkdir(parents=True, exist_ok=True)
-            f.dst.write_text(rendered, encoding="utf-8", newline="\r\n")
+        for src, dst in templates.items():
+            if not src.exists():
+                raise FileNotFoundError(src)
+            rendered = render_template(src.read_text(encoding="utf-8"), **context)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(rendered, encoding="utf-8", newline="\r\n")
 
-        return templates
+        return list(templates.values())
 
     def write_pyproject_toml(self, layout: PayloadLayout) -> None:
         name, version = get_name_version(self.info)
