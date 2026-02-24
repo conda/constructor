@@ -460,11 +460,11 @@ def _run_installer_msi(
     ]
 
     # Prepare logging
-    post_install_log = Path(os.environ.get("TEMP")) / (install_dir.name + "-postinstall.log")
+    post_install_log = install_dir / "install.log"
+    # Logging from MSI engine is handled separately
     log_path = Path(os.environ.get("TEMP")) / (install_dir.name + "-install.log")
-    for log_file in [post_install_log, log_path]:
-        if log_file.exists():
-            os.remove(log_file)
+    if log_path.exists():
+        os.remove(log_path)
     cmd.extend(["/L*V", str(log_path)])
 
     # Run installer and handle errors/logs if necessary
@@ -498,11 +498,11 @@ def _run_uninstaller_msi(
     ]
 
     # Prepare logging
-    pre_uninstall_log = Path(os.environ.get("TEMP")) / (install_dir.name + "-preuninstall.log")
+    pre_uninstall_log = install_dir / "uninstall.log"
+    # Logging from MSI engine is handled separately
     log_path = Path(os.environ.get("TEMP")) / (install_dir.name + "-uninstall.log")
-    for log_file in [pre_uninstall_log, log_path]:
-        if log_file.exists():
-            os.remove(log_file)
+    if log_path.exists():
+        os.remove(log_path)
     cmd.extend(["/L*V", str(log_path)])
 
     try:

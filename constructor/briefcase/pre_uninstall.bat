@@ -18,7 +18,7 @@ set "PAYLOAD_TAR=%INSTDIR%\{{ archive_name }}"
 
 rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
-set "LOG=%TEMP%\%APPNAME%-preuninstall.log"
+set "LOG=%INSTDIR%\uninstall.log"
 
 {%- if add_debug %}
 echo ==== pre_uninstall start ==== >> "%LOG%"
@@ -45,5 +45,9 @@ if errorlevel 1 (
 
 "%CONDA_EXE%" --log-file "%LOG%" constructor uninstall --prefix "%BASE_PATH%"
 if errorlevel 1 ( exit /b %errorlevel% )
+
+rem If we reached this far without any errors, remove any log-files.
+if exist "%INSTDIR%\install.log" del "%INSTDIR%\install.log"
+if exist "%INSTDIR%\uninstall.log" del "%INSTDIR%\uninstall.log"
 
 exit /b 0

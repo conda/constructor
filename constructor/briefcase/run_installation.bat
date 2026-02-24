@@ -25,7 +25,7 @@ set "CONDA_PKGS_DIRS=%BASE_PATH%\pkgs"
 
 rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
-set "LOG=%TEMP%\%APPNAME%-postinstall.log"
+set "LOG=%INSTDIR%\install.log"
 
 {%- if add_debug %}
 echo ==== run_installation start ==== >> "%LOG%"
