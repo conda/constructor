@@ -222,6 +222,7 @@ def create_install_options_list(info: dict) -> list[dict]:
 
     return options
 
+
 @dataclass(frozen=True)
 class PayloadLayout:
     """A data class with purpose to contain the payload layout."""
