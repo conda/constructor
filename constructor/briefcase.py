@@ -287,7 +287,7 @@ class Payload:
 
     def make_archive(self, src: Path, dst: Path) -> Path:
         """Create an archive of the directory 'src'.
-        The inputs 'src' must be an existing directory.
+        The input 'src' must be an existing directory.
         If 'dst' does not exist, this function will create it.
         The directory specified via 'src' is removed after successful creation.
         Returns the path to the archive.
