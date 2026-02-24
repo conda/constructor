@@ -243,9 +243,8 @@ class Payload:
     archive_name: str = "payload.tar.gz"
     conda_exe_name: str = "_conda.exe"
 
-    # There might be other ways we want to enable `add_debug_logging`, but it has proven
-    # very useful at least for the CI environment.
-    add_debug_logging: bool = bool(os.environ.get("CI")) and os.environ.get("CI") != "0"
+    # Enable additional log output during pre/post uninstall/install.
+    add_debug_logging: bool = False
 
     @functools.cached_property
     def root(self) -> Path:

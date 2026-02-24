@@ -3,9 +3,7 @@ setlocal
 
 {% macro error_block(message, code) %}
 echo [ERROR] {{ message }}
-{%- if add_debug %}
 >> "%LOG%" echo [ERROR] {{ message }}
-{%- endif %}
 exit /b {{ code }}
 {% endmacro %}
 
@@ -18,11 +16,11 @@ set "PREFIX=%BASE_PATH%"
 set "CONDA_EXE=%INSTDIR%\{{ conda_exe_name }}"
 set "PAYLOAD_TAR=%INSTDIR%\{{ archive_name }}"
 
-{%- if add_debug %}
 rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
 set "LOG=%TEMP%\%APPNAME%-preuninstall.log"
 
+{%- if add_debug %}
 echo ==== pre_uninstall start ==== >> "%LOG%"
 echo SCRIPT=%~f0 >> "%LOG%"
 echo CWD=%CD% >> "%LOG%"
@@ -32,9 +30,6 @@ echo CONDA_EXE=%CONDA_EXE% >> "%LOG%"
 echo PAYLOAD_TAR=%PAYLOAD_TAR% >> "%LOG%"
 "%CONDA_EXE%" --version >> "%LOG%" 2>&1
 {%- endif %}
-
-{%- set conda_log = ' --log-file "%LOG%"' if add_debug else '' %}
-{%- set dump_and_exit = 'type "%LOG%" & exit /b %errorlevel%' if add_debug else 'exit /b %errorlevel%' %}
 
 rem Consistency checks
 if not exist "%CONDA_EXE%" (
@@ -48,7 +43,7 @@ if errorlevel 1 (
   {{ error_block('Failed to create "%PAYLOAD_TAR%"', '%errorlevel%') }}
 )
 
-"%CONDA_EXE%"{{ conda_log }} constructor uninstall --prefix "%BASE_PATH%"
-if errorlevel 1 ( {{ dump_and_exit }} )
+"%CONDA_EXE%" --log-file "%LOG%" constructor uninstall --prefix "%BASE_PATH%"
+if errorlevel 1 ( exit /b %errorlevel% )
 
 exit /b 0

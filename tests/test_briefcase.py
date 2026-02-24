@@ -273,5 +273,3 @@ def test_templates_debug_mode(debug_logging):
         # Check the first line.
         expected = "@echo on\n" if debug_logging else "@echo off\n"
         assert lines[0] == expected
-        # If debug_logging is True, we expect to find %LOG%, otherwise not.
-        assert debug_logging == any("%LOG%" in line for line in lines)
