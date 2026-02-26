@@ -4,7 +4,6 @@ Logic to build installers using Briefcase.
 
 import functools
 import logging
-import os
 import re
 import shutil
 import sys
