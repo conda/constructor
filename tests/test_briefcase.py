@@ -171,11 +171,13 @@ def test_payload_layout():
     payload = Payload(info)
     prepared_payload = payload.prepare()
 
-    external_dir = prepared_payload.root / "external"
-    assert external_dir.is_dir() and external_dir == prepared_payload.external
+    root = prepared_payload[0]
+    external_dir = root / "external"
+    # The second item in prepared_payload is the 'external' directory
+    assert external_dir.is_dir() and external_dir == prepared_payload[1]
 
-    base_dir = prepared_payload.root / "external" / "base"
-    pkgs_dir = prepared_payload.root / "external" / "base" / "pkgs"
+    base_dir = root / "external" / "base"
+    pkgs_dir = root / "external" / "base" / "pkgs"
     archive_path = external_dir / payload.archive_name
     # Since archiving removes the directory 'base_dir' and its contents
     assert not base_dir.exists()
@@ -212,9 +214,9 @@ def test_payload_remove():
     payload = Payload(info)
     prepared_payload = payload.prepare()
 
-    assert prepared_payload.root.is_dir()
+    assert prepared_payload[0].is_dir()
     payload.remove()
-    assert not prepared_payload.root.is_dir()
+    assert not prepared_payload[0].is_dir()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
@@ -223,7 +225,7 @@ def test_payload_pyproject_toml():
     info = mock_info.copy()
     payload = Payload(info)
     prepared_payload = payload.prepare()
-    pyproject_toml = prepared_payload.root / "pyproject.toml"
+    pyproject_toml = prepared_payload[0] / "pyproject.toml"
     assert pyproject_toml.is_file()
 
 
@@ -233,7 +235,7 @@ def test_payload_conda_exe():
     info = mock_info.copy()
     payload = Payload(info)
     prepared_payload = payload.prepare()
-    conda_exe = prepared_payload.external / "_conda.exe"
+    conda_exe = prepared_payload[1] / "_conda.exe"  # The second item is the 'external' directory
     assert conda_exe.is_file()
 
 

@@ -222,16 +222,6 @@ def create_install_options_list(info: dict) -> list[dict]:
     return options
 
 
-@dataclass(frozen=True)
-class PayloadLayout:
-    """A data class with purpose to contain the payload layout."""
-
-    root: Path
-    external: Path
-    base: Path
-    pkgs: Path
-
-
 @dataclass
 class Payload:
     """
@@ -266,23 +256,39 @@ class Payload:
             # delattr on a cached_property may raise on some versions / edge cases
             pass
 
-    def prepare(self) -> PayloadLayout:
-        """Prepares the payload."""
+    def prepare(self) -> tuple:
+        """Prepares the payload.
+
+        Directory structure created during preparation:
+
+            <root>/                          (temporary directory, see :attr:`root`)
+            └── <EXTERNAL_PACKAGE_PATH>/     (external_dir: contains the payload archive and conda exe)
+                └── base/                    (base_dir: represents the base conda environment)
+                    └── pkgs/                (pkgs_dir: staging area for conda package distributions)
+        """
         root = self.root
-        layout = self._create_layout(root)
+        external_dir = root / EXTERNAL_PACKAGE_PATH
+        external_dir.mkdir(parents=True, exist_ok=True)
+
+        # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
+        base_dir = external_dir / "base"
+        base_dir.mkdir()
+
+        pkgs_dir = base_dir / "pkgs"
+        pkgs_dir.mkdir()
         # Render the template files and add them to the necessary config field
         self.render_templates()
-        self.write_pyproject_toml(layout)
+        self.write_pyproject_toml(root, external_dir)
 
-        preconda.write_files(self.info, layout.base)
-        preconda.copy_extra_files(self.info.get("extra_files", []), layout.external)
-        self._stage_dists(layout)
-        self._stage_conda(layout)
+        preconda.write_files(self.info, base_dir)
+        preconda.copy_extra_files(self.info.get("extra_files", []), external_dir)
+        self._stage_dists(pkgs_dir)
+        self._stage_conda(external_dir)
 
-        archive_path = self.make_archive(layout.base, layout.external)
+        archive_path = self.make_archive(base_dir, external_dir)
         if not archive_path.exists():
             raise RuntimeError(f"Unexpected error, failed to create archive: {archive_path}")
-        return layout
+        return (root, external_dir, base_dir, pkgs_dir)
 
     def make_archive(self, src: Path, dst: Path) -> Path:
         """Create an archive of the directory 'src'.
@@ -338,7 +344,7 @@ class Payload:
 
         return list(templates.values())
 
-    def write_pyproject_toml(self, layout: PayloadLayout) -> None:
+    def write_pyproject_toml(self, root: Path, external: Path) -> None:
         name, version = get_name_version(self.info)
         bundle, app_name = get_bundle_app_name(self.info, name)
 
@@ -351,12 +357,12 @@ class Payload:
                 app_name: {
                     "formal_name": f"{self.info['name']} {self.info['version']}",
                     "description": "",  # Required, but not used in the installer.
-                    "external_package_path": str(layout.external),
+                    "external_package_path": str(external),
                     "use_full_install_path": False,
                     "install_launcher": False,
                     "install_option": create_install_options_list(self.info),
-                    "post_install_script": str(layout.root / "run_installation.bat"),
-                    "pre_uninstall_script": str(layout.root / "pre_uninstall.bat"),
+                    "post_install_script": str(root / "run_installation.bat"),
+                    "pre_uninstall_script": str(root / "pre_uninstall.bat"),
                 }
             },
         }
@@ -366,40 +372,16 @@ class Payload:
             config["author"] = self.info["company"]
 
         # Finalize
-        (layout.root / "pyproject.toml").write_text(tomli_w.dumps({"tool": {"briefcase": config}}))
-        logger.debug(f"Created TOML file at: {layout.root}")
+        (root / "pyproject.toml").write_text(tomli_w.dumps({"tool": {"briefcase": config}}))
+        logger.debug(f"Created TOML file at: {root}")
 
-    def _create_layout(self, root: Path) -> PayloadLayout:
-        """The layout is created as:
-        root/
-        └── external/
-            └── base/
-                └── pkgs/
-        For MSI installers with briefcase, the top level 'root' is used as current
-        working directory while the installer is being built.
-        Furthermore, the directory 'external' is a directory such that if it exists,
-        the installer will bundle all the contents of 'external' (but not 'external' itself)
-        and the contents will be installed into the installation directory, following
-        the same structure as the contents of 'external'.
-        """
-        external_dir = root / EXTERNAL_PACKAGE_PATH
-        external_dir.mkdir(parents=True, exist_ok=True)
-
-        # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
-        base_dir = external_dir / "base"
-        base_dir.mkdir()
-
-        pkgs_dir = base_dir / "pkgs"
-        pkgs_dir.mkdir()
-        return PayloadLayout(root=root, external=external_dir, base=base_dir, pkgs=pkgs_dir)
-
-    def _stage_dists(self, layout: PayloadLayout) -> None:
+    def _stage_dists(self, pkgs_dir: Path) -> None:
         download_dir = Path(self.info["_download_dir"])
         for dist in self.info["_dists"]:
-            shutil.copy(download_dir / filename_dist(dist), layout.pkgs)
+            shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
 
-    def _stage_conda(self, layout: PayloadLayout) -> None:
-        copy_conda_exe(layout.external, self.conda_exe_name, self.info["_conda_exe"])
+    def _stage_conda(self, external_dir: Path) -> None:
+        copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"])
 
 
 def create(info, verbose=False):
