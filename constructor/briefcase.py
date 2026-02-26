@@ -2,11 +2,14 @@
 Logic to build installers using Briefcase.
 """
 
+import functools
 import logging
+import os
 import re
 import shutil
 import sys
 import sysconfig
+import tarfile
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,6 +22,7 @@ else:
     tomli_w = None  # This file is only intended for Windows use
 
 from . import preconda
+from .jinja import render_template
 from .utils import DEFAULT_REVERSE_DOMAIN_ID, copy_conda_exe, filename_dist
 
 BRIEFCASE_DIR = Path(__file__).parent / "briefcase"
@@ -219,37 +223,6 @@ def create_install_options_list(info: dict) -> list[dict]:
     return options
 
 
-# Create a Briefcase configuration file. Using a full TOML writer rather than a Jinja
-# template allows us to avoid escaping strings everywhere.
-def write_pyproject_toml(tmp_dir, info):
-    name, version = get_name_version(info)
-    bundle, app_name = get_bundle_app_name(info, name)
-
-    config = {
-        "project_name": name,
-        "bundle": bundle,
-        "version": version,
-        "license": get_license(info),
-        "app": {
-            app_name: {
-                "formal_name": f"{info['name']} {info['version']}",
-                "description": "",  # Required, but not used in the installer.
-                "external_package_path": EXTERNAL_PACKAGE_PATH,
-                "use_full_install_path": False,
-                "install_launcher": False,
-                "post_install_script": str(BRIEFCASE_DIR / "run_installation.bat"),
-                "install_option": create_install_options_list(info),
-            }
-        },
-    }
-
-    if "company" in info:
-        config["author"] = info["company"]
-
-    (tmp_dir / "pyproject.toml").write_text(tomli_w.dumps({"tool": {"briefcase": config}}))
-    logger.debug(f"Created TOML file at: {tmp_dir}")
-
-
 @dataclass(frozen=True)
 class PayloadLayout:
     """A data class with purpose to contain the payload layout."""
@@ -267,29 +240,135 @@ class Payload:
     """
 
     info: dict
-    root: Path | None = None
+    archive_name: str = "payload.tar.gz"
+    conda_exe_name: str = "_conda.exe"
+
+    # Enable additional log output during pre/post uninstall/install.
+    add_debug_logging: bool = False
+
+    @functools.cached_property
+    def root(self) -> Path:
+        """Create root upon first access and cache it."""
+        return Path(tempfile.mkdtemp(prefix="payload-"))
+
+    def remove(self, *, ignore_errors: bool = True) -> None:
+        """Remove the root of the payload.
+
+        This function requires some extra care due to the root being a cached property.
+        """
+        root = getattr(self, "root", None)
+        if root is None:
+            return
+        shutil.rmtree(root, ignore_errors=ignore_errors)
+        # Now we drop the cached value so next access will recreate if desired
+        try:
+            delattr(self, "root")
+        except Exception:
+            # delattr on a cached_property may raise on some versions / edge cases
+            pass
 
     def prepare(self) -> PayloadLayout:
-        root = self._ensure_root()
-        self._write_pyproject(root)
+        """Prepares the payload."""
+        root = self.root
         layout = self._create_layout(root)
+        # Render the template files and add them to the necessary config field
+        self.render_templates()
+        self.write_pyproject_toml(layout)
 
         preconda.write_files(self.info, layout.base)
         preconda.copy_extra_files(self.info.get("extra_files", []), layout.external)
         self._stage_dists(layout)
         self._stage_conda(layout)
+
+        archive_path = self.make_archive(layout.base, layout.external)
+        if not archive_path.exists():
+            raise RuntimeError(f"Unexpected error, failed to create archive: {archive_path}")
         return layout
 
-    def remove(self) -> None:
-        shutil.rmtree(self.root)
+    def make_archive(self, src: Path, dst: Path) -> Path:
+        """Create an archive of the directory 'src'.
+        The input 'src' must be an existing directory.
+        If 'dst' does not exist, this function will create it.
+        The directory specified via 'src' is removed after successful creation.
+        Returns the path to the archive.
 
-    def _write_pyproject(self, root: Path) -> None:
-        write_pyproject_toml(root, self.info)
+        Example:
+            payload = Payload(...)
+            foo = Path('foo')
+            bar = Path('bar')
+            targz = payload.make_archive(foo, bar)
+            This will create the file bar\\<payload.archive_name> containing 'foo' and all its contents.
 
-    def _ensure_root(self) -> Path:
-        if self.root is None:
-            self.root = Path(tempfile.mkdtemp())
-        return self.root
+        """
+        if not src.is_dir():
+            raise NotADirectoryError(src)
+        dst.mkdir(parents=True, exist_ok=True)
+
+        archive_path = dst / self.archive_name
+
+        archive_type = archive_path.suffix[1:]  # since suffix starts with '.'
+        with tarfile.open(archive_path, mode=f"w:{archive_type}", compresslevel=1) as tar:
+            tar.add(src, arcname=src.name)
+
+        shutil.rmtree(src)
+        return archive_path
+
+    def render_templates(self) -> list[Path]:
+        """Render the configured templates under the payload root,
+        returns a list of Paths to the rendered templates.
+        """
+        templates = {
+            Path(BRIEFCASE_DIR / "run_installation.bat"): Path(self.root / "run_installation.bat"),
+            Path(BRIEFCASE_DIR / "pre_uninstall.bat"): Path(self.root / "pre_uninstall.bat"),
+        }
+
+        context: dict[str, str] = {
+            "archive_name": self.archive_name,
+            "conda_exe_name": self.conda_exe_name,
+            "add_debug": self.add_debug_logging,
+            "register_envs": str(self.info.get("register_envs", True)).lower(),
+        }
+
+        # Render the templates now using jinja and the defined context
+        for src, dst in templates.items():
+            if not src.exists():
+                raise FileNotFoundError(src)
+            rendered = render_template(src.read_text(encoding="utf-8"), **context)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(rendered, encoding="utf-8", newline="\r\n")
+
+        return list(templates.values())
+
+    def write_pyproject_toml(self, layout: PayloadLayout) -> None:
+        name, version = get_name_version(self.info)
+        bundle, app_name = get_bundle_app_name(self.info, name)
+
+        config = {
+            "project_name": name,
+            "bundle": bundle,
+            "version": version,
+            "license": get_license(self.info),
+            "app": {
+                app_name: {
+                    "formal_name": f"{self.info['name']} {self.info['version']}",
+                    "description": "",  # Required, but not used in the installer.
+                    "external_package_path": str(layout.external),
+                    "use_full_install_path": False,
+                    "install_launcher": False,
+                    "install_option": create_install_options_list(self.info),
+                    "post_install_script": str(layout.root / "run_installation.bat"),
+                    "pre_uninstall_script": str(layout.root / "pre_uninstall.bat"),
+                }
+            },
+        }
+
+        # Add optional content
+        if "company" in self.info:
+            config["author"] = self.info["company"]
+
+        # Finalize
+        (layout.root / "pyproject.toml").write_text(tomli_w.dumps({"tool": {"briefcase": config}}))
+        logger.debug(f"Created TOML file at: {layout.root}")
 
     def _create_layout(self, root: Path) -> PayloadLayout:
         """The layout is created as:
@@ -321,7 +400,7 @@ class Payload:
             shutil.copy(download_dir / filename_dist(dist), layout.pkgs)
 
     def _stage_conda(self, layout: PayloadLayout) -> None:
-        copy_conda_exe(layout.external, "_conda.exe", self.info["_conda_exe"])
+        copy_conda_exe(layout.external, self.conda_exe_name, self.info["_conda_exe"])
 
 
 def create(info, verbose=False):

@@ -1,4 +1,5 @@
 import sys
+import tarfile
 from pathlib import Path
 
 import pytest
@@ -154,6 +155,7 @@ def test_name_no_alphanumeric(name):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_prepare_payload():
+    """Test preparing the payload."""
     info = mock_info.copy()
     payload = Payload(info)
     payload.prepare()
@@ -162,6 +164,9 @@ def test_prepare_payload():
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_layout():
+    """Test the layout of the payload and verify that archiving
+    parts of the payload works as expected.
+    """
     info = mock_info.copy()
     payload = Payload(info)
     prepared_payload = payload.prepare()
@@ -170,14 +175,39 @@ def test_payload_layout():
     assert external_dir.is_dir() and external_dir == prepared_payload.external
 
     base_dir = prepared_payload.root / "external" / "base"
-    assert base_dir.is_dir() and base_dir == prepared_payload.base
-
     pkgs_dir = prepared_payload.root / "external" / "base" / "pkgs"
-    assert pkgs_dir.is_dir() and pkgs_dir == prepared_payload.pkgs
+    archive_path = external_dir / payload.archive_name
+    # Since archiving removes the directory 'base_dir' and its contents
+    assert not base_dir.exists()
+    assert not pkgs_dir.exists()
+    assert archive_path.exists()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_payload_archive(tmp_path: Path):
+    """Test that the payload archive function works as expected."""
+    info = mock_info.copy()
+    payload = Payload(info)
+
+    foo_dir = tmp_path / "foo"
+    foo_dir.mkdir()
+
+    expected_text = "some test text"
+    hello_file = foo_dir / "hello.txt"
+    hello_file.write_text(expected_text, encoding="utf-8")
+
+    archive_path = payload.make_archive(foo_dir, tmp_path)
+
+    with tarfile.open(archive_path, mode="r:gz") as tar:
+        member = tar.getmember("foo/hello.txt")
+        f = tar.extractfile(member)
+        assert f is not None
+        assert f.read().decode("utf-8") == expected_text
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_remove():
+    """Test removing the payload."""
     info = mock_info.copy()
     payload = Payload(info)
     prepared_payload = payload.prepare()
@@ -189,6 +219,7 @@ def test_payload_remove():
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_pyproject_toml():
+    """Test that the pyproject.toml file is created when the payload is prepared."""
     info = mock_info.copy()
     payload = Payload(info)
     prepared_payload = payload.prepare()
@@ -198,8 +229,47 @@ def test_payload_pyproject_toml():
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_conda_exe():
+    """Test that conda-standalone is prepared."""
     info = mock_info.copy()
     payload = Payload(info)
     prepared_payload = payload.prepare()
     conda_exe = prepared_payload.external / "_conda.exe"
     assert conda_exe.is_file()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize("debug_logging", [True, False])
+def test_payload_templates_are_rendered(debug_logging):
+    """Test that templates are rendered when the payload is prepared."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    payload.add_debug_logging = debug_logging
+    rendered_templates = payload.render_templates()
+    assert len(rendered_templates) == 2  # There should be at least two files
+    for f in rendered_templates:
+        assert f.is_file()
+        text = f.read_text(encoding="utf-8")
+        assert "{{" not in text and "}}" not in text
+        assert "{%" not in text and "%}" not in text
+        assert "{#" not in text and "#}" not in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize("debug_logging", [True, False])
+def test_templates_debug_mode(debug_logging):
+    """Test that debug logging affects template generation."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    payload.add_debug_logging = debug_logging
+    rendered_templates = payload.render_templates()
+    assert len(rendered_templates) == 2  # There should be at least two files
+
+    for f in rendered_templates:
+        assert f.is_file()
+
+        with open(f) as open_file:
+            lines = open_file.readlines()
+
+        # Check the first line.
+        expected = "@echo on\n" if debug_logging else "@echo off\n"
+        assert lines[0] == expected
