@@ -389,7 +389,7 @@ def create(info, verbose=False):
         raise Exception(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
 
     payload = Payload(info)
-    prepared_payload = payload.prepare()
+    payload.prepare()
 
     briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
     if not briefcase.exists():
@@ -400,11 +400,11 @@ def create(info, verbose=False):
     logger.info("Building MSI installer")
     run(
         [briefcase, "package"] + (["-v"] if verbose else []),
-        cwd=prepared_payload.root,
+        cwd=payload.root,
         check=True,
     )
 
-    dist_dir = prepared_payload.root / "dist"
+    dist_dir = payload.root / "dist"
     msi_paths = list(dist_dir.glob("*.msi"))
     if len(msi_paths) != 1:
         raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}, expected 1.")
