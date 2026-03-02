@@ -1743,7 +1743,6 @@ Section "Uninstall"
     ${If} ${Silent}
         !insertmacro un.ParseCommandLineArgs
     ${EndIf}
-    ${Print} "Uninstallation started for INSTDIR: $INSTDIR"
     !insertmacro FindWindowsBinaries
 
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_ROOT_PREFIX", "$INSTDIR")'
@@ -1758,7 +1757,6 @@ Section "Uninstall"
     # set PATH for the installer process, so that MSVC runtimes get found OK
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                  "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$R7;$R7\system32;$R7\system32\Wbem")'
-    ${Print} "Path has been set with INSTDIR: $INSTDIR"
 
     # our newest Python builds have a patch that allows us to control the PATH search stuff much more
     #   carefully.  More info at https://docs.conda.io/projects/conda/en/latest/user-guide/troubleshooting.html#solution
@@ -1839,7 +1837,6 @@ Section "Uninstall"
         call un.AbortRetryNSExecWait
     ${EndIf}
     ${If} ${FileExists} "$INSTDIR\.nonadmin"
-        ${Print} "About to modify PATH with INSTDIR: $INSTDIR"
         !insertmacro AddRemovePath "remove" "un."
     ${EndIf}
 
