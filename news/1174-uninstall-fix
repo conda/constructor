@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* EXE: Fix an issue where uninstallation would sometimes fail for installations that have been added to `PATH`.
+* EXE: Fix an issue where the wrong environment variable was read resulting in uninstallers sometimes failing due to `PATH` corrupting the value of `INSTDIR`. (#1174)
 
 ### Deprecations
 
