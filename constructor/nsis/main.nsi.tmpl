@@ -1749,11 +1749,6 @@ Section "Uninstall"
 
     # ensure that MSVC runtime DLLs are on PATH during uninstallation
     ReadEnvStr $R7 SystemRoot
-    StrLen $9 "$R7"
-    ${If} $9 > 1024
-        ${Print} "::warning:: System PATH is very long ($9 chars) and may be truncated. \
-                Consider shortening PATH before running this uninstaller."
-    ${EndIf}
     # set PATH for the installer process, so that MSVC runtimes get found OK
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PATH", \
                  "$INSTDIR;$INSTDIR\Library\mingw-w64\bin;$INSTDIR\Library\usr\bin;$INSTDIR\Library\bin;$INSTDIR\Scripts;$INSTDIR\bin;$R7;$R7\system32;$R7\system32\Wbem")'
