@@ -1,5 +1,22 @@
 [//]: # (current developments)
 
+## 2026-03-03   3.15.1:
+### Bug fixes
+
+* EXE: Fix an issue where the wrong environment variable was read resulting in uninstallers sometimes failing due to `PATH` corrupting the value of `INSTDIR`. (#1174)
+
+### Other
+
+* The canary CI environment using the `onedir` variant of `conda-standalone` now correctly uses the latest version available. (#1173)
+
+### Contributors
+
+* @lrandersson
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2026-02-10   3.15.0:
 ### Enhancements
 
