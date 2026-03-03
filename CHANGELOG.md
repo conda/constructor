@@ -12,8 +12,6 @@
 ### Contributors
 
 * @lrandersson
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
