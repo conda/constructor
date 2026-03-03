@@ -243,7 +243,7 @@ class Payload:
     def remove(self, *, ignore_errors: bool = True) -> None:
         """Remove the root of the payload.
 
-        This function requires some extra care due to the root being a cached property.
+        This function requires some extra care due to the root directory being a cached property.
         """
         root = getattr(self, "root", None)
         if root is None:
@@ -387,6 +387,9 @@ class Payload:
 def create(info, verbose=False):
     if not IS_WINDOWS:
         raise Exception(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
+
+    if not info.get("_conda_exe_supports_logging"):
+        raise Exception("MSI installers require conda-standalone with logging support.")
 
     payload = Payload(info)
     payload.prepare()

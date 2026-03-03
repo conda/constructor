@@ -46,7 +46,7 @@ if errorlevel 1 (
 "%CONDA_EXE%" --log-file "%LOG%" constructor uninstall --prefix "%BASE_PATH%"
 if errorlevel 1 ( exit /b %errorlevel% )
 
-rem If we reached this far without any errors, remove any log-files.
+rem If we reached this far without any errors, remove any log files.
 if exist "%INSTDIR%\install.log" del "%INSTDIR%\install.log"
 if exist "%INSTDIR%\uninstall.log" del "%INSTDIR%\uninstall.log"
 
