@@ -1715,6 +1715,7 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
             f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
         )
 
+
 @pytest.mark.xfail(
     condition=(
         CONDA_EXE == StandaloneExe.CONDA
