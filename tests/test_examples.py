@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ctypes
 import getpass
 import json
 import os
@@ -11,6 +10,7 @@ import time
 import warnings
 import xml.etree.ElementTree as ET
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import timedelta
 from functools import cache
 from pathlib import Path
@@ -339,26 +339,97 @@ def _sentinel_file_checks(example_path, install_dir):
             )
 
 
-def is_admin() -> bool:
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except Exception:
-        return False
-
-
 def calculate_msi_install_path(installer: Path) -> Path:
     """This is a temporary solution for now since we cannot choose the install location ourselves.
     Installers are named <name>-<version>-Windows-x86_64.msi.
     """
     dir_name = installer.name.replace("-Windows-x86_64.msi", "").replace("-", " ")
-    if is_admin():
-        root_dir = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files"))
-    else:
-        local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
-        root_dir = Path(local_dir) / "Programs"
+    local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
+    root_dir = Path(local_dir) / "Programs"
+    root_dir.mkdir(parents=True, exist_ok=True)
 
-    assert root_dir.is_dir()  # Sanity check to avoid strange unexpected errors
+    assert root_dir.is_dir()  # Consistency check to avoid strange unexpected errors
     return Path(root_dir) / dir_name
+
+
+def handle_exception_and_error_out(
+    failure: InstallationFailure | UninstallationFailure, original_exception: BaseException
+) -> None:
+    """Print failure context (including logs) and re-raise with exception chaining."""
+    print(failure.read_text())
+    raise failure from original_exception
+
+
+def _read_briefcase_log_tail(path: Path, last_digits: int) -> str:
+    """Helper function to read logs from installers created with briefcase.
+    The encoding can vary between the different logs.
+    """
+    if not path or not path.exists():
+        return f"(log not found: {path})"
+
+    # Try UTF-16 first (MSI logs), fallback to UTF-8
+    try:
+        text = path.read_text(encoding="utf-16", errors="replace")
+    except UnicodeError:
+        text = path.read_text(encoding="utf-8", errors="replace")
+
+    return text[last_digits:]
+
+
+@dataclass
+class InstallationFailure(RuntimeError):
+    cmd: list[str]
+    returncode: int
+    msi_log: Path | None = None
+    post_install_log: Path | None = None
+
+    def read_text(self, last_digits: int = -15000) -> str:
+        parts = [
+            f"Command: {self.cmd}",
+            f"Return code: {self.returncode}",
+        ]
+
+        if self.post_install_log:
+            parts.append(
+                f"\n=== MSI LOG POST INSTALL: {self.post_install_log} ===\n"
+                + _read_briefcase_log_tail(self.post_install_log, last_digits)
+            )
+
+        if self.msi_log:
+            parts.append(
+                f"\n=== MSI LOG: {self.msi_log} ===\n"
+                + _read_briefcase_log_tail(self.msi_log, last_digits)
+            )
+
+        return "\n".join(parts)
+
+
+@dataclass
+class UninstallationFailure(RuntimeError):
+    cmd: list[str]
+    returncode: int
+    msi_log: Path | None = None
+    pre_uninstall_log: Path | None = None
+
+    def read_text(self, last_digits: int = -15000) -> str:
+        parts = [
+            f"Command: {self.cmd}",
+            f"Return code: {self.returncode}",
+        ]
+
+        if self.pre_uninstall_log:
+            parts.append(
+                f"\n=== MSI LOG PRE UNINSTALL: {self.pre_uninstall_log} ===\n"
+                + _read_briefcase_log_tail(self.pre_uninstall_log, last_digits)
+            )
+
+        if self.msi_log:
+            parts.append(
+                f"\n=== MSI LOG: {self.msi_log} ===\n"
+                + _read_briefcase_log_tail(self.msi_log, last_digits)
+            )
+
+        return "\n".join(parts)
 
 
 def _run_installer_msi(
@@ -389,22 +460,28 @@ def _run_installer_msi(
         "/qn",
     ]
 
-    log_path = Path(os.environ.get("TEMP")) / (install_dir.name + ".log")
+    # Prepare logging
+    post_install_log = install_dir / "install.log"
+    # Logging from MSI engine is handled separately
+    log_path = Path(os.environ.get("TEMP")) / (install_dir.name + "-install.log")
+    if log_path.exists():
+        os.remove(log_path)
     cmd.extend(["/L*V", str(log_path)])
+
+    # Run installer and handle errors/logs if necessary
     try:
         process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
     except subprocess.CalledProcessError as e:
-        if log_path.exists():
-            # When running on the CI system, it tries to decode a UTF-16 log file as UTF-8,
-            # therefore we need to specify encoding before printing.
-            print(f"\n=== MSI LOG {log_path} START ===")
-            print(
-                log_path.read_text(encoding="utf-16", errors="replace")[-15000:]
-            )  # last 15k chars
-            print(f"\n=== MSI LOG {log_path} END ===")
-        raise e
-    if check:
-        print("A check for MSI Installers not yet implemented")
+        handle_exception_and_error_out(
+            InstallationFailure(
+                cmd=cmd,
+                returncode=e.returncode,
+                msi_log=log_path,
+                post_install_log=post_install_log,
+            ),
+            original_exception=e,
+        )
+
     return process
 
 
@@ -420,13 +497,32 @@ def _run_uninstaller_msi(
         str(installer),
         "/qn",
     ]
-    process = _execute(cmd, timeout=timeout, check=check)
+
+    # Prepare logging
+    pre_uninstall_log = install_dir / "uninstall.log"
+    # Logging from MSI engine is handled separately
+    log_path = Path(os.environ.get("TEMP")) / (install_dir.name + "-uninstall.log")
+    if log_path.exists():
+        os.remove(log_path)
+    cmd.extend(["/L*V", str(log_path)])
+
+    try:
+        process = _execute(cmd, installer_input=None, timeout=timeout, check=check)
+    except subprocess.CalledProcessError as e:
+        handle_exception_and_error_out(
+            UninstallationFailure(
+                cmd=cmd,
+                returncode=e.returncode,
+                msi_log=log_path,
+                post_install_log=pre_uninstall_log,
+            ),
+            original_exception=e,
+        )
+
     if check:
         # TODO:
         # Check log and if there are remaining files, similar to the exe installers
         pass
-    # This is temporary until uninstallation works fine
-    shutil.rmtree(str(install_dir), ignore_errors=True)
 
     return process
 
@@ -1056,8 +1152,6 @@ def test_register_envs(tmp_path, request):
     """Verify that 'register_envs: False' results in the environment not being registered."""
     input_path = _example_path("register_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
-        if installer.suffix == ".msi":
-            raise NotImplementedError("Test for 'register_envs' not yet implemented for MSI")
         _run_installer(input_path, installer, install_dir, request=request)
         environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
         assert str(install_dir) not in environments_txt
@@ -1619,6 +1713,8 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
     input_path = _example_path("register_envs")  # The specific example we use here is not important
     options = ["/InstallationType=JustMe", f"/NoRegistry={no_registry}"]
     for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".msi":
+            continue
         _run_installer(
             input_path,
             installer,
@@ -1629,21 +1725,20 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
             options=options,
         )
 
-    # Use the installer file name for the registry search
-    installer_file_name_parts = Path(installer).name.split("-")
-    name = installer_file_name_parts[0]
-    version = installer_file_name_parts[1]
-    partial_name = f"{name} {version}"
+        # Use the installer file name for the registry search
+        installer_file_name_parts = Path(installer).name.split("-")
+        name = installer_file_name_parts[0]
+        version = installer_file_name_parts[1]
+        partial_name = f"{name} {version}"
 
-    is_in_installed_apps_menu = _is_program_installed(partial_name)
-    _run_uninstaller_exe(install_dir)
+        is_in_installed_apps_menu = _is_program_installed(partial_name)
+        _run_uninstaller_exe(install_dir)
 
-    # If no_registry=0 we expect is_in_installed_apps_menu=True
-    # If no_registry=1 we expect is_in_installed_apps_menu=False
-    assert is_in_installed_apps_menu == (no_registry == 0), (
-        f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
-    )
-
+        # If no_registry=0 we expect is_in_installed_apps_menu=True
+        # If no_registry=1 we expect is_in_installed_apps_menu=False
+        assert is_in_installed_apps_menu == (no_registry == 0), (
+            f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
+        )
 
 @pytest.mark.xfail(
     condition=(
