@@ -1,6 +1,25 @@
+import sys
+import tarfile
+from pathlib import Path
+
 import pytest
 
-from constructor.briefcase import get_bundle_app_name, get_name_version
+from constructor.briefcase import Payload, get_bundle_app_name, get_name_version
+from constructor.conda_interface import cc_platform
+
+"""
+    Here 'mock_info' is simply a 'mock' of the regular 'info' object that is used to create installers.
+    It contains bare minimum in order to allow simple unit testing.
+"""
+mock_info = {
+    "name": "MockInfo",
+    "version": "1.0.0",
+    "_conda_exe": str(Path(sys.prefix) / "standalone_conda" / "conda.exe"),
+    "_download_dir": "",
+    "_dists": [],
+    "_platform": cc_platform,
+    "_urls": [],
+}
 
 
 @pytest.mark.parametrize(
@@ -132,3 +151,127 @@ def test_rdi_invalid_package(rdi):
 def test_name_no_alphanumeric(name):
     with pytest.raises(ValueError, match=f"Name '{name}' contains no alphanumeric characters"):
         get_bundle_app_name({}, name)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_prepare_payload():
+    """Test preparing the payload."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    payload.prepare()
+    assert payload.root.is_dir()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_payload_layout():
+    """Test the layout of the payload and verify that archiving
+    parts of the payload works as expected.
+    """
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+
+    root = prepared_payload[0]
+    external_dir = root / "external"
+    # The second item in prepared_payload is the 'external' directory
+    assert external_dir.is_dir() and external_dir == prepared_payload[1]
+
+    base_dir = root / "external" / "base"
+    pkgs_dir = root / "external" / "base" / "pkgs"
+    archive_path = external_dir / payload.archive_name
+    # Since archiving removes the directory 'base_dir' and its contents
+    assert not base_dir.exists()
+    assert not pkgs_dir.exists()
+    assert archive_path.exists()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_payload_archive(tmp_path: Path):
+    """Test that the payload archive function works as expected."""
+    info = mock_info.copy()
+    payload = Payload(info)
+
+    foo_dir = tmp_path / "foo"
+    foo_dir.mkdir()
+
+    expected_text = "some test text"
+    hello_file = foo_dir / "hello.txt"
+    hello_file.write_text(expected_text, encoding="utf-8")
+
+    archive_path = payload.make_archive(foo_dir, tmp_path)
+
+    with tarfile.open(archive_path, mode="r:gz") as tar:
+        member = tar.getmember("foo/hello.txt")
+        f = tar.extractfile(member)
+        assert f is not None
+        assert f.read().decode("utf-8") == expected_text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_payload_remove():
+    """Test removing the payload."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+
+    assert prepared_payload[0].is_dir()
+    payload.remove()
+    assert not prepared_payload[0].is_dir()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_payload_pyproject_toml():
+    """Test that the pyproject.toml file is created when the payload is prepared."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+    pyproject_toml = prepared_payload[0] / "pyproject.toml"
+    assert pyproject_toml.is_file()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_payload_conda_exe():
+    """Test that conda-standalone is prepared."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    prepared_payload = payload.prepare()
+    conda_exe = prepared_payload[1] / "_conda.exe"  # The second item is the 'external' directory
+    assert conda_exe.is_file()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize("debug_logging", [True, False])
+def test_payload_templates_are_rendered(debug_logging):
+    """Test that templates are rendered when the payload is prepared."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    payload.add_debug_logging = debug_logging
+    rendered_templates = payload.render_templates()
+    assert len(rendered_templates) == 2  # There should be at least two files
+    for f in rendered_templates:
+        assert f.is_file()
+        text = f.read_text(encoding="utf-8")
+        assert "{{" not in text and "}}" not in text
+        assert "{%" not in text and "%}" not in text
+        assert "{#" not in text and "#}" not in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize("debug_logging", [True, False])
+def test_templates_debug_mode(debug_logging):
+    """Test that debug logging affects template generation."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    payload.add_debug_logging = debug_logging
+    rendered_templates = payload.render_templates()
+    assert len(rendered_templates) == 2  # There should be at least two files
+
+    for f in rendered_templates:
+        assert f.is_file()
+
+        with open(f) as open_file:
+            lines = open_file.readlines()
+
+        # Check the first line.
+        expected = "@echo on\n" if debug_logging else "@echo off\n"
+        assert lines[0] == expected
