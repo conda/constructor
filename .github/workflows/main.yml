@@ -156,7 +156,7 @@ jobs:
           AZURE_SIGNTOOL_KEY_VAULT_URL: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_URL }}
           CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x86/signtool.exe"
-          CONSTRUCTOR_VERBOSE: 1
+          CONSTRUCTOR_VERBOSE: 0
         run: |
           rm -rf coverage.json
           pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py

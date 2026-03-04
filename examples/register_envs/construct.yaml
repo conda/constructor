@@ -3,7 +3,7 @@
 
 name: RegisterEnvs
 version: 1.0.0
-installer_type: {{ "exe" if os.name == "nt" else "all" }}
+installer_type: all
 channels:
   - https://repo.anaconda.com/pkgs/main/
 specs:
