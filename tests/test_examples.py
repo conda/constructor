@@ -1750,8 +1750,9 @@ def test_frozen_environment(tmp_path, request, has_conflict):
 
     if has_conflict:
         config.setdefault("extra_files", []).append({"frozen.json": "conda-meta/frozen"})
-        with open(input_path / "construct.yaml", "w") as f:
-            yaml.dump(config, f)
+
+    with open(input_path / "construct.yaml", "w") as f:
+        yaml.dump(config, f)
 
     with context as c:
         for installer, install_dir in create_installer(input_path, tmp_path):
