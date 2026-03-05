@@ -637,13 +637,17 @@ def test_pre_uninstall_registry_uses_reg64():
     # REG64 variable must be defined and used in the subroutine
     assert "REG64" in text
     assert "/reg:64" in text
-    # Must appear in both reg query and reg delete contexts
-    reg64_first_pos = text.find("/reg:64")
-    reg_query_pos = text.find("reg query")
-    reg_delete_pos = text.find("reg delete")
-    assert reg64_first_pos != -1
+
+    # reg query and reg delete must both appear after the subroutine label
+    subroutine_pos = text.find(":remove_python_registry")
+    reg_query_pos = text.find("reg query", subroutine_pos)
+    reg_delete_pos = text.find("reg delete", subroutine_pos)
+    assert subroutine_pos != -1
     assert reg_query_pos != -1
     assert reg_delete_pos != -1
-    # reg64 must appear after the subroutine label
-    subroutine_pos = text.find(":remove_python_registry")
-    assert reg64_first_pos > subroutine_pos
+
+    # /reg:64 must appear in both the reg query and reg delete lines
+    reg_query_line = next(line for line in text.splitlines() if "reg query" in line and "PythonCore" in line)
+    reg_delete_line = next(line for line in text.splitlines() if "reg delete" in line)
+    assert "/reg:64" in reg_query_line or "%REG64%" in reg_query_line
+    assert "/reg:64" in reg_delete_line or "%REG64%" in reg_delete_line
