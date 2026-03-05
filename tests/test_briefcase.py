@@ -647,7 +647,9 @@ def test_pre_uninstall_registry_uses_reg64():
     assert reg_delete_pos != -1
 
     # /reg:64 must appear in both the reg query and reg delete lines
-    reg_query_line = next(line for line in text.splitlines() if "reg query" in line and "PythonCore" in line)
+    reg_query_line = next(
+        line for line in text.splitlines() if "reg query" in line and "PythonCore" in line
+    )
     reg_delete_line = next(line for line in text.splitlines() if "reg delete" in line)
     assert "/reg:64" in reg_query_line or "%REG64%" in reg_query_line
     assert "/reg:64" in reg_delete_line or "%REG64%" in reg_delete_line
