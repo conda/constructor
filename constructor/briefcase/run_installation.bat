@@ -113,19 +113,21 @@ if "%OPTION_REGISTER_PYTHON%"=="1" (
     )
     rem PY_REG is the base registry path for this Python version.
     rem /v sets a named value, /ve sets the default (unnamed) value, /d sets the data,
-    rem /f forces overwrite without prompting
+    rem /f forces overwrite without prompting.
+    rem REG64 forces the 64-bit registry view since the MSI engine runs as a 32-bit process.
+    set "REG64=/reg:64"
     set "PY_REG=!REG_HIVE!\Software\Python\PythonCore\{{ pyver_components[:2] | join(".") }}"
-    reg add "!PY_REG!\Help\Main Python Documentation" /v "Main Python Documentation" /d "%BASE_PATH%\Doc\python{{ pyver_components | join("") }}.chm" /f >> "%LOG%" 2>&1
+    reg add "!PY_REG!\Help\Main Python Documentation" /v "Main Python Documentation" /d "%BASE_PATH%\Doc\python{{ pyver_components | join("") }}.chm" /f !REG64! >> "%LOG%" 2>&1
     if errorlevel 1 ( exit /b %errorlevel% )
-    reg add "!PY_REG!\InstallPath" /ve /d "%BASE_PATH%" /f >> "%LOG%" 2>&1
+    reg add "!PY_REG!\InstallPath" /ve /d "%BASE_PATH%" /f !REG64! >> "%LOG%" 2>&1
     if errorlevel 1 ( exit /b %errorlevel% )
-    reg add "!PY_REG!\InstallPath" /v "ExecutablePath" /d "%BASE_PATH%\python.exe" /f >> "%LOG%" 2>&1
+    reg add "!PY_REG!\InstallPath" /v "ExecutablePath" /d "%BASE_PATH%\python.exe" /f !REG64! >> "%LOG%" 2>&1
     if errorlevel 1 ( exit /b %errorlevel% )
-    reg add "!PY_REG!\InstallPath" /v "InstallGroup" /d "Python {{ pyver_components[:2] | join(".") }}" /f >> "%LOG%" 2>&1
+    reg add "!PY_REG!\InstallPath" /v "InstallGroup" /d "Python {{ pyver_components[:2] | join(".") }}" /f !REG64! >> "%LOG%" 2>&1
     if errorlevel 1 ( exit /b %errorlevel% )
-    reg add "!PY_REG!\Modules" /ve /d "" /f >> "%LOG%" 2>&1
+    reg add "!PY_REG!\Modules" /ve /d "" /f !REG64! >> "%LOG%" 2>&1
     if errorlevel 1 ( exit /b %errorlevel% )
-    reg add "!PY_REG!\PythonPath" /ve /d "%BASE_PATH%\Lib;%BASE_PATH%\DLLs" /f >> "%LOG%" 2>&1
+    reg add "!PY_REG!\PythonPath" /ve /d "%BASE_PATH%\Lib;%BASE_PATH%\DLLs" /f !REG64! >> "%LOG%" 2>&1
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 {%- endif %}

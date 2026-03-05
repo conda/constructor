@@ -598,3 +598,52 @@ def test_pre_uninstall_nonadmin_removed_after_path_and_registry():
     assert registry_removal_pos != -1
     assert nonadmin_removal_pos > path_removal_pos
     assert nonadmin_removal_pos > registry_removal_pos
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_registry_uses_reg64():
+    """Verify that Python registry writes in run_installation.bat use /reg:64
+    to force the 64-bit registry view, since the MSI engine runs as a 32-bit
+    process and would otherwise redirect writes to WOW6432Node."""
+    info = mock_info.copy()
+    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    # REG64 variable must be defined and used
+    assert "REG64" in text
+    assert "/reg:64" in text
+    # Must not use the literal flag directly in reg add calls (should use variable)
+    assert "reg add" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_pre_uninstall_registry_uses_reg64():
+    """Verify that Python registry queries and deletes in pre_uninstall.bat use
+    /reg:64 to force the 64-bit registry view, since the MSI engine runs as a
+    32-bit process and registry entries were written to the 64-bit view at
+    install time."""
+    info = mock_info.copy()
+    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    # REG64 variable must be defined and used in the subroutine
+    assert "REG64" in text
+    assert "/reg:64" in text
+    # Must appear in both reg query and reg delete contexts
+    reg64_first_pos = text.find("/reg:64")
+    reg_query_pos = text.find("reg query")
+    reg_delete_pos = text.find("reg delete")
+    assert reg64_first_pos != -1
+    assert reg_query_pos != -1
+    assert reg_delete_pos != -1
+    # reg64 must appear after the subroutine label
+    subroutine_pos = text.find(":remove_python_registry")
+    assert reg64_first_pos > subroutine_pos

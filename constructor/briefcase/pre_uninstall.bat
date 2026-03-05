@@ -73,7 +73,8 @@ if "%REG_HIVE%"=="HKCU" (
 )
 
 {%- if has_python %}
-rem Remove Python registry entries only if InstallPath matches BASE_PATH
+rem Remove Python registry entries only if InstallPath matches BASE_PATH.
+rem /reg:64 ensures we query the 64-bit registry view regardless of MSI process bitness.
 echo Checking Python registry entries...
 >> "%LOG%" echo Checking Python registry entries...
 call :remove_python_registry "%REG_HIVE%" "%BASE_PATH%"
@@ -82,15 +83,17 @@ goto :after_remove_python_registry
 :remove_python_registry
 set "REG_HIVE_ARG=%~1"
 set "BASE_PATH_ARG=%~2"
+rem REG64 forces the 64-bit registry view since the MSI engine runs as a 32-bit process.
+set "REG64=/reg:64"
 rem Enumerate all subkeys under PythonCore (e.g. 3.11, 3.13)
-for /f "tokens=*" %%K in ('reg query "%REG_HIVE_ARG%\Software\Python\PythonCore" 2^>nul') do (
+for /f "tokens=*" %%K in ('reg query "%REG_HIVE_ARG%\Software\Python\PythonCore" %REG64% 2^>nul') do (
     rem Read the InstallPath default value for each subkey
-    for /f "tokens=2*" %%A in ('reg query "%%K\InstallPath" /ve 2^>nul') do (
+    for /f "tokens=2*" %%A in ('reg query "%%K\InstallPath" /ve %REG64% 2^>nul') do (
         rem Only delete if InstallPath matches our installation directory
         if /i "%%B"=="%BASE_PATH_ARG%" (
             echo Removing Python registry key: %%K
             >> "%LOG%" echo Removing Python registry key: %%K
-            reg delete "%%K" /f >> "%LOG%" 2>&1
+            reg delete "%%K" /f %REG64% >> "%LOG%" 2>&1
             if errorlevel 1 ( exit /b %errorlevel% )
         )
     )
