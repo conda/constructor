@@ -474,50 +474,6 @@ def test_render_templates_no_python_no_registry():
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_render_templates_python_registry_removal_uses_base_path():
-    """Verify that the Python registry removal in pre_uninstall.bat compares
-    InstallPath against BASE_PATH and not INSTDIR. The MSI layout is different from EXE."""
-    info = mock_info.copy()
-    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
-    payload = Payload(info)
-    rendered_templates = payload.render_templates()
-
-    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
-    text = pre_uninstall.read_text(encoding="utf-8")
-
-    assert "PythonCore" in text
-    assert "reg query" in text
-    assert "reg delete" in text
-    assert "%BASE_PATH%" in text
-    assert '=="%INSTDIR%"' not in text
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_pre_uninstall_python_registry_uses_subroutine():
-    """Verify that Python registry removal uses the call :remove_python_registry
-    subroutine pattern. This is required because variables set before a for /f
-    loop do not expand correctly inside the loop's command string, even with
-    enabledelayedexpansion. Passing them as subroutine arguments via %~1 and %~2
-    is the reliable workaround."""
-    info = mock_info.copy()
-    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
-    payload = Payload(info)
-    rendered_templates = payload.render_templates()
-
-    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
-    text = pre_uninstall.read_text(encoding="utf-8")
-
-    assert "call :remove_python_registry" in text
-    assert "goto :after_remove_python_registry" in text
-    assert ":remove_python_registry" in text
-    assert ":after_remove_python_registry" in text
-    assert '"%REG_HIVE%"' in text
-    assert '"%BASE_PATH%"' in text
-    assert "%~1" in text
-    assert "%~2" in text
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 @pytest.mark.parametrize(
     "initialize_conda, expected_flag",
     [

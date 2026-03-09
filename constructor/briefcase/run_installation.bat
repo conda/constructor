@@ -64,7 +64,7 @@ if errorlevel 1 ( exit /b %errorlevel% )
 if errorlevel 1 ( exit /b %errorlevel% )
 
 if not exist "%BASE_PATH%" (
-  {{ error_block('"%BASE_PATH%" not found!', 13) }}
+  {{ error_block('"%BASE_PATH%" not found!', 12) }}
 )
 
 rem Create .nonadmin marker file for user-scoped installs
