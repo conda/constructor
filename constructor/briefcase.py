@@ -123,8 +123,11 @@ def is_bat_file(file_path: Path) -> bool:
     return file_path.is_file() and file_path.suffix.lower() == ".bat"
 
 
-def create_uninstall_options_list() -> list[dict]:
-    """Returns a list of dicts with data formatted for the uninstallation options page."""
+def create_uninstall_options_list(info: dict) -> list[dict]:
+    """Returns a list of dicts with data formatted for the uninstallation options page.
+    Options are currently only shown when uninstall_with_conda_exe is True."""
+    if not bool(info.get("uninstall_with_conda_exe")):
+        return []
     return [
         {
             "name": "remove_user_data",
@@ -374,6 +377,14 @@ class Payload:
             # In the .bat template this is used in the "shortcuts enabled" branch,
             # so passing an empty string here is correct when all shortcuts are wanted.
             "shortcuts": shortcuts_flags(self.info),
+            # --- uninstall_with_conda_exe ---
+            "uninstall_with_conda_exe": bool(self.info.get("uninstall_with_conda_exe")),
+            # --- has_conda ---
+            "has_conda": self.info.get("_has_conda", False),
+            # --- setup_envs ---
+            # Placeholder for extra_envs support. Currently only contains base env.
+            # Will be expanded when extra_envs is implemented for MSI installers.
+            "setup_envs": [{"name": "base", "prefix": "%BASE_PATH%"}],
         }
 
         # Render the templates now using jinja and the defined context
@@ -403,7 +414,7 @@ class Payload:
                     "use_full_install_path": False,
                     "install_launcher": False,
                     "install_option": create_install_options_list(self.info),
-                    "uninstall_option": create_uninstall_options_list(),
+                    "uninstall_option": create_uninstall_options_list(self.info),
                     "post_install_script": str(root / "run_installation.bat"),
                     "pre_uninstall_script": str(root / "pre_uninstall.bat"),
                 }

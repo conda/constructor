@@ -19,6 +19,7 @@ mock_info = {
     "_dists": [],
     "_platform": cc_platform,
     "_urls": [],
+    "uninstall_with_conda_exe": False,
 }
 
 
@@ -427,6 +428,7 @@ def test_render_templates_uninstall_option_variable_names():
     """Verify that the uninstall option variable names in the rendered template match
     exactly what run_pre_uninstall.bat sets via positional arguments."""
     info = mock_info.copy()
+    info["uninstall_with_conda_exe"] = True
     payload = Payload(info)
     rendered_templates = payload.render_templates()
 
@@ -545,7 +547,7 @@ def test_pre_uninstall_nonadmin_removed_after_path_and_registry():
     pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
     text = pre_uninstall.read_text(encoding="utf-8")
 
-    nonadmin_removal_pos = text.find('del "%INSTDIR%\\.nonadmin"')
+    nonadmin_removal_pos = text.find('del "%BASE_PATH%\\.nonadmin"')
     path_removal_pos = text.find("--remove=user")
     registry_removal_pos = text.find("remove_python_registry")
 

@@ -11,6 +11,11 @@ echo [ERROR] {{ message }}
 exit /b {{ code }}
 {% endmacro %}
 
+{%- macro tee(message) -%}
+echo {{ message }}
+>> "%LOG%" echo {{ message }}
+{%- endmacro %}
+
 rem Assign INSTDIR and normalize the path
 set "INSTDIR=%~dp0.."
 for %%I in ("%INSTDIR%") do set "INSTDIR=%%~fI"
@@ -25,7 +30,7 @@ for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
 set "LOG=%INSTDIR%\uninstall.log"
 
 rem Determine install mode from .nonadmin marker file written at install time
-if exist "%INSTDIR%\.nonadmin" (
+if exist "%BASE_PATH%\.nonadmin" (
     set "REG_HIVE=HKCU"
 ) else (
     set "REG_HIVE=HKLM"
@@ -57,25 +62,17 @@ if errorlevel 1 (
   {{ error_block('Failed to create "%PAYLOAD_TAR%"', '%errorlevel%') }}
 )
 
-rem Remove shortcuts unconditionally
-echo Removing shortcuts...
->> "%LOG%" echo Removing shortcuts...
-"%CONDA_EXE%" constructor --prefix "%BASE_PATH%" --rm-menus --log-file "%LOG%"
-if errorlevel 1 ( exit /b %errorlevel% )
-
 rem Remove PATH entries only for user-scoped installs (mirrors NSIS .nonadmin check)
 {%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
 if "%REG_HIVE%"=="HKCU" (
-    echo Removing from PATH...
-    >> "%LOG%" echo Removing from PATH...
+    {{ tee("Removing from PATH...") }}
     "%CONDA_EXE%" constructor windows path --remove=user --prefix "%INSTDIR%" {{ pathflag }} --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 
 {%- if has_python %}
 rem Remove Python registry entries only if InstallPath matches BASE_PATH.
-echo Checking Python registry entries...
->> "%LOG%" echo Checking Python registry entries...
+{{ tee("Checking Python registry entries...") }}
 call :remove_python_registry "%REG_HIVE%" "%BASE_PATH%"
 goto :after_remove_python_registry
 
@@ -103,13 +100,13 @@ exit /b 0
 {%- endif %}
 
 rem Remove .nonadmin marker file if it exists
-if exist "%INSTDIR%\.nonadmin" (
-    echo Removing .nonadmin marker file...
-    >> "%LOG%" echo Removing .nonadmin marker file...
-    del "%INSTDIR%\.nonadmin"
+if exist "%BASE_PATH%\.nonadmin" (
+    {{ tee("Removing .nonadmin marker file...") }}
+    del "%BASE_PATH%\.nonadmin"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 
+{%- if uninstall_with_conda_exe %}
 rem Run constructor uninstall, conditionally passing optional flags
 set "UNINST_ARGS="
 if "%OPTION_REMOVE_USER_DATA%"=="1" (
@@ -118,10 +115,35 @@ if "%OPTION_REMOVE_USER_DATA%"=="1" (
 if "%OPTION_REMOVE_CACHES%"=="1" (
     set "UNINST_ARGS=!UNINST_ARGS! --remove-caches"
 )
-echo Running constructor uninstall...
->> "%LOG%" echo Running constructor uninstall...
+{{ tee("Running constructor uninstall...") }}
 "%CONDA_EXE%" constructor uninstall --prefix "%BASE_PATH%"!UNINST_ARGS! --log-file "%LOG%"
 if errorlevel 1 ( exit /b %errorlevel% )
+{%- else %}
+rem Remove menus for each environment.
+rem TODO: loop over extra_envs when extra_envs support is implemented for MSI.
+{%- for env in setup_envs %}
+{{ tee("Removing menus for " + env.name + "...") }}
+"%CONDA_EXE%" constructor --prefix "{{ env.prefix }}" --rm-menus --log-file "%LOG%"
+if errorlevel 1 ( exit /b %errorlevel% )
+{%- endfor %}
+
+{%- if has_conda %}
+rem Reverse conda shell initialization
+if "%REG_HIVE%"=="HKCU" (
+    set "CONDA_INIT_SCOPE=user"
+) else (
+    set "CONDA_INIT_SCOPE=system"
+)
+{{ tee("Reversing conda shell initialization...") }}
+"%BASE_PATH%\condabin\conda.bat" init cmd.exe --reverse --!CONDA_INIT_SCOPE! --log-file "%LOG%"
+if errorlevel 1 ( exit /b %errorlevel% )
+{%- endif %}
+
+rem Remove the base conda environment. INSTDIR itself is cleaned up by the MSI engine.
+{{ tee("Removing base environment...") }}
+rmdir /s /q "%BASE_PATH%"
+if errorlevel 1 ( exit /b %errorlevel% )
+{%- endif %}
 
 rem If we reached this far without any errors, remove any log files.
 if exist "%INSTDIR%\install.log" del "%INSTDIR%\install.log"

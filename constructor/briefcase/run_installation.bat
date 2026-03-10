@@ -10,6 +10,11 @@ echo [ERROR] {{ message }}
 exit /b {{ code }}
 {% endmacro %}
 
+{%- macro tee(message) -%}
+echo {{ message }}
+>> "%LOG%" echo {{ message }}
+{%- endmacro %}
+
 rem Assign INSTDIR and normalize the path
 set "INSTDIR=%~dp0.."
 for %%I in ("%INSTDIR%") do set "INSTDIR=%%~fI"
@@ -55,8 +60,7 @@ if not exist "%PAYLOAD_TAR%" (
   {{ error_block('PAYLOAD_TAR not found: "%PAYLOAD_TAR%"', 11) }}
 )
 
-echo Unpacking payload...
->> "%LOG%" echo Unpacking payload...
+{{ tee("Unpacking payload...") }}
 "%CONDA_EXE%" constructor extract --prefix "%INSTDIR%" --tar-from-stdin --log-file "%LOG%" < "%PAYLOAD_TAR%"
 if errorlevel 1 ( exit /b %errorlevel% )
 
@@ -67,21 +71,19 @@ if not exist "%BASE_PATH%" (
   {{ error_block('"%BASE_PATH%" not found!', 12) }}
 )
 
-rem Create .nonadmin marker file for user-scoped installs
-rem This is used by the uninstaller to determine the install mode
+rem Create .nonadmin marker file for user-scoped installs inside BASE_PATH.
+rem This is used by the uninstaller (and menuinst) to determine the install mode.
 if "%ALLUSERS%"=="0" (
-    echo. > "%INSTDIR%\.nonadmin"
+    echo. > "%BASE_PATH%\.nonadmin"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 
 rem Install packages, conditionally creating shortcuts
 if "%OPTION_ENABLE_SHORTCUTS%"=="1" (
-    echo Installing packages with shortcuts...
-    >> "%LOG%" echo Installing packages with shortcuts...
+    {{ tee("Installing packages with shortcuts...") }}
     "%CONDA_EXE%" install --offline -yp "%BASE_PATH%" --file "%BASE_PATH%\conda-meta\initial-state.explicit.txt" {{ shortcuts }} {{ no_rcs_arg }} --log-file "%LOG%"
 ) else (
-    echo Installing packages...
-    >> "%LOG%" echo Installing packages...
+    {{ tee("Installing packages...") }}
     "%CONDA_EXE%" install --offline -yp "%BASE_PATH%" --file "%BASE_PATH%\conda-meta\initial-state.explicit.txt" --no-shortcuts {{ no_rcs_arg }} --log-file "%LOG%"
 )
 if errorlevel 1 ( exit /b %errorlevel% )
@@ -95,8 +97,7 @@ if errorlevel 1 ( exit /b %errorlevel% )
 rem Add to PATH / run conda init if the option was selected
 {%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
 if "%OPTION_INITIALIZE_CONDA%"=="1" (
-    echo Adding to PATH...
-    >> "%LOG%" echo Adding to PATH...
+    {{ tee("Adding to PATH...") }}
     "%CONDA_EXE%" constructor windows path --prepend=user --prefix "%INSTDIR%" {{ pathflag }} --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
@@ -104,8 +105,7 @@ if "%OPTION_INITIALIZE_CONDA%"=="1" (
 {%- if has_python %}
 rem Register as system Python if the option was selected
 if "%OPTION_REGISTER_PYTHON%"=="1" (
-    echo Registering as system Python...
-    >> "%LOG%" echo Registering as system Python...
+    {{ tee("Registering as system Python...") }}
     if "%ALLUSERS%"=="1" (
         set "REG_HIVE=HKLM"
     ) else (
@@ -134,8 +134,7 @@ if "%OPTION_REGISTER_PYTHON%"=="1" (
 
 rem Clear the package cache if the option was selected
 if "%OPTION_CLEAR_PACKAGE_CACHE%"=="1" (
-    echo Clearing package cache...
-    >> "%LOG%" echo Clearing package cache...
+    {{ tee("Clearing package cache...") }}
     "%CONDA_EXE%" clean --all --force-pkgs-dirs --yes {{ no_rcs_arg }} --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
