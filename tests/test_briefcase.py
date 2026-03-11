@@ -519,22 +519,6 @@ def test_render_templates_path_removal_gated_on_reg_hive():
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_pre_uninstall_nonadmin_removal():
-    """Verify that pre_uninstall.bat removes the .nonadmin marker file
-    if it exists. The .nonadmin file is created by run_installation.bat
-    for user-scoped installs and must be cleaned up during uninstall."""
-    info = mock_info.copy()
-    payload = Payload(info)
-    rendered_templates = payload.render_templates()
-
-    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
-    text = pre_uninstall.read_text(encoding="utf-8")
-
-    assert ".nonadmin" in text
-    assert "del" in text
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_pre_uninstall_nonadmin_removed_after_path_and_registry():
     """Verify that .nonadmin is removed AFTER PATH and registry cleanup,
     since those steps depend on .nonadmin to determine the install mode

@@ -99,13 +99,6 @@ exit /b 0
 :after_remove_python_registry
 {%- endif %}
 
-rem Remove .nonadmin marker file if it exists
-if exist "%BASE_PATH%\.nonadmin" (
-    {{ tee("Removing .nonadmin marker file...") }}
-    del "%BASE_PATH%\.nonadmin"
-    if errorlevel 1 ( exit /b %errorlevel% )
-)
-
 {%- if uninstall_with_conda_exe %}
 rem Run constructor uninstall, conditionally passing optional flags
 set "UNINST_ARGS="
