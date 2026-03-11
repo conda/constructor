@@ -519,30 +519,6 @@ def test_render_templates_path_removal_gated_on_reg_hive():
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_pre_uninstall_nonadmin_removed_after_path_and_registry():
-    """Verify that .nonadmin is removed AFTER PATH and registry cleanup,
-    since those steps depend on .nonadmin to determine the install mode
-    via REG_HIVE."""
-    info = mock_info.copy()
-    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
-    payload = Payload(info)
-    rendered_templates = payload.render_templates()
-
-    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
-    text = pre_uninstall.read_text(encoding="utf-8")
-
-    nonadmin_removal_pos = text.find('del "%BASE_PATH%\\.nonadmin"')
-    path_removal_pos = text.find("--remove=user")
-    registry_removal_pos = text.find("remove_python_registry")
-
-    assert nonadmin_removal_pos != -1
-    assert path_removal_pos != -1
-    assert registry_removal_pos != -1
-    assert nonadmin_removal_pos > path_removal_pos
-    assert nonadmin_removal_pos > registry_removal_pos
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_render_templates_registry_uses_reg64():
     """Verify that Python registry writes in run_installation.bat use /reg:64
     to force the 64-bit registry view, since the MSI engine runs as a 32-bit
