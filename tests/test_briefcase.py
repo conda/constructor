@@ -619,3 +619,34 @@ def test_create_uninstall_options_list_without_conda_exe():
     info = {"uninstall_with_conda_exe": False}
     options = create_uninstall_options_list(info)
     assert options == []
+def test_render_templates_with_virtual_specs():
+    """Test that virtual_specs check block is rendered when specs are provided."""
+    info = mock_info.copy()
+    info["virtual_specs"] = ["__win>=10", "__cuda>=11"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    assert "Checking virtual specs compatibility" in text
+    assert "__win>=10 __cuda>=11" in text
+    assert '"__win>=10" "__cuda>=11"' in text
+    assert "CONDA_SOLVER=classic" in text
+    assert "--dry-run" in text
+    assert "_virtual_specs_checks" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_without_virtual_specs():
+    """Test that virtual_specs check block is not rendered when specs are empty."""
+    info = mock_info.copy()
+    info["virtual_specs"] = []
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    assert "Checking virtual specs compatibility" not in text
+    assert "_virtual_specs_checks" not in text
