@@ -71,6 +71,8 @@ if not exist "%BASE_PATH%" (
   {{ error_block('"%BASE_PATH%" not found!', 12) }}
 )
 
+rem TODO: loop over extra_envs when extra_envs support is implemented for MSI.
+
 rem Create .nonadmin marker file for user-scoped installs inside BASE_PATH.
 rem This is used by the uninstaller (and menuinst) to determine the install mode.
 if "%ALLUSERS%"=="0" (

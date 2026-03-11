@@ -113,7 +113,6 @@ if "%OPTION_REMOVE_CACHES%"=="1" (
 if errorlevel 1 ( exit /b %errorlevel% )
 {%- else %}
 rem Remove menus for each environment.
-rem TODO: loop over extra_envs when extra_envs support is implemented for MSI.
 {%- for env in setup_envs %}
 {{ tee("Removing menus for " + env.name + "...") }}
 "%CONDA_EXE%" constructor --prefix "{{ env.prefix }}" --rm-menus --log-file "%LOG%"
@@ -132,8 +131,8 @@ if "%REG_HIVE%"=="HKCU" (
 if errorlevel 1 ( exit /b %errorlevel% )
 {%- endif %}
 
-rem Remove the base conda environment. INSTDIR itself is cleaned up by the MSI engine.
-{{ tee("Removing base environment...") }}
+rem Remove conda environments. INSTDIR itself is cleaned up by the MSI engine.
+{{ tee("Removing environments...") }}
 rmdir /s /q "%BASE_PATH%"
 if errorlevel 1 ( exit /b %errorlevel% )
 {%- endif %}
