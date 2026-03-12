@@ -60,7 +60,7 @@ if not exist "%CONDA_EXE%" (
 )
 if "%ALLUSERS%"=="0" (
   if not exist "%BASE_PATH%\.nonadmin" (
-    {{ error_block('The installation appears to be corrupted. Please reinstall the application.', 11) }}
+    {{ error_block('Insufficient permissions. Please re-run the uninstallation as administrator.', 11) }}
   )
 )
 
