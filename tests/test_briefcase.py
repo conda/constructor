@@ -507,10 +507,11 @@ def test_render_templates_path_removal_flags(initialize_conda, expected_flag):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-def test_render_templates_path_removal_gated_on_reg_hive():
+def test_render_templates_path_removal_gated_on_nonadmin():
     """Verify that PATH removal in pre_uninstall.bat is gated on
-    REG_HIVE == HKCU, mirroring the NSIS .nonadmin check. PATH was only
-    ever added for user-scoped installs so should only be removed for those."""
+    the .nonadmin marker file check, mirroring the NSIS behaviour. PATH was
+    only ever added for user-scoped installs so should only be removed for
+    those."""
     info = mock_info.copy()
     payload = Payload(info)
     rendered_templates = payload.render_templates()
@@ -518,11 +519,17 @@ def test_render_templates_path_removal_gated_on_reg_hive():
     pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
     text = pre_uninstall.read_text(encoding="utf-8")
 
-    hkcu_check_pos = text.find('"%REG_HIVE%"=="HKCU"')
     path_removal_pos = text.find("--remove=user")
-    assert hkcu_check_pos != -1
-    assert path_removal_pos != -1
-    assert path_removal_pos > hkcu_check_pos
+    assert path_removal_pos != -1, '"--remove=user" not found in pre_uninstall.bat'
+
+    # Search backwards from --remove=user to find the nearest preceding .nonadmin
+    # guard, confirming it is the direct condition for PATH removal and not some
+    # other .nonadmin check elsewhere in the file.
+    preceding_text = text[:path_removal_pos]
+    nonadmin_check_pos = preceding_text.rfind('if exist "%BASE_PATH%\\.nonadmin"')
+    assert nonadmin_check_pos != -1, (
+        'No .nonadmin guard found immediately before "--remove=user" in pre_uninstall.bat'
+    )
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
