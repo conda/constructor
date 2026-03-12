@@ -47,6 +47,7 @@ if exist "%BASE_PATH%\.nonadmin" (
 >> "%LOG%" echo PAYLOAD_TAR=%PAYLOAD_TAR%
 >> "%LOG%" echo CONDA_ROOT_PREFIX=%CONDA_ROOT_PREFIX%
 >> "%LOG%" echo REG_HIVE=%REG_HIVE%
+>> "%LOG%" echo ALLUSERS=%ALLUSERS%
 >> "%LOG%" echo OPTION_REMOVE_USER_DATA=%OPTION_REMOVE_USER_DATA%
 >> "%LOG%" echo OPTION_REMOVE_CACHES=%OPTION_REMOVE_CACHES%
 >> "%LOG%" echo OPTION_REMOVE_CONFIG_FILES=%OPTION_REMOVE_CONFIG_FILES%
@@ -56,6 +57,11 @@ if exist "%BASE_PATH%\.nonadmin" (
 rem Consistency checks
 if not exist "%CONDA_EXE%" (
   {{ error_block('CONDA_EXE not found: "%CONDA_EXE%"', 10) }}
+)
+if "%ALLUSERS%"=="0" (
+  if not exist "%BASE_PATH%\.nonadmin" (
+    {{ error_block('The installation appears to be corrupted. Please reinstall the application.', 11) }}
+  )
 )
 
 rem Recreate an empty payload tar. This file was deleted during installation but the
