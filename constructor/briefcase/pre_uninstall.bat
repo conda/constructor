@@ -24,6 +24,7 @@ set "BASE_PATH=%INSTDIR%\base"
 set "PREFIX=%BASE_PATH%"
 set "CONDA_EXE=%INSTDIR%\{{ conda_exe_name }}"
 set "PAYLOAD_TAR=%INSTDIR%\{{ archive_name }}"
+set "CONDA_ROOT_PREFIX=%BASE_PATH%"
 
 rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
@@ -44,9 +45,11 @@ if exist "%BASE_PATH%\.nonadmin" (
 >> "%LOG%" echo BASE_PATH=%BASE_PATH%
 >> "%LOG%" echo CONDA_EXE=%CONDA_EXE%
 >> "%LOG%" echo PAYLOAD_TAR=%PAYLOAD_TAR%
+>> "%LOG%" echo CONDA_ROOT_PREFIX=%CONDA_ROOT_PREFIX%
 >> "%LOG%" echo REG_HIVE=%REG_HIVE%
 >> "%LOG%" echo OPTION_REMOVE_USER_DATA=%OPTION_REMOVE_USER_DATA%
 >> "%LOG%" echo OPTION_REMOVE_CACHES=%OPTION_REMOVE_CACHES%
+>> "%LOG%" echo OPTION_REMOVE_CONFIG_FILES=%OPTION_REMOVE_CONFIG_FILES%
 "%CONDA_EXE%" --version >> "%LOG%" 2>&1
 {%- endif %}
 
@@ -107,6 +110,15 @@ if "%OPTION_REMOVE_USER_DATA%"=="1" (
 )
 if "%OPTION_REMOVE_CACHES%"=="1" (
     set "UNINST_ARGS=!UNINST_ARGS! --remove-caches"
+)
+if "%OPTION_REMOVE_CONFIG_FILES%"=="1" (
+    rem User installs (.nonadmin marker exists) only remove user config files.
+    rem Admin installs remove both user and system config files.
+    if exist "%BASE_PATH%\.nonadmin" (
+        set "UNINST_ARGS=!UNINST_ARGS! --remove-config-files=user"
+    ) else (
+        set "UNINST_ARGS=!UNINST_ARGS! --remove-config-files=all"
+    )
 )
 {{ tee("Running constructor uninstall...") }}
 "%CONDA_EXE%" constructor uninstall --prefix "%BASE_PATH%"!UNINST_ARGS! --log-file "%LOG%"

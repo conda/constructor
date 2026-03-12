@@ -4,7 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from constructor.briefcase import Payload, _get_python_info, get_bundle_app_name, get_name_version
+from constructor.briefcase import (
+    Payload,
+    _get_python_info,
+    create_uninstall_options_list,
+    get_bundle_app_name,
+    get_name_version,
+)
 from constructor.conda_interface import cc_platform
 
 """
@@ -437,6 +443,7 @@ def test_render_templates_uninstall_option_variable_names():
 
     assert "OPTION_REMOVE_USER_DATA" in text
     assert "OPTION_REMOVE_CACHES" in text
+    assert "OPTION_REMOVE_CONFIG_FILES" in text
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
@@ -571,3 +578,37 @@ def test_pre_uninstall_registry_uses_reg64():
     reg_delete_line = next(line for line in text.splitlines() if "reg delete" in line)
     assert "/reg:64" in reg_query_line or "%REG64%" in reg_query_line
     assert "/reg:64" in reg_delete_line or "%REG64%" in reg_delete_line
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_pre_uninstall_conda_root_prefix():
+    """Verify that CONDA_ROOT_PREFIX is set in pre_uninstall.bat.
+    This is required for the --rm-menus command to work correctly."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert "CONDA_ROOT_PREFIX=%BASE_PATH%" in text
+
+
+def test_create_uninstall_options_list_with_conda_exe():
+    """Test that create_uninstall_options_list returns all expected options
+    when uninstall_with_conda_exe is True."""
+    info = {"uninstall_with_conda_exe": True}
+    options = create_uninstall_options_list(info)
+
+    option_names = [opt["name"] for opt in options]
+    assert "remove_user_data" in option_names
+    assert "remove_caches" in option_names
+    assert "remove_config_files" in option_names
+
+
+def test_create_uninstall_options_list_without_conda_exe():
+    """Test that create_uninstall_options_list returns empty list
+    when uninstall_with_conda_exe is False."""
+    info = {"uninstall_with_conda_exe": False}
+    options = create_uninstall_options_list(info)
+    assert options == []

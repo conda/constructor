@@ -141,6 +141,12 @@ def create_uninstall_options_list(info: dict) -> list[dict]:
             "description": "Clear the package cache upon completion.",
             "default": False,
         },
+        {
+            "name": "remove_config_files",
+            "title": "Remove configuration files",
+            "description": "Remove .condarc and other configuration files.",
+            "default": False,
+        },
     ]
 
 
