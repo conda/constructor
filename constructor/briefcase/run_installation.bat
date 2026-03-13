@@ -71,6 +71,19 @@ if not exist "%BASE_PATH%" (
   {{ error_block('"%BASE_PATH%" not found!', 12) }}
 )
 
+{%- if virtual_specs %}
+rem Check virtual specs compatibility before proceeding with installation.
+rem We need to specify CONDA_SOLVER=classic to work around this bug:
+rem https://github.com/conda/conda-libmamba-solver/issues/480
+set "CONDA_SOLVER=classic"
+{{ tee("Checking virtual specs compatibility: " ~ virtual_specs_debug) }}
+"%CONDA_EXE%" create --dry-run --prefix "%BASE_PATH%\envs\_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }} --log-file "%LOG%"
+if errorlevel 1 (
+    {{ error_block("Failed to check virtual specs: " ~ virtual_specs_debug, 13) }}
+)
+set "CONDA_SOLVER="
+{%- endif %}
+
 rem TODO: loop over extra_envs when extra_envs support is implemented for MSI.
 
 rem Create .nonadmin marker file for user-scoped installs inside BASE_PATH.
@@ -79,6 +92,22 @@ if "%ALLUSERS%"=="0" (
     echo. > "%BASE_PATH%\.nonadmin"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
+
+{%- if condarc_content %}
+rem Write .condarc file to the base environment
+{{ tee("Writing .condarc...") }}
+(
+{%- for line in condarc_content.splitlines() %}
+{%- if line %}
+echo {{ line }}
+{%- else %}
+rem Use echo. for empty lines; plain "echo" prints "ECHO is on/off"
+echo.
+{%- endif %}
+{%- endfor %}
+) > "%BASE_PATH%\.condarc"
+if errorlevel 1 ( exit /b %errorlevel% )
+{%- endif %}
 
 rem Install packages, conditionally creating shortcuts
 if "%OPTION_ENABLE_SHORTCUTS%"=="1" (

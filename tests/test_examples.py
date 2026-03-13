@@ -836,7 +836,6 @@ def test_example_miniforge(tmp_path, request, example):
             elif installer.suffix == ".msi":
                 # TODO: Start menus
                 _run_uninstaller_msi(installer, install_dir)
-                raise NotImplementedError("Test needs to be implemented")
 
 
 def test_example_noconda(tmp_path, request):
