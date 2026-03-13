@@ -22,7 +22,7 @@ else:
 
 from . import preconda
 from .jinja import render_template
-from .utils import DEFAULT_REVERSE_DOMAIN_ID, copy_conda_exe, filename_dist
+from .utils import DEFAULT_REVERSE_DOMAIN_ID, copy_conda_exe, filename_dist, shortcuts_flags
 
 BRIEFCASE_DIR = Path(__file__).parent / "briefcase"
 EXTERNAL_PACKAGE_PATH = "external"
@@ -123,6 +123,33 @@ def is_bat_file(file_path: Path) -> bool:
     return file_path.is_file() and file_path.suffix.lower() == ".bat"
 
 
+def create_uninstall_options_list(info: dict) -> list[dict]:
+    """Returns a list of dicts with data formatted for the uninstallation options page.
+    Options are currently only shown when uninstall_with_conda_exe is True."""
+    if not bool(info.get("uninstall_with_conda_exe")):
+        return []
+    return [
+        {
+            "name": "remove_user_data",
+            "title": "Remove user data",
+            "description": "Remove user data associated with this installation.",
+            "default": False,
+        },
+        {
+            "name": "remove_caches",
+            "title": "Remove caches",
+            "description": "Clear the package cache upon completion.",
+            "default": False,
+        },
+        {
+            "name": "remove_config_files",
+            "title": "Remove configuration files",
+            "description": "Remove .condarc and other configuration files.",
+            "default": False,
+        },
+    ]
+
+
 def create_install_options_list(info: dict) -> list[dict]:
     """Returns a list of dicts with data formatted for the installation options page."""
     options = []
@@ -220,6 +247,15 @@ def create_install_options_list(info: dict) -> list[dict]:
             )
 
     return options
+
+
+def _get_python_info(info: dict) -> tuple[bool, list[str]]:
+    """Return (has_python, pyver_components) by inspecting _dists."""
+    for dist in info.get("_dists", []):
+        name, version, _ = filename_dist(dist).rsplit("-", 2)
+        if name == "python":
+            return True, version.split(".")
+    return False, []
 
 
 @dataclass
@@ -327,11 +363,34 @@ class Payload:
             Path(BRIEFCASE_DIR / "pre_uninstall.bat"): Path(self.root / "pre_uninstall.bat"),
         }
 
-        context: dict[str, str] = {
+        has_python, pyver_components = _get_python_info(self.info)
+
+        context: dict = {
             "archive_name": self.archive_name,
             "conda_exe_name": self.conda_exe_name,
             "add_debug": self.add_debug_logging,
             "register_envs": str(self.info.get("register_envs", True)).lower(),
+            # --- has_python / pyver_components ---
+            "has_python": has_python,
+            "pyver_components": pyver_components,
+            # --- OPTION_INITIALIZE_CONDA ---
+            "initialize_conda": self.info.get("initialize_conda", "classic"),
+            # --- OPTION_CLEAR_PACKAGE_CACHE / OPTION_ENABLE_SHORTCUTS ---
+            "no_rcs_arg": self.info.get("_ignore_condarcs_arg", ""),
+            # --- OPTION_ENABLE_SHORTCUTS ---
+            # shortcuts_flags returns the appropriate --shortcuts-only=... flags,
+            # an empty string (all shortcuts), or --no-shortcuts (none).
+            # In the .bat template this is used in the "shortcuts enabled" branch,
+            # so passing an empty string here is correct when all shortcuts are wanted.
+            "shortcuts": shortcuts_flags(self.info),
+            # --- uninstall_with_conda_exe ---
+            "uninstall_with_conda_exe": bool(self.info.get("uninstall_with_conda_exe")),
+            # --- has_conda ---
+            "has_conda": self.info.get("_has_conda", False),
+            # --- setup_envs ---
+            # Placeholder for extra_envs support. Currently only contains base env.
+            # Will be expanded when extra_envs is implemented for MSI installers.
+            "setup_envs": [{"name": "base", "prefix": "%BASE_PATH%"}],
         }
 
         # Render the templates now using jinja and the defined context
@@ -361,6 +420,7 @@ class Payload:
                     "use_full_install_path": False,
                     "install_launcher": False,
                     "install_option": create_install_options_list(self.info),
+                    "uninstall_option": create_uninstall_options_list(self.info),
                     "post_install_script": str(root / "run_installation.bat"),
                     "pre_uninstall_script": str(root / "pre_uninstall.bat"),
                 }
