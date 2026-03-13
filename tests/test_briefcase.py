@@ -619,6 +619,8 @@ def test_create_uninstall_options_list_without_conda_exe():
     info = {"uninstall_with_conda_exe": False}
     options = create_uninstall_options_list(info)
     assert options == []
+
+
 def test_render_templates_with_virtual_specs():
     """Test that virtual_specs check block is rendered when specs are provided."""
     info = mock_info.copy()

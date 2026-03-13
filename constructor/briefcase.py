@@ -394,9 +394,7 @@ class Payload:
             # --- virtual_specs ---
             # virtual_specs: quoted for command-line use
             # virtual_specs_debug: unquoted for display
-            "virtual_specs": " ".join(
-                [f'"{spec}"' for spec in self.info.get("virtual_specs", ())]
-            ),
+            "virtual_specs": " ".join([f'"{spec}"' for spec in self.info.get("virtual_specs", ())]),
             "virtual_specs_debug": " ".join(self.info.get("virtual_specs", ())),
         }
 
