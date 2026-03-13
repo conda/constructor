@@ -1740,6 +1740,7 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
             f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
         )
 
+
 @pytest.mark.xfail(
     condition=(
         CONDA_EXE == StandaloneExe.CONDA
@@ -1767,10 +1768,16 @@ def test_frozen_environment(tmp_path, request, has_conflict):
     with open(input_path / "construct.yaml") as f:
         config = yaml.load(f)
 
+    # Since the above yaml.load does not rely on jinja rendering,
+    # set installer_type based on platform instead of using Jinja in the YAML.
+    # This is needed until MSI installers support protected base environments.
+    config["installer_type"] = "exe" if os.name == "nt" else "all"
+
     if has_conflict:
         config.setdefault("extra_files", []).append({"frozen.json": "conda-meta/frozen"})
-        with open(input_path / "construct.yaml", "w") as f:
-            yaml.dump(config, f)
+
+    with open(input_path / "construct.yaml", "w") as f:
+        yaml.dump(config, f)
 
     with context as c:
         for installer, install_dir in create_installer(input_path, tmp_path):

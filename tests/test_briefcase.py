@@ -4,7 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from constructor.briefcase import Payload, get_bundle_app_name, get_name_version
+from constructor.briefcase import (
+    Payload,
+    _get_python_info,
+    create_uninstall_options_list,
+    get_bundle_app_name,
+    get_name_version,
+)
 from constructor.conda_interface import cc_platform
 
 """
@@ -19,6 +25,7 @@ mock_info = {
     "_dists": [],
     "_platform": cc_platform,
     "_urls": [],
+    "uninstall_with_conda_exe": False,
 }
 
 
@@ -153,6 +160,27 @@ def test_name_no_alphanumeric(name):
         get_bundle_app_name({}, name)
 
 
+@pytest.mark.parametrize(
+    "dists, has_python_expected, pyver_expected",
+    [
+        # Python present
+        (["python-3.11.5-0.tar.bz2"], True, ["3", "11", "5"]),
+        (["python-3.9.7-0.tar.bz2"], True, ["3", "9", "7"]),
+        # Python present alongside other dists
+        (["numpy-1.24.0-py311_0.tar.bz2", "python-3.11.5-0.tar.bz2"], True, ["3", "11", "5"]),
+        # No python dist
+        (["numpy-1.24.0-py311_0.tar.bz2"], False, []),
+        # Empty dists
+        ([], False, []),
+    ],
+)
+def test_get_python_info(dists, has_python_expected, pyver_expected):
+    info = {"_dists": dists}
+    has_python, pyver_components = _get_python_info(info)
+    assert has_python == has_python_expected
+    assert pyver_components == pyver_expected
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_prepare_payload():
     """Test preparing the payload."""
@@ -264,14 +292,330 @@ def test_templates_debug_mode(debug_logging):
     payload = Payload(info)
     payload.add_debug_logging = debug_logging
     rendered_templates = payload.render_templates()
-    assert len(rendered_templates) == 2  # There should be at least two files
+    assert len(rendered_templates) == 2
 
     for f in rendered_templates:
         assert f.is_file()
-
         with open(f) as open_file:
             lines = open_file.readlines()
-
-        # Check the first line.
         expected = "@echo on\n" if debug_logging else "@echo off\n"
         assert lines[0] == expected
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_no_python():
+    """Test when no Python dist is present, has_python is False and the
+    OPTION_REGISTER_PYTHON block should not appear in the rendered output."""
+    info = mock_info.copy()
+    info["_dists"] = []
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+    assert "OPTION_REGISTER_PYTHON" not in text
+    assert "PythonCore" not in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_with_python():
+    """Test when a Python dist is present, has_python is True and the
+    OPTION_REGISTER_PYTHON block should appear in the rendered output."""
+    info = mock_info.copy()
+    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+    assert "OPTION_REGISTER_PYTHON" in text
+    assert "PythonCore" in text
+    assert "3.11" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize(
+    "initialize_conda, expected_flag",
+    [
+        ("condabin", "--condabin"),
+        ("classic", "--classic"),
+    ],
+)
+def test_render_templates_add_to_path_flags(initialize_conda, expected_flag):
+    """Verify that the correct path flag is rendered based on initialize_conda mode."""
+    info = mock_info.copy()
+    info["initialize_conda"] = initialize_conda
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+    assert expected_flag in text
+    assert "constructor windows path" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize("no_rcs_arg", ["--no-rc", ""])
+def test_render_templates_no_rcs_arg(no_rcs_arg):
+    """Verify that no_rcs_arg is rendered into the template correctly."""
+    info = mock_info.copy()
+    info["_ignore_condarcs_arg"] = no_rcs_arg
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+    if no_rcs_arg:
+        assert no_rcs_arg in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_registry_uses_base_path():
+    """Test that Python registry entries use BASE_PATH (INSTDIR\\base) and not
+    INSTDIR directly, since in the MSI layout is different from EXE."""
+    info = mock_info.copy()
+    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    assert "%BASE_PATH%\\python.exe" in text
+    assert "%BASE_PATH%\\Lib;%BASE_PATH%\\DLLs" in text
+    assert "%BASE_PATH%\\Doc\\" in text
+
+    assert "%INSTDIR%\\python.exe" not in text
+    assert "%INSTDIR%\\Lib;%INSTDIR%\\DLLs" not in text
+    assert "%INSTDIR%\\Doc\\" not in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_nonadmin_created_for_user_install():
+    """Verify that run_installation.bat creates a .nonadmin marker file
+    when ALLUSERS is 0. This file is used by pre_uninstall.bat to determine
+    the install mode via REG_HIVE."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    assert ".nonadmin" in text
+    assert 'ALLUSERS%"=="0"' in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_option_variable_names():
+    """Verify that the option variable names in the rendered template match
+    exactly what run_post_installation.bat sets via positional arguments."""
+    info = mock_info.copy()
+    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    assert "OPTION_REGISTER_PYTHON" in text
+    assert "OPTION_INITIALIZE_CONDA" in text
+    assert "OPTION_CLEAR_PACKAGE_CACHE" in text
+    assert "OPTION_ENABLE_SHORTCUTS" in text
+
+    assert "OPTION_REGISTER_SYSTEM_PYTHON" not in text
+    assert "OPTION_ADD_TO_PATH" not in text
+    assert "OPTION_CLEAR_PKG_CACHE" not in text
+    assert "OPTION_CREATE_SHORTCUTS" not in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_uninstall_option_variable_names():
+    """Verify that the uninstall option variable names in the rendered template match
+    exactly what run_pre_uninstall.bat sets via positional arguments."""
+    info = mock_info.copy()
+    info["uninstall_with_conda_exe"] = True
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert "OPTION_REMOVE_USER_DATA" in text
+    assert "OPTION_REMOVE_CACHES" in text
+    assert "OPTION_REMOVE_CONFIG_FILES" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_pre_uninstall_delayed_expansion():
+    """Verify that pre_uninstall.bat enables delayed expansion explicitly.
+    This is required because:
+    1. setlocal in pre_uninstall.bat creates a new scope, so enabledelayedexpansion
+       from run_pre_uninstall.bat is NOT inherited.
+    2. !VAR! syntax is needed inside for /f loops and for building UNINST_ARGS
+       dynamically.
+    """
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert "setlocal enabledelayedexpansion" in text.lower()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_no_python_no_registry():
+    """Verify that when no Python dist is present, no registry operations
+    appear in pre_uninstall.bat."""
+    info = mock_info.copy()
+    info["_dists"] = []
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert "PythonCore" not in text
+    assert "reg delete" not in text
+    assert "reg query" not in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize(
+    "initialize_conda, expected_flag",
+    [
+        ("condabin", "--condabin"),
+        ("classic", "--classic"),
+    ],
+)
+def test_render_templates_path_removal_flags(initialize_conda, expected_flag):
+    """Verify the correct path flag is rendered in pre_uninstall.bat
+    based on initialize_conda mode."""
+    info = mock_info.copy()
+    info["initialize_conda"] = initialize_conda
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert expected_flag in text
+    assert "constructor windows path" in text
+    assert "--remove=user" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_path_removal_gated_on_nonadmin():
+    """Verify that PATH removal in pre_uninstall.bat is gated on
+    the .nonadmin marker file check, mirroring the NSIS behaviour. PATH was
+    only ever added for user-scoped installs so should only be removed for
+    those."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    path_removal_pos = text.find("--remove=user")
+    assert path_removal_pos != -1, '"--remove=user" not found in pre_uninstall.bat'
+
+    # Search backwards from --remove=user to find the nearest preceding .nonadmin
+    # guard, confirming it is the direct condition for PATH removal and not some
+    # other .nonadmin check elsewhere in the file.
+    preceding_text = text[:path_removal_pos]
+    nonadmin_check_pos = preceding_text.rfind('if exist "%BASE_PATH%\\.nonadmin"')
+    assert nonadmin_check_pos != -1, (
+        'No .nonadmin guard found immediately before "--remove=user" in pre_uninstall.bat'
+    )
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_render_templates_registry_uses_reg64():
+    """Verify that Python registry writes in run_installation.bat use /reg:64
+    to force the 64-bit registry view, since the MSI engine runs as a 32-bit
+    process and would otherwise redirect writes to WOW6432Node."""
+    info = mock_info.copy()
+    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    # REG64 variable must be defined and used
+    assert "REG64" in text
+    assert "/reg:64" in text
+    # Must not use the literal flag directly in reg add calls (should use variable)
+    assert "reg add" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_pre_uninstall_registry_uses_reg64():
+    """Verify that Python registry queries and deletes in pre_uninstall.bat use
+    /reg:64 to force the 64-bit registry view, since the MSI engine runs as a
+    32-bit process and registry entries were written to the 64-bit view at
+    install time."""
+    info = mock_info.copy()
+    info["_dists"] = ["python-3.11.5-0.tar.bz2"]
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    # REG64 variable must be defined and used in the subroutine
+    assert "REG64" in text
+    assert "/reg:64" in text
+
+    # reg query and reg delete must both appear after the subroutine label
+    subroutine_pos = text.find(":remove_python_registry")
+    reg_query_pos = text.find("reg query", subroutine_pos)
+    reg_delete_pos = text.find("reg delete", subroutine_pos)
+    assert subroutine_pos != -1
+    assert reg_query_pos != -1
+    assert reg_delete_pos != -1
+
+    # /reg:64 must appear in both the reg query and reg delete lines
+    reg_query_line = next(
+        line for line in text.splitlines() if "reg query" in line and "PythonCore" in line
+    )
+    reg_delete_line = next(line for line in text.splitlines() if "reg delete" in line)
+    assert "/reg:64" in reg_query_line or "%REG64%" in reg_query_line
+    assert "/reg:64" in reg_delete_line or "%REG64%" in reg_delete_line
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_pre_uninstall_conda_root_prefix():
+    """Verify that CONDA_ROOT_PREFIX is set in pre_uninstall.bat.
+    This is required for the --rm-menus command to work correctly."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert "CONDA_ROOT_PREFIX=%BASE_PATH%" in text
+
+
+def test_create_uninstall_options_list_with_conda_exe():
+    """Test that create_uninstall_options_list returns all expected options
+    when uninstall_with_conda_exe is True."""
+    info = {"uninstall_with_conda_exe": True}
+    options = create_uninstall_options_list(info)
+
+    option_names = [opt["name"] for opt in options]
+    assert "remove_user_data" in option_names
+    assert "remove_caches" in option_names
+    assert "remove_config_files" in option_names
+
+
+def test_create_uninstall_options_list_without_conda_exe():
+    """Test that create_uninstall_options_list returns empty list
+    when uninstall_with_conda_exe is False."""
+    info = {"uninstall_with_conda_exe": False}
+    options = create_uninstall_options_list(info)
+    assert options == []
