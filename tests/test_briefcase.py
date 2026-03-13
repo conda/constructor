@@ -639,7 +639,6 @@ def test_render_templates_with_virtual_specs():
     assert "_virtual_specs_checks" in text
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_render_templates_without_virtual_specs():
     """Test that virtual_specs check block is not rendered when specs are empty."""
     info = mock_info.copy()
