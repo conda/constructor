@@ -339,11 +339,16 @@ def _sentinel_file_checks(example_path, install_dir):
             )
 
 
-def calculate_msi_install_path(installer: Path) -> Path:
-    """This is a temporary solution for now since we cannot choose the install location ourselves.
-    Installers are named <name>-<version>-Windows-x86_64.msi.
+def calculate_msi_install_path(config_path: Path) -> Path:
+    """Calculate the MSI install path from the construct.yaml config.
+
+    MSI installers use '<name> <version>' as the install directory name,
+    matching the formal_name set in briefcase.py.
     """
-    dir_name = installer.name.replace("-Windows-x86_64.msi", "").replace("-", " ")
+    yaml = YAML()
+    with open(config_path) as f:
+        config = yaml.load(f)
+    dir_name = f"{config['name']} {config['version']}"
     local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
     root_dir = Path(local_dir) / "Programs"
     root_dir.mkdir(parents=True, exist_ok=True)
@@ -647,7 +652,7 @@ def create_installer(
                 input_dir / config_filename
             )
         elif installer.suffix == ".msi":
-            install_dir = calculate_msi_install_path(installer)
+            install_dir = calculate_msi_install_path(input_dir / config_filename)
         else:
             install_dir = (
                 workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
