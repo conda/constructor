@@ -1444,6 +1444,8 @@ def test_allusers_exe(tmp_path, request):
 
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".msi":
+          continue  # TODO: Test currently not applicable for MSI installers
         _run_installer(
             input_path,
             installer,
