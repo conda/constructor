@@ -23,6 +23,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
+from constructor.construct import parse as parse_construct
 from constructor.utils import (
     StandaloneExe,
     check_version,
@@ -345,9 +346,7 @@ def calculate_msi_install_path(config_path: Path) -> Path:
     MSI installers use '<name> <version>' as the install directory name,
     matching the formal_name set in briefcase.py.
     """
-    yaml = YAML()
-    with open(config_path) as f:
-        config = yaml.load(f)
+    config = parse_construct(str(config_path), platform="win-64")
     dir_name = f"{config['name']} {config['version']}"
     local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
     root_dir = Path(local_dir) / "Programs"
