@@ -704,28 +704,30 @@ def test_get_script_env_variables_double_quotes_rejected(script_env_variables):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
-def test_render_templates_with_script_env_variables():
-    """Test that script_env_variables are rendered in the template."""
+@pytest.mark.parametrize("template_name", ["run_installation.bat", "pre_uninstall.bat"])
+def test_render_templates_with_script_env_variables(template_name):
+    """Test that script_env_variables are rendered in both install and uninstall templates."""
     info = mock_info.copy()
     info["script_env_variables"] = {"MY_VAR": "my_value", "OTHER": "50%"}
     payload = Payload(info)
     rendered_templates = payload.render_templates()
 
-    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
-    text = run_installation.read_text(encoding="utf-8")
+    template = next(f for f in rendered_templates if f.name == template_name)
+    text = template.read_text(encoding="utf-8")
 
     assert 'set "MY_VAR=my_value"' in text
     assert 'set "OTHER=50%%"' in text
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
-def test_render_templates_without_script_env_variables():
+@pytest.mark.parametrize("template_name", ["run_installation.bat", "pre_uninstall.bat"])
+def test_render_templates_without_script_env_variables(template_name):
     """Test that no script_env_variables block is rendered when not provided."""
     info = mock_info.copy()
     payload = Payload(info)
     rendered_templates = payload.render_templates()
 
-    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
-    text = run_installation.read_text(encoding="utf-8")
+    template = next(f for f in rendered_templates if f.name == template_name)
+    text = template.read_text(encoding="utf-8")
 
     assert "User-defined environment variables" not in text
