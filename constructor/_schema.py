@@ -515,7 +515,8 @@ class ConstructorConfiguration(BaseModel):
     in your value, you can escape them by replacing each single quote with
     `'''`.
 
-    On Windows, single quotes and double quotes are not supported.
+    On Windows EXE installers, single quotes and double quotes are not supported.
+    On Windows MSI installers, single quotes are supported but double quotes are not.
 
     Note that the # (hash) character cannot be used as it denotes yaml
     comments for all platforms.
