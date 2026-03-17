@@ -24,6 +24,7 @@ from . import preconda
 from .jinja import render_template
 from .utils import (
     DEFAULT_REVERSE_DOMAIN_ID,
+    bat_env_var_esc,
     copy_conda_exe,
     filename_dist,
     shortcuts_flags,
@@ -126,6 +127,27 @@ def get_license(info):
 
 def is_bat_file(file_path: Path) -> bool:
     return file_path.is_file() and file_path.suffix.lower() == ".bat"
+
+
+def _get_script_env_variables(info: dict) -> dict[str, str]:
+    """Validate and escape script_env_variables for batch file use.
+
+    Raises ValueError if any key or value contains double quotes.
+    Returns escaped key-value pairs.
+    """
+    raw_vars = info.get("script_env_variables", {})
+    escaped_vars = {}
+
+    for key, val in raw_vars.items():
+        if '"' in key or '"' in val:
+            raise ValueError(
+                f"script_env_variables entry '{key}' contains double quotes, "
+                "which are not supported in MSI installers. "
+                "Use single quotes instead."
+            )
+        escaped_vars[key] = bat_env_var_esc(val)
+
+    return escaped_vars
 
 
 def create_uninstall_options_list(info: dict) -> list[dict]:
@@ -401,6 +423,9 @@ class Payload:
             # virtual_specs_debug: unquoted for display
             "virtual_specs": " ".join([f'"{spec}"' for spec in self.info.get("virtual_specs", ())]),
             "virtual_specs_debug": " ".join(self.info.get("virtual_specs", ())),
+            # --- script_env_variables ---
+            # User-defined environment variables for pre/post install scripts
+            "script_env_variables": _get_script_env_variables(self.info),
         }
 
         # Render the templates now using jinja and the defined context

@@ -396,6 +396,25 @@ def win_str_esc(s, newlines=True):
     return '"%s"' % s
 
 
+def bat_env_var_esc(s: str) -> str:
+    """Escape a string for use in a Windows batch file SET command.
+
+    For use with: set "VAR=<escaped_value>"
+
+    Single quotes are allowed (they're literal in batch).
+    Double quotes are NOT supported - validate before calling this function.
+    """
+    # Order matters: ^ must be first since it's the escape character
+    s = s.replace("^", "^^")
+    s = s.replace("%", "%%")
+    s = s.replace("!", "^!")
+    s = s.replace("&", "^&")
+    s = s.replace("<", "^<")
+    s = s.replace(">", "^>")
+    s = s.replace("|", "^|")
+    return s
+
+
 def check_required_env_vars(env_vars):
     missing_vars = {var for var in env_vars if var not in environ}
     if missing_vars:

@@ -35,6 +35,13 @@ rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
 set "LOG=%INSTDIR%\install.log"
 
+{%- if script_env_variables %}
+rem User-defined environment variables for pre/post install scripts
+{%- for key, val in script_env_variables.items() %}
+set "{{ key }}={{ val }}"
+{%- endfor %}
+{%- endif %}
+
 {%- if add_debug %}
 >> "%LOG%" echo ==== run_installation start ====
 >> "%LOG%" echo SCRIPT=%~f0

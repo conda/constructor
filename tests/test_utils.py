@@ -1,6 +1,7 @@
 from os import sep
 
 from constructor.utils import (
+    bat_env_var_esc,
     get_condarc_content,
     make_VIProductVersion,
     normalize_path,
@@ -24,6 +25,27 @@ def test_normalize_path():
 
     path = "test///test/test".replace("/", sep)
     assert normalize_path(path) == "test/test/test".replace("/", sep)
+
+
+def test_bat_env_var_esc():
+    """Test escaping strings for Windows batch file SET commands."""
+    # Plain strings pass through unchanged
+    assert bat_env_var_esc("foo") == "foo"
+    assert bat_env_var_esc("foo bar") == "foo bar"
+
+    # Single quotes are allowed (literal in batch)
+    assert bat_env_var_esc("foo 'bar'") == "foo 'bar'"
+
+    # Special characters are escaped
+    assert bat_env_var_esc("50%") == "50%%"
+    assert bat_env_var_esc("a & b") == "a ^& b"
+    assert bat_env_var_esc("a | b") == "a ^| b"
+    assert bat_env_var_esc("a < b > c") == "a ^< b ^> c"
+    assert bat_env_var_esc("a^b") == "a^^b"
+    assert bat_env_var_esc("foo!") == "foo^!"
+
+    # Combined special characters
+    assert bat_env_var_esc("100% & done!") == "100%% ^& done^!"
 
 
 def test_get_condarc_content_with_write_condarc():
