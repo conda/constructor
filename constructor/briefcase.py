@@ -26,7 +26,6 @@ from .utils import (
     DEFAULT_REVERSE_DOMAIN_ID,
     copy_conda_exe,
     filename_dist,
-    get_condarc_content,
     shortcuts_flags,
 )
 
@@ -402,9 +401,6 @@ class Payload:
             # virtual_specs_debug: unquoted for display
             "virtual_specs": " ".join([f'"{spec}"' for spec in self.info.get("virtual_specs", ())]),
             "virtual_specs_debug": " ".join(self.info.get("virtual_specs", ())),
-            # --- condarc ---
-            # condarc_content: the YAML content to write to .condarc (or None if not needed)
-            "condarc_content": get_condarc_content(self.info),
         }
 
         # Render the templates now using jinja and the defined context

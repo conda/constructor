@@ -93,22 +93,6 @@ if "%ALLUSERS%"=="0" (
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 
-{%- if condarc_content %}
-rem Write .condarc file to the base environment
-{{ tee("Writing .condarc...") }}
-(
-{%- for line in condarc_content.splitlines() %}
-{%- if line %}
-echo {{ line }}
-{%- else %}
-rem Use echo. for empty lines; plain "echo" prints "ECHO is on/off"
-echo.
-{%- endif %}
-{%- endfor %}
-) > "%BASE_PATH%\.condarc"
-if errorlevel 1 ( exit /b %errorlevel% )
-{%- endif %}
-
 rem Install packages, conditionally creating shortcuts
 if "%OPTION_ENABLE_SHORTCUTS%"=="1" (
     {{ tee("Installing packages with shortcuts...") }}
