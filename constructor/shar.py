@@ -26,7 +26,6 @@ from .preconda import copy_extra_files
 from .preconda import files as preconda_files
 from .preconda import write_files as preconda_write_files
 from .utils import (
-    add_condarc,
     approx_size_kb,
     copy_conda_exe,
     filename_dist,
@@ -96,7 +95,6 @@ def get_header(conda_exec, tarball, info):
     variables["second_payload_size"] = getsize(tarball)
     variables["conda_exe_payloads"] = info.get("_conda_exe_payloads", {})
     variables["conda_exe_payloads_size"] = info.get("_conda_exe_payloads_size", 0)
-    variables["write_condarc"] = list(add_condarc(info))
     variables["final_channels"] = get_final_channels(info)
     variables["conclusion_text"] = info.get("conclusion_text", "installation finished.")
     variables["pycache"] = "__pycache__"
@@ -175,6 +173,9 @@ def create(info, verbose=False):
 
     if os.path.exists(join(tmp_dir, "conda-meta", "frozen")):
         post_t.add(join(tmp_dir, "conda-meta", "frozen"), "conda-meta/frozen")
+
+    if os.path.exists(join(tmp_dir, ".condarc")):
+        post_t.add(join(tmp_dir, ".condarc"), ".condarc")
 
     for env_name in info.get("_extra_envs_info", {}):
         pre_t.addfile(tarinfo=tarfile.TarInfo(f"envs/{env_name}/conda-meta/history"))

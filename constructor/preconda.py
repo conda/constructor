@@ -35,6 +35,7 @@ from .conda_interface import distro as conda_distro
 from .utils import (
     ensure_transmuted_ext,
     filename_dist,
+    get_condarc_content,
     get_final_channels,
     get_final_url,
     shortcuts_flags,
@@ -203,6 +204,9 @@ def write_files(info: dict, workspace: str):
     # base environment frozen marker files
     write_frozen(info.get("freeze_base"), join(workspace, "conda-meta"))
 
+    # base environment .condarc
+    write_condarc(info, workspace)
+
     for fn in files:
         os.chmod(join(workspace, fn), 0o664)
 
@@ -330,6 +334,19 @@ def write_shortcuts_txt(info: dict, dst_dir: str, env_config: dict):
         contents = shortcuts_flags(info)
     with open(join(dst_dir, "shortcuts.txt"), "w") as f:
         f.write(contents)
+
+
+def write_condarc(info: dict, dst_dir: str):
+    """Write .condarc file to the workspace if configured.
+
+    The file will be included in the payload tarball and extracted
+    to the correct location during installation.
+    """
+    condarc = get_condarc_content(info)
+    if not condarc:
+        return
+    with open(join(dst_dir, ".condarc"), "w") as f:
+        f.write(condarc)
 
 
 def copy_extra_files(

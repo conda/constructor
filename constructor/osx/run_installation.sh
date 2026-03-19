@@ -115,10 +115,6 @@ done
 # Cleanup!
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 
-{%- for condarc in write_condarc %}
-{{ condarc }}
-{%- endfor %}
-
 # This is not needed for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
 chown -R "${USER}" "$PREFIX"

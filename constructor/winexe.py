@@ -25,7 +25,6 @@ from .preconda import copy_extra_files
 from .preconda import write_files as preconda_write_files
 from .signing import AzureSignTool, WindowsSignTool
 from .utils import (
-    add_condarc,
     approx_size_kb,
     copy_conda_exe,
     filename_dist,
@@ -189,6 +188,7 @@ def make_nsi(
         "pre_uninstall": "@pre_uninstall.bat",
         "index_cache": "@" + join("pkgs", "cache"),
         "repodata_record": "@" + join("pkgs", "repodata_record.json"),
+        "condarc_file": "@.condarc" if os.path.exists(join(dir_path, ".condarc")) else "",
     }
 
     conclusion_text = info.get("conclusion_text", "")
@@ -276,7 +276,6 @@ def make_nsi(
     variables["DISTS"] = [win_str_esc(join(download_dir, dist)) for dist in dists]
     variables["SIGNTOOL_COMMAND"] = signing_tool.get_signing_command() if signing_tool else ""
     variables["SETUP_ENVS"] = setup_envs_commands(info, dir_path)
-    variables["WRITE_CONDARC"] = list(add_condarc(info))
     variables["SIZE"] = approx_pkgs_size_kb
     variables["UNINSTALL_NAME"] = info.get("uninstall_name", default_uninstall_name)
     variables["EXTRA_FILES"] = get_extra_files(extra_files, dir_path)

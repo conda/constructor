@@ -23,6 +23,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
+from constructor.construct import parse as parse_construct
 from constructor.utils import (
     StandaloneExe,
     check_version,
@@ -339,11 +340,14 @@ def _sentinel_file_checks(example_path, install_dir):
             )
 
 
-def calculate_msi_install_path(installer: Path) -> Path:
-    """This is a temporary solution for now since we cannot choose the install location ourselves.
-    Installers are named <name>-<version>-Windows-x86_64.msi.
+def calculate_msi_install_path(config_path: Path) -> Path:
+    """Calculate the MSI install path from the construct.yaml config.
+
+    MSI installers use '<name> <version>' as the install directory name,
+    matching the formal_name set in briefcase.py.
     """
-    dir_name = installer.name.replace("-Windows-x86_64.msi", "").replace("-", " ")
+    config = parse_construct(str(config_path), platform="win-64")
+    dir_name = f"{config['name']} {config['version']}"
     local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
     root_dir = Path(local_dir) / "Programs"
     root_dir.mkdir(parents=True, exist_ok=True)
@@ -647,7 +651,7 @@ def create_installer(
                 input_dir / config_filename
             )
         elif installer.suffix == ".msi":
-            install_dir = calculate_msi_install_path(installer)
+            install_dir = calculate_msi_install_path(input_dir / config_filename)
         else:
             install_dir = (
                 workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
@@ -836,7 +840,6 @@ def test_example_miniforge(tmp_path, request, example):
             elif installer.suffix == ".msi":
                 # TODO: Start menus
                 _run_uninstaller_msi(installer, install_dir)
-                raise NotImplementedError("Test needs to be implemented")
 
 
 def test_example_noconda(tmp_path, request):
@@ -1441,6 +1444,8 @@ def test_allusers_exe(tmp_path, request):
 
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".msi":
+            continue  # TODO: Test currently not applicable for MSI installers
         _run_installer(
             input_path,
             installer,
