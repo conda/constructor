@@ -174,30 +174,6 @@ def get_condarc_content(info) -> str | None:
     return condarc
 
 
-def add_condarc(info):
-    """
-    Generate platform-specific commands to write the .condarc file.
-
-    For NSIS (Windows EXE), yields NSIS script commands.
-    For shell scripts, yields shell commands.
-    """
-    condarc = get_condarc_content(info)
-    if condarc is None:
-        return
-    yield "# ----- add condarc"
-    if info["_platform"].startswith("win"):
-        yield "Var /Global CONDARC"
-        yield 'FileOpen $CONDARC "$INSTDIR\\.condarc" w'
-        for line in condarc.splitlines():
-            yield 'FileWrite $CONDARC "%s$\\r$\\n"' % line
-        yield "FileClose $CONDARC"
-    else:
-        yield 'cat <<EOF >"$PREFIX/.condarc"'
-        for line in condarc.splitlines():
-            yield line
-        yield "EOF"
-
-
 def ensure_transmuted_ext(info, url):
     """
     If transmuting, micromamba won't find the dist in the preconda tarball

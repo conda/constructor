@@ -1,7 +1,6 @@
 from os import sep
 
 from constructor.utils import (
-    add_condarc,
     get_condarc_content,
     make_VIProductVersion,
     normalize_path,
@@ -63,17 +62,3 @@ def test_get_condarc_content_returns_none():
     # write_condarc without channels should also return None
     info = {"write_condarc": True}
     assert get_condarc_content(info) is None
-
-
-def test_add_condarc_yields_platform_commands():
-    """Test that add_condarc yields platform-specific file write commands."""
-    info = {
-        "_platform": "win-64",
-        "condarc": {"channels": ["test-channel"]},
-    }
-    commands = list(add_condarc(info))
-    assert len(commands) > 0
-    assert "# ----- add condarc" in commands[0]
-    # Windows NSIS commands should include FileOpen/FileWrite
-    assert any("FileOpen" in cmd for cmd in commands)
-    assert any("FileWrite" in cmd for cmd in commands)

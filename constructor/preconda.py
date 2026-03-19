@@ -343,7 +343,7 @@ def write_condarc(info: dict, dst_dir: str):
     to the correct location during installation.
     """
     condarc = get_condarc_content(info)
-    if condarc is None:
+    if not condarc:
         return
     with open(join(dst_dir, ".condarc"), "w") as f:
         f.write(condarc)
