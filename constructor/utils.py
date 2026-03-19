@@ -132,7 +132,14 @@ def preprocess(data, namespace):
     return if_pat.sub(if_repl, data)
 
 
-def add_condarc(info):
+def get_condarc_content(info) -> str | None:
+    """
+    Get the condarc content string from the info dict.
+
+    Returns the condarc content as a YAML string, or None if no condarc should be written.
+    Handles both the new 'condarc' key (direct content) and the legacy 'write_condarc'
+    approach (building from channel settings).
+    """
     from .conda_interface import MatchSpec  # prevent circular import
 
     condarc = info.get("condarc")
@@ -146,7 +153,7 @@ def add_condarc(info):
         if not (
             write_condarc and (default_channels or channels or channel_alias or mirrored_channels)
         ):
-            return
+            return None
         condarc = {}
         if default_channels:
             condarc["default_channels"] = default_channels
@@ -164,18 +171,7 @@ def add_condarc(info):
                 )
     if isinstance(condarc, dict):
         condarc = yaml_to_string(condarc)
-    yield "# ----- add condarc"
-    if info["_platform"].startswith("win"):
-        yield "Var /Global CONDARC"
-        yield 'FileOpen $CONDARC "$INSTDIR\\.condarc" w'
-        for line in condarc.splitlines():
-            yield 'FileWrite $CONDARC "%s$\\r$\\n"' % line
-        yield "FileClose $CONDARC"
-    else:
-        yield 'cat <<EOF >"$PREFIX/.condarc"'
-        for line in condarc.splitlines():
-            yield line
-        yield "EOF"
+    return condarc
 
 
 def ensure_transmuted_ext(info, url):
