@@ -15,6 +15,17 @@ echo {{ message }}
 >> "%LOG%" echo {{ message }}
 {%- endmacro %}
 
+{% macro install_env(env) %}
+{{ tee("Setting up " ~ env.name ~ " environment...") }}
+set "CONDA_CHANNELS={{ env.channels }}"
+if "%OPTION_ENABLE_SHORTCUTS%"=="1" (
+    "%CONDA_EXE%" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile }}" {{ env.shortcuts }} {{ no_rcs_arg }} --log-file "%LOG%"
+) else (
+    "%CONDA_EXE%" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile }}" --no-shortcuts {{ no_rcs_arg }} --log-file "%LOG%"
+)
+if errorlevel 1 ( exit /b %errorlevel% )
+{% endmacro %}
+
 rem Assign INSTDIR and normalize the path
 set "INSTDIR=%~dp0.."
 for %%I in ("%INSTDIR%") do set "INSTDIR=%%~fI"
@@ -98,8 +109,6 @@ set "CONDA_PKGS_DIRS=%BASE_PATH%\pkgs"
 "%CONDA_EXE%" constructor extract --prefix "%BASE_PATH%" --conda-pkgs --log-file "%LOG%"
 if errorlevel 1 ( exit /b %errorlevel% )
 
-rem TODO: loop over extra_envs when extra_envs support is implemented for MSI.
-
 rem Create .nonadmin marker file for user-scoped installs inside BASE_PATH.
 rem This is used by the uninstaller (and menuinst) to determine the install mode.
 if "%ALLUSERS%"=="0" (
@@ -107,15 +116,10 @@ if "%ALLUSERS%"=="0" (
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 
-rem Install packages, conditionally creating shortcuts
-if "%OPTION_ENABLE_SHORTCUTS%"=="1" (
-    {{ tee("Installing packages with shortcuts...") }}
-    "%CONDA_EXE%" install --offline -yp "%BASE_PATH%" --file "%BASE_PATH%\conda-meta\initial-state.explicit.txt" {{ shortcuts }} {{ no_rcs_arg }} --log-file "%LOG%"
-) else (
-    {{ tee("Installing packages...") }}
-    "%CONDA_EXE%" install --offline -yp "%BASE_PATH%" --file "%BASE_PATH%\conda-meta\initial-state.explicit.txt" --no-shortcuts {{ no_rcs_arg }} --log-file "%LOG%"
-)
-if errorlevel 1 ( exit /b %errorlevel% )
+rem Install packages for each environment
+{%- for env in setup_envs %}
+{{ install_env(env) }}
+{%- endfor %}
 
 rem Delete the payload to save disk space.
 rem A truncated placeholder of 0 bytes is recreated during uninstall

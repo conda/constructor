@@ -8,6 +8,7 @@ from constructor.briefcase import (
     Payload,
     _get_python_info,
     _get_script_env_variables,
+    _setup_envs_commands,
     create_uninstall_options_list,
     get_bundle_app_name,
     get_name_version,
@@ -730,3 +731,133 @@ def test_render_templates_without_script_env_variables(template_name):
     text = template.read_text(encoding="utf-8")
 
     assert "User-defined environment variables" not in text
+
+
+def test_setup_envs_commands_base_only():
+    """Test _setup_envs_commands returns only base env when no extra_envs."""
+    info = {
+        "channels": ["conda-forge", "defaults"],
+        "_extra_envs_info": {},
+    }
+    envs = _setup_envs_commands(info)
+
+    assert len(envs) == 1
+    assert envs[0]["name"] == "base"
+    assert envs[0]["prefix"] == "%BASE_PATH%"
+    assert envs[0]["lockfile"] == r"%BASE_PATH%\conda-meta\initial-state.explicit.txt"
+    assert "conda-forge" in envs[0]["channels"]
+
+
+def test_setup_envs_commands_with_extra_envs():
+    """Test _setup_envs_commands includes extra_envs."""
+    info = {
+        "channels": ["defaults"],
+        "_extra_envs_info": {
+            "py311": {"_dists": []},
+            "tools": {"_dists": []},
+        },
+        "extra_envs": {
+            "py311": {
+                "channels": ["conda-forge"],
+            },
+            "tools": {
+                # No channels specified, should inherit from base
+            },
+        },
+    }
+    envs = _setup_envs_commands(info)
+
+    assert len(envs) == 3
+
+    # Base env
+    assert envs[0]["name"] == "base"
+    assert envs[0]["prefix"] == "%BASE_PATH%"
+
+    # Extra envs
+    env_names = [e["name"] for e in envs]
+    assert "py311" in env_names
+    assert "tools" in env_names
+
+    py311_env = next(e for e in envs if e["name"] == "py311")
+    assert py311_env["prefix"] == r"%BASE_PATH%\envs\py311"
+    assert py311_env["lockfile"] == r"%BASE_PATH%\envs\py311\conda-meta\initial-state.explicit.txt"
+    assert "conda-forge" in py311_env["channels"]
+
+    tools_env = next(e for e in envs if e["name"] == "tools")
+    assert tools_env["prefix"] == r"%BASE_PATH%\envs\tools"
+    # tools inherits channels from base
+    assert "defaults" in tools_env["channels"]
+
+
+def test_setup_envs_commands_shortcuts():
+    """Test _setup_envs_commands handles menu_packages/shortcuts correctly."""
+    info = {
+        "channels": ["defaults"],
+        "menu_packages": ["console_shortcut"],
+        "_extra_envs_info": {
+            "myenv": {"_dists": []},
+        },
+        "extra_envs": {
+            "myenv": {
+                "menu_packages": ["other_shortcut"],
+            },
+        },
+    }
+    envs = _setup_envs_commands(info)
+
+    assert len(envs) == 2
+
+    base_env = envs[0]
+    assert "console_shortcut" in base_env["shortcuts"]
+
+    myenv = envs[1]
+    assert "other_shortcut" in myenv["shortcuts"]
+
+
+def test_setup_envs_commands_channels_remap():
+    """Test _setup_envs_commands handles channels_remap correctly."""
+    info = {
+        "channels": ["https://foo.bar"],
+        "channels_remap": [{"src": "https://foo.bar", "dest": "conda-forge"}],
+        "_extra_envs_info": {
+            "myenv": {"_dists": []},
+        },
+        "extra_envs": {
+            "myenv": {
+                "channels": ["https://foo.bar"],
+                "channels_remap": [{"src": "https://foo.bar", "dest": "my-mirror"}],
+            },
+        },
+    }
+    envs = _setup_envs_commands(info)
+
+    base_env = envs[0]
+    assert "conda-forge" in base_env["channels"]
+
+    myenv = envs[1]
+    assert "my-mirror" in myenv["channels"]
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+def test_render_templates_with_extra_envs():
+    """Test that extra_envs are rendered in the install template."""
+    info = mock_info.copy()
+    info["channels"] = ["defaults"]
+    info["_extra_envs_info"] = {
+        "py311": {"_dists": []},
+    }
+    info["extra_envs"] = {
+        "py311": {
+            "channels": ["conda-forge"],
+        },
+    }
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    # Both base and py311 environments should be installed
+    assert "Setting up base environment" in text
+    assert "Setting up py311 environment" in text
+    assert r"%BASE_PATH%\envs\py311" in text

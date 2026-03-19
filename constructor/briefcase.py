@@ -28,6 +28,7 @@ from .utils import (
     bat_env_var_esc,
     copy_conda_exe,
     filename_dist,
+    get_final_channels,
     shortcuts_flags,
 )
 
@@ -149,6 +150,49 @@ def _get_script_env_variables(info: dict) -> dict[str, str]:
         escaped_vars[key] = bat_env_var_esc(val)
 
     return escaped_vars
+
+
+def _setup_envs_commands(info: dict) -> list[dict]:
+    """Build environment setup data for base and extra_envs.
+
+    Returns a list of dicts, each containing the data needed to install
+    one environment. Used by the run_installation.bat template.
+    """
+    environments = []
+
+    # Base environment
+    environments.append(
+        {
+            "name": "base",
+            "prefix": "%BASE_PATH%",
+            "lockfile": r"%BASE_PATH%\conda-meta\initial-state.explicit.txt",
+            "channels": ",".join(get_final_channels(info)),
+            "shortcuts": shortcuts_flags(info),
+        }
+    )
+
+    # Extra environments
+    for env_name in info.get("_extra_envs_info", {}):
+        env_config = info["extra_envs"][env_name]
+        # Needed for shortcuts_flags function
+        if "_conda_exe_type" not in env_config:
+            env_config["_conda_exe_type"] = info.get("_conda_exe_type")
+        channel_info = {
+            "channels": env_config.get("channels", info.get("channels", ())),
+            "channels_remap": env_config.get("channels_remap", info.get("channels_remap", ())),
+        }
+        environments.append(
+            {
+                "name": env_name,
+                "prefix": rf"%BASE_PATH%\envs\{env_name}",
+                "lockfile": rf"%BASE_PATH%\envs\{env_name}\conda-meta\initial-state.explicit.txt",
+                "channels": ",".join(get_final_channels(channel_info)),
+                "shortcuts": shortcuts_flags(env_config),
+            }
+        )
+
+    return environments
+
 
 
 def create_uninstall_options_list(info: dict) -> list[dict]:
@@ -416,9 +460,7 @@ class Payload:
             # --- has_conda ---
             "has_conda": self.info.get("_has_conda", False),
             # --- setup_envs ---
-            # Placeholder for extra_envs support. Currently only contains base env.
-            # Will be expanded when extra_envs is implemented for MSI installers.
-            "setup_envs": [{"name": "base", "prefix": "%BASE_PATH%"}],
+            "setup_envs": _setup_envs_commands(self.info),
             # --- virtual_specs ---
             # virtual_specs: quoted for command-line use
             # virtual_specs_debug: unquoted for display
@@ -475,7 +517,12 @@ class Payload:
 
     def _stage_dists(self, pkgs_dir: Path) -> None:
         download_dir = Path(self.info["_download_dir"])
-        for dist in self.info["_dists"]:
+        # Collect dists from base and extra_envs, de-duplicated
+        dists = self.info["_dists"].copy()
+        for env_info in self.info.get("_extra_envs_info", {}).values():
+            dists += env_info["_dists"]
+        dists = list({dist: None for dist in dists})  # de-duplicate
+        for dist in dists:
             shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
 
     def _stage_conda(self, external_dir: Path) -> None:
