@@ -40,7 +40,10 @@ if [[ "${USER}" != "root" ]]; then
             if [[ -f "${file}" ]] || [[ -d "${file}" ]]; then
                 OWNER=$(stat -f "%u" "${file}" | id -un)
                 if [[ "${OWNER}" == "root" ]]; then
-                    chown "${USER}" "${file}"
+                    if ! chown "${USER}" "${file}"; then
+                        MSG="WARNING! Unable to change ownership of ${file}."
+                        logger -p "install.warning" "${MSG}" || echo "${MSG}"
+                    fi
                 fi
             fi
             file="${file%/*}"
