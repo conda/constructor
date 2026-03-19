@@ -669,10 +669,6 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
 done
 {%- endif %}
 
-{%- for condarc in write_condarc %}
-{{ condarc }}
-{%- endfor %}
-
 POSTCONDA="$PREFIX/postconda.tar.bz2"
 CONDA_QUIET="$BATCH" \
 "$CONDA_EXEC" constructor --prefix "$PREFIX" --extract-tarball < "$POSTCONDA" || exit 1

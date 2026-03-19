@@ -22,7 +22,6 @@ from .jinja import render_template
 from .signing import CodeSign
 from .utils import (
     DEFAULT_REVERSE_DOMAIN_ID,
-    add_condarc,
     approx_size_kb,
     copy_conda_exe,
     explained_check_call,
@@ -395,7 +394,6 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["installer_version"] = info["version"]
     variables["installer_platform"] = info["_platform"]
     variables["final_channels"] = get_final_channels(info)
-    variables["write_condarc"] = list(add_condarc(info))
     variables["path_exists_error_text"] = path_exists_error_text
     variables["progress_notifications"] = info.get("progress_notifications", False)
     variables["pre_or_post"] = user_script_type or "__PRE_OR_POST__"
