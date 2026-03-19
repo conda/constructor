@@ -71,6 +71,19 @@ if not exist "%BASE_PATH%" (
   {{ error_block('"%BASE_PATH%" not found!', 12) }}
 )
 
+{%- if virtual_specs %}
+rem Check virtual specs compatibility before proceeding with installation.
+rem We need to specify CONDA_SOLVER=classic to work around this bug:
+rem https://github.com/conda/conda-libmamba-solver/issues/480
+set "CONDA_SOLVER=classic"
+{{ tee("Checking virtual specs compatibility: " ~ virtual_specs_debug) }}
+"%CONDA_EXE%" create --dry-run --prefix "%BASE_PATH%\envs\_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }} --log-file "%LOG%"
+if errorlevel 1 (
+    {{ error_block("Failed to check virtual specs: " ~ virtual_specs_debug, 13) }}
+)
+set "CONDA_SOLVER="
+{%- endif %}
+
 rem TODO: loop over extra_envs when extra_envs support is implemented for MSI.
 
 rem Create .nonadmin marker file for user-scoped installs inside BASE_PATH.

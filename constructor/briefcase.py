@@ -22,7 +22,12 @@ else:
 
 from . import preconda
 from .jinja import render_template
-from .utils import DEFAULT_REVERSE_DOMAIN_ID, copy_conda_exe, filename_dist, shortcuts_flags
+from .utils import (
+    DEFAULT_REVERSE_DOMAIN_ID,
+    copy_conda_exe,
+    filename_dist,
+    shortcuts_flags,
+)
 
 BRIEFCASE_DIR = Path(__file__).parent / "briefcase"
 EXTERNAL_PACKAGE_PATH = "external"
@@ -391,6 +396,11 @@ class Payload:
             # Placeholder for extra_envs support. Currently only contains base env.
             # Will be expanded when extra_envs is implemented for MSI installers.
             "setup_envs": [{"name": "base", "prefix": "%BASE_PATH%"}],
+            # --- virtual_specs ---
+            # virtual_specs: quoted for command-line use
+            # virtual_specs_debug: unquoted for display
+            "virtual_specs": " ".join([f'"{spec}"' for spec in self.info.get("virtual_specs", ())]),
+            "virtual_specs_debug": " ".join(self.info.get("virtual_specs", ())),
         }
 
         # Render the templates now using jinja and the defined context

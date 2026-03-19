@@ -1648,9 +1648,10 @@ Section "Install"
 {%- endif %}
 {%- endfor %}
 
-{%- for condarc in WRITE_CONDARC %}
-    {{ condarc }}
-{%- endfor %}
+{%- if condarc_file %}
+    SetOutPath "$INSTDIR"
+    File {{ condarc_file }}
+{%- endif %}
 
     AddSize {{ SIZE }}
 
