@@ -53,6 +53,15 @@ set "{{ key }}={{ val }}"
 {%- endfor %}
 {%- endif %}
 
+rem Installer metadata for pre/post install scripts
+set "INSTALLER_NAME={{ installer_name }}"
+set "INSTALLER_VER={{ installer_version }}"
+set "INSTALLER_PLAT={{ installer_platform }}"
+set "INSTALLER_TYPE=MSI"
+rem INSTALLER_UNATTENDED is not available for MSI installers.
+rem Detecting silent mode requires UILevel from WiX, which would need
+rem changes to the briefcase-windows-app-template to pass to this script.
+
 {%- if add_debug %}
 >> "%LOG%" echo ==== run_installation start ====
 >> "%LOG%" echo SCRIPT=%~f0
@@ -117,6 +126,19 @@ if "%ALLUSERS%"=="0" (
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 
+{%- if has_pre_install %}
+rem Run user-supplied pre-install script
+{%- if has_pre_install_desc %}
+if "%OPTION_PRE_INSTALL_SCRIPT%"=="1" (
+{%- endif %}
+    {{ tee("Running pre-install script...") }}
+    call "%BASE_PATH%\pkgs\user_pre_install.bat"
+    if errorlevel 1 ( exit /b %errorlevel% )
+{%- if has_pre_install_desc %}
+)
+{%- endif %}
+{%- endif %}
+
 rem Install packages for each environment
 {%- for env in setup_envs %}
 {{ install_env(env) }}
@@ -172,5 +194,18 @@ if "%OPTION_CLEAR_PACKAGE_CACHE%"=="1" (
     "%CONDA_EXE%" clean --all --force-pkgs-dirs --yes {{ no_rcs_arg }} --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
+
+{%- if has_post_install %}
+rem Run user-supplied post-install script
+{%- if has_post_install_desc %}
+if "%OPTION_POST_INSTALL_SCRIPT%"=="1" (
+{%- endif %}
+    {{ tee("Running post-install script...") }}
+    call "%BASE_PATH%\pkgs\user_post_install.bat"
+    if errorlevel 1 ( exit /b %errorlevel% )
+{%- if has_post_install_desc %}
+)
+{%- endif %}
+{%- endif %}
 
 exit /b 0

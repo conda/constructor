@@ -849,3 +849,140 @@ def test_render_templates_with_extra_envs():
     assert "Setting up base environment" in text
     assert "Setting up py311 environment" in text
     assert r"%BASE_PATH%\envs\py311" in text
+
+
+@pytest.mark.parametrize("template_name", ["run_installation.bat", "pre_uninstall.bat"])
+def test_render_templates_installer_metadata(template_name):
+    """Test that installer metadata env vars are rendered in both templates."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    template = next(f for f in rendered_templates if f.name == template_name)
+    text = template.read_text(encoding="utf-8")
+
+    assert 'set "INSTALLER_NAME=MockInfo"' in text
+    assert 'set "INSTALLER_VER=1.0.0"' in text
+    assert f'set "INSTALLER_PLAT={cc_platform}"' in text
+    assert 'set "INSTALLER_TYPE=MSI"' in text
+    assert "INSTALLER_UNATTENDED is not available" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+@pytest.mark.parametrize(
+    "script_type,has_desc",
+    [
+        ("pre_install", False),
+        ("pre_install", True),
+        ("post_install", False),
+        ("post_install", True),
+    ],
+)
+def test_render_templates_user_install_scripts(tmp_path, script_type, has_desc):
+    """Test that user install scripts are rendered correctly.
+
+    - Mandatory scripts (no desc) are always called
+    - Optional scripts (with desc) are gated by OPTION flag
+    """
+    script = tmp_path / f"{script_type}.bat"
+    script.write_text(f"@echo {script_type}")
+
+    info = mock_info.copy()
+    info[script_type] = str(script)
+    if has_desc:
+        info[f"{script_type}_desc"] = "Custom script description"
+
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    # Script call should always be present
+    label = script_type.replace("_", "-")  # pre_install -> pre-install
+    assert f"Running {label} script" in text
+    assert f"user_{script_type}.bat" in text
+
+    # OPTION check only present for optional scripts
+    option_var = f"OPTION_{script_type.upper()}_SCRIPT"
+    if has_desc:
+        assert option_var in text
+    else:
+        assert option_var not in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+def test_render_templates_with_pre_uninstall(tmp_path):
+    """Test that pre_uninstall script call is rendered."""
+    script = tmp_path / "pre_uninstall.bat"
+    script.write_text("@echo pre_uninstall")
+
+    info = mock_info.copy()
+    info["pre_uninstall"] = str(script)
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert "Running pre-uninstall script" in text
+    assert "user_pre_uninstall.bat" in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+def test_render_templates_without_user_scripts():
+    """Test that no user script blocks are rendered when scripts are not provided."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+
+    assert "user_pre_install.bat" not in run_installation.read_text(encoding="utf-8")
+    assert "user_post_install.bat" not in run_installation.read_text(encoding="utf-8")
+    assert "user_pre_uninstall.bat" not in pre_uninstall.read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+@pytest.mark.parametrize(
+    "script_key,dest_name",
+    [
+        ("pre_install", "user_pre_install.bat"),
+        ("post_install", "user_post_install.bat"),
+        ("pre_uninstall", "user_pre_uninstall.bat"),
+    ],
+)
+def test_stage_user_scripts(tmp_path, script_key, dest_name):
+    """Test that user scripts are staged to the correct location."""
+    script = tmp_path / f"{script_key}.bat"
+    script.write_text(f"@echo {script_key}")
+
+    info = mock_info.copy()
+    info[script_key] = str(script)
+    payload = Payload(info)
+
+    pkgs_dir = tmp_path / "pkgs"
+    pkgs_dir.mkdir()
+    payload._stage_user_scripts(pkgs_dir)
+
+    staged_script = pkgs_dir / dest_name
+    assert staged_script.is_file()
+    assert staged_script.read_text() == f"@echo {script_key}"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+def test_stage_user_scripts_validates_bat_extension(tmp_path):
+    """Test that non-.bat files are rejected."""
+    script = tmp_path / "pre_install.sh"
+    script.write_text("foo")
+
+    info = mock_info.copy()
+    info["pre_install"] = str(script)
+    payload = Payload(info)
+
+    pkgs_dir = tmp_path / "pkgs"
+    pkgs_dir.mkdir()
+
+    with pytest.raises(ValueError, match="must be an existing '.bat' file"):
+        payload._stage_user_scripts(pkgs_dir)

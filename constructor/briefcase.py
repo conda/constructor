@@ -387,6 +387,7 @@ class Payload:
         preconda.write_files(self.info, base_dir)
         preconda.copy_extra_files(self.info.get("extra_files", []), external_dir)
         self._stage_dists(pkgs_dir)
+        self._stage_user_scripts(pkgs_dir)
         self._stage_conda(external_dir)
 
         archive_path = self.make_archive(base_dir, external_dir)
@@ -463,6 +464,19 @@ class Payload:
             # --- script_env_variables ---
             # User-defined environment variables for pre/post install scripts
             "script_env_variables": _get_script_env_variables(self.info),
+            # --- user scripts ---
+            # Flags indicating whether user-supplied scripts are present
+            "has_pre_install": bool(self.info.get("pre_install")),
+            "has_post_install": bool(self.info.get("post_install")),
+            "has_pre_uninstall": bool(self.info.get("pre_uninstall")),
+            # Flags indicating whether scripts are optional (have a description)
+            "has_pre_install_desc": bool(self.info.get("pre_install_desc")),
+            "has_post_install_desc": bool(self.info.get("post_install_desc")),
+            # --- installer metadata ---
+            # Used by user scripts to identify the installer
+            "installer_name": self.info.get("name", ""),
+            "installer_version": self.info.get("version", ""),
+            "installer_platform": self.info.get("_platform", ""),
         }
 
         # Render the templates now using jinja and the defined context
@@ -515,6 +529,22 @@ class Payload:
             dists.update(env_info.get("_dists", []))
         for dist in sorted(dists):
             shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
+
+    def _stage_user_scripts(self, pkgs_dir: Path) -> None:
+        """Copy user-supplied pre/post install scripts to the pkgs directory."""
+        script_mappings = [
+            ("pre_install", "user_pre_install.bat"),
+            ("post_install", "user_post_install.bat"),
+            ("pre_uninstall", "user_pre_uninstall.bat"),
+        ]
+        for key, dest_name in script_mappings:
+            if script_path := self.info.get(key):
+                script_path = Path(script_path)
+                if not is_bat_file(script_path):
+                    raise ValueError(
+                        f"Specified {key} script '{script_path}' must be an existing '.bat' file."
+                    )
+                shutil.copy(script_path, pkgs_dir / dest_name)
 
     def _stage_conda(self, external_dir: Path) -> None:
         copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"])

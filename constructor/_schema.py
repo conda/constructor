@@ -558,6 +558,9 @@ class ConstructorConfiguration(BaseModel):
       the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
       `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
       `%INSTALLER_UNATTENDED%` will be `"1"` in silent mode (`/S`), `"0"` otherwise.
+    - For Windows `.msi` installers, the script must be a `.bat` file.
+      The same variables as `.exe` installers are available, except
+      `%INSTALLER_TYPE%` is set to `MSI` and `%INSTALLER_UNATTENDED%` is not available.
 
     If necessary, you can activate the installed `base` environment like this:
 
@@ -576,11 +579,11 @@ class ConstructorConfiguration(BaseModel):
     """
     pre_uninstall: NonEmptyStr | None = None
     """
-    Path to a pre uninstall script. This is only supported on Windows,
+    Path to a pre uninstall script. This is only supported on Windows (EXE and MSI),
     and must be a `.bat` file. Installation path is available as `%PREFIX%`.
     Metadata about the installer can be found in the `%INSTALLER_NAME%`,
     `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
-    `%INSTALLER_TYPE%` is set to `EXE`.
+    `%INSTALLER_TYPE%` is set to `EXE` or `MSI`.
     """
     default_prefix: NonEmptyStr | None = None
     """
