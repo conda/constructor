@@ -404,14 +404,12 @@ def bat_env_var_esc(s: str) -> str:
     Single quotes are allowed (they're literal in batch).
     Double quotes are NOT supported - validate before calling this function.
     """
-    # Order matters: ^ must be first since it's the escape character
+    # ^ and % need special handling: ^ must be first (it's the escape char),
+    # and % uses %% not ^%
     s = s.replace("^", "^^")
     s = s.replace("%", "%%")
-    s = s.replace("!", "^!")
-    s = s.replace("&", "^&")
-    s = s.replace("<", "^<")
-    s = s.replace(">", "^>")
-    s = s.replace("|", "^|")
+    for c in ("!", "&", "<", ">", "|"):
+        s = s.replace(c, f"^{c}")
     return s
 
 
