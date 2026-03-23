@@ -125,14 +125,16 @@ chown -R "${USER}" "$PREFIX"
 CONDA_DIR="${HOME}/.conda"
 if [[ -d "${CONDA_DIR}" ]]; then
     if ! chown -R "${USER}" "${CONDA_DIR}"; then
-        MSG="WARNING: Unable to change ownership of ${CONDA_DIR}."
+        OWNER=$(stat -f "%u" "${CONDA_DIR}" | id -un)
+        MSG="WARNING: Unable to change ownership of ${CONDA_DIR} (owned by ${OWNER})."
         logger -p "install.warning" "${MSG}" || echo "${MSG}"
     fi
 fi
 CONDARC="${HOME}/.condarc"
 if [[ -f "${CONDARC}" ]]; then
     if ! chown "${USER}" "${CONDARC}"; then
-        MSG="WARNING: Unable to change ownership of ${CONDARC}."
+        OWNER=$(stat -f "%u" "${CONDARC}" | id -un)
+        MSG="WARNING: Unable to change ownership of ${CONDARC} (owned by ${OWNER})."
         logger -p "install.warning" "${MSG}" || echo "${MSG}"
     fi
 fi
