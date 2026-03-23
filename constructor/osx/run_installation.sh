@@ -122,8 +122,22 @@ find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 # This is not needed for the default install to ~, but if the user changes the
 # install location, the permissions will default to root unless this is done.
 chown -R "${USER}" "$PREFIX"
-test -d "${HOME}/.conda" && chown -R "${USER}" "${HOME}/.conda"
-test -f "${HOME}/.condarc" && chown "${USER}" "${HOME}/.condarc"
+CONDA_DIR="${HOME}/.conda"
+if [[ -d "${CONDA_DIR}" ]]; then
+    if ! chown -R "${USER}" "${CONDA_DIR}"; then
+        OWNER=$(stat -f "%u" "${CONDA_DIR}" | id -un)
+        MSG="WARNING: Unable to change ownership of ${CONDA_DIR} (owned by ${OWNER})."
+        logger -p "install.warning" "${MSG}" || echo "${MSG}"
+    fi
+fi
+CONDARC="${HOME}/.condarc"
+if [[ -f "${CONDARC}" ]]; then
+    if ! chown "${USER}" "${CONDARC}"; then
+        OWNER=$(stat -f "%u" "${CONDARC}" | id -un)
+        MSG="WARNING: Unable to change ownership of ${CONDARC} (owned by ${OWNER})."
+        logger -p "install.warning" "${MSG}" || echo "${MSG}"
+    fi
+fi
 
 notify "Done! Installation is available in $PREFIX."
 
