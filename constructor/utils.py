@@ -413,6 +413,19 @@ def bat_env_var_esc(s: str) -> str:
     return s
 
 
+def bat_echo_esc(s: str) -> str:
+    """Escape a string for use in a Windows batch file ECHO command.
+
+    Escapes special shell characters that would otherwise be interpreted
+    as redirections or command separators.
+    """
+    # ^ must be escaped first since it's the escape character
+    s = s.replace("^", "^^")
+    for c in ("&", "<", ">", "|"):
+        s = s.replace(c, f"^{c}")
+    return s
+
+
 def check_required_env_vars(env_vars):
     missing_vars = {var for var in env_vars if var not in environ}
     if missing_vars:

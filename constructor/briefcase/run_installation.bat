@@ -29,7 +29,6 @@ set CONDA_PROTECT_FROZEN_ENVS=0
 set CONDA_REGISTER_ENVS={{ register_envs }}
 set CONDA_SAFETY_CHECKS=disabled
 set "CONDA_ROOT_PREFIX=%BASE_PATH%"
-set "CONDA_PKGS_DIRS=%BASE_PATH%\pkgs"
 
 rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
@@ -71,25 +70,33 @@ if not exist "%PAYLOAD_TAR%" (
 "%CONDA_EXE%" constructor extract --prefix "%INSTDIR%" --tar-from-stdin --log-file "%LOG%" < "%PAYLOAD_TAR%"
 if errorlevel 1 ( exit /b %errorlevel% )
 
-"%CONDA_EXE%" constructor extract --prefix "%BASE_PATH%" --conda-pkgs --log-file "%LOG%"
-if errorlevel 1 ( exit /b %errorlevel% )
-
 if not exist "%BASE_PATH%" (
   {{ error_block('"%BASE_PATH%" not found!', 12) }}
 )
 
 {%- if virtual_specs %}
-rem Check virtual specs compatibility before proceeding with installation.
+rem Check virtual specs compatibility before extracting conda packages.
+rem This matches the order used by NSIS installers.
 rem We need to specify CONDA_SOLVER=classic to work around this bug:
 rem https://github.com/conda/conda-libmamba-solver/issues/480
+rem Use a temp pkgs dir to avoid incomplete cache files in base\pkgs (like shell installer does).
 set "CONDA_SOLVER=classic"
-{{ tee("Checking virtual specs compatibility: " ~ virtual_specs_debug) }}
+set "CONDA_PKGS_DIRS=%TEMP%\constructor_vspecs"
+echo Checking virtual specs compatibility: {{ virtual_specs_debug_bat }}
+>> "%LOG%" echo Checking virtual specs compatibility: {{ virtual_specs_debug_bat }}
 "%CONDA_EXE%" create --dry-run --prefix "%BASE_PATH%\envs\_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }} --log-file "%LOG%"
 if errorlevel 1 (
-    {{ error_block("Failed to check virtual specs: " ~ virtual_specs_debug, 13) }}
+    echo [ERROR] Failed to check virtual specs: {{ virtual_specs_debug_bat }}
+    >> "%LOG%" echo [ERROR] Failed to check virtual specs: {{ virtual_specs_debug_bat }}
+    exit /b 13
 )
 set "CONDA_SOLVER="
 {%- endif %}
+
+set "CONDA_PKGS_DIRS=%BASE_PATH%\pkgs"
+
+"%CONDA_EXE%" constructor extract --prefix "%BASE_PATH%" --conda-pkgs --log-file "%LOG%"
+if errorlevel 1 ( exit /b %errorlevel% )
 
 rem TODO: loop over extra_envs when extra_envs support is implemented for MSI.
 

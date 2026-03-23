@@ -24,6 +24,7 @@ from . import preconda
 from .jinja import render_template
 from .utils import (
     DEFAULT_REVERSE_DOMAIN_ID,
+    bat_echo_esc,
     bat_env_var_esc,
     copy_conda_exe,
     filename_dist,
@@ -421,8 +422,10 @@ class Payload:
             # --- virtual_specs ---
             # virtual_specs: quoted for command-line use
             # virtual_specs_debug: unquoted for display
+            # virtual_specs_debug_bat: escaped for batch echo commands
             "virtual_specs": " ".join([f'"{spec}"' for spec in self.info.get("virtual_specs", ())]),
             "virtual_specs_debug": " ".join(self.info.get("virtual_specs", ())),
+            "virtual_specs_debug_bat": bat_echo_esc(" ".join(self.info.get("virtual_specs", ()))),
             # --- script_env_variables ---
             # User-defined environment variables for pre/post install scripts
             "script_env_variables": _get_script_env_variables(self.info),

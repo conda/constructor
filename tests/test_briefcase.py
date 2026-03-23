@@ -633,7 +633,6 @@ def test_render_templates_with_virtual_specs():
     text = run_installation.read_text(encoding="utf-8")
 
     assert "Checking virtual specs compatibility" in text
-    assert "__win>=10 __cuda>=11" in text
     assert '"__win>=10" "__cuda>=11"' in text
     assert "CONDA_SOLVER=classic" in text
     assert "--dry-run" in text
