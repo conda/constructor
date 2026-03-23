@@ -173,7 +173,7 @@ Function mui_AnaCustomOptions_Show
             ${Else}
                 ${NSD_CreateLabel} 5% "$5u" 90% 20u \
                     "NOT recommended. This can lead to conflicts with other applications. \
-                    Instead, use the Commmand Prompt and Powershell menus added \
+                    Instead, use the Command Prompt and PowerShell menus added \
                     to the Windows Start Menu."
             ${EndIf}
             IntOp $5 $5 + 20
