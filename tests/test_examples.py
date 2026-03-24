@@ -1248,7 +1248,15 @@ def test_virtual_specs_failed(tmp_path, request):
                 _check_installer_log(install_dir)
             continue
         elif installer.suffix == ".msi":
-            raise NotImplementedError("Test for 'virtual_specs' not yet implemented for MSI")
+            # MSI writes errors to install.log in the install directory
+            msi_post_install_log = install_dir / "install.log"
+            if msi_post_install_log.exists():
+                log_content = msi_post_install_log.read_text(encoding="utf-8", errors="replace")
+                assert "Failed to check virtual specs" in log_content
+            else:
+                # If log doesn't exist, installation failed before post-install script ran
+                assert process.returncode != 0
+            continue
         elif installer.suffix == ".pkg":
             if not ON_CI:
                 continue
