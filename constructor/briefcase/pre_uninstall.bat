@@ -30,6 +30,13 @@ rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
 set "LOG=%INSTDIR%\uninstall.log"
 
+{%- if script_env_variables %}
+rem User-defined environment variables for pre/post install scripts
+{%- for key, val in script_env_variables.items() %}
+set "{{ key }}={{ val }}"
+{%- endfor %}
+{%- endif %}
+
 rem Determine install mode from .nonadmin marker file written at install time
 if exist "%BASE_PATH%\.nonadmin" (
     set "REG_HIVE=HKCU"
