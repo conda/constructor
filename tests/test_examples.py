@@ -1006,6 +1006,13 @@ def test_example_shortcuts(tmp_path, request):
                     assert (anaconda / "Anaconda Prompt (another_env).lnk").is_file()
                     break
             else:
+                # Debug: list what's actually in the Start Menu
+                for key in ("ProgramData", "AppData"):
+                    start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
+                    if start_menu.exists():
+                        print(f"{key} Start Menu contents: {list(start_menu.iterdir())}")
+                    else:
+                        print(f"{key} Start Menu path does not exist: {start_menu}")
                 raise AssertionError("No shortcuts found!")
             if installer.suffix == ".msi":
                 _run_uninstaller_msi(installer, install_dir)

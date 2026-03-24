@@ -152,14 +152,26 @@ if "%REG_HIVE%"=="HKCU" (
     set "CONDA_INIT_SCOPE=system"
 )
 {{ tee("Reversing conda shell initialization...") }}
+{{ tee("DEBUG: Running conda init --reverse with scope=!CONDA_INIT_SCOPE!") }}
+{{ tee("DEBUG: Command: \"%BASE_PATH%\\condabin\\conda.bat\" init cmd.exe --reverse --!CONDA_INIT_SCOPE!") }}
 "%BASE_PATH%\condabin\conda.bat" init cmd.exe --reverse --!CONDA_INIT_SCOPE! --log-file "%LOG%"
-if errorlevel 1 ( exit /b %errorlevel% )
+set "CONDA_INIT_ERRORLEVEL=%errorlevel%"
+{{ tee("DEBUG: conda init --reverse returned errorlevel=!CONDA_INIT_ERRORLEVEL!") }}
+if !CONDA_INIT_ERRORLEVEL! neq 0 (
+    {{ tee("DEBUG: conda init failed but continuing with uninstall...") }}
+)
 {%- endif %}
 
 rem Remove conda environments. INSTDIR itself is cleaned up by the MSI engine.
 {{ tee("Removing environments...") }}
+{{ tee("DEBUG: Running rmdir /s /q \"%BASE_PATH%\"") }}
 rmdir /s /q "%BASE_PATH%"
-if errorlevel 1 ( exit /b %errorlevel% )
+set "RMDIR_ERRORLEVEL=%errorlevel%"
+{{ tee("DEBUG: rmdir returned errorlevel=!RMDIR_ERRORLEVEL!") }}
+if !RMDIR_ERRORLEVEL! neq 0 (
+    {{ tee("DEBUG: rmdir failed with errorlevel=!RMDIR_ERRORLEVEL!") }}
+    exit /b !RMDIR_ERRORLEVEL!
+)
 {%- endif %}
 
 rem If we reached this far without any errors, remove any log files.
