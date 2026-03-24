@@ -27,7 +27,6 @@ mock_info = {
     "_dists": [],
     "_platform": cc_platform,
     "_urls": [],
-    "uninstall_with_conda_exe": False,
 }
 
 
@@ -436,7 +435,6 @@ def test_render_templates_uninstall_option_variable_names():
     """Verify that the uninstall option variable names in the rendered template match
     exactly what run_pre_uninstall.bat sets via positional arguments."""
     info = mock_info.copy()
-    info["uninstall_with_conda_exe"] = True
     payload = Payload(info)
     rendered_templates = payload.render_templates()
 
@@ -603,24 +601,14 @@ def test_pre_uninstall_conda_root_prefix():
     assert "CONDA_ROOT_PREFIX=%BASE_PATH%" in text
 
 
-def test_create_uninstall_options_list_with_conda_exe():
-    """Test that create_uninstall_options_list returns all expected options
-    when uninstall_with_conda_exe is True."""
-    info = {"uninstall_with_conda_exe": True}
-    options = create_uninstall_options_list(info)
+def test_create_uninstall_options_list():
+    """Test that create_uninstall_options_list returns all expected options."""
+    options = create_uninstall_options_list({})
 
     option_names = [opt["name"] for opt in options]
     assert "remove_user_data" in option_names
     assert "remove_caches" in option_names
     assert "remove_config_files" in option_names
-
-
-def test_create_uninstall_options_list_without_conda_exe():
-    """Test that create_uninstall_options_list returns empty list
-    when uninstall_with_conda_exe is False."""
-    info = {"uninstall_with_conda_exe": False}
-    options = create_uninstall_options_list(info)
-    assert options == []
 
 
 def test_render_templates_with_virtual_specs():

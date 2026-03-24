@@ -195,10 +195,7 @@ def _setup_envs_commands(info: dict) -> list[dict]:
 
 
 def create_uninstall_options_list(info: dict) -> list[dict]:
-    """Returns a list of dicts with data formatted for the uninstallation options page.
-    Options are currently only shown when uninstall_with_conda_exe is True."""
-    if not bool(info.get("uninstall_with_conda_exe")):
-        return []
+    """Returns a list of dicts with data formatted for the uninstallation options page."""
     return [
         {
             "name": "remove_user_data",
@@ -454,10 +451,6 @@ class Payload:
             # In the .bat template this is used in the "shortcuts enabled" branch,
             # so passing an empty string here is correct when all shortcuts are wanted.
             "shortcuts": shortcuts_flags(self.info),
-            # --- uninstall_with_conda_exe ---
-            "uninstall_with_conda_exe": bool(self.info.get("uninstall_with_conda_exe")),
-            # --- has_conda ---
-            "has_conda": self.info.get("_has_conda", False),
             # --- setup_envs ---
             "setup_envs": _setup_envs_commands(self.info),
             # --- virtual_specs ---
@@ -534,6 +527,11 @@ def create(info, verbose=False):
 
     if not info.get("_conda_exe_supports_logging"):
         raise Exception("MSI installers require conda-standalone with logging support.")
+
+    # MSI installers always use conda-standalone for uninstallation.
+    # This ensures proper cleanup of conda init, environments, and shortcuts
+    # via the `conda constructor uninstall` command.
+    info["uninstall_with_conda_exe"] = True
 
     payload = Payload(info)
     payload.prepare()
