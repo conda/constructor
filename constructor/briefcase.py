@@ -194,7 +194,6 @@ def _setup_envs_commands(info: dict) -> list[dict]:
     return environments
 
 
-
 def create_uninstall_options_list(info: dict) -> list[dict]:
     """Returns a list of dicts with data formatted for the uninstallation options page.
     Options are currently only shown when uninstall_with_conda_exe is True."""
