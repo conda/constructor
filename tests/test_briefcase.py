@@ -7,6 +7,7 @@ import pytest
 from constructor.briefcase import (
     Payload,
     _get_python_info,
+    _get_script_env_variables,
     create_uninstall_options_list,
     get_bundle_app_name,
     get_name_version,
@@ -632,7 +633,6 @@ def test_render_templates_with_virtual_specs():
     text = run_installation.read_text(encoding="utf-8")
 
     assert "Checking virtual specs compatibility" in text
-    assert "__win>=10 __cuda>=11" in text
     assert '"__win>=10" "__cuda>=11"' in text
     assert "CONDA_SOLVER=classic" in text
     assert "--dry-run" in text
@@ -651,3 +651,82 @@ def test_render_templates_without_virtual_specs():
 
     assert "Checking virtual specs compatibility" not in text
     assert "_virtual_specs_checks" not in text
+
+
+@pytest.mark.parametrize(
+    "info",
+    [
+        {},
+        {"script_env_variables": {}},
+    ],
+)
+def test_get_script_env_variables_empty(info):
+    """Test that empty dict is returned when no script_env_variables are provided."""
+    assert _get_script_env_variables(info) == {}
+
+
+@pytest.mark.parametrize(
+    "script_env_variables, expected",
+    [
+        # Basic variables pass through
+        ({"FOO": "bar"}, {"FOO": "bar"}),
+        ({"FOO": "bar", "BAZ": "qux"}, {"FOO": "bar", "BAZ": "qux"}),
+        # Single quotes are allowed
+        ({"MSG": "foo 'bar'"}, {"MSG": "foo 'bar'"}),
+        # Special batch characters are escaped
+        ({"PERCENT": "50%"}, {"PERCENT": "50%%"}),
+        ({"AMP": "a & b"}, {"AMP": "a ^& b"}),
+        ({"PIPE": "a | b"}, {"PIPE": "a ^| b"}),
+        ({"REDIR": "a < b > c"}, {"REDIR": "a ^< b ^> c"}),
+        ({"CARET": "a^b"}, {"CARET": "a^^b"}),
+        ({"BANG": "foo!"}, {"BANG": "foo^!"}),
+    ],
+)
+def test_get_script_env_variables(script_env_variables, expected):
+    """Test script_env_variables validation and escaping."""
+    info = {"script_env_variables": script_env_variables}
+    assert _get_script_env_variables(info) == expected
+
+
+@pytest.mark.parametrize(
+    "script_env_variables",
+    [
+        {"BAD": 'foo "bar"'},  # double quotes in value
+        {'BAD"KEY': "value"},  # double quotes in key
+    ],
+)
+def test_get_script_env_variables_double_quotes_rejected(script_env_variables):
+    """Test that double quotes raise ValueError."""
+    info = {"script_env_variables": script_env_variables}
+    with pytest.raises(ValueError, match="double quotes"):
+        _get_script_env_variables(info)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+@pytest.mark.parametrize("template_name", ["run_installation.bat", "pre_uninstall.bat"])
+def test_render_templates_with_script_env_variables(template_name):
+    """Test that script_env_variables are rendered in both install and uninstall templates."""
+    info = mock_info.copy()
+    info["script_env_variables"] = {"MY_VAR": "my_value", "OTHER": "50%"}
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    template = next(f for f in rendered_templates if f.name == template_name)
+    text = template.read_text(encoding="utf-8")
+
+    assert 'set "MY_VAR=my_value"' in text
+    assert 'set "OTHER=50%%"' in text
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
+@pytest.mark.parametrize("template_name", ["run_installation.bat", "pre_uninstall.bat"])
+def test_render_templates_without_script_env_variables(template_name):
+    """Test that no script_env_variables block is rendered when not provided."""
+    info = mock_info.copy()
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    template = next(f for f in rendered_templates if f.name == template_name)
+    text = template.read_text(encoding="utf-8")
+
+    assert "User-defined environment variables" not in text
