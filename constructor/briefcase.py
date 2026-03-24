@@ -286,7 +286,7 @@ def create_install_options_list(info: dict) -> list[dict]:
                 "name": "enable_shortcuts",
                 "title": "Create shortcuts",
                 "description": "Create shortcuts (supported packages only).",
-                "default": False,
+                "default": True,
             }
         )
 
