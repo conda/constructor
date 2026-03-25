@@ -380,6 +380,20 @@ def _read_briefcase_log_tail(path: Path, last_digits: int) -> str:
     return text[last_digits:]
 
 
+def _read_install_log(path: Path) -> str:
+    """Read install.log with proper encoding handling.
+    Windows batch file >> redirection creates UTF-16 files.
+    """
+    if not path or not path.exists():
+        return f"(log not found: {path})"
+
+    # Try UTF-16 first (Windows batch >> redirection), fallback to UTF-8
+    try:
+        return path.read_text(encoding="utf-16", errors="replace")
+    except UnicodeError:
+        return path.read_text(encoding="utf-8", errors="replace")
+
+
 @dataclass
 class InstallationFailure(RuntimeError):
     cmd: list[str]
@@ -1007,13 +1021,18 @@ def test_example_shortcuts(tmp_path, request):
                     break
             else:
                 # Debug: list what's actually in the Start Menu
+                print(f"\n=== Shortcut check failed for {installer.name} ===")
                 for key in ("ProgramData", "AppData"):
                     start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
                     if start_menu.exists():
                         print(f"{key} Start Menu contents: {list(start_menu.iterdir())}")
                     else:
                         print(f"{key} Start Menu path does not exist: {start_menu}")
-                raise AssertionError("No shortcuts found!")
+                # Print install.log if available
+                install_log = install_dir / "install.log"
+                print(f"\n=== install.log from {install_dir} ===")
+                print(_read_install_log(install_log))
+                raise AssertionError(f"No shortcuts found for {installer.name}!")
             if installer.suffix == ".msi":
                 _run_uninstaller_msi(installer, install_dir)
             else:
