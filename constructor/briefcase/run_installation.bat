@@ -27,17 +27,16 @@ if "%OPTION_ENABLE_SHORTCUTS%"=="1" (
 )
 set "INSTALL_ERRORLEVEL=%errorlevel%"
 if %INSTALL_ERRORLEVEL% neq 0 ( exit /b %INSTALL_ERRORLEVEL% )
-rem Debug: Check Menu JSON files for $schema to determine new-style vs legacy
-if exist "{{ env.prefix }}\Menu\*.json" (
-    for %%F in ("{{ env.prefix }}\Menu\*.json") do (
-        findstr /C:"$schema" "%%F" >nul 2>&1
-        if errorlevel 1 (
-            echo DEBUG: %%~nxF uses LEGACY menuinst (no $schema) - checks .nonadmin
-            >> "%LOG%" echo DEBUG: %%~nxF uses LEGACY menuinst (no $schema) - checks .nonadmin
-        ) else (
-            echo DEBUG: %%~nxF uses NEW menuinst (has $schema) - elevate_as_needed decorator
-            >> "%LOG%" echo DEBUG: %%~nxF uses NEW menuinst (has $schema) - elevate_as_needed decorator
-        )
+rem Debug: List Menu JSON files and check for $schema
+for %%F in ("{{ env.prefix }}\Menu\*.json") do if exist "%%F" (
+    echo DEBUG: Found %%~nxF in {{ env.name }}
+    >> "%LOG%" echo DEBUG: Found %%~nxF in {{ env.name }}
+    findstr /C:"$schema" "%%F" >nul 2>&1 && (
+        echo DEBUG:   %%~nxF has $schema - NEW style menuinst
+        >> "%LOG%" echo DEBUG:   %%~nxF has $schema - NEW style menuinst
+    ) || (
+        echo DEBUG:   %%~nxF no $schema - LEGACY style menuinst
+        >> "%LOG%" echo DEBUG:   %%~nxF no $schema - LEGACY style menuinst
     )
 )
 {% endmacro %}
