@@ -1006,6 +1006,11 @@ def test_example_shortcuts(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         # check that the shortcuts are created
         if sys.platform == "win32":
+            # Skip shortcut verification for MSI installers due to menuinst bug
+            # https://github.com/conda/menuinst/issues/453
+            if installer.suffix == ".msi":
+                print(f"Skipping shortcut verification for {installer.name} (menuinst#453)")
+                continue
             for key in ("ProgramData", "AppData"):
                 start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
                 package_1 = start_menu / "Package 1"
