@@ -188,13 +188,6 @@ if "%OPTION_REGISTER_PYTHON%"=="1" (
 )
 {%- endif %}
 
-rem Clear the package cache if the option was selected
-if "%OPTION_CLEAR_PACKAGE_CACHE%"=="1" (
-    {{ tee("Clearing package cache...") }}
-    "%CONDA_EXE%" clean --all --force-pkgs-dirs --yes {{ no_rcs_arg }} --log-file "%LOG%"
-    if errorlevel 1 ( exit /b %errorlevel% )
-)
-
 {%- if has_post_install %}
 rem Run user-supplied post-install script
 {%- if has_post_install_desc %}
@@ -207,5 +200,12 @@ if "%OPTION_POST_INSTALL_SCRIPT%"=="1" (
 )
 {%- endif %}
 {%- endif %}
+
+rem Clear the package cache if the option was selected
+if "%OPTION_CLEAR_PACKAGE_CACHE%"=="1" (
+    {{ tee("Clearing package cache...") }}
+    "%CONDA_EXE%" clean --all --force-pkgs-dirs --yes {{ no_rcs_arg }} --log-file "%LOG%"
+    if errorlevel 1 ( exit /b %errorlevel% )
+)
 
 exit /b 0
