@@ -4,7 +4,7 @@
 name: Outputs
 version: 1.0.0
 installer_type: sh  # [unix]
-installer_type: exe  # [win]
+installer_type: [exe, msi]  # [win]
 channels:
   - https://conda.anaconda.org/conda-forge
 specs:
