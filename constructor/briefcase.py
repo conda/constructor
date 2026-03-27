@@ -386,6 +386,9 @@ class Payload:
 
         preconda.write_files(self.info, base_dir)
         preconda.copy_extra_files(self.info.get("extra_files", []), base_dir)
+        # Copy license file to PREFIX, matching behavior of other installer types
+        if license_file := self.info.get("license_file"):
+            preconda.copy_extra_files([license_file], base_dir)
         self._stage_dists(pkgs_dir)
         self._stage_user_scripts(pkgs_dir)
         self._stage_conda(external_dir)
