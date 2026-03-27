@@ -115,7 +115,6 @@ exit /b 0
 :after_remove_python_registry
 {%- endif %}
 
-{%- if uninstall_with_conda_exe %}
 rem Run constructor uninstall, conditionally passing optional flags
 set "UNINST_ARGS="
 if "%OPTION_REMOVE_USER_DATA%"=="1" (
@@ -136,31 +135,6 @@ if "%OPTION_REMOVE_CONFIG_FILES%"=="1" (
 {{ tee("Running constructor uninstall...") }}
 "%CONDA_EXE%" constructor uninstall --prefix "%BASE_PATH%"!UNINST_ARGS! --log-file "%LOG%"
 if errorlevel 1 ( exit /b %errorlevel% )
-{%- else %}
-rem Remove menus for each environment.
-{%- for env in setup_envs %}
-{{ tee("Removing menus for " + env.name + "...") }}
-"%CONDA_EXE%" constructor --prefix "{{ env.prefix }}" --rm-menus --log-file "%LOG%"
-if errorlevel 1 ( exit /b %errorlevel% )
-{%- endfor %}
-
-{%- if has_conda %}
-rem Reverse conda shell initialization
-if "%REG_HIVE%"=="HKCU" (
-    set "CONDA_INIT_SCOPE=user"
-) else (
-    set "CONDA_INIT_SCOPE=system"
-)
-{{ tee("Reversing conda shell initialization...") }}
-"%BASE_PATH%\condabin\conda.bat" init cmd.exe --reverse --!CONDA_INIT_SCOPE! --log-file "%LOG%"
-if errorlevel 1 ( exit /b %errorlevel% )
-{%- endif %}
-
-rem Remove conda environments. INSTDIR itself is cleaned up by the MSI engine.
-{{ tee("Removing environments...") }}
-rmdir /s /q "%BASE_PATH%"
-if errorlevel 1 ( exit /b %errorlevel% )
-{%- endif %}
 
 rem If we reached this far without any errors, remove any log files.
 if exist "%INSTDIR%\install.log" del "%INSTDIR%\install.log"
