@@ -385,7 +385,7 @@ class Payload:
         self.write_pyproject_toml(root, external_dir)
 
         preconda.write_files(self.info, base_dir)
-        preconda.copy_extra_files(self.info.get("extra_files", []), external_dir)
+        preconda.copy_extra_files(self.info.get("extra_files", []), base_dir)
         self._stage_dists(pkgs_dir)
         self._stage_user_scripts(pkgs_dir)
         self._stage_conda(external_dir)
