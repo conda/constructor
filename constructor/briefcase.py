@@ -510,10 +510,10 @@ class Payload:
     def _stage_dists(self, pkgs_dir: Path) -> None:
         download_dir = Path(self.info["_download_dir"])
         # Collect dists from base and extra_envs, de-duplicated
-        dists = self.info["_dists"].copy()
+        dists = set(self.info["_dists"])
         for env_info in self.info.get("_extra_envs_info", {}).values():
-            dists += env_info["_dists"]
-        for dist in sorted(set(dists)):
+            dists.update(env_info.get("_dists", []))
+        for dist in sorted(dists):
             shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
 
     def _stage_conda(self, external_dir: Path) -> None:
