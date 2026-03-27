@@ -48,6 +48,19 @@ def get_installer_type(info: dict):
         return os_allowed[osname][:1]
     elif itype == "all":
         return os_allowed[osname]
+    elif isinstance(itype, (list, tuple)):
+        # Handle list of installer types, e.g. [exe, msi]
+        for t in itype:
+            if t not in all_allowed:
+                all_allowed_str = ", ".join(sorted(all_allowed))
+                sys.exit("Error: invalid installer type '%s'; allowed: %s" % (t, all_allowed_str))
+            if t not in os_allowed[osname]:
+                os_allowed_str = ", ".join(sorted(os_allowed[osname]))
+                sys.exit(
+                    "Error: invalid installer type '%s' for %s; allowed: %s"
+                    % (t, osname, os_allowed_str)
+                )
+        return tuple(itype)
     elif itype not in all_allowed:
         all_allowed = ", ".join(sorted(all_allowed))
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
