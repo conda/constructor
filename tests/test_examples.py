@@ -992,6 +992,10 @@ def test_example_shortcuts(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         # check that the shortcuts are created
         if sys.platform == "win32":
+            # MSI shortcut verification expected to fail due to menuinst bug
+            # https://github.com/conda/menuinst/issues/453
+            if installer.suffix == ".msi":
+                pytest.xfail("MSI shortcut verification fails due to menuinst#453")
             for key in ("ProgramData", "AppData"):
                 start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
                 package_1 = start_menu / "Package 1"
