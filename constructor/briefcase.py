@@ -360,7 +360,7 @@ class Payload:
             # delattr on a cached_property may raise on some versions / edge cases
             pass
 
-    def prepare(self) -> tuple:
+    def prepare(self) -> None:
         """Prepares the payload.
 
         Directory structure created during preparation:
@@ -369,9 +369,10 @@ class Payload:
             └── <EXTERNAL_PACKAGE_PATH>/     (external_dir: contains the payload archive and conda exe)
                 └── base/                    (base_dir: represents the base conda environment)
                     └── pkgs/                (pkgs_dir: staging area for conda package distributions)
+
+        Note: base_dir and pkgs_dir are removed after archiving.
         """
-        root = self.root
-        external_dir = root / EXTERNAL_PACKAGE_PATH
+        external_dir = self.root / EXTERNAL_PACKAGE_PATH
         external_dir.mkdir(parents=True, exist_ok=True)
 
         # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
@@ -380,9 +381,9 @@ class Payload:
 
         pkgs_dir = base_dir / "pkgs"
         pkgs_dir.mkdir()
-        # Render the template files and add them to the necessary config field
+
         self.render_templates()
-        self.write_pyproject_toml(root, external_dir)
+        self.write_pyproject_toml(self.root, external_dir)
 
         preconda.write_files(self.info, base_dir)
         preconda.copy_extra_files(self.info.get("extra_files", []), external_dir)
@@ -392,7 +393,6 @@ class Payload:
         archive_path = self.make_archive(base_dir, external_dir)
         if not archive_path.exists():
             raise RuntimeError(f"Unexpected error, failed to create archive: {archive_path}")
-        return (root, external_dir, base_dir, pkgs_dir)
 
     def make_archive(self, src: Path, dst: Path) -> Path:
         """Create an archive of the directory 'src'.
@@ -522,10 +522,17 @@ class Payload:
 
 def create(info, verbose=False):
     if not IS_WINDOWS:
-        raise Exception(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
+        raise OSError(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
 
     if not info.get("_conda_exe_supports_logging"):
-        raise Exception("MSI installers require conda-standalone with logging support.")
+        raise ValueError("MSI installers require conda-standalone with logging support.")
+
+    # Check briefcase exists before doing any work
+    briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
+    if not briefcase.exists():
+        raise FileNotFoundError(
+            f"Dependency 'briefcase' does not seem to be installed.\nTried: {briefcase}"
+        )
 
     # MSI installers always use conda-standalone for uninstallation.
     # This ensures proper cleanup of conda init, environments, and shortcuts
@@ -533,29 +540,24 @@ def create(info, verbose=False):
     info["uninstall_with_conda_exe"] = True
 
     payload = Payload(info)
-    payload.prepare()
+    try:
+        payload.prepare()
 
-    briefcase = Path(sysconfig.get_path("scripts")) / "briefcase.exe"
-    if not briefcase.exists():
-        raise FileNotFoundError(
-            f"Dependency 'briefcase' does not seem to be installed.\nTried: {briefcase}"
+        logger.info("Building MSI installer")
+        run(
+            [briefcase, "package"] + (["-v"] if verbose else []),
+            cwd=payload.root,
+            check=True,
         )
 
-    logger.info("Building MSI installer")
-    run(
-        [briefcase, "package"] + (["-v"] if verbose else []),
-        cwd=payload.root,
-        check=True,
-    )
+        dist_dir = payload.root / "dist"
+        msi_paths = list(dist_dir.glob("*.msi"))
+        if len(msi_paths) != 1:
+            raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}, expected 1.")
 
-    dist_dir = payload.root / "dist"
-    msi_paths = list(dist_dir.glob("*.msi"))
-    if len(msi_paths) != 1:
-        raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}, expected 1.")
-
-    outpath = Path(info["_outpath"])
-    outpath.unlink(missing_ok=True)
-    shutil.move(msi_paths[0], outpath)
-
-    if not info.get("_debug"):
-        payload.remove()
+        outpath = Path(info["_outpath"])
+        outpath.unlink(missing_ok=True)
+        shutil.move(msi_paths[0], outpath)
+    finally:
+        if not info.get("_debug"):
+            payload.remove()
