@@ -198,15 +198,13 @@ def test_payload_layout():
     """
     info = mock_info.copy()
     payload = Payload(info)
-    prepared_payload = payload.prepare()
+    payload.prepare()
 
-    root = prepared_payload[0]
-    external_dir = root / "external"
-    # The second item in prepared_payload is the 'external' directory
-    assert external_dir.is_dir() and external_dir == prepared_payload[1]
+    external_dir = payload.root / "external"
+    assert external_dir.is_dir()
 
-    base_dir = root / "external" / "base"
-    pkgs_dir = root / "external" / "base" / "pkgs"
+    base_dir = payload.root / "external" / "base"
+    pkgs_dir = payload.root / "external" / "base" / "pkgs"
     archive_path = external_dir / payload.archive_name
     # Since archiving removes the directory 'base_dir' and its contents
     assert not base_dir.exists()
@@ -241,11 +239,12 @@ def test_payload_remove():
     """Test removing the payload."""
     info = mock_info.copy()
     payload = Payload(info)
-    prepared_payload = payload.prepare()
+    payload.prepare()
+    root = payload.root
 
-    assert prepared_payload[0].is_dir()
+    assert root.is_dir()
     payload.remove()
-    assert not prepared_payload[0].is_dir()
+    assert not root.is_dir()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
@@ -253,8 +252,8 @@ def test_payload_pyproject_toml():
     """Test that the pyproject.toml file is created when the payload is prepared."""
     info = mock_info.copy()
     payload = Payload(info)
-    prepared_payload = payload.prepare()
-    pyproject_toml = prepared_payload[0] / "pyproject.toml"
+    payload.prepare()
+    pyproject_toml = payload.root / "pyproject.toml"
     assert pyproject_toml.is_file()
 
 
@@ -263,8 +262,9 @@ def test_payload_conda_exe():
     """Test that conda-standalone is prepared."""
     info = mock_info.copy()
     payload = Payload(info)
-    prepared_payload = payload.prepare()
-    conda_exe = prepared_payload[1] / "_conda.exe"  # The second item is the 'external' directory
+    payload.prepare()
+    external_dir = payload.root / "external"
+    conda_exe = external_dir / "_conda.exe"
     assert conda_exe.is_file()
 
 
