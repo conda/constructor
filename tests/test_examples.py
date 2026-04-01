@@ -518,7 +518,7 @@ def _run_uninstaller_msi(
                 cmd=cmd,
                 returncode=e.returncode,
                 msi_log=log_path,
-                post_install_log=pre_uninstall_log,
+                pre_uninstall_log=pre_uninstall_log,
             ),
             original_exception=e,
         )
