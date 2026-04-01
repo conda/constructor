@@ -37,6 +37,15 @@ set "{{ key }}={{ val }}"
 {%- endfor %}
 {%- endif %}
 
+rem Installer metadata for pre-uninstall script
+set "INSTALLER_NAME={{ installer_name }}"
+set "INSTALLER_VER={{ installer_version }}"
+set "INSTALLER_PLAT={{ installer_platform }}"
+set "INSTALLER_TYPE=MSI"
+rem INSTALLER_UNATTENDED is not available for MSI installers.
+rem Detecting silent mode requires UILevel from WiX, which would need
+rem changes to the briefcase-windows-app-template to pass to this script.
+
 rem Determine install mode from .nonadmin marker file written at install time
 if exist "%BASE_PATH%\.nonadmin" (
     set "REG_HIVE=HKCU"
@@ -77,6 +86,13 @@ type nul > "%PAYLOAD_TAR%"
 if errorlevel 1 (
   {{ error_block('Failed to create "%PAYLOAD_TAR%"', '%errorlevel%') }}
 )
+
+{%- if has_pre_uninstall %}
+rem Run user-supplied pre-uninstall script
+{{ tee("Running pre-uninstall script...") }}
+call "%BASE_PATH%\pkgs\user_pre_uninstall.bat"
+if errorlevel 1 ( exit /b %errorlevel% )
+{%- endif %}
 
 rem Remove PATH entries only for user-scoped installs (mirrors NSIS .nonadmin check)
 {%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
