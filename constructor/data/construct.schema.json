@@ -1072,7 +1072,7 @@
         }
       ],
       "default": null,
-      "description": "Path to a pre uninstall script. This is only supported on Windows, and must be a `.bat` file. Installation path is available as `%PREFIX%`. Metadata about the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.",
+      "description": "Path to a pre uninstall script. This is only supported on Windows, and must be a `.bat` file. Installation path is available as `%PREFIX%`. Metadata about the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.\nIf the uninstallation is performed with `conda-standalone`, the following environment variables are available: `%UNINSTALLER_REMOVE_CONFIG_FILES%` (set to `system`, `user`, or `all` if selected), `%UNINSTALLER_REMOVE_USER_DATA%` (set to `1` if set), and `%UNINSTALLER_REMOVE_CACHES%` (set to `1` if set).",
       "title": "Pre Uninstall"
     },
     "progress_notifications": {

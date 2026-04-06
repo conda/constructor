@@ -575,6 +575,11 @@ class ConstructorConfiguration(BaseModel):
     Metadata about the installer can be found in the `%INSTALLER_NAME%`,
     `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
     `%INSTALLER_TYPE%` is set to `EXE`.
+
+    If the uninstallation is performed with `conda-standalone`, the following
+    environment variables are available: `%UNINSTALLER_REMOVE_CONFIG_FILES%` (set to
+    `system`, `user`, or `all` if selected), `%UNINSTALLER_REMOVE_USER_DATA%` (set to `1`
+    if set), and `%UNINSTALLER_REMOVE_CACHES%` (set to `1` if set).
     """
     default_prefix: NonEmptyStr | None = None
     """
