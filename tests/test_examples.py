@@ -878,7 +878,7 @@ def test_example_from_existing_env(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         if installer.suffix == ".pkg" and not ON_CI:
             return
-        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+        for pkg in PrefixData(install_dir, interoperability=True).iter_records():
             assert pkg["channel"] != "pypi"
 
 
@@ -888,7 +888,7 @@ def test_example_from_env_txt(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         if installer.suffix == ".pkg" and not ON_CI:
             return
-        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+        for pkg in PrefixData(install_dir, interoperability=True).iter_records():
             assert pkg["channel"] != "pypi"
 
 
@@ -898,7 +898,7 @@ def test_example_from_env_yaml(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request)
         if installer.suffix == ".pkg" and not ON_CI:
             return
-        for pkg in PrefixData(install_dir, pip_interop_enabled=True).iter_records():
+        for pkg in PrefixData(install_dir, interoperability=True).iter_records():
             assert pkg["channel"] != "pypi"
 
 
