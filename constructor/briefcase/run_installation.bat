@@ -154,7 +154,7 @@ rem Add to PATH / run conda init if the option was selected
 {%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
 if "%OPTION_INITIALIZE_CONDA%"=="1" (
     {{ tee("Adding to PATH...") }}
-    "%CONDA_EXE%" constructor windows path --prepend=user --prefix "%INSTDIR%" {{ pathflag }} --log-file "%LOG%"
+    "%CONDA_EXE%" constructor windows path --prepend=user --prefix "%BASE_PATH%" {{ pathflag }} --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 
