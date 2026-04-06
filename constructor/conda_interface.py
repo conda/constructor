@@ -131,7 +131,7 @@ if conda_interface_type == "conda":
                 "removed": [],
             }
         elif isinstance(raw_repodata_str, dict):
-            # conda 26.x+ returns already-parsed dict from fetch_latest()
+            # conda 26.x+ may return an already-parsed dict from fetch_latest()
             full_repodata = raw_repodata_str
         else:
             full_repodata = json.loads(raw_repodata_str)
