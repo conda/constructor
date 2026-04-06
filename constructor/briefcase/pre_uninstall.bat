@@ -98,7 +98,7 @@ rem Remove PATH entries only for user-scoped installs (mirrors NSIS .nonadmin ch
 {%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
 if exist "%BASE_PATH%\.nonadmin" (
     {{ tee("Removing from PATH...") }}
-    "%CONDA_EXE%" constructor windows path --remove=user --prefix "%INSTDIR%" {{ pathflag }} --log-file "%LOG%"
+    "%CONDA_EXE%" constructor windows path --remove=user --prefix "%BASE_PATH%" {{ pathflag }} --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 

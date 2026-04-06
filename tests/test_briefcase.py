@@ -391,6 +391,30 @@ def test_render_templates_registry_uses_base_path():
     assert "%INSTDIR%\\Doc\\" not in text
 
 
+def test_render_templates_path_commands_use_base_path():
+    """Verify that the 'constructor windows path' commands use BASE_PATH
+    (INSTDIR\\base) and not INSTDIR directly, since the conda environment
+    lives in BASE_PATH in the MSI layout."""
+    info = mock_info.copy()
+    info["initialize_conda"] = "classic"
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    # Check run_installation.bat uses BASE_PATH for adding to PATH
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    run_text = run_installation.read_text(encoding="utf-8")
+
+    assert 'constructor windows path --prepend=user --prefix "%BASE_PATH%"' in run_text
+    assert 'constructor windows path --prepend=user --prefix "%INSTDIR%"' not in run_text
+
+    # Check pre_uninstall.bat uses BASE_PATH for removing from PATH
+    pre_uninstall = next(f for f in rendered_templates if f.name == "pre_uninstall.bat")
+    pre_text = pre_uninstall.read_text(encoding="utf-8")
+
+    assert 'constructor windows path --remove=user --prefix "%BASE_PATH%"' in pre_text
+    assert 'constructor windows path --remove=user --prefix "%INSTDIR%"' not in pre_text
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_render_templates_nonadmin_created_for_user_install():
     """Verify that run_installation.bat creates a .nonadmin marker file
