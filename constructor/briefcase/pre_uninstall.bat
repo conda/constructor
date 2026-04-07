@@ -25,6 +25,8 @@ set "PREFIX=%BASE_PATH%"
 set "CONDA_EXE=%INSTDIR%\{{ conda_exe_name }}"
 set "PAYLOAD_TAR=%INSTDIR%\{{ archive_name }}"
 set "CONDA_ROOT_PREFIX=%BASE_PATH%"
+rem Set CONDA_QUIET primarily to disable the spinners
+set CONDA_QUIET={{ 0 if add_debug else 1 }}
 
 rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
@@ -53,6 +55,13 @@ if exist "%BASE_PATH%\.nonadmin" (
     set "REG_HIVE=HKLM"
 )
 
+rem Map OPTION_* to UNINSTALLER_* for compatibility with NSIS uninstaller scripts
+if "%OPTION_REMOVE_USER_DATA%"=="1" set "UNINSTALLER_REMOVE_USER_DATA=1"
+if "%OPTION_REMOVE_CACHES%"=="1" set "UNINSTALLER_REMOVE_CACHES=1"
+if "%OPTION_REMOVE_CONFIG_FILES%"=="1" (
+    if "%REG_HIVE%"=="HKCU" (set "UNINSTALLER_REMOVE_CONFIG_FILES=user") else (set "UNINSTALLER_REMOVE_CONFIG_FILES=all")
+)
+
 {%- if add_debug %}
 >> "%LOG%" echo ==== pre_uninstall start ====
 >> "%LOG%" echo SCRIPT=%~f0
@@ -67,6 +76,9 @@ if exist "%BASE_PATH%\.nonadmin" (
 >> "%LOG%" echo OPTION_REMOVE_USER_DATA=%OPTION_REMOVE_USER_DATA%
 >> "%LOG%" echo OPTION_REMOVE_CACHES=%OPTION_REMOVE_CACHES%
 >> "%LOG%" echo OPTION_REMOVE_CONFIG_FILES=%OPTION_REMOVE_CONFIG_FILES%
+>> "%LOG%" echo UNINSTALLER_REMOVE_USER_DATA=%UNINSTALLER_REMOVE_USER_DATA%
+>> "%LOG%" echo UNINSTALLER_REMOVE_CACHES=%UNINSTALLER_REMOVE_CACHES%
+>> "%LOG%" echo UNINSTALLER_REMOVE_CONFIG_FILES=%UNINSTALLER_REMOVE_CONFIG_FILES%
 "%CONDA_EXE%" --version >> "%LOG%" 2>&1
 {%- endif %}
 
