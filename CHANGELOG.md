@@ -1,5 +1,28 @@
 [//]: # (current developments)
 
+## 2026-04-07   3.15.2:
+### Enhancements
+
+* EXE: Expose uninstallation options as environment variables for pre-uninstallation scripts. (#1197)
+
+### Bug fixes
+
+* PKG: Do not fail the installer when ownership of files in `$HOME` cannot be changed. (#1177 via #1184)
+* Fix TypeError when conda 26.x returns dict from `fetch_latest()`. (#1196)
+* SH: Fix `-t` flag passing arguments to `conda activate`. (#1202 via #1203)
+
+### Contributors
+
+* @marcoesters
+* @lrandersson
+* @gabrielbusta
+
+### New contributors
+
+* @gabrielbusta made their first contribution in: https://github.com/conda/constructor/pull/1196
+
+
+
 ## 2026-03-03   3.15.1:
 ### Bug fixes
 

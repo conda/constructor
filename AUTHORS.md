@@ -74,6 +74,7 @@ Authors are sorted alphabetically.
 * conda-bot
 * dependabot[bot]
 * dionizijefa
+* gabrielbusta
 * guimondmm
 * pre-commit-ci[bot]
 * y2kbugger
