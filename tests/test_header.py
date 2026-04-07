@@ -172,3 +172,51 @@ def test_template_shellcheck(
     print(*findings, sep="\n")
     assert findings == []
     assert returncode == 0
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Shell test not for Windows")
+@pytest.mark.parametrize(
+    "use_fix,expect_pass",
+    [
+        pytest.param(True, True, id="with_fix"),
+        pytest.param(False, False, id="without_fix"),
+    ],
+)
+def test_subshell_clears_positional_params(use_fix, expect_pass):
+    """
+    Regression test for https://github.com/conda/conda/issues/15854
+
+    The -t flag runs tests in a subshell that sources bin/activate.
+    Since bin/activate contains `conda activate "$@"`, positional
+    params must be cleared first or installer args leak through.
+    """
+    fix_line = "set --" if use_fix else "# no fix"
+    test_script = f"""
+    #!/bin/bash
+    (
+        {fix_line}
+        if [ -n "$*" ]; then
+            echo "LEAKED: $@"
+            exit 1
+        fi
+    )
+    """
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
+        f.write(test_script)
+        f.flush()
+        script_path = f.name
+
+    try:
+        result = subprocess.run(
+            ["bash", script_path, "-b", "-p", "/some/path", "-t"],
+            capture_output=True,
+            text=True,
+        )
+        if expect_pass:
+            assert result.returncode == 0, f"Fix should work: {result.stdout}"
+        else:
+            assert result.returncode == 1, "Without fix, args should leak"
+            assert "LEAKED" in result.stdout
+    finally:
+        Path(script_path).unlink()
