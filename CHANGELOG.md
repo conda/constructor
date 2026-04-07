@@ -15,10 +15,11 @@
 
 * @marcoesters
 * @lrandersson
-* @conda-bot
-* @dependabot[bot]
 * @gabrielbusta
-* @pre-commit-ci[bot]
+
+### New contributors
+
+* @gabrielbusta made their first contribution in: https://github.com/conda/constructor/pull/1196
 
 
 
