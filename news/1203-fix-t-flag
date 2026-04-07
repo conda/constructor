@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* SH: Fix `-t` flag passing arguments to `conda activate`. (#1203)
+* SH: Fix `-t` flag passing arguments to `conda activate`. (#1202 via #1203)
 
 ### Deprecations
 

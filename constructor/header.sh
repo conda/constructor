@@ -840,11 +840,9 @@ fi
 if [ "$TEST" = "1" ]; then
     printf "INFO: Running package tests in a subshell\\n"
     NFAILS=0
-    (# Clear positional parameters to prevent them from being passed to conda activate
-     # when bin/activate is sourced (it contains `conda activate "$@"`)
-     set --
-     # shellcheck disable=SC1091
-     . "$PREFIX"/bin/activate
+    (# shellcheck disable=SC1091
+     . "$PREFIX"/etc/profile.d/conda.sh
+     conda activate
      which conda-build > /dev/null 2>&1 || conda install -y conda-build
      if [ ! -d "$PREFIX/conda-bld/${INSTALLER_PLAT}" ]; then
          mkdir -p "$PREFIX/conda-bld/${INSTALLER_PLAT}"

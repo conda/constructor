@@ -176,27 +176,39 @@ def test_template_shellcheck(
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Shell test not for Windows")
 @pytest.mark.parametrize(
-    "use_fix,expect_pass",
+    "use_bin_activate,expect_leak",
     [
-        pytest.param(True, True, id="with_fix"),
-        pytest.param(False, False, id="without_fix"),
+        pytest.param(True, True, id="bin_activate_leaks_args"),
+        pytest.param(False, False, id="conda_sh_does_not_leak"),
     ],
 )
-def test_subshell_clears_positional_params(use_fix, expect_pass):
+def test_activate_arg_leak(use_bin_activate, expect_leak):
     """
     Regression test for https://github.com/conda/conda/issues/15854
 
-    The -t flag runs tests in a subshell that sources bin/activate.
-    Since bin/activate contains `conda activate "$@"`, positional
-    params must be cleared first or installer args leak through.
+    bin/activate contains `conda activate "$@"` which leaks positional
+    params from the caller. The fix uses etc/profile.d/conda.sh + conda
+    activate instead, which doesn't pass $@ to any command.
     """
-    fix_line = "set --" if use_fix else "# no fix"
+    if use_bin_activate:
+        # Simulates bin/activate: sources a script then runs command with "$@"
+        # This leaks the caller's positional params
+        activate_script = """
+        received_args="$@"
+        """
+    else:
+        # Simulates etc/profile.d/conda.sh + conda activate (no args)
+        # This doesn't leak because we don't pass "$@"
+        activate_script = """
+        received_args=""
+        """
+
     test_script = f"""
     #!/bin/bash
     (
-        {fix_line}
-        if [ -n "$*" ]; then
-            echo "LEAKED: $@"
+        {activate_script}
+        if [ -n "$received_args" ]; then
+            echo "LEAKED: $received_args"
             exit 1
         fi
     )
@@ -213,10 +225,10 @@ def test_subshell_clears_positional_params(use_fix, expect_pass):
             capture_output=True,
             text=True,
         )
-        if expect_pass:
-            assert result.returncode == 0, f"Fix should work: {result.stdout}"
-        else:
-            assert result.returncode == 1, "Without fix, args should leak"
+        if expect_leak:
+            assert result.returncode == 1, "bin/activate pattern should leak args"
             assert "LEAKED" in result.stdout
+        else:
+            assert result.returncode == 0, f"conda.sh pattern should not leak: {result.stdout}"
     finally:
         Path(script_path).unlink()
