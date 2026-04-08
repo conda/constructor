@@ -1823,20 +1823,8 @@ Section "Uninstall"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0")'
     ${EndIf}
 
-    ${If} ${FileExists} "$INSTDIR\pre_uninstall.bat"
-        ${Print} "Running pre-uninstall script..."
-        # `type` is used to simulate a `tee`-like output in cmd.exe
-        push '"$INSTDIR\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
-        push "Failed to run pre-uninstall scripts."
-        push 'WithLog'
-        call un.AbortRetryNSExecWait
-    ${EndIf}
-    ${If} ${FileExists} "$INSTDIR\.nonadmin"
-        !insertmacro AddRemovePath "remove" "un."
-    ${EndIf}
-
 {%- if uninstall_with_conda_exe %}
-    # Parse arguments
+    # Parse uninstall options
     StrCpy $R0 ""
 
     ${If} $UninstRemoveConfigFiles_User_State == ${BST_CHECKED}
@@ -1861,6 +1849,21 @@ Section "Uninstall"
         StrCpy $R0 "$R0 --remove-caches"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CACHES", "1")'
     ${EndIf}
+{%- endif %}
+
+    ${If} ${FileExists} "$INSTDIR\pre_uninstall.bat"
+        ${Print} "Running pre-uninstall script..."
+        # `type` is used to simulate a `tee`-like output in cmd.exe
+        push '"$INSTDIR\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
+        push "Failed to run pre-uninstall scripts."
+        push 'WithLog'
+        call un.AbortRetryNSExecWait
+    ${EndIf}
+    ${If} ${FileExists} "$INSTDIR\.nonadmin"
+        !insertmacro AddRemovePath "remove" "un."
+    ${EndIf}
+
+{%- if uninstall_with_conda_exe %}
 
     ${Print} "Removing files and folders..."
     push '"$INSTDIR\_conda.exe" constructor uninstall $R0 --prefix "$INSTDIR" {{ CONDA_LOG_ARG }}'
