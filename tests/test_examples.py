@@ -1352,18 +1352,6 @@ def test_uninstallation_standalone(
     input_path = tmp_path / "input"
     shutil.copytree(str(recipe_path), str(input_path))
 
-    # Create extra files to delete in pre-uninstall script
-    user_files_dir = tmp_path / "user_files"
-    for file in ("cache", "data", "config_user", "config_system"):
-        (user_files_dir / file).touch()
-
-    construct_yaml_file = input_path / "construct.yaml"
-    with construct_yaml_file.open() as file:
-        construct_yaml = yaml.load(file)
-    construct_yaml["script_env_variables"] = {"USER_FILES": str(user_files_dir)}
-    with construct_yaml_file.open(mode="w") as file:
-        yaml.dump(construct_yaml, file)
-
     installer, install_dir = next(create_installer(input_path, tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
     _run_installer(
@@ -1404,16 +1392,35 @@ def test_uninstallation_standalone(
     if remove_caches:
         uninstall_options.append("/RemoveCaches=1")
 
+    # Create extra files to delete in pre-uninstall script
+    user_files_dir = tmp_path / "user_files"
+    user_files_dir.mkdir()
+    user_files: dict[str, bool] = {
+        "cache": remove_caches,
+        "data": remove_user_data,
+        "config_user": remove_user_rcs,
+        "config_system": remove_system_rcs,
+    }
+    for file in user_files:
+        (user_files_dir / file).touch()
+        assert (user_files_dir / file).exists()
+    construct_yaml_file = input_path / "construct.yaml"
+    with construct_yaml_file.open() as file:
+        construct_yaml = yaml.load(file)
+    construct_yaml["script_env_variables"] = {"USER_FILES": str(user_files_dir)}
+    with construct_yaml_file.open(mode="w") as file:
+        yaml.dump(construct_yaml, file)
+
     try:
         _run_uninstaller_exe(install_dir, check=True, options=uninstall_options)
         assert dot_conda_dir.exists() != remove_user_data
         assert pkg_cache.exists() != remove_caches
         assert system_rc.exists() != remove_system_rcs
         assert user_rc.exists() != remove_user_rcs
-        assert (user_files_dir / "data").exists() != remove_user_data
-        assert (user_files_dir / "cache").exists() != remove_caches
-        assert (user_files_dir / "config_system").exists() != remove_system_rcs
-        assert (user_files_dir / "config_user").exists() != remove_user_rcs
+        # The post-install script only touches the files inside user_files_dir
+        assert user_files_dir.exists()
+        for file, removed in user_files.items():
+            assert (user_files_dir / file).exists() != removed
     finally:
         if system_rc.parent.exists():
             shutil.rmtree(system_rc.parent)
