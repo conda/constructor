@@ -1823,10 +1823,10 @@ Section "Uninstall"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0")'
     ${EndIf}
 
-    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+    ${If} ${FileExists} "$INSTDIR\pre_uninstall.bat"
         ${Print} "Running pre-uninstall script..."
         # `type` is used to simulate a `tee`-like output in cmd.exe
-        push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
+        push '"$INSTDIR\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
         push "Failed to run pre-uninstall scripts."
         push 'WithLog'
         call un.AbortRetryNSExecWait
