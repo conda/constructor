@@ -1356,8 +1356,6 @@ def test_uninstallation_standalone(
     # Set up files for removal.
     # Since conda-standalone is extensively tested upstream,
     # only set up a minimum set of files.
-    dot_conda_dir = tmp_path / ".conda"
-    assert dot_conda_dir.exists()
 
     # Minimum set of files needed for an index cache
     pkg_cache = tmp_path / "pkgs"
@@ -1411,6 +1409,10 @@ def test_uninstallation_standalone(
         check_subprocess=True,
         uninstall=False,
     )
+
+    # Ensure that the installation set up environments.txt
+    dot_conda_dir = tmp_path / ".conda"
+    assert dot_conda_dir.exists()
 
     try:
         _run_uninstaller_exe(install_dir, check=True, options=uninstall_options)
