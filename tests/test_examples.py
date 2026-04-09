@@ -1326,7 +1326,8 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
 
 
 @pytest.mark.skipif(
-    CONDA_EXE == StandaloneExe.CONDA and check_version(CONDA_EXE_VERSION, min_version="24.11.0"),
+    CONDA_EXE == StandaloneExe.CONDA
+    and not check_version(CONDA_EXE_VERSION, min_version="24.11.0"),
     reason=f"Requires conda-standalone 24.11.x or newer (is {CONDA_EXE_VERSION})",
 )
 @pytest.mark.skipif(not sys.platform == "win32", reason="Windows only")
