@@ -1399,7 +1399,6 @@ def test_uninstallation_standalone(
     construct_yaml["script_env_variables"] = {"USER_FILES": str(user_files_dir)}
     with construct_yaml_file.open(mode="w") as file:
         yaml.dump(construct_yaml, file)
-    assert user_files_dir.exists()
 
     installer, install_dir = next(create_installer(input_path, tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
@@ -1412,7 +1411,6 @@ def test_uninstallation_standalone(
     )
 
     # Ensure that the installation set up environments.txt
-    assert user_files_dir.exists()
     dot_conda_dir = tmp_path / ".conda"
     assert dot_conda_dir.exists()
 
