@@ -1353,16 +1353,6 @@ def test_uninstallation_standalone(
     input_path = tmp_path / "input"
     shutil.copytree(str(recipe_path), str(input_path))
 
-    installer, install_dir = next(create_installer(input_path, tmp_path))
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    _run_installer(
-        input_path,
-        installer,
-        install_dir,
-        check_subprocess=True,
-        uninstall=False,
-    )
-
     # Set up files for removal.
     # Since conda-standalone is extensively tested upstream,
     # only set up a minimum set of files.
@@ -1411,6 +1401,16 @@ def test_uninstallation_standalone(
     construct_yaml["script_env_variables"] = {"USER_FILES": str(user_files_dir)}
     with construct_yaml_file.open(mode="w") as file:
         yaml.dump(construct_yaml, file)
+
+    installer, install_dir = next(create_installer(input_path, tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        check_subprocess=True,
+        uninstall=False,
+    )
 
     try:
         _run_uninstaller_exe(install_dir, check=True, options=uninstall_options)
