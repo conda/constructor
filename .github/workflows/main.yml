@@ -39,43 +39,43 @@ jobs:
       matrix:
         include:
           # UBUNTU
-          # - os: ubuntu-latest
-          #   python-version: "3.10"
-          #   conda-standalone: conda-standalone
-          # - os: ubuntu-latest
-          #   python-version: "3.11"
-          #   conda-standalone: conda-standalone-nightly
-          # - os: ubuntu-latest
-          #   python-version: "3.12"
-          #   conda-standalone: micromamba
-          # - os: ubuntu-latest
-          #   python-version: "3.13"
-          #   conda-standalone: conda-standalone-onedir
-          #   check-docs-schema: true
-          # # MACOS
-          # - os: macos-15-intel
-          #   python-version: "3.10"
-          #   conda-standalone: conda-standalone-nightly
-          # - os: macos-15-intel
-          #   python-version: "3.11"
-          #   conda-standalone: conda-standalone-onedir
-          # - os: macos-latest
-          #   python-version: "3.12"
-          #   conda-standalone: conda-standalone
-          # - os: macos-latest
-          #   python-version: "3.13"
-          #   conda-standalone: micromamba
-          # # WINDOWS
-          # - os: windows-2022
-          #   python-version: "3.10"
-          #   conda-standalone: conda-standalone-nightly
-          # - os: windows-2022
-          #   python-version: "3.11"
-          #   conda-standalone: conda-standalone
-          # - os: windows-2022
-          #   python-version: "3.12"
-          #   # conda-standalone: micromamba
-          #   conda-standalone: conda-standalone-nightly
+          - os: ubuntu-latest
+            python-version: "3.10"
+            conda-standalone: conda-standalone
+          - os: ubuntu-latest
+            python-version: "3.11"
+            conda-standalone: conda-standalone-nightly
+          - os: ubuntu-latest
+            python-version: "3.12"
+            conda-standalone: micromamba
+          - os: ubuntu-latest
+            python-version: "3.13"
+            conda-standalone: conda-standalone-onedir
+            check-docs-schema: true
+          # MACOS
+          - os: macos-15-intel
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+          - os: macos-15-intel
+            python-version: "3.11"
+            conda-standalone: conda-standalone-onedir
+          - os: macos-latest
+            python-version: "3.12"
+            conda-standalone: conda-standalone
+          - os: macos-latest
+            python-version: "3.13"
+            conda-standalone: micromamba
+          # WINDOWS
+          - os: windows-2022
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+          - os: windows-2022
+            python-version: "3.11"
+            conda-standalone: conda-standalone
+          - os: windows-2022
+            python-version: "3.12"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-nightly
           - os: windows-2022
             python-version: "3.13"
             # conda-standalone: micromamba
@@ -156,7 +156,7 @@ jobs:
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x86/signtool.exe"
         run: |
           rm -rf coverage.json
-          pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py -k 'test_uninstallation_standalone'
+          pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
