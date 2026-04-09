@@ -1823,10 +1823,39 @@ Section "Uninstall"
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0")'
     ${EndIf}
 
-    ${If} ${FileExists} "$INSTDIR\pkgs\pre_uninstall.bat"
+{%- if uninstall_with_conda_exe %}
+    # Parse uninstall options
+    var /global UninstOptions
+    StrCpy $UninstOptions ""
+
+    ${If} $UninstRemoveConfigFiles_User_State == ${BST_CHECKED}
+    ${If} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+        StrCpy $UninstOptions "$UninstOptions --remove-config-files=all"
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CONFIG_FILES", "all")'
+    ${Else}
+        StrCpy $UninstOptions "$UninstOptions  --remove-config-files=user"
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CONFIG_FILES", "user")'
+    ${EndIf}
+    ${ElseIf} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
+        StrCpy $UninstOptions "$UninstOptions --remove-config-files=system"
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CONFIG_FILES", "system")'
+    ${EndIf}
+
+    ${If} $UninstRemoveUserData_State == ${BST_CHECKED}
+        StrCpy $UninstOptions "$UninstOptions  --remove-user-data"
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_USER_DATA", "1")'
+    ${EndIf}
+
+    ${If} $UninstRemoveCaches_State == ${BST_CHECKED}
+        StrCpy $UninstOptions "$UninstOptions  --remove-caches"
+        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CACHES", "1")'
+    ${EndIf}
+{%- endif %}
+
+    ${If} ${FileExists} "$INSTDIR\pre_uninstall.bat"
         ${Print} "Running pre-uninstall script..."
         # `type` is used to simulate a `tee`-like output in cmd.exe
-        push '"$INSTDIR\pkgs\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
+        push '"$INSTDIR\pre_uninstall.bat" > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
         push "Failed to run pre-uninstall scripts."
         push 'WithLog'
         call un.AbortRetryNSExecWait
@@ -1836,34 +1865,9 @@ Section "Uninstall"
     ${EndIf}
 
 {%- if uninstall_with_conda_exe %}
-    # Parse arguments
-    StrCpy $R0 ""
-
-    ${If} $UninstRemoveConfigFiles_User_State == ${BST_CHECKED}
-    ${If} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
-        StrCpy $R0 "$R0 --remove-config-files=all"
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CONFIG_FILES", "all")'
-    ${Else}
-        StrCpy $R0 "$R0 --remove-config-files=user"
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CONFIG_FILES", "user")'
-    ${EndIf}
-    ${ElseIf} $UninstRemoveConfigFiles_System_State == ${BST_CHECKED}
-        StrCpy $R0 "$R0 --remove-config-files=system"
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CONFIG_FILES", "system")'
-    ${EndIf}
-
-    ${If} $UninstRemoveUserData_State == ${BST_CHECKED}
-        StrCpy $R0 "$R0 --remove-user-data"
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_USER_DATA", "1")'
-    ${EndIf}
-
-    ${If} $UninstRemoveCaches_State == ${BST_CHECKED}
-        StrCpy $R0 "$R0 --remove-caches"
-        System::Call 'kernel32::SetEnvironmentVariable(t,t)i("UNINSTALLER_REMOVE_CACHES", "1")'
-    ${EndIf}
 
     ${Print} "Removing files and folders..."
-    push '"$INSTDIR\_conda.exe" constructor uninstall $R0 --prefix "$INSTDIR" {{ CONDA_LOG_ARG }}'
+    push '"$INSTDIR\_conda.exe" constructor uninstall $UninstOptions --prefix "$INSTDIR" {{ CONDA_LOG_ARG }}'
     push 'Failed to remove files and folders. Please see the log for more information.'
     push 'WithLog'
     SetDetailsPrint listonly
