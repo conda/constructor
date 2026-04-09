@@ -928,7 +928,7 @@ def test_register_envs(tmp_path, request):
         assert str(install_dir) not in environments_txt
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="MacOS only")
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.parametrize("domains", ({}, {"enable_anywhere": "false", "enable_localSystem": True}))
 def test_pkg_distribution_domains(tmp_path, domains):
     recipe_path = _example_path("osxpkg")
