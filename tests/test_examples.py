@@ -1348,7 +1348,6 @@ def test_uninstallation_standalone(
     remove_config_files: str | None,
     tmp_path: Path,
 ):
-    yaml = YAML()
     recipe_path = _example_path("uninstall_with_conda_exe")
     input_path = tmp_path / "input"
     shutil.copytree(str(recipe_path), str(input_path))
@@ -1393,12 +1392,14 @@ def test_uninstallation_standalone(
     for file in user_files:
         (user_files_dir / file).touch()
         assert (user_files_dir / file).exists()
+    yaml = YAML()
     construct_yaml_file = input_path / "construct.yaml"
     with construct_yaml_file.open() as file:
         construct_yaml = yaml.load(file)
     construct_yaml["script_env_variables"] = {"USER_FILES": str(user_files_dir)}
     with construct_yaml_file.open(mode="w") as file:
         yaml.dump(construct_yaml, file)
+    assert user_files_dir.exists()
 
     installer, install_dir = next(create_installer(input_path, tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
@@ -1411,6 +1412,7 @@ def test_uninstallation_standalone(
     )
 
     # Ensure that the installation set up environments.txt
+    assert user_files_dir.exists()
     dot_conda_dir = tmp_path / ".conda"
     assert dot_conda_dir.exists()
 
