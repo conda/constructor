@@ -1,5 +1,20 @@
 [//]: # (current developments)
 
+## 2026-04-10   3.15.3:
+### Enhancements
+
+* EXE: Add script environment variables to pre-uninstall scripts. (#1206)
+
+### Bug fixes
+
+* Fix regression that placed the pre-uninstall script in the package cache. (#1205)
+
+### Contributors
+
+* @marcoesters
+
+
+
 ## 2026-04-07   3.15.2:
 ### Enhancements
 
