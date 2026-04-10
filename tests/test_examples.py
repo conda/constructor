@@ -928,7 +928,7 @@ def test_register_envs(tmp_path, request):
         assert str(install_dir) not in environments_txt
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="MacOS only")
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.parametrize("domains", ({}, {"enable_anywhere": "false", "enable_localSystem": True}))
 def test_pkg_distribution_domains(tmp_path, domains):
     recipe_path = _example_path("osxpkg")
@@ -1326,8 +1326,9 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
 
 
 @pytest.mark.skipif(
-    CONDA_EXE == StandaloneExe.CONDA and check_version(CONDA_EXE_VERSION, min_version="24.11.0"),
-    reason="Requires conda-standalone 24.11.x or newer",
+    CONDA_EXE == StandaloneExe.CONDA
+    and not check_version(CONDA_EXE_VERSION, min_version="24.11.0"),
+    reason=f"Requires conda-standalone 24.11.x or newer (is {CONDA_EXE_VERSION})",
 )
 @pytest.mark.skipif(not sys.platform == "win32", reason="Windows only")
 @pytest.mark.skipif(not ON_CI, reason="CI only - Interacts with system files")
@@ -1347,26 +1348,13 @@ def test_uninstallation_standalone(
     remove_config_files: str | None,
     tmp_path: Path,
 ):
-    yaml = YAML()
     recipe_path = _example_path("uninstall_with_conda_exe")
     input_path = tmp_path / "input"
     shutil.copytree(str(recipe_path), str(input_path))
 
-    installer, install_dir = next(create_installer(input_path, tmp_path))
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))
-    _run_installer(
-        input_path,
-        installer,
-        install_dir,
-        check_subprocess=True,
-        uninstall=False,
-    )
-
     # Set up files for removal.
     # Since conda-standalone is extensively tested upstream,
     # only set up a minimum set of files.
-    dot_conda_dir = tmp_path / ".conda"
-    assert dot_conda_dir.exists()
 
     # Minimum set of files needed for an index cache
     pkg_cache = tmp_path / "pkgs"
@@ -1404,12 +1392,27 @@ def test_uninstallation_standalone(
     for file in user_files:
         (user_files_dir / file).touch()
         assert (user_files_dir / file).exists()
+    yaml = YAML()
     construct_yaml_file = input_path / "construct.yaml"
     with construct_yaml_file.open() as file:
         construct_yaml = yaml.load(file)
     construct_yaml["script_env_variables"] = {"USER_FILES": str(user_files_dir)}
     with construct_yaml_file.open(mode="w") as file:
         yaml.dump(construct_yaml, file)
+
+    installer, install_dir = next(create_installer(input_path, tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+    _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        check_subprocess=True,
+        uninstall=False,
+    )
+
+    # Ensure that the installation has set up environments.txt
+    dot_conda_dir = tmp_path / ".conda"
+    assert dot_conda_dir.exists()
 
     try:
         _run_uninstaller_exe(install_dir, check=True, options=uninstall_options)

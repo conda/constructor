@@ -1822,6 +1822,9 @@ Section "Uninstall"
     ${Else}
         System::Call 'kernel32::SetEnvironmentVariable(t,t)i("INSTALLER_UNATTENDED", "0")'
     ${EndIf}
+{%- for key, escaped_val in SCRIPT_ENV_VARIABLES | items %}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("{{ key }}", {{ escaped_val }})'
+{%- endfor %}
 
 {%- if uninstall_with_conda_exe %}
     # Parse uninstall options
