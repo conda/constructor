@@ -1410,7 +1410,7 @@ def test_uninstallation_standalone(
         uninstall=False,
     )
 
-    # Ensure that the installation set up environments.txt
+    # Ensure that the installation has set up environments.txt
     dot_conda_dir = tmp_path / ".conda"
     assert dot_conda_dir.exists()
 

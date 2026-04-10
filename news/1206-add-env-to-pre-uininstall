@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add script environment variables to pre-uninstall scripts. (#1206)
+* EXE: Add script environment variables to pre-uninstall scripts. (#1206)
 
 ### Bug fixes
 
