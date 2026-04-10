@@ -7,7 +7,7 @@
 
 ### Bug fixes
 
-* Fix regression that placed the pre-uninstall script in the package cache. (#1205)
+* EXE: Fix regression that placed the pre-uninstall script in the package cache. (#1205)
 
 ### Contributors
 
