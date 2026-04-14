@@ -1678,6 +1678,14 @@ Section "Install"
         push 'Failed to clear package cache'
         push 'WithLog'
         call AbortRetryNSExecWait
+        # conda clean may leave behind .conda_trash files or locked files (e.g. vc_runtime DLLs).
+        # Force remove any leftovers using the same two-phase approach as uninstallation.
+        # See https://github.com/conda/constructor/issues/1213
+        ${If} ${FileExists} "$INSTDIR\pkgs"
+            nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR\pkgs"'
+            # Fallback: schedule any remaining locked files for deletion on reboot
+            RMDir /r /REBOOTOK "$INSTDIR\pkgs"
+        ${EndIf}
     ${EndIf}
 
     !if ${INIT_CONDA_OPTION} == 1
