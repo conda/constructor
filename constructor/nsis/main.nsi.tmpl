@@ -1679,7 +1679,7 @@ Section "Install"
         push 'WithLog'
         call AbortRetryNSExecWait
         # conda clean may leave behind .conda_trash files or locked files (e.g. vc_runtime DLLs).
-        # Force remove any leftovers using the same two-phase approach as uninstallation.
+        # Force remove any leftovers, note that locked files may still remain
         # See https://github.com/conda/constructor/issues/1213
         ${If} ${FileExists} "$INSTDIR\pkgs"
             nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR\pkgs"'
