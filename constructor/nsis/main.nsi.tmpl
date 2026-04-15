@@ -1683,8 +1683,6 @@ Section "Install"
         # See https://github.com/conda/constructor/issues/1213
         ${If} ${FileExists} "$INSTDIR\pkgs"
             nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR\pkgs"'
-            # Fallback: schedule any remaining locked files for deletion on reboot
-            RMDir /r /REBOOTOK "$INSTDIR\pkgs"
         ${EndIf}
     ${EndIf}
 
