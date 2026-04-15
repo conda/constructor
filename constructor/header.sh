@@ -599,7 +599,9 @@ export FORCE
 # Avoid silent errors when $HOME is not writable
 # https://github.com/conda/constructor/pull/669
 #}
+{%- if register_envs == "true" %}
 test -d ~/.conda || mkdir -p ~/.conda >/dev/null 2>/dev/null || test -d ~/.conda || mkdir ~/.conda
+{%- endif %}
 
 printf "\nInstalling base environment...\n\n"
 
