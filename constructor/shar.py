@@ -19,6 +19,7 @@ import tempfile
 from contextlib import nullcontext
 from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
+from pathlib import Path
 
 from .construct import ns_platform
 from .jinja import render_template
@@ -182,11 +183,6 @@ def create(info, verbose=False):
             join(tmp_dir, "envs", env_name, "conda-meta", "history"),
             f"envs/{env_name}/conda-meta/history",
         )
-        if os.path.exists(join(tmp_dir, "envs", env_name, "conda-meta", "frozen")):
-            post_t.add(
-                join(tmp_dir, "envs", env_name, "conda-meta", "frozen"),
-                f"envs/{env_name}/conda-meta/frozen",
-            )
 
     extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     for path in extra_files:
@@ -239,6 +235,33 @@ def create(info, verbose=False):
                     if not chunk:
                         break
                     fo.write(chunk)
+
+    # Save payload for Docker builds if dockerfile output is requested
+    if "dockerfile" in str(info.get("build_outputs", [])) or info.get("installer_type") == "docker":
+        output_dir = Path(info["_output_dir"])
+        payload_dir = output_dir / "docker" / "_payload"
+        payload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save the main payload
+        payload_dest = payload_dir / "_conda"
+        shutil.copy(tarball, payload_dest)
+        logger.info(f"Saved conda payload: {payload_dest}")
+
+        # Save preconda
+        preconda_dest = payload_dir / "preconda.tar.bz2"
+        shutil.copy(preconda_tarball, preconda_dest)  # preconda_tarball already exists at line 94
+        logger.info(f"Saved preconda: {preconda_dest}")
+
+        # Save postconda
+        postconda_dest = payload_dir / "postconda.tar.bz2"
+        shutil.copy(postconda_tarball, postconda_dest)  # postconda_tarball exists at line 95
+        logger.info(f"Saved postconda: {postconda_dest}")
+
+    # print("TMP DIR:", tmp_dir)
+    # print("PRECONDA:", preconda_tarball)
+    # print("POSTCONDA:", postconda_tarball)
+    # print("PAYLOAD TAR:", tarball)
+    # print("OUTPATH:", shar_path)
 
     os.unlink(tarball)
     os.chmod(shar_path, 0o755)
