@@ -43,5 +43,12 @@ COPY --from=builder /root/.conda /root/.conda
 
 RUN echo 'export PATH=$(sed -e "s,:\?/opt/conda/bin:,," <<< "${PATH}")' >> ~/.bashrc && \
     "$PREFIX/bin/python" -m conda init --all
+    if [ -f "$PREFIX/bin/mamba" ]; then \
+        if [ "$("$PREFIX/bin/mamba" --version | head -n 1 | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then \
+            "$PREFIX/bin/python" -m mamba.mamba init; \
+        else \
+            "$PREFIX/bin/mamba" shell init; \
+        fi; \
+    fi
 
 CMD [ "/bin/bash" ]
