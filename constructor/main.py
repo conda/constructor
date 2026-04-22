@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 def get_installer_type(info: dict):
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe",)}
+    os_allowed = {"linux": ("sh", "docker"), "osx": ("sh", "pkg"), "win": ("exe",)}
     all_allowed = set(sum(os_allowed.values(), ("all",)))
 
     itype = info.get("installer_type")
@@ -399,6 +399,10 @@ def main_build(
             from .winexe import create as winexe_create
 
             create = winexe_create
+        elif itype == "docker":
+            from .docker_build import create as docker_create
+
+            create = docker_create
         info["installer_type"] = itype
         info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
