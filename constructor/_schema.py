@@ -42,6 +42,7 @@ class InstallerTypes(StrEnum):
     EXE = "exe"
     PKG = "pkg"
     SH = "sh"
+    DOCKER = "docker"
 
 
 class PkgDomains(StrEnum):
@@ -403,6 +404,7 @@ class ConstructorConfiguration(BaseModel):
     - `sh`: shell-based installer for Linux or macOS
     - `pkg`: macOS GUI installer built with Apple's `pkgbuild`
     - `exe`: Windows GUI installer built with NSIS
+    - `docker`: a Dockerfile that replicates the installation environment
 
     The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
     value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
@@ -852,6 +854,26 @@ class ConstructorConfiguration(BaseModel):
         conda:
             message: "This base environment is frozen and cannot be modified."
     ```
+    """
+    docker_base_image: NonEmptyStr | None = None
+    """
+    Base image to use for docker builds when `installer_type` includes `docker`.
+    Defaults to `debian:13.4-slim`.
+    """
+    docker_base_image_sha: NonEmptyStr | None = None
+    """
+    If `docker_base_image` is provided, you can also provide a SHA256 hash of
+    the image to ensure the integrity of the base image used for the build.
+    Otherwise, the base image defaults to `latest`.
+    """
+    docker_tag: NonEmptyStr | None = None
+    """
+    Tag to use for the built docker image when `installer_type` includes `docker`.
+    If not provided, it will default to `<name>:<version>`.
+    """
+    docker_labels: dict[NonEmptyStr, NonEmptyStr] = {}
+    """
+    Labels to add to the built docker image when `installer_type` includes `docker`.
     """
 
 
