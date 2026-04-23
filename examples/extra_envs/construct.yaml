@@ -8,6 +8,7 @@ channels:
   - https://conda.anaconda.org/conda-forge
 specs:
   - python=3.10
+  - pip
   - conda # conda is required for extra_envs
   - miniforge_console_shortcut 1.*  # [win]
 exclude:  # [unix]
