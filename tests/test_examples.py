@@ -1800,9 +1800,9 @@ def test_frozen_environment(tmp_path, request, has_conflict):
 
             expected_frozen = {
                 prefix / "conda-meta" / "frozen": config["freeze_base"]["conda"],
-                prefix / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"][
-                    "env1"
-                ]["freeze_env"]["conda"],
+                prefix / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"]["env1"][
+                    "freeze_env"
+                ]["conda"],
             }
 
             for frozen_path, expected_content in expected_frozen.items():
