@@ -38,7 +38,7 @@ if [[ "${USER}" != "root" ]]; then
         while [[ "${file}" != "${HOME}" ]] && [[ "${file}" != "${PREFIX}" ]]; do
             # Check just in case the file wasn't created due to flaky conda init
             if [[ -f "${file}" ]] || [[ -d "${file}" ]]; then
-                OWNER=$(stat -f "%u" "${file}" | id -un)
+                OWNER=$(stat -f "%Su" "${file}")
                 if [[ "${OWNER}" == "root" ]]; then
                     if ! chown "${USER}" "${file}"; then
                         MSG="WARNING! Unable to change ownership of ${file} (owned by ${OWNER})."
