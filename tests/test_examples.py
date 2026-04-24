@@ -1029,6 +1029,24 @@ def test_example_shortcuts(tmp_path, request):
             assert (applications / "package-1_b.desktop").exists()
 
 
+def _verify_windows_signature(installer: Path):
+    """Verify a Windows installer has a valid signature."""
+    proc = subprocess.run(
+        [
+            "powershell",
+            "-c",
+            f"$sig = Get-AuthenticodeSignature -LiteralPath '{installer}';$sig.Status.value__",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0 or not proc.stdout.strip():
+        raise AssertionError(f"Failed to verify signature for {installer}: {proc.stderr}")
+    status = int(proc.stdout.strip())
+    # 0 = Valid, 1 = UnknownError (self-signed certs), >1 = Error/NotSigned
+    assert status <= 1, f"Signature verification failed for {installer}: status={status}"
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_example_signing(tmp_path, request):
     input_path = _example_path("signing")
@@ -1046,6 +1064,7 @@ def test_example_signing(tmp_path, request):
         CONSTRUCTOR_SIGNING_CERTIFICATE=str(cert_path),
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=cert_pwd,
     ):
+        _verify_windows_signature(installer)
         _run_installer(input_path, installer, install_dir, request=request)
 
 

@@ -22,6 +22,7 @@ else:
 
 from . import preconda
 from .jinja import render_template
+from .signing import create_signing_tool
 from .utils import (
     DEFAULT_REVERSE_DOMAIN_ID,
     bat_echo_esc,
@@ -572,6 +573,8 @@ def create(info, verbose=False):
     # via the `conda constructor uninstall` command.
     info["uninstall_with_conda_exe"] = True
 
+    signing_tool = create_signing_tool(info)
+
     payload = Payload(info)
     try:
         payload.prepare()
@@ -591,6 +594,10 @@ def create(info, verbose=False):
         outpath = Path(info["_outpath"])
         outpath.unlink(missing_ok=True)
         shutil.move(msi_paths[0], outpath)
+
+        if signing_tool:
+            signing_tool.sign(outpath)
+            signing_tool.verify_signature(outpath)
     finally:
         if not info.get("_debug"):
             payload.remove()
