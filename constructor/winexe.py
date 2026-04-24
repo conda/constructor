@@ -17,13 +17,14 @@ import tempfile
 from os.path import abspath, basename, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
+from typing import TYPE_CHECKING
 
 from .construct import ns_platform
 from .imaging import write_images
 from .jinja import render_template
 from .preconda import copy_extra_files
 from .preconda import write_files as preconda_write_files
-from .signing import AzureSignTool, WindowsSignTool
+from .signing import create_signing_tool
 from .utils import (
     approx_size_kb,
     copy_conda_exe,
@@ -33,6 +34,9 @@ from .utils import (
     shortcuts_flags,
     win_str_esc,
 )
+
+if TYPE_CHECKING:
+    from .signing import AzureSignTool, WindowsSignTool
 
 NSIS_DIR = join(abspath(dirname(__file__)), "nsis")
 MAKENSIS_EXE = abspath(join(sys.prefix, "NSIS", "makensis.exe"))
@@ -357,15 +361,7 @@ Error: no file %s
 
 def create(info, verbose=False):
     verify_nsis_install()
-    signing_tool = None
-    if signing_tool_name := info.get("windows_signing_tool"):
-        if signing_tool_name == "signtool":
-            signing_tool = WindowsSignTool(certificate_file=info.get("signing_certificate"))
-        elif signing_tool_name == "azuresigntool":
-            signing_tool = AzureSignTool()
-        else:
-            raise ValueError(f"Unknown signing tool: {signing_tool_name}")
-        signing_tool.verify_signing_tool()
+    signing_tool = create_signing_tool(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
