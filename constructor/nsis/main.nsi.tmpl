@@ -130,6 +130,7 @@ ${Using:StrFunc} StrStr
 # are not written into install.log. STEP_LOG creates an intermittent file
 # that is output into these streams after the commands finish.
 !define STEP_LOG                      "$INSTDIR\.step.log"
+!define MAX_RELATIVE_PATH_LENGTH {{ max_relative_path_length }}
 
 var /global INIT_CONDA
 var /global REG_PY
@@ -168,6 +169,7 @@ var /global IsDomainUser
 var /global CheckPathLength
 var /global LongPathsEnabled
 var /global InstDirLen
+var /global PathTooLongHint
 
 var /global InstModePage_RadioButton_JustMe
 var /global InstModePage_RadioButton_AllUsers
@@ -1115,6 +1117,25 @@ Function OnDirectoryLeave
         ${EndIf}
     ${EndIf}
 
+    # MAX_PATH check - runs independently of check_path_length
+    ${If} $LongPathsEnabled == "0"
+        IntOp $0 $InstDirLen + ${MAX_RELATIVE_PATH_LENGTH}
+        ${If} $0 > 260
+            ${If} ${Silent}
+                ${Print} "::warning:: The installation path may be too long ($0 chars, limit 260). Some files could fail to extract."
+            ${Else}
+                MessageBox MB_YESNO|MB_ICONWARNING \
+                    "The installation path may be too long. Some files could fail to extract.$\n$\n\
+                     Maximum file path: $0 characters (limit: 260).$\n$\n\
+                     You can either choose a shorter path or enable Long Paths in Windows.$\n$\n\
+                     Continue anyway?" \
+                    IDYES continue_long_path
+                Abort
+                continue_long_path:
+            ${EndIf}
+        ${EndIf}
+    ${EndIf}
+
     # Call the CheckForSpaces function.
     Push $INSTDIR # Input string (install path).
     Call CheckForSpaces
@@ -1586,9 +1607,18 @@ Section "Install"
     File {{ dist }}
 {%- endfor %}
 
+    # Set hint for extraction error if path may be too long
+    IntOp $0 $InstDirLen + ${MAX_RELATIVE_PATH_LENGTH}
+    ${If} $0 > 260
+    ${AndIf} $LongPathsEnabled == "0"
+        StrCpy $PathTooLongHint "$\n$\nThis may be caused by the installation path being too long."
+    ${Else}
+        StrCpy $PathTooLongHint ""
+    ${EndIf}
+
     ${Print} "Setting up the package cache..."
     push '"$INSTDIR\_conda.exe" constructor --prefix "$INSTDIR" --extract-conda-pkgs {{ CONDA_LOG_ARG }}'
-    push 'Failed to extract packages'
+    push 'Failed to extract packages$PathTooLongHint'
     push 'WithLog'
     call AbortRetryNSExecWait
 

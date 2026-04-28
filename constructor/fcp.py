@@ -153,6 +153,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     # Keep a min, 50MB buffer size
     total_tarball_size = 52428800
     total_extracted_pkgs_size = 52428800
+    max_relative_path_length = 0
 
     for pc_rec in pc_recs:
         fn = pc_rec.fn
@@ -163,6 +164,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
         paths_data = read_paths_json(extracted_package_dir).paths
         for path_data in paths_data:
             short_path = path_data.path
+            max_relative_path_length = max(max_relative_path_length, len(short_path))
             try:
                 size = path_data.size_in_bytes or getsize(join(extracted_package_dir, short_path))
             except AttributeError:
@@ -176,7 +178,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             map_members_icase[short_path_lower]["fns"].add(fn)
 
     if duplicate_files == "skip":
-        return total_tarball_size, total_extracted_pkgs_size
+        return total_tarball_size, total_extracted_pkgs_size, max_relative_path_length
 
     logger.info("Checking for duplicate files ...")
     for member in map_members_scase:
@@ -201,7 +203,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             else:
                 sys.exit(f"Error: {msg_str}")
 
-    return total_tarball_size, total_extracted_pkgs_size
+    return total_tarball_size, total_extracted_pkgs_size, max_relative_path_length
 
 
 def _precs_from_environment(environment, input_dir):
@@ -443,7 +445,7 @@ def _main(
             input_dir=input_dir,
         )
     if dry_run:
-        return None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None
     pc_recs, _urls, dists, has_conda = _fetch_precs(
         precs, download_dir, transmute_file_type=transmute_file_type
     )
@@ -463,8 +465,8 @@ def _main(
         duplicate_files = "skip"
 
     all_pc_recs = list({rec: None for rec in all_pc_recs})  # deduplicate
-    approx_tarballs_size, approx_pkgs_size = check_duplicates_files(
-        pc_recs, platform, duplicate_files=duplicate_files
+    approx_tarballs_size, approx_pkgs_size, max_relative_path_length = check_duplicates_files(
+        all_pc_recs, platform, duplicate_files=duplicate_files
     )
 
     return (
@@ -476,6 +478,7 @@ def _main(
         approx_pkgs_size,
         has_conda,
         extra_envs_data,
+        max_relative_path_length,
     )
 
 
@@ -529,6 +532,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             approx_pkgs_size,
             has_conda,
             extra_envs_info,
+            max_relative_path_length,
         ) = _main(
             name,
             version,
@@ -561,3 +565,4 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     info["_has_conda"] = has_conda
     # contains {env_name: [_dists, _urls, _records]} for each extra environment
     info["_extra_envs_info"] = extra_envs_info
+    info["_max_relative_path_length"] = max_relative_path_length
