@@ -1785,11 +1785,6 @@ def test_frozen_environment(tmp_path, request, has_conflict):
     with open(input_path / "construct.yaml") as f:
         config = yaml.load(f)
 
-    # Since the above yaml.load does not rely on jinja rendering,
-    # set installer_type based on platform instead of using Jinja in the YAML.
-    # This is needed until MSI installers support protected base environments.
-    config["installer_type"] = "exe" if os.name == "nt" else "all"
-
     if has_conflict:
         config.setdefault("extra_files", []).append({"frozen.json": "conda-meta/frozen"})
 
@@ -1800,11 +1795,14 @@ def test_frozen_environment(tmp_path, request, has_conflict):
         for installer, install_dir in create_installer(input_path, tmp_path):
             _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
 
+            # MSI installers use a 'base' subdirectory for the conda environment
+            prefix = install_dir / "base" if installer.suffix == ".msi" else install_dir
+
             expected_frozen = {
-                install_dir / "conda-meta" / "frozen": config["freeze_base"]["conda"],
-                install_dir / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"][
-                    "env1"
-                ]["freeze_env"]["conda"],
+                prefix / "conda-meta" / "frozen": config["freeze_base"]["conda"],
+                prefix / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"]["env1"][
+                    "freeze_env"
+                ]["conda"],
             }
 
             for frozen_path, expected_content in expected_frozen.items():
