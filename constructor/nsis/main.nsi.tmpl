@@ -1125,10 +1125,13 @@ Function OnDirectoryLeave
                 ${Print} "::warning:: The installation path may be too long ($0 chars, limit 260). Some files could fail to extract."
             ${Else}
                 MessageBox MB_YESNO|MB_ICONWARNING \
-                    "The installation path may be too long. Some files could fail to extract.$\n$\n\
-                     Maximum file path: $0 characters (limit: 260).$\n$\n\
-                     You can either choose a shorter path or enable Long Paths in Windows.$\n$\n\
-                     Continue anyway?" \
+                    "The installation path may be too long. Some files could fail to extract.$\n\
+                    $\n\
+                    Maximum file path: $0 characters (limit: 260).$\n\
+                    $\n\
+                    You can either choose a shorter path or enable Long Paths in Windows.$\n\
+                    $\n\
+                    Continue anyway?" \
                     IDYES continue_long_path
                 Abort
                 continue_long_path:
