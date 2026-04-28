@@ -81,9 +81,8 @@ def get_name_version(info):
     return name, version
 
 
-# Takes an arbitrary string with at least one alphanumeric character, and makes it into
-# a valid Python package name.
 def make_app_name(name, source):
+    """Takes an arbitrary string with at least one alphanumeric character, and makes it into a valid Python package name."""
     app_name = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
     if not app_name:
         raise ValueError(f"{source} contains no alphanumeric characters")
