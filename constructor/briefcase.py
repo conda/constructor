@@ -22,7 +22,7 @@ else:
 
 from . import preconda
 from .jinja import render_template
-from .signing import create_signing_tool
+from .signing import create_windows_signing_tool
 from .utils import (
     DEFAULT_REVERSE_DOMAIN_ID,
     bat_echo_esc,
@@ -572,7 +572,7 @@ def create(info, verbose=False):
     # via the `conda constructor uninstall` command.
     info["uninstall_with_conda_exe"] = True
 
-    signing_tool = create_signing_tool(info)
+    signing_tool = create_windows_signing_tool(info)
 
     payload = Payload(info)
     try:
@@ -590,13 +590,13 @@ def create(info, verbose=False):
         if len(msi_paths) != 1:
             raise RuntimeError(f"Found {len(msi_paths)} MSI files in {dist_dir}, expected 1.")
 
+        if signing_tool:
+            signing_tool.sign(msi_paths[0])
+            signing_tool.verify_signature(msi_paths[0])
+
         outpath = Path(info["_outpath"])
         outpath.unlink(missing_ok=True)
         shutil.move(msi_paths[0], outpath)
-
-        if signing_tool:
-            signing_tool.sign(outpath)
-            signing_tool.verify_signature(outpath)
     finally:
         if not info.get("_debug"):
             payload.remove()
