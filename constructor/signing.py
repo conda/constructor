@@ -364,8 +364,8 @@ class CodeSign(SigningTool):
             explained_check_call(command)
 
 
-def create_signing_tool(info: dict) -> SigningTool | None:
-    """Create a signing tool based on construct.yaml configuration.
+def create_windows_signing_tool(info: dict) -> SigningTool | None:
+    """Create a Windows signing tool based on construct.yaml.
 
     Returns None if no signing is configured.
     """

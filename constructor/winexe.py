@@ -24,7 +24,7 @@ from .imaging import write_images
 from .jinja import render_template
 from .preconda import copy_extra_files
 from .preconda import write_files as preconda_write_files
-from .signing import create_signing_tool
+from .signing import create_windows_signing_tool
 from .utils import (
     approx_size_kb,
     copy_conda_exe,
@@ -361,7 +361,7 @@ Error: no file %s
 
 def create(info, verbose=False):
     verify_nsis_install()
-    signing_tool = create_signing_tool(info)
+    signing_tool = create_windows_signing_tool(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
