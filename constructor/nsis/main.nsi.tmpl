@@ -1120,6 +1120,7 @@ Function OnDirectoryLeave
     # MAX_PATH check - runs independently of check_path_length
     ${If} $LongPathsEnabled == "0"
         IntOp $0 $InstDirLen + ${MAX_RELATIVE_PATH_LENGTH}
+        IntOp $0 $0 + 1  # Account for path separator between install dir and relative path
         ${If} $0 > 260
             ${If} ${Silent}
                 ${Print} "::warning:: The installation path may be too long ($0 chars, limit 260). Some files could fail to extract."
@@ -1608,6 +1609,7 @@ Section "Install"
 
     # Set hint for extraction error if path may be too long
     IntOp $0 $InstDirLen + ${MAX_RELATIVE_PATH_LENGTH}
+    IntOp $0 $0 + 1  # Account for path separator between install dir and relative path
     ${If} $0 > 260
     ${AndIf} $LongPathsEnabled == "0"
         StrCpy $PathTooLongHint "$\n$\nThis may be caused by the installation path being too long."

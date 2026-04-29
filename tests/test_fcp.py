@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
-from unittest.mock import patch
 
 import pytest
 
@@ -94,8 +93,7 @@ class MockPackageCacheRecord:
         return default
 
 
-@patch("constructor.fcp.read_paths_json")
-def test_check_duplicates_files_returns_max_path_length(mock_read_paths):
+def test_check_duplicates_files_returns_max_path_length(mocker):
     """Verify function returns max path length as third tuple element."""
     pc_rec1 = MockPackageCacheRecord(
         fn="pkg1-1.0.tar.bz2",
@@ -113,6 +111,7 @@ def test_check_duplicates_files_returns_max_path_length(mock_read_paths):
             return MockPathsJson(pc_rec1._paths)
         return MockPathsJson(pc_rec2._paths)
 
+    mock_read_paths = mocker.patch("constructor.fcp.read_paths_json")
     mock_read_paths.side_effect = read_paths_side_effect
 
     result = check_duplicates_files([pc_rec1, pc_rec2], "win-64", duplicate_files="skip")
@@ -122,11 +121,44 @@ def test_check_duplicates_files_returns_max_path_length(mock_read_paths):
     assert max_path_len == 38
 
 
-@patch("constructor.fcp.read_paths_json")
-def test_check_duplicates_files_empty_packages(mock_read_paths):
+def test_check_duplicates_files_empty_packages(mocker):
     """Verify returns 0 when no packages provided."""
+    mock_read_paths = mocker.patch("constructor.fcp.read_paths_json")
+
     result = check_duplicates_files([], "win-64", duplicate_files="skip")
 
     assert len(result) == 3
     assert result[2] == 0
     mock_read_paths.assert_not_called()
+
+
+def test_check_duplicates_files_with_env_prefixes(mocker):
+    """Verify env_prefixes adds prefix length to max path calculation."""
+    pc_rec_base = MockPackageCacheRecord(
+        fn="base-pkg-1.0.tar.bz2",
+        extracted_package_dir="/cache/base-pkg",
+        paths=["lib/short.py"],  # 12 chars, no prefix -> 12
+    )
+    pc_rec_env = MockPackageCacheRecord(
+        fn="env-pkg-1.0.tar.bz2",
+        extracted_package_dir="/cache/env-pkg",
+        paths=["lib/short.py"],  # 12 chars, with "envs/myenv/" prefix (11) -> 23
+    )
+
+    def read_paths_side_effect(extracted_dir):
+        if extracted_dir == "/cache/base-pkg":
+            return MockPathsJson(pc_rec_base._paths)
+        return MockPathsJson(pc_rec_env._paths)
+
+    mock_read_paths = mocker.patch("constructor.fcp.read_paths_json")
+    mock_read_paths.side_effect = read_paths_side_effect
+
+    env_prefixes = {pc_rec_env: "envs/myenv/"}
+    result = check_duplicates_files(
+        [pc_rec_base, pc_rec_env], "win-64", duplicate_files="skip", env_prefixes=env_prefixes
+    )
+
+    assert len(result) == 3
+    _, _, max_path_len = result
+    # "envs/myenv/" (11) + "lib/short.py" (12) = 23
+    assert max_path_len == 23
