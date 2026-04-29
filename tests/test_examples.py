@@ -869,7 +869,31 @@ def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
 
 def test_example_use_channel_remap(tmp_path, request):
     input_path = _example_path("use_channel_remap")
+    print(f"DEBUG channel_remap: input_path={input_path}")
+    print(f"DEBUG channel_remap: tmp_path={tmp_path}")
+    print(f"DEBUG channel_remap: CONDA_EXE={CONDA_EXE}")
+    # Read and print construct.yaml for debugging
+    construct_file = input_path / "construct.yaml"
+    if construct_file.exists():
+        print(f"DEBUG channel_remap: construct.yaml contents:")
+        print(construct_file.read_text())
     for installer, install_dir in create_installer(input_path, tmp_path):
+        print(f"DEBUG channel_remap: installer={installer}")
+        print(f"DEBUG channel_remap: install_dir={install_dir}")
+        # List installer contents/size for debugging
+        if installer.exists():
+            print(f"DEBUG channel_remap: installer size={installer.stat().st_size}")
+        # Check if this is a shell installer and peek at the header
+        if installer.suffix == ".sh":
+            with open(installer, "rb") as f:
+                # Read more of the header to find CONDA_CHANNELS
+                header = f.read(30000).decode("utf-8", errors="replace")
+                # Look for channel-related lines
+                for line in header.split("\n"):
+                    if "CONDA_CHANNELS" in line or "channels=" in line.lower():
+                        print(f"DEBUG channel_remap header: {line}")
+                    if "--offline" in line:
+                        print(f"DEBUG channel_remap header: {line}")
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         p = subprocess.run(
             [sys.executable, "-m", "conda", "list", "--prefix", install_dir, "--json"],
