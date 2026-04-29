@@ -130,6 +130,7 @@ ${Using:StrFunc} StrStr
 # are not written into install.log. STEP_LOG creates an intermittent file
 # that is output into these streams after the commands finish.
 !define STEP_LOG                      "$INSTDIR\.step.log"
+!define MAX_RELATIVE_PATH_LENGTH {{ max_relative_path_length }}
 
 var /global INIT_CONDA
 var /global REG_PY
@@ -1111,6 +1112,26 @@ Function OnDirectoryLeave
             MessageBox MB_OK|MB_ICONSTOP "The installation path should be shorter than 46 characters. \
                                           Please choose another location." \
                        /SD IDOK
+            Abort
+        ${EndIf}
+    ${EndIf}
+
+    # MAX_PATH check - installation will fail if path exceeds 260 characters
+    ${If} $LongPathsEnabled == "0"
+        IntOp $0 $InstDirLen + ${MAX_RELATIVE_PATH_LENGTH}
+        IntOp $0 $0 + 1  # Account for path separator between install dir and relative path
+        ${If} $0 > 260
+            IntOp $1 260 - ${MAX_RELATIVE_PATH_LENGTH}
+            IntOp $1 $1 - 1  # Account for path separator
+            ${If} ${Silent}
+                ${Print} "::error:: The installation path is too long. Your path is $InstDirLen characters, but must be at most $1 characters."
+            ${Else}
+                MessageBox MB_OK|MB_ICONSTOP \
+                    "The installation path is too long.$\n$\n\
+                    Your path is $InstDirLen characters, but must be at most $1 characters.$\n$\n\
+                    Please choose a shorter installation path." \
+                    /SD IDOK
+            ${EndIf}
             Abort
         ${EndIf}
     ${EndIf}

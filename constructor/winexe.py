@@ -252,6 +252,7 @@ def make_nsi(
     variables["initialize_by_default"] = info.get("initialize_by_default", None)
     variables["check_path_length"] = info.get("check_path_length", False)
     variables["check_path_spaces"] = info.get("check_path_spaces", True)
+    variables["max_relative_path_length"] = info.get("_max_relative_path_length", 0)
     variables["keep_pkgs"] = info.get("keep_pkgs") or False
     variables["pre_install_exists"] = bool(info.get("pre_install"))
     variables["post_install_exists"] = bool(info.get("post_install"))

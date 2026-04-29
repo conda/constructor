@@ -107,11 +107,12 @@ jobs:
             && files+=(--file "tests/extra-requirements-${{ runner.os }}.txt")
           conda install ${files[@]} -y
           echo "NSIS_USING_LOG_BUILD=1" >> $GITHUB_ENV
-          pip install -e . --no-deps --no-build-isolation
+          python -m pip install -e . --no-deps --no-build-isolation
       - name: Set up conda executable
         run: |
           if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
-            conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge micromamba
+            # Pin to <2.6 temporarily to debug test_example_use_channel_remap failure
+            conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge "micromamba<2.6"
             if [[ "${{ runner.os }}" == "Windows" ]]; then
               echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/Library/bin/micromamba.exe" >> $GITHUB_ENV
             else
