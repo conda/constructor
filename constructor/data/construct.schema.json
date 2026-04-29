@@ -477,7 +477,8 @@
     },
     "check_path_length": {
       "default": false,
-      "description": "Check the length of the path where the distribution is installed to ensure nodejs can be installed. Raise a message to request shorter paths (less than 46 character) or enable long paths on windows > 10 (require admin right). Default is False. (Windows only).",
+      "deprecated": true,
+      "description": "_Deprecated_. Path length validation is now always performed using the computed maximum relative path length from the package contents. This option will be removed in a future version. (Windows only).",
       "title": "Check Path Length",
       "type": "boolean"
     },
