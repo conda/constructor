@@ -13,10 +13,11 @@ import shutil
 import sys
 import tempfile
 from collections import defaultdict
+from collections.abc import Iterable
 from itertools import groupby
 from os.path import abspath, expanduser, isdir, join
 from subprocess import check_call
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from constructor.utils import filename_dist
 
@@ -144,8 +145,35 @@ def _fetch(download_dir, precs):
     return list(dict.fromkeys(PrefixGraph(pc.iter_records()).graph))
 
 
-def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
+def check_duplicates_files(
+    pc_recs: Iterable["PackageCacheRecord"],
+    platform: str,
+    duplicate_files: Literal["error", "warn", "skip"] = "error",
+    env_prefixes: dict["PackageCacheRecord", str] | None = None,
+) -> tuple[int, int, int]:
+    """
+    Check for duplicate files across packages and compute size/path metrics.
+
+    Iterates through all files in the provided package cache records to:
+    1. Detect duplicate files (same path in multiple packages)
+    2. Compute approximate tarball and extracted sizes
+    3. Track the longest relative file path (for MAX_PATH validation on Windows)
+
+    Args:
+        pc_recs: Package cache records to check.
+        platform: Target platform string (e.g., "win-64", "linux-64").
+        duplicate_files: How to handle duplicates - "error", "warn", or "skip".
+        env_prefixes: Optional dict mapping PackageCacheRecord -> path prefix string.
+            Used to account for extra_envs paths which are installed under
+            "envs/<name>/" rather than the base install directory. Records not
+            in this dict are assumed to be in the base environment (no prefix).
+
+    Returns:
+        Tuple of (approx_tarball_size, approx_extracted_size, max_relative_path_length)
+    """
     assert duplicate_files in ("warn", "skip", "error")
+    if env_prefixes is None:
+        env_prefixes = {}
 
     map_members_scase = defaultdict(set)
     map_members_icase = defaultdict(lambda: {"files": set(), "fns": set()})
@@ -162,9 +190,12 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
         total_tarball_size += int(pc_rec.get("size", 0))
 
         paths_data = read_paths_json(extracted_package_dir).paths
+        env_prefix_len = len(env_prefixes.get(pc_rec, ""))
         for path_data in paths_data:
             short_path = path_data.path
-            max_relative_path_length = max(max_relative_path_length, len(short_path))
+            max_relative_path_length = max(
+                max_relative_path_length, env_prefix_len + len(short_path)
+            )
             try:
                 size = path_data.size_in_bytes or getsize(join(extracted_package_dir, short_path))
             except AttributeError:
@@ -452,11 +483,17 @@ def _main(
     all_pc_recs = pc_recs.copy()
 
     extra_envs_data = {}
+    env_prefixes = {}  # Maps pc_rec -> "envs/<name>/" prefix for max path calculation
     for env_name, env_precs in extra_envs_precs.items():
         env_pc_recs, env_urls, env_dists, _ = _fetch_precs(
             env_precs, download_dir, transmute_file_type=transmute_file_type
         )
         extra_envs_data[env_name] = {"_urls": env_urls, "_dists": env_dists, "_records": env_precs}
+        env_prefix = f"envs/{env_name}/"
+        for pc_rec in env_pc_recs:
+            existing_prefix = env_prefixes.get(pc_rec, "")
+            if len(env_prefix) > len(existing_prefix):
+                env_prefixes[pc_rec] = env_prefix
         all_pc_recs += env_pc_recs
 
     duplicate_files = "warn" if ignore_duplicate_files else "error"
@@ -465,8 +502,12 @@ def _main(
         duplicate_files = "skip"
 
     all_pc_recs = list({rec: None for rec in all_pc_recs})  # deduplicate
+    # Pass all_pc_recs (base + extra_envs) to check_duplicates_files:
+    # - When extra_envs exists, duplicate_files="skip" so only sizes and max path are computed
+    # - When no extra_envs, all_pc_recs == pc_recs
+    # - env_prefixes dict ensures max path accounts for "envs/<name>/" prefix in extra_envs
     approx_tarballs_size, approx_pkgs_size, max_relative_path_length = check_duplicates_files(
-        all_pc_recs, platform, duplicate_files=duplicate_files
+        all_pc_recs, platform, duplicate_files=duplicate_files, env_prefixes=env_prefixes
     )
 
     return (
