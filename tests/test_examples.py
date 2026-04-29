@@ -119,12 +119,28 @@ def _execute(
         stdin=subprocess.PIPE if installer_input else None,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
+        text=False,  # Read as bytes to handle binary output
         env=env,
     )
     stdout, stderr = None, None
     try:
-        stdout, stderr = p.communicate(input=installer_input, timeout=timeout)
+        stdout_bytes, stderr_bytes = p.communicate(
+            input=installer_input.encode() if installer_input else None,
+            timeout=timeout,
+        )
+        # Decode with error handling to debug binary output issues
+        try:
+            stdout = stdout_bytes.decode('utf-8')
+        except UnicodeDecodeError as e:
+            print(f"DEBUG: stdout decode error at position {e.start}: {e.reason}")
+            print(f"DEBUG: bytes around error: {stdout_bytes[max(0,e.start-50):e.end+50]!r}")
+            stdout = stdout_bytes.decode('utf-8', errors='replace')
+        try:
+            stderr = stderr_bytes.decode('utf-8')
+        except UnicodeDecodeError as e:
+            print(f"DEBUG: stderr decode error at position {e.start}: {e.reason}")
+            print(f"DEBUG: bytes around error: {stderr_bytes[max(0,e.start-50):e.end+50]!r}")
+            stderr = stderr_bytes.decode('utf-8', errors='replace')
         retcode = p.poll()
         if check and retcode:
             raise subprocess.CalledProcessError(retcode, cmd, output=stdout, stderr=stderr)
