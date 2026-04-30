@@ -96,7 +96,7 @@ def setup_envs_commands(info, dir_path):
             "no_rcs_arg": info.get("_ignore_condarcs_arg", ""),
         }
     )
-    # now we generate one item per extra env, if present
+    # Now we generate one item per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
         env_info = info["extra_envs"][env_name]
         # Needed for shortcuts_flags function
