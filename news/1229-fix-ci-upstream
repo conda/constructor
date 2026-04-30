@@ -1,0 +1,20 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* CI: Add `pip` to dev environment (required after `conda-libmamba-solver` 26.4.0 enabled sharded repodata by default). (#1229)
+* CI: Pin `micromamba<2.6` due to cache regression ([mamba-org/mamba#4250](https://github.com/mamba-org/mamba/issues/4250)). (#1229)
