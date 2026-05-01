@@ -7,17 +7,18 @@
 fcp (fetch conda packages) module
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 import sys
 import tempfile
 from collections import defaultdict
-from collections.abc import Iterable
 from itertools import groupby
 from os.path import abspath, expanduser, isdir, join
 from subprocess import check_call
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from constructor.utils import filename_dist
 
@@ -39,6 +40,9 @@ from .conda_interface import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import Literal
+
     from .conda_interface import PackageCacheRecord
 
 logger = logging.getLogger(__name__)
@@ -146,10 +150,10 @@ def _fetch(download_dir, precs):
 
 
 def check_duplicates_files(
-    pc_recs: Iterable["PackageCacheRecord"],
+    pc_recs: Iterable[PackageCacheRecord],
     platform: str,
     duplicate_files: Literal["error", "warn", "skip"] = "error",
-    env_prefixes: dict["PackageCacheRecord", str] | None = None,
+    env_prefixes: dict[PackageCacheRecord, str] | None = None,
 ) -> tuple[int, int, int]:
     """
     Check for duplicate files across packages and compute size/path metrics.
@@ -167,6 +171,7 @@ def check_duplicates_files(
             Used to account for extra_envs paths which are installed under
             "envs/<name>/" rather than the base install directory. Records not
             in this dict are assumed to be in the base environment (no prefix).
+            The prefix string should include the trailing slash (e.g., "envs/myenv/").
 
     Returns:
         Tuple of (approx_tarball_size, approx_extracted_size, max_relative_path_length)

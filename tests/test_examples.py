@@ -162,7 +162,7 @@ def _check_installer_log(install_dir):
             "Once you have installed it, set NSIS_USING_LOG_BUILD=1.\n"
             "Otherwise, this usually means that the destination folder could not be created.\n"
             "Possible causes: permissions, non-supported characters, long paths...\n"
-            "Consider setting 'check_path_spaces' and 'check_path_length' to 'False'."
+            "Consider setting 'check_path_spaces' to 'False'."
         )
     if error_lines:
         raise AssertionError("\n".join(error_lines))
