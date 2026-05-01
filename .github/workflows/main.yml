@@ -111,7 +111,8 @@ jobs:
       - name: Set up conda executable
         run: |
           if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
-            conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge micromamba
+            # Pin to <2.6 due to cache regression: https://github.com/mamba-org/mamba/issues/4250
+            conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge "micromamba<2.6"
             if [[ "${{ runner.os }}" == "Windows" ]]; then
               echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/Library/bin/micromamba.exe" >> $GITHUB_ENV
             else
