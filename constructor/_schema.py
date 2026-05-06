@@ -872,6 +872,10 @@ class ConstructorConfiguration(BaseModel):
     The labels `org.opencontainers.image.title` and `org.opencontainers.image.version` are
     set automatically from `name` and `version`.
     """
+    docker_build: bool = False
+    """
+    Option to build the docker image after creating the Dockerfile.
+    """
 
 
 def fix_descriptions(obj):

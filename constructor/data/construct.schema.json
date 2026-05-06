@@ -653,6 +653,12 @@
       "description": "Base image to use for docker builds when `installer_type` includes `docker`. Should be a specific image reference. For reproducibility, please specify a SHA256 digest. For example: `debian:13.4-slim@sha256:abc123...`. If the digest is not provided, it defaults to `latest`.",
       "title": "Docker Base Image"
     },
+    "docker_build": {
+      "default": false,
+      "description": "Option to build the docker image after creating the Dockerfile.",
+      "title": "Docker Build",
+      "type": "boolean"
+    },
     "docker_labels": {
       "additionalProperties": {
         "minLength": 1,
