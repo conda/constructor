@@ -245,7 +245,8 @@
         "all",
         "exe",
         "pkg",
-        "sh"
+        "sh",
+        "docker"
       ],
       "title": "InstallerTypes",
       "type": "string"
@@ -638,6 +639,47 @@
       "description": "Set default installation prefix for domain users. If not provided, the installation prefix for domain users will be `%LOCALAPPDATA%\\<NAME>`. By default, it is different from the `default_prefix` value to avoid installing the distribution into the roaming profile. Environment variables will be expanded at install time. Windows only.",
       "title": "Default Prefix Domain User"
     },
+    "docker_base_image": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Base image to use for docker builds when `installer_type` includes `docker`. Should be a specific image reference. For reproducibility, please specify a SHA256 digest. For example: `debian:13.4-slim@sha256:abc123...`. If the digest is not provided, it defaults to `latest`.",
+      "title": "Docker Base Image"
+    },
+    "docker_labels": {
+      "additionalProperties": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "default": {},
+      "description": "Additional labels to add to the built docker image. The labels `org.opencontainers.image.title` and `org.opencontainers.image.version` are set automatically from `name` and `version`.",
+      "propertyNames": {
+        "minLength": 1
+      },
+      "title": "Docker Labels",
+      "type": "object"
+    },
+    "docker_tag": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Tag to use for the built docker image. If not provided, it will default to `<name>:<version>`.",
+      "title": "Docker Tag"
+    },
     "environment": {
       "anyOf": [
         {
@@ -864,7 +906,7 @@
         }
       ],
       "default": null,
-      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` on Linux and `exe` on Windows.",
+      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n- `docker`: a Dockerfile that replicates the installation environment\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` and `docker` on Linux and `exe` on Windows.",
       "title": "Installer Type"
     },
     "keep_pkgs": {
