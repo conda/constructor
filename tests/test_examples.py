@@ -1554,3 +1554,24 @@ def test_frozen_environment(tmp_path, request, has_conflict):
             s in c.value.stderr
             for s in ("RuntimeError", "freeze_base / freeze_env", "extra_files", "base")
         )
+
+
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
+@pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
+def test_docker_build(tmp_path):
+    input_path = _example_path("docker_build")
+    image_name = "docker-test"
+    output_path = tmp_path / "output"
+    docker_dir = output_path / "docker"
+
+    try:
+        for installer, _ in create_installer(input_path, output_path):
+            assert (docker_dir / "Dockerfile").exists()
+            assert (docker_dir / installer.name).exists()
+
+            subprocess.run(["docker", "build", "-t", image_name, str(docker_dir)], check=True)
+
+            assert subprocess.run(["docker", "run", "--rm", image_name, "conda", "--version"], capture_output=True, text=True, check=True)
+
+    finally:
+        subprocess.run(["docker", "rmi", image_name], check=False)
