@@ -2,7 +2,6 @@ import logging
 import shutil
 import subprocess
 import tempfile
-import platform
 from pathlib import Path
 from jinja2 import Template
 
@@ -90,8 +89,9 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     rendered_dockerfile = docker_template.render(
         constructor_version=__version__,
         base_image=docker_base_image,
-        default_prefix=info.get("default_prefix", "/opt/conda"),
+        default_prefix=info.get("default_prefix", f"/opt/{info.get('installer_name').lower()}"),
         installer_filename=Path(info["_outpath"]).name,
+        clean_cmd="$PREFIX/bin/mamba clean -afy" if "mamba" in specs else "$PREFIX/bin/conda clean -afy" if "conda" in specs else "",
         name=info["name"],
         version=info["version"],
         labels=info.get("docker_labels", {}),
