@@ -24,6 +24,3 @@ register_envs: true
 labels:
   maintainer: "jaidarice"
   description: "Test Docker image built with constructor."
-
-post_install: post_install_script.sh
-# post_install runs during .sh installer execution during Stage 1 of the Docker build.

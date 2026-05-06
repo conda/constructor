@@ -1569,9 +1569,12 @@ def test_docker_build(tmp_path):
             assert (docker_dir / "Dockerfile").exists()
             assert (docker_dir / installer.name).exists()
 
-            subprocess.run(["docker", "buildx", "build", "--load", "--platform", platform, "-t", image_name, str(docker_dir)], check=True)
-
-            result = subprocess.run(["docker", "run", "--rm", image_name, "conda", "--version"], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["docker", "run", "--rm", image_name, "conda", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
 
             assert "conda" in result.stdout
 

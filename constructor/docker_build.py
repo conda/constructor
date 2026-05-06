@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
 from jinja2 import Template
 
 from . import __version__
@@ -22,7 +23,8 @@ DOCKER_PLATFORM_MAP = {
     "osx-64": "linux/amd64",
 }
 
-def prepare_docker_context(info: dict, tmp_dir: Path) -> tuple[Path, Path]:
+
+def prepare_docker_context(info: dict, tmp_dir: Path) -> Path:
     """Copy the .sh installer into the Docker build directory.
 
     Parameters
@@ -36,13 +38,11 @@ def prepare_docker_context(info: dict, tmp_dir: Path) -> tuple[Path, Path]:
     Returns
     -------
     Path
-        Path to the tmp Docker build directory (``<_output_dir>/docker``).
+        Path to the tmp Docker build directory.
     """
     installer_path = Path(info["_outpath"])
     if not installer_path.exists():
-        raise RuntimeError(
-            f"Expected .sh installer not found: {installer_path}\n"
-        )
+        raise RuntimeError(f"Expected .sh installer not found: {installer_path}\n")
 
     shutil.copy(installer_path, tmp_dir / installer_path.name)
     logger.info("Copied installer to tmp directory: %s", tmp_dir / installer_path.name)
@@ -52,19 +52,19 @@ def prepare_docker_context(info: dict, tmp_dir: Path) -> tuple[Path, Path]:
 
 def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     """
-    Render the Dockerfile template and write it to `<docker_dir>/Dockerfile`.
+    Render the Dockerfile template and write it to the Docker build directory.
 
     Parameters
     ----------
     info: dict
         Constructor installer info dict.
     docker_dir: Path
-        Path to the Docker build directory (``<_output_dir>/docker``) returned by prepare_docker_context().
+        Path to the Docker build directory returned by prepare_docker_context().
 
     Returns
     -------
     Path
-        Path to the generated Dockerfile. ``<docker_dir>/Dockerfile``.
+        Path to the generated Dockerfile.
     """
     from .conda_interface import MatchSpec
 
@@ -91,11 +91,15 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
         base_image=docker_base_image,
         default_prefix=info.get("default_prefix", f"/opt/{info.get('installer_name').lower()}"),
         installer_filename=Path(info["_outpath"]).name,
-        clean_cmd="$PREFIX/bin/mamba clean -afy" if "mamba" in specs else "$PREFIX/bin/conda clean -afy" if "conda" in specs else "",
+        clean_cmd="$PREFIX/bin/mamba clean -afy"
+        if "mamba" in specs
+        else "$PREFIX/bin/conda clean -afy"
+        if "conda" in specs
+        else "",
         name=info["name"],
         version=info["version"],
         labels=info.get("docker_labels", {}),
-        init_cmd = "$PREFIX/bin/mamba shell" if "mamba" in specs else "$PREFIX/bin/python -m conda",
+        init_cmd="$PREFIX/bin/mamba shell" if "mamba" in specs else "$PREFIX/bin/python -m conda",
         register_envs=info.get("register_envs", True),
         keep_pkgs=info.get("keep_pkgs", False),
     )
@@ -108,7 +112,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
 
 def build_image(info: dict, docker_dir: Path) -> None:
     """Optionally build the docker image from the generated Dockerfile.
-    Currently only supports building on linux/arm64 and linux/amd64.
+    Currently supported on linux and macOS platforms.
 
     Parameters
     ----------
@@ -145,11 +149,22 @@ def build_image(info: dict, docker_dir: Path) -> None:
     image_version = info.get("docker_image_version", info["version"].split("-")[0])
     tag = f"{image_name}:{image_version}"
 
-    cmd = ["docker", "buildx", "build", "--load", "--platform", docker_platform, "-t", tag, str(docker_dir)]
+    cmd = [
+        "docker",
+        "buildx",
+        "build",
+        "--load",
+        "--platform",
+        docker_platform,
+        "-t",
+        tag,
+        str(docker_dir),
+    ]
 
     logger.info("Building Docker image: '%s'", tag)
     subprocess.run(cmd, check=True)
     logger.info("Docker image built: '%s'", tag)
+
 
 def create(info: dict, verbose: bool = False) -> None:
     """Build a Docker output
@@ -174,6 +189,8 @@ def create(info: dict, verbose: bool = False) -> None:
         output_docker_dir = Path(info["_output_dir"]) / "docker"
         output_docker_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy(tmp_path / "Dockerfile", output_docker_dir / "Dockerfile")
-        shutil.copy(tmp_path / Path(info["_outpath"]).name, output_docker_dir / Path(info["_outpath"]).name)
+        shutil.copy(
+            tmp_path / Path(info["_outpath"]).name, output_docker_dir / Path(info["_outpath"]).name
+        )
 
     logger.info("Docker output complete. Docker directory: '%s'", output_docker_dir)

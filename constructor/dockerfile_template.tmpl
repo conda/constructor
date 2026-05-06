@@ -15,9 +15,8 @@ RUN sh /tmp/installer.sh -b -p ${PREFIX} && \
     find "${PREFIX}/lib" -name 'lib*.a' -delete && \
     find "${PREFIX}/lib" -name 'lib*.js.map' -delete && \
     find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
-    {% if not keep_pkgs %}
-        rm -rf "$PREFIX/pkgs" && {{ clean_cmd }} && \
-    {% endif %}
+    {% if not keep_pkgs %}rm -rf "$PREFIX/pkgs" && {{ clean_cmd }} && \
+    {% endif %}\
     find "${PREFIX}" -follow -type f -name '*.a' -delete
 
 ##########################################################

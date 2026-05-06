@@ -49,7 +49,7 @@ def get_installer_type(info: dict):
     if docker_build and osname == "win":
         sys.exit(
             "Error: 'docker_build' is not supported on Windows. "
-            "Run the build on a Linux or macOS host instead."
+            "Run the build on Linux or macOS instead."
         )
 
     if docker_build and itype in ("pkg", "exe"):
