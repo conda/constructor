@@ -863,12 +863,14 @@ class ConstructorConfiguration(BaseModel):
     """
     docker_tag: NonEmptyStr | None = None
     """
-    Tag to use for the built docker image when `installer_type` includes `docker`.
+    Tag to use for the built docker image.
     If not provided, it will default to `<name>:<version>`.
     """
     docker_labels: dict[NonEmptyStr, NonEmptyStr] = {}
     """
-    Labels to add to the built docker image when `installer_type` includes `docker`.
+    Additional labels to add to the built docker image.
+    The labels `org.opencontainers.image.title` and `org.opencontainers.image.version` are
+    set automatically from `name` and `version`.
     """
 
 

@@ -91,7 +91,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     rendered_dockerfile = docker_template.render(
         constructor_version=__version__,
         base_image=docker_base_image,
-        default_prefix=info.get("default_prefix", f"/opt/{info.get('installer_name').lower()}"),
+        default_prefix=info.get("default_prefix", f"/opt/{info['name'].lower()}"),
         installer_filename=Path(info["_outpath"]).name,
         clean_cmd="$PREFIX/bin/mamba clean -afy"
         if "mamba" in specs
@@ -147,9 +147,7 @@ def build_image(info: dict, docker_dir: Path) -> None:
             "Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP)}."
         )
 
-    image_name = info.get("docker_image_name", info["name"].lower())
-    image_version = info.get("docker_image_version", info["version"].split("-")[0])
-    tag = f"{image_name}:{image_version}"
+    tag = info.get("docker_tag", f"{info['name']}:{info['version'].split('-')[0]}")
 
     cmd = [
         "docker",
