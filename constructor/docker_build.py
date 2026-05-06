@@ -1,3 +1,5 @@
+"""Logic for creating a Dockerfile and/or building Docker images from Constructor installers."""
+
 import logging
 import shutil
 import subprocess
