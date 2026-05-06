@@ -423,7 +423,9 @@ def main_build(
         if itype != "docker":
             info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
         else:
-            info["_outpath"] = abspath(join(output_dir, get_output_filename(info))).replace(".docker", ".sh")
+            info["_outpath"] = abspath(join(output_dir, get_output_filename(info))).replace(
+                ".docker", ".sh"
+            )
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())
