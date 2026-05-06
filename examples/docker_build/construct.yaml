@@ -21,6 +21,6 @@ keep_pkgs: true
 
 register_envs: true
 
-labels:
+docker_labels:
   maintainer: "jaidarice"
   description: "Test Docker image built with constructor."
