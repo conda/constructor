@@ -40,10 +40,24 @@ logger = logging.getLogger(__name__)
 def get_installer_type(info: dict):
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh", "docker"), "osx": ("sh", "pkg"), "win": ("exe",)}
+    os_allowed = {"linux": ("sh", "docker"), "osx": ("sh", "pkg", "docker"), "win": ("exe",)}
     all_allowed = set(sum(os_allowed.values(), ("all",)))
 
     itype = info.get("installer_type")
+    docker_build = info.get("docker_build", False)
+
+    if docker_build and osname == "win":
+        sys.exit(
+            "Error: 'docker_build' is not supported on Windows. "
+            "Run the build on a Linux or macOS host instead."
+        )
+
+    if docker_build and itype in ("pkg", "exe"):
+        sys.exit(
+            "Error: 'docker_build' not compatible with installer_type. "
+            "Use installer_type: 'sh', 'docker', or 'all' to build a Docker image."
+        )
+
     if not itype:
         return os_allowed[osname][:1]
     elif itype == "all":
@@ -56,6 +70,8 @@ def get_installer_type(info: dict):
         sys.exit(
             "Error: invalid installer type '%s' for %s; allowed: %s" % (itype, osname, os_allowed)
         )
+    elif itype == "docker" or docker_build:
+        return ("sh", "docker")
     else:
         return (itype,)
 
