@@ -7,6 +7,8 @@
 fcp (fetch conda packages) module
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
@@ -38,6 +40,9 @@ from .conda_interface import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import Literal
+
     from .conda_interface import PackageCacheRecord
 
 logger = logging.getLogger(__name__)
@@ -144,8 +149,36 @@ def _fetch(download_dir, precs):
     return list(dict.fromkeys(PrefixGraph(pc.iter_records()).graph))
 
 
-def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
+def check_duplicates_files(
+    pc_recs: Iterable[PackageCacheRecord],
+    platform: str,
+    duplicate_files: Literal["error", "warn", "skip"] = "error",
+    env_prefixes: dict[PackageCacheRecord, str] | None = None,
+) -> tuple[int, int, int]:
+    """
+    Check for duplicate files across packages and compute size/path metrics.
+
+    Iterates through all files in the provided package cache records to:
+    1. Detect duplicate files (same path in multiple packages)
+    2. Compute approximate tarball and extracted sizes
+    3. Track the longest relative file path (for MAX_PATH validation on Windows)
+
+    Args:
+        pc_recs: Package cache records to check.
+        platform: Target platform string (e.g., "win-64", "linux-64").
+        duplicate_files: How to handle duplicates - "error", "warn", or "skip".
+        env_prefixes: Optional dict mapping PackageCacheRecord -> path prefix string.
+            Used to account for extra_envs paths which are installed under
+            "envs/<name>/" rather than the base install directory. Records not
+            in this dict are assumed to be in the base environment (no prefix).
+            The prefix string should include the trailing slash (e.g., "envs/myenv/").
+
+    Returns:
+        Tuple of (approx_tarball_size, approx_extracted_size, max_relative_path_length)
+    """
     assert duplicate_files in ("warn", "skip", "error")
+    if env_prefixes is None:
+        env_prefixes = {}
 
     map_members_scase = defaultdict(set)
     map_members_icase = defaultdict(lambda: {"files": set(), "fns": set()})
@@ -153,6 +186,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
     # Keep a min, 50MB buffer size
     total_tarball_size = 52428800
     total_extracted_pkgs_size = 52428800
+    max_relative_path_length = 0
 
     for pc_rec in pc_recs:
         fn = pc_rec.fn
@@ -161,8 +195,12 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
         total_tarball_size += int(pc_rec.get("size", 0))
 
         paths_data = read_paths_json(extracted_package_dir).paths
+        env_prefix_len = len(env_prefixes.get(pc_rec, ""))
         for path_data in paths_data:
             short_path = path_data.path
+            max_relative_path_length = max(
+                max_relative_path_length, env_prefix_len + len(short_path)
+            )
             try:
                 size = path_data.size_in_bytes or getsize(join(extracted_package_dir, short_path))
             except AttributeError:
@@ -176,7 +214,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             map_members_icase[short_path_lower]["fns"].add(fn)
 
     if duplicate_files == "skip":
-        return total_tarball_size, total_extracted_pkgs_size
+        return total_tarball_size, total_extracted_pkgs_size, max_relative_path_length
 
     logger.info("Checking for duplicate files ...")
     for member in map_members_scase:
@@ -201,7 +239,7 @@ def check_duplicates_files(pc_recs, platform, duplicate_files="error"):
             else:
                 sys.exit(f"Error: {msg_str}")
 
-    return total_tarball_size, total_extracted_pkgs_size
+    return total_tarball_size, total_extracted_pkgs_size, max_relative_path_length
 
 
 def _precs_from_environment(environment, input_dir):
@@ -443,18 +481,24 @@ def _main(
             input_dir=input_dir,
         )
     if dry_run:
-        return None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None, None, None, None
     pc_recs, _urls, dists, has_conda = _fetch_precs(
         precs, download_dir, transmute_file_type=transmute_file_type
     )
     all_pc_recs = pc_recs.copy()
 
     extra_envs_data = {}
+    env_prefixes = {}  # Maps pc_rec -> "envs/<name>/" prefix for max path calculation
     for env_name, env_precs in extra_envs_precs.items():
         env_pc_recs, env_urls, env_dists, _ = _fetch_precs(
             env_precs, download_dir, transmute_file_type=transmute_file_type
         )
         extra_envs_data[env_name] = {"_urls": env_urls, "_dists": env_dists, "_records": env_precs}
+        env_prefix = f"envs/{env_name}/"
+        for pc_rec in env_pc_recs:
+            existing_prefix = env_prefixes.get(pc_rec, "")
+            if len(env_prefix) > len(existing_prefix):
+                env_prefixes[pc_rec] = env_prefix
         all_pc_recs += env_pc_recs
 
     duplicate_files = "warn" if ignore_duplicate_files else "error"
@@ -463,8 +507,12 @@ def _main(
         duplicate_files = "skip"
 
     all_pc_recs = list({rec: None for rec in all_pc_recs})  # deduplicate
-    approx_tarballs_size, approx_pkgs_size = check_duplicates_files(
-        pc_recs, platform, duplicate_files=duplicate_files
+    # Pass all_pc_recs (base + extra_envs) to check_duplicates_files:
+    # - When extra_envs exists, duplicate_files="skip" so only sizes and max path are computed
+    # - When no extra_envs, all_pc_recs == pc_recs
+    # - env_prefixes dict ensures max path accounts for "envs/<name>/" prefix in extra_envs
+    approx_tarballs_size, approx_pkgs_size, max_relative_path_length = check_duplicates_files(
+        all_pc_recs, platform, duplicate_files=duplicate_files, env_prefixes=env_prefixes
     )
 
     return (
@@ -476,6 +524,7 @@ def _main(
         approx_pkgs_size,
         has_conda,
         extra_envs_data,
+        max_relative_path_length,
     )
 
 
@@ -529,6 +578,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
             approx_pkgs_size,
             has_conda,
             extra_envs_info,
+            max_relative_path_length,
         ) = _main(
             name,
             version,
@@ -561,3 +611,4 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     info["_has_conda"] = has_conda
     # contains {env_name: [_dists, _urls, _records]} for each extra environment
     info["_extra_envs_info"] = extra_envs_info
+    info["_max_relative_path_length"] = max_relative_path_length
