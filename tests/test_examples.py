@@ -1560,9 +1560,13 @@ def test_frozen_environment(tmp_path, request, has_conflict):
 @pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
 def test_docker_build(tmp_path):
     input_path = _example_path("docker_build")
-    image_name = "docker-test"
     output_path = tmp_path / "output"
     docker_dir = output_path / "docker"
+
+    yaml = YAML()
+    with open(input_path / "construct.yaml") as f:
+        config = yaml.load(f)
+    image_name = f"{config['name'].lower()}:{config['version'].split('-')[0]}"
 
     try:
         for installer, _ in create_installer(input_path, output_path):
