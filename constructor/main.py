@@ -44,6 +44,20 @@ def get_installer_type(info: dict):
     all_allowed = set(sum(os_allowed.values(), ("all",)))
 
     itype = info.get("installer_type")
+    docker_build = info.get("docker_build", False)
+
+    if docker_build and osname == "win":
+        sys.exit(
+            "Error: 'docker_build' is not supported on Windows. "
+            "Run the build on Linux or macOS instead."
+        )
+
+    if docker_build and itype in ("pkg", "exe"):
+        sys.exit(
+            "Error: 'docker_build' not compatible with installer_type. "
+            "Use installer_type: 'sh', 'docker', or 'all' to build a Docker image."
+        )
+
     if not itype:
         return os_allowed[osname][:1]
     elif itype == "all":
@@ -56,6 +70,8 @@ def get_installer_type(info: dict):
         sys.exit(
             "Error: invalid installer type '%s' for %s; allowed: %s" % (itype, osname, os_allowed)
         )
+    elif itype == "docker" or docker_build:
+        return ("sh", "docker")
     else:
         return (itype,)
 
@@ -399,8 +415,17 @@ def main_build(
             from .winexe import create as winexe_create
 
             create = winexe_create
+        elif itype == "docker":
+            from .docker_build import create as docker_create
+
+            create = docker_create
         info["installer_type"] = itype
-        info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
+        if itype != "docker":
+            info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
+        else:
+            info["_outpath"] = abspath(join(output_dir, get_output_filename(info))).replace(
+                ".docker", ".sh"
+            )
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())

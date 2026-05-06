@@ -1,0 +1,26 @@
+name: test_docker
+version: 1.0.0
+
+channels:
+  - conda-forge
+
+specs:
+  - python
+  - numpy
+  - conda
+
+installer_type: docker
+# Generates Dockerfile and stages the installer. Does not build the image.
+
+docker_build: true
+# Builds the Docker image after generating the Dockerfile and staging installer files.
+
+docker_base_image: "debian:13.4-slim@sha256:cedb1ef40439206b673ee8b33a46a03a0c9fa90bf3732f54704f99cb061d2c5a"
+
+keep_pkgs: true
+
+register_envs: true
+
+docker_labels:
+  maintainer: "jaidarice"
+  description: "Test Docker image built with constructor."

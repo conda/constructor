@@ -42,6 +42,7 @@ class InstallerTypes(StrEnum):
     EXE = "exe"
     PKG = "pkg"
     SH = "sh"
+    DOCKER = "docker"
 
 
 class PkgDomains(StrEnum):
@@ -403,10 +404,11 @@ class ConstructorConfiguration(BaseModel):
     - `sh`: shell-based installer for Linux or macOS
     - `pkg`: macOS GUI installer built with Apple's `pkgbuild`
     - `exe`: Windows GUI installer built with NSIS
+    - `docker`: a Dockerfile that replicates the installation environment
 
     The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
     value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
-    as `sh` on Linux and `exe` on Windows.
+    as `sh` and `docker` on Linux and `exe` on Windows.
 
     """
     license_file: NonEmptyStr | None = None
@@ -852,6 +854,27 @@ class ConstructorConfiguration(BaseModel):
         conda:
             message: "This base environment is frozen and cannot be modified."
     ```
+    """
+    docker_base_image: Annotated[str, Field(min_length=1)] | None = None
+    """
+    Base image to use for docker builds when `installer_type` includes `docker`.
+    Should be a specific image reference. For reproducibility, please specify a SHA256 digest.
+    For example: `debian:13.4-slim@sha256:abc123...`. If the digest is not provided, it defaults to `latest`.
+    """
+    docker_tag: NonEmptyStr | None = None
+    """
+    Tag to use for the built docker image.
+    If not provided, it will default to `<name>:<version>`.
+    """
+    docker_labels: dict[NonEmptyStr, NonEmptyStr] = {}
+    """
+    Additional labels to add to the built docker image.
+    The labels `org.opencontainers.image.title` and `org.opencontainers.image.version` are
+    set automatically from `name` and `version`.
+    """
+    docker_build: bool = False
+    """
+    Option to build the docker image after creating the Dockerfile.
     """
 
 
