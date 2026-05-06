@@ -420,7 +420,8 @@ def main_build(
 
             create = docker_create
         info["installer_type"] = itype
-        info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
+        if itype != "docker":
+            info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())
