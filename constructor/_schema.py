@@ -408,7 +408,7 @@ class ConstructorConfiguration(BaseModel):
 
     The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
     value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
-    as `sh` on Linux and `exe` on Windows.
+    as `sh` and `docker` on Linux and `exe` on Windows.
 
     """
     license_file: NonEmptyStr | None = None
@@ -855,16 +855,11 @@ class ConstructorConfiguration(BaseModel):
             message: "This base environment is frozen and cannot be modified."
     ```
     """
-    docker_base_image: NonEmptyStr | None = None
+    docker_base_image: Annotated[str, Field(min_length=1)] | None = None
     """
     Base image to use for docker builds when `installer_type` includes `docker`.
-    Defaults to `debian:13.4-slim`.
-    """
-    docker_base_image_sha: NonEmptyStr | None = None
-    """
-    If `docker_base_image` is provided, you can also provide a SHA256 hash of
-    the image to ensure the integrity of the base image used for the build.
-    Otherwise, the base image defaults to `latest`.
+    Should be a specific image reference. For reproducibility, please specify a SHA256 digest.
+    For example: `debian:13.4-slim@sha256:abc123...`. If the digest is not provided, it defaults to `latest`.
     """
     docker_tag: NonEmptyStr | None = None
     """
