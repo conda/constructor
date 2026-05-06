@@ -10,12 +10,15 @@ ARG PREFIX={{ default_prefix }}
 
 COPY {{ installer_filename }} /tmp/installer.sh
 
-RUN bash  /tmp/installer.sh -b -p ${PREFIX} && \
-    rm -rf "${PREFIX}/uninstall.sh" "${PREFIX}/_conda" && \
+RUN sh /tmp/installer.sh -b -p ${PREFIX} && \
+    rm -rf "${PREFIX}/uninstall.sh" "${PREFIX}/_conda" || true && \
     find "${PREFIX}/lib" -name 'lib*.a' -delete && \
     find "${PREFIX}/lib" -name 'lib*.js.map' -delete && \
     find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
-    "$PREFIX/bin/python" -m conda clean -afy && \
+    {% if not keep_pkgs %}
+        rm -rf "$PREFIX/pkgs" && \
+        "$PREFIX/bin/python" -m conda clean -afy || "$PREFIX/bin/mamba" clean -afy && \
+    {% endif %}
     find "${PREFIX}" -follow -type f -name '*.a' -delete
 
 ##########################################################
@@ -39,16 +42,11 @@ ENV LC_ALL=C.UTF-8
 ENV PATH="${PREFIX}/bin:${PATH}"
 
 COPY --from=builder ${PREFIX} ${PREFIX}
+{% if register_envs %}
 COPY --from=builder /root/.conda /root/.conda
+{% endif %}
 
-RUN echo 'export PATH=$(sed -e "s,:\?/opt/conda/bin:,," <<< "${PATH}")' >> ~/.bashrc && \
-    "$PREFIX/bin/python" -m conda init --all
-    if [ -f "$PREFIX/bin/mamba" ]; then \
-        if [ "$("$PREFIX/bin/mamba" --version | head -n 1 | cut -d' ' -f2 | cut -d'.' -f1)" -lt 2 ]; then \
-            "$PREFIX/bin/python" -m mamba.mamba init; \
-        else \
-            "$PREFIX/bin/mamba" shell init; \
-        fi; \
-    fi
+RUN echo 'export PATH=$(sed -e "s,:\?{{ default_prefix }}/bin:,," <<< "${PATH}")' >> ~/.bashrc && \
+    {{ init_cmd }} init --all
 
 CMD [ "/bin/bash" ]
