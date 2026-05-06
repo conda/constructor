@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 def get_installer_type(info: dict):
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh", "docker"), "osx": ("sh", "pkg"), "win": ("exe",)}
+    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe",)}
     all_allowed = set(sum(os_allowed.values(), ("all",)))
 
     itype = info.get("installer_type")
