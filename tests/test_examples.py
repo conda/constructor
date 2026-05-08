@@ -1561,7 +1561,7 @@ def test_frozen_environment(tmp_path, request, has_conflict):
 def test_docker_build(tmp_path):
     input_path = _example_path("docker_build")
     output_path = tmp_path / "output"
-    docker_dir = output_path / "docker"
+    docker_dir = output_path / "installer" / "docker"
 
     yaml = YAML()
     with open(input_path / "construct.yaml") as f:
@@ -1572,6 +1572,10 @@ def test_docker_build(tmp_path):
         for installer, _ in create_installer(input_path, output_path):
             assert (docker_dir / "Dockerfile").exists()
             assert (docker_dir / installer.name).exists()
+
+            tarballs = list(docker_dir.glob("*.tar"))
+            assert tarballs, "No Docker image tarball found in docker dir"
+            subprocess.run(["docker", "load", "-i", str(tarballs[0])], check=True)
 
             result = subprocess.run(
                 ["docker", "run", "--rm", image_name, "conda", "--version"],
