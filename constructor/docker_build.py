@@ -110,7 +110,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     return dockerfile_path
 
 
-def build_image(info: dict, docker_dir: Path, docker_dest: Path) -> None:
+def build_image(info: dict, docker_dir: Path) -> None:
     """Optionally build the docker image from the generated Dockerfile.
     Currently supported on linux and macOS platforms.
 
@@ -119,9 +119,7 @@ def build_image(info: dict, docker_dir: Path, docker_dest: Path) -> None:
     info: dict
         Constructor installer info dict.
     docker_dir: Path
-        Path to the Docker directory containing the Dockerfile.
-    docker_dest: Path
-        Path to the output directory where the built Docker image tarball will be saved.
+        Path to the Docker directory containing the Docker outputs.
 
     """
     if info.get("_platform") not in DOCKER_PLATFORM_MAP:
@@ -148,7 +146,8 @@ def build_image(info: dict, docker_dir: Path, docker_dest: Path) -> None:
         )
 
     tag = info.get("docker_tag", f"{info['name'].lower()}:{info['version'].split('-')[0]}")
-    tarball_dest = docker_dest / f"{tag.replace(':', '-')}-{docker_platform.replace('/', '-')}.tar"
+    docker_dir = Path(info["_output_dir"]) / "docker"
+    tarball_dest = docker_dir / f"{tag.replace(':', '-')}-{docker_platform.replace('/', '-')}.tar"
 
     cmd = [
         "docker",
