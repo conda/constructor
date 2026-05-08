@@ -40,8 +40,15 @@ logger = logging.getLogger(__name__)
 def get_installer_type(info: dict):
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe",)}
-    all_allowed = set(sum(os_allowed.values(), ("all",)))
+    os_allowed = {
+        "linux": ("sh",),
+        "osx": (
+            "sh",
+            "pkg",
+        ),
+        "win": ("exe",),
+    }
+    all_allowed = set(sum(os_allowed.values(), ("all", "docker")))
 
     itype = info.get("installer_type")
     docker_build = info.get("docker_build", False)
@@ -51,11 +58,10 @@ def get_installer_type(info: dict):
             "Error: 'docker_build' is not supported on Windows. "
             "Run the build on Linux or macOS instead."
         )
-
     if docker_build and itype in ("pkg", "exe"):
         sys.exit(
-            "Error: 'docker_build' not compatible with installer_type. "
-            "Use installer_type: 'sh', 'docker', or 'all' to build a Docker image."
+            "Error: 'docker_build' is not compatible with installer_type 'pkg' or 'exe'. "
+            "Use installer_type: 'sh', 'docker', or omit installer_type."
         )
 
     if not itype:
@@ -65,13 +71,13 @@ def get_installer_type(info: dict):
     elif itype not in all_allowed:
         all_allowed = ", ".join(sorted(all_allowed))
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
+    elif itype == "docker" or docker_build:
+        return ("sh", "docker")
     elif itype not in os_allowed[osname]:
         os_allowed = ", ".join(sorted(os_allowed[osname]))
         sys.exit(
             "Error: invalid installer type '%s' for %s; allowed: %s" % (itype, osname, os_allowed)
         )
-    elif itype == "docker" or docker_build:
-        return ("sh", "docker")
     else:
         return (itype,)
 
@@ -217,6 +223,12 @@ def main_build(
     info["_conda_exe"] = abspath(conda_exe)
     info["_debug"] = debug
     itypes = get_installer_type(info)
+
+    if "docker" in itypes and not info.get("docker_base_image"):
+        sys.exit(
+            "Error: docker_base_image is required when building Docker output. "
+            "Please specify a base image using the 'docker_base_image' key in construct.yaml."
+        )
 
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
@@ -429,7 +441,13 @@ def main_build(
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())
-        logger.info("Successfully created '%(_outpath)s'.", info)
+        if itype == "docker":
+            logger.info(
+                "Docker output complete. Docker directory: '%s'",
+                Path(info["_output_dir"]) / "docker",
+            )
+        else:
+            logger.info("Successfully created '%(_outpath)s'.", info)
 
     # Merge info files for each installer type
     if len(itypes) > 1:

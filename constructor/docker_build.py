@@ -1,4 +1,4 @@
-"""Logic for creating a Dockerfile and/or building Docker images from Constructor installers."""
+"""Logic for creating a Dockerfile and/or building portable Docker images from Constructor installers."""
 
 import logging
 import shutil
@@ -66,7 +66,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     Returns
     -------
     Path
-        Path to the generated Dockerfile.
+        Path to the generated Dockerfile, or None if generation is skipped.
     """
     from .conda_interface import MatchSpec
 
@@ -76,11 +76,11 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
 
     docker_base_image = info.get("docker_base_image")
     if not docker_base_image:
-        raise RuntimeError(
-            "Base image for Dockerfile not specified. "
-            "Please set 'docker_base_image' in construct.yaml, e.g.:\n"
-            " docker_base_image: debian:13.4-slim@sha256:4ffb3a1511099754cddc70eb1b12e50ffdb67619aa0ab6c13fcd800a78ef7c7a\n"
+        logger.warning(
+            "Skipping Dockerfile generation. 'docker_base_image' not specified in construct.yaml."
         )
+        return None
+
     if "@" not in docker_base_image:
         logger.warning(
             "No SHA256 digest specified for docker_base_image. "
@@ -95,9 +95,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
         installer_filename=Path(info["_outpath"]).name,
         clean_cmd="$PREFIX/bin/mamba clean -afy"
         if "mamba" in specs
-        else "$PREFIX/bin/conda clean -afy"
-        if "conda" in specs
-        else "",
+        else "$PREFIX/bin/conda clean -afy",
         name=info["name"],
         version=info["version"],
         labels=info.get("docker_labels", {}),
@@ -112,7 +110,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     return dockerfile_path
 
 
-def build_image(info: dict, docker_dir: Path) -> None:
+def build_image(info: dict, docker_dir: Path, docker_dest: Path) -> None:
     """Optionally build the docker image from the generated Dockerfile.
     Currently supported on linux and macOS platforms.
 
@@ -122,12 +120,14 @@ def build_image(info: dict, docker_dir: Path) -> None:
         Constructor installer info dict.
     docker_dir: Path
         Path to the Docker directory containing the Dockerfile.
+    docker_dest: Path
+        Path to the output directory where the built Docker image tarball will be saved.
 
     """
     if info.get("_platform") not in DOCKER_PLATFORM_MAP:
         logger.warning(
             f"Building Docker images is not supported on platform '{info['_platform']}'. "
-            "Skipping Docker build. You can still generate the Dockerfile by and build the image manually using 'docker buildx' on a supported platform or using Docker Desktop. "
+            "Skipping Docker build. You can still build the image manually using 'docker buildx' on a supported platform or Docker Desktop. "
             "Supported platforms for Docker build are: linux/amd64 and linux/arm64."
         )
         return
@@ -144,26 +144,28 @@ def build_image(info: dict, docker_dir: Path) -> None:
     if docker_platform is None:
         raise RuntimeError(
             f"Unsupported platform for Docker build: '{info['_platform']}'. "
-            "Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP)}."
+            f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP)}."
         )
 
-    tag = info.get("docker_tag", f"{info['name']}:{info['version'].split('-')[0]}")
+    tag = info.get("docker_tag", f"{info['name'].lower()}:{info['version'].split('-')[0]}")
+    tarball_dest = docker_dest / f"{tag.replace(':', '-')}-{docker_platform.replace('/', '-')}.tar"
 
     cmd = [
         "docker",
         "buildx",
         "build",
-        "--load",
+        str(docker_dir),
         "--platform",
         docker_platform,
         "-t",
         tag,
-        str(docker_dir),
+        "--output",
+        f"type=docker,dest={tarball_dest}",
     ]
 
     logger.info("Building Docker image: '%s'", tag)
     subprocess.run(cmd, check=True)
-    logger.info("Docker image built: '%s'", tag)
+    logger.info("Docker image saved to: '%s'", tarball_dest)
 
 
 def create(info: dict, verbose: bool = False) -> None:
@@ -180,17 +182,22 @@ def create(info: dict, verbose: bool = False) -> None:
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         tmp_path = Path(temp_dir)
+        info["_outpath"] = info["_outpath"].replace(".docker", ".sh")
         prepare_docker_context(info, tmp_path)
-        generate_dockerfile(info, tmp_path)
-
-        if info.get("docker_build"):
-            build_image(info, tmp_path)
+        dockerfile = generate_dockerfile(info, tmp_path)
+        if dockerfile is None:
+            logger.warning("Dockerfile generation skipped. Docker image will not be built.")
+            return
 
         output_docker_dir = Path(info["_output_dir"]) / "docker"
         output_docker_dir.mkdir(parents=True, exist_ok=True)
+
         shutil.copy(tmp_path / "Dockerfile", output_docker_dir / "Dockerfile")
         shutil.copy(
             tmp_path / Path(info["_outpath"]).name, output_docker_dir / Path(info["_outpath"]).name
         )
+
+        if info.get("docker_build"):
+            build_image(info, output_docker_dir)
 
     logger.info("Docker output complete. Docker directory: '%s'", output_docker_dir)
