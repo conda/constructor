@@ -1,8 +1,7 @@
 ### Enhancements
 
-* Add docker support, enabling constructor to generate a Dockerfile and optionally build a Docker image. (#1219)
-    * `installer_type: docker` generates the Dockerfile
-    * `docker_build: true` builds the Docker image
+* Add `installer_type: docker` support to generate a Dockerfile from a constructor build to be used as-is or modified. (#1219)
+* Add `docker_build: true` support to build a portable Docker image. (#1219)
 
 ### Bug fixes
 
