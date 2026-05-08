@@ -167,7 +167,7 @@ def build_image(info: dict, docker_dir: Path) -> None:
 
     logger.info("Saving Docker image to tarball: '%s'", tarball_dest)
     with open(tarball_dest, "wb") as f:
-        subprocess.run(["docker", "save", tag], check=True, stdout=f)
+        subprocess.run(["docker", "save", tag, "-o", str(tarball_dest)], check=True, stdout=f)
     logger.info("Docker image saved to: '%s'", tarball_dest)
 
 
