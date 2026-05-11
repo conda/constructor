@@ -552,11 +552,11 @@ interactive installation. (Windows only).
 
 Only applies if `register_python` is true.
 
-### `check_path_length`
+### ~~`check_path_length`~~
 
-Check the length of the path where the distribution is installed to ensure nodejs
-can be installed.  Raise a message to request shorter paths (less than 46 character)
-or enable long paths on windows > 10 (require admin right). Default is False. (Windows only).
+_Deprecated_. Path length validation is now always performed using the computed
+maximum relative path length from the package contents. This option will be
+removed in a future version. (Windows only).
 
 ### `check_path_spaces`
 

@@ -1,5 +1,6 @@
 pytest
 pytest-cov
+pytest-mock
 coverage
 jinja2
 ruamel.yaml
