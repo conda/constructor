@@ -1071,22 +1071,30 @@ Function OnDirectoryLeave
     StrLen $InstDirLen "$InstDir"
 
     # MAX_PATH check - installation will fail if path exceeds 260 characters
+    # If running as admin on Windows 10+, automatically enable long path support
     ${If} $LongPathsEnabled == "0"
         IntOp $0 $InstDirLen + ${MAX_RELATIVE_PATH_LENGTH}
         IntOp $0 $0 + 1  # Account for path separator between install dir and relative path
         ${If} $0 > 260
-            IntOp $1 260 - ${MAX_RELATIVE_PATH_LENGTH}
-            IntOp $1 $1 - 1  # Account for path separator
-            ${If} ${Silent}
-                ${Print} "::error:: The installation path is too long. Your path is $InstDirLen characters, but must be at most $1 characters."
+            ${If} ${AtLeastWin10}
+            ${AndIfNot} $NO_REGISTRY = "1"
+            ${AndIf} ${UAC_IsAdmin}
+                # Enable long path support via registry
+                WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
             ${Else}
-                MessageBox MB_OK|MB_ICONSTOP \
-                    "The installation path is too long.$\n$\n\
-                    Your path is $InstDirLen characters, but must be at most $1 characters.$\n$\n\
-                    Please choose a shorter installation path." \
-                    /SD IDOK
+                IntOp $1 260 - ${MAX_RELATIVE_PATH_LENGTH}
+                IntOp $1 $1 - 1  # Account for path separator
+                ${If} ${Silent}
+                    ${Print} "::error:: The installation path is too long. Your path is $InstDirLen characters, but must be at most $1 characters."
+                ${Else}
+                    MessageBox MB_OK|MB_ICONSTOP \
+                        "The installation path is too long.$\n$\n\
+                        Your path is $InstDirLen characters, but must be at most $1 characters.$\n$\n\
+                        Please choose a shorter installation path." \
+                        /SD IDOK
+                ${EndIf}
+                Abort
             ${EndIf}
-            Abort
         ${EndIf}
     ${EndIf}
 

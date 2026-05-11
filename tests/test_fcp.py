@@ -69,7 +69,7 @@ def test_exclude_packages(values: tuple[..., GenericObject], expected_value):
 class MockPathData:
     """Represents a file path entry."""
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         self.path = path
         self.size_in_bytes = 1  # must be non-zero to avoid filesystem access
 
@@ -77,19 +77,19 @@ class MockPathData:
 class MockPathsJson:
     """Wraps a list of MockPathData entries."""
 
-    def __init__(self, paths):
+    def __init__(self, paths: list[str]) -> None:
         self.paths = [MockPathData(p) for p in paths]
 
 
 class MockPackageCacheRecord:
     """Represents a package record."""
 
-    def __init__(self, fn, extracted_package_dir, paths):
+    def __init__(self, fn: str, extracted_package_dir: str, paths: list[str]) -> None:
         self.fn = fn
         self.extracted_package_dir = extracted_package_dir
         self._paths = paths
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: object = None) -> object:
         return default
 
 
@@ -162,3 +162,19 @@ def test_check_duplicates_files_with_env_prefixes(mocker):
     _, _, max_path_len = result
     # "envs/myenv/" (11) + "lib/short.py" (12) = 23
     assert max_path_len == 23
+
+
+def test_check_duplicates_files_env_prefix_requires_trailing_slash():
+    """Verify env_prefixes values must end with '/'."""
+    pc_rec = MockPackageCacheRecord(
+        fn="pkg-1.0.tar.bz2",
+        extracted_package_dir="/cache/pkg",
+        paths=["lib/file.py"],
+    )
+
+    # Missing trailing slash should raise ValueError
+    env_prefixes = {pc_rec: "envs/myenv"}  # no trailing slash
+    with pytest.raises(ValueError, match="must end with '/'"):
+        check_duplicates_files(
+            [pc_rec], "win-64", duplicate_files="skip", env_prefixes=env_prefixes
+        )
