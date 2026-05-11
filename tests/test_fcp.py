@@ -164,17 +164,22 @@ def test_check_duplicates_files_with_env_prefixes(mocker):
     assert max_path_len == 23
 
 
-def test_check_duplicates_files_env_prefix_requires_trailing_slash():
-    """Verify env_prefixes values must end with '/'."""
+def test_check_duplicates_files_env_prefix_normalizes_trailing_slash(mocker):
+    """Verify env_prefixes without trailing slash are normalized."""
     pc_rec = MockPackageCacheRecord(
         fn="pkg-1.0.tar.bz2",
         extracted_package_dir="/cache/pkg",
-        paths=["lib/file.py"],
+        paths=["lib/file.py"],  # 11 chars
     )
 
-    # Missing trailing slash should raise ValueError
-    env_prefixes = {pc_rec: "envs/myenv"}  # no trailing slash
-    with pytest.raises(ValueError, match="must end with '/'"):
-        check_duplicates_files(
-            [pc_rec], "win-64", duplicate_files="skip", env_prefixes=env_prefixes
-        )
+    mock_read_paths = mocker.patch("constructor.fcp.read_paths_json")
+    mock_read_paths.return_value = MockPathsJson(pc_rec._paths)
+
+    # Missing trailing slash should be normalized (not raise error)
+    env_prefixes = {pc_rec: "envs/myenv"}  # 10 chars, will become 11 with trailing /
+    result = check_duplicates_files(
+        [pc_rec], "win-64", duplicate_files="skip", env_prefixes=env_prefixes
+    )
+
+    # "envs/myenv/" (11) + "lib/file.py" (11) = 22
+    assert result[2] == 22

@@ -171,7 +171,7 @@ def check_duplicates_files(
             Used to account for extra_envs paths which are installed under
             "envs/<name>/" rather than the base install directory. Records not
             in this dict are assumed to be in the base environment (no prefix).
-            The prefix string must include the trailing slash (e.g., "envs/myenv/").
+            A trailing separator is added automatically if missing.
 
     Returns:
         Tuple of (approx_tarball_size, approx_extracted_size, max_relative_path_length)
@@ -179,9 +179,11 @@ def check_duplicates_files(
     assert duplicate_files in ("warn", "skip", "error")
     if env_prefixes is None:
         env_prefixes = {}
-    for prefix in env_prefixes.values():
-        if prefix and not prefix.endswith("/"):
-            raise ValueError(f"env_prefixes values must end with '/': got {prefix!r}")
+    else:
+        # Ensure trailing separator for accurate length calculation
+        env_prefixes = {
+            k: v if v.endswith(("/", "\\")) else v + "/" for k, v in env_prefixes.items() if v
+        }
 
     map_members_scase = defaultdict(set)
     map_members_icase = defaultdict(lambda: {"files": set(), "fns": set()})
