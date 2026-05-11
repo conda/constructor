@@ -179,11 +179,9 @@ def check_duplicates_files(
     assert duplicate_files in ("warn", "skip", "error")
     if env_prefixes is None:
         env_prefixes = {}
-    else:
-        # Ensure trailing separator for accurate length calculation
-        env_prefixes = {
-            k: v if v.endswith(("/", "\\")) else v + "/" for k, v in env_prefixes.items() if v
-        }
+    for env, prefix in env_prefixes.items():
+        if prefix and not prefix.endswith("/"):
+            env_prefixes[env] += "/"
 
     map_members_scase = defaultdict(set)
     map_members_icase = defaultdict(lambda: {"files": set(), "fns": set()})
