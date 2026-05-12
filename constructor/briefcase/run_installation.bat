@@ -45,7 +45,8 @@ rem Set CONDA_QUIET primarily to disable the spinners
 set CONDA_QUIET={{ 0 if add_debug else 1 }}
 
 rem Get the name of the install directory
-for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
+for %%I in ("%INSTDIR%") do set "DISTRIBUTION_NAME=%%~nxI"
+set MENUINST_DISTRIBUTION_NAME=%DISTRIBUTION_NAME%
 set "LOG=%INSTDIR%\install.log"
 
 {%- if script_env_variables %}
@@ -126,6 +127,15 @@ rem This is used by the uninstaller (and menuinst) to determine the install mode
 if "%ALLUSERS%"=="0" (
     echo. > "%BASE_PATH%\.nonadmin"
     if errorlevel 1 ( exit /b %errorlevel% )
+)
+
+rem Persist distribution_name to menuinst.toml before installing packages.
+rem This ensures the value is captured even if no packages have shortcuts.
+rem Must run before conda install to avoid creating shortcuts twice.
+"%CONDA_EXE%" menuinst --install -p "%BASE_PATH%" --root-prefix "%BASE_PATH%"
+if errorlevel 1 ( exit /b %errorlevel% )
+if not exist "%BASE_PATH%\Menu\menuinst.toml" (
+  {{ error_block('Failed to initialize shortcut configuration', 14) }}
 )
 
 {%- if has_pre_install %}
