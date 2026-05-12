@@ -44,6 +44,7 @@ test:
     - nsis =*=*log*  # [win]
     - pip
     - pytest
+    - pytest-mock
     - pywin32        # [win]
   imports:
     - constructor
