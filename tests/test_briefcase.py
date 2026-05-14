@@ -27,6 +27,9 @@ mock_info = {
     "_dists": [],
     "_platform": cc_platform,
     "_urls": [],
+    # Required for auto-generating branding images
+    "welcome_image_text": "MockInfo",
+    "header_image_text": "MockInfo",
 }
 
 
@@ -1026,7 +1029,10 @@ def test_payload_pyproject_toml_installer_images(tmp_path, has_user_images):
     Both user-provided and auto-generated images should result in
     installer_background, installer_banner, and icon keys being present.
     """
-    import tomllib
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        import tomli as tomllib
 
     info = mock_info.copy()
 

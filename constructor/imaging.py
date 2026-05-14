@@ -56,9 +56,9 @@ def add_text(im, xy, text, min_lines, line_height, font, color):
     return d
 
 
-def mk_welcome_image(info):
+def mk_welcome_image(info, size=welcome_size):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
-    im = new_background(welcome_size, info["_color"])
+    im = new_background(size, info["_color"])
     text = "\n".join([info["welcome_image_text"], info["version"]])
     add_text(im, (20, 100), text, 2, 30, font, white)
     return im
@@ -73,9 +73,9 @@ def mk_welcome_image_osx(info):
     return im
 
 
-def mk_header_image(info):
+def mk_header_image(info, size=header_size):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
-    im = Image.new("RGB", header_size, color=white)
+    im = Image.new("RGB", size, color=white)
     text = info["header_image_text"]
     color = info["_color"]
     add_text(im, (20, 15), text, 1, 20, font, color)
@@ -117,8 +117,8 @@ def write_images(info, dir_path, installer_type="exe"):
         ]
     elif installer_type == "msi":
         instructions = [
-            ("welcome", welcome_size_msi, mk_welcome_image, ".bmp"),
-            ("header", header_size_msi, mk_header_image, ".bmp"),
+            ("welcome", welcome_size_msi, lambda info: mk_welcome_image(info, welcome_size_msi), ".bmp"),
+            ("header", header_size_msi, lambda info: mk_header_image(info, header_size_msi), ".bmp"),
             ("icon", icon_size, mk_icon_image, ".ico"),
         ]
     else:

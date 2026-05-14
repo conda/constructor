@@ -513,7 +513,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on macOS, this message will be shown at the end of the installer upon success. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `conclusion_file` and `conclusion_text` are provided, `conclusion_file` takes precedence.\nIf the installer is for Windows, the file type must be nsi.",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be shown at the end of the installer upon success. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `conclusion_file` and `conclusion_text` are provided, `conclusion_file` takes precedence.\nIf the installer is for Windows EXE, the file type must be nsi. (Not supported for MSI installers.)",
       "title": "Conclusion File"
     },
     "conclusion_text": {
@@ -526,7 +526,7 @@
         }
       ],
       "default": null,
-      "description": "A message that will be shown at the end of the installer upon success. The behaviour is slightly different across installer types:\n- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.  You can disable it altogether so it defaults to the system message if you set this  key to `\"\"` (empty string).\n- EXE: The first line will be used as a title. The following lines will be used as text.",
+      "description": "A message that will be shown at the end of the installer upon success. The behaviour is slightly different across installer types:\n- PKG: If this key is missing, it defaults to a message about Anaconda Cloud.  You can disable it altogether so it defaults to the system message if you set this  key to `\"\"` (empty string).\n- EXE: The first line will be used as a title. The following lines will be used as text.\n- MSI: Not supported.",
       "title": "Conclusion Text"
     },
     "conda_channel_alias": {
@@ -1093,7 +1093,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the welcome screen. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `readme_file` and `readme_text` are provided, `readme_file` takes precedence.",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the welcome screen. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `readme_file` and `readme_text` are provided, `readme_file` takes precedence. (Not supported for MSI installers.)",
       "title": "Readme File"
     },
     "readme_text": {
@@ -1106,7 +1106,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the welcome screen. If this key is missing, it defaults to a message about Anaconda Cloud. You can disable it altogether if you set this key to `\"\"` (empty string).",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the welcome screen. If this key is missing, it defaults to a message about Anaconda Cloud. You can disable it altogether if you set this key to `\"\"` (empty string). (Not supported for MSI installers.)",
       "title": "Readme Text"
     },
     "register_envs": {
@@ -1310,7 +1310,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\nIf the installer is for Windows and the welcome file type is nsi, it will use the nsi script to add in extra pages before the installer begins the installation process.",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\nIf the installer is for Windows EXE and the welcome file type is nsi, it will use the nsi script to add in extra pages before the installer begins the installation process. (Not supported for MSI installers.)",
       "title": "Welcome File"
     },
     "welcome_image": {
@@ -1350,7 +1350,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. If this key is missing, it defaults to a message about Anaconda Cloud. You can disable it altogether so it defaults to the system message if you set this key to `\"\"` (empty string).",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. If this key is missing, it defaults to a message about Anaconda Cloud. You can disable it altogether so it defaults to the system message if you set this key to `\"\"` (empty string). (Not supported for MSI installers.)",
       "title": "Welcome Text"
     },
     "windows_signing_tool": {
