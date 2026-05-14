@@ -150,10 +150,10 @@ def modify_xml(xml_path, info):
         if not info["welcome_image"]:
             background_path = None
         else:
-            write_images(info, PACKAGES_DIR, os="osx")
+            write_images(info, PACKAGES_DIR, installer_type="pkg")
             background_path = os.path.join(PACKAGES_DIR, "welcome.png")
     elif "welcome_image_text" in info:
-        write_images(info, PACKAGES_DIR, os="osx")
+        write_images(info, PACKAGES_DIR, installer_type="pkg")
         background_path = os.path.join(PACKAGES_DIR, "welcome.png")
     else:
         # Default to Anaconda's logo if the keys above were not specified
