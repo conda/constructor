@@ -117,8 +117,18 @@ def write_images(info, dir_path, installer_type="exe"):
         ]
     elif installer_type == "msi":
         instructions = [
-            ("welcome", welcome_size_msi, lambda info: mk_welcome_image(info, welcome_size_msi), ".bmp"),
-            ("header", header_size_msi, lambda info: mk_header_image(info, header_size_msi), ".bmp"),
+            (
+                "welcome",
+                welcome_size_msi,
+                lambda info: mk_welcome_image(info, welcome_size_msi),
+                ".bmp",
+            ),
+            (
+                "header",
+                header_size_msi,
+                lambda info: mk_header_image(info, header_size_msi),
+                ".bmp",
+            ),
             ("icon", icon_size, mk_icon_image, ".ico"),
         ]
     else:
