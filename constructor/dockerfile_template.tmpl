@@ -11,8 +11,8 @@ ARG PREFIX={{ default_prefix }}
 COPY {{ installer_filename }} /tmp/installer.sh
 
 RUN sh /tmp/installer.sh -b -p "${PREFIX}" && \
-    rm -rf "${PREFIX}/uninstall.sh" && \
-    rm -rf "${PREFIX}/_conda" || true && \
+    rm -f "${PREFIX}/uninstall.sh" && \
+    rm -f "${PREFIX}/_conda" && \
     find "${PREFIX}/lib" -name 'lib*.a' -delete && \
     find "${PREFIX}/lib" -name 'lib*.js.map' -delete && \
     find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
