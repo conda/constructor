@@ -123,8 +123,7 @@ def write_images(info, dir_path, installer_type="exe"):
         ]
     else:
         raise ValueError(
-            f"Installer type '{installer_type}' not supported. "
-            "Choose 'exe', 'pkg', or 'msi'."
+            f"Installer type '{installer_type}' not supported. Choose 'exe', 'pkg', or 'msi'."
         )
 
     for name, size, function, ext in instructions:

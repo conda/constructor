@@ -17,11 +17,13 @@ from subprocess import run
 IS_WINDOWS = sys.platform == "win32"
 if IS_WINDOWS:
     import tomli_w
+
+    from .imaging import write_images
 else:
     tomli_w = None  # This file is only intended for Windows use
+    write_images = None  # imaging.py requires PIL, which is only available on Windows
 
 from . import preconda
-from .imaging import write_images
 from .jinja import render_template
 from .signing import create_windows_signing_tool
 from .utils import (

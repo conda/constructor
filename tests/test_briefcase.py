@@ -1033,7 +1033,9 @@ def test_payload_pyproject_toml_installer_images(tmp_path, has_user_images):
     if has_user_images:
         # Use existing test image from examples directory
         repo_root = Path(__file__).parent.parent
-        example_image = repo_root / "examples" / "customized_welcome_conclusion" / "ExtraPagesExampleImg.bmp"
+        example_image = (
+            repo_root / "examples" / "customized_welcome_conclusion" / "ExtraPagesExampleImg.bmp"
+        )
         assert example_image.exists(), f"Test image not found: {example_image}"
 
         info["welcome_image"] = str(example_image)
