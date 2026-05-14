@@ -1010,3 +1010,64 @@ def test_stage_user_scripts_validates_bat_extension(tmp_path):
 
     with pytest.raises(ValueError, match="must be an existing '.bat' file"):
         payload._stage_user_scripts(pkgs_dir)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize(
+    "has_user_images",
+    [
+        pytest.param(True, id="user-provided-images"),
+        pytest.param(False, id="auto-generated-images"),
+    ],
+)
+def test_payload_pyproject_toml_installer_images(tmp_path, has_user_images):
+    """Test that pyproject.toml contains branding image paths.
+
+    Both user-provided and auto-generated images should result in
+    installer_background, installer_banner, and icon keys being present.
+    """
+    import tomllib
+
+    info = mock_info.copy()
+
+    if has_user_images:
+        # Use existing test image from examples directory
+        repo_root = Path(__file__).parent.parent
+        example_image = repo_root / "examples" / "customized_welcome_conclusion" / "ExtraPagesExampleImg.bmp"
+        assert example_image.exists(), f"Test image not found: {example_image}"
+
+        info["welcome_image"] = str(example_image)
+        info["header_image"] = str(example_image)
+        info["icon_image"] = str(example_image)
+    else:
+        # Ensure text options are set for auto-generation
+        info["welcome_image_text"] = "Test"
+        info["header_image_text"] = "Test"
+
+    payload = Payload(info)
+    payload.prepare()
+
+    pyproject_path = payload.root / "pyproject.toml"
+    assert pyproject_path.is_file()
+
+    with open(pyproject_path, "rb") as f:
+        config = tomllib.load(f)
+
+    app_config = config["tool"]["briefcase"]["app"]
+    app_name = list(app_config.keys())[0]
+    app = app_config[app_name]
+
+    # Verify branding paths are present
+    assert "installer_background" in app, "installer_background missing from pyproject.toml"
+    assert "installer_banner" in app, "installer_banner missing from pyproject.toml"
+    assert "icon" in app, "icon missing from pyproject.toml"
+
+    # Verify paths are absolute and point to expected files
+    assert app["installer_background"].endswith("welcome.bmp")
+    assert app["installer_banner"].endswith("header.bmp")
+    assert app["icon"].endswith("icon")  # No extension for icon
+
+    # Verify the actual image files exist
+    assert Path(app["installer_background"]).exists()
+    assert Path(app["installer_banner"]).exists()
+    assert Path(app["icon"] + ".ico").exists()  # Briefcase adds .ico
