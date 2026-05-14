@@ -21,8 +21,6 @@ DOCKER_PLATFORM_MAP = {
     "linux-32": "linux/386",
     "linux-ppc64le": "linux/ppc64le",
     "linux-s390x": "linux/s390x",
-    "osx-arm64": "linux/arm64",
-    "osx-64": "linux/amd64",
 }
 
 
@@ -42,7 +40,7 @@ def prepare_docker_context(info: dict) -> Path:
     """
     installer_path = Path(info["_outpath"])
     if not installer_path.exists():
-        raise RuntimeError(f"Expected .sh installer not found: {installer_path}\n")
+        raise RuntimeError(f"Expected .sh installer not found: {installer_path}")
 
     tmp_dir_path = installer_path.parent / "tmp"
     tmp_dir_path.mkdir(parents=True, exist_ok=True)
