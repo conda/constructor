@@ -25,6 +25,11 @@ header_size = 150, 57
 icon_size = 256, 256
 # These are for OSX
 welcome_size_osx = 1227, 600
+# MSI/WiX image sizes
+# TODO: MSI welcome/header have different aspect ratios than EXE (landscape vs portrait).
+# Auto-resize will stretch images. May need to revisit scaling strategy if results are poor.
+welcome_size_msi = (493, 312)
+header_size_msi = (493, 58)
 
 
 def new_background(size, color, bs=20, boxes=50):
@@ -99,19 +104,28 @@ def add_color_info(info):
         sys.exit("Error: color '%s' not defined" % color_name)
 
 
-def write_images(info, dir_path, os="windows"):
-    if os == "windows":
+def write_images(info, dir_path, installer_type="exe"):
+    if installer_type == "exe":
         instructions = [
             ("welcome", welcome_size, mk_welcome_image, ".bmp"),
             ("header", header_size, mk_header_image, ".bmp"),
             ("icon", icon_size, mk_icon_image, ".ico"),
         ]
-    elif os == "osx":
+    elif installer_type == "pkg":
         instructions = [
             ("welcome", welcome_size_osx, mk_welcome_image_osx, ".png"),
         ]
+    elif installer_type == "msi":
+        instructions = [
+            ("welcome", welcome_size_msi, mk_welcome_image, ".bmp"),
+            ("header", header_size_msi, mk_header_image, ".bmp"),
+            ("icon", icon_size, mk_icon_image, ".ico"),
+        ]
     else:
-        raise ValueError(f"OS {os} not supported. Choose `windows` or `osx`.")
+        raise ValueError(
+            f"Installer type '{installer_type}' not supported. "
+            "Choose 'exe', 'pkg', or 'msi'."
+        )
 
     for name, size, function, ext in instructions:
         key = name + "_image"
