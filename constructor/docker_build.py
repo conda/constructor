@@ -26,7 +26,7 @@ DOCKER_PLATFORM_MAP = {
 }
 
 
-def prepare_docker_context(info: dict, tmp_dir: Path) -> Path:
+def prepare_docker_context(info: dict) -> Path:
     """Copy the .sh installer into the Docker build directory.
 
     Parameters
@@ -34,25 +34,27 @@ def prepare_docker_context(info: dict, tmp_dir: Path) -> Path:
     info: dict
         Constructor installer info dict. Must contain ``_outpath`` and ``_output_dir`` pointing to the built .sh
         installer and output directory respectively.
-    tmp_dir: Path
-        Path to a temporary directory to stage the Docker build context. The .sh installer will be copied to this directory.
 
     Returns
     -------
     Path
-        Path to the tmp Docker build directory.
+        Path to the tmp Docker build directory where the installer is copied.
     """
     installer_path = Path(info["_outpath"])
     if not installer_path.exists():
         raise RuntimeError(f"Expected .sh installer not found: {installer_path}\n")
 
-    shutil.copy(installer_path, tmp_dir / installer_path.name)
-    logger.info("Copied installer to tmp directory: %s", tmp_dir / installer_path.name)
+    tmp_dir_path = installer_path.parent / "tmp"
+    tmp_dir_path.mkdir(parents=True, exist_ok=True)
+    docker_tmp_dir = Path(tempfile.mkdtemp(dir=tmp_dir_path))
 
-    return tmp_dir
+    shutil.copy(installer_path, docker_tmp_dir / installer_path.name)
+    logger.info("Copied installer to tmp directory")
+
+    return docker_tmp_dir
 
 
-def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
+def generate_dockerfile(info: dict, docker_dir: Path) -> Path | None:
     """
     Render the Dockerfile template and write it to the Docker build directory.
 
@@ -71,42 +73,44 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     from .conda_interface import MatchSpec
 
     specs = {MatchSpec(spec).name for spec in info.get("specs", ())}
+    has_mamba = "mamba" in specs
+    has_conda = "conda" in specs
 
     docker_template = Template(TEMPLATE_PATH.read_text())
 
     docker_base_image = info.get("docker_base_image")
-    if not docker_base_image:
-        logger.warning(
-            "Skipping Dockerfile generation. 'docker_base_image' not specified in construct.yaml."
-        )
-        return None
+    # if not docker_base_image:
+    #     logger.warning(
+    #         "Skipping Dockerfile generation. 'docker_base_image' not specified in construct.yaml."
+    #     )
+    #     return None
 
-    if "@" not in docker_base_image:
-        logger.warning(
-            "No SHA256 digest specified for docker_base_image. "
-            "Consider specifying a digest to ensure the integrity of the base image used for the build, e.g.:\n"
-            " docker_base_image: debian:13.4-slim@sha256:4ffb3a1511099754cddc70eb1b12e50ffdb67619aa0ab6c13fcd800a78ef7c7a\n"
-        )
+    # if "@" not in docker_base_image:
+    #     logger.warning(
+    #         "No SHA256 digest specified for docker_base_image.\n"
+    #         "Consider specifying a digest to ensure the integrity of the base image used for the build, e.g.:\n"
+    #         " docker_base_image: debian:13.4-slim@sha256:4ffb3a1511099754cddc70eb1b12e50ffdb67619aa0ab6c13fcd800a78ef7c7a"
+    #     )
 
     rendered_dockerfile = docker_template.render(
         constructor_version=__version__,
         base_image=docker_base_image,
         default_prefix=info.get("default_prefix", f"/opt/{info['name'].lower()}"),
         installer_filename=Path(info["_outpath"]).name,
-        clean_cmd="$PREFIX/bin/mamba clean -afy"
-        if "mamba" in specs
-        else "$PREFIX/bin/conda clean -afy",
+        # clean_cmd="$PREFIX/bin/mamba clean -afy"
+        # if has_mamba
+        # else "$PREFIX/bin/conda clean -afy",
         name=info["name"],
         version=info["version"],
         labels=info.get("docker_labels", {}),
-        init_cmd="$PREFIX/bin/mamba shell" if "mamba" in specs else "$PREFIX/bin/python -m conda",
-        register_envs=info.get("register_envs", True),
-        keep_pkgs=info.get("keep_pkgs", False),
+        # init_cmd="$PREFIX/bin/mamba shell" if has_mamba else "$PREFIX/bin/python -m conda",
+        register_envs=info.get("register_envs"),
+        keep_pkgs=info.get("keep_pkgs"),
     )
 
+    logger.info("Writting Dockerfile...")
     dockerfile_path = docker_dir / "Dockerfile"
     dockerfile_path.write_text(rendered_dockerfile)
-    logger.info("Dockerfile written to: '%s'", dockerfile_path)
     return dockerfile_path
 
 
@@ -122,31 +126,22 @@ def build_image(info: dict, docker_dir: Path) -> None:
         Path to the Docker directory containing the Docker outputs.
 
     """
-    if info.get("_platform") not in DOCKER_PLATFORM_MAP:
-        logger.warning(
-            f"Building Docker images is not supported on platform '{info['_platform']}'. "
-            "Skipping Docker build. You can still build the image manually using 'docker buildx' on a supported platform or Docker Desktop. "
-            "Supported platforms for Docker build are: linux/amd64 and linux/arm64."
-        )
-        return
-
-    if shutil.which("docker") is None:
-        raise RuntimeError(
-            "Building a Docker image requires the 'docker' CLI tool to be installed and available in PATH. "
-            "Install Docker Desktop or Docker Engine to proceed, or "
-            "use `installer_type: docker` in construct.yaml to "
-            "generate the Dockerfile without building the image."
-        )
+    # if shutil.which("docker") is None:
+    #     raise RuntimeError(
+    #         "Building a Docker image requires the 'docker' CLI tool to be installed and available in PATH. "
+    #         "Install Docker Desktop or Docker Engine to proceed, or "
+    #         "use `installer_type: docker` in construct.yaml to "
+    #         "generate the Dockerfile without building the image."
+    #     )
 
     docker_platform = DOCKER_PLATFORM_MAP.get(info["_platform"])
-    if docker_platform is None:
-        raise RuntimeError(
-            f"Unsupported platform for Docker build: '{info['_platform']}'. "
-            f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP)}."
-        )
+    # if docker_platform is None:
+    #     raise RuntimeError(
+    #         f"Unsupported platform for Docker build: '{info['_platform']}'. "
+    #         f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP)}."
+    #     )
 
     tag = info.get("docker_tag", f"{info['name'].lower()}:{info['version'].split('-')[0]}")
-    docker_dir = Path(info["_output_dir"]) / "docker"
     tarball_dest = docker_dir / f"{tag.replace(':', '-')}-{docker_platform.replace('/', '-')}.tar"
 
     cmd = [
@@ -163,12 +158,10 @@ def build_image(info: dict, docker_dir: Path) -> None:
 
     logger.info("Building Docker image: '%s'", tag)
     subprocess.run(cmd, check=True)
-    logger.info("Docker image '%s' built successfully.", tag)
 
     logger.info("Saving Docker image to tarball: '%s'", tarball_dest)
     with open(tarball_dest, "wb") as f:
-        subprocess.run(["docker", "save", tag, "-o", str(tarball_dest)], check=True, stdout=f)
-    logger.info("Docker image saved to: '%s'", tarball_dest)
+        subprocess.run(["docker", "save", tag, "-o", str(tarball_dest)], check=True)
 
 
 def create(info: dict, verbose: bool = False) -> None:
@@ -184,23 +177,23 @@ def create(info: dict, verbose: bool = False) -> None:
 
     """
     with tempfile.TemporaryDirectory() as temp_dir:
-        tmp_path = Path(temp_dir)
-        info["_outpath"] = info["_outpath"].replace(".docker", ".sh")
-        prepare_docker_context(info, tmp_path)
-        dockerfile = generate_dockerfile(info, tmp_path)
+        docker_tmp_dir = Path(temp_dir)
+        prepare_docker_context(info)
+        dockerfile = generate_dockerfile(info, docker_tmp_dir)
         if dockerfile is None:
-            logger.warning("Dockerfile generation skipped. Docker image will not be built.")
+            logger.error("Dockerfile not generated.")
             return
 
-        output_docker_dir = Path(info["_output_dir"]) / "docker"
-        output_docker_dir.mkdir(parents=True, exist_ok=True)
-
-        shutil.copy(tmp_path / "Dockerfile", output_docker_dir / "Dockerfile")
-        shutil.copy(
-            tmp_path / Path(info["_outpath"]).name, output_docker_dir / Path(info["_outpath"]).name
-        )
+        mkdir = info["_output_dir"] / "installer"
+        mkdir.mkdir(parents=True, exist_ok=True)
 
         if info.get("docker_build"):
-            build_image(info, output_docker_dir)
+            build_image(info, docker_tmp_dir)
+            tarball = next(docker_tmp_dir.glob("*.tar"), None)
+            if tarball:
+                shutil.copy(tarball, info["_output_dir"] / tarball.name)
+        else:
+            shutil.copy(docker_tmp_dir / "Dockerfile", info["_output_dir"] / "Dockerfile")
+            shutil.copy(docker_tmp_dir / Path(info["_outpath"]).name, info["_output_dir"] / Path(info["_outpath"]).name)
 
-    logger.info("Docker output complete. Docker directory: '%s'", output_docker_dir)
+    logger.info("Docker output complete. Docker directory: '%s'", info["_output_dir"])
