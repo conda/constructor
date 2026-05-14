@@ -404,7 +404,7 @@ class ConstructorConfiguration(BaseModel):
     - `sh`: shell-based installer for Linux or macOS
     - `pkg`: macOS GUI installer built with Apple's `pkgbuild`
     - `exe`: Windows GUI installer built with NSIS
-    - `docker`: generates a Dockerfile that replicates the installation environment (Does not build image. See `docker_build` option below.)
+    - `docker`: generates a `Dockerfile` or image of the installation environment.
 
     The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
     value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
@@ -858,19 +858,19 @@ class ConstructorConfiguration(BaseModel):
     docker_base_image: Annotated[str, Field(min_length=1)] | None = None
     """
     Base image to use for docker builds when `installer_type` includes `docker` or `docker_build` is True.
-    Should be a specific image reference. For reproducibility, please specify a SHA256 digest.
-    For example: `debian:13.4-slim@sha256:abc123...`. If the digest is not provided, a warning will be shown.
+    For example: `debian:13.4-slim@sha256:abc123...`.
     """
     docker_tag: NonEmptyStr | None = None
     """
     Tag to use for the docker image.
     If not provided, it will default to `<name>:<version>`.
+    Has no effect if `docker_build` is not set.
     """
     docker_labels: dict[NonEmptyStr, NonEmptyStr] = {}
     """
     Additional labels to add to the built docker image.
-    The labels `org.opencontainers.image.title` and `org.opencontainers.image.version` are
-    set automatically from `name` and `version`.
+    The labels `org.opencontainers.image.title` and `org.opencontainers.image.version`
+    are set automatically from `name` and `version`.
     """
     docker_build: bool = False
     """
