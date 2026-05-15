@@ -46,15 +46,15 @@ def get_installer_type(info: dict):
         "osx": (
             "sh",
             "pkg",
-        ),
+    ),
         "win": ("exe",),
     }
     all_allowed = set(sum(os_allowed.values(), ("all", "docker")))
 
     itype = info.get("installer_type")
-    docker_build = info.get("docker_build", False)
 
-    if docker_build and shutil.which("docker") is None:
+    is_docker_image = info.get("docker_image")
+    if is_docker_image and shutil.which("docker") is None:
         raise RuntimeError(
             "Building a Docker image requires the 'docker' CLI tool to be installed and available in PATH. "
             "Install Docker Desktop or Docker Engine to proceed, or "
@@ -69,7 +69,7 @@ def get_installer_type(info: dict):
     elif itype not in all_allowed:
         all_allowed = ", ".join(sorted(all_allowed))
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
-    elif itype == "docker" or docker_build:
+    elif itype == "docker" or is_docker_image:
         return ("sh", "docker")
     elif itype not in os_allowed[osname]:
         os_allowed = ", ".join(sorted(os_allowed[osname]))
