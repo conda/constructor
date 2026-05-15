@@ -15,8 +15,10 @@ RUN sh /tmp/installer.sh -b -p "${PREFIX}" && \
     rm -f "${PREFIX}/_conda" && \
     find "${PREFIX}" -follow -type f -name '*.js.map' -delete && \
     find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
-/    {% if not keep_pkgs %}rm -rf "${PREFIX}/pkgs" && {{ clean_cmd }} && \
-    {% endif %}find "${PREFIX}" -follow -type f -name '*.a' -delete
+    {%- if not keep_pkgs %}
+        rm -rf "${PREFIX}/pkgs" && \
+    {%- endif %}
+    find "${PREFIX}" -follow -type f -name '*.a' -delete
 
 ##########################################################
 # Stage 2: Final image
