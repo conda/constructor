@@ -1600,7 +1600,7 @@ def test_docker_image_build(tmp_path):
         assert "conda" in result.stdout
 
         inspect_result = subprocess.run(
-        ["docker", "inspect", "--format", "{{ json .Config.Labels }}", image_name],
+            ["docker", "inspect", "--format", "{{ json .Config.Labels }}", image_name],
             capture_output=True,
             text=True,
             check=True,
@@ -1608,7 +1608,7 @@ def test_docker_image_build(tmp_path):
         labels = json.loads(inspect_result.stdout)
 
         for key, value in config.get("docker_labels", {}).items():
-            assert labels.get(key) == value, (f"Label {key}: {value} not found in Docker image")
+            assert labels.get(key) == value, f"Label {key}: {value} not found in Docker image"
         assert labels.get("org.opencontainers.image.title") == config["name"]
         assert labels.get("org.opencontainers.image.version") == config["version"]
 

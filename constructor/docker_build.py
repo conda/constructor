@@ -84,12 +84,15 @@ def build_image(info: dict, docker_dir: Path) -> Path:
 
     """
     if not (docker_platform := DOCKER_PLATFORM_MAP.get(info["_platform"])):
-        raise RuntimeError(f"Unsupported platform for Docker build: {info['_platform']}"
-        f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP.keys())}"
+        raise RuntimeError(
+            f"Unsupported platform for Docker build: {info['_platform']}"
+            f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP.keys())}"
         )
 
     if info.get("docker_tag") and ":" not in info.get("docker_tag"):
-        raise ValueError("Invalid docker_tag: '{info['docker_tag']}'. Must be in format 'name:tag'.")
+        raise ValueError(
+            "Invalid docker_tag: '{info['docker_tag']}'. Must be in format 'name:tag'."
+        )
 
     tag = info.get("docker_tag", f"{info['name'].lower()}:{info['version']}")
     tarball_dest = docker_dir / f"{Path(info['_outpath']).stem}-docker.tar"
@@ -112,6 +115,7 @@ def build_image(info: dict, docker_dir: Path) -> Path:
     logger.info("Saving Docker image to tarball: '%s'", tarball_dest)
     subprocess.run(["docker", "save", tag, "-o", str(tarball_dest)], check=True)
     return tarball_dest
+
 
 def create(info: dict, verbose: bool = False) -> None:
     """Build a Docker output
@@ -144,6 +148,9 @@ def create(info: dict, verbose: bool = False) -> None:
             output_dir = Path(info["_output_dir"]) / installer_path.stem
             output_dir.mkdir(parents=True, exist_ok=True)
             shutil.copy(docker_tmp_dir / "Dockerfile", output_dir / "Dockerfile")
-            shutil.copy(docker_tmp_dir / Path(info["_outpath"]).name, output_dir / Path(info["_outpath"]).name)
+            shutil.copy(
+                docker_tmp_dir / Path(info["_outpath"]).name,
+                output_dir / Path(info["_outpath"]).name,
+            )
 
     logger.info("Docker output complete. Docker directory: '%s'", info["_output_dir"])

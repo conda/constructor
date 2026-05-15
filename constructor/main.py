@@ -46,7 +46,7 @@ def get_installer_type(info: dict):
         "osx": (
             "sh",
             "pkg",
-    ),
+        ),
         "win": ("exe",),
     }
     all_allowed = set(sum(os_allowed.values(), ("all", "docker")))
