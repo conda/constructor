@@ -857,13 +857,14 @@ class ConstructorConfiguration(BaseModel):
     """
     docker_base_image: Annotated[str, Field(min_length=1)] | None = None
     """
+    Required to use docker-related features.
     Base image to use for docker builds when `installer_type` includes `docker` or `docker_build` is True.
     For example: `debian:13.4-slim@sha256:abc123...`.
     """
     docker_tag: NonEmptyStr | None = None
     """
     Tag to use for the docker image.
-    If not provided, it will default to `<name>:<version>`.
+    If not provided, it will default to `<name>-<version>:<platform>-<arch>`.
     Has no effect if `docker_build` is not set.
     """
     docker_labels: dict[NonEmptyStr, NonEmptyStr] = {}
