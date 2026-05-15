@@ -1556,35 +1556,61 @@ def test_frozen_environment(tmp_path, request, has_conflict):
         )
 
 
-@pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
-@pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
-def test_docker_build(tmp_path):
-    input_path = _example_path("docker_build")
+def test_dockerfile_generation(tmp_path):
+    input_path = _example_path("dockerfile")
     output_path = tmp_path / "output"
-    docker_dir = output_path / "installer" / "docker"
 
     yaml = YAML()
     with open(input_path / "construct.yaml") as f:
         config = yaml.load(f)
-    image_name = f"{config['name'].lower()}:{config['version'].split('-')[0]}"
+
+    for installer, _ in create_installer(input_path, output_path):
+        if installer.suffix == ".sh":
+            installer_stem = Path(installer).stem
+            docker_output_dir = output_path / "installer" / installer_stem
+            assert (docker_output_dir / "Dockerfile").exists()
+            assert (docker_output_dir / installer.name).exists()
+
+
+@pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
+def test_docker_image_build(tmp_path):
+    input_path = _example_path("docker_image")
+    output_path = tmp_path / "output"
+
+    yaml = YAML()
+    with open(input_path / "construct.yaml") as f:
+        config = yaml.load(f)
+    image_name = f"{config['name'].lower()}:{config['version']}"
+
+    for installer, _ in create_installer(input_path, output_path):
+        if installer.suffix == ".sh":
+            installer_stem = Path(installer).stem
+    tarball = output_path / "installer" / f"{installer_stem}-docker.tar"
+    assert tarball.exists(), f"Expected tarball not found: {tarball}"
+    subprocess.run(["docker", "load", "-i", str(tarball)], check=True)
 
     try:
-        for installer, _ in create_installer(input_path, output_path):
-            assert (docker_dir / "Dockerfile").exists()
-            assert (docker_dir / installer.name).exists()
+        result = subprocess.run(
+            ["docker", "run", "--rm", image_name, "conda", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
 
-            tarballs = list(docker_dir.glob("*.tar"))
-            assert tarballs, "No Docker image tarball found in docker dir"
-            subprocess.run(["docker", "load", "-i", str(tarballs[0])], check=True)
+        assert "conda" in result.stdout
 
-            result = subprocess.run(
-                ["docker", "run", "--rm", image_name, "conda", "--version"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
+        inspect_result = subprocess.run(
+        ["docker", "inspect", "--format", "{{ json .Config.Labels }}", image_name],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        labels = json.loads(inspect_result.stdout)
 
-            assert "conda" in result.stdout
+        for key, value in config.get("docker_labels", {}).items():
+            assert labels.get(key) == value, (f"Label {key}: {value} not found in Docker image")
+        assert labels.get("org.opencontainers.image.title") == config["name"]
+        assert labels.get("org.opencontainers.image.version") == config["version"]
 
     finally:
         subprocess.run(["docker", "rmi", image_name], check=False)

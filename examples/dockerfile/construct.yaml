@@ -1,4 +1,4 @@
-name: test_docker
+name: test_dockerfile
 version: 1.0.0
 
 channels:
@@ -10,10 +10,6 @@ specs:
   - conda
 
 installer_type: docker
-# Generates Dockerfile and stages the installer.
-
-docker_image: tar
-# Additionally builds a portable Docker image from the generated Dockerfile.
 
 docker_base_image: "debian:13.4-slim@sha256:cedb1ef40439206b673ee8b33a46a03a0c9fa90bf3732f54704f99cb061d2c5a"
 
@@ -23,4 +19,4 @@ register_envs: true
 
 docker_labels:
   maintainer: "jaidarice"
-  description: "Test Docker image built with constructor."
+  description: "Test Dockerfile generated with constructor."
