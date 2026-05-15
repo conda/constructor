@@ -15,6 +15,7 @@ import argparse
 import json
 import logging
 import os
+import shutil
 import subprocess
 import sys
 from os.path import abspath, expanduser, isdir, join
@@ -53,15 +54,12 @@ def get_installer_type(info: dict):
     itype = info.get("installer_type")
     docker_build = info.get("docker_build", False)
 
-    if docker_build and osname == "win":
-        sys.exit(
-            "Error: 'docker_build' is not supported on Windows. "
-            "Run the build on Linux or macOS instead."
-        )
-    if docker_build and itype in ("pkg", "exe"):
-        sys.exit(
-            "Error: 'docker_build' is not compatible with installer_type 'pkg' or 'exe'. "
-            "Use installer_type: 'sh', 'docker', or omit installer_type."
+    if docker_build and shutil.which("docker") is None:
+        raise RuntimeError(
+            "Building a Docker image requires the 'docker' CLI tool to be installed and available in PATH. "
+            "Install Docker Desktop or Docker Engine to proceed, or "
+            "use `installer_type: docker` in construct.yaml to "
+            "generate the Dockerfile without building the image."
         )
 
     if not itype:
@@ -378,6 +376,11 @@ def main_build(
                 "enable_anywhere": "true",
                 "enable_currentUserHome": "true",
             }
+
+    if "docker" in itypes and not info.get("docker_base_image"):
+        sys.exit(
+            "Error: 'docker_base_image' not specified in construct.yaml. Skipping Dockerfile generation."
+        )
 
     if osname == "win":
         info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(
