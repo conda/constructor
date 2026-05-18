@@ -53,14 +53,8 @@ def get_installer_type(info: dict):
 
     itype = info.get("installer_type")
 
-    is_docker_image = info.get("docker_image")
-    if is_docker_image and shutil.which("docker") is None:
-        raise RuntimeError(
-            "Building a Docker image requires the 'docker' CLI tool to be installed and available in PATH. "
-            "Install Docker Desktop or Docker Engine to proceed, or "
-            "use `installer_type: docker` in construct.yaml to "
-            "generate the Dockerfile without building the image."
-        )
+    if not itype and info.get("docker_image"):
+        itype = "docker"
 
     if not itype:
         return os_allowed[osname][:1]
@@ -69,7 +63,12 @@ def get_installer_type(info: dict):
     elif itype not in all_allowed:
         all_allowed = ", ".join(sorted(all_allowed))
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
-    elif itype == "docker" or is_docker_image:
+    elif itype == "docker":
+        if osname != "linux":
+            sys.exit(
+                "Error: Docker features are only supported for Linux target platforms. "
+                "Use --platform linux-ARCH to build a Docker artifact."
+            )
         return ("sh", "docker")
     elif itype not in os_allowed[osname]:
         os_allowed = ", ".join(sorted(os_allowed[osname]))
@@ -90,6 +89,8 @@ def get_output_filename(info: dict) -> str:
     os_map = {"linux": "Linux", "osx": "MacOSX", "win": "Windows"}
     arch_name_map = {"64": "x86_64", "32": "x86"}
     ext = info["installer_type"]
+    if ext == "docker":
+        ext = "sh"
     return "%s-%s-%s.%s" % (
         "%(name)s-%(version)s" % info,
         os_map.get(osname, osname),
@@ -224,8 +225,15 @@ def main_build(
 
     if "docker" in itypes and not info.get("docker_base_image"):
         sys.exit(
-            "Error: docker_base_image is required when building Docker output. "
+            "Error: docker_base_image is required when building Docker artifacts. "
             "Please specify a base image using the 'docker_base_image' key in construct.yaml."
+        )
+    if info.get("docker_image") and shutil.which("docker") is None:
+        sys.exit(
+            "Error: Building a Docker image requires the 'docker' CLI tool to be installed and available in PATH. "
+            "Install Docker Desktop or Docker Engine to proceed, or "
+            "use `installer_type: docker` in construct.yaml to "
+            "generate the Dockerfile without building the image."
         )
 
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
@@ -377,11 +385,6 @@ def main_build(
                 "enable_currentUserHome": "true",
             }
 
-    if "docker" in itypes and not info.get("docker_base_image"):
-        sys.exit(
-            "Error: 'docker_base_image' not specified in construct.yaml. Skipping Dockerfile generation."
-        )
-
     if osname == "win":
         info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(
             info["_conda_exe"],
@@ -435,19 +438,15 @@ def main_build(
 
             create = docker_create
         info["installer_type"] = itype
-        if itype != "docker":
-            info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
-        else:
-            info["_outpath"] = abspath(join(output_dir, get_output_filename(info))).replace(
-                ".docker", ".sh"
-            )
+        info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
+
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())
         if itype == "docker":
             logger.info(
                 "Docker output complete. Docker directory: '%s'",
-                Path(info["_output_dir"]) / "docker",
+                Path(info["_output_dir"]),
             )
         else:
             logger.info("Successfully created '%(_outpath)s'.", info)
