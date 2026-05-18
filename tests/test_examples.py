@@ -1556,6 +1556,7 @@ def test_frozen_environment(tmp_path, request, has_conflict):
         )
 
 
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux only")
 def test_dockerfile_generation(tmp_path):
     input_path = _example_path("dockerfile")
     output_path = tmp_path / "output"
@@ -1564,19 +1565,24 @@ def test_dockerfile_generation(tmp_path):
     with open(input_path / "construct.yaml") as f:
         config = yaml.load(f)
 
+    installer_stem = None
     for installer, _ in create_installer(input_path, output_path):
-        docker_output_dir = output_path / "installer" / installer.stem
-        assert (docker_output_dir / "Dockerfile").exists()
-        assert (docker_output_dir / installer.name).exists()
+        if installer.suffix == ".sh":
+            installer_stem = installer.stem
+    assert installer_stem is not None
+    docker_output_dir = output_path / "installer" / installer_stem
+    assert (docker_output_dir / "Dockerfile").exists()
+    assert (docker_output_dir / f"{installer_stem}.sh").exists()
 
-        dockerfile_text = (docker_output_dir / "Dockerfile").read_text()
+    dockerfile_text = (docker_output_dir / "Dockerfile").read_text()
 
-        assert f"FROM {config['docker_base_image']}" in dockerfile_text
+    assert f"FROM {config['docker_base_image']}" in dockerfile_text
 
-        for key, value in config.get("docker_labels", {}).items():
-            assert f'{key}="{value}"' in dockerfile_text
+    for key, value in config.get("docker_labels", {}).items():
+        assert f'{key}="{value}"' in dockerfile_text
 
 
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux only")
 @pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
 def test_docker_image_build(tmp_path):
     input_path = _example_path("docker_image")
@@ -1587,9 +1593,12 @@ def test_docker_image_build(tmp_path):
         config = yaml.load(f)
     image_name = f"{config['name'].lower()}:{config['version']}"
 
+    installer_stem = None
     for installer, _ in create_installer(input_path, output_path):
         if installer.suffix == ".sh":
-            installer_stem = Path(installer).stem
+            installer_stem = installer.stem
+    assert installer_stem is not None
+
     tarball = output_path / "installer" / f"{installer_stem}-docker.tar"
     assert tarball.exists(), f"Expected tarball not found: {tarball}"
 
