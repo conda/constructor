@@ -26,9 +26,10 @@ icon_size = 256, 256
 # These are for OSX
 welcome_size_osx = 1227, 600
 # MSI/WiX image sizes
-# TODO: MSI welcome/header have different aspect ratios than EXE (landscape vs portrait).
-# Auto-resize will stretch images. May need to revisit scaling strategy if results are poor.
+# WiX WelcomeDlg uses a full-background image with text overlaid on the right side.
+# We create a side-panel effect: branding on left 164px, white padding on right.
 welcome_size_msi = (493, 312)
+welcome_side_panel_width_msi = 164  # Width for branding area (matches EXE welcome width)
 header_size_msi = (493, 58)
 
 
@@ -56,9 +57,9 @@ def add_text(im, xy, text, min_lines, line_height, font, color):
     return d
 
 
-def mk_welcome_image(info, size=welcome_size):
+def mk_welcome_image(info):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
-    im = new_background(size, info["_color"])
+    im = new_background(welcome_size, info["_color"])
     text = "\n".join([info["welcome_image_text"], info["version"]])
     add_text(im, (20, 100), text, 2, 30, font, white)
     return im
@@ -73,9 +74,9 @@ def mk_welcome_image_osx(info):
     return im
 
 
-def mk_header_image(info, size=header_size):
+def mk_header_image(info):
     font = ImageFont.truetype(BytesIO(ttf_bytes), 20)
-    im = Image.new("RGB", size, color=white)
+    im = Image.new("RGB", header_size, color=white)
     text = info["header_image_text"]
     color = info["_color"]
     add_text(im, (20, 15), text, 1, 20, font, color)
@@ -104,6 +105,25 @@ def add_color_info(info):
         sys.exit("Error: color '%s' not defined" % color_name)
 
 
+def _resize_for_msi_welcome(image_path):
+    """Resize image for MSI welcome dialog with side-panel layout.
+
+    WiX WelcomeDlg uses a full-background bitmap with text overlaid on the right.
+    The user's image is resized to 164x312 and placed on the left, with white
+    padding on the right for the dialog text.
+    """
+    im = Image.open(image_path)
+
+    # Resize to side panel dimensions (164x312)
+    panel_size = (welcome_side_panel_width_msi, welcome_size_msi[1])
+    im = im.resize(panel_size)
+
+    # Create white canvas (493x312) and paste image on left side
+    canvas = Image.new("RGB", welcome_size_msi, color=white)
+    canvas.paste(im, (0, 0))
+    return canvas
+
+
 def write_images(info, dir_path, installer_type="exe"):
     if installer_type == "exe":
         instructions = [
@@ -116,21 +136,8 @@ def write_images(info, dir_path, installer_type="exe"):
             ("welcome", welcome_size_osx, mk_welcome_image_osx, ".png"),
         ]
     elif installer_type == "msi":
-        instructions = [
-            (
-                "welcome",
-                welcome_size_msi,
-                lambda info: mk_welcome_image(info, welcome_size_msi),
-                ".bmp",
-            ),
-            (
-                "header",
-                header_size_msi,
-                lambda info: mk_header_image(info, header_size_msi),
-                ".bmp",
-            ),
-            ("icon", icon_size, mk_icon_image, ".ico"),
-        ]
+        # MSI uses WiX defaults; user-provided images handled separately below
+        instructions = []
     else:
         raise ValueError(
             f"Installer type '{installer_type}' not supported. Choose 'exe', 'pkg', or 'msi'."
@@ -146,3 +153,18 @@ def write_images(info, dir_path, installer_type="exe"):
             im = function(info)
         assert im.size == size
         im.save(join(dir_path, name + ext))
+
+    # MSI: handle custom images if provided (no auto-generation)
+    if installer_type == "msi":
+        if info.get("welcome_image"):
+            im = _resize_for_msi_welcome(info["welcome_image"])
+            assert im.size == welcome_size_msi
+            im.save(join(dir_path, "welcome.bmp"))
+        if info.get("header_image"):
+            im = Image.open(info["header_image"])
+            im = im.resize(header_size_msi)
+            im.save(join(dir_path, "header.bmp"))
+        if info.get("icon_image"):
+            im = Image.open(info["icon_image"])
+            im = im.resize(icon_size)
+            im.save(join(dir_path, "icon.ico"))

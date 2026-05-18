@@ -663,7 +663,9 @@ class ConstructorConfiguration(BaseModel):
     """
     Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
     to be used as the welcome image for the Windows and PKG installers.
-    The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on macOS.
+    The image is re-sized to 164 x 314 pixels for EXE installers, 1227 x 600 on macOS,
+    and for MSI installers it is scaled to fit a 164-pixel wide side panel (maintaining
+    aspect ratio) with white padding on the right.
     By default, an image is automatically generated on Windows. On macOS, Anaconda's
     logo is shown if this key is not provided. If you don't want a background on
     PKG installers, set this key to `""` (empty string).
