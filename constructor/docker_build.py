@@ -85,13 +85,13 @@ def build_image(info: dict, docker_dir: Path) -> Path:
     """
     if not (docker_platform := DOCKER_PLATFORM_MAP.get(info["_platform"])):
         raise RuntimeError(
-            f"Unsupported platform for Docker build: {info['_platform']}"
-            f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP.keys())}"
+            f"Unsupported platform for Docker build: {info['_platform']}. "
+            f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP.keys())}."
         )
 
     if info.get("docker_tag") and ":" not in info.get("docker_tag"):
         raise ValueError(
-            "Invalid docker_tag: '{info['docker_tag']}'. Must be in format 'name:tag'."
+            f"Invalid docker_tag: '{info['docker_tag']}'. Must be in format 'name:tag'."
         )
 
     tag = info.get("docker_tag", f"{info['name'].lower()}:{info['version']}")
