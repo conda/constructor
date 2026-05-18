@@ -14,10 +14,10 @@ RUN sh /tmp/installer.sh -b -p "${PREFIX}" && \
     rm -f "${PREFIX}/uninstall.sh" && \
     rm -f "${PREFIX}/_conda" && \
     find "${PREFIX}" -follow -type f -name '*.js.map' -delete && \
-    find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true && \
-    {%- if not keep_pkgs %}
+    (find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true) && \
+    {% if not keep_pkgs -%}
         rm -rf "${PREFIX}/pkgs" && \
-    {%- endif %}
+    {% endif -%}
     find "${PREFIX}" -follow -type f -name '*.a' -delete
 
 ##########################################################
@@ -44,6 +44,6 @@ COPY --from=builder /root/.conda /root/.conda
 {% endif %}
 
 RUN echo 'export PATH=$(sed -e "s,:\?{{ default_prefix }}/bin:,," <<< "${PATH}")' >> ~/.bashrc && \
-/    {{ init_cmd }} init --all
+    {{ init_cmd }} init --all
 
 CMD [ "/bin/bash" ]
