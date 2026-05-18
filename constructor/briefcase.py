@@ -43,7 +43,6 @@ EXTERNAL_PACKAGE_PATH = "external"
 # The following EXE branding options are not supported for MSI installers
 # because they require modifications to the WiX template in briefcase-windows-app-template:
 # - welcome_file / welcome_text (custom welcome page text)
-# - readme_file / readme_text (readme page)
 # - conclusion_file / conclusion_text (finish page text)
 
 # Default to a low version, so that if a valid version is provided in the future, it'll

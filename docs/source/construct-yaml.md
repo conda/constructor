@@ -585,9 +585,9 @@ shown before the license information, right after the introduction.
 File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
 both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
 
-If the installer is for Windows EXE and the welcome file type is nsi,
+If the installer is for Windows and the welcome file type is nsi,
 it will use the nsi script to add in extra pages before the installer
-begins the installation process. (Not supported for MSI installers.)
+begins the installation process.
 
 ### `welcome_text`
 
@@ -595,7 +595,7 @@ If `installer_type` is `pkg` on macOS, this message will be
 shown before the license information, right after the introduction.
 If this key is missing, it defaults to a message about Anaconda Cloud.
 You can disable it altogether so it defaults to the system message
-if you set this key to `""` (empty string). (Not supported for MSI installers.)
+if you set this key to `""` (empty string).
 
 ### `readme_file`
 
@@ -603,7 +603,6 @@ If `installer_type` is `pkg` on macOS, this message will be
 shown before the license information, right after the welcome screen.
 File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
 both `readme_file` and `readme_text` are provided, `readme_file` takes precedence.
-(Not supported for MSI installers.)
 
 ### `readme_text`
 
@@ -611,7 +610,6 @@ If `installer_type` is `pkg` on macOS, this message will be
 shown before the license information, right after the welcome screen.
 If this key is missing, it defaults to a message about Anaconda Cloud.
 You can disable it altogether if you set this key to `""` (empty string).
-(Not supported for MSI installers.)
 
 ### `post_install_pages`
 
@@ -632,8 +630,7 @@ plain text (.txt), rich text (.rtf) or HTML (.html). If both
 `conclusion_file` and `conclusion_text` are provided,
 `conclusion_file` takes precedence.
 
-If the installer is for Windows EXE, the file type must be nsi.
-(Not supported for MSI installers.)
+If the installer is for Windows, the file type must be nsi.
 
 ### `conclusion_text`
 
@@ -643,7 +640,6 @@ The behaviour is slightly different across installer types:
   You can disable it altogether so it defaults to the system message if you set this
   key to `""` (empty string).
 - EXE: The first line will be used as a title. The following lines will be used as text.
-- MSI: Not supported.
 
 ### `extra_files`
 
