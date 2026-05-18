@@ -1564,18 +1564,17 @@ def test_dockerfile_generation(tmp_path):
     with open(input_path / "construct.yaml") as f:
         config = yaml.load(f)
 
-    for installer, info in create_installer(input_path, output_path):
-        if info.get("installer_type") == "docker":
-            docker_output_dir = output_path / "installer" / installer.stem
-            assert (docker_output_dir / "Dockerfile").exists()
-            assert (docker_output_dir / installer.name).exists()
+    for installer, _ in create_installer(input_path, output_path):
+        docker_output_dir = output_path / "installer" / installer.stem
+        assert (docker_output_dir / "Dockerfile").exists()
+        assert (docker_output_dir / installer.name).exists()
 
-            dockerfile_text = (docker_output_dir / "Dockerfile").read_text()
+        dockerfile_text = (docker_output_dir / "Dockerfile").read_text()
 
-            assert f"FROM {config['docker_base_image']}" in dockerfile_text
+        assert f"FROM {config['docker_base_image']}" in dockerfile_text
 
-            for key, value in config.get("docker_labels", {}).items():
-                assert f'{key}="{value}"' in dockerfile_text
+        for key, value in config.get("docker_labels", {}).items():
+            assert f'{key}="{value}"' in dockerfile_text
 
 
 @pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
