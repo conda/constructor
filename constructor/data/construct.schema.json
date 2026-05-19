@@ -1310,7 +1310,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\nIf the installer is for Windows and the welcome file type is nsi, it will use the nsi script to add in extra pages before the installer begins the installation process.",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\nIf the installer is for Windows EXE and the welcome file type is nsi, it will use the nsi script to add in extra pages before the installer begins the installation process.",
       "title": "Welcome File"
     },
     "welcome_image": {

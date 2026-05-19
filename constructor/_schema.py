@@ -757,7 +757,7 @@ class ConstructorConfiguration(BaseModel):
     File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
     both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
 
-    If the installer is for Windows and the welcome file type is nsi,
+    If the installer is for Windows EXE and the welcome file type is nsi,
     it will use the nsi script to add in extra pages before the installer
     begins the installation process.
     """
