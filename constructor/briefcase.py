@@ -17,8 +17,11 @@ from subprocess import run
 IS_WINDOWS = sys.platform == "win32"
 if IS_WINDOWS:
     import tomli_w
+
+    from .imaging import write_images
 else:
     tomli_w = None  # This file is only intended for Windows use
+    write_images = None  # imaging.py requires PIL, which is only available on Windows
 
 from . import preconda
 from .jinja import render_template
@@ -35,6 +38,12 @@ from .utils import (
 
 BRIEFCASE_DIR = Path(__file__).parent / "briefcase"
 EXTERNAL_PACKAGE_PATH = "external"
+
+# MSI Branding Limitations:
+# The following EXE branding options are not supported for MSI installers
+# because they require modifications to the WiX template in briefcase-windows-app-template:
+# - welcome_file / welcome_text (custom welcome page text)
+# - conclusion_file / conclusion_text (finish page text)
 
 # Default to a low version, so that if a valid version is provided in the future, it'll
 # be treated as an upgrade.
@@ -375,6 +384,9 @@ class Payload:
         external_dir = self.root / EXTERNAL_PACKAGE_PATH
         external_dir.mkdir(parents=True, exist_ok=True)
 
+        # Generate branding images for MSI installer (only if user provided custom images)
+        write_images(self.info, external_dir, installer_type="msi")
+
         # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
         base_dir = external_dir / "base"
         base_dir.mkdir()
@@ -515,6 +527,18 @@ class Payload:
                 }
             },
         }
+
+        # Add optional branding images (only if user provided them in construct.yaml)
+        icon_ico = external / "icon.ico"
+        if icon_ico.exists():
+            # Briefcase expects icon path WITHOUT extension - it appends .ico
+            config["app"][app_name]["icon"] = str(external / "icon")
+        welcome_bmp = external / "welcome.bmp"
+        if welcome_bmp.exists():
+            config["app"][app_name]["installer_background"] = str(welcome_bmp)
+        header_bmp = external / "header.bmp"
+        if header_bmp.exists():
+            config["app"][app_name]["installer_banner"] = str(header_bmp)
 
         # Add optional content
         if "company" in self.info:

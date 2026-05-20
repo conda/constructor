@@ -2,6 +2,11 @@ import sys
 import tarfile
 from pathlib import Path
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 import pytest
 
 from constructor.briefcase import (
@@ -27,6 +32,9 @@ mock_info = {
     "_dists": [],
     "_platform": cc_platform,
     "_urls": [],
+    # Required for auto-generating branding images
+    "welcome_image_text": "MockInfo",
+    "header_image_text": "MockInfo",
 }
 
 
@@ -1010,3 +1018,70 @@ def test_stage_user_scripts_validates_bat_extension(tmp_path):
 
     with pytest.raises(ValueError, match="must be an existing '.bat' file"):
         payload._stage_user_scripts(pkgs_dir)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+@pytest.mark.parametrize(
+    "has_user_images",
+    [
+        pytest.param(True, id="user-provided-images"),
+        pytest.param(False, id="no-user-images"),
+    ],
+)
+def test_payload_pyproject_toml_installer_images(tmp_path, has_user_images):
+    """Test that pyproject.toml contains branding image paths only when user provides them.
+
+    MSI installers only include branding images if user explicitly provides them.
+    Otherwise, WiX defaults are used.
+    """
+    info = mock_info.copy()
+
+    if has_user_images:
+        # Use existing test image from examples directory
+        repo_root = Path(__file__).parent.parent
+        example_image = (
+            repo_root / "examples" / "customized_welcome_conclusion" / "ExtraPagesExampleImg.bmp"
+        )
+        assert example_image.exists(), f"Test image not found: {example_image}"
+
+        info["welcome_image"] = str(example_image)
+        info["header_image"] = str(example_image)
+        info["icon_image"] = str(example_image)
+
+    payload = Payload(info)
+    payload.prepare()
+
+    pyproject_path = payload.root / "pyproject.toml"
+    assert pyproject_path.is_file()
+
+    with open(pyproject_path, "rb") as f:
+        config = tomllib.load(f)
+
+    app_config = config["tool"]["briefcase"]["app"]
+    app_name = list(app_config.keys())[0]
+    app = app_config[app_name]
+
+    if has_user_images:
+        # Verify branding paths are present when user provides images
+        assert "installer_background" in app, "installer_background missing"
+        assert "installer_banner" in app, "installer_banner missing"
+        assert "icon" in app, "icon missing from pyproject.toml"
+
+        # Verify paths point to expected files
+        assert app["installer_background"].endswith("welcome.bmp")
+        assert app["installer_banner"].endswith("header.bmp")
+        assert app["icon"].endswith("icon")  # No extension for icon
+
+        # Verify the actual image files exist
+        assert Path(app["installer_background"]).exists()
+        assert Path(app["installer_banner"]).exists()
+        assert Path(app["icon"] + ".ico").exists()  # Briefcase adds .ico
+    else:
+        # No branding images - use WiX defaults
+        assert "icon" not in app, "icon should not be present without user image"
+        assert "installer_background" not in app, (
+            "installer_background should not be present without user image"
+        )
+        assert "installer_banner" not in app, (
+            "installer_banner should not be present without user image"
+        )

@@ -25,6 +25,12 @@ header_size = 150, 57
 icon_size = 256, 256
 # These are for OSX
 welcome_size_osx = 1227, 600
+# MSI/WiX image sizes
+# WiX WelcomeDlg uses a full-background image with text overlaid on the right side.
+# We create a side-panel effect: branding on left 164px, white padding on right.
+welcome_size_msi = (493, 312)
+welcome_side_panel_width_msi = 164  # Width for branding area (matches EXE welcome width)
+header_size_msi = (493, 58)
 
 
 def new_background(size, color, bs=20, boxes=50):
@@ -99,19 +105,43 @@ def add_color_info(info):
         sys.exit("Error: color '%s' not defined" % color_name)
 
 
-def write_images(info, dir_path, os="windows"):
-    if os == "windows":
+def _resize_for_msi_welcome(image_path):
+    """Resize image for MSI welcome dialog with side-panel layout.
+
+    WiX WelcomeDlg uses a full-background bitmap with text overlaid on the right.
+    The user's image is resized to 164x312 and placed on the left, with white
+    padding on the right for the dialog text.
+    """
+    im = Image.open(image_path)
+
+    # Resize to side panel dimensions (164x312)
+    panel_size = (welcome_side_panel_width_msi, welcome_size_msi[1])
+    im = im.resize(panel_size)
+
+    # Create white canvas (493x312) and paste image on left side
+    canvas = Image.new("RGB", welcome_size_msi, color=white)
+    canvas.paste(im, (0, 0))
+    return canvas
+
+
+def write_images(info, dir_path, installer_type="exe"):
+    if installer_type == "exe":
         instructions = [
             ("welcome", welcome_size, mk_welcome_image, ".bmp"),
             ("header", header_size, mk_header_image, ".bmp"),
             ("icon", icon_size, mk_icon_image, ".ico"),
         ]
-    elif os == "osx":
+    elif installer_type == "pkg":
         instructions = [
             ("welcome", welcome_size_osx, mk_welcome_image_osx, ".png"),
         ]
+    elif installer_type == "msi":
+        # MSI uses WiX defaults; user-provided images handled separately below
+        instructions = []
     else:
-        raise ValueError(f"OS {os} not supported. Choose `windows` or `osx`.")
+        raise ValueError(
+            f"Installer type '{installer_type}' not supported. Choose 'exe', 'pkg', or 'msi'."
+        )
 
     for name, size, function, ext in instructions:
         key = name + "_image"
@@ -124,12 +154,17 @@ def write_images(info, dir_path, os="windows"):
         assert im.size == size
         im.save(join(dir_path, name + ext))
 
-
-if __name__ == "__main__":
-    info = {
-        "name": "test",
-        "version": "0.3.1",
-        "default_image_color": "yellow",
-        "welcome_image": "../examples/miniconda/bird.png",
-    }
-    write_images(info, ".")
+    # MSI: handle custom images if provided (no auto-generation)
+    if installer_type == "msi":
+        if info.get("welcome_image"):
+            im = _resize_for_msi_welcome(info["welcome_image"])
+            assert im.size == welcome_size_msi
+            im.save(join(dir_path, "welcome.bmp"))
+        if info.get("header_image"):
+            im = Image.open(info["header_image"])
+            im = im.resize(header_size_msi)
+            im.save(join(dir_path, "header.bmp"))
+        if info.get("icon_image"):
+            im = Image.open(info["icon_image"])
+            im = im.resize(icon_size)
+            im.save(join(dir_path, "icon.ico"))
