@@ -89,11 +89,6 @@ def build_image(info: dict, docker_dir: Path) -> Path:
             f"Supported platforms are: {', '.join(DOCKER_PLATFORM_MAP.keys())}."
         )
 
-    if info.get("docker_tag") and ":" not in info.get("docker_tag"):
-        raise ValueError(
-            f"Invalid docker_tag: '{info['docker_tag']}'. Must be in format 'name:tag'."
-        )
-
     tag = info.get("docker_tag", f"{info['name'].lower()}:{info['version']}")
     tarball_dest = docker_dir / f"{Path(info['_outpath']).stem}-docker.tar"
 
@@ -114,6 +109,7 @@ def build_image(info: dict, docker_dir: Path) -> Path:
 
     logger.info("Saving Docker image to tarball: '%s'", tarball_dest)
     subprocess.run(["docker", "save", tag, "-o", str(tarball_dest)], check=True)
+    subprocess.run(["docker", "rmi", tag], check=True)
     return tarball_dest
 
 
@@ -140,7 +136,9 @@ def create(info: dict, verbose: bool = False) -> None:
 
         generate_dockerfile(info, docker_tmp_dir)
 
-        if info.get("docker_image") == "tar":
+        if info.get("docker_image") != "tar":
+            raise NotImplementedError("Only 'tar' docker_image output is currently supported.")
+        elif info.get("docker_image") == "tar":
             tarball = build_image(info, docker_tmp_dir)
             if tarball:
                 shutil.copy(tarball, Path(info["_output_dir"]) / tarball.name)
