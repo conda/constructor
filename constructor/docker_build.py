@@ -136,7 +136,7 @@ def create(info: dict, verbose: bool = False) -> None:
 
         generate_dockerfile(info, docker_tmp_dir)
 
-        if info.get("docker_image") != "tar":
+        if info.get("docker_image") and info.get("docker_image") != "tar":
             raise NotImplementedError("Only 'tar' docker_image output is currently supported.")
         elif info.get("docker_image") == "tar":
             tarball = build_image(info, docker_tmp_dir)
