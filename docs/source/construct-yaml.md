@@ -493,7 +493,9 @@ so the user receives updates after each command executed by the installer.
 
 Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
 to be used as the welcome image for the Windows and PKG installers.
-The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on macOS.
+The image is re-sized to 164 x 314 pixels for EXE installers, 1227 x 600 on macOS,
+and for MSI installers it is scaled to fit a 164-pixel wide side panel (maintaining
+aspect ratio) with white padding on the right.
 By default, an image is automatically generated on Windows. On macOS, Anaconda's
 logo is shown if this key is not provided. If you don't want a background on
 PKG installers, set this key to `""` (empty string).
@@ -585,7 +587,7 @@ shown before the license information, right after the introduction.
 File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
 both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
 
-If the installer is for Windows and the welcome file type is nsi,
+If the installer is for Windows EXE and the welcome file type is nsi,
 it will use the nsi script to add in extra pages before the installer
 begins the installation process.
 
