@@ -105,7 +105,20 @@ def build_image(info: dict, docker_dir: Path) -> Path:
     ]
 
     logger.info("Building Docker image: '%s'", tag)
-    subprocess.run(cmd, check=True)
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        # Gather diagnostics on failure
+        docker_version = subprocess.run(["docker", "--version"], capture_output=True, text=True)
+        buildx_version = subprocess.run(["docker", "buildx", "version"], capture_output=True, text=True)
+        buildx_ls = subprocess.run(["docker", "buildx", "ls"], capture_output=True, text=True)
+        raise RuntimeError(
+            f"Docker build failed.\n"
+            f"Command: {cmd}\n"
+            f"Docker version: {docker_version.stdout.strip()}\n"
+            f"Buildx version: {buildx_version.stdout.strip() or buildx_version.stderr.strip()}\n"
+            f"Buildx builders: {buildx_ls.stdout.strip()}"
+        ) from e
 
     logger.info("Saving Docker image to tarball: '%s'", tarball_dest)
     subprocess.run(["docker", "save", tag, "-o", str(tarball_dest)], check=True)
