@@ -1556,8 +1556,15 @@ def test_frozen_environment(tmp_path, request, has_conflict):
         )
 
 
-@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux only")
-def test_dockerfile_generation(tmp_path):
+def test_dockerfile_generation(tmp_path, platform_conda_exe):
+    platform, conda_exe = platform_conda_exe
+
+    if sys.platform.startswith("linux"):
+        conda_exe = None
+        extra_constructor_args = None
+    else:
+        extra_constructor_args = ["--platform", platform]
+
     input_path = _example_path("dockerfile")
     output_path = tmp_path / "output"
 
@@ -1566,7 +1573,9 @@ def test_dockerfile_generation(tmp_path):
         config = yaml.load(f)
 
     installer_stem = None
-    for installer, _ in create_installer(input_path, output_path):
+    for installer, _ in create_installer(
+        input_path, output_path, conda_exe=conda_exe, extra_constructor_args=extra_constructor_args
+    ):
         if installer.suffix == ".sh":
             installer_stem = installer.stem
     assert installer_stem is not None
@@ -1582,9 +1591,16 @@ def test_dockerfile_generation(tmp_path):
         assert f'{key}="{value}"' in dockerfile_text
 
 
-@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux only")
 @pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
-def test_docker_image_build(tmp_path):
+def test_docker_image_build(tmp_path, platform_conda_exe):
+    platform, conda_exe = platform_conda_exe
+
+    if sys.platform.startswith("linux"):
+        conda_exe = None
+        extra_constructor_args = None
+    else:
+        extra_constructor_args = ["--platform", platform]
+
     input_path = _example_path("docker_image")
     output_path = tmp_path / "output"
 
@@ -1594,7 +1610,9 @@ def test_docker_image_build(tmp_path):
     image_name = f"{config['name'].lower()}:{config['version']}"
 
     installer_stem = None
-    for installer, _ in create_installer(input_path, output_path):
+    for installer, _ in create_installer(
+        input_path, output_path, conda_exe=conda_exe, extra_constructor_args=extra_constructor_args
+    ):
         if installer.suffix == ".sh":
             installer_stem = installer.stem
     assert installer_stem is not None
