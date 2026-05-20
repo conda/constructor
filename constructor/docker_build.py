@@ -110,7 +110,9 @@ def build_image(info: dict, docker_dir: Path) -> Path:
     except subprocess.CalledProcessError as e:
         # Gather diagnostics on failure
         docker_version = subprocess.run(["docker", "--version"], capture_output=True, text=True)
-        buildx_version = subprocess.run(["docker", "buildx", "version"], capture_output=True, text=True)
+        buildx_version = subprocess.run(
+            ["docker", "buildx", "version"], capture_output=True, text=True
+        )
         buildx_ls = subprocess.run(["docker", "buildx", "ls"], capture_output=True, text=True)
         raise RuntimeError(
             f"Docker build failed.\n"
@@ -122,7 +124,7 @@ def build_image(info: dict, docker_dir: Path) -> Path:
 
     logger.info("Saving Docker image to tarball: '%s'", tarball_dest)
     subprocess.run(["docker", "save", tag, "-o", str(tarball_dest)], check=True)
-    subprocess.run(["docker", "rmi", tag], check=True)
+    subprocess.run(["docker", "rmi", tag], check=False)
     return tarball_dest
 
 
@@ -149,12 +151,9 @@ def create(info: dict, verbose: bool = False) -> None:
 
         generate_dockerfile(info, docker_tmp_dir)
 
-        if info.get("docker_image") and info.get("docker_image") != "tar":
-            raise NotImplementedError("Only 'tar' docker_image output is currently supported.")
-        elif info.get("docker_image") == "tar":
+        if info.get("docker_image") == "tar":
             tarball = build_image(info, docker_tmp_dir)
-            if tarball:
-                shutil.copy(tarball, Path(info["_output_dir"]) / tarball.name)
+            shutil.copy(tarball, Path(info["_output_dir"]) / tarball.name)
         else:
             output_dir = Path(info["_output_dir"]) / installer_path.stem
             output_dir.mkdir(parents=True, exist_ok=True)

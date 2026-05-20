@@ -15,7 +15,6 @@ import argparse
 import json
 import logging
 import os
-import shutil
 import subprocess
 import sys
 from os.path import abspath, expanduser, isdir, join
@@ -31,7 +30,14 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
-from .utils import StandaloneExe, check_version, identify_conda_exe, normalize_path, yield_lines
+from .utils import (
+    StandaloneExe,
+    check_version,
+    has_docker_buildx,
+    identify_conda_exe,
+    normalize_path,
+    yield_lines,
+)
 
 DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
 
@@ -228,12 +234,17 @@ def main_build(
             "Error: docker_base_image is required when building Docker artifacts. "
             "Please specify a base image using the 'docker_base_image' key in construct.yaml."
         )
-    if info.get("docker_image") and shutil.which("docker") is None:
+    if info.get("docker_image") and not has_docker_buildx():
         sys.exit(
-            "Error: Building a Docker image requires the 'docker' CLI tool to be installed and available in PATH. "
-            "Install Docker Desktop or Docker Engine to proceed, or "
+            "Error: Building a Docker image requires Docker Buildx to be installed and available in PATH. "
+            "Install Docker Buildx to proceed, or "
             "use `installer_type: docker` in construct.yaml to "
             "generate the Dockerfile without building the image."
+        )
+    if info.get("docker_image") and info.get("docker_image") != "tar":
+        sys.exit(
+            f"Error: docker_image: '{info.get('docker_image')}' is not yet supported. "
+            "Only 'tar' output is currently supported. Please set 'docker_image: tar' to proceed."
         )
 
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):

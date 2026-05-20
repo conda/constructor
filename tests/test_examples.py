@@ -26,6 +26,7 @@ from constructor.utils import (
     StandaloneExe,
     check_version,
     format_conda_exe_name,
+    has_docker_buildx,
     identify_conda_exe,
 )
 
@@ -1591,7 +1592,7 @@ def test_dockerfile_generation(tmp_path, platform_conda_exe):
         assert f'{key}="{value}"' in dockerfile_text
 
 
-@pytest.mark.skipif(not shutil.which("docker"), reason="Docker not available")
+@pytest.mark.skipif(not has_docker_buildx(), reason="Docker Buildx not available")
 def test_docker_image_build(tmp_path, platform_conda_exe):
     platform, conda_exe = platform_conda_exe
 
