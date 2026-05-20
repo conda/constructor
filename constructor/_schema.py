@@ -590,7 +590,7 @@ class ConstructorConfiguration(BaseModel):
     this is used only for "Just Me" installations; for "All Users" installations,
     use the `default_prefix_all_users` key. If not provided, the default prefix
     is `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at
-    install time.
+    install time. If creating a Docker output, the default is `/opt/<NAME>` and can be overridden during the Docker build process.
     """
     default_prefix_domain_user: NonEmptyStr | None = None
     """
@@ -864,8 +864,8 @@ class ConstructorConfiguration(BaseModel):
     docker_tag: NonEmptyStr | None = None
     """
     Tag to use for the docker image.
-    If not provided, it will default to `<name>-<version>:<platform>-<arch>`.
-    Has no effect if not using the docker build output feature.
+    If not provided, it will default to `<name>:<version>`.
+    Has no effect if not using the `docker_image` feature.
     """
     docker_labels: dict[NonEmptyStr, NonEmptyStr] = {}
     """

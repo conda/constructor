@@ -608,7 +608,7 @@
         }
       ],
       "default": null,
-      "description": "Set default install prefix. On Linux, if not provided, the default prefix is `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows, this is used only for \"Just Me\" installations; for \"All Users\" installations, use the `default_prefix_all_users` key. If not provided, the default prefix is `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at install time.",
+      "description": "Set default install prefix. On Linux, if not provided, the default prefix is `${HOME}/<NAME>` (or, if `HOME` is not set, `/opt/<NAME>`). On Windows, this is used only for \"Just Me\" installations; for \"All Users\" installations, use the `default_prefix_all_users` key. If not provided, the default prefix is `%USERPROFILE%\\<NAME>`. Environment variables will be expanded at install time. If creating a Docker output, the default is `/opt/<NAME>` and can be overridden during the Docker build process.",
       "title": "Default Prefix"
     },
     "default_prefix_all_users": {
@@ -695,7 +695,7 @@
         }
       ],
       "default": null,
-      "description": "Tag to use for the docker image. If not provided, it will default to `<name>-<version>:<platform>-<arch>`. Has no effect if not using the docker build output feature.",
+      "description": "Tag to use for the docker image. If not provided, it will default to `<name>:<version>`. Has no effect if not using the `docker_image` feature.",
       "title": "Docker Tag"
     },
     "environment": {
