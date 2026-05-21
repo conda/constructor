@@ -4,7 +4,7 @@ ci:
 exclude: ^(versioneer.py|constructor/_version.py|CONSTRUCT.md|docs/source/construct-yaml.md)
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -19,6 +19,7 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
     rev: v0.15.13
+    rev: 5e2fb545eba1ea9dc051f6f962d52fe8f76a9794  # frozen: v0.15.13
     hooks:
       # Run the linter.
       - id: ruff
@@ -26,11 +27,11 @@ repos:
       # Run the formatter.
       - id: ruff-format
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+    rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
     hooks:
       - id: shellcheck
         exclude: ^(constructor/header.sh|constructor/osx/.*sh)
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: f805888065fdb6162e1f800e50bb9460cbd223d6  # frozen: 0.37.2
     hooks:
       - id: check-github-workflows
