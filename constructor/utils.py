@@ -14,6 +14,7 @@ import logging
 import math
 import re
 import shutil
+import subprocess
 import sys
 import warnings
 from io import StringIO
@@ -429,3 +430,16 @@ def parse_virtual_specs(info) -> dict:
                     "__osx only supports `<` or `>=`; __glibc only supports `>=`."
                 )
     return specs
+
+
+def has_docker_buildx() -> bool:
+    try:
+        subprocess.run(
+            ["docker", "buildx", "version"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+        return True
+    except (subprocess.CalledProcessError, OSError):
+        return False

@@ -30,7 +30,14 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
-from .utils import StandaloneExe, check_version, identify_conda_exe, normalize_path, yield_lines
+from .utils import (
+    StandaloneExe,
+    check_version,
+    has_docker_buildx,
+    identify_conda_exe,
+    normalize_path,
+    yield_lines,
+)
 
 DEFAULT_CACHE_DIR = os.getenv("CONSTRUCTOR_CACHE", "~/.conda/constructor")
 
@@ -40,10 +47,21 @@ logger = logging.getLogger(__name__)
 def get_installer_type(info: dict):
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe",)}
-    all_allowed = set(sum(os_allowed.values(), ("all",)))
+    os_allowed = {
+        "linux": ("sh",),
+        "osx": (
+            "sh",
+            "pkg",
+        ),
+        "win": ("exe",),
+    }
+    all_allowed = set(sum(os_allowed.values(), ("all", "docker")))
 
     itype = info.get("installer_type")
+
+    if not itype and info.get("docker_image"):
+        itype = "docker"
+
     if not itype:
         return os_allowed[osname][:1]
     elif itype == "all":
@@ -51,6 +69,13 @@ def get_installer_type(info: dict):
     elif itype not in all_allowed:
         all_allowed = ", ".join(sorted(all_allowed))
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
+    elif itype == "docker":
+        if osname != "linux":
+            sys.exit(
+                "Error: Docker features are only supported for Linux target platforms. "
+                "Use --platform linux-ARCH to build a Docker artifact."
+            )
+        return ("sh", "docker")
     elif itype not in os_allowed[osname]:
         os_allowed = ", ".join(sorted(os_allowed[osname]))
         sys.exit(
@@ -70,6 +95,8 @@ def get_output_filename(info: dict) -> str:
     os_map = {"linux": "Linux", "osx": "MacOSX", "win": "Windows"}
     arch_name_map = {"64": "x86_64", "32": "x86"}
     ext = info["installer_type"]
+    if ext == "docker":
+        ext = "sh"
     return "%s-%s-%s.%s" % (
         "%(name)s-%(version)s" % info,
         os_map.get(osname, osname),
@@ -201,6 +228,24 @@ def main_build(
     info["_conda_exe"] = abspath(conda_exe)
     info["_debug"] = debug
     itypes = get_installer_type(info)
+
+    if "docker" in itypes and not info.get("docker_base_image"):
+        sys.exit(
+            "Error: docker_base_image is required when building Docker artifacts. "
+            "Please specify a base image using the 'docker_base_image' key in construct.yaml."
+        )
+    if info.get("docker_image") and not has_docker_buildx():
+        sys.exit(
+            "Error: Building a Docker image requires Docker Buildx to be installed and available in PATH. "
+            "Install Docker Buildx to proceed, or remove `docker_image` and"
+            "use `installer_type: docker` in construct.yaml to "
+            "generate the Dockerfile without building the image."
+        )
+    if info.get("docker_image") and info.get("docker_image") != "tar":
+        sys.exit(
+            f"Error: docker_image: '{info.get('docker_image')}' is not yet supported. "
+            "Only 'tar' output is currently supported. Please set 'docker_image: tar' to proceed."
+        )
 
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
@@ -399,12 +444,23 @@ def main_build(
             from .winexe import create as winexe_create
 
             create = winexe_create
+        elif itype == "docker":
+            from .docker_build import create as docker_create
+
+            create = docker_create
         info["installer_type"] = itype
         info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
+
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())
-        logger.info("Successfully created '%(_outpath)s'.", info)
+        if itype == "docker":
+            logger.info(
+                "Docker output complete. Docker directory: '%s'",
+                Path(info["_output_dir"]),
+            )
+        else:
+            logger.info("Successfully created '%(_outpath)s'.", info)
 
     # Merge info files for each installer type
     if len(itypes) > 1:
