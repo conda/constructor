@@ -44,6 +44,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
 
     specs = {MatchSpec(spec).name for spec in info.get("specs", ())}
     has_mamba = "mamba" in specs
+    has_conda = "conda" in specs
 
     docker_template = Template(TEMPLATE_PATH.read_text())
 
@@ -55,7 +56,8 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
         name=info["name"],
         version=info["version"],
         labels=info.get("docker_labels", {}),
-        init_cmd="$PREFIX/bin/mamba shell" if has_mamba else "$PREFIX/bin/python -m conda",
+        has_mamba=has_mamba,
+        has_conda=has_conda,
         register_envs=info.get("register_envs"),
         keep_pkgs=info.get("keep_pkgs"),
     )
@@ -129,7 +131,11 @@ def build_image(info: dict, docker_dir: Path) -> Path:
 
 
 def create(info: dict, verbose: bool = False) -> None:
-    """Build a Docker output
+    """Build a Docker output from a previously built ``.sh`` installer.
+
+    The ``.sh`` installer is built in the preceding ``sh`` iteration of the
+    installer loop in ``main_build`` and must exist at ``info["_outpath"]``
+    before this function is called.
 
     Parameters
     ----------
@@ -164,3 +170,5 @@ def create(info: dict, verbose: bool = False) -> None:
             )
 
     logger.info("Docker output complete. Docker directory: '%s'", info["_output_dir"])
+
+    installer_path.unlink(missing_ok=True)

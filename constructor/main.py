@@ -237,7 +237,7 @@ def main_build(
     if info.get("docker_image") and not has_docker_buildx():
         sys.exit(
             "Error: Building a Docker image requires Docker Buildx to be installed and available in PATH. "
-            "Install Docker Buildx to proceed, or "
+            "Install Docker Buildx to proceed, or remove `docker_image` and"
             "use `installer_type: docker` in construct.yaml to "
             "generate the Dockerfile without building the image."
         )

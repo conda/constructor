@@ -13,6 +13,8 @@ COPY {{ installer_filename }} /tmp/installer.sh
 RUN sh /tmp/installer.sh -b -p "${PREFIX}" && \
     rm -f "${PREFIX}/uninstall.sh" && \
     rm -f "${PREFIX}/_conda" && \
+    rm -f "${PREFIX}/micromamba" && \
+    rm -rf "${PREFIX}/_internal" && \
     find "${PREFIX}" -follow -type f -name '*.js.map' -delete && \
     (find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true) && \
     {% if not keep_pkgs -%}
@@ -39,11 +41,17 @@ ENV LC_ALL=C.UTF-8
 ENV PATH="${PREFIX}/bin:${PATH}"
 
 COPY --from=builder ${PREFIX} ${PREFIX}
-{% if register_envs %}
+{%- if register_envs %}
 COPY --from=builder /root/.conda /root/.conda
 {% endif %}
 
 RUN echo 'export PATH=$(sed -e "s,:\?{{ default_prefix }}/bin:,," <<< "${PATH}")' >> ~/.bashrc && \
-    {{ init_cmd }} init --all
+    {%- if has_mamba %}
+    $PREFIX/bin/mamba shell init --all || $PREFIX/bin/mamba init --all
+    {%- elif has_conda %}
+    $PREFIX/bin/python -m conda init --all
+    {%- else %}
+    echo "No conda or mamba found in environment, skipping shell init"
+    {%- endif %}
 
 CMD [ "/bin/bash" ]
