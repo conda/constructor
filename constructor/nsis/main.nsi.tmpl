@@ -38,6 +38,7 @@ Unicode true
   !endif
 !macroend
 
+var /global TmpDir
 var /global QuietMode # "0" = print normally, "1" = do not print
 var /global StdOutHandle
 var /global StdOutHandleSet
@@ -1460,6 +1461,14 @@ Section "Install"
     # for users even during an all-users installation.
     !insertmacro setInstdirPermissions
 
+    # Create the temporary directory inside $INSTDIR so that
+    # Windows Defender does not get triggered by conda-standalone
+    # being extracted into LOCALAPPDATA
+    # See https://github.com/conda/constructor/issues/1243
+    StrCpy $TmpDir "$INSTDIR\tmp"
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMP", "$TmpDir")'
+    CreateDirectory $TmpDir
+
 {% if needs_python_exe %}
     SetOutPath "$INSTDIR\Lib"
     File "{{ NSIS_DIR }}\_nsis.py"
@@ -1714,6 +1723,9 @@ Section "Install"
     ${EndIf}
 
     WriteUninstaller "$INSTDIR\Uninstall-${NAME}.exe"
+    ${If} ${FileExists} "$TmpDir"
+        RMDir /r "$TmpDir"
+    ${EndIf}
 
     ${Print} "Setting installation directory permissions..."
     # Enable inheritance on all files inside $INSTDIR.
@@ -1795,6 +1807,14 @@ Section "Uninstall"
         IntOp $0 $0 + 1
         goto loop_py
     endloop_py:
+
+    # Create the temporary directory inside $INSTDIR so that
+    # Windows Defender does not get triggered by conda-standalone
+    # being extracted into LOCALAPPDATA
+    # See https://github.com/conda/constructor/issues/1243
+    StrCpy TmpDir "$INSTDIR\tmp"
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMP", "${TmpDir}")'
+    CreateDirectory "$TmpDir"
 
     # Extra info for pre_uninstall scripts
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("PREFIX", "$INSTDIR")'
