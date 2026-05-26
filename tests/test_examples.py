@@ -442,7 +442,7 @@ def _run_installer_msi(
     installer_input=None,
     timeout=420,
     check=True,
-    options: list = [],
+    options: list | None = None,
 ):
     """Runs specified MSI Installer via command line in silent mode. This is work in progress."""
     if not sys.platform.startswith("win"):
@@ -451,6 +451,8 @@ def _run_installer_msi(
     # Translate NSIS-style options to MSI properties and collect MSI properties
     msi_properties = []
     allusers = False
+    if options is None:
+        options = []
     for opt in options:
         if opt == "/InstallationType=AllUsers":
             allusers = True
