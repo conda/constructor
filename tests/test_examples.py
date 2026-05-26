@@ -449,11 +449,19 @@ def _run_installer_msi(
     if not sys.platform.startswith("win"):
         raise ValueError("Can only run .msi installers on Windows")
 
-    # Currently we only have 1 test that specifies options, so this is a temporary "fix"
-    if options:
-        allusers = "/InstallationType=AllUsers" in options
-    else:
-        allusers = False
+    # Translate NSIS-style options to MSI properties and collect MSI properties
+    msi_properties = []
+    allusers = False
+    if options is None:
+        options = []
+    for opt in options:
+        if opt == "/InstallationType=AllUsers":
+            allusers = True
+        elif opt == "/InstallationType=JustMe":
+            allusers = False
+        elif "=" in opt and not opt.startswith("/"):
+            # Direct MSI property (e.g., "OPTION_INITIALIZE_CONDA=1")
+            msi_properties.append(opt)
 
     cmd = [
         "msiexec.exe",
@@ -462,6 +470,7 @@ def _run_installer_msi(
         "ALLUSERS=1"
         if allusers
         else "MSIINSTALLPERUSER=1",  # For some reason tests fail on the CI system if "ALLUSERS=1"
+        *msi_properties,
         "/qn",
     ]
 
@@ -1357,7 +1366,8 @@ def test_initialization(tmp_path, request, monkeypatch, method):
             # do not add to PATH due to CVE-2022-26526, so force single user install
             options = ["/AddToPath=1", "/InstallationType=JustMe"]
         elif installer.suffix == ".msi":
-            raise NotImplementedError("Test needs to be implemented")
+            # MSI uses OPTION_INITIALIZE_CONDA property instead of /AddToPath
+            options = ["OPTION_INITIALIZE_CONDA=1"] if initialize else []
         else:
             options = []
         _run_installer(
@@ -1392,7 +1402,21 @@ def test_initialization(tmp_path, request, monkeypatch, method):
             finally:
                 _run_uninstaller_exe(install_dir, check=True)
         elif installer.suffix == ".msi":
-            raise NotImplementedError("Test needs to be implemented")
+            try:
+                prefix = install_dir / "base"
+                with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_QUERY_VALUE
+                ) as key:
+                    value = winreg.QueryValueEx(key, "Path")[0]
+                    paths = value.strip().split(os.pathsep)
+                if method == "condabin":
+                    assert (str(prefix / "condabin") in paths) == initialize
+                else:
+                    assert (str(prefix) in paths) == initialize
+                    assert (str(prefix / "Scripts") in paths) == initialize
+                    assert (str(prefix / "Library" / "bin") in paths) == initialize
+            finally:
+                _run_uninstaller_msi(installer, install_dir, check=True)
         else:
             # GHA's Ubuntu needs interactive, but macOS wants login :shrug:
             login_flag = "-i" if sys.platform.startswith("linux") else "-l"
