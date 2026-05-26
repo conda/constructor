@@ -134,12 +134,19 @@ def txt_to_rtf(txt: str) -> str:
     # Escape RTF special characters: \ { }
     escaped = txt.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
 
-    # Segoe UI, 9pt (18 half-points)
+    # RTF header breakdown:
+    #   \rtf1    - RTF version 1
+    #   \ansi    - ANSI character set
+    #   \deff0   - default font is font 0
+    #   \fonttbl - font table definition
+    #   \f0      - use font 0 (Segoe UI)
+    #   \fs18    - font size 18 half-points (9pt)
     rtf_lines = ["{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Segoe UI;}}\\f0\\fs18"]
     for line in escaped.split("\n"):
         if line.strip():
             rtf_lines.append(line.rstrip() + " ")
         else:
+            # \par = paragraph break (two for visual separation between paragraphs)
             rtf_lines.append("\\par\\par")
     rtf_lines.append("}")
 
@@ -149,7 +156,7 @@ def txt_to_rtf(txt: str) -> str:
 def get_license(info, root: Path = None):
     """Retrieve the specified license as a dict or return a placeholder if not set.
 
-    If a .txt license file is provided and root is specified, converts it to RTF
+    If root is specified and the license file is not already RTF, converts it to RTF
     with a readable font (Segoe UI) instead of relying on Briefcase's default Courier.
 
     :param root: Payload directory to write the converted RTF file to.
