@@ -1812,7 +1812,7 @@ Section "Uninstall"
     # Windows Defender does not get triggered by conda-standalone
     # being extracted into LOCALAPPDATA
     # See https://github.com/conda/constructor/issues/1243
-    StrCpy TmpDir "$INSTDIR\tmp"
+    StrCpy $TmpDir "$INSTDIR\tmp"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMP", "${TmpDir}")'
     CreateDirectory "$TmpDir"
 
