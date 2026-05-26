@@ -442,7 +442,7 @@ def _run_installer_msi(
     installer_input=None,
     timeout=420,
     check=True,
-    options: list | None = None,
+    options: list = [],
 ):
     """Runs specified MSI Installer via command line in silent mode. This is work in progress."""
     if not sys.platform.startswith("win"):
@@ -451,15 +451,14 @@ def _run_installer_msi(
     # Translate NSIS-style options to MSI properties and collect MSI properties
     msi_properties = []
     allusers = False
-    if options:
-        for opt in options:
-            if opt == "/InstallationType=AllUsers":
-                allusers = True
-            elif opt == "/InstallationType=JustMe":
-                allusers = False
-            elif "=" in opt and not opt.startswith("/"):
-                # Direct MSI property (e.g., "OPTION_INITIALIZE_CONDA=1")
-                msi_properties.append(opt)
+    for opt in options:
+        if opt == "/InstallationType=AllUsers":
+            allusers = True
+        elif opt == "/InstallationType=JustMe":
+            allusers = False
+        elif "=" in opt and not opt.startswith("/"):
+            # Direct MSI property (e.g., "OPTION_INITIALIZE_CONDA=1")
+            msi_properties.append(opt)
 
     cmd = [
         "msiexec.exe",
@@ -468,9 +467,9 @@ def _run_installer_msi(
         "ALLUSERS=1"
         if allusers
         else "MSIINSTALLPERUSER=1",  # For some reason tests fail on the CI system if "ALLUSERS=1"
+        *msi_properties,
+        "/qn",
     ]
-    cmd.extend(msi_properties)
-    cmd.append("/qn")
 
     # Prepare logging
     post_install_log = install_dir / "install.log"
