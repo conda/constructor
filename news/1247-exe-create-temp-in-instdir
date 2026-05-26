@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* EXE: Create temporary directories inside `$INSTDIR` to avoid Windows Defender errors with `conda-standalone`. (#1243 via #1247)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
