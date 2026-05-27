@@ -16,7 +16,9 @@ from constructor.briefcase import (
     _setup_envs_commands,
     create_uninstall_options_list,
     get_bundle_app_name,
+    get_license,
     get_name_version,
+    txt_to_rtf,
 )
 from constructor.conda_interface import cc_platform
 
@@ -1085,3 +1087,54 @@ def test_payload_pyproject_toml_installer_images(tmp_path, has_user_images):
         assert "installer_banner" not in app, (
             "installer_banner should not be present without user image"
         )
+
+
+def test_txt_to_rtf():
+    """Test txt_to_rtf produces valid RTF with correct font and escaping."""
+    text = "Foo\\Bar\n\n{braces}\n\nEnd"
+    result = txt_to_rtf(text)
+
+    # RTF header with Segoe UI font at 9pt
+    assert result.startswith("{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Segoe UI;}}\\f0\\fs18")
+    assert result.endswith("}")
+    # Escaping
+    assert "Foo\\\\Bar" in result
+    assert "\\{braces\\}" in result
+    # Blank lines become paragraph breaks
+    assert result.count("\\par\\par") == 2
+
+
+@pytest.mark.parametrize(
+    "license_file, root_provided, expect_conversion",
+    [
+        (None, False, False),  # No license → placeholder
+        ("license.rtf", True, False),  # RTF file → no conversion
+        ("license.txt", True, True),  # TXT + root → convert
+        ("license.txt", False, False),  # TXT + no root → no conversion
+    ],
+)
+def test_get_license_scenarios(tmp_path, license_file, root_provided, expect_conversion):
+    """Test get_license handles different file types and root scenarios."""
+    if license_file is None:
+        info = {}
+    else:
+        src = tmp_path / license_file
+        if license_file.endswith(".rtf"):
+            src.write_text("{\\rtf1 existing}", encoding="utf-8")
+        else:
+            src.write_text("Plain text license", encoding="utf-8")
+        info = {"license_file": str(src)}
+
+    root = tmp_path / "payload" if root_provided else None
+    if root:
+        root.mkdir()
+
+    result = get_license(info, root=root)
+
+    if license_file is None:
+        assert "placeholder_license.txt" in result["file"]
+    elif expect_conversion:
+        assert result["file"] == str(root / "LICENSE.rtf")
+        assert "Segoe UI" in (root / "LICENSE.rtf").read_text(encoding="utf-8")
+    else:
+        assert result["file"] == str(tmp_path / license_file)
