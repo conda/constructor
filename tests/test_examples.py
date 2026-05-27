@@ -1452,6 +1452,23 @@ def test_output_files(tmp_path):
         files_exist = [file for file in files_not_expected if (root_path / file).exists()]
         assert files_exist == []
 
+        # Test that info.json contains serialized objects
+        info_json = json.loads((root_path / "info.json").read_text())
+        assert isinstance(info_json.get("_conda_exe_version"), str)
+        _all_pkg_records = info_json.get("_all_pkg_records")
+        assert isinstance(_all_pkg_records, list), "Package record is not a list."
+        assert len(_all_pkg_records) > 0, "Package record is empty."
+        assert isinstance(_all_pkg_records[0], dict), "Package record no serialized."
+        _records = info_json.get("_records")
+        assert isinstance(_records, list), "Package record for base is not a list."
+        assert len(_records) > 0, "Package record for base is empty."
+        assert isinstance(_records[0], dict), "Package record for base is not serialized."
+        for env, env_info in info_json.get("_extra_envs_info", {}).items():
+            _records = env_info.get("_records")
+            assert isinstance(_records, list), f"Record for {env} is not a list."
+            assert len(_records) > 0, f"Record for {env} is empty."
+            assert isinstance(_records[0], dict), f"Record for {env} is not serialized."
+
 
 def test_regressions(tmp_path, request):
     input_path = _example_path("regressions")
