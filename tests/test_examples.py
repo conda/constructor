@@ -1784,13 +1784,15 @@ def test_regressions(tmp_path, request):
 @pytest.mark.skipif(not ON_CI, reason="CI only")
 @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
 def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
-    """Verify the app is in the Installed Apps Menu (or not), based on the CLI arg '/NoRegistry'.
+    """Verify the app is in the Installed Apps Menu (or not), based on the NSIS-specific '/NoRegistry' flag.
     If NoRegistry=0, we expect to find the installer in the Menu, otherwise not.
     """
     input_path = _example_path("register_envs")  # The specific example we use here is not important
     options = ["/InstallationType=JustMe", f"/NoRegistry={no_registry}"]
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".msi":
+            # MSI registration is handled by Windows Installer (msiexec) and cannot
+            # be disabled. The /NoRegistry flag is NSIS-specific.
             continue
         _run_installer(
             input_path,

@@ -866,7 +866,7 @@
         }
       ],
       "default": null,
-      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n- `msi`: Windows GUI installer built with Briefcase and WiX\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` on Linux and `exe` on Windows.",
+      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n- `msi`: Windows GUI installer built with Briefcase and WiX (experimental)\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` on Linux and `exe` on Windows.",
       "title": "Installer Type"
     },
     "keep_pkgs": {
