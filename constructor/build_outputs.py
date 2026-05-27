@@ -16,6 +16,7 @@ from conda.common.url import remove_auth, split_anaconda_token
 from conda.core.prefix_data import PrefixGraph
 
 from . import __version__
+from .conda_interface import VersionOrder
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +77,17 @@ def dump_hash(info, algorithm=None):
 
 
 def dump_info(info):
+    def _serialize(obj):
+        if hasattr(obj, "dump"):
+            return obj.dump()
+        elif isinstance(obj, VersionOrder):
+            return obj.norm_version
+        else:
+            return repr(obj)
+
     outpath = os.path.join(info["_output_dir"], "info.json")
     with open(outpath, "w") as f:
-        json.dump(info, f, indent=2, default=repr)
+        json.dump(info, f, indent=2, default=_serialize)
     return os.path.abspath(outpath)
 
 
