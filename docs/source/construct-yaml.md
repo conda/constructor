@@ -285,7 +285,7 @@ Some tools require `signing_certificate` to be set.
 Defaults to `signtool` if `signing_certificate` is set.
 Additional environment variables may need to be used to configure signing.
 See the documentation for details:
-https://conda.github.io/constructor/howto/#signing-exe-installers
+https://conda.github.io/constructor/howto/#signing-windows-installers-exe-and-msi
 
 ### `signing_certificate`
 
@@ -578,7 +578,7 @@ To allow installations with spaces, change to False. Note that:
 
 ### `nsis_template`
 
-Path to an NSIS template file to use instead of the default template. (Windows only)
+Path to an NSIS template file to use instead of the default template. (EXE only)
 
 ### `welcome_file`
 

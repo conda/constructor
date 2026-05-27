@@ -65,3 +65,14 @@ Then, you can invoke `constructor` normally after setting a special environment 
 
 The resulting EXE installer will always generate an `install.log` file in the target directory.
 It will contain the full logs, as available in the "Show details" dialog.
+
+## Verbose MSI installers
+
+MSI installers can be run with Windows Installer logging:
+
+```batch
+> msiexec /i your-installer.msi /l*v install.log
+```
+
+The `/l*v` flag creates a verbose log file. For more `msiexec` options, see
+[Microsoft's documentation](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/msiexec).

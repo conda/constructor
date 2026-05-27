@@ -455,7 +455,7 @@ class ConstructorConfiguration(BaseModel):
     Defaults to `signtool` if `signing_certificate` is set.
     Additional environment variables may need to be used to configure signing.
     See the documentation for details:
-    https://conda.github.io/constructor/howto/#signing-exe-installers
+    https://conda.github.io/constructor/howto/#signing-windows-installers-exe-and-msi
     """
     signing_certificate: NonEmptyStr | None = None
     """
@@ -748,7 +748,7 @@ class ConstructorConfiguration(BaseModel):
     """
     nsis_template: NonEmptyStr | None = None
     """
-    Path to an NSIS template file to use instead of the default template. (Windows only)
+    Path to an NSIS template file to use instead of the default template. (EXE only)
     """
     welcome_file: NonEmptyStr | None = None
     """

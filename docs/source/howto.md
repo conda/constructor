@@ -46,9 +46,11 @@ Example of a CI pipeline implementing:
 - [Signing](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L349) and [notarization](https://github.com/napari/packaging/blob/6f5fcfaf7b/.github/workflows/make_bundle_conda.yml#L459) on macOS
 ```
 
-### Signing EXE installers
+### Signing Windows installers (EXE and MSI)
 
 Windows can trigger SmartScreen alerts for EXE installers, signed or not. It does help when they are signed, though. [Read this SO answer about SmartScreen reputation for more details](https://stackoverflow.com/questions/48946680/how-to-avoid-the-windows-defender-smartscreen-prevented-an-unrecognized-app-fro/66582477#66582477).
+
+MSI installers are signed using the same tools and environment variables as EXE installers.
 
 `constructor` supports the following tools to sign installers:
 
@@ -257,3 +259,35 @@ it to your `specs` definition and it will be available in your installations as 
 :::
 
 [activation-deepdive]: https://docs.conda.io/projects/conda/en/stable/dev-guide/deep-dives/activation.html
+
+## MSI Installers (Experimental)
+
+:::{warning}
+MSI installer support is experimental and may change in future releases.
+:::
+
+MSI installers provide an alternative to EXE installers on Windows, built using
+[Briefcase](https://beeware.org/project/projects/tools/briefcase/). They offer
+native Windows Installer integration, which is useful for enterprise deployment
+via Group Policy.
+
+### Building an MSI installer
+
+Set `installer_type` to `msi` in your `construct.yaml`:
+
+```yaml
+installer_type: msi  # [win]
+```
+
+Or build both EXE and MSI:
+
+```yaml
+installer_type: [exe, msi]  # [win]
+```
+
+### Current limitations
+
+- **`INSTALLER_UNATTENDED` not available**: Post-install scripts cannot detect silent installs. This will be added in a future release.
+- **No template customization**: Unlike EXE's `nsis_template`, MSI has no equivalent
+- **No `.nsi` extra pages**: `post_install_pages` and custom `welcome_file`/`conclusion_file` with `.nsi` are EXE-only
+- **Quote handling**: `script_env_variables` supports single quotes but not double quotes
