@@ -1813,7 +1813,7 @@ Section "Uninstall"
     # being extracted into LOCALAPPDATA
     # See https://github.com/conda/constructor/issues/1243
     StrCpy $TmpDir "$INSTDIR\tmp"
-    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMP", "${TmpDir}")'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMP", "$TmpDir")'
     CreateDirectory "$TmpDir"
 
     # Extra info for pre_uninstall scripts
