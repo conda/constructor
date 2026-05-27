@@ -1458,7 +1458,7 @@ def test_output_files(tmp_path):
         _all_pkg_records = info_json.get("_all_pkg_records")
         assert isinstance(_all_pkg_records, list), "Package record is not a list."
         assert len(_all_pkg_records) > 0, "Package record is empty."
-        assert isinstance(_all_pkg_records[0], dict), "Package record no serialized."
+        assert isinstance(_all_pkg_records[0], dict), "Package record not serialized."
         _records = info_json.get("_records")
         assert isinstance(_records, list), "Package record for base is not a list."
         assert len(_records) > 0, "Package record for base is empty."
