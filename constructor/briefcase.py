@@ -414,6 +414,7 @@ class Payload:
         Directory structure created during preparation:
 
             <root>/                          (temporary directory, see :attr:`root`)
+            ├── welcome.bmp, header.bmp, icon.ico  (branding images for WiX UI, not installed)
             └── <EXTERNAL_PACKAGE_PATH>/     (external_dir: contains the payload archive and conda exe)
                 └── base/                    (base_dir: represents the base conda environment)
                     └── pkgs/                (pkgs_dir: staging area for conda package distributions)
@@ -423,8 +424,9 @@ class Payload:
         external_dir = self.root / EXTERNAL_PACKAGE_PATH
         external_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generate branding images for MSI installer (only if user provided custom images)
-        write_images(self.info, external_dir, installer_type="msi")
+        # Generate branding images at root level so they're not included in the payload.
+        # These are only used for WiX UI configuration.
+        write_images(self.info, self.root, installer_type="msi")
 
         # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
         base_dir = external_dir / "base"
@@ -568,14 +570,15 @@ class Payload:
         }
 
         # Add optional branding images (only if user provided them in construct.yaml)
-        icon_ico = external / "icon.ico"
+        # Images are stored at root level, not in external_dir, to avoid bundling them in the payload
+        icon_ico = root / "icon.ico"
         if icon_ico.exists():
             # Briefcase expects icon path WITHOUT extension - it appends .ico
-            config["app"][app_name]["icon"] = str(external / "icon")
-        welcome_bmp = external / "welcome.bmp"
+            config["app"][app_name]["icon"] = str(root / "icon")
+        welcome_bmp = root / "welcome.bmp"
         if welcome_bmp.exists():
             config["app"][app_name]["installer_background"] = str(welcome_bmp)
-        header_bmp = external / "header.bmp"
+        header_bmp = root / "header.bmp"
         if header_bmp.exists():
             config["app"][app_name]["installer_banner"] = str(header_bmp)
 
