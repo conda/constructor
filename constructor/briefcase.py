@@ -267,30 +267,30 @@ def create_uninstall_options_list(info: dict) -> list[dict]:
 
 
 def create_install_options_list(info: dict) -> list[dict]:
-    """Returns a list of dicts with data formatted for the installation options page."""
+    """Returns a list of dicts with data formatted for the installation options page.
+
+    Options are ordered to match the EXE (NSIS) installer for consistency:
+    1. Create shortcuts
+    2. Add to PATH (initialize_conda)
+    3. Register Python
+    4. Clear package cache
+    5. Pre-install script
+    6. Post-install script
+    """
     options = []
 
-    # Register Python (if Python is bundled)
-    has_python = False
-    for item in info.get("_dists", []):
-        if item.startswith("python-"):
-            components = item.split("-")  # python-x.y.z-<build number>.suffix
-            python_version = ".".join(components[1].split(".")[:-1])  # create the string "x.y"
-            has_python = True
-            break
-
-    if has_python and info.get("register_python", True):
+    # 1. Enable shortcuts
+    if info.get("_enable_shortcuts", False) is True:
         options.append(
             {
-                "name": "register_python",
-                "title": f"Register {info['name']} as my default Python {python_version}.",
-                "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
-                f"detect {info['name']} as the primary Python {python_version} on the system.",
-                "default": info.get("register_python_default", False),
+                "name": "enable_shortcuts",
+                "title": "Create shortcuts",
+                "description": "Create shortcuts (supported packages only).",
+                "default": True,
             }
         )
 
-    # Initialize conda
+    # 2. Initialize conda (Add to PATH)
     initialize_conda = info.get("initialize_conda", "classic")
     if initialize_conda:
         if initialize_conda == "condabin":
@@ -313,7 +313,27 @@ def create_install_options_list(info: dict) -> list[dict]:
             }
         )
 
-    # Keep package option (presented to the user as a negation (clear package cache))
+    # 3. Register Python (if Python is bundled)
+    has_python = False
+    for item in info.get("_dists", []):
+        if item.startswith("python-"):
+            components = item.split("-")  # python-x.y.z-<build number>.suffix
+            python_version = ".".join(components[1].split(".")[:-1])  # create the string "x.y"
+            has_python = True
+            break
+
+    if has_python and info.get("register_python", True):
+        options.append(
+            {
+                "name": "register_python",
+                "title": f"Register {info['name']} as my default Python {python_version}.",
+                "description": "Allows other programs, such as VSCode, PyCharm, etc. to automatically "
+                f"detect {info['name']} as the primary Python {python_version} on the system.",
+                "default": info.get("register_python_default", False),
+            }
+        )
+
+    # 4. Clear package cache (presented to the user as a negation of keep_pkgs)
     clear_package_cache = not info.get("keep_pkgs", False)
     options.append(
         {
@@ -324,18 +344,7 @@ def create_install_options_list(info: dict) -> list[dict]:
         }
     )
 
-    # Enable shortcuts
-    if info.get("_enable_shortcuts", False) is True:
-        options.append(
-            {
-                "name": "enable_shortcuts",
-                "title": "Create shortcuts",
-                "description": "Create shortcuts (supported packages only).",
-                "default": True,
-            }
-        )
-
-    # Pre/Post install script
+    # 5 & 6. Pre/Post install script
     for script_type in ["pre", "post"]:
         script_description = info.get(f"{script_type}_install_desc", "")
         script = info.get(f"{script_type}_install", "")
