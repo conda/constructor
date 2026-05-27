@@ -126,11 +126,50 @@ def get_bundle_app_name(info, name):
     return bundle, app_name
 
 
-def get_license(info):
-    """Retrieve the specified license as a dict or return a placeholder if not set."""
+def txt_to_rtf(txt: str) -> str:
+    """Convert plain text to RTF with Segoe UI font.
 
+    Uses Segoe UI at 9pt for better readability than Briefcase's default Courier.
+    """
+    # Escape RTF special characters: \ { }
+    escaped = txt.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
+
+    # RTF header breakdown:
+    #   \rtf1    - RTF version 1
+    #   \ansi    - ANSI character set
+    #   \deff0   - default font is font 0
+    #   \fonttbl - font table definition
+    #   \f0      - use font 0 (Segoe UI)
+    #   \fs18    - font size 18 half-points (9pt)
+    rtf_lines = ["{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Segoe UI;}}\\f0\\fs18"]
+    for line in escaped.split("\n"):
+        if line.strip():
+            rtf_lines.append(line.rstrip() + " ")
+        else:
+            # \par = paragraph break (two for visual separation between paragraphs)
+            rtf_lines.append("\\par\\par")
+    rtf_lines.append("}")
+
+    return "\n".join(rtf_lines)
+
+
+def get_license(info, root: Path = None):
+    """Retrieve the specified license as a dict or return a placeholder if not set.
+
+    If root is specified and the license file is not already RTF, converts it to RTF
+    with a readable font (Segoe UI) instead of relying on Briefcase's default Courier.
+
+    :param root: Payload directory to write the converted RTF file to.
+    """
     if "license_file" in info:
-        return {"file": info["license_file"]}
+        license_path = Path(info["license_file"])
+        # If already RTF or no root to write to, return as-is
+        if license_path.suffix.lower() == ".rtf" or root is None:
+            return {"file": str(license_path)}
+        # Convert txt to rtf with better font
+        rtf_path = root / "LICENSE.rtf"
+        rtf_path.write_text(txt_to_rtf(license_path.read_text(encoding="utf-8")), encoding="utf-8")
+        return {"file": str(rtf_path)}
 
     placeholder_license = Path(__file__).parent / "nsis" / "placeholder_license.txt"
     return {"file": str(placeholder_license)}  # convert to str for TOML serialization
@@ -512,7 +551,7 @@ class Payload:
             "project_name": name,
             "bundle": bundle,
             "version": version,
-            "license": get_license(self.info),
+            "license": get_license(self.info, root),
             "app": {
                 app_name: {
                     "formal_name": f"{self.info['name']} {self.info['version']}",
