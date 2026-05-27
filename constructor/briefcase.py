@@ -433,8 +433,6 @@ class Payload:
         external_dir = self.root / EXTERNAL_PACKAGE_PATH
         external_dir.mkdir(parents=True, exist_ok=True)
 
-        # Generate branding images at root level so they're not included in the payload.
-        # These are only used for WiX UI configuration.
         write_images(self.info, self.root, installer_type="msi")
 
         # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
