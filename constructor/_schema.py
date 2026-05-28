@@ -404,7 +404,7 @@ class ConstructorConfiguration(BaseModel):
     - `sh`: shell-based installer for Linux or macOS
     - `pkg`: macOS GUI installer built with Apple's `pkgbuild`
     - `exe`: Windows GUI installer built with NSIS
-    - `msi`: Windows GUI installer built with Briefcase and WiX
+    - `msi`: Windows GUI installer built with Briefcase and WiX (experimental)
 
     The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
     value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well

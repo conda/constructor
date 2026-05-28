@@ -413,6 +413,9 @@ def main_build(
 
             create = winexe_create
         elif itype == "msi":
+            logger.warning(
+                "MSI installer support is experimental and may change in future releases."
+            )
             from .briefcase import create as briefcase_create
 
             create = briefcase_create
