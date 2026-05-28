@@ -1573,13 +1573,11 @@ def test_dockerfile_generation(tmp_path, platform_conda_exe):
     with open(input_path / "construct.yaml") as f:
         config = yaml.load(f)
 
-    installer_stem = None
     for installer, _ in create_installer(
         input_path, output_path, conda_exe=conda_exe, extra_constructor_args=extra_constructor_args
     ):
         if installer.suffix == ".sh":
             installer_stem = installer.stem
-    assert installer_stem is not None
     assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
     docker_output_dir = output_path / "installer" / installer_stem
     assert (docker_output_dir / "Dockerfile").exists()
@@ -1611,13 +1609,11 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
         config = yaml.load(f)
     image_name = f"{config['name'].lower()}:{config['version']}"
 
-    installer_stem = None
     for installer, _ in create_installer(
         input_path, output_path, conda_exe=conda_exe, extra_constructor_args=extra_constructor_args
     ):
         if installer.suffix == ".sh":
             installer_stem = installer.stem
-    assert installer_stem is not None
 
     assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
     assert not (output_path / "installer" / installer_stem).is_dir()
