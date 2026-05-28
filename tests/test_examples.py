@@ -745,10 +745,11 @@ def test_example_extra_envs(tmp_path, request):
     input_path = _example_path("extra_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+        base = install_dir / "base" / if installer.suffix == ".msi" else install_dir
         assert (
-            "@EXPLICIT" in (install_dir / "conda-meta" / "initial-state.explicit.txt").read_text()
+            "@EXPLICIT" in (base / "conda-meta" / "initial-state.explicit.txt").read_text()
         )
-        for env in install_dir.glob("envs/*/conda-meta/"):
+        for env in base.glob("envs/*/conda-meta/"):
             envtxt = env / "initial-state.explicit.txt"
             assert envtxt.exists()
             assert "@EXPLICIT" in envtxt.read_text()
