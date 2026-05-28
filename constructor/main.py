@@ -241,11 +241,6 @@ def main_build(
             "use `installer_type: docker` in construct.yaml to "
             "generate the Dockerfile without building the image."
         )
-    if info.get("docker_image") and info.get("docker_image") != "tar":
-        sys.exit(
-            f"Error: docker_image: '{info.get('docker_image')}' is not yet supported. "
-            "Only 'tar' output is currently supported. Please set 'docker_image: tar' to proceed."
-        )
 
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)

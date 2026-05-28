@@ -157,7 +157,7 @@ def create(info: dict, verbose: bool = False) -> None:
 
         generate_dockerfile(info, docker_tmp_dir)
 
-        if info.get("docker_image") == "tar":
+        if info.get("docker_image"):
             tarball = build_image(info, docker_tmp_dir)
             shutil.copy(tarball, Path(info["_output_dir"]) / tarball.name)
         else:
