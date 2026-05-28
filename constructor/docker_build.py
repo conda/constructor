@@ -118,7 +118,6 @@ def build_image(info: dict, docker_dir: Path) -> Path:
         buildx_ls = subprocess.run(["docker", "buildx", "ls"], capture_output=True, text=True)
         raise RuntimeError(
             f"Docker build failed.\n"
-            f"Command: {cmd}\n"
             f"Docker version: {docker_version.stdout.strip()}\n"
             f"Buildx version: {buildx_version.stdout.strip() or buildx_version.stderr.strip()}\n"
             f"Buildx builders: {buildx_ls.stdout.strip()}"
