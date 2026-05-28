@@ -1578,17 +1578,18 @@ def test_dockerfile_generation(tmp_path, platform_conda_exe):
     ):
         if installer.suffix == ".sh":
             installer_stem = installer.stem
-    assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
-    docker_output_dir = output_path / "installer" / installer_stem
-    assert (docker_output_dir / "Dockerfile").exists()
-    assert (docker_output_dir / f"{installer_stem}.sh").exists()
+            docker_output_dir = output_path / "installer" / installer_stem
 
-    dockerfile_text = (docker_output_dir / "Dockerfile").read_text()
+            assert (docker_output_dir / "Dockerfile").exists()
+            assert (docker_output_dir / f"{installer_stem}.sh").exists()
+            assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
 
-    assert f"FROM {config['docker_base_image']}" in dockerfile_text
+            dockerfile_text = (docker_output_dir / "Dockerfile").read_text()
 
-    for key, value in config.get("docker_labels", {}).items():
-        assert f'LABEL {key}="{value}"' in dockerfile_text
+            assert f"FROM {config['docker_base_image']}" in dockerfile_text
+
+            for key, value in config.get("docker_labels", {}).items():
+                assert f'LABEL {key}="{value}"' in dockerfile_text
 
 
 @pytest.mark.skipif(not has_docker_buildx(), reason="Docker Buildx not available")
@@ -1615,10 +1616,10 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
         if installer.suffix == ".sh":
             installer_stem = installer.stem
 
-    assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
-    assert not (output_path / "installer" / installer_stem).is_dir()
     tarball = output_path / "installer" / f"{installer_stem}-docker.tar"
     assert tarball.exists(), f"Expected tarball not found: {tarball}"
+    assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
+    assert not (output_path / "installer" / installer_stem).is_dir()
 
     try:
         subprocess.run(["docker", "load", "-i", str(tarball)], check=True)
