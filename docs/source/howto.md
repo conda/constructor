@@ -285,9 +285,18 @@ Or build both EXE and MSI:
 installer_type: [exe, msi]  # [win]
 ```
 
+### Directory structure
+
+MSI installers use a different directory layout than EXE installers:
+
+- **EXE installers**: Files are extracted directly to the installation directory (`$INSTDIR`)
+- **MSI installers**: The base conda environment is installed inside an `$INSTDIR\base` subdirectory
+
+This means that for MSI installations, paths like `python.exe` will be at `$INSTDIR\base\python.exe` rather than `$INSTDIR\python.exe`.
+
 ### Current limitations
 
 - **`INSTALLER_UNATTENDED` not available**: Post-install scripts cannot detect silent installs. This will be added in a future release.
-- **No template customization**: Unlike EXE's `nsis_template`, MSI has no equivalent
+- **No template customization**: Unlike EXE installers which support `nsis_template` for complete installer customization, MSI installers use [Briefcase](https://beeware.org/project/projects/tools/briefcase/) with a fixed WiX template and cannot be customized.
 - **No `.nsi` extra pages**: `post_install_pages` and custom `welcome_file`/`conclusion_file` with `.nsi` are EXE-only
 - **Quote handling**: `script_env_variables` supports single quotes but not double quotes

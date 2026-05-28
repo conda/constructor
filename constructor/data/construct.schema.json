@@ -953,7 +953,7 @@
         }
       ],
       "default": null,
-      "description": "Path to an NSIS template file to use instead of the default template. (EXE only)",
+      "description": "Path to an NSIS template file to use instead of the default template. (EXE only; MSI installers use Briefcase with a fixed WiX template and do not support customization.)",
       "title": "Nsis Template"
     },
     "pkg_domains": {

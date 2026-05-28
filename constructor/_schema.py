@@ -748,7 +748,8 @@ class ConstructorConfiguration(BaseModel):
     """
     nsis_template: NonEmptyStr | None = None
     """
-    Path to an NSIS template file to use instead of the default template. (EXE only)
+    Path to an NSIS template file to use instead of the default template. (EXE only;
+    MSI installers use Briefcase with a fixed WiX template and do not support customization.)
     """
     welcome_file: NonEmptyStr | None = None
     """
