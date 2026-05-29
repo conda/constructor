@@ -227,7 +227,7 @@ set of command-line options passed as public properties.
 | Property | Description | Default |
 |----------|-------------|---------|
 | `ALLUSERS` | `1` for all users, `0` (or empty) for current user | Per-user |
-| `TARGETDIR` | Installation directory | `%LOCALAPPDATA%\<name>` or `%PROGRAMFILES%\<name>` |
+| `TARGETDIR` | Installation directory | `%LOCALAPPDATA%\<name>` (per-user) or `%PROGRAMFILES%\<name>` (all users) |
 | `OPTION_REGISTER_PYTHON` | Register as system Python (`1` or `0`) | `0` |
 | `OPTION_INITIALIZE_CONDA` | Add to PATH (`1` or `0`) | `0` |
 | `OPTION_CLEAR_PACKAGE_CACHE` | Clear package cache after install (`1` or `0`) | `1` |
@@ -240,8 +240,10 @@ set of command-line options passed as public properties.
 MSI installers can be uninstalled via:
 
 1. **Add/Remove Programs**: Right-click and select "Uninstall"
-2. **Double-clicking the MSI file**: Shows a dialog with "Repair" and "Remove" options. **This is the only way to access uninstall options** like removing caches or config files.
+2. **Double-clicking the MSI file**: Shows a dialog with "Repair" and "Remove" options
 3. **Command line**: `msiexec /x your-installer.msi [options]`
+
+Options 2 and 3 support additional cleanup properties (see below). Option 1 performs a basic uninstall without these options.
 
 **Uninstaller properties (passed as `PROPERTY=value`):**
 

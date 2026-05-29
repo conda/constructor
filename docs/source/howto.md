@@ -267,9 +267,7 @@ MSI installer support is experimental and may change in future releases.
 :::
 
 MSI installers provide an alternative to EXE installers on Windows, built using
-[Briefcase](https://beeware.org/project/projects/tools/briefcase/). They offer
-native Windows Installer integration, which is useful for enterprise deployment
-via Group Policy.
+[Briefcase](https://beeware.org/project/projects/tools/briefcase/).
 
 ### Building an MSI installer
 
