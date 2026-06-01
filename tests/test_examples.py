@@ -1611,12 +1611,14 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
 
     image_name = f"{config['name'].lower()}:{config['version']}"
 
-    list(create_installer(
-        input_path,
-        output_path,
-        conda_exe=conda_exe,
-        extra_constructor_args=extra_constructor_args,
-    ))
+    list(
+        create_installer(
+            input_path,
+            output_path,
+            conda_exe=conda_exe,
+            extra_constructor_args=extra_constructor_args,
+        )
+    )
 
     installer_dir = output_path / "installer"
 
@@ -1649,9 +1651,7 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
         labels = json.loads(inspect_result.stdout)
 
         for key, value in config.get("docker_labels", {}).items():
-            assert labels.get(key) == value, (
-                f"Label {key}: {value} not found in Docker image"
-            )
+            assert labels.get(key) == value, f"Label {key}: {value} not found in Docker image"
 
         assert labels.get("org.opencontainers.image.title") == config["name"]
         assert labels.get("org.opencontainers.image.version") == config["version"]
