@@ -1608,18 +1608,24 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
     yaml = YAML()
     with open(input_path / "construct.yaml") as f:
         config = yaml.load(f)
+
     image_name = f"{config['name'].lower()}:{config['version']}"
 
-    for installer, _ in create_installer(
-        input_path, output_path, conda_exe=conda_exe, extra_constructor_args=extra_constructor_args
-    ):
-        if installer.suffix == ".sh":
-            installer_stem = installer.stem
+    list(create_installer(
+        input_path,
+        output_path,
+        conda_exe=conda_exe,
+        extra_constructor_args=extra_constructor_args,
+    ))
 
-    tarball = output_path / "installer" / f"{installer_stem}-docker.tar"
-    assert tarball.exists(), f"Expected tarball not found: {tarball}"
-    assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
-    assert not (output_path / "installer" / installer_stem).is_dir()
+    installer_dir = output_path / "installer"
+
+    sh_files = list((installer_dir).glob("*.sh"))
+    assert sh_files == [], f"Unexpected .sh installer(s) left in output: {sh_files}"
+
+    tarballs = list(installer_dir.glob("*-docker.tar"))
+    assert tarballs, "No Docker tarball found"
+    tarball = tarballs[0]
 
     try:
         subprocess.run(["docker", "load", "-i", str(tarball)], check=True)
@@ -1639,10 +1645,14 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
             text=True,
             check=True,
         )
+
         labels = json.loads(inspect_result.stdout)
 
         for key, value in config.get("docker_labels", {}).items():
-            assert labels.get(key) == value, f"Label {key}: {value} not found in Docker image"
+            assert labels.get(key) == value, (
+                f"Label {key}: {value} not found in Docker image"
+            )
+
         assert labels.get("org.opencontainers.image.title") == config["name"]
         assert labels.get("org.opencontainers.image.version") == config["version"]
 
