@@ -59,9 +59,6 @@ def get_installer_type(info: dict):
 
     itype = info.get("installer_type")
 
-    if not itype and info.get("docker_image"):
-        itype = "docker"
-
     if not itype:
         return os_allowed[osname][:1]
     elif itype == "all":
@@ -229,18 +226,18 @@ def main_build(
     info["_debug"] = debug
     itypes = get_installer_type(info)
 
-    if "docker" in itypes and not info.get("docker_base_image"):
-        sys.exit(
-            "Error: docker_base_image is required when building Docker artifacts. "
-            "Please specify a base image using the 'docker_base_image' key in construct.yaml."
-        )
-    if info.get("docker_image") and not has_docker_buildx():
-        sys.exit(
-            "Error: Building a Docker image requires Docker Buildx to be installed and available in PATH. "
-            "Install Docker Buildx to proceed, or remove `docker_image` and"
-            "use `installer_type: docker` in construct.yaml to "
-            "generate the Dockerfile without building the image."
-        )
+    if "docker" in itypes:
+        if not info.get("docker_base_image"):
+            sys.exit(
+                "Error: docker_base_image is required when building Docker artifacts. "
+                "Please specify a base image using the 'docker_base_image' key in construct.yaml."
+            )
+        if info.get("docker_image_format") and not has_docker_buildx():
+            sys.exit(
+                "Error: Building a Docker image requires Docker Buildx to be installed and available in PATH. "
+                "Install Docker Buildx to proceed, or remove `docker_image_format` to "
+                "generate the Dockerfile without building the portable image."
+            )
 
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
