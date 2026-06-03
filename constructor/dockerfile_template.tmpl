@@ -12,7 +12,7 @@ COPY {{ installer_filename }} /tmp/installer.sh
 
 RUN sh /tmp/installer.sh -b -p "${PREFIX}" && \
     rm -f "${PREFIX}/_conda" && \
-    rm -f "${PREFIX}/micromamba" && \
+    rm -f "${PREFIX}/{{ conda_exe_name }}" && \
     rm -rf "${PREFIX}/_internal" && \
     find "${PREFIX}" -follow -type f -name '*.js.map' -delete && \
     (find "${PREFIX}" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true) && \
@@ -44,13 +44,14 @@ COPY --from=builder ${PREFIX} ${PREFIX}
 COPY --from=builder /root/.conda /root/.conda
 {% endif %}
 
+# Avoid duplicating PREFIX/bin in interactive shell PATH after shell init.
 RUN echo 'export PATH=$(sed -e "s,:\?{{ default_prefix }}/bin:,," <<< "${PATH}")' >> ~/.bashrc && \
     {%- if has_mamba %}
-    $PREFIX/bin/mamba shell init --all || $PREFIX/bin/mamba init --all
+    "$PREFIX/bin/mamba" shell init --all || "$PREFIX/bin/python" -m mamba.mamba init --all
     {%- elif has_conda %}
     $PREFIX/bin/python -m conda init --all
     {%- else %}
-    echo "No conda or mamba found in environment, skipping shell init"
+    echo "No conda executable found, skipping shell init"
     {%- endif %}
 
 CMD [ "/bin/bash" ]
