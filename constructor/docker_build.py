@@ -60,6 +60,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
         labels=info.get("docker_labels", {}),
         has_mamba=has_mamba,
         has_conda=has_conda,
+        initialize_conda=info.get("initialize_conda"),
         register_envs=info.get("register_envs"),
         keep_pkgs=info.get("keep_pkgs"),
     )
