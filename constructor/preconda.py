@@ -49,7 +49,7 @@ except ImportError:
     import ruamel_json as json
 
 files = (
-    "pkgs/.constructor-build.info",
+    ".constructor-build.info",
     "pkgs/urls",
     "pkgs/urls.txt",
     "conda-meta/initial-state.explicit.txt",
@@ -113,7 +113,7 @@ def write_index_cache(info: dict, dst_dir: str, used_packages: list[str]):
             os.unlink(join(cache_dir, cache_file))
 
 
-def system_info():
+def system_info(info: dict):
     out = {
         "constructor": CONSTRUCTOR_VERSION,
         "conda": CONDA_INTERFACE_VERSION,
@@ -123,6 +123,10 @@ def system_info():
         "machine": platform.machine(),
         "platform_full": platform.version(),
     }
+    out["installer_name"] = info.get("installer_name", "Unknown")
+    out["installer_version"] = info.get("installer_version", "Unknown")
+    out["installer_platform"] = info.get("installer_platform", "Unknown")
+    out["installer_type"] = info.get("installer_type", "Unknown")
     if sys.platform == "darwin":
         out["extra"] = platform.mac_ver()
     elif sys.platform.startswith("linux"):
@@ -162,8 +166,8 @@ def write_files(info: dict, workspace: str):
     os.makedirs(join(workspace, "conda-meta"), exist_ok=True)
     pkgs_dir = join(workspace, "pkgs")
     os.makedirs(pkgs_dir, exist_ok=True)
-    with open(join(pkgs_dir, ".constructor-build.info"), "w") as fo:
-        json.dump(system_info(), fo)
+    with open(join(workspace, ".constructor-build.info"), "w") as fo:
+        json.dump(system_info(info), fo)
 
     all_urls = info["_urls"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():
