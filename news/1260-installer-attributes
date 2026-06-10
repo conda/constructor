@@ -16,5 +16,5 @@
 
 ### Other
 
-* Add `installer_name`, `installer_version`, `installer_platform`, and `installer_type` 
+* Add `installer_name`, `installer_version`, `installer_platform`, and `installer_type`
   attributes to the `.constructor-build.info` file, so this information can be persistently stored. (#1250)
