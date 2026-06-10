@@ -1011,15 +1011,20 @@ def test_example_scripts(tmp_path, request):
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        # console_shortcut package uses hardcoded "Anaconda3" in its menu definition
+        distribution_name = "Anaconda3"
+        if sys.platform == "win32":
+            # Verify shortcuts don't exist before installation (not leftover from previous run (since EXE/MSI run in a loop))
+            for key in ("ProgramData", "AppData"):
+                start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
+                package_1 = start_menu / "Package 1"
+                if package_1.is_dir():
+                    assert not (package_1 / "A.lnk").is_file(), "A.lnk exists before installation"
+                    assert not (package_1 / "B.lnk").is_file(), "B.lnk exists before installation"
+
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         # check that the shortcuts are created
         if sys.platform == "win32":
-            # console_shortcut package uses hardcoded "Anaconda3" in its menu definition,
-            # but MSI sets MENUINST_DISTRIBUTION_NAME which overrides DISTRIBUTION_NAME
-            if installer.suffix == ".msi":
-                distribution_name = install_dir.name
-            else:
-                distribution_name = "Anaconda3"
             for key in ("ProgramData", "AppData"):
                 start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
                 package_1 = start_menu / "Package 1"
@@ -1034,10 +1039,6 @@ def test_example_shortcuts(tmp_path, request):
                     assert (console_shortcut_dir / "Anaconda Prompt (another_env).lnk").is_file()
                     break
             else:
-                # TODO: Remove debug output after verifying test passes
-                for key in ("ProgramData", "AppData"):
-                    sm = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
-                    print(f"{sm}: {[d.name for d in sm.iterdir() if d.is_dir()]}")
                 raise AssertionError(f"No shortcuts found! Expected '{distribution_name} (64-bit)'")
             if installer.suffix == ".msi":
                 _run_uninstaller_msi(installer, install_dir)
