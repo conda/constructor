@@ -1014,25 +1014,31 @@ def test_example_shortcuts(tmp_path, request):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         # check that the shortcuts are created
         if sys.platform == "win32":
-            # MSI shortcut verification expected to fail due to menuinst bug
-            # https://github.com/conda/menuinst/issues/453
+            # console_shortcut package uses hardcoded "Anaconda3" in its menu definition,
+            # but MSI sets MENUINST_DISTRIBUTION_NAME which overrides DISTRIBUTION_NAME
             if installer.suffix == ".msi":
-                pytest.xfail("MSI shortcut verification fails due to menuinst#453")
+                distribution_name = install_dir.name
+            else:
+                distribution_name = "Anaconda3"
             for key in ("ProgramData", "AppData"):
                 start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
                 package_1 = start_menu / "Package 1"
-                anaconda = start_menu / "Anaconda3 (64-bit)"
-                if package_1.is_dir() and anaconda.is_dir():
+                console_shortcut_dir = start_menu / f"{distribution_name} (64-bit)"
+                if package_1.is_dir() and console_shortcut_dir.is_dir():
                     assert (package_1 / "A.lnk").is_file()
                     assert (package_1 / "B.lnk").is_file()
                     # The shortcut created from the 'base' env
                     # should not exist because we filtered it out in the YAML
                     # We do expect one shortcut from 'another_env'
-                    assert not (anaconda / "Anaconda Prompt.lnk").is_file()
-                    assert (anaconda / "Anaconda Prompt (another_env).lnk").is_file()
+                    assert not (console_shortcut_dir / "Anaconda Prompt.lnk").is_file()
+                    assert (console_shortcut_dir / "Anaconda Prompt (another_env).lnk").is_file()
                     break
             else:
-                raise AssertionError("No shortcuts found!")
+                # TODO: Remove debug output after verifying test passes
+                for key in ("ProgramData", "AppData"):
+                    sm = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
+                    print(f"{sm}: {[d.name for d in sm.iterdir() if d.is_dir()]}")
+                raise AssertionError(f"No shortcuts found! Expected '{distribution_name} (64-bit)'")
             if installer.suffix == ".msi":
                 _run_uninstaller_msi(installer, install_dir)
             else:
