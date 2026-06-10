@@ -169,7 +169,7 @@ def write_files(info: dict, workspace: str):
     out = {
         "name": info.get("name"),
         "version": info.get("version"),
-        "platform": info.get("platform"),
+        "platform": info.get("_platform"),
         "type": info.get("installer_type"),
     }
     with open(join(workspace, ".installer.info"), "w") as fo:
