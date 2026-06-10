@@ -187,7 +187,6 @@ def make_nsi(
         "pre_install": "@pre_install.bat",
         "post_install": "@post_install.bat",
         "pre_uninstall": "@pre_uninstall.bat",
-        "installer_info": "@.constructor-build.info",
         "index_cache": "@" + join("pkgs", "cache"),
         "repodata_record": "@" + join("pkgs", "repodata_record.json"),
     }
