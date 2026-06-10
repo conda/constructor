@@ -16,5 +16,5 @@
 
 ### Other
 
-* Add `installer_name`, `installer_version`, `installer_platform`, and `installer_type`
-  attributes to the `.constructor-build.info` file, so this information can be persistently stored. (#1250)
+* Add the `installer` name, version, platform and type attributes to a `.installer.info` file in the main `workspace` directory,
+  so this information can be persistently stored. (#1250)
