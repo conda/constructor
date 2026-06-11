@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add experimental support for building Windows MSI installers (via BeeWare's Briefcase). (#1251)
+* Add experimental support for building Windows MSI installers (via BeeWare's Briefcase). (#1251 via #646, #967)
 
 ### Bug fixes
 
