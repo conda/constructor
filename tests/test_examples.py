@@ -573,6 +573,12 @@ def test_example_mirrored_channels(tmp_path, request):
 )
 @pytest.mark.parametrize("example", ("miniforge", "miniforge-mamba2"))
 def test_example_miniforge(tmp_path, request, example):
+    if example == "miniforge":
+        installer_name = "Miniforge3"
+        installer_version = "25.0.0-1"
+    elif example == "miniforge-mamba2":
+        installer_name = "Miniforge3-mamba2"
+        installer_version = "25.1.1-0"
     input_path = _example_path(example)
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
@@ -601,17 +607,12 @@ def test_example_miniforge(tmp_path, request, example):
             assert (install_dir / ".installer.info").is_file()
             with open(install_dir / ".installer.info") as f:
                 installer_info = json.load(f)
-            assert (
-                installer_info["name"] == "Miniforge3"
-                if example == "miniforge"
-                else "Miniforge3-mamba2"
-            )
-            assert installer_info["version"] == "25.0.0-1" if example == "miniforge" else "25.1.1-0"
+            assert installer_info["name"] == installer_name
+            assert installer_info["version"] == installer_version
             assert installer_info["platform"] in SUPPORTED_PLATFORMS
             assert installer_info["type"] == installer.suffix[1:]
             if installer.suffix == ".pkg" and ON_CI:
-                basename = "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
-                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / basename)
+                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / installer_name)
             if installer.suffix == ".exe":
                 for key in ("ProgramData", "AppData"):
                     start_menu_dir = Path(
