@@ -604,9 +604,9 @@ def test_example_miniforge(tmp_path, request, example, installer_name, installer
             assert install_dir.glob("conda-meta/*.json")
             assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
             # Check that the installer info file is in place
-            assert (install_dir / ".installer.info").is_file()
-            with open(install_dir / ".installer.info") as f:
-                installer_info = json.load(f)
+            info_file = install_dir / ".installer.info"
+            assert info_file.is_file()
+            installer_info = json.loads(info_file.read_text())
             assert installer_info["name"] == installer_name
             assert installer_info["version"] == installer_version
             assert installer_info["platform"] in SUPPORTED_PLATFORMS
