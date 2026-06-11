@@ -69,7 +69,9 @@ class SigningTool:
 
     def sign(self, file_path: str | Path):
         """Sign the specified file."""
-        raise NotImplementedError("Signing not implemented for base class.")
+        # Use shell=True with env var references so secrets aren't exposed in tracebacks
+        command = f"{self.get_signing_command()} {win_str_esc(str(file_path))}"
+        check_call(command, shell=True)
 
 
 class WindowsSignTool(SigningTool):
@@ -101,27 +103,6 @@ class WindowsSignTool(SigningTool):
             command += ' /p "%CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD%"'
         return command
 
-    def sign(self, file_path: str | Path):
-        """Sign a file using signtool."""
-        params = self._get_signing_params()
-        command = [
-            self.executable,
-            "sign",
-            "/f",
-            str(self.certificate_file),
-            "/tr",
-            params["timestamp_server"],
-            "/td",
-            params["timestamp_digest"],
-            "/fd",
-            params["file_digest"],
-        ]
-        if "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD" in os.environ:
-            # Read secret directly to avoid storing in intermediate variables
-            command.extend(["/p", os.environ["CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD"]])
-        command.append(str(file_path))
-        check_call(command)
-
     def verify_signing_tool(self):
         super()._verify_tool_is_available()
         if not Path(self.certificate_file).exists():
@@ -151,72 +132,6 @@ class WindowsSignTool(SigningTool):
 class AzureSignTool(SigningTool):
     def __init__(self):
         super().__init__(os.environ.get("AZURE_SIGNTOOL_PATH", "AzureSignTool"))
-
-    def _get_signing_params(self):
-        """Get non-secret signing parameters from environment."""
-        required_env_vars = (
-            "AZURE_SIGNTOOL_KEY_VAULT_URL",
-            "AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE",
-        )
-        check_required_env_vars(required_env_vars)
-
-        return {
-            "key_vault_url": os.environ["AZURE_SIGNTOOL_KEY_VAULT_URL"],
-            "key_vault_certificate": os.environ["AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE"],
-            "timestamp_server": os.environ.get(
-                "AZURE_SIGNTOOL_TIMESTAMP_SERVER_URL", "http://timestamp.sectigo.com"
-            ),
-            "timestamp_digest": os.environ.get("AZURE_SIGNTOOL_TIMESTAMP_DIGEST", "sha256"),
-            "file_digest": os.environ.get("AZURE_SIGNTOOL_FILE_DIGEST", "sha256"),
-        }
-
-    def sign(self, file_path: str | Path):
-        """Sign a file using AzureSignTool."""
-        params = self._get_signing_params()
-        command = [
-            self.executable,
-            "sign",
-            "-v",
-            "-kvu",
-            params["key_vault_url"],
-            "-kvc",
-            params["key_vault_certificate"],
-            "-tr",
-            params["timestamp_server"],
-            "-td",
-            params["timestamp_digest"],
-            "-fd",
-            params["file_digest"],
-        ]
-
-        # Read secrets directly from os.environ to avoid storing in intermediate variables
-        if "AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN" in os.environ:
-            logger.info("AzureSignTool: signing binary using access token.")
-            command.extend(["-kva", os.environ["AZURE_SIGNTOOL_KEY_VAULT_ACCESSTOKEN"]])
-        elif "AZURE_SIGNTOOL_KEY_VAULT_SECRET" in os.environ:
-            logger.info("AzureSignTool: signing binary using secret.")
-            check_required_env_vars(
-                (
-                    "AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID",
-                    "AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID",
-                )
-            )
-            command.extend(
-                [
-                    "-kvi",
-                    os.environ["AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID"],
-                    "-kvt",
-                    os.environ["AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID"],
-                    "-kvs",
-                    os.environ["AZURE_SIGNTOOL_KEY_VAULT_SECRET"],
-                ]
-            )
-        else:
-            logger.info("AzureSignTool: signing binary using managed identity.")
-            command.append("-kvm")
-
-        command.append(str(file_path))
-        check_call(command)
 
     def get_signing_command(self) -> str:
         required_env_vars = (
