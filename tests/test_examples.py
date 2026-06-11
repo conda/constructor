@@ -571,14 +571,11 @@ def test_example_mirrored_channels(tmp_path, request):
     ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
-@pytest.mark.parametrize("example", ("miniforge", "miniforge-mamba2"))
-def test_example_miniforge(tmp_path, request, example):
-    if example == "miniforge":
-        installer_name = "Miniforge3"
-        installer_version = "25.0.0-1"
-    elif example == "miniforge-mamba2":
-        installer_name = "Miniforge3-mamba2"
-        installer_version = "25.1.1-0"
+@pytest.mark.parametrize("example, installer_name, installer_version", [
+    ("miniforge", "Miniforge3", "25.0.0-1"),
+    ("miniforge-mamba2", "Miniforge3-mamba2", "25.1.1-0"),
+])
+def test_example_miniforge(tmp_path, request, example, installer_name, installer_version):
     input_path = _example_path(example)
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
