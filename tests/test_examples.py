@@ -601,7 +601,11 @@ def test_example_miniforge(tmp_path, request, example):
             assert (install_dir / ".installer.info").is_file()
             with open(install_dir / ".installer.info") as f:
                 installer_info = json.load(f)
-            assert installer_info["name"] == "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
+            assert (
+                installer_info["name"] == "Miniforge3"
+                if example == "miniforge"
+                else "Miniforge3-mamba2"
+            )
             assert installer_info["version"] == "25.0.0-1" if example == "miniforge" else "25.1.1-0"
             assert installer_info["platform"] in SUPPORTED_PLATFORMS
             assert installer_info["type"] == installer.suffix[1:]
