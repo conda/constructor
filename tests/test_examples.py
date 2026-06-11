@@ -22,7 +22,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
-from constructor.conda_interface import SUPPORTED_PLATFORMS
+from constructor.conda_interface import cc_platform, SUPPORTED_PLATFORMS
 from constructor.utils import (
     StandaloneExe,
     check_version,
@@ -609,7 +609,7 @@ def test_example_miniforge(tmp_path, request, example, installer_name, installer
             installer_info = json.loads(info_file.read_text())
             assert installer_info["name"] == installer_name
             assert installer_info["version"] == installer_version
-            assert installer_info["platform"] in SUPPORTED_PLATFORMS
+            assert installer_info["platform"] == cc_platform
             assert installer_info["type"] == installer.suffix[1:]
             if installer.suffix == ".pkg" and ON_CI:
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / installer_name)
