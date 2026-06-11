@@ -131,6 +131,8 @@ if "%ALLUSERS%"=="0" (
 
 rem Persist distribution_name to menuinst.toml before installing packages.
 rem This ensures the value is captured even if no packages have shortcuts.
+rem At this point %BASE_PATH%\Menu has no .json files (packages not installed yet),
+rem so menuinst only writes distribution_name - no shortcuts are created here.
 "%CONDA_EXE%" menuinst --install -p "%BASE_PATH%" --root-prefix "%BASE_PATH%"
 if errorlevel 1 ( exit /b %errorlevel% )
 if not exist "%BASE_PATH%\Menu\menuinst.toml" (
