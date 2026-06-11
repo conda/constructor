@@ -22,6 +22,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
+from constructor.conda_interface import SUPPORTED_PLATFORMS
 from constructor.utils import (
     StandaloneExe,
     check_version,
@@ -596,6 +597,14 @@ def test_example_miniforge(tmp_path, request, example):
             # Check that key metadata files are in place
             assert install_dir.glob("conda-meta/*.json")
             assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
+            # Check that the installer info file is in place
+            assert (install_dir / ".installer.info").is_file()
+            with open(install_dir / ".installer.info") as f:
+                installer_info = json.load(f)
+            assert installer_info["name"] == "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
+            assert installer_info["version"] == "25.0.0-1" if example == "miniforge" else "25.1.1-0"
+            assert installer_info["platform"] in SUPPORTED_PLATFORMS
+            assert installer_info["type"] == installer.suffix[1:]
             if installer.suffix == ".pkg" and ON_CI:
                 basename = "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
                 _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / basename)
