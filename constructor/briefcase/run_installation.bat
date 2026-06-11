@@ -131,7 +131,6 @@ if "%ALLUSERS%"=="0" (
 
 rem Persist distribution_name to menuinst.toml before installing packages.
 rem This ensures the value is captured even if no packages have shortcuts.
-rem Must run before conda install to avoid creating shortcuts twice.
 "%CONDA_EXE%" menuinst --install -p "%BASE_PATH%" --root-prefix "%BASE_PATH%"
 if errorlevel 1 ( exit /b %errorlevel% )
 if not exist "%BASE_PATH%\Menu\menuinst.toml" (
