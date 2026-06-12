@@ -49,6 +49,7 @@ except ImportError:
     import ruamel_json as json
 
 files = (
+    ".installer.info",
     "pkgs/.constructor-build.info",
     "pkgs/urls",
     "pkgs/urls.txt",
@@ -164,6 +165,15 @@ def write_files(info: dict, workspace: str):
     os.makedirs(pkgs_dir, exist_ok=True)
     with open(join(pkgs_dir, ".constructor-build.info"), "w") as fo:
         json.dump(system_info(), fo)
+
+    out = {
+        "name": info.get("name"),
+        "version": info.get("version"),
+        "platform": info.get("_platform"),
+        "type": info.get("installer_type"),
+    }
+    with open(join(workspace, ".installer.info"), "w") as fo:
+        json.dump(out, fo)
 
     all_urls = info["_urls"].copy()
     for env_info in info.get("_extra_envs_info", {}).values():

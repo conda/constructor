@@ -22,6 +22,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
+from constructor.conda_interface import cc_platform
 from constructor.utils import (
     StandaloneExe,
     check_version,
@@ -570,8 +571,14 @@ def test_example_mirrored_channels(tmp_path, request):
     ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
-@pytest.mark.parametrize("example", ("miniforge", "miniforge-mamba2"))
-def test_example_miniforge(tmp_path, request, example):
+@pytest.mark.parametrize(
+    "example, installer_name, installer_version",
+    [
+        ("miniforge", "Miniforge3", "25.0.0-1"),
+        ("miniforge-mamba2", "Miniforge3-mamba2", "25.1.1-0"),
+    ],
+)
+def test_example_miniforge(tmp_path, request, example, installer_name, installer_version):
     input_path = _example_path(example)
     for installer, install_dir in create_installer(input_path, tmp_path):
         if installer.suffix == ".sh":
@@ -596,9 +603,16 @@ def test_example_miniforge(tmp_path, request, example):
             # Check that key metadata files are in place
             assert install_dir.glob("conda-meta/*.json")
             assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
+            # Check that the installer info file is in place
+            info_file = install_dir / ".installer.info"
+            assert info_file.is_file()
+            installer_info = json.loads(info_file.read_text())
+            assert installer_info["name"] == installer_name
+            assert installer_info["version"] == installer_version
+            assert installer_info["platform"] == cc_platform
+            assert installer_info["type"] == installer.suffix[1:]
             if installer.suffix == ".pkg" and ON_CI:
-                basename = "Miniforge3" if example == "miniforge" else "Miniforge3-mamba2"
-                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / basename)
+                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / installer_name)
             if installer.suffix == ".exe":
                 for key in ("ProgramData", "AppData"):
                     start_menu_dir = Path(

@@ -1502,6 +1502,7 @@ Section "Install"
     SetOutPath "$INSTDIR"
     File {{ conda_exe }}
     File {{ pre_uninstall }}
+    File {{ installer_info }}
 
 {%- for path, files in EXTRA_FILES | items %}
     SetOutPath "{{ path }}"
