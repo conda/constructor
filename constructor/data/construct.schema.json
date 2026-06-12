@@ -244,6 +244,7 @@
       "enum": [
         "all",
         "exe",
+        "msi",
         "pkg",
         "sh"
       ],
@@ -865,7 +866,7 @@
         }
       ],
       "default": null,
-      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` on Linux and `exe` on Windows.",
+      "description": "The type of the installer being created. Possible values are:\n- `sh`: shell-based installer for Linux or macOS\n- `pkg`: macOS GUI installer built with Apple's `pkgbuild`\n- `exe`: Windows GUI installer built with NSIS\n- `msi`: Windows GUI installer built with Briefcase and WiX (experimental)\nThe default type is `sh` on Linux and macOS, and `exe` on Windows. A special value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well as `sh` on Linux and `exe` on Windows.",
       "title": "Installer Type"
     },
     "keep_pkgs": {
@@ -953,7 +954,7 @@
         }
       ],
       "default": null,
-      "description": "Path to an NSIS template file to use instead of the default template. (Windows only)",
+      "description": "Path to an NSIS template file to use instead of the default template. (EXE only; MSI installers use Briefcase with a fixed WiX template and do not support customization.)",
       "title": "Nsis Template"
     },
     "pkg_domains": {
@@ -996,7 +997,7 @@
         }
       ],
       "default": null,
-      "description": "Path to a post-install script. Some notes:\n- For Unix `.sh` installers, the shebang line is respected if present;  otherwise, the script is run by the POSIX shell `sh`. Note that the use  of a shebang can reduce the portability of the installer. The  installation path is available as `${PREFIX}`. Installer metadata is  available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`  environment variables. `${INSTALLER_TYPE}` is set to `SH`.  `${INSTALLER_UNATTENDED}` will be `\"1\"` in batch mode (`-b`), `\"0\"` otherwise.\n- For PKG installers, the shebang line is respected if present;  otherwise, `bash` is used. The same variables mentioned for `sh`  installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.  `${INSTALLER_UNATTENDED}` will be `\"1\"` for command line installs, `\"0\"` otherwise.\n- For Windows `.exe` installers, the script must be a `.bat` file.  Installation path is available as `%PREFIX%`. Metadata about  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.  `%INSTALLER_UNATTENDED%` will be `\"1\"` in silent mode (`/S`), `\"0\"` otherwise.\nIf necessary, you can activate the installed `base` environment like this:\n- Unix: `. \"$PREFIX/etc/profile.d/conda.sh\" && conda activate \"$PREFIX\"`\n- Windows: `call \"%PREFIX%\\Scripts\\activate.bat\"`",
+      "description": "Path to a post-install script. Some notes:\n- For Unix `.sh` installers, the shebang line is respected if present;  otherwise, the script is run by the POSIX shell `sh`. Note that the use  of a shebang can reduce the portability of the installer. The  installation path is available as `${PREFIX}`. Installer metadata is  available in the `${INSTALLER_NAME}`, `${INSTALLER_VER}`, `${INSTALLER_PLAT}`  environment variables. `${INSTALLER_TYPE}` is set to `SH`.  `${INSTALLER_UNATTENDED}` will be `\"1\"` in batch mode (`-b`), `\"0\"` otherwise.\n- For PKG installers, the shebang line is respected if present;  otherwise, `bash` is used. The same variables mentioned for `sh`  installers are available here. `${INSTALLER_TYPE}` is set to `PKG`.  `${INSTALLER_UNATTENDED}` will be `\"1\"` for command line installs, `\"0\"` otherwise.\n- For Windows `.exe` installers, the script must be a `.bat` file.  Installation path is available as `%PREFIX%`. Metadata about  the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,  `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.  `%INSTALLER_UNATTENDED%` will be `\"1\"` in silent mode (`/S`), `\"0\"` otherwise.\n- For Windows `.msi` installers, the script must be a `.bat` file.  The same variables as `.exe` installers are available, except  `%INSTALLER_TYPE%` is set to `MSI` and `%INSTALLER_UNATTENDED%` is not available.\nIf necessary, you can activate the installed `base` environment like this:\n- Unix: `. \"$PREFIX/etc/profile.d/conda.sh\" && conda activate \"$PREFIX\"`\n- Windows: `call \"%PREFIX%\\Scripts\\activate.bat\"`",
       "title": "Post Install"
     },
     "post_install_desc": {
@@ -1073,7 +1074,7 @@
         }
       ],
       "default": null,
-      "description": "Path to a pre uninstall script. This is only supported on Windows, and must be a `.bat` file. Installation path is available as `%PREFIX%`. Metadata about the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.\nIf the uninstallation is performed with `conda-standalone`, the following environment variables are available: `%UNINSTALLER_REMOVE_CONFIG_FILES%` (set to `system`, `user`, or `all` if selected), `%UNINSTALLER_REMOVE_USER_DATA%` (set to `1` if set), and `%UNINSTALLER_REMOVE_CACHES%` (set to `1` if set).",
+      "description": "Path to a pre uninstall script. This is only supported on Windows (EXE and MSI), and must be a `.bat` file. Installation path is available as `%PREFIX%`. Metadata about the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE` or `MSI`.\nIf the uninstallation is performed with `conda-standalone`, the following environment variables are available: `%UNINSTALLER_REMOVE_CONFIG_FILES%` (set to `system`, `user`, or `all` if selected), `%UNINSTALLER_REMOVE_USER_DATA%` (set to `1` if set), and `%UNINSTALLER_REMOVE_CACHES%` (set to `1` if set).",
       "title": "Pre Uninstall"
     },
     "progress_notifications": {
@@ -1145,7 +1146,7 @@
         }
       ],
       "default": null,
-      "description": "Unique identifier for this package, formatted with reverse domain notation. This is used internally in the PKG installers to handle future updates and others. If not provided, it will default to `io.continuum`. (MacOS only)",
+      "description": "Unique identifier for this package, formatted with reverse domain notation. This is used internally in the MSI and PKG installers to handle future updates and others. If not provided, it will default to:\n* In MSI installers: `io.continuum` followed by an ID derived from the `name`. * In PKG installers: `io.continuum`.",
       "title": "Reverse Domain Identifier"
     },
     "script_env_variables": {
@@ -1153,7 +1154,7 @@
         "type": "string"
       },
       "default": {},
-      "description": "Dictionary of additional environment variables to be made available to the pre_install and post_install scripts, in the form of VAR:VALUE pairs. These environment variables are in addition to those in the `post_install` section above and take precedence in the case of name collisions.\nOn Unix the variable values are automatically single quoted, allowing you to supply strings with spaces, without needing to worry about escaping. As a consequence, string interpolation is disabled: if you need string interpolation, you can apply it in the pre_install/post_install script(s). If you need to include single quotes in your value, you can escape them by replacing each single quote with `'''`.\nOn Windows, single quotes and double quotes are not supported.\nNote that the # (hash) character cannot be used as it denotes yaml comments for all platforms.",
+      "description": "Dictionary of additional environment variables to be made available to the pre_install and post_install scripts, in the form of VAR:VALUE pairs. These environment variables are in addition to those in the `post_install` section above and take precedence in the case of name collisions.\nOn Unix the variable values are automatically single quoted, allowing you to supply strings with spaces, without needing to worry about escaping. As a consequence, string interpolation is disabled: if you need string interpolation, you can apply it in the pre_install/post_install script(s). If you need to include single quotes in your value, you can escape them by replacing each single quote with `'''`.\nFor Windows EXE installers, single quotes and double quotes are not supported. For Windows MSI installers, single quotes are supported but double quotes are not.\nNote that the # (hash) character cannot be used as it denotes yaml comments for all platforms.",
       "propertyNames": {
         "minLength": 1
       },
@@ -1310,7 +1311,7 @@
         }
       ],
       "default": null,
-      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\nIf the installer is for Windows and the welcome file type is nsi, it will use the nsi script to add in extra pages before the installer begins the installation process.",
+      "description": "If `installer_type` is `pkg` on macOS, this message will be shown before the license information, right after the introduction. File can be plain text (.txt), rich text (.rtf) or HTML (.html). If both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.\nIf the installer is for Windows EXE and the welcome file type is nsi, it will use the nsi script to add in extra pages before the installer begins the installation process.",
       "title": "Welcome File"
     },
     "welcome_image": {
@@ -1323,7 +1324,7 @@
         }
       ],
       "default": null,
-      "description": "Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.) to be used as the welcome image for the Windows and PKG installers. The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on macOS. By default, an image is automatically generated on Windows. On macOS, Anaconda's logo is shown if this key is not provided. If you don't want a background on PKG installers, set this key to `\"\"` (empty string).",
+      "description": "Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.) to be used as the welcome image for the Windows and PKG installers. The image is re-sized to 164 x 314 pixels for EXE installers, 1227 x 600 on macOS, and for MSI installers it is scaled to fit a 164-pixel wide side panel (maintaining aspect ratio) with white padding on the right. By default, an image is automatically generated on Windows. On macOS, Anaconda's logo is shown if this key is not provided. If you don't want a background on PKG installers, set this key to `\"\"` (empty string).",
       "title": "Welcome Image"
     },
     "welcome_image_text": {
@@ -1363,7 +1364,7 @@
         }
       ],
       "default": null,
-      "description": "The tool used to sign Windows installers. Must be one of: azuresigntool, signtool. Some tools require `signing_certificate` to be set. Defaults to `signtool` if `signing_certificate` is set. Additional environment variables may need to be used to configure signing. See the documentation for details: https://conda.github.io/constructor/howto/#signing-exe-installers"
+      "description": "The tool used to sign Windows installers. Must be one of: azuresigntool, signtool. Some tools require `signing_certificate` to be set. Defaults to `signtool` if `signing_certificate` is set. Additional environment variables may need to be used to configure signing. See the documentation for details: https://conda.github.io/constructor/howto/#signing-windows-installers-exe-and-msi"
     },
     "write_condarc": {
       "default": false,

@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 def get_installer_type(info: dict):
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe",)}
+    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe", "msi")}
     all_allowed = set(sum(os_allowed.values(), ("all",)))
 
     itype = info.get("installer_type")
@@ -48,6 +48,19 @@ def get_installer_type(info: dict):
         return os_allowed[osname][:1]
     elif itype == "all":
         return os_allowed[osname]
+    elif isinstance(itype, (list, tuple)):
+        # Handle list of installer types, e.g. [exe, msi]
+        for t in itype:
+            if t not in all_allowed:
+                all_allowed_str = ", ".join(sorted(all_allowed))
+                sys.exit("Error: invalid installer type '%s'; allowed: %s" % (t, all_allowed_str))
+            if t not in os_allowed[osname]:
+                os_allowed_str = ", ".join(sorted(os_allowed[osname]))
+                sys.exit(
+                    "Error: invalid installer type '%s' for %s; allowed: %s"
+                    % (t, osname, os_allowed_str)
+                )
+        return tuple(itype)
     elif itype not in all_allowed:
         all_allowed = ", ".join(sorted(all_allowed))
         sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
@@ -399,6 +412,13 @@ def main_build(
             from .winexe import create as winexe_create
 
             create = winexe_create
+        elif itype == "msi":
+            logger.warning(
+                "MSI installer support is experimental and may change in future releases."
+            )
+            from .briefcase import create as briefcase_create
+
+            create = briefcase_create
         info["installer_type"] = itype
         info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
         create(info, verbose=verbose)

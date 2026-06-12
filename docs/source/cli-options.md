@@ -200,6 +200,102 @@ Combine this with `CONDA_VERBOSITY=3` at install time for maximum details:
 ```
 :::
 
+## MSI installers
+
+MSI installers use Windows Installer (`msiexec`) instead of NSIS. They support a different
+set of command-line options passed as public properties.
+
+### Installation
+
+```batch
+> msiexec /i your-installer.msi [properties] [options]
+```
+
+**Common `msiexec` options:**
+
+| Option | Description |
+|--------|-------------|
+| `/i <msi>` | Install the specified MSI package |
+| `/x <msi>` | Uninstall the specified MSI package |
+| `/qn` | No UI (completely silent) |
+| `/qb` | Basic UI (progress bar only) |
+| `/qr` | Reduced UI |
+| `/l*v <logfile>` | Verbose logging to file |
+
+**Installer properties (passed as `PROPERTY=value`):**
+
+| Property | Description | Default |
+|----------|-------------|---------|
+| `ALLUSERS` | `1` for all users, `0` (or empty) for current user | Per-user |
+| `TARGETDIR` | Installation directory | `%LOCALAPPDATA%\<name>` (per-user) or `%PROGRAMFILES%\<name>` (all users) |
+| `OPTION_REGISTER_PYTHON` | Register as system Python (`1` or `0`) | `0` |
+| `OPTION_INITIALIZE_CONDA` | Add to PATH (`1` or `0`) | `0` |
+| `OPTION_CLEAR_PACKAGE_CACHE` | Clear package cache after install (`1` or `0`) | `1` |
+| `OPTION_ENABLE_SHORTCUTS` | Create shortcuts (`1` or `0`) | `1` |
+| `OPTION_PRE_INSTALL_SCRIPT` | Run pre-install script if configured (`1` or `0`) | `0` |
+| `OPTION_POST_INSTALL_SCRIPT` | Run post-install script if configured (`1` or `0`) | `0` |
+
+### Uninstallation
+
+MSI installers can be uninstalled via:
+
+1. **Add/Remove Programs**: Right-click and select "Uninstall"
+2. **Double-clicking the MSI file**: Shows a dialog with "Repair" and "Remove" options
+3. **Command line**: `msiexec /x your-installer.msi [options]`
+
+Options 2 and 3 support additional cleanup properties (see below). Option 1 performs a basic uninstall without these options.
+
+**Uninstaller properties (passed as `PROPERTY=value`):**
+
+| Property | Description | Default |
+|----------|-------------|---------|
+| `OPTION_REMOVE_USER_DATA` | Remove user data like `~/.conda` (`1` or `0`) | `0` |
+| `OPTION_REMOVE_CACHES` | Remove package caches (`1` or `0`) | `0` |
+| `OPTION_REMOVE_CONFIG_FILES` | Remove `.condarc` files (`1` or `0`) | `0` |
+
+### Examples
+
+Install silently for the current user:
+
+```batch
+> msiexec /i MyApp.msi /qn
+```
+
+Install silently for all users to a custom directory:
+
+```batch
+> msiexec /i MyApp.msi /qn ALLUSERS=1 TARGETDIR="C:\Program Files\MyApp"
+```
+
+Install silently with verbose logging:
+
+```batch
+> msiexec /i MyApp.msi /qn /l*v install.log
+```
+
+Install silently, registering Python and adding to PATH:
+
+```batch
+> msiexec /i MyApp.msi /qn OPTION_REGISTER_PYTHON=1 OPTION_INITIALIZE_CONDA=1
+```
+
+Uninstall silently:
+
+```batch
+> msiexec /x MyApp.msi /qn
+```
+
+Uninstall silently with cleanup options:
+
+```batch
+> msiexec /x MyApp.msi /qn OPTION_REMOVE_CACHES=1 OPTION_REMOVE_CONFIG_FILES=1
+```
+
+:::{note}
+Unlike EXE installers which display help with `/?`, MSI installers rely on `msiexec /?`
+for general Windows Installer help. See this documentation for constructor-specific properties.
+:::
+
 ## PKG installers
 
 The PKG installers do not offer any CLI options. Instead, you need to use the `installer`

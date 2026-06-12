@@ -10,6 +10,7 @@ import time
 import warnings
 import xml.etree.ElementTree as ET
 from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import timedelta
 from functools import cache
 from pathlib import Path
@@ -23,6 +24,7 @@ from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
 from constructor.conda_interface import cc_platform
+from constructor.construct import parse as parse_construct
 from constructor.utils import (
     StandaloneExe,
     check_version,
@@ -53,6 +55,7 @@ pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
 ON_CI = bool(os.environ.get("CI")) and os.environ.get("CI") != "0"
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
+CONSTRUCTOR_VERBOSE = os.environ.get("CONSTRUCTOR_VERBOSE")
 CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 if CONDA_EXE_VERSION is not None:
     CONDA_EXE_VERSION = Version(CONDA_EXE_VERSION)
@@ -338,6 +341,206 @@ def _sentinel_file_checks(example_path, install_dir):
             )
 
 
+def calculate_msi_install_path(config_path: Path) -> Path:
+    """Calculate the MSI install path from the construct.yaml config.
+
+    MSI installers use '<name> <version>' as the install directory name,
+    matching the formal_name set in briefcase.py.
+    """
+    config = parse_construct(str(config_path), platform="win-64")
+    dir_name = f"{config['name']} {config['version']}"
+    local_dir = os.environ.get("LOCALAPPDATA", str(Path.home() / r"AppData\Local"))
+    root_dir = Path(local_dir) / "Programs"
+    root_dir.mkdir(parents=True, exist_ok=True)
+
+    assert root_dir.is_dir()  # Consistency check to avoid strange unexpected errors
+    return Path(root_dir) / dir_name
+
+
+def handle_exception_and_error_out(
+    failure: InstallationFailure | UninstallationFailure, original_exception: BaseException
+) -> None:
+    """Print failure context (including logs) and re-raise with exception chaining."""
+    print(failure.read_text())
+    raise failure from original_exception
+
+
+def _read_briefcase_log_tail(path: Path, last_digits: int) -> str:
+    """Helper function to read logs from installers created with briefcase.
+    The encoding can vary between the different logs.
+    """
+    if not path or not path.exists():
+        return f"(log not found: {path})"
+
+    # Try UTF-16 first (MSI logs), fallback to UTF-8
+    try:
+        text = path.read_text(encoding="utf-16", errors="replace")
+    except UnicodeError:
+        text = path.read_text(encoding="utf-8", errors="replace")
+
+    return text[last_digits:]
+
+
+@dataclass
+class InstallationFailure(RuntimeError):
+    cmd: list[str]
+    returncode: int
+    msi_log: Path | None = None
+    post_install_log: Path | None = None
+
+    def read_text(self, last_digits: int = -15000) -> str:
+        parts = [
+            f"Command: {self.cmd}",
+            f"Return code: {self.returncode}",
+        ]
+
+        if self.post_install_log:
+            parts.append(
+                f"\n=== MSI LOG POST INSTALL: {self.post_install_log} ===\n"
+                + _read_briefcase_log_tail(self.post_install_log, last_digits)
+            )
+
+        if self.msi_log:
+            parts.append(
+                f"\n=== MSI LOG: {self.msi_log} ===\n"
+                + _read_briefcase_log_tail(self.msi_log, last_digits)
+            )
+
+        return "\n".join(parts)
+
+
+@dataclass
+class UninstallationFailure(RuntimeError):
+    cmd: list[str]
+    returncode: int
+    msi_log: Path | None = None
+    pre_uninstall_log: Path | None = None
+
+    def read_text(self, last_digits: int = -15000) -> str:
+        parts = [
+            f"Command: {self.cmd}",
+            f"Return code: {self.returncode}",
+        ]
+
+        if self.pre_uninstall_log:
+            parts.append(
+                f"\n=== MSI LOG PRE UNINSTALL: {self.pre_uninstall_log} ===\n"
+                + _read_briefcase_log_tail(self.pre_uninstall_log, last_digits)
+            )
+
+        if self.msi_log:
+            parts.append(
+                f"\n=== MSI LOG: {self.msi_log} ===\n"
+                + _read_briefcase_log_tail(self.msi_log, last_digits)
+            )
+
+        return "\n".join(parts)
+
+
+def _run_installer_msi(
+    installer: Path,
+    install_dir: Path,
+    installer_input=None,
+    timeout=420,
+    check=True,
+    options: list | None = None,
+):
+    """Runs specified MSI Installer via command line in silent mode. This is work in progress."""
+    if not sys.platform.startswith("win"):
+        raise ValueError("Can only run .msi installers on Windows")
+
+    # Translate NSIS-style options to MSI properties and collect MSI properties
+    msi_properties = []
+    allusers = False
+    if options is None:
+        options = []
+    for opt in options:
+        if opt == "/InstallationType=AllUsers":
+            allusers = True
+        elif opt == "/InstallationType=JustMe":
+            allusers = False
+        elif "=" in opt and not opt.startswith("/"):
+            # Direct MSI property (e.g., "OPTION_INITIALIZE_CONDA=1")
+            msi_properties.append(opt)
+
+    cmd = [
+        "msiexec.exe",
+        "/i",
+        str(installer),
+        "ALLUSERS=1"
+        if allusers
+        else "MSIINSTALLPERUSER=1",  # For some reason tests fail on the CI system if "ALLUSERS=1"
+        *msi_properties,
+        "/qn",
+    ]
+
+    # Prepare logging
+    post_install_log = install_dir / "install.log"
+    # Logging from MSI engine is handled separately
+    log_path = Path(os.environ.get("TEMP")) / (install_dir.name + "-install.log")
+    if log_path.exists():
+        os.remove(log_path)
+    cmd.extend(["/L*V", str(log_path)])
+
+    # Run installer and handle errors/logs if necessary
+    try:
+        process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
+    except subprocess.CalledProcessError as e:
+        handle_exception_and_error_out(
+            InstallationFailure(
+                cmd=cmd,
+                returncode=e.returncode,
+                msi_log=log_path,
+                post_install_log=post_install_log,
+            ),
+            original_exception=e,
+        )
+
+    return process
+
+
+def _run_uninstaller_msi(
+    installer: Path,
+    install_dir: Path,
+    timeout: int = 420,
+    check: bool = True,
+) -> subprocess.CompletedProcess | None:
+    cmd = [
+        "msiexec.exe",
+        "/x",
+        str(installer),
+        "/qn",
+    ]
+
+    # Prepare logging
+    pre_uninstall_log = install_dir / "uninstall.log"
+    # Logging from MSI engine is handled separately
+    log_path = Path(os.environ.get("TEMP")) / (install_dir.name + "-uninstall.log")
+    if log_path.exists():
+        os.remove(log_path)
+    cmd.extend(["/L*V", str(log_path)])
+
+    try:
+        process = _execute(cmd, installer_input=None, timeout=timeout, check=check)
+    except subprocess.CalledProcessError as e:
+        handle_exception_and_error_out(
+            UninstallationFailure(
+                cmd=cmd,
+                returncode=e.returncode,
+                msi_log=log_path,
+                pre_uninstall_log=pre_uninstall_log,
+            ),
+            original_exception=e,
+        )
+
+    if check:
+        # TODO:
+        # Check log and if there are remaining files, similar to the exe installers
+        pass
+
+    return process
+
+
 def _run_installer(
     example_path: Path,
     installer: Path,
@@ -383,12 +586,27 @@ def _run_installer(
             timeout=timeout,
             check=check_subprocess,
         )
+    elif installer.suffix == ".msi":
+        process = _run_installer_msi(
+            installer,
+            install_dir,
+            installer_input=installer_input,
+            timeout=timeout,
+            check=check_subprocess,
+            options=options,
+        )
     else:
         raise ValueError(f"Unknown installer type: {installer.suffix}")
-    if check_sentinels and not (installer.suffix == ".pkg" and ON_CI):
+
+    if installer.suffix == ".msi":
+        print("sentinel_file_checks for MSI installers not yet implemented")
+    elif check_sentinels and not (installer.suffix == ".pkg" and ON_CI):
         _sentinel_file_checks(example_path, install_dir)
-    if uninstall and installer.suffix == ".exe":
-        _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
+    if uninstall:
+        if installer.suffix == ".msi":
+            _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess)
+        elif installer.suffix == ".exe":
+            _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
     return process
 
 
@@ -408,16 +626,19 @@ def create_installer(
 
     output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)
-    cmd = [
-        *COV_CMD,
-        "constructor",
-        "-v",
+    cmd = [*COV_CMD, "constructor"]
+    # This flag will (if enabled) create a lot of output upon test failures for .exe-installers.
+    # If debugging generated NSIS templates, it can be worth to enable.
+    if CONSTRUCTOR_VERBOSE:
+        cmd.append("-v")
+    cmd += [
         str(input_dir),
         "--output-dir",
         str(output_dir),
         "--config-filename",
         config_filename,
     ]
+
     if conda_exe:
         cmd.extend(["--conda-exe", conda_exe])
     if debug:
@@ -431,18 +652,21 @@ def create_installer(
 
     def _sort_by_extension(path):
         "Return shell installers first so they are run before the GUI ones"
-        return {"sh": 1, "pkg": 2, "exe": 3}[path.suffix[1:]], path
+        return {"sh": 1, "pkg": 2, "exe": 3, "msi": 4}[path.suffix[1:]], path
 
-    installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".sh", ".pkg"))
+    installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".msi", ".sh", ".pkg"))
     for installer in sorted(installers, key=_sort_by_extension):
         if installer.suffix == ".pkg" and ON_CI:
             install_dir = Path("~").expanduser() / calculate_install_dir(
                 input_dir / config_filename
             )
+        elif installer.suffix == ".msi":
+            install_dir = calculate_msi_install_path(input_dir / config_filename)
         else:
             install_dir = (
                 workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
             )
+
         yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
             try:
@@ -521,22 +745,31 @@ def test_example_extra_envs(tmp_path, request):
     input_path = _example_path("extra_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
-        assert (
-            "@EXPLICIT" in (install_dir / "conda-meta" / "initial-state.explicit.txt").read_text()
-        )
-        for env in install_dir.glob("envs/*/conda-meta/"):
+        base = (install_dir / "base") if installer.suffix == ".msi" else install_dir
+        assert "@EXPLICIT" in (base / "conda-meta" / "initial-state.explicit.txt").read_text()
+        for env in base.glob("envs/*/conda-meta/"):
             envtxt = env / "initial-state.explicit.txt"
             assert envtxt.exists()
             assert "@EXPLICIT" in envtxt.read_text()
 
         if sys.platform.startswith("win"):
-            _run_uninstaller_exe(install_dir=install_dir)
+            if installer.suffix == ".msi":
+                _run_uninstaller_msi(installer, install_dir)
+            else:
+                _run_uninstaller_exe(install_dir=install_dir)
 
 
 def test_example_extra_files(tmp_path, request):
     input_path = _example_path("extra_files")
     for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
-        _run_installer(input_path, installer, install_dir, request=request)
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            request=request,
+            check_sentinels=CONSTRUCTOR_VERBOSE,
+            check_subprocess=CONSTRUCTOR_VERBOSE,
+        )
 
 
 def test_example_mirrored_channels(tmp_path, request):
@@ -604,7 +837,11 @@ def test_example_miniforge(tmp_path, request, example, installer_name, installer
             assert install_dir.glob("conda-meta/*.json")
             assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
             # Check that the installer info file is in place
-            info_file = install_dir / ".installer.info"
+            info_file_name = ".installer.info"
+            if installer.suffix == ".msi":
+                info_file = install_dir / "base" / info_file_name
+            else:
+                info_file = install_dir / info_file_name
             assert info_file.is_file()
             installer_info = json.loads(info_file.read_text())
             assert installer_info["name"] == installer_name
@@ -626,6 +863,9 @@ def test_example_miniforge(tmp_path, request, example, installer_name, installer
                     raise AssertionError("Could not find Start Menu folder for miniforge")
                 _run_uninstaller_exe(install_dir)
                 assert not list(start_menu_dir.glob("Miniforge*.lnk"))
+            elif installer.suffix == ".msi":
+                # TODO: Start menus
+                _run_uninstaller_msi(installer, install_dir)
 
 
 def test_example_noconda(tmp_path, request):
@@ -775,25 +1015,39 @@ def test_example_scripts(tmp_path, request):
 def test_example_shortcuts(tmp_path, request):
     input_path = _example_path("shortcuts")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        # console_shortcut package uses hardcoded "Anaconda3" in its menu definition
+        distribution_name = "Anaconda3"
+        if sys.platform == "win32":
+            # Verify shortcuts don't exist before installation (not leftover from previous run (since EXE/MSI run in a loop))
+            for key in ("ProgramData", "AppData"):
+                start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
+                package_1 = start_menu / "Package 1"
+                if package_1.is_dir():
+                    assert not (package_1 / "A.lnk").is_file(), "A.lnk exists before installation"
+                    assert not (package_1 / "B.lnk").is_file(), "B.lnk exists before installation"
+
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
         # check that the shortcuts are created
         if sys.platform == "win32":
             for key in ("ProgramData", "AppData"):
                 start_menu = Path(os.environ[key]) / "Microsoft/Windows/Start Menu/Programs"
                 package_1 = start_menu / "Package 1"
-                anaconda = start_menu / "Anaconda3 (64-bit)"
-                if package_1.is_dir() and anaconda.is_dir():
+                console_shortcut_dir = start_menu / f"{distribution_name} (64-bit)"
+                if package_1.is_dir() and console_shortcut_dir.is_dir():
                     assert (package_1 / "A.lnk").is_file()
                     assert (package_1 / "B.lnk").is_file()
                     # The shortcut created from the 'base' env
                     # should not exist because we filtered it out in the YAML
                     # We do expect one shortcut from 'another_env'
-                    assert not (anaconda / "Anaconda Prompt.lnk").is_file()
-                    assert (anaconda / "Anaconda Prompt (another_env).lnk").is_file()
+                    assert not (console_shortcut_dir / "Anaconda Prompt.lnk").is_file()
+                    assert (console_shortcut_dir / "Anaconda Prompt (another_env).lnk").is_file()
                     break
             else:
-                raise AssertionError("No shortcuts found!")
-            _run_uninstaller_exe(install_dir)
+                raise AssertionError(f"No shortcuts found! Expected '{distribution_name} (64-bit)'")
+            if installer.suffix == ".msi":
+                _run_uninstaller_msi(installer, install_dir)
+            else:
+                _run_uninstaller_exe(install_dir)
             assert not (package_1 / "A.lnk").is_file()
             assert not (package_1 / "B.lnk").is_file()
         elif sys.platform == "darwin":
@@ -806,6 +1060,24 @@ def test_example_shortcuts(tmp_path, request):
             print("Shortcuts found:", sorted(applications.glob("**/*.desktop")))
             assert (applications / "package-1_a.desktop").exists()
             assert (applications / "package-1_b.desktop").exists()
+
+
+def _verify_windows_signature(installer: Path):
+    """Verify a Windows installer has a valid signature."""
+    proc = subprocess.run(
+        [
+            "powershell",
+            "-c",
+            f"$sig = Get-AuthenticodeSignature -LiteralPath '{installer}';$sig.Status.value__",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0 or not proc.stdout.strip():
+        raise AssertionError(f"Failed to verify signature for {installer}: {proc.stderr}")
+    status = int(proc.stdout.strip())
+    # 0 = Valid, 1 = UnknownError (self-signed certs), >1 = Error/NotSigned
+    assert status <= 1, f"Signature verification failed for {installer}: status={status}"
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
@@ -825,6 +1097,7 @@ def test_example_signing(tmp_path, request):
         CONSTRUCTOR_SIGNING_CERTIFICATE=str(cert_path),
         CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD=cert_pwd,
     ):
+        _verify_windows_signature(installer)
         _run_installer(input_path, installer, install_dir, request=request)
 
 
@@ -935,6 +1208,7 @@ def test_example_from_explicit(tmp_path, request):
 
 
 def test_register_envs(tmp_path, request):
+    """Verify that 'register_envs: False' results in the environment not being registered."""
     input_path = _example_path("register_envs")
     for installer, install_dir in create_installer(input_path, tmp_path):
         _run_installer(input_path, installer, install_dir, request=request)
@@ -997,6 +1271,7 @@ def test_cross_osx_building(tmp_path):
     )
 
 
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
 def test_cross_build_example(tmp_path, platform_conda_exe):
     platform, conda_exe = platform_conda_exe
     input_path = _example_path("virtual_specs_ok")
@@ -1012,6 +1287,7 @@ def test_cross_build_example(tmp_path, platform_conda_exe):
 
 
 def test_virtual_specs_failed(tmp_path, request):
+    """Verify that virtual packages listed via 'virtual_specs' are satisfied."""
     input_path = _example_path("virtual_specs_failed")
     for installer, install_dir in create_installer(input_path, tmp_path):
         process = _run_installer(
@@ -1026,6 +1302,16 @@ def test_virtual_specs_failed(tmp_path, request):
         if installer.suffix == ".exe":
             with pytest.raises(AssertionError, match="Failed to check virtual specs"):
                 _check_installer_log(install_dir)
+            continue
+        elif installer.suffix == ".msi":
+            # MSI writes errors to install.log in the install directory
+            msi_post_install_log = install_dir / "install.log"
+            if msi_post_install_log.exists():
+                log_content = msi_post_install_log.read_text(encoding="utf-8", errors="replace")
+                assert "Failed to check virtual specs" in log_content
+            else:
+                # If log doesn't exist, installation failed before post-install script ran
+                assert process.returncode != 0
             continue
         elif installer.suffix == ".pkg":
             if not ON_CI:
@@ -1089,6 +1375,9 @@ def test_initialization(tmp_path, request, monkeypatch, method):
             # GHA runs on an admin user account, but AllUsers (admin) installs
             # do not add to PATH due to CVE-2022-26526, so force single user install
             options = ["/AddToPath=1", "/InstallationType=JustMe"]
+        elif installer.suffix == ".msi":
+            # MSI uses OPTION_INITIALIZE_CONDA property instead of /AddToPath
+            options = ["OPTION_INITIALIZE_CONDA=1"] if initialize else []
         else:
             options = []
         _run_installer(
@@ -1122,6 +1411,22 @@ def test_initialization(tmp_path, request, monkeypatch, method):
 
             finally:
                 _run_uninstaller_exe(install_dir, check=True)
+        elif installer.suffix == ".msi":
+            try:
+                prefix = install_dir / "base"
+                with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_QUERY_VALUE
+                ) as key:
+                    value = winreg.QueryValueEx(key, "Path")[0]
+                    paths = value.strip().split(os.pathsep)
+                if method == "condabin":
+                    assert (str(prefix / "condabin") in paths) == initialize
+                else:
+                    assert (str(prefix) in paths) == initialize
+                    assert (str(prefix / "Scripts") in paths) == initialize
+                    assert (str(prefix / "Library" / "bin") in paths) == initialize
+            finally:
+                _run_uninstaller_msi(installer, install_dir, check=True)
         else:
             # GHA's Ubuntu needs interactive, but macOS wants login :shrug:
             login_flag = "-i" if sys.platform.startswith("linux") else "-l"
@@ -1218,6 +1523,8 @@ def test_allusers_exe(tmp_path, request):
 
     input_path = _example_path("miniforge")
     for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".msi":
+            continue  # TODO: Test currently not applicable for MSI installers
         _run_installer(
             input_path,
             installer,
@@ -1501,12 +1808,16 @@ def test_regressions(tmp_path, request):
 @pytest.mark.skipif(not ON_CI, reason="CI only")
 @pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows only")
 def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
-    """Verify the app is in the Installed Apps Menu (or not), based on the CLI arg '/NoRegistry'.
+    """Verify the app is in the Installed Apps Menu (or not), based on the NSIS-specific '/NoRegistry' flag.
     If NoRegistry=0, we expect to find the installer in the Menu, otherwise not.
     """
-    input_path = _example_path("extra_files")  # The specific example we use here is not important
+    input_path = _example_path("register_envs")  # The specific example we use here is not important
     options = ["/InstallationType=JustMe", f"/NoRegistry={no_registry}"]
     for installer, install_dir in create_installer(input_path, tmp_path):
+        if installer.suffix == ".msi":
+            # MSI registration is handled by Windows Installer (msiexec) and cannot
+            # be disabled. The /NoRegistry flag is NSIS-specific.
+            continue
         _run_installer(
             input_path,
             installer,
@@ -1517,20 +1828,20 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry):
             options=options,
         )
 
-    # Use the installer file name for the registry search
-    installer_file_name_parts = Path(installer).name.split("-")
-    name = installer_file_name_parts[0]
-    version = installer_file_name_parts[1]
-    partial_name = f"{name} {version}"
+        # Use the installer file name for the registry search
+        installer_file_name_parts = Path(installer).name.split("-")
+        name = installer_file_name_parts[0]
+        version = installer_file_name_parts[1]
+        partial_name = f"{name} {version}"
 
-    is_in_installed_apps_menu = _is_program_installed(partial_name)
-    _run_uninstaller_exe(install_dir)
+        is_in_installed_apps_menu = _is_program_installed(partial_name)
+        _run_uninstaller_exe(install_dir)
 
-    # If no_registry=0 we expect is_in_installed_apps_menu=True
-    # If no_registry=1 we expect is_in_installed_apps_menu=False
-    assert is_in_installed_apps_menu == (no_registry == 0), (
-        f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
-    )
+        # If no_registry=0 we expect is_in_installed_apps_menu=True
+        # If no_registry=1 we expect is_in_installed_apps_menu=False
+        assert is_in_installed_apps_menu == (no_registry == 0), (
+            f"Unable to find program '{partial_name}' in the 'Installed apps' menu"
+        )
 
 
 @pytest.mark.xfail(
@@ -1562,18 +1873,22 @@ def test_frozen_environment(tmp_path, request, has_conflict):
 
     if has_conflict:
         config.setdefault("extra_files", []).append({"frozen.json": "conda-meta/frozen"})
-        with open(input_path / "construct.yaml", "w") as f:
-            yaml.dump(config, f)
+
+    with open(input_path / "construct.yaml", "w") as f:
+        yaml.dump(config, f)
 
     with context as c:
         for installer, install_dir in create_installer(input_path, tmp_path):
             _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
 
+            # MSI installers use a 'base' subdirectory for the conda environment
+            prefix = install_dir / "base" if installer.suffix == ".msi" else install_dir
+
             expected_frozen = {
-                install_dir / "conda-meta" / "frozen": config["freeze_base"]["conda"],
-                install_dir / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"][
-                    "env1"
-                ]["freeze_env"]["conda"],
+                prefix / "conda-meta" / "frozen": config["freeze_base"]["conda"],
+                prefix / "envs" / "env1" / "conda-meta" / "frozen": config["extra_envs"]["env1"][
+                    "freeze_env"
+                ]["conda"],
             }
 
             for frozen_path, expected_content in expected_frozen.items():

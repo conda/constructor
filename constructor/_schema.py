@@ -40,6 +40,7 @@ class WinSignTools(StrEnum):
 class InstallerTypes(StrEnum):
     ALL = "all"
     EXE = "exe"
+    MSI = "msi"
     PKG = "pkg"
     SH = "sh"
 
@@ -403,6 +404,7 @@ class ConstructorConfiguration(BaseModel):
     - `sh`: shell-based installer for Linux or macOS
     - `pkg`: macOS GUI installer built with Apple's `pkgbuild`
     - `exe`: Windows GUI installer built with NSIS
+    - `msi`: Windows GUI installer built with Briefcase and WiX (experimental)
 
     The default type is `sh` on Linux and macOS, and `exe` on Windows. A special
     value of `all` builds _both_ `sh` and `pkg` installers on macOS, as well
@@ -453,7 +455,7 @@ class ConstructorConfiguration(BaseModel):
     Defaults to `signtool` if `signing_certificate` is set.
     Additional environment variables may need to be used to configure signing.
     See the documentation for details:
-    https://conda.github.io/constructor/howto/#signing-exe-installers
+    https://conda.github.io/constructor/howto/#signing-windows-installers-exe-and-msi
     """
     signing_certificate: NonEmptyStr | None = None
     """
@@ -486,8 +488,11 @@ class ConstructorConfiguration(BaseModel):
     reverse_domain_identifier: NonEmptyStr | None = None
     """
     Unique identifier for this package, formatted with reverse domain notation. This is
-    used internally in the PKG installers to handle future updates and others. If not
-    provided, it will default to `io.continuum`. (MacOS only)
+    used internally in the MSI and PKG installers to handle future updates and others.
+    If not provided, it will default to:
+
+    * In MSI installers: `io.continuum` followed by an ID derived from the `name`.
+    * In PKG installers: `io.continuum`.
     """
     uninstall_name: NonEmptyStr | None = None
     """
@@ -510,7 +515,8 @@ class ConstructorConfiguration(BaseModel):
     in your value, you can escape them by replacing each single quote with
     `'''`.
 
-    On Windows, single quotes and double quotes are not supported.
+    For Windows EXE installers, single quotes and double quotes are not supported.
+    For Windows MSI installers, single quotes are supported but double quotes are not.
 
     Note that the # (hash) character cannot be used as it denotes yaml
     comments for all platforms.
@@ -552,6 +558,9 @@ class ConstructorConfiguration(BaseModel):
       the installer can be found in the `%INSTALLER_NAME%`, `%INSTALLER_VER%`,
       `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
       `%INSTALLER_UNATTENDED%` will be `"1"` in silent mode (`/S`), `"0"` otherwise.
+    - For Windows `.msi` installers, the script must be a `.bat` file.
+      The same variables as `.exe` installers are available, except
+      `%INSTALLER_TYPE%` is set to `MSI` and `%INSTALLER_UNATTENDED%` is not available.
 
     If necessary, you can activate the installed `base` environment like this:
 
@@ -570,11 +579,11 @@ class ConstructorConfiguration(BaseModel):
     """
     pre_uninstall: NonEmptyStr | None = None
     """
-    Path to a pre uninstall script. This is only supported on Windows,
+    Path to a pre uninstall script. This is only supported on Windows (EXE and MSI),
     and must be a `.bat` file. Installation path is available as `%PREFIX%`.
     Metadata about the installer can be found in the `%INSTALLER_NAME%`,
     `%INSTALLER_VER%`, `%INSTALLER_PLAT%` environment variables.
-    `%INSTALLER_TYPE%` is set to `EXE`.
+    `%INSTALLER_TYPE%` is set to `EXE` or `MSI`.
 
     If the uninstallation is performed with `conda-standalone`, the following
     environment variables are available: `%UNINSTALLER_REMOVE_CONFIG_FILES%` (set to
@@ -654,7 +663,9 @@ class ConstructorConfiguration(BaseModel):
     """
     Path to an image in any common image format (`.png`, `.jpg`, `.tif`, etc.)
     to be used as the welcome image for the Windows and PKG installers.
-    The image is re-sized to 164 x 314 pixels on Windows and 1227 x 600 on macOS.
+    The image is re-sized to 164 x 314 pixels for EXE installers, 1227 x 600 on macOS,
+    and for MSI installers it is scaled to fit a 164-pixel wide side panel (maintaining
+    aspect ratio) with white padding on the right.
     By default, an image is automatically generated on Windows. On macOS, Anaconda's
     logo is shown if this key is not provided. If you don't want a background on
     PKG installers, set this key to `""` (empty string).
@@ -737,7 +748,8 @@ class ConstructorConfiguration(BaseModel):
     """
     nsis_template: NonEmptyStr | None = None
     """
-    Path to an NSIS template file to use instead of the default template. (Windows only)
+    Path to an NSIS template file to use instead of the default template. (EXE only;
+    MSI installers use Briefcase with a fixed WiX template and do not support customization.)
     """
     welcome_file: NonEmptyStr | None = None
     """
@@ -746,7 +758,7 @@ class ConstructorConfiguration(BaseModel):
     File can be plain text (.txt), rich text (.rtf) or HTML (.html). If
     both `welcome_file` and `welcome_text` are provided, `welcome_file` takes precedence.
 
-    If the installer is for Windows and the welcome file type is nsi,
+    If the installer is for Windows EXE and the welcome file type is nsi,
     it will use the nsi script to add in extra pages before the installer
     begins the installation process.
     """

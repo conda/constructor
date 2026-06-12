@@ -17,15 +17,15 @@ import tempfile
 from os.path import abspath, basename, dirname, isfile, join
 from pathlib import Path
 from subprocess import check_output, run
+from typing import TYPE_CHECKING
 
 from .construct import ns_platform
 from .imaging import write_images
 from .jinja import render_template
 from .preconda import copy_extra_files
 from .preconda import write_files as preconda_write_files
-from .signing import AzureSignTool, WindowsSignTool
+from .signing import create_windows_signing_tool
 from .utils import (
-    add_condarc,
     approx_size_kb,
     copy_conda_exe,
     filename_dist,
@@ -34,6 +34,9 @@ from .utils import (
     shortcuts_flags,
     win_str_esc,
 )
+
+if TYPE_CHECKING:
+    from .signing import AzureSignTool, WindowsSignTool
 
 NSIS_DIR = join(abspath(dirname(__file__)), "nsis")
 MAKENSIS_EXE = abspath(join(sys.prefix, "NSIS", "makensis.exe"))
@@ -190,6 +193,7 @@ def make_nsi(
         "installer_info": "@.installer.info",
         "index_cache": "@" + join("pkgs", "cache"),
         "repodata_record": "@" + join("pkgs", "repodata_record.json"),
+        "condarc_file": "@.condarc" if os.path.exists(join(dir_path, ".condarc")) else "",
     }
 
     conclusion_text = info.get("conclusion_text", "")
@@ -253,7 +257,7 @@ def make_nsi(
     variables["initialize_by_default"] = info.get("initialize_by_default", None)
     variables["check_path_spaces"] = info.get("check_path_spaces", True)
     variables["max_relative_path_length"] = info.get("_max_relative_path_length", 0)
-    variables["keep_pkgs"] = info.get("keep_pkgs") or False
+    variables["keep_pkgs"] = info.get("keep_pkgs", False)
     variables["pre_install_exists"] = bool(info.get("pre_install"))
     variables["post_install_exists"] = bool(info.get("post_install"))
     variables["with_conclusion_text"] = bool(conclusion_text)
@@ -277,7 +281,6 @@ def make_nsi(
     variables["DISTS"] = [win_str_esc(join(download_dir, dist)) for dist in dists]
     variables["SIGNTOOL_COMMAND"] = signing_tool.get_signing_command() if signing_tool else ""
     variables["SETUP_ENVS"] = setup_envs_commands(info, dir_path)
-    variables["WRITE_CONDARC"] = list(add_condarc(info))
     variables["SIZE"] = approx_pkgs_size_kb
     variables["UNINSTALL_NAME"] = info.get("uninstall_name", default_uninstall_name)
     variables["EXTRA_FILES"] = get_extra_files(extra_files, dir_path)
@@ -359,15 +362,7 @@ Error: no file %s
 
 def create(info, verbose=False):
     verify_nsis_install()
-    signing_tool = None
-    if signing_tool_name := info.get("windows_signing_tool"):
-        if signing_tool_name == "signtool":
-            signing_tool = WindowsSignTool(certificate_file=info.get("signing_certificate"))
-        elif signing_tool_name == "azuresigntool":
-            signing_tool = AzureSignTool()
-        else:
-            raise ValueError(f"Unknown signing tool: {signing_tool_name}")
-        signing_tool.verify_signing_tool()
+    signing_tool = create_windows_signing_tool(info)
     tmp_dir = tempfile.mkdtemp()
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)

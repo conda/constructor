@@ -21,7 +21,7 @@ from .imaging import write_images
 from .jinja import render_template
 from .signing import CodeSign
 from .utils import (
-    add_condarc,
+    DEFAULT_REVERSE_DOMAIN_ID,
     approx_size_kb,
     copy_conda_exe,
     explained_check_call,
@@ -150,10 +150,10 @@ def modify_xml(xml_path, info):
         if not info["welcome_image"]:
             background_path = None
         else:
-            write_images(info, PACKAGES_DIR, os="osx")
+            write_images(info, PACKAGES_DIR, installer_type="pkg")
             background_path = os.path.join(PACKAGES_DIR, "welcome.png")
     elif "welcome_image_text" in info:
-        write_images(info, PACKAGES_DIR, os="osx")
+        write_images(info, PACKAGES_DIR, installer_type="pkg")
         background_path = os.path.join(PACKAGES_DIR, "welcome.png")
     else:
         # Default to Anaconda's logo if the keys above were not specified
@@ -394,7 +394,6 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["installer_version"] = info["version"]
     variables["installer_platform"] = info["_platform"]
     variables["final_channels"] = get_final_channels(info)
-    variables["write_condarc"] = list(add_condarc(info))
     variables["path_exists_error_text"] = path_exists_error_text
     variables["progress_notifications"] = info.get("progress_notifications", False)
     variables["pre_or_post"] = user_script_type or "__PRE_OR_POST__"
@@ -433,7 +432,7 @@ def fresh_dir(dir_path):
 def pkgbuild(name, identifier=None, version=None, install_location=None):
     "see `man pkgbuild` for the meaning of optional arguments"
     if identifier is None:
-        identifier = "io.continuum"
+        identifier = DEFAULT_REVERSE_DOMAIN_ID
     args = [
         "pkgbuild",
         "--root",

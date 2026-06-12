@@ -67,6 +67,12 @@ class SigningTool:
         """Verify the signed installer."""
         raise NotImplementedError("Signature verification not implemented for base class.")
 
+    def sign(self, file_path: str | Path):
+        """Sign the specified file."""
+        # Use shell=True with env var references so secrets aren't exposed in tracebacks
+        command = f"{self.get_signing_command()} {win_str_esc(str(file_path))}"
+        check_call(command, shell=True)
+
 
 class WindowsSignTool(SigningTool):
     def __init__(self, certificate_file=None):
@@ -75,15 +81,22 @@ class WindowsSignTool(SigningTool):
             certificate_file=certificate_file,
         )
 
+    def _get_signing_params(self):
+        """Get non-secret signing parameters from environment."""
+        return {
+            "timestamp_server": os.environ.get(
+                "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL", "http://timestamp.sectigo.com"
+            ),
+            "timestamp_digest": os.environ.get("CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST", "sha256"),
+            "file_digest": os.environ.get("CONSTRUCTOR_SIGNTOOL_FILE_DIGEST", "sha256"),
+        }
+
     def get_signing_command(self) -> str:
-        timestamp_server = os.environ.get(
-            "CONSTRUCTOR_SIGNTOOL_TIMESTAMP_SERVER_URL", "http://timestamp.sectigo.com"
-        )
-        timestamp_digest = os.environ.get("CONSTRUCTOR_SIGNTOOL_TIMESTAMP_DIGEST", "sha256")
-        file_digest = os.environ.get("CONSTRUCTOR_SIGNTOOL_FILE_DIGEST", "sha256")
+        params = self._get_signing_params()
         command = (
             f"{win_str_esc(self.executable)} sign /f {win_str_esc(self.certificate_file)} "
-            f"/tr {win_str_esc(timestamp_server)} /td {timestamp_digest} /fd {file_digest}"
+            f"/tr {win_str_esc(params['timestamp_server'])} /td {params['timestamp_digest']} "
+            f"/fd {params['file_digest']}"
         )
         if "CONSTRUCTOR_PFX_CERTIFICATE_PASSWORD" in os.environ:
             # signtool can get the password from the env var on its own
@@ -261,3 +274,23 @@ class CodeSign(SigningTool):
         else:
             command = self.get_signing_command(bundle, entitlements=entitlements)
             explained_check_call(command)
+
+
+def create_windows_signing_tool(info: dict) -> SigningTool | None:
+    """Create a Windows signing tool based on construct.yaml.
+
+    Returns None if no signing is configured.
+    """
+    signing_tool_name = info.get("windows_signing_tool")
+    if not signing_tool_name:
+        return None
+
+    if signing_tool_name == "signtool":
+        signing_tool = WindowsSignTool(certificate_file=info.get("signing_certificate"))
+    elif signing_tool_name == "azuresigntool":
+        signing_tool = AzureSignTool()
+    else:
+        raise ValueError(f"Unknown signing tool: {signing_tool_name}")
+
+    signing_tool.verify_signing_tool()
+    return signing_tool
