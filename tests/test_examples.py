@@ -27,6 +27,7 @@ from constructor.utils import (
     StandaloneExe,
     check_version,
     format_conda_exe_name,
+    has_docker_buildx,
     identify_conda_exe,
 )
 
@@ -1585,3 +1586,108 @@ def test_frozen_environment(tmp_path, request, has_conflict):
             s in c.value.stderr
             for s in ("RuntimeError", "freeze_base / freeze_env", "extra_files", "base")
         )
+
+
+def test_dockerfile_generation(tmp_path, platform_conda_exe):
+    platform, conda_exe = platform_conda_exe
+
+    if sys.platform.startswith("linux"):
+        conda_exe = None
+        extra_constructor_args = None
+    else:
+        extra_constructor_args = ["--platform", platform]
+
+    input_path = _example_path("dockerfile")
+    output_path = tmp_path / "output"
+
+    yaml = YAML()
+    with open(input_path / "construct.yaml") as f:
+        config = yaml.load(f)
+
+    for installer, _ in create_installer(
+        input_path, output_path, conda_exe=conda_exe, extra_constructor_args=extra_constructor_args
+    ):
+        if installer.suffix == ".sh":
+            installer_stem = installer.stem
+            docker_output_dir = output_path / "installer" / installer_stem
+
+            assert (docker_output_dir / "Dockerfile").exists()
+            assert (docker_output_dir / f"{installer_stem}.sh").exists()
+            assert not (output_path / "installer" / f"{installer_stem}.sh").exists()
+
+            dockerfile_text = (docker_output_dir / "Dockerfile").read_text()
+
+            assert f"FROM {config['docker_base_image']}" in dockerfile_text
+
+            for key, value in config.get("docker_labels", {}).items():
+                assert f'LABEL {key}="{value}"' in dockerfile_text
+
+
+@pytest.mark.skipif(not has_docker_buildx(), reason="Docker Buildx not available")
+def test_docker_image_build(tmp_path, platform_conda_exe):
+    platform, conda_exe = platform_conda_exe
+
+    if sys.platform.startswith("linux"):
+        conda_exe = None
+        extra_constructor_args = None
+    else:
+        extra_constructor_args = ["--platform", platform]
+
+    input_path = _example_path("docker_image_format")
+    output_path = tmp_path / "output"
+
+    yaml = YAML()
+    with open(input_path / "construct.yaml") as f:
+        config = yaml.load(f)
+
+    image_name = f"{config['name'].lower()}:{config['version']}"
+    image_format = config.get("docker_image_format")
+    assert image_format
+
+    list(
+        create_installer(
+            input_path,
+            output_path,
+            conda_exe=conda_exe,
+            extra_constructor_args=extra_constructor_args,
+        )
+    )
+
+    installer_dir = output_path / "installer"
+
+    sh_files = list((installer_dir).glob("*.sh"))
+    assert sh_files == [], f"Unexpected .sh installer(s) left in output: {sh_files}"
+
+    artifacts = list(installer_dir.glob(f"*-docker.{image_format}"))
+    assert artifacts, f"No Docker {image_format} artifacts found"
+    artifact = artifacts[0]
+
+    try:
+        subprocess.run(["docker", "load", "-i", str(artifact)], check=True)
+
+        result = subprocess.run(
+            ["docker", "run", "--rm", image_name, "conda", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        assert "conda" in result.stdout
+
+        inspect_result = subprocess.run(
+            ["docker", "inspect", "--format", "{{ json .Config.Labels }}", image_name],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        labels = json.loads(inspect_result.stdout)
+
+        for key, value in config.get("docker_labels", {}).items():
+            assert labels.get(key) == value, f"Label {key}: {value} not found in Docker image"
+
+        assert labels.get("org.opencontainers.image.title") == config["name"]
+        assert labels.get("org.opencontainers.image.version") == config["version"]
+
+    finally:
+        subprocess.run(["docker", "rmi", image_name], check=False)
