@@ -16,6 +16,7 @@ import sys
 from functools import partial
 from os.path import dirname
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from jsonschema import Draft202012Validator, validators
 from jsonschema.exceptions import ValidationError
@@ -23,6 +24,9 @@ from ruamel.yaml import YAMLError
 
 from constructor.exceptions import UnableToParse, UnableToParseMissingJinja2, YamlParsingError
 from constructor.utils import yaml
+
+if TYPE_CHECKING:
+    import os
 
 logger = logging.getLogger(__name__)
 
@@ -92,23 +96,7 @@ exception:
     return "\n".join(lines) + "\n"
 
 
-# adapted from conda-build
-def yamlize(data, directory, content_filter):
-    data = content_filter(data)
-    try:
-        return yaml.load(data)
-    except YAMLError as e:
-        if ("{{" not in data) and ("{%" not in data):
-            raise UnableToParse(original=e)
-        try:
-            from constructor.jinja import render_jinja_for_input_file
-        except ImportError as ex:
-            raise UnableToParseMissingJinja2(original=ex)
-        data = render_jinja_for_input_file(data, directory, content_filter)
-        return yaml.load(data)
-
-
-def parse(path, platform):
+def render(path: os.PathLike, platform: str) -> str:
     try:
         with open(path) as fi:
             data = fi.read()
@@ -116,8 +104,23 @@ def parse(path, platform):
         sys.exit("Error: could not open '%s' for reading" % path)
     directory = dirname(path)
     content_filter = partial(select_lines, namespace=ns_platform(platform))
+    data = content_filter(data)
     try:
-        res = yamlize(data, directory, content_filter)
+        yaml.load(data)
+        return data
+    except YAMLError as e:
+        if ("{{" not in data) and ("{%" not in data):
+            raise UnableToParse(original=e)
+        try:
+            from constructor.jinja import render_jinja_for_input_file
+        except ImportError as ex:
+            raise UnableToParseMissingJinja2(original=ex)
+        return render_jinja_for_input_file(data, directory, content_filter)
+
+
+def parse(path: os.PathLike, platform: str):
+    try:
+        res = yaml.load(render(path, platform))
     except YamlParsingError as e:
         sys.exit(e.error_msg())
 
