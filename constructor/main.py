@@ -28,6 +28,7 @@ from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
 from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
+from .construct import render as construct_render
 from .construct import verify as construct_verify
 from .fcp import main as fcp_main
 from .utils import StandaloneExe, check_version, identify_conda_exe, normalize_path, yield_lines
@@ -544,6 +545,11 @@ def main(argv=None):
         default=False,
         action="store_true",
     )
+    p.add_argument(
+        "--render",
+        help="Parse and render the construct.yaml file",
+        action="store_true",
+    )
 
     p.add_argument("-v", "--verbose", action="store_true")
 
@@ -581,7 +587,8 @@ def main(argv=None):
     )
 
     args = p.parse_args(argv)
-    logger.info("Got the following cli arguments: '%s'", args)
+    if not args.render:
+        logger.info("Got the following cli arguments: '%s'", args)
 
     if args.verbose or args.debug:
         logging.getLogger("constructor").setLevel(logging.DEBUG)
@@ -603,6 +610,11 @@ def main(argv=None):
     full_config_path = os.path.join(dir_path, args.config_filename)
     if not os.path.isfile(full_config_path):
         p.error("no such file: %s" % full_config_path)
+
+    if args.render:
+        platform = args.platform or cc_platform
+        print(construct_render(full_config_path, platform=platform))
+        return
 
     conda_exe = args.conda_exe
     conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
