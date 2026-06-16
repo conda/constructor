@@ -8,6 +8,7 @@ except ModuleNotFoundError:
     import tomli as tomllib
 
 import pytest
+from PIL import Image
 
 from constructor.briefcase import (
     Payload,
@@ -1039,16 +1040,15 @@ def test_payload_pyproject_toml_installer_images(tmp_path, has_user_images):
     info = mock_info.copy()
 
     if has_user_images:
-        # Use existing test image from examples directory
-        repo_root = Path(__file__).parent.parent
-        example_image = (
-            repo_root / "examples" / "customized_welcome_conclusion" / "ExtraPagesExampleImg.bmp"
-        )
-        assert example_image.exists(), f"Test image not found: {example_image}"
+        # Create a minimal test image. We avoid using files from examples/ because canary
+        # builds run tests in an isolated conda-build environment where only the directories
+        # listed in recipe/meta.yaml's source_files are available.
+        test_image = tmp_path / "test_image.bmp"
+        Image.new("RGB", (10, 10), color="red").save(test_image)
 
-        info["welcome_image"] = str(example_image)
-        info["header_image"] = str(example_image)
-        info["icon_image"] = str(example_image)
+        info["welcome_image"] = str(test_image)
+        info["header_image"] = str(test_image)
+        info["icon_image"] = str(test_image)
 
     payload = Payload(info)
     payload.prepare()
