@@ -44,7 +44,7 @@ def _build_init_run_block(info):
                 mamba_version = record.version
                 break
         if check_version(mamba_version, min_version="2.0.0"):
-            run += ' && "${PREFIX}/bin/mamba" shell init'
+            run += ' && "${PREFIX}/bin/mamba" shell init --shell bash'
         else:
             run += ' && "${PREFIX}/bin/python" -m mamba.mamba init --all'
     return run
