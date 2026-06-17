@@ -1,6 +1,6 @@
 ### Enhancements
 
-* EXE: Warn users and improve error messages when the installation path may exceed the Windows 260-character path length limit, based on the longest file path bundled with the installer. (#1170 via #1228)
+* EXE: Add a new error check when the chosen installation path would exceed the Windows 260-character limit, computed from the longest bundled file path. This reduces the risk of users running into confusing installation failures caused by long paths on Windows. (#1170 via #1228)
 
 ### Bug fixes
 
