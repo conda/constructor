@@ -1939,7 +1939,8 @@ def test_dockerfile_generation(tmp_path, platform_conda_exe):
 
 
 @pytest.mark.skipif(not has_docker_buildx(), reason="Docker Buildx not available")
-def test_docker_image_build(tmp_path, platform_conda_exe):
+@pytest.mark.parametrize("init", ["conda", "condabin", "mamba_v1", "mamba_v2", None])
+def test_docker_image_build(tmp_path, platform_conda_exe, init):
     platform, conda_exe = platform_conda_exe
 
     if sys.platform.startswith("linux"):
@@ -1948,12 +1949,26 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
     else:
         extra_constructor_args = ["--platform", platform]
 
-    input_path = _example_path("docker_image_format")
+    input_path = tmp_path / "input"
+    input_path.mkdir()
+    construct_yaml_path = input_path / "construct.yaml"
+    shutil.copy(_example_path("docker_image_format") / "construct.yaml", construct_yaml_path)
     output_path = tmp_path / "output"
 
     yaml = YAML()
-    with open(input_path / "construct.yaml") as f:
+    with open(construct_yaml_path) as f:
         config = yaml.load(f)
+
+    if init == "classic":
+        config["initialize_conda"] = "classic"
+    elif init == "condabin":
+        config["initialize_conda"] = "condabin"
+    elif init in ("mamba_v1", "mamba_v2"):
+        config["specs"] += ["mamba"]
+        config["initialize_conda"] = True
+
+    with open(construct_yaml_path, "w") as f:
+        yaml.dump(config, f)
 
     image_name = f"{config['name'].lower()}:{config['version']}"
     image_format = config.get("docker_image_format")
@@ -1969,7 +1984,6 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
     )
 
     installer_dir = output_path / "installer"
-
     sh_files = list((installer_dir).glob("*.sh"))
     assert sh_files == [], f"Unexpected .sh installer(s) left in output: {sh_files}"
 
@@ -1980,14 +1994,21 @@ def test_docker_image_build(tmp_path, platform_conda_exe):
     try:
         subprocess.run(["docker", "load", "-i", str(artifact)], check=True)
 
-        result = subprocess.run(
-            ["docker", "run", "--rm", image_name, "conda", "--version"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        assert "conda" in result.stdout
+        if init in ("classic", "condabin", "mamba_v1", "mamba_v2"):
+            result = subprocess.run(
+                ["docker", "run", "--rm", image_name, "conda", "create", "--help"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            assert "conda create" in result.stdout
+        else:
+            result = subprocess.run(
+                ["docker", "run", "--rm", image_name, "python", "-c", "print('Hello, World!')"],
+                capture_output=True,
+                text=True,
+            )
+            assert "Hello, World!" in result.stdout
 
         inspect_result = subprocess.run(
             ["docker", "inspect", "--format", "{{ json .Config.Labels }}", image_name],
