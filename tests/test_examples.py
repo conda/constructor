@@ -2004,7 +2004,7 @@ def test_docker_image_build(tmp_path, platform_conda_exe, init):
             assert "conda create" in result.stdout
         else:
             result = subprocess.run(
-                ["docker", "run", "--rm", image_name, "python", "-c", "print('Hello, World!')"],
+                ["docker", "run", "--rm", image_name, "/bin/bash", "-c", "echo 'Hello, World!'"],
                 capture_output=True,
                 text=True,
             )
