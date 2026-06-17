@@ -1964,8 +1964,11 @@ def test_docker_image_build(tmp_path, platform_conda_exe, init):
     elif init == "condabin":
         config["initialize_conda"] = "condabin"
     elif init in ("mamba_v1", "mamba_v2"):
-        config["specs"] += ["mamba"]
         config["initialize_conda"] = True
+        if init == "mamba_v1":
+            config["specs"] += ["mamba <2.0.0"]
+        else:
+            config["specs"] += ["mamba"]
 
     with open(construct_yaml_path, "w") as f:
         yaml.dump(config, f)
