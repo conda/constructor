@@ -59,7 +59,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
     info: dict
         Constructor installer info dict.
     docker_dir: Path
-        Path to the Docker build directory returned by prepare_docker_context().
+        Path to the Docker build directory.
 
     Returns
     -------
@@ -90,14 +90,14 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
 
 def build_image(info: dict, docker_dir: Path) -> Path:
     """Optionally build the docker image from the generated Dockerfile.
-    Currently supported on linux and macOS platforms.
+    Target platform must be linux.
 
     Parameters
     ----------
     info: dict
         Constructor installer info dict.
     docker_dir: Path
-        Path to the Docker directory containing the Docker outputs.
+        Path to the Docker directory containing the Docker artifacts.
 
     Returns
     -------
@@ -152,8 +152,7 @@ def build_image(info: dict, docker_dir: Path) -> Path:
 def create(info: dict, verbose: bool = False) -> None:
     """Build a Docker output from a previously built ``.sh`` installer.
 
-    The ``.sh`` installer is built in the preceding ``sh`` iteration of the
-    installer loop in ``main_build`` and must exist at ``info["_outpath"]``
+    The ``.sh`` installer is built and must exist at ``info["_outpath"]``
     before this function is called.
 
     Parameters

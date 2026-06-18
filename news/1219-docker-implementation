@@ -1,7 +1,7 @@
 ### Enhancements
 
 * Add `installer_type: docker` support to generate a Dockerfile and staged `.sh` installer from a constructor build to be used as-is or customized before building.
-* Add `docker_image: tar` support to build and export a portable Docker image. Requires Docker Buildx.
+* Add `docker_image_format: tar` support to build and export a portable Docker image. Requires Docker Buildx.
 * Both Docker features target Linux only and support all host platforms. (#1219)
 
 ### Bug fixes
