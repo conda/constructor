@@ -1966,9 +1966,9 @@ def test_docker_image_build(tmp_path, platform_conda_exe, init):
     elif init in ("mamba_v1", "mamba_v2"):
         config["initialize_conda"] = True
         if init == "mamba_v1":
-            config["specs"] += ["mamba <2.0.0"]
+            config["specs"].append("mamba <2.0.0")
         else:
-            config["specs"] += ["mamba"]
+            config["specs"].append("mamba >=2.0.0")
 
     with open(construct_yaml_path, "w") as f:
         yaml.dump(config, f)
@@ -2005,13 +2005,12 @@ def test_docker_image_build(tmp_path, platform_conda_exe, init):
                 check=True,
             )
             assert "conda create" in result.stdout
-        else:
-            result = subprocess.run(
-                ["docker", "run", "--rm", image_name, "/bin/bash", "-c", "echo 'Hello, World!'"],
-                capture_output=True,
-                text=True,
-            )
-            assert "Hello, World!" in result.stdout
+        result = subprocess.run(
+            ["docker", "run", "--rm", image_name, "/bin/bash", "-c", "echo 'Hello, World!'"],
+            capture_output=True,
+            text=True,
+        )
+        assert "Hello, World!" in result.stdout
 
         inspect_result = subprocess.run(
             ["docker", "inspect", "--format", "{{ json .Config.Labels }}", image_name],

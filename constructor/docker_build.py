@@ -26,27 +26,24 @@ DOCKER_PLATFORM_MAP = {
 
 
 def _build_init_run_block(info):
-    from .conda_interface import MatchSpec
-
-    specs = {MatchSpec(spec).name for spec in info.get("specs", ())}
-    has_mamba = "mamba" in specs
-    has_conda = "conda" in specs
-    initialize_conda = info.get("initialize_conda")
-
-    if not (has_conda or has_mamba) or not initialize_conda or initialize_conda == "condabin":
+    if not info.get("_has_conda"):
         return ""
+        
+    initialize_conda = info.get("initialize_conda")
+    if not initialize_conda or initialize_conda == "condabin":
+        return ""
+        
     run = 'RUN "${PREFIX}/bin/conda" init --all'
 
-    if has_mamba:
-        mamba_version = None
-        for record in info.get("_all_pkg_records", ()):
-            if record.name == "mamba":
-                mamba_version = record.version
-                break
-        if check_version(mamba_version, min_version="2.0.0"):
+    for record in info.get("_all_pkg_records", ()):
+        if not record.name == "mamba":
+            continue
+        if check_version(record.version, min_version="2.0.0"):
             run += ' && "${PREFIX}/bin/mamba" shell init --shell bash'
         else:
             run += ' && "${PREFIX}/bin/python" -m mamba.mamba init --all'
+        break
+
     return run
 
 

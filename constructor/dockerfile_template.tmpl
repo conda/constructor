@@ -40,12 +40,13 @@ ENV LC_ALL=C.UTF-8
 {%- if initialize_conda == 'condabin' %}
 ENV PATH="${PREFIX}/condabin:${PATH}"
 {%- elif initialize_conda  %}
-ENV PATH="${PREFIX}/condabin:${PREFIX}/bin:${PATH}"
+ENV PATH="${PREFIX}/bin:${PREFIX}/condabin:${PATH}"
 {%- endif %}
 
 COPY --from=builder ${PREFIX} ${PREFIX}
 {%- if register_envs %}
-COPY --from=builder /root/.conda /root/.conda
+ARG HOME=/root
+COPY --from=builder ${HOME}/.conda ${HOME}/.conda
 {% endif %}
 
 {{ init_run_block }}
