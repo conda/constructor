@@ -25,6 +25,7 @@ from ruamel.yaml import YAML
 
 from constructor.conda_interface import cc_platform
 from constructor.construct import parse as parse_construct
+from constructor.main import get_installer_type
 from constructor.utils import (
     StandaloneExe,
     check_version,
@@ -611,17 +612,22 @@ def _run_installer(
     return process
 
 
-def create_installer(
+def _build_installers(
     input_dir: Path,
     workspace: Path,
+    installer_type: str | None = None,
     conda_exe=CONSTRUCTOR_CONDA_EXE,
     debug=CONSTRUCTOR_DEBUG,
-    with_spaces=False,
     timeout=420,
     config_filename="construct.yaml",
     extra_constructor_args: Iterable[str] = None,
     **env_vars,
-) -> Generator[tuple[Path, Path], None, None]:
+) -> Path:
+    """Run constructor and return the output directory holding the artifact(s).
+
+    installer_type=None builds all applicable types (current behavior); a value
+    passes --installer-type to build exactly one.
+    """
     if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
         pytest.skip("Micromamba is not supported on Windows yet.")
 
@@ -639,7 +645,8 @@ def create_installer(
         "--config-filename",
         config_filename,
     ]
-
+    if installer_type:
+        cmd += ["--installer-type", installer_type]
     if conda_exe:
         cmd.extend(["--conda-exe", conda_exe])
     if debug:
@@ -648,8 +655,87 @@ def create_installer(
         cmd.extend(extra_constructor_args)
 
     _execute(cmd, timeout=timeout, **env_vars)
+    return output_dir
 
+
+def _install_dir_for(
+    installer: Path,
+    input_dir: Path,
+    workspace: Path,
+    config_filename: str,
+    with_spaces: bool,
+) -> Path:
     install_dir_prefix = "i n s t a l l" if with_spaces else "install"
+    if installer.suffix == ".pkg" and ON_CI:
+        return Path("~").expanduser() / calculate_install_dir(input_dir / config_filename)
+    elif installer.suffix == ".msi":
+        return calculate_msi_install_path(input_dir / config_filename)
+    else:
+        return workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
+
+
+def installer_types_for_example(
+    example_path: Path, config_filename: str = "construct.yaml"
+) -> tuple[str, ...]:
+    """Installer types this example builds on the current platform.
+
+    Reuses constructor's own get_installer_type() so the test parametrization
+    matches what the build actually produces.
+    """
+    info = parse_construct(str(example_path / config_filename), platform=cc_platform)
+    info["_platform"] = cc_platform
+    return get_installer_type(info)
+
+
+def create_single_installer(
+    input_dir: Path,
+    workspace: Path,
+    installer_type: str,
+    *,
+    with_spaces=False,
+    timeout=420,
+    config_filename="construct.yaml",
+    extra_constructor_args: Iterable[str] = None,
+    **env_vars,
+) -> tuple[Path, Path]:
+    """Build exactly one installer type; return (installer_path, install_dir)."""
+    output_dir = _build_installers(
+        input_dir,
+        workspace,
+        installer_type=installer_type,
+        timeout=timeout,
+        config_filename=config_filename,
+        extra_constructor_args=extra_constructor_args,
+        **env_vars,
+    )
+    installer = next(output_dir.glob(f"*.{installer_type}"), None)
+    if installer is None:
+        raise FileNotFoundError(f"No .{installer_type} installer found in {output_dir}")
+    install_dir = _install_dir_for(installer, input_dir, workspace, config_filename, with_spaces)
+    return installer, install_dir
+
+
+def create_installer(
+    input_dir: Path,
+    workspace: Path,
+    conda_exe=CONSTRUCTOR_CONDA_EXE,
+    debug=CONSTRUCTOR_DEBUG,
+    with_spaces=False,
+    timeout=420,
+    config_filename="construct.yaml",
+    extra_constructor_args: Iterable[str] = None,
+    **env_vars,
+) -> Generator[tuple[Path, Path], None, None]:
+    output_dir = _build_installers(
+        input_dir,
+        workspace,
+        conda_exe=conda_exe,
+        debug=debug,
+        timeout=timeout,
+        config_filename=config_filename,
+        extra_constructor_args=extra_constructor_args,
+        **env_vars,
+    )
 
     def _sort_by_extension(path):
         "Return shell installers first so they are run before the GUI ones"
@@ -657,17 +743,9 @@ def create_installer(
 
     installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".msi", ".sh", ".pkg"))
     for installer in sorted(installers, key=_sort_by_extension):
-        if installer.suffix == ".pkg" and ON_CI:
-            install_dir = Path("~").expanduser() / calculate_install_dir(
-                input_dir / config_filename
-            )
-        elif installer.suffix == ".msi":
-            install_dir = calculate_msi_install_path(input_dir / config_filename)
-        else:
-            install_dir = (
-                workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
-            )
-
+        install_dir = _install_dir_for(
+            installer, input_dir, workspace, config_filename, with_spaces
+        )
         yield installer, install_dir
         if KEEP_ARTIFACTS_PATH:
             try:
@@ -695,6 +773,17 @@ def _example_path(example_name):
 def _is_micromamba(path) -> bool:
     name, _ = identify_conda_exe(path)
     return name == StandaloneExe.MAMBA
+
+
+def test_installer_types_for_example_matches_platform():
+    """Validate any example with 'installer_type: all'; and that the resolved types match the platform set."""
+    types = installer_types_for_example(_example_path("miniforge"))
+    if sys.platform.startswith("linux"):
+        assert types == ("sh",)
+    elif sys.platform == "darwin":
+        assert types == ("sh", "pkg")
+    elif sys.platform.startswith("win"):
+        assert types == ("exe", "msi")
 
 
 @pytest.fixture(params=["linux-aarch64"])
@@ -798,75 +887,95 @@ def test_example_mirrored_channels(tmp_path, request):
         assert condarc_data == expected_condarc
 
 
-@pytest.mark.xfail(
+def _check_miniforge(
+    input_path, installer_name, installer_version, installer_type, tmp_path, request
+):
+    """Helper function for the existing miniforge examples."""
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    if installer_type == "sh":
+        # try both batch and interactive installations
+        install_dirs = (install_dir / "batch", install_dir / "interactive")
+        installer_inputs = (None, f"\nyes\n{install_dir / 'interactive'}\nno\nno\n")
+    else:
+        install_dirs = (install_dir,)
+        installer_inputs = (None,)
+    for installer_input, install_dir in zip(installer_inputs, install_dirs):
+        _run_installer(
+            input_path,
+            installer,
+            install_dir,
+            installer_input=installer_input,
+            request=request,
+            # PKG installers use their own install path, so we can't check sentinels
+            # via `install_dir`
+            check_sentinels=installer_type != "pkg",
+            uninstall=False,
+        )
+        # Check that key metadata files are in place
+        assert install_dir.glob("conda-meta/*.json")
+        assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
+        # Check that the installer info file is in place
+        info_file_name = ".installer.info"
+        if installer_type == "msi":
+            info_file = install_dir / "base" / info_file_name
+        else:
+            info_file = install_dir / info_file_name
+        assert info_file.is_file()
+        installer_info = json.loads(info_file.read_text())
+        assert installer_info["name"] == installer_name
+        assert installer_info["version"] == installer_version
+        assert installer_info["platform"] == cc_platform
+        assert installer_info["type"] == installer_type
+        if installer_type == "pkg" and ON_CI:
+            _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / installer_name)
+        if installer_type == "exe":
+            for key in ("ProgramData", "AppData"):
+                start_menu_dir = Path(
+                    os.environ[key],
+                    "Microsoft/Windows/Start Menu/Programs/Miniforge3",
+                )
+                if start_menu_dir.is_dir():
+                    assert list(start_menu_dir.glob("Miniforge*.lnk"))
+                    break
+            else:
+                raise AssertionError("Could not find Start Menu folder for miniforge")
+            _run_uninstaller_exe(install_dir)
+            assert not list(start_menu_dir.glob("Miniforge*.lnk"))
+        elif installer_type == "msi":
+            # TODO: Start menus
+            _run_uninstaller_msi(installer, install_dir)
+
+
+_MINIFORGE_XFAIL = pytest.mark.xfail(
     (
         CONDA_EXE == StandaloneExe.CONDA
         and not check_version(CONDA_EXE_VERSION, min_version="23.11.0a0")
     ),
     reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
 )
+
+
+@_MINIFORGE_XFAIL
+@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("miniforge")))
+def test_example_miniforge(tmp_path, request, installer_type):
+    _check_miniforge(
+        _example_path("miniforge"), "Miniforge3", "25.0.0-1", installer_type, tmp_path, request
+    )
+
+
+@_MINIFORGE_XFAIL
 @pytest.mark.parametrize(
-    "example, installer_name, installer_version",
-    [
-        ("miniforge", "Miniforge3", "25.0.0-1"),
-        ("miniforge-mamba2", "Miniforge3-mamba2", "25.1.1-0"),
-    ],
+    "installer_type", installer_types_for_example(_example_path("miniforge-mamba2"))
 )
-def test_example_miniforge(tmp_path, request, example, installer_name, installer_version):
-    input_path = _example_path(example)
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        if installer.suffix == ".sh":
-            # try both batch and interactive installations
-            install_dirs = (install_dir / "batch", install_dir / "interactive")
-            installer_inputs = (None, f"\nyes\n{install_dir / 'interactive'}\nno\nno\n")
-        else:
-            install_dirs = (install_dir,)
-            installer_inputs = (None,)
-        for installer_input, install_dir in zip(installer_inputs, install_dirs):
-            _run_installer(
-                input_path,
-                installer,
-                install_dir,
-                installer_input=installer_input,
-                request=request,
-                # PKG installers use their own install path, so we can't check sentinels
-                # via `install_dir`
-                check_sentinels=installer.suffix != ".pkg",
-                uninstall=False,
-            )
-            # Check that key metadata files are in place
-            assert install_dir.glob("conda-meta/*.json")
-            assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
-            # Check that the installer info file is in place
-            info_file_name = ".installer.info"
-            if installer.suffix == ".msi":
-                info_file = install_dir / "base" / info_file_name
-            else:
-                info_file = install_dir / info_file_name
-            assert info_file.is_file()
-            installer_info = json.loads(info_file.read_text())
-            assert installer_info["name"] == installer_name
-            assert installer_info["version"] == installer_version
-            assert installer_info["platform"] == cc_platform
-            assert installer_info["type"] == installer.suffix[1:]
-            if installer.suffix == ".pkg" and ON_CI:
-                _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / installer_name)
-            if installer.suffix == ".exe":
-                for key in ("ProgramData", "AppData"):
-                    start_menu_dir = Path(
-                        os.environ[key],
-                        "Microsoft/Windows/Start Menu/Programs/Miniforge3",
-                    )
-                    if start_menu_dir.is_dir():
-                        assert list(start_menu_dir.glob("Miniforge*.lnk"))
-                        break
-                else:
-                    raise AssertionError("Could not find Start Menu folder for miniforge")
-                _run_uninstaller_exe(install_dir)
-                assert not list(start_menu_dir.glob("Miniforge*.lnk"))
-            elif installer.suffix == ".msi":
-                # TODO: Start menus
-                _run_uninstaller_msi(installer, install_dir)
+def test_example_miniforge_mamba2(tmp_path, request, installer_type):
+    _check_miniforge(
+        _example_path("miniforge-mamba2"),
+        "Miniforge3-mamba2",
+        "25.1.1-0",
+        installer_type,
+        tmp_path,
+        request,
+    )
 
 
 def test_example_noconda(tmp_path, request):
