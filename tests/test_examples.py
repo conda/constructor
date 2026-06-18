@@ -1268,6 +1268,7 @@ def test_example_signing(tmp_path, request, installer_type):
     not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
     reason="AzureSignTool not available",
 )
+@pytest.mark.parametrize("installer_type", ["exe"])
 @pytest.mark.parametrize(
     "installer_type", installer_types_for_example(_example_path("azure_signtool"))
 )
