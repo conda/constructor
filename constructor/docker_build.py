@@ -28,11 +28,11 @@ DOCKER_PLATFORM_MAP = {
 def _build_init_run_block(info):
     if not info.get("_has_conda"):
         return ""
-        
+
     initialize_conda = info.get("initialize_conda")
     if not initialize_conda or initialize_conda == "condabin":
         return ""
-        
+
     run = 'RUN "${PREFIX}/bin/conda" init --all'
 
     for record in info.get("_all_pkg_records", ()):
