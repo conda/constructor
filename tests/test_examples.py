@@ -664,12 +664,18 @@ def _install_dir_for(
     workspace: Path,
     config_filename: str,
     with_spaces: bool,
+    short: bool = False,
 ) -> Path:
     install_dir_prefix = "i n s t a l l" if with_spaces else "install"
     if installer.suffix == ".pkg" and ON_CI:
         return Path("~").expanduser() / calculate_install_dir(input_dir / config_filename)
     elif installer.suffix == ".msi":
         return calculate_msi_install_path(input_dir / config_filename)
+    elif short:
+        # Each parametrized test already has its own workspace, so the installer
+        # stem/suffix are not needed to keep install dirs distinct. Keeping the
+        # name short avoids exceeding MAX_PATH on Windows (see from_env_txt).
+        return workspace / install_dir_prefix
     else:
         return workspace / f"{install_dir_prefix}-{installer.stem}-{installer.suffix[1:]}"
 
@@ -711,7 +717,9 @@ def create_single_installer(
     installer = next(output_dir.glob(f"*.{installer_type}"), None)
     if installer is None:
         raise FileNotFoundError(f"No .{installer_type} installer found in {output_dir}")
-    install_dir = _install_dir_for(installer, input_dir, workspace, config_filename, with_spaces)
+    install_dir = _install_dir_for(
+        installer, input_dir, workspace, config_filename, with_spaces, short=True
+    )
     return installer, install_dir
 
 
