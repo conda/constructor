@@ -809,16 +809,23 @@ def platform_conda_exe(request, tmp_path) -> tuple[str, Path]:
     return platform, conda_exe
 
 
-def test_example_customize_controls(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("customize_controls"))
+)
+def test_example_customize_controls(tmp_path, request, installer_type):
     input_path = _example_path("customize_controls")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_customized_welcome_conclusion(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type",
+    installer_types_for_example(_example_path("customized_welcome_conclusion")),
+)
+def test_example_customized_welcome_conclusion(tmp_path, request, installer_type):
     input_path = _example_path("customized_welcome_conclusion")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    _run_installer(input_path, installer, install_dir, request=request)
 
 
 @pytest.mark.parametrize("extra_pages", ("str", "list"))
@@ -849,42 +856,50 @@ def test_example_extra_envs(tmp_path, request):
                 _run_uninstaller_exe(install_dir=install_dir)
 
 
-def test_example_extra_files(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("extra_files"))
+)
+def test_example_extra_files(tmp_path, request, installer_type):
     input_path = _example_path("extra_files")
-    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            check_sentinels=CONSTRUCTOR_VERBOSE,
-            check_subprocess=CONSTRUCTOR_VERBOSE,
-        )
+    installer, install_dir = create_single_installer(
+        input_path, tmp_path, installer_type, with_spaces=True
+    )
+    _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        request=request,
+        check_sentinels=CONSTRUCTOR_VERBOSE,
+        check_subprocess=CONSTRUCTOR_VERBOSE,
+    )
 
 
-def test_example_mirrored_channels(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("mirrored_channels"))
+)
+def test_example_mirrored_channels(tmp_path, request, installer_type):
     input_path = _example_path("mirrored_channels")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
 
-        expected_condarc = {
-            "channels": ["conda-forge"],
-            "mirrored_channels": {
-                "conda-forge": [
-                    "https://conda.anaconda.org/conda-forge",
-                    "https://conda.anaconda.org/mirror1",
-                    "https://conda.anaconda.org/mirror2",
-                ]
-            },
-        }
+    expected_condarc = {
+        "channels": ["conda-forge"],
+        "mirrored_channels": {
+            "conda-forge": [
+                "https://conda.anaconda.org/conda-forge",
+                "https://conda.anaconda.org/mirror1",
+                "https://conda.anaconda.org/mirror2",
+            ]
+        },
+    }
 
-        condarc_file = install_dir / ".condarc"
-        assert condarc_file.exists()
+    condarc_file = install_dir / ".condarc"
+    assert condarc_file.exists()
 
-        with open(condarc_file) as file:
-            condarc_data = YAML().load(file)
+    with open(condarc_file) as file:
+        condarc_data = YAML().load(file)
 
-        assert condarc_data == expected_condarc
+    assert condarc_data == expected_condarc
 
 
 def _check_miniforge(
@@ -978,18 +993,26 @@ def test_example_miniforge_mamba2(tmp_path, request, installer_type):
     )
 
 
-def test_example_noconda(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type",
+    installer_types_for_example(_example_path("noconda"), "constructor_input.yaml"),
+)
+def test_example_noconda(tmp_path, request, installer_type):
     input_path = _example_path("noconda")
-    for installer, install_dir in create_installer(
-        input_path, tmp_path, config_filename="constructor_input.yaml", with_spaces=True
-    ):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            config_filename="constructor_input.yaml",
-            request=request,
-        )
+    installer, install_dir = create_single_installer(
+        input_path,
+        tmp_path,
+        installer_type,
+        config_filename="constructor_input.yaml",
+        with_spaces=True,
+    )
+    _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        config_filename="constructor_input.yaml",
+        request=request,
+    )
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
@@ -1109,10 +1132,13 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     assert validated_signatures == components
 
 
-def test_example_scripts(tmp_path, request):
+@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("scripts")))
+def test_example_scripts(tmp_path, request, installer_type):
     input_path = _example_path("scripts")
-    for installer, install_dir in create_installer(input_path, tmp_path, with_spaces=True):
-        _run_installer(input_path, installer, install_dir, request=request)
+    installer, install_dir = create_single_installer(
+        input_path, tmp_path, installer_type, with_spaces=True
+    )
+    _run_installer(input_path, installer, install_dir, request=request)
 
 
 @pytest.mark.skipif(
@@ -1248,18 +1274,21 @@ def test_azure_signtool(tmp_path, request, monkeypatch, auth_method):
         _run_installer(input_path, installer, install_dir, request=request)
 
 
-def test_example_use_channel_remap(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("use_channel_remap"))
+)
+def test_example_use_channel_remap(tmp_path, request, installer_type):
     input_path = _example_path("use_channel_remap")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
-        p = subprocess.run(
-            [sys.executable, "-m", "conda", "list", "--prefix", install_dir, "--json"],
-            capture_output=True,
-            text=True,
-        )
-        packages = json.loads(p.stdout)
-        for pkg in packages:
-            assert pkg["channel"] == "private_repo"
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
+    p = subprocess.run(
+        [sys.executable, "-m", "conda", "list", "--prefix", install_dir, "--json"],
+        capture_output=True,
+        text=True,
+    )
+    packages = json.loads(p.stdout)
+    for pkg in packages:
+        assert pkg["channel"] == "private_repo"
 
 
 def test_example_from_existing_env(tmp_path, request):
@@ -1317,13 +1346,16 @@ def test_example_from_explicit(tmp_path, request):
         assert out == expected
 
 
-def test_register_envs(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("register_envs"))
+)
+def test_register_envs(tmp_path, request, installer_type):
     """Verify that 'register_envs: False' results in the environment not being registered."""
     input_path = _example_path("register_envs")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(input_path, installer, install_dir, request=request)
-        environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
-        assert str(install_dir) not in environments_txt
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    _run_installer(input_path, installer, install_dir, request=request)
+    environments_txt = Path("~/.conda/environments.txt").expanduser().read_text()
+    assert str(install_dir) not in environments_txt
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
@@ -1438,17 +1470,20 @@ def test_virtual_specs_failed(tmp_path, request):
         assert msg in process.stdout + process.stderr
 
 
-def test_virtual_specs_ok(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("virtual_specs_ok"))
+)
+def test_virtual_specs_ok(tmp_path, request, installer_type):
     input_path = _example_path("virtual_specs_ok")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            check_subprocess=True,
-            uninstall=True,
-        )
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        request=request,
+        check_subprocess=True,
+        uninstall=True,
+    )
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Unix only")
@@ -1860,58 +1895,62 @@ def test_uninstallation_standalone(
             shutil.rmtree(system_rc.parent)
 
 
-def test_output_files(tmp_path):
+@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("outputs")))
+def test_output_files(tmp_path, installer_type):
     input_path = _example_path("outputs")
-    for installer, _ in create_installer(input_path, tmp_path):
-        files_expected = [
-            f"{installer.name}.md5",
-            f"{installer.name}.sha256",
-            "info.json",
-            "licenses.json",
-            "pkg-list.base.txt",
-            "pkg-list.py310.txt",
-            "lockfile.base.txt",
-            "lockfile.py310.txt",
-        ]
-        files_not_expected = [
-            "pkg-list.py311.txt",
-            "lockfile.py311.txt",
-        ]
-        root_path = installer.parent
-        files_exist = [file for file in files_expected if (root_path / file).exists()]
-        assert sorted(files_exist) == sorted(files_expected)
-        files_exist = [file for file in files_not_expected if (root_path / file).exists()]
-        assert files_exist == []
+    installer, _ = create_single_installer(input_path, tmp_path, installer_type)
+    files_expected = [
+        f"{installer.name}.md5",
+        f"{installer.name}.sha256",
+        "info.json",
+        "licenses.json",
+        "pkg-list.base.txt",
+        "pkg-list.py310.txt",
+        "lockfile.base.txt",
+        "lockfile.py310.txt",
+    ]
+    files_not_expected = [
+        "pkg-list.py311.txt",
+        "lockfile.py311.txt",
+    ]
+    root_path = installer.parent
+    files_exist = [file for file in files_expected if (root_path / file).exists()]
+    assert sorted(files_exist) == sorted(files_expected)
+    files_exist = [file for file in files_not_expected if (root_path / file).exists()]
+    assert files_exist == []
 
-        # Test that info.json contains serialized objects
-        info_json = json.loads((root_path / "info.json").read_text())
-        assert isinstance(info_json.get("_conda_exe_version"), str)
-        _all_pkg_records = info_json.get("_all_pkg_records")
-        assert isinstance(_all_pkg_records, list), "Package record is not a list."
-        assert len(_all_pkg_records) > 0, "Package record is empty."
-        assert isinstance(_all_pkg_records[0], dict), "Package record not serialized."
-        _records = info_json.get("_records")
-        assert isinstance(_records, list), "Package record for base is not a list."
-        assert len(_records) > 0, "Package record for base is empty."
-        assert isinstance(_records[0], dict), "Package record for base is not serialized."
-        for env, env_info in info_json.get("_extra_envs_info", {}).items():
-            _records = env_info.get("_records")
-            assert isinstance(_records, list), f"Record for {env} is not a list."
-            assert len(_records) > 0, f"Record for {env} is empty."
-            assert isinstance(_records[0], dict), f"Record for {env} is not serialized."
+    # Test that info.json contains serialized objects
+    info_json = json.loads((root_path / "info.json").read_text())
+    assert isinstance(info_json.get("_conda_exe_version"), str)
+    _all_pkg_records = info_json.get("_all_pkg_records")
+    assert isinstance(_all_pkg_records, list), "Package record is not a list."
+    assert len(_all_pkg_records) > 0, "Package record is empty."
+    assert isinstance(_all_pkg_records[0], dict), "Package record not serialized."
+    _records = info_json.get("_records")
+    assert isinstance(_records, list), "Package record for base is not a list."
+    assert len(_records) > 0, "Package record for base is empty."
+    assert isinstance(_records[0], dict), "Package record for base is not serialized."
+    for env, env_info in info_json.get("_extra_envs_info", {}).items():
+        _records = env_info.get("_records")
+        assert isinstance(_records, list), f"Record for {env} is not a list."
+        assert len(_records) > 0, f"Record for {env} is empty."
+        assert isinstance(_records[0], dict), f"Record for {env} is not serialized."
 
 
-def test_regressions(tmp_path, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("regressions"))
+)
+def test_regressions(tmp_path, request, installer_type):
     input_path = _example_path("regressions")
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            check_subprocess=True,
-            uninstall=True,
-        )
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        request=request,
+        check_subprocess=True,
+        uninstall=True,
+    )
 
 
 @pytest.mark.parametrize("no_registry", (0, 1))
