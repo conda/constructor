@@ -44,6 +44,7 @@ constructor = [
     "nsis/*",
     "osx/*",
     "ttf/*",
+    "briefcase/*",
 ]
 
 [tool.ruff]
