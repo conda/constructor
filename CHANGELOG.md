@@ -1,5 +1,45 @@
 [//]: # (current developments)
 
+## 2026-06-22   3.16.0:
+### Enhancements
+
+* EXE: Uninstalling with option "Clear Package Cache" now also performs additional clean-up to account for potentially left-over files. (#1213 via #1214)
+* Add `installer_type: docker` support to generate a Dockerfile and staged `.sh` installer from a constructor build to be used as-is or customized before building.
+* Add `docker_image_format: tar` support to build and export a portable Docker image. Requires Docker Buildx.
+* Both Docker features target Linux only and support all host platforms. (#1219)
+* EXE: Add a new error check when the chosen installation path would exceed the Windows 260-character limit, computed from the longest bundled file path. This reduces the risk of users running into confusing installation failures caused by long paths on Windows. (#1170 via #1228)
+* Serialize package records and versions for `info.json` output. (#1250)
+* Add experimental support for building Windows MSI installers (via BeeWare's Briefcase). (#1251 via #646, #967)
+* Add `constructor --render` CLI option to render `construct.yaml` files. (#1263)
+
+### Bug fixes
+
+* Skip creating `~/.conda` in shell installers when `register_envs` is false.
+  Avoids a spurious failure when `$HOME` is read-only. (#1215)
+* PKG: Fix incorrect owner name in ownership warning messages. (#1223)
+* EXE: Create temporary directories inside `$INSTDIR` to avoid Windows Defender errors with `conda-standalone`. (#1243 via #1247)
+
+### Other
+
+* CI: Add `pip` to dev environment (required after `conda-libmamba-solver` 26.4.0 enabled sharded repodata by default). (#1229)
+* CI: Pin `micromamba<2.6` due to cache regression ([mamba-org/mamba#4250](https://github.com/mamba-org/mamba/issues/4250)). (#1229)
+* Add the `installer` name, version, platform and type attributes to a `.installer.info` file in the main `workspace` directory,
+  so this information can be persistently stored. (#1250)
+
+### Contributors
+
+* @chrisburr
+* @Jrice1317
+* @jaimergp
+* @marcoesters
+* @lrandersson
+* @stacynoland
+* @conda-bot
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2026-04-10   3.15.3:
 ### Enhancements
 
