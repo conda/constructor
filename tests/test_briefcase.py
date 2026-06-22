@@ -8,7 +8,6 @@ except ModuleNotFoundError:
     import tomli as tomllib
 
 import pytest
-from PIL import Image
 
 from constructor.briefcase import (
     Payload,
@@ -1040,6 +1039,10 @@ def test_payload_pyproject_toml_installer_images(tmp_path, has_user_images):
     info = mock_info.copy()
 
     if has_user_images:
+        # Imported lazily: pillow is a Windows/macOS-only dependency (see recipe/meta.yaml),
+        # so a module-level import would break test collection on Linux (e.g. canary builds).
+        from PIL import Image
+
         # Create a minimal test image. We avoid using files from examples/ because canary
         # builds run tests in an isolated conda-build environment where only the directories
         # listed in recipe/meta.yaml's source_files are available.
