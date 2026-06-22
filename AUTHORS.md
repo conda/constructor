@@ -57,6 +57,7 @@ Authors are sorted alphabetically.
 * Ryan
 * Sai Hanuma Rahul
 * Sophia Castellarin
+* Stacy Noland
 * Thomas Antony
 * Thomas Holder
 * Thomas Robitaille
