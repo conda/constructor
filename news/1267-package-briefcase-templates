@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* Include the `briefcase/` batch templates in the packaged distribution so MSI installer builds work from an installed `constructor` (previously `run_installation.bat` and `pre_uninstall.bat` were missing from `site-packages`). (#1267)
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
