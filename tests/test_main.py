@@ -49,4 +49,4 @@ def test_installer_type_flag_invalid_for_platform(tmp_path):
     bad = "sh" if sys.platform.startswith("win") else "exe"
     with pytest.raises(SystemExit) as exc:
         main([str(tmp_path), "--installer-type", bad, "--dry-run"])
-    assert "not available" in str(exc.value)
+    assert "invalid installer type" in str(exc.value)

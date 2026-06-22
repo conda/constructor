@@ -232,6 +232,8 @@ def main_build(
     info["_download_dir"] = join(cache_dir, platform)
     info["_conda_exe"] = abspath(conda_exe)
     info["_debug"] = debug
+    if installer_type:
+        info["installer_type"] = installer_type
     itypes = get_installer_type(info)
 
     if "docker" in itypes:
@@ -246,14 +248,6 @@ def main_build(
                 "Install Docker Buildx to proceed, or remove `docker_image_format` to "
                 "generate the Dockerfile without building the portable image."
             )
-    if installer_type:
-        if installer_type not in itypes:
-            sys.exit(
-                f"Error: installer type '{installer_type}' not available for this "
-                f"config/platform; allowed: {', '.join(itypes)}"
-            )
-        itypes = (installer_type,)
-
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
 
