@@ -3,9 +3,9 @@
 ## 2026-06-22   3.16.0:
 ### Enhancements
 
-* EXE: Uninstalling with option "Clear Package Cache" now also performs additional clean-up to account for potentially left-over files. (#1213 via #1214)
-* Add `installer_type: docker` support to generate a Dockerfile and staged `.sh` installer from a constructor build to be used as-is or customized before building.
-* Add `docker_image_format: tar` support to build and export a portable Docker image. Requires Docker Buildx.
+* EXE: Uninstalling with option "Clear Package Cache" now also performs additional clean-up to account for potentially left over files. (#1213 via #1214)
+* Add `installer_type: docker` support to generate a Dockerfile and staged `.sh` installer from a constructor build (#1219).
+* Add `docker_image_format: tar` support to build and export a portable Docker image. Requires Docker Buildx (#1219).
 * Both Docker features target Linux only and support all host platforms. (#1219)
 * EXE: Add a new error check when the chosen installation path would exceed the Windows 260-character limit, computed from the longest bundled file path. This reduces the risk of users running into confusing installation failures caused by long paths on Windows. (#1170 via #1228)
 * Serialize package records and versions for `info.json` output. (#1250)
@@ -34,9 +34,6 @@
 * @marcoesters
 * @lrandersson
 * @stacynoland
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
