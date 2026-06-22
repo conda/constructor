@@ -17,7 +17,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 5e2fb545eba1ea9dc051f6f962d52fe8f76a9794  # frozen: v0.15.13
+    rev: 77039ccbba72c8aede339c5f8ae29b42aced0a2e  # frozen: v0.15.18
     hooks:
       # Run the linter.
       - id: ruff
@@ -30,6 +30,6 @@ repos:
       - id: shellcheck
         exclude: ^(constructor/header.sh|constructor/osx/.*sh)
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: f805888065fdb6162e1f800e50bb9460cbd223d6  # frozen: 0.37.2
+    rev: 8ef330cbb7204d388aa7a620f9549bcea8009663  # frozen: 0.37.3
     hooks:
       - id: check-github-workflows
