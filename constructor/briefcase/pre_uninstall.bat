@@ -44,9 +44,6 @@ set "INSTALLER_NAME={{ installer_name }}"
 set "INSTALLER_VER={{ installer_version }}"
 set "INSTALLER_PLAT={{ installer_platform }}"
 set "INSTALLER_TYPE=MSI"
-rem INSTALLER_UNATTENDED is not available for MSI installers.
-rem Detecting silent mode requires UILevel from WiX, which would need
-rem changes to the briefcase-windows-app-template to pass to this script.
 
 rem Determine install mode from .nonadmin marker file written at install time
 if exist "%BASE_PATH%\.nonadmin" (

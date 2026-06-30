@@ -919,7 +919,6 @@ def test_render_templates_installer_metadata(template_name):
     assert 'set "INSTALLER_VER=1.0.0"' in text
     assert f'set "INSTALLER_PLAT={cc_platform}"' in text
     assert 'set "INSTALLER_TYPE=MSI"' in text
-    assert "INSTALLER_UNATTENDED is not available" in text
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
