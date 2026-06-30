@@ -2,19 +2,23 @@ echo Added by post-install script > "%PREFIX%\post_install_sentinel.txt"
 if not "%INSTALLER_NAME%" == "Scripts" exit 1
 if not "%INSTALLER_VER%" == "1.0.0" exit 1
 if not "%INSTALLER_PLAT%" == "win-64" exit 1
-if not "%INSTALLER_TYPE%" == "EXE" exit 1
-if not "%INSTALLER_UNATTENDED%" == "1" exit 1
+if not "%INSTALLER_TYPE%" == "EXE" if not "%INSTALLER_TYPE%" == "MSI" exit 1
+rem INSTALLER_UNATTENDED is only set by EXE installers.
+if "%INSTALLER_TYPE%" == "EXE" if not "%INSTALLER_UNATTENDED%" == "1" exit 1
 if "%PREFIX%" == "" exit 1
 if not "%CUSTOM_VARIABLE_1%" == "FIR$T-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS" exit 1
 if not "%CUSTOM_VARIABLE_2%" == "$ECOND-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS" exit 1
 if not exist "%PREFIX%\pre_install_sentinel.txt" exit 1
 
-if not exist "%INSTALLER_PATH%" (
-  echo ERROR: "INSTALLER_PATH=%INSTALLER_PATH%" points to a file that does not exist!
-  exit 1
-)
+rem INSTALLER_PATH and INSTALLER_PLUGINSDIR are only set by EXE installers.
+if "%INSTALLER_TYPE%" == "EXE" (
+  if not exist "%INSTALLER_PATH%" (
+    echo ERROR: "INSTALLER_PATH=%INSTALLER_PATH%" points to a file that does not exist!
+    exit 1
+  )
 
-if not exist "%INSTALLER_PLUGINSDIR%" (
-  echo ERROR: "INSTALLER_PLUGINSDIR=%INSTALLER_PLUGINSDIR%" points to a directory that does not exist!
-  exit 1
+  if not exist "%INSTALLER_PLUGINSDIR%" (
+    echo ERROR: "INSTALLER_PLUGINSDIR=%INSTALLER_PLUGINSDIR%" points to a directory that does not exist!
+    exit 1
+  )
 )

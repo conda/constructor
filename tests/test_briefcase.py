@@ -14,6 +14,7 @@ from constructor.briefcase import (
     _get_python_info,
     _get_script_env_variables,
     _setup_envs_commands,
+    create_install_options_list,
     create_uninstall_options_list,
     get_bundle_app_name,
     get_license,
@@ -643,6 +644,25 @@ def test_create_uninstall_options_list():
     assert "remove_user_data" in option_names
     assert "remove_caches" in option_names
     assert "remove_config_files" in option_names
+
+
+@pytest.mark.parametrize("script_type", ["pre", "post"])
+def test_install_options_script_default_enabled(tmp_path, script_type):
+    """Pre/post-install script options default to enabled when a script exists.
+
+    This mirrors the NSIS installer, which checks the box by default when the
+    script is present (see nsis/main.nsi.tmpl).
+    """
+    script = tmp_path / f"{script_type}_install.bat"
+    script.write_text("@echo script")
+
+    info = mock_info.copy()
+    info[f"{script_type}_install"] = str(script)
+    info[f"{script_type}_install_desc"] = "Custom script description"
+
+    options = create_install_options_list(info)
+    option = next(opt for opt in options if opt["name"] == f"{script_type}_install_script")
+    assert option["default"] is True
 
 
 def test_render_templates_with_virtual_specs():
