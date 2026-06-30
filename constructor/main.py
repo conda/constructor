@@ -211,6 +211,7 @@ def main_build(
     conda_exe: str = "conda.exe",
     config_filename: str = "construct.yaml",
     debug: bool = False,
+    installer_type: str | None = None,
 ):
     logger.info("platform: %s", platform)
     if not os.path.isfile(conda_exe):
@@ -231,6 +232,8 @@ def main_build(
     info["_download_dir"] = join(cache_dir, platform)
     info["_conda_exe"] = abspath(conda_exe)
     info["_debug"] = debug
+    if installer_type:
+        info["installer_type"] = installer_type
     itypes = get_installer_type(info)
 
     if "docker" in itypes:
@@ -245,7 +248,6 @@ def main_build(
                 "Install Docker Buildx to proceed, or remove `docker_image_format` to "
                 "generate the Dockerfile without building the portable image."
             )
-
     if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
 
@@ -619,6 +621,15 @@ def main(argv=None):
     )
 
     p.add_argument(
+        "--installer-type",
+        help="Build only this installer type (sh, pkg, exe, msi). "
+        "Primarily for testing; overrides 'installer_type' from the config.",
+        action="store",
+        metavar="TYPE",
+        dest="installer_type",
+    )
+
+    p.add_argument(
         "dir_path",
         help="directory containing construct.yaml",
         action="store",
@@ -690,6 +701,7 @@ https://github.com/conda/conda-standalone/releases""".lstrip()
         conda_exe=conda_exe,
         config_filename=args.config_filename,
         debug=args.debug,
+        installer_type=args.installer_type,
     )
 
 
