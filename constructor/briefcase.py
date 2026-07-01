@@ -367,7 +367,8 @@ def create_install_options_list(info: dict) -> list[dict]:
                     "name": f"{script_type}_install_script",
                     "title": f"{script_type.capitalize()}-install script",
                     "description": script_description,
-                    "default": False,
+                    # Mirror NSIS: default to enabled when the script exists.
+                    "default": bool(script),
                 }
             )
 
