@@ -2107,6 +2107,26 @@ def test_docker_image_build(tmp_path, platform_conda_exe, init):
         subprocess.run(["docker", "load", "-i", str(artifact)], check=True)
 
         if init in ("classic", "condabin", "mamba_v1", "mamba_v2"):
+            prefix = config.get("default_prefix", f"/opt/{config['name'].lower()}")
+            debug = subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    image_name,
+                    "/bin/bash",
+                    "-c",
+                    f"echo PATH=$PATH; "
+                    f"echo '--- {prefix}/condabin ---'; ls -la {prefix}/condabin 2>&1; "
+                    f"echo '--- {prefix}/bin/conda* ---'; ls -la {prefix}/bin/conda* 2>&1; "
+                    f"echo '--- which conda ---'; which conda 2>&1; "
+                    f"echo '--- condabin/conda shebang ---'; head -1 {prefix}/condabin/conda 2>&1",
+                ],
+                capture_output=True,
+                text=True,
+            )
+            print("DEBUG condabin/PATH state:\n" + debug.stdout + debug.stderr)
+
             result = subprocess.run(
                 ["docker", "run", "--rm", image_name, "conda", "create", "--help"],
                 capture_output=True,
