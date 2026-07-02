@@ -12,7 +12,7 @@
 
 ### Docs
 
-* Updated docs to clarify the use of `INSTALLER_UNATTENDED` within the context of MSI installers. (#1278)
+* Updated docs to clarify the use of `INSTALLER_UNATTENDED` within the context of MSI installers, and updated minimum `briefcase` version to `0.4.3`. (#1278)
 
 ### Other
 
