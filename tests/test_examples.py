@@ -2212,3 +2212,6 @@ def test_docker_image_build(tmp_path, platform_conda_exe, init):
 
     finally:
         subprocess.run(["docker", "rmi", image_name], check=False)
+        # Each parametrized run leaves behind buildx cache layers; without pruning,
+        # disk fills up across the 5 variants and later runs fail with ENOSPC.
+        subprocess.run(["docker", "builder", "prune", "-f"], check=False)
