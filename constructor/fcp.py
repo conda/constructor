@@ -16,7 +16,7 @@ import sys
 import tempfile
 from collections import defaultdict
 from itertools import groupby
-from os.path import abspath, expanduser, isdir, join
+from os.path import abspath, basename, expanduser, isdir, join
 from subprocess import check_call
 from typing import TYPE_CHECKING
 
@@ -199,10 +199,17 @@ def check_duplicates_files(
 
         paths_data = read_paths_json(extracted_package_dir).paths
         env_prefix_len = len(env_prefixes.get(pc_rec, ""))
+        # Before linking, conda extracts each package into the package cache at
+        # $INSTDIR/pkgs/<name-version-build>/<short_path>. This intermediate path is
+        # longer than the final linked path (env_prefix + short_path) and is what
+        # actually overflows MAX_PATH, so it must drive the length check.
+        pkgs_prefix_len = len("pkgs/") + len(basename(extracted_package_dir)) + len("/")
         for path_data in paths_data:
             short_path = path_data.path
             max_relative_path_length = max(
-                max_relative_path_length, env_prefix_len + len(short_path)
+                max_relative_path_length,
+                env_prefix_len + len(short_path),
+                pkgs_prefix_len + len(short_path),
             )
             try:
                 size = path_data.size_in_bytes or getsize(join(extracted_package_dir, short_path))

@@ -1076,14 +1076,16 @@ Function OnDirectoryLeave
     ${If} $LongPathsEnabled == "0"
         IntOp $0 $InstDirLen + ${MAX_RELATIVE_PATH_LENGTH}
         IntOp $0 $0 + 1  # Account for path separator between install dir and relative path
-        ${If} $0 > 260
+        # MAX_PATH is 260 including the null terminator, so the usable path length is 259.
+        # A full path of exactly 260 characters already fails to be created.
+        ${If} $0 > 259
             ${If} ${AtLeastWin10}
             ${AndIfNot} $NO_REGISTRY = "1"
             ${AndIf} ${UAC_IsAdmin}
                 # Enable long path support via registry
                 WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
             ${Else}
-                IntOp $1 260 - ${MAX_RELATIVE_PATH_LENGTH}
+                IntOp $1 259 - ${MAX_RELATIVE_PATH_LENGTH}
                 IntOp $1 $1 - 1  # Account for path separator
                 ${If} ${Silent}
                     ${Print} "::error:: The installation path is too long. Your path is $InstDirLen characters, but must be at most $1 characters."
