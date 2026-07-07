@@ -1,5 +1,29 @@
 [//]: # (current developments)
 
+## 2026-07-07   3.16.2:
+### Enhancements
+
+* Add a `--installer-type` command line option to build only a single installer type (`sh`, `pkg`, `exe`, or `msi`), overriding `installer_type` from the configuration. (#1266)
+
+### Bug fixes
+
+* Fix `AzureSignTool` signature verification failing for installer paths that contain spaces. (#1273)
+* Improve the EXE installer path length check added in #1228 to also account for the package cache extraction path (`pkgs/<name-version-build>/`), preventing installations that were allowed to proceed from failing to extract packages when the install path was long. (#1282)
+
+### Contributors
+
+* @chrisburr
+* @Jrice1317
+* @jaimergp
+* @marcoesters
+* @lrandersson
+* @stacynoland
+* @conda-bot
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2026-06-22   3.16.1:
 ### Bug fixes
 
