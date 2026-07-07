@@ -372,7 +372,7 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 89
+  num_commits: 92
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
 - name: Matthias Kuhn
@@ -382,7 +382,7 @@
   github: m-kuhn
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 87
+  num_commits: 89
   github: dependabot[bot]
   first_commit: 2024-05-07 10:16:05
 - name: Julien Jerphanion
@@ -405,7 +405,7 @@
   github: Jrice1317
   alternate_emails:
   - 100002667+Jrice1317@users.noreply.github.com
-  num_commits: 6
+  num_commits: 7
   first_commit: 2025-07-30 14:27:00
 - name: dionizijefa
   github: dionizijefa
@@ -420,7 +420,7 @@
   email: 34315751+lrandersson@users.noreply.github.com
   alternate_emails:
   - randersson@anaconda.com
-  num_commits: 35
+  num_commits: 39
   first_commit: 2025-10-21 08:30:00
 - name: David Laehnemann
   github: dlaehnemann
