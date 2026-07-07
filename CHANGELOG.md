@@ -12,15 +12,7 @@
 
 ### Contributors
 
-* @chrisburr
-* @Jrice1317
-* @jaimergp
-* @marcoesters
 * @lrandersson
-* @stacynoland
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
