@@ -57,3 +57,9 @@ class UnableToParseMissingJinja2(UnableToParse):
             """),
             ]
         )
+
+
+class InvalidInstallerTypeError(Exception):
+    """Raised when installer_type is invalid for the target platform."""
+
+    pass

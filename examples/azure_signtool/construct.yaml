@@ -3,7 +3,9 @@
 
 name: Signed_AzureSignTool
 version: 1.0.0
-installer_type: [exe, msi]
+installer_type:
+  - exe
+  - msi
 channels:
   - https://repo.anaconda.com/pkgs/main/
 specs:
