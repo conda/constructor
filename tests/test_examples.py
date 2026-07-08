@@ -1805,7 +1805,10 @@ def test_allusers_exe(tmp_path, request, installer_type):
     CONDA_EXE == StandaloneExe.CONDA and not check_version(CONDA_EXE_VERSION, min_version="24.9.0"),
     reason="Pre-existing .condarc breaks installation",
 )
-def test_ignore_condarc_files(tmp_path, monkeypatch, request):
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("customize_controls"))
+)
+def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
     # Create a bogus .condarc file that would result in errors if read.
     # conda searches inside XDG_CONFIG_HOME on all systems, which is a
     # a safer directory to monkeypatch, especially on Windows where patching
@@ -1833,22 +1836,22 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request):
     construct_yaml = input_path / "construct.yaml"
     content = construct_yaml.read_text()
     construct_yaml.write_text(content.replace("name: NoCondaOptions", "name: NoCondaRC"))
-    for installer, install_dir in create_installer(input_path, tmp_path):
-        proc = _run_installer(
-            input_path,
-            installer,
-            install_dir,
-            request=request,
-            check_subprocess=True,
-            uninstall=True,
-        )
-        if CONDA_EXE == StandaloneExe.MAMBA and installer.suffix == ".sh":
-            # micromamba loads the rc files even for constructor subcommands.
-            # This cannot be turned off with --no-rc, which causes four errors
-            # in stderr. If there are more, other micromamba calls have read
-            # the bogus .condarc file.
-            # pkg installers unfortunately do not output any errors into the log.
-            assert proc.stderr.count("Bad conversion of configurable") == 4
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    proc = _run_installer(
+        input_path,
+        installer,
+        install_dir,
+        request=request,
+        check_subprocess=True,
+        uninstall=True,
+    )
+    if CONDA_EXE == StandaloneExe.MAMBA and installer_type == "sh":
+        # micromamba loads the rc files even for constructor subcommands.
+        # This cannot be turned off with --no-rc, which causes four errors
+        # in stderr. If there are more, other micromamba calls have read
+        # the bogus .condarc file.
+        # pkg installers unfortunately do not output any errors into the log.
+        assert proc.stderr.count("Bad conversion of configurable") == 4
 
 
 @pytest.mark.skipif(
