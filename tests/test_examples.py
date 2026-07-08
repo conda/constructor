@@ -1279,9 +1279,6 @@ def test_example_signing(tmp_path, request, installer_type):
     "installer_type", installer_types_for_example(_example_path("azure_signtool"))
 )
 @pytest.mark.parametrize(
-    "installer_type", installer_types_for_example(_example_path("azure_signtool"))
-)
-@pytest.mark.parametrize(
     "auth_method",
     os.environ.get("AZURE_SIGNTOOL_TEST_AUTH_METHODS", "token,secret").split(","),
 )
