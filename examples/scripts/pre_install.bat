@@ -2,8 +2,7 @@ if not "%INSTALLER_NAME%" == "Scripts" exit 1
 if not "%INSTALLER_VER%" == "1.0.0" exit 1
 if not "%INSTALLER_PLAT%" == "win-64" exit 1
 if not "%INSTALLER_TYPE%" == "EXE" if not "%INSTALLER_TYPE%" == "MSI" exit 1
-rem INSTALLER_UNATTENDED is not yet set by MSI installers (see conda/constructor#1276).
-if "%INSTALLER_TYPE%" == "EXE" if not "%INSTALLER_UNATTENDED%" == "1" exit 1
+if not "%INSTALLER_UNATTENDED%" == "1" exit 1
 if "%PREFIX%" == "" exit 1
 if not "%CUSTOM_VARIABLE_1%" == "FIR$T-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS" exit 1
 if not "%CUSTOM_VARIABLE_2%" == "$ECOND-CUSTOM_STRING WITH SPACES AND @*! CHARACTERS" exit 1

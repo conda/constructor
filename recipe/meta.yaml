@@ -28,12 +28,12 @@ requirements:
     - conda-standalone >=24.11.0
     - jinja2
     - jsonschema >=4
-    - pillow >=3.1     # [win or osx]
-    - nsis >=3.08      # [win]
-    - briefcase >=0.3.26  # [win]
-    - tomli-w >=1.2.0  # [win]
-  run_constrained:     # [unix]
-    - nsis >=3.08      # [unix]
+    - pillow >=3.1       # [win or osx]
+    - nsis >=3.08        # [win]
+    - briefcase >=0.4.3  # [win]
+    - tomli-w >=1.2.0    # [win]
+  run_constrained:       # [unix]
+    - nsis >=3.08        # [unix]
     - conda-libmamba-solver !=24.11.0
     - pydantic >=2
 
