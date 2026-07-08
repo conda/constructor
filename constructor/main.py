@@ -30,6 +30,7 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import render as construct_render
 from .construct import verify as construct_verify
+from .exceptions import InvalidInstallerTypeError
 from .fcp import main as fcp_main
 from .utils import (
     StandaloneExe,
@@ -46,6 +47,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_installer_type(info: dict):
+    """Return the installer type(s) to build for the given platform.
+
+    Raises
+    ------
+    InvalidInstallerTypeError
+        If the installer type is not valid for the target platform.
+    """
     osname, unused_arch = info["_platform"].split("-")
 
     os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe", "msi")}
@@ -62,28 +70,31 @@ def get_installer_type(info: dict):
         for t in itype:
             if t not in all_allowed:
                 all_allowed_str = ", ".join(sorted(all_allowed))
-                sys.exit("Error: invalid installer type '%s'; allowed: %s" % (t, all_allowed_str))
+                raise InvalidInstallerTypeError(
+                    f"invalid installer type '{t}'; allowed: {all_allowed_str}"
+                )
             if t not in os_allowed[osname]:
                 os_allowed_str = ", ".join(sorted(os_allowed[osname]))
-                sys.exit(
-                    "Error: invalid installer type '%s' for %s; allowed: %s"
-                    % (t, osname, os_allowed_str)
+                raise InvalidInstallerTypeError(
+                    f"invalid installer type '{t}' for {osname}; allowed: {os_allowed_str}"
                 )
         return tuple(itype)
     elif itype not in all_allowed:
-        all_allowed = ", ".join(sorted(all_allowed))
-        sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
+        all_allowed_str = ", ".join(sorted(all_allowed))
+        raise InvalidInstallerTypeError(
+            f"invalid installer type '{itype}'; allowed: {all_allowed_str}"
+        )
     elif itype == "docker":
         if osname != "linux":
-            sys.exit(
-                "Error: Docker features are only supported for Linux target platforms. "
+            raise InvalidInstallerTypeError(
+                "Docker features are only supported for Linux target platforms. "
                 "Use --platform linux-ARCH to build a Docker artifact."
             )
         return ("sh", "docker")
     elif itype not in os_allowed[osname]:
-        os_allowed = ", ".join(sorted(os_allowed[osname]))
-        sys.exit(
-            "Error: invalid installer type '%s' for %s; allowed: %s" % (itype, osname, os_allowed)
+        os_allowed_str = ", ".join(sorted(os_allowed[osname]))
+        raise InvalidInstallerTypeError(
+            f"invalid installer type '{itype}' for {osname}; allowed: {os_allowed_str}"
         )
     else:
         return (itype,)
@@ -234,7 +245,10 @@ def main_build(
     info["_debug"] = debug
     if installer_type:
         info["installer_type"] = installer_type
-    itypes = get_installer_type(info)
+    try:
+        itypes = get_installer_type(info)
+    except InvalidInstallerTypeError as e:
+        sys.exit(f"Error: {e}")
 
     if "docker" in itypes:
         if not info.get("docker_base_image"):

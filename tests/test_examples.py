@@ -25,6 +25,7 @@ from ruamel.yaml import YAML
 
 from constructor.conda_interface import cc_platform
 from constructor.construct import parse as parse_construct
+from constructor.exceptions import InvalidInstallerTypeError
 from constructor.main import get_installer_type
 from constructor.utils import (
     StandaloneExe,
@@ -687,10 +688,20 @@ def installer_types_for_example(
 
     Reuses constructor's own get_installer_type() so the test parametrization
     matches what the build actually produces.
+
+    Returns a tuple with a single skip marker if the example's installer types
+    are not valid for the current platform (e.g., Windows-only examples on Linux).
     """
     info = parse_construct(str(example_path / config_filename), platform=cc_platform)
     info["_platform"] = cc_platform
-    return get_installer_type(info)
+    try:
+        return get_installer_type(info)
+    except InvalidInstallerTypeError:
+        return (
+            pytest.param(
+                "skip", marks=pytest.mark.skip(reason="Example not valid for this platform")
+            ),
+        )
 
 
 def create_single_installer(
@@ -1253,7 +1264,6 @@ def test_example_signing(tmp_path, request, installer_type):
     _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 @pytest.mark.skipif(
     not shutil.which("azuresigntool") and not os.environ.get("AZURE_SIGNTOOL_PATH"),
     reason="AzureSignTool not available",
