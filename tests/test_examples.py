@@ -1039,8 +1039,8 @@ def test_example_noconda(tmp_path, request, installer_type):
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
-@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("osxpkg")))
-def test_example_osxpkg(tmp_path, request, installer_type):
+def test_example_osxpkg(tmp_path, request):
+    installer_type = "pkg"
     input_path = _example_path("osxpkg")
     ownership_test_files_home = [
         ".bash_profile",
@@ -1073,10 +1073,8 @@ def test_example_osxpkg(tmp_path, request, installer_type):
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
-@pytest.mark.parametrize(
-    "installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages"))
-)
-def test_example_osxpkg_extra_pages(tmp_path, installer_type):
+def test_example_osxpkg_extra_pages(tmp_path):
+    installer_type = "pkg"
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
     except subprocess.CalledProcessError:
@@ -1112,10 +1110,8 @@ def test_example_osxpkg_extra_pages(tmp_path, installer_type):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
 @pytest.mark.skipif("CI" not in os.environ, reason="CI only")
-@pytest.mark.parametrize(
-    "installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages"))
-)
-def test_macos_signing(tmp_path, self_signed_application_certificate_macos, installer_type):
+def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
+    installer_type = "pkg"
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
     except subprocess.CalledProcessError:
@@ -1408,8 +1404,8 @@ def test_register_envs(tmp_path, request, installer_type):
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.parametrize("domains", ({}, {"enable_anywhere": "false", "enable_localSystem": True}))
-@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("osxpkg")))
-def test_pkg_distribution_domains(tmp_path, domains, installer_type):
+def test_pkg_distribution_domains(tmp_path, domains):
+    installer_type = "pkg"
     recipe_path = _example_path("osxpkg")
     input_path = tmp_path / "input"
     output_path = tmp_path / "output"
