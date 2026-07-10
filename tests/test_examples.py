@@ -707,7 +707,7 @@ def installer_types_for_example(
 def create_single_installer(
     input_dir: Path,
     workspace: Path,
-    installer_type: str,
+    installer_type: str | None = None,
     *,
     with_spaces=False,
     timeout=420,
@@ -715,7 +715,11 @@ def create_single_installer(
     extra_constructor_args: Iterable[str] = None,
     **env_vars,
 ) -> tuple[Path, Path]:
-    """Build exactly one installer type; return (installer_path, install_dir)."""
+    """Build exactly one installer type; return (installer_path, install_dir).
+
+    installer_type=None relies on the example's construct.yaml to build exactly
+    one installer type; the type is then inferred from the resulting artifact.
+    """
     output_dir = _build_installers(
         input_dir,
         workspace,
@@ -725,9 +729,15 @@ def create_single_installer(
         extra_constructor_args=extra_constructor_args,
         **env_vars,
     )
-    installer = next(output_dir.glob(f"*.{installer_type}"), None)
+    if installer_type:
+        installer = next(output_dir.glob(f"*.{installer_type}"), None)
+    else:
+        installer = next(
+            (p for p in output_dir.iterdir() if p.suffix[1:] in ("sh", "pkg", "exe", "msi")), None
+        )
     if installer is None:
-        raise FileNotFoundError(f"No .{installer_type} installer found in {output_dir}")
+        wanted = installer_type or "(sh|pkg|exe|msi)"
+        raise FileNotFoundError(f"No .{wanted} installer found in {output_dir}")
     install_dir = _install_dir_for(
         installer, input_dir, workspace, config_filename, with_spaces, short=True
     )
@@ -1040,7 +1050,6 @@ def test_example_noconda(tmp_path, request, installer_type):
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 def test_example_osxpkg(tmp_path, request):
-    installer_type = "pkg"
     input_path = _example_path("osxpkg")
     ownership_test_files_home = [
         ".bash_profile",
@@ -1074,7 +1083,6 @@ def test_example_osxpkg(tmp_path, request):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
 def test_example_osxpkg_extra_pages(tmp_path):
-    installer_type = "pkg"
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
     except subprocess.CalledProcessError:
@@ -1083,7 +1091,7 @@ def test_example_osxpkg_extra_pages(tmp_path):
     input_path = tmp_path / "input"
     output_path = tmp_path / "output"
     shutil.copytree(str(recipe_path), str(input_path))
-    installer, install_dir = create_single_installer(input_path, output_path, installer_type)
+    installer, install_dir = create_single_installer(input_path, output_path)
     # expand-full is an undocumented option that extracts all archives,
     # including binary archives like the PlugIns file
     cmd = ["pkgutil", "--expand-full", installer, output_path / "expanded"]
@@ -1111,7 +1119,6 @@ def test_example_osxpkg_extra_pages(tmp_path):
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
 @pytest.mark.skipif("CI" not in os.environ, reason="CI only")
 def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
-    installer_type = "pkg"
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
     except subprocess.CalledProcessError:
@@ -1122,7 +1129,7 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     with open(input_path / "construct.yaml", "a") as f:
         f.write(f"notarization_identity_name: {self_signed_application_certificate_macos}\n")
     output_path = tmp_path / "output"
-    installer, _ = create_single_installer(input_path, output_path, installer_type)
+    installer, _ = create_single_installer(input_path, output_path)
 
     # Check component signatures
     expanded_path = output_path / "expanded"
@@ -1405,7 +1412,6 @@ def test_register_envs(tmp_path, request, installer_type):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.parametrize("domains", ({}, {"enable_anywhere": "false", "enable_localSystem": True}))
 def test_pkg_distribution_domains(tmp_path, domains):
-    installer_type = "pkg"
     recipe_path = _example_path("osxpkg")
     input_path = tmp_path / "input"
     output_path = tmp_path / "output"
@@ -1416,7 +1422,7 @@ def test_pkg_distribution_domains(tmp_path, domains):
             for key, val in domains.items():
                 cyml.write(f"  {key}: {val}\n")
 
-    installer, install_dir = create_single_installer(input_path, output_path, installer_type)
+    installer, install_dir = create_single_installer(input_path, output_path)
     cmd = ["pkgutil", "--expand", installer, output_path / "expanded"]
     _execute(cmd)
     domains_file = output_path / "expanded" / "Distribution"
