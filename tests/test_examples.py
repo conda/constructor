@@ -1068,7 +1068,7 @@ def test_example_osxpkg(tmp_path, request):
     # getpass.getuser is more reliable than os.getlogin:
     # https://docs.python.org/3/library/os.html#os.getlogin
     expected_owner = getpass.getuser()
-    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
+    installer, install_dir = create_single_installer(input_path, tmp_path)
     _run_installer(input_path, installer, install_dir, request=request)
     expected = {}
     found = {}
