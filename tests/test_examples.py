@@ -1016,6 +1016,8 @@ def test_example_miniforge(tmp_path, request, installer_type):
     "installer_type", installer_types_for_example(_example_path("miniforge-mamba2"))
 )
 def test_example_miniforge_mamba2(tmp_path, request, installer_type):
+    if installer_type == "pkg":
+        pytest.skip("Miniforge does not produce PKG installers; test is flaky on macOS CI")
     _check_miniforge(
         _example_path("miniforge-mamba2"),
         "Miniforge3-mamba2",
