@@ -38,6 +38,8 @@ class WinSignTools(StrEnum):
 
 
 class InstallerTypes(StrEnum):
+    # If you add a member that produces a single file named after itself (like
+    # EXE/MSI/PKG/SH), also update FILE_INSTALLER_TYPES in tests/test_examples.py.
     ALL = "all"
     EXE = "exe"
     MSI = "msi"
