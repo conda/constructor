@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import pytest
 
+from constructor._schema import InstallerTypes
 from constructor.main import main
 
 _CONSTRUCT = dedent(
@@ -38,7 +39,7 @@ def test_installer_type_flag_valid(tmp_path):
     """Test that --installer-type dont exit with error for valid types."""
     (tmp_path / "construct.yaml").write_text(_CONSTRUCT)
     # No need to test all types
-    itype = "exe" if sys.platform.startswith("win") else "sh"
+    itype = InstallerTypes.EXE if sys.platform.startswith("win") else InstallerTypes.SH
     assert main([str(tmp_path), "--installer-type", itype, "--dry-run"]) is None
 
 
@@ -46,7 +47,7 @@ def test_installer_type_flag_invalid_for_platform(tmp_path):
     """Test that a type not valid for the current platform/config exits with the expected error message."""
     (tmp_path / "construct.yaml").write_text(_CONSTRUCT)
     # Pick a type that is never valid on this platform.
-    bad = "sh" if sys.platform.startswith("win") else "exe"
+    bad = InstallerTypes.SH if sys.platform.startswith("win") else InstallerTypes.EXE
     with pytest.raises(SystemExit) as exc:
         main([str(tmp_path), "--installer-type", bad, "--dry-run"])
     assert "invalid installer type" in str(exc.value)

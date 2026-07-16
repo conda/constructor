@@ -15,6 +15,7 @@ from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
 
 from . import preconda
+from ._schema import InstallerTypes
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
@@ -59,7 +60,7 @@ def is_macho_binary(file: Path) -> bool:
 
 def calculate_install_dir(yaml_file, subdir=None):
     contents = parse(yaml_file, subdir or conda_context.subdir)
-    if contents.get("installer_type") == "sh":
+    if contents.get("installer_type") == InstallerTypes.SH:
         return contents["name"]
     name = contents.get("pkg_name") or contents["name"]
     location = contents.get("default_location_pkg")
@@ -150,10 +151,10 @@ def modify_xml(xml_path, info):
         if not info["welcome_image"]:
             background_path = None
         else:
-            write_images(info, PACKAGES_DIR, installer_type="pkg")
+            write_images(info, PACKAGES_DIR, installer_type=InstallerTypes.PKG)
             background_path = os.path.join(PACKAGES_DIR, "welcome.png")
     elif "welcome_image_text" in info:
-        write_images(info, PACKAGES_DIR, installer_type="pkg")
+        write_images(info, PACKAGES_DIR, installer_type=InstallerTypes.PKG)
         background_path = os.path.join(PACKAGES_DIR, "welcome.png")
     else:
         # Default to Anaconda's logo if the keys above were not specified

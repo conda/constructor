@@ -23,6 +23,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
+from constructor._schema import InstallerTypes
 from constructor.conda_interface import cc_platform
 from constructor.construct import parse as parse_construct
 from constructor.exceptions import InvalidInstallerTypeError
@@ -53,6 +54,15 @@ try:
 except ImportError:
     COV_CMD = ()
 
+
+# Installer types that produce a single file named after the type (e.g. "foo.sh"),
+# in the order shell installers should run before GUI ones.
+FILE_INSTALLER_TYPES = (
+    InstallerTypes.SH,
+    InstallerTypes.PKG,
+    InstallerTypes.EXE,
+    InstallerTypes.MSI,
+)
 
 pytestmark = pytest.mark.examples
 REPO_DIR = Path(__file__).parent.parent
@@ -616,7 +626,7 @@ def _run_installer(
 def _build_installers(
     input_dir: Path,
     workspace: Path,
-    installer_type: str | None = None,
+    installer_type: InstallerTypes | None = None,
     conda_exe=CONSTRUCTOR_CONDA_EXE,
     debug=CONSTRUCTOR_DEBUG,
     timeout=420,
@@ -707,7 +717,7 @@ def installer_types_for_example(
 def create_single_installer(
     input_dir: Path,
     workspace: Path,
-    installer_type: str | None = None,
+    installer_type: InstallerTypes | None = None,
     *,
     with_spaces=False,
     timeout=420,
@@ -733,7 +743,7 @@ def create_single_installer(
         installer = next(output_dir.glob(f"*.{installer_type}"), None)
     else:
         installer = next(
-            (p for p in output_dir.iterdir() if p.suffix[1:] in ("sh", "pkg", "exe", "msi")), None
+            (p for p in output_dir.iterdir() if p.suffix[1:] in FILE_INSTALLER_TYPES), None
         )
     if installer is None:
         wanted = installer_type or "(sh|pkg|exe|msi)"
@@ -768,9 +778,9 @@ def create_installer(
 
     def _sort_by_extension(path):
         "Return shell installers first so they are run before the GUI ones"
-        return {"sh": 1, "pkg": 2, "exe": 3, "msi": 4}[path.suffix[1:]], path
+        return FILE_INSTALLER_TYPES.index(path.suffix[1:]), path
 
-    installers = (p for p in output_dir.iterdir() if p.suffix in (".exe", ".msi", ".sh", ".pkg"))
+    installers = (p for p in output_dir.iterdir() if p.suffix[1:] in FILE_INSTALLER_TYPES)
     for installer in sorted(installers, key=_sort_by_extension):
         install_dir = _install_dir_for(
             installer, input_dir, workspace, config_filename, with_spaces
@@ -808,11 +818,11 @@ def test_installer_types_for_example_matches_platform():
     """Validate any example with 'installer_type: all'; and that the resolved types match the platform set."""
     types = installer_types_for_example(_example_path("miniforge"))
     if sys.platform.startswith("linux"):
-        assert types == ("sh",)
+        assert types == (InstallerTypes.SH,)
     elif sys.platform == "darwin":
-        assert types == ("sh", "pkg")
+        assert types == (InstallerTypes.SH, InstallerTypes.PKG)
     elif sys.platform.startswith("win"):
-        assert types == ("exe", "msi")
+        assert types == (InstallerTypes.EXE, InstallerTypes.MSI)
 
 
 @pytest.fixture(params=["linux-aarch64"])
@@ -875,7 +885,7 @@ def test_example_extra_envs(tmp_path, request, installer_type):
     input_path = _example_path("extra_envs")
     installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
     _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
-    base = (install_dir / "base") if installer_type == "msi" else install_dir
+    base = (install_dir / "base") if installer_type == InstallerTypes.MSI else install_dir
     assert "@EXPLICIT" in (base / "conda-meta" / "initial-state.explicit.txt").read_text()
     for env in base.glob("envs/*/conda-meta/"):
         envtxt = env / "initial-state.explicit.txt"
@@ -883,7 +893,7 @@ def test_example_extra_envs(tmp_path, request, installer_type):
         assert "@EXPLICIT" in envtxt.read_text()
 
     if sys.platform.startswith("win"):
-        if installer_type == "msi":
+        if installer_type == InstallerTypes.MSI:
             _run_uninstaller_msi(installer, install_dir)
         else:
             _run_uninstaller_exe(install_dir=install_dir)
@@ -940,7 +950,7 @@ def _check_miniforge(
 ):
     """Helper function for the existing miniforge examples."""
     installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
-    if installer_type == "sh":
+    if installer_type == InstallerTypes.SH:
         # try both batch and interactive installations
         install_dirs = (install_dir / "batch", install_dir / "interactive")
         installer_inputs = (None, f"\nyes\n{install_dir / 'interactive'}\nno\nno\n")
@@ -956,7 +966,7 @@ def _check_miniforge(
             request=request,
             # PKG installers use their own install path, so we can't check sentinels
             # via `install_dir`
-            check_sentinels=installer_type != "pkg",
+            check_sentinels=installer_type != InstallerTypes.PKG,
             uninstall=False,
         )
         # Check that key metadata files are in place
@@ -964,7 +974,7 @@ def _check_miniforge(
         assert install_dir.glob("pkgs/cache/*.json")  # enables offline installs
         # Check that the installer info file is in place
         info_file_name = ".installer.info"
-        if installer_type == "msi":
+        if installer_type == InstallerTypes.MSI:
             info_file = install_dir / "base" / info_file_name
         else:
             info_file = install_dir / info_file_name
@@ -974,9 +984,9 @@ def _check_miniforge(
         assert installer_info["version"] == installer_version
         assert installer_info["platform"] == cc_platform
         assert installer_info["type"] == installer_type
-        if installer_type == "pkg" and ON_CI:
+        if installer_type == InstallerTypes.PKG and ON_CI:
             _sentinel_file_checks(input_path, Path(os.environ["HOME"]) / installer_name)
-        if installer_type == "exe":
+        if installer_type == InstallerTypes.EXE:
             for key in ("ProgramData", "AppData"):
                 start_menu_dir = Path(
                     os.environ[key],
@@ -989,7 +999,7 @@ def _check_miniforge(
                 raise AssertionError("Could not find Start Menu folder for miniforge")
             _run_uninstaller_exe(install_dir)
             assert not list(start_menu_dir.glob("Miniforge*.lnk"))
-        elif installer_type == "msi":
+        elif installer_type == InstallerTypes.MSI:
             # TODO: Start menus
             _run_uninstaller_msi(installer, install_dir)
 
@@ -1016,7 +1026,7 @@ def test_example_miniforge(tmp_path, request, installer_type):
     "installer_type", installer_types_for_example(_example_path("miniforge-mamba2"))
 )
 def test_example_miniforge_mamba2(tmp_path, request, installer_type):
-    if installer_type == "pkg":
+    if installer_type == InstallerTypes.PKG:
         pytest.skip("Miniforge does not produce PKG installers; test is flaky on macOS CI")
     _check_miniforge(
         _example_path("miniforge-mamba2"),
@@ -1217,7 +1227,7 @@ def test_example_shortcuts(tmp_path, request, installer_type):
                 break
         else:
             raise AssertionError(f"No shortcuts found! Expected '{distribution_name} (64-bit)'")
-        if installer_type == "msi":
+        if installer_type == InstallerTypes.MSI:
             _run_uninstaller_msi(installer, install_dir)
         else:
             _run_uninstaller_exe(install_dir)
@@ -1344,7 +1354,7 @@ def test_example_from_existing_env(tmp_path, request, installer_type):
         CONSTRUCTOR_TEST_EXISTING_ENV=str(tmp_path / "env"),
     )
     _run_installer(input_path, installer, install_dir, request=request)
-    if installer_type == "pkg" and not ON_CI:
+    if installer_type == InstallerTypes.PKG and not ON_CI:
         return
     for pkg in PrefixData(install_dir, interoperability=True).iter_records():
         assert pkg["channel"] != "pypi"
@@ -1357,7 +1367,7 @@ def test_example_from_env_txt(tmp_path, request, installer_type):
     input_path = _example_path("from_env_txt")
     installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
     _run_installer(input_path, installer, install_dir, request=request)
-    if installer_type == "pkg" and not ON_CI:
+    if installer_type == InstallerTypes.PKG and not ON_CI:
         return
     for pkg in PrefixData(install_dir, interoperability=True).iter_records():
         assert pkg["channel"] != "pypi"
@@ -1372,7 +1382,7 @@ def test_example_from_env_yaml(tmp_path, request, installer_type):
         input_path, tmp_path, installer_type, timeout=600
     )
     _run_installer(input_path, installer, install_dir, request=request)
-    if installer_type == "pkg" and not ON_CI:
+    if installer_type == InstallerTypes.PKG and not ON_CI:
         return
     for pkg in PrefixData(install_dir, interoperability=True).iter_records():
         assert pkg["channel"] != "pypi"
@@ -1386,7 +1396,7 @@ def test_example_from_explicit(tmp_path, request, installer_type):
     input_path = _example_path("from_explicit")
     installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
     _run_installer(input_path, installer, install_dir, request=request)
-    if installer_type == "pkg" and not ON_CI:
+    if installer_type == InstallerTypes.PKG and not ON_CI:
         return
     out = subprocess.check_output(
         [sys.executable, "-mconda", "list", "-p", install_dir, "--explicit", "--md5"],
@@ -1497,11 +1507,11 @@ def test_virtual_specs_failed(tmp_path, request, installer_type):
         uninstall=False,
     )
     # This example is configured to fail due to unsatisfiable virtual specs
-    if installer_type == "exe":
+    if installer_type == InstallerTypes.EXE:
         with pytest.raises(AssertionError, match="Failed to check virtual specs"):
             _check_installer_log(install_dir)
         return
-    elif installer_type == "msi":
+    elif installer_type == InstallerTypes.MSI:
         # MSI writes errors to install.log in the install directory
         msi_post_install_log = install_dir / "install.log"
         if msi_post_install_log.exists():
@@ -1511,7 +1521,7 @@ def test_virtual_specs_failed(tmp_path, request, installer_type):
             # If log doesn't exist, installation failed before post-install script ran
             assert process.returncode != 0
         return
-    elif installer_type == "pkg":
+    elif installer_type == InstallerTypes.PKG:
         if not ON_CI:
             return
         # The GUI does provide a better message with the min version and so on
@@ -1548,7 +1558,7 @@ def test_virtual_specs_ok(tmp_path, request, installer_type):
 )
 def test_virtual_specs_override(tmp_path, request, monkeypatch, installer_type):
     input_path = _example_path("virtual_specs_failed")
-    if installer_type == "pkg":
+    if installer_type == InstallerTypes.PKG:
         pytest.skip("Override test is not applicable to .pkg installers")
     installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
     monkeypatch.setenv("CONDA_OVERRIDE_GLIBC", "20")
@@ -1576,13 +1586,13 @@ def test_initialization(tmp_path, request, monkeypatch, method, installer_type):
     input_path = _example_path("initialization")
     initialize = method is not False
     installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
-    if installer_type == "sh" and initialize:
+    if installer_type == InstallerTypes.SH and initialize:
         options = ["-c"]
-    elif installer_type == "exe":
+    elif installer_type == InstallerTypes.EXE:
         # GHA runs on an admin user account, but AllUsers (admin) installs
         # do not add to PATH due to CVE-2022-26526, so force single user install
         options = ["/AddToPath=1", "/InstallationType=JustMe"]
-    elif installer_type == "msi":
+    elif installer_type == InstallerTypes.MSI:
         # MSI uses OPTION_INITIALIZE_CONDA property instead of /AddToPath
         options = ["OPTION_INITIALIZE_CONDA=1"] if initialize else []
     else:
@@ -1596,7 +1606,7 @@ def test_initialization(tmp_path, request, monkeypatch, method, installer_type):
         uninstall=False,
         options=options,
     )
-    if installer_type == "exe":
+    if installer_type == InstallerTypes.EXE:
         try:
             paths = []
             for root, keyname in (
@@ -1618,7 +1628,7 @@ def test_initialization(tmp_path, request, monkeypatch, method, installer_type):
 
         finally:
             _run_uninstaller_exe(install_dir, check=True)
-    elif installer_type == "msi":
+    elif installer_type == InstallerTypes.MSI:
         try:
             prefix = install_dir / "base"
             with winreg.OpenKey(
@@ -1728,7 +1738,7 @@ def test_allusers_exe(tmp_path, request, installer_type):
         return dacl_info
 
     input_path = _example_path("miniforge")
-    if installer_type == "msi":
+    if installer_type == InstallerTypes.MSI:
         pytest.skip("AllUsers permission test is not applicable to MSI installers yet")
     installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
     _run_installer(
@@ -1846,7 +1856,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
         check_subprocess=True,
         uninstall=True,
     )
-    if CONDA_EXE == StandaloneExe.MAMBA and installer_type == "sh":
+    if CONDA_EXE == StandaloneExe.MAMBA and installer_type == InstallerTypes.SH:
         # micromamba loads the rc files even for constructor subcommands.
         # This cannot be turned off with --no-rc, which causes four errors
         # in stderr. If there are more, other micromamba calls have read
@@ -1930,7 +1940,7 @@ def test_uninstallation_standalone(
     with construct_yaml_file.open(mode="w") as file:
         yaml.dump(construct_yaml, file)
 
-    installer, install_dir = create_single_installer(input_path, tmp_path, "exe")
+    installer, install_dir = create_single_installer(input_path, tmp_path, InstallerTypes.EXE)
     monkeypatch.setenv("USERPROFILE", str(tmp_path))
     _run_installer(
         input_path,
@@ -2028,7 +2038,7 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry, installer_t
     If NoRegistry=0, we expect to find the installer in the Menu, otherwise not.
     """
     input_path = _example_path("register_envs")  # The specific example we use here is not important
-    if installer_type == "msi":
+    if installer_type == InstallerTypes.MSI:
         # MSI registration is handled by Windows Installer (msiexec) and cannot
         # be disabled. The /NoRegistry flag is NSIS-specific.
         pytest.skip("/NoRegistry flag is NSIS-specific; not applicable to MSI")
@@ -2101,7 +2111,7 @@ def test_frozen_environment(tmp_path, request, has_conflict, installer_type):
         _run_installer(input_path, installer, install_dir, request=request, uninstall=False)
 
         # MSI installers use a 'base' subdirectory for the conda environment
-        prefix = install_dir / "base" if installer_type == "msi" else install_dir
+        prefix = install_dir / "base" if installer_type == InstallerTypes.MSI else install_dir
 
         expected_frozen = {
             prefix / "conda-meta" / "frozen": config["freeze_base"]["conda"],
