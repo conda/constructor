@@ -11,6 +11,7 @@ Utilities to generate images out of text, used in GUI installers as logo replace
 import sys
 from io import BytesIO
 from os.path import dirname, join
+from pathlib import Path
 from random import randint
 
 from PIL import Image, ImageDraw, ImageFont

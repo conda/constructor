@@ -23,6 +23,7 @@ from tempfile import TemporaryDirectory
 from textwrap import dedent
 
 from . import __version__
+from ._schema import InstallerTypes
 from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
@@ -30,7 +31,6 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import render as construct_render
 from .construct import verify as construct_verify
-from ._schema import InstallerTypes
 from .exceptions import InvalidInstallerTypeError
 from .fcp import main as fcp_main
 from .utils import (
