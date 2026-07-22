@@ -239,7 +239,7 @@ jobs:
         uses: conda/actions/canary-release@7f6830b1428a9bd47f0b068892c77eae95207037 # v26.1.0
         # TODO: remove 'dev-ra-fix-test-issue' from this condition once the
         # Canary Build fix on that branch is verified green and merged.
-        if: github.ref_name == 'main' || startsWith(github.ref_name, 'feature/') || github.ref_name == 'dev-ra-fix-test-issue'
+        # if: github.ref_name == 'main' || startsWith(github.ref_name, 'feature/')
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}
