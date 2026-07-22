@@ -237,7 +237,6 @@ jobs:
 
       - name: Create and upload canary build
         uses: conda/actions/canary-release@0f4ec1506e74c12799813dc66e613a39077ea864 # v26.7.0
-        if: github.ref_name == 'main' || startsWith(github.ref_name, 'feature/')
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}
@@ -245,3 +244,4 @@ jobs:
           anaconda-org-label: ${{ github.ref_name == 'main' && 'dev' || format('{0}-{1}', github.event.repository.name, github.ref_name) }}
           anaconda-org-token: ${{ secrets.ANACONDA_ORG_CONDA_CANARY_TOKEN }}
           conda-build-arguments: '--override-channels -c conda-forge -c defaults'
+          upload: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'feature/') }}
