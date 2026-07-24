@@ -25,6 +25,7 @@ else:
 
 from . import preconda
 from ._schema import InstallerTypes
+from .conda_ship import batch_runtime_installation
 from .jinja import render_template
 from .signing import create_windows_signing_tool
 from .utils import (
@@ -542,6 +543,7 @@ class Payload:
             "installer_name": self.info.get("name", ""),
             "installer_version": self.info.get("version", ""),
             "installer_platform": self.info.get("_platform", ""),
+            "conda_ship_runtime": batch_runtime_installation(self.info),
         }
 
         # Render the templates now using jinja and the defined context

@@ -17,6 +17,7 @@ from tempfile import NamedTemporaryFile
 from . import preconda
 from ._schema import InstallerTypes
 from .conda_interface import conda_context
+from .conda_ship import unix_runtime_installation
 from .construct import ns_platform, parse
 from .imaging import write_images
 from .jinja import render_template
@@ -407,6 +408,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["script_env_variables"] = info.get("script_env_variables", {})
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
     variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"])
+    variables["conda_ship_runtime"] = unix_runtime_installation(info)
 
     data = render_template(data, **variables)
 

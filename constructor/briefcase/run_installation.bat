@@ -211,6 +211,28 @@ if "%OPTION_POST_INSTALL_SCRIPT%"=="1" (
 {%- endif %}
 {%- endif %}
 
+{%- if conda_ship_runtime %}
+{{ tee("Recording conda-ship runtime installation...") }}
+set "CONDA_SHIP_INTERNAL_UPDATE=v1/record-installation"
+set "CONDA_SHIP_INTERNAL_UPDATE_OWNERSHIP={{ conda_ship_runtime.ownership }}"
+set "CONDA_SHIP_INTERNAL_UPDATE_INSTALLATION={{ conda_ship_runtime.installation }}"
+set "CONDA_SHIP_INTERNAL_UPDATE_EXECUTABLE=%BASE_PATH%\{{ conda_ship_runtime.executable }}"
+set "CONDA_SHIP_PREFIX=%BASE_PATH%\{{ conda_ship_runtime.managed_prefix }}"
+{%- if conda_ship_runtime.instruction %}
+set "CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION={{ conda_ship_runtime.instruction }}"
+{%- else %}
+set "CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION="
+{%- endif %}
+"%BASE_PATH%\{{ conda_ship_runtime.executable }}" >nul
+if errorlevel 1 ( exit /b 1 )
+set "CONDA_SHIP_INTERNAL_UPDATE="
+set "CONDA_SHIP_INTERNAL_UPDATE_OWNERSHIP="
+set "CONDA_SHIP_INTERNAL_UPDATE_INSTALLATION="
+set "CONDA_SHIP_INTERNAL_UPDATE_EXECUTABLE="
+set "CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION="
+set "CONDA_SHIP_PREFIX="
+{%- endif %}
+
 rem Clear the package cache if the option was selected
 if "%OPTION_CLEAR_PACKAGE_CACHE%"=="1" (
     {{ tee("Clearing package cache...") }}

@@ -19,6 +19,7 @@ from pathlib import Path
 from subprocess import check_output, run
 from typing import TYPE_CHECKING
 
+from .conda_ship import nsis_runtime_installation
 from .construct import ns_platform
 from .imaging import write_images
 from .jinja import render_template
@@ -309,6 +310,7 @@ def make_nsi(
     variables["VIRTUAL_SPECS_DEBUG"] = " ".join([spec for spec in info.get("virtual_specs", ())])
     variables["LICENSEFILENAME"] = basename(info.get("license_file", "placeholder_license.txt"))
     variables["NO_RCS_ARG"] = info.get("_ignore_condarcs_arg", "")
+    variables["CONDA_SHIP_RUNTIME"] = nsis_runtime_installation(info)
 
     data = render_template(read_nsi_tmpl(info), **variables)
     if info["_platform"].startswith("win") and sys.platform != "win32":

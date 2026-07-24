@@ -20,6 +20,7 @@ from contextlib import nullcontext
 from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
 
+from .conda_ship import unix_runtime_installation
 from .construct import ns_platform
 from .jinja import render_template
 from .preconda import copy_extra_files
@@ -114,6 +115,7 @@ def get_header(conda_exec, tarball, info):
     variables["min_glibc_version"] = min_glibc_version
 
     variables["script_env_variables"] = info.get("script_env_variables", {})
+    variables["conda_ship_runtime"] = unix_runtime_installation(info)
 
     return render_template(read_header_template(), **variables)
 

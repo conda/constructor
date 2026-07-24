@@ -1261,7 +1261,8 @@ FunctionEnd
 
     Function ${un}AbortRetryNSExecWait
         # This function expects three arguments in the stack
-        # $R1: 'WithLog' or 'NoLog': Use ExecToLog or just Exec, respectively
+        # $R1: 'WithLog', 'WithLogMandatory', or 'NoLog'
+        # Use ExecToLog for either WithLog mode and Exec for NoLog
         # $R2: The message to show if an error occurred
         # $R3: The command to run, quoted
         # Note that the args need to be pushed to the stack in reverse order!
@@ -1278,15 +1279,16 @@ FunctionEnd
             # parse time.
             StrCpy $R3 '"$CMD_EXE" /V:ON /D /C "$R3"'
             ${If} $R1 == "WithLog"
+            ${OrIf} $R1 == "WithLogMandatory"
                 nsExec::ExecToLog $R3
             ${ElseIf} $R1 == "NoLog"
                 nsExec::Exec $R3
             ${Else}
-                ${Print} "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog' or 'NoLog'. You used: $R1"
+                ${Print} "::error:: AbortRetryNSExecWait: 1st argument must be 'WithLog', 'WithLogMandatory', or 'NoLog'. You used: $R1"
                 Abort
             ${EndIf}
             pop $R0
-            ${If} $R1 == "WithLog"
+            ${If} $R1 != "NoLog"
             ${AndIf} ${FileExists} "${STEP_LOG}"
                 ${If} ${Silent}
                     push "both"
@@ -1304,11 +1306,16 @@ FunctionEnd
                     Call ${un}PrintFromStepLog
                 ${EndIf}
                 ${Print} "::error:: $R2"
-                MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON1 \
-                        $R2 /SD IDABORT IDABORT abort IDRETRY retry
-                ; IDIGNORE: Continue anyway
-                StrCpy $R0 "0"
-                goto retry
+                ${If} $R1 == "WithLogMandatory"
+                    MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION|MB_DEFBUTTON2 \
+                            $R2 /SD IDCANCEL IDCANCEL abort IDRETRY retry
+                ${Else}
+                    MessageBox MB_ABORTRETRYIGNORE|MB_ICONEXCLAMATION|MB_DEFBUTTON1 \
+                            $R2 /SD IDABORT IDABORT abort IDRETRY retry
+                    ; IDIGNORE: Continue anyway
+                    StrCpy $R0 "0"
+                    goto retry
+                ${EndIf}
             abort:
                 ; Abort installation
                 Abort
@@ -1667,6 +1674,30 @@ Section "Install"
             call AbortRetryNSExecWait
         ${EndIf}
     ${EndIf}
+
+{%- if CONDA_SHIP_RUNTIME %}
+    ${Print} "Recording conda-ship runtime installation..."
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE", "v1/record-installation")'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_OWNERSHIP", {{ CONDA_SHIP_RUNTIME.ownership }})'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_INSTALLATION", {{ CONDA_SHIP_RUNTIME.installation }})'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_EXECUTABLE", "$INSTDIR\{{ CONDA_SHIP_RUNTIME.executable }}")'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_PREFIX", "$INSTDIR\{{ CONDA_SHIP_RUNTIME.managed_prefix }}")'
+{%- if CONDA_SHIP_RUNTIME.instruction %}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION", {{ CONDA_SHIP_RUNTIME.instruction }})'
+{%- else %}
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION", i 0)'
+{%- endif %}
+    push '"$INSTDIR\{{ CONDA_SHIP_RUNTIME.executable }}" > NUL'
+    push 'Failed to record conda-ship runtime installation'
+    push 'WithLogMandatory'
+    call AbortRetryNSExecWait
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE", i 0)'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_OWNERSHIP", i 0)'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_INSTALLATION", i 0)'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_EXECUTABLE", i 0)'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION", i 0)'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SHIP_PREFIX", i 0)'
+{%- endif %}
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
         ${Print} "Clearing package cache..."

@@ -35,6 +35,10 @@ SCHEMA_PATH = HERE / "data" / "construct.schema.json"
 NAME_REGEX = VERSION_REGEX = r"^[a-zA-Z0-9_]([a-zA-Z0-9._-]*[a-zA-Z0-9_])?$"
 ENV_NAME_REGEX = r"^[^/:# ]+$"
 NonEmptyStr = Annotated[str, Field(min_length=1)]
+CondaShipInstallation = Annotated[
+    str,
+    Field(min_length=1, max_length=64, pattern=r"^[a-z0-9][a-z0-9-]*$"),
+]
 _base_config_dict = ConfigDict(
     extra="forbid",
     use_attribute_docstrings=True,
@@ -68,6 +72,36 @@ class PkgDomains(StrEnum):
 class CondaInitialization(StrEnum):
     CLASSIC = "classic"
     CONDABIN = "condabin"
+
+
+class CondaShipRuntime(BaseModel):
+    model_config: ConfigDict = _base_config_dict
+
+    executable: NonEmptyStr = ...
+    """
+    Path to the conda-ship stamped executable, relative to the constructor
+    prefix.
+    """
+    managed_prefix: NonEmptyStr | None = None
+    """
+    Optional path to the runtime's managed prefix, relative to the constructor
+    prefix. When omitted, the executable uses its stamped default.
+    """
+    ownership: Literal["direct", "external"] = "direct"
+    """
+    Who updates the installed executable. Constructor installations normally
+    use `direct`. Use `external` only when the installer is maintained by an
+    external updater.
+    """
+    installation: CondaShipInstallation = "constructor"
+    """
+    Installation kind recorded in the conda-ship runtime metadata.
+    """
+    instruction: NonEmptyStr | None = None
+    """
+    Update instruction shown for an externally owned installation. Required
+    when `ownership` is `external` and not valid for `direct`.
+    """
 
 
 class ChannelRemap(BaseModel):
@@ -495,6 +529,32 @@ class ConstructorConfiguration(BaseModel):
     a dictionary, which will be converted to a YAML string for writing. _Note:_ if this
     option is used, then all other options related to the construction of a `.condarc`
     file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
+    """
+    conda_ship_runtime: CondaShipRuntime | None = None
+    """
+    Record a conda-ship stamped executable as part of the mandatory installer
+    transaction. The executable must already be included in the installed
+    prefix, either through a package or `extra_files`.
+
+    Constructor records `direct` ownership and the `constructor` installation
+    kind by default. Set `managed_prefix` to a separate subdirectory of the
+    constructor prefix. The runtime executable must live outside that
+    subdirectory so it can bootstrap the managed prefix. SH installers may
+    omit `managed_prefix` to initialize the runtime's stamped per-user default.
+    PKG, EXE, and MSI installers require it because their mandatory
+    installation steps may run with elevated credentials. An installer with
+    its own ongoing updater may instead set `ownership` to `external` and
+    provide an `instruction`. EXE runtime values cannot contain single or
+    double quotes. MSI runtime values cannot contain double quotes.
+
+    ```
+    conda_ship_runtime:
+      executable: conda
+      managed_prefix: runtime
+    ```
+
+    Supported for SH, PKG, EXE, and MSI installers. It is not a
+    `post_install` script and cannot be skipped with the user-script options.
     """
     company: NonEmptyStr | None = None
     """

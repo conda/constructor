@@ -921,6 +921,29 @@ def test_render_templates_installer_metadata(template_name):
     assert 'set "INSTALLER_TYPE=MSI"' in text
 
 
+def test_render_templates_conda_ship_runtime():
+    info = mock_info.copy()
+    info["conda_ship_runtime"] = {
+        "executable": "conda.exe",
+        "managed_prefix": "runtime",
+        "ownership": "direct",
+        "installation": "constructor",
+    }
+    payload = Payload(info)
+    rendered_templates = payload.render_templates()
+
+    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
+    text = run_installation.read_text(encoding="utf-8")
+
+    assert 'set "CONDA_SHIP_INTERNAL_UPDATE=v1/record-installation"' in text
+    assert 'set "CONDA_SHIP_INTERNAL_UPDATE_OWNERSHIP=direct"' in text
+    assert 'set "CONDA_SHIP_INTERNAL_UPDATE_INSTALLATION=constructor"' in text
+    assert 'set "CONDA_SHIP_INTERNAL_UPDATE_EXECUTABLE=%BASE_PATH%\\conda.exe"' in text
+    assert 'set "CONDA_SHIP_PREFIX=%BASE_PATH%\\runtime"' in text
+    assert '"%BASE_PATH%\\conda.exe"' in text
+    assert "if errorlevel 1 ( exit /b 1 )" in text
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
 @pytest.mark.parametrize(
     "script_type,has_desc",

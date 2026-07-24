@@ -43,6 +43,69 @@
       "title": "CondaInitialization",
       "type": "string"
     },
+    "CondaShipRuntime": {
+      "additionalProperties": false,
+      "properties": {
+        "executable": {
+          "description": "Path to the conda-ship stamped executable, relative to the constructor prefix.",
+          "minLength": 1,
+          "title": "Executable",
+          "type": "string"
+        },
+        "installation": {
+          "default": "constructor",
+          "description": "Installation kind recorded in the conda-ship runtime metadata.",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "title": "Installation",
+          "type": "string"
+        },
+        "instruction": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Update instruction shown for an externally owned installation. Required when `ownership` is `external` and not valid for `direct`.",
+          "title": "Instruction"
+        },
+        "managed_prefix": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional path to the runtime's managed prefix, relative to the constructor prefix. When omitted, the executable uses its stamped default.",
+          "title": "Managed Prefix"
+        },
+        "ownership": {
+          "default": "direct",
+          "description": "Who updates the installed executable. Constructor installations normally use `direct`. Use `external` only when the installer is maintained by an external updater.",
+          "enum": [
+            "direct",
+            "external"
+          ],
+          "title": "Ownership",
+          "type": "string"
+        }
+      },
+      "required": [
+        "executable"
+      ],
+      "title": "CondaShipRuntime",
+      "type": "object"
+    },
     "ExtraEnv": {
       "additionalProperties": false,
       "properties": {
@@ -554,6 +617,18 @@
       },
       "title": "Conda Default Channels",
       "type": "array"
+    },
+    "conda_ship_runtime": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CondaShipRuntime"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Record a conda-ship stamped executable as part of the mandatory installer transaction. The executable must already be included in the installed prefix, either through a package or `extra_files`.\nConstructor records `direct` ownership and the `constructor` installation kind by default. Set `managed_prefix` to a separate subdirectory of the constructor prefix. The runtime executable must live outside that subdirectory so it can bootstrap the managed prefix. SH installers may omit `managed_prefix` to initialize the runtime's stamped per-user default. PKG, EXE, and MSI installers require it because their mandatory installation steps may run with elevated credentials. An installer with its own ongoing updater may instead set `ownership` to `external` and provide an `instruction`. EXE runtime values cannot contain single or double quotes. MSI runtime values cannot contain double quotes.\n```\nconda_ship_runtime:\n  executable: conda\n  managed_prefix: runtime\n```\nSupported for SH, PKG, EXE, and MSI installers. It is not a `post_install` script and cannot be skipped with the user-script options."
     },
     "condarc": {
       "anyOf": [

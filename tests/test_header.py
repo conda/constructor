@@ -44,9 +44,22 @@ def run_shellcheck(script):
 @pytest.mark.parametrize("arch", ["x86_64", "arm64"])
 @pytest.mark.parametrize("check_path_spaces", [False, True])
 @pytest.mark.parametrize(
+    "conda_ship_runtime",
+    [
+        None,
+        {
+            "executable": "conda",
+            "managed_prefix": "'runtime'",
+            "ownership": "direct",
+            "installation": "constructor",
+            "instruction": None,
+        },
+    ],
+)
+@pytest.mark.parametrize(
     "script", [pytest.param(path, id=str(path)) for path in sorted(Path(OSX_DIR).glob("*.sh"))]
 )
-def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
+def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, conda_ship_runtime, script):
     with script.open() as f:
         data = f.read()
     processed = render_template(
@@ -71,6 +84,7 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         script_env_variables={},
         initialize_conda="condabin",
         conda_exe_name="_conda",
+        conda_ship_runtime=conda_ship_runtime,
     )
 
     findings, returncode = run_shellcheck(processed)
@@ -97,6 +111,19 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
 @pytest.mark.parametrize("min_glibc_version", ["2.17"])
 @pytest.mark.parametrize("min_osx_version", ["10.13"])
 @pytest.mark.parametrize("conda_exe_payloads_and_size", [({"path": (0, 10, False)}, 10)])
+@pytest.mark.parametrize(
+    "conda_ship_runtime",
+    [
+        None,
+        {
+            "executable": "conda",
+            "managed_prefix": "'runtime'",
+            "ownership": "direct",
+            "installation": "constructor",
+            "instruction": None,
+        },
+    ],
+)
 def test_template_shellcheck(
     osx,
     arch,
@@ -115,6 +142,7 @@ def test_template_shellcheck(
     min_glibc_version,
     min_osx_version,
     conda_exe_payloads_and_size,
+    conda_ship_runtime,
 ):
     template = read_header_template()
     processed = render_template(
@@ -165,6 +193,7 @@ def test_template_shellcheck(
             "conda_exe_payloads": conda_exe_payloads_and_size[0],
             "conda_exe_payloads_size": conda_exe_payloads_and_size[1],
             "conda_exe_name": "_conda",
+            "conda_ship_runtime": conda_ship_runtime,
         },
     )
 

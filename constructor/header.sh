@@ -694,6 +694,28 @@ else
 fi
 {%- endif %}
 
+{%- if conda_ship_runtime %}
+printf "Recording conda-ship runtime installation...\n"
+if ! (
+unset CONDA_SHIP_PREFIX
+unset CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION
+CONDA_SHIP_INTERNAL_UPDATE=v1/record-installation \
+CONDA_SHIP_INTERNAL_UPDATE_OWNERSHIP={{ conda_ship_runtime.ownership }} \
+CONDA_SHIP_INTERNAL_UPDATE_INSTALLATION={{ conda_ship_runtime.installation }} \
+CONDA_SHIP_INTERNAL_UPDATE_EXECUTABLE="$PREFIX"/{{ conda_ship_runtime.executable }} \
+{% if conda_ship_runtime.managed_prefix -%}
+CONDA_SHIP_PREFIX="$PREFIX"/{{ conda_ship_runtime.managed_prefix }} \
+{% endif -%}
+{% if conda_ship_runtime.instruction -%}
+CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION={{ conda_ship_runtime.instruction }} \
+{% endif -%}
+"$PREFIX"/{{ conda_ship_runtime.executable }} > /dev/null
+); then
+    printf "ERROR: recording the conda-ship runtime installation failed\n" >&2
+    exit 1
+fi
+{%- endif %}
+
 if [ -f "$MSGS" ]; then
   cat "$MSGS"
 fi

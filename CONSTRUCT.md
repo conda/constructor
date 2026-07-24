@@ -312,6 +312,32 @@ a dictionary, which will be converted to a YAML string for writing. _Note:_ if t
 option is used, then all other options related to the construction of a `.condarc`
 file (`write_condarc`, `conda_default_channels`, etc.) are ignored.
 
+### `conda_ship_runtime`
+
+Record a conda-ship stamped executable as part of the mandatory installer
+transaction. The executable must already be included in the installed
+prefix, either through a package or `extra_files`.
+
+Constructor records `direct` ownership and the `constructor` installation
+kind by default. Set `managed_prefix` to a separate subdirectory of the
+constructor prefix. The runtime executable must live outside that
+subdirectory so it can bootstrap the managed prefix. SH installers may
+omit `managed_prefix` to initialize the runtime's stamped per-user default.
+PKG, EXE, and MSI installers require it because their mandatory
+installation steps may run with elevated credentials. An installer with
+its own ongoing updater may instead set `ownership` to `external` and
+provide an `instruction`. EXE runtime values cannot contain single or
+double quotes. MSI runtime values cannot contain double quotes.
+
+```
+conda_ship_runtime:
+  executable: conda
+  managed_prefix: runtime
+```
+
+Supported for SH, PKG, EXE, and MSI installers. It is not a
+`post_install` script and cannot be skipped with the user-script options.
+
 ### `company`
 
 Name of the company/entity responsible for the installer.

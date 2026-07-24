@@ -112,6 +112,26 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     mv "$PREFIX/envs/$env_name/conda-meta/history.bak" "$PREFIX/envs/$env_name/conda-meta/history"
 done
 
+{%- if conda_ship_runtime %}
+notify "Recording conda-ship runtime installation."
+if ! (
+unset CONDA_SHIP_PREFIX
+unset CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION
+CONDA_SHIP_INTERNAL_UPDATE=v1/record-installation \
+CONDA_SHIP_INTERNAL_UPDATE_OWNERSHIP={{ conda_ship_runtime.ownership }} \
+CONDA_SHIP_INTERNAL_UPDATE_INSTALLATION={{ conda_ship_runtime.installation }} \
+CONDA_SHIP_INTERNAL_UPDATE_EXECUTABLE="$PREFIX"/{{ conda_ship_runtime.executable }} \
+CONDA_SHIP_PREFIX="$PREFIX"/{{ conda_ship_runtime.managed_prefix }} \
+{% if conda_ship_runtime.instruction -%}
+CONDA_SHIP_INTERNAL_UPDATE_INSTRUCTION={{ conda_ship_runtime.instruction }} \
+{% endif -%}
+"$PREFIX"/{{ conda_ship_runtime.executable }} > /dev/null
+); then
+    echo "ERROR: recording the conda-ship runtime installation failed"
+    exit 1
+fi
+{%- endif %}
+
 # Cleanup!
 find "$PREFIX/pkgs" -type d -empty -exec rmdir {} \; 2>/dev/null || :
 

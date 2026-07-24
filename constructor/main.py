@@ -27,6 +27,7 @@ from ._schema import InstallerTypes
 from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
+from .conda_ship import validate_runtime_installation
 from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import render as construct_render
@@ -253,6 +254,10 @@ def main_build(
     try:
         itypes = get_installer_type(info)
     except InvalidInstallerTypeError as e:
+        sys.exit(f"Error: {e}")
+    try:
+        validate_runtime_installation(info, itypes)
+    except ValueError as e:
         sys.exit(f"Error: {e}")
 
     if InstallerTypes.DOCKER in itypes:
