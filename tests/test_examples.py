@@ -702,7 +702,21 @@ def installer_types_for_example(
     Returns a tuple with a single skip marker if the example's installer types
     are not valid for the current platform (e.g., Windows-only examples on Linux).
     """
-    info = parse_construct(str(example_path / config_filename), platform=cc_platform)
+    config_path = example_path / config_filename
+    # conda-build's recipe test step only copies a subset of examples/ into its
+    # isolated test source tree (see recipe/meta.yaml test.source_files), so most
+    # examples are legitimately absent there even though this module is still
+    # collected in full. Skip rather than erroring so collection can complete.
+    if not config_path.exists():
+        return (
+            pytest.param(
+                "skip",
+                marks=pytest.mark.skip(
+                    reason=f"{config_path} not found (partial checkout, e.g. conda-build test env)"
+                ),
+            ),
+        )
+    info = parse_construct(str(config_path), platform=cc_platform)
     info["_platform"] = cc_platform
     try:
         return get_installer_type(info)
