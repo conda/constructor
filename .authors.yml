@@ -1,3 +1,8 @@
+- name: Maayan Matsliah
+  email: maayan.matsliah@gmail.com
+  github: maayanmatsliah-tech
+  num_commits: 1
+  first_commit: 2026-07-08 10:16:05
 - name: Michael Sarahan
   email: msarahan@gmail.com
   github: msarahan
@@ -264,7 +269,7 @@
   github: chenghlee
 - name: conda-bot
   email: ad-team+condabot@anaconda.com
-  num_commits: 67
+  num_commits: 69
   first_commit: 2022-01-25 21:38:28
   alternate_emails:
   - 18747875+conda-bot@users.noreply.github.com
@@ -372,7 +377,7 @@
   github: deepeshaburse
 - name: pre-commit-ci[bot]
   email: 66853113+pre-commit-ci[bot]@users.noreply.github.com
-  num_commits: 92
+  num_commits: 95
   first_commit: 2023-05-02 12:01:43
   github: pre-commit-ci[bot]
 - name: Matthias Kuhn
@@ -382,7 +387,7 @@
   github: m-kuhn
 - name: dependabot[bot]
   email: 49699333+dependabot[bot]@users.noreply.github.com
-  num_commits: 89
+  num_commits: 96
   github: dependabot[bot]
   first_commit: 2024-05-07 10:16:05
 - name: Julien Jerphanion
@@ -420,7 +425,7 @@
   email: 34315751+lrandersson@users.noreply.github.com
   alternate_emails:
   - randersson@anaconda.com
-  num_commits: 39
+  num_commits: 46
   first_commit: 2025-10-21 08:30:00
 - name: David Laehnemann
   github: dlaehnemann
