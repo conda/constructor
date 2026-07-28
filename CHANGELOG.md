@@ -1,5 +1,26 @@
 [//]: # (current developments)
 
+## 2026-07-28   3.16.3:
+### Bug fixes
+
+* EXE: Also set the `TEMP` and `TMPDIR` environment variables (in addition to `TMP`) when redirecting temporary directories inside `$INSTDIR`, since different tools resolve the temp directory using different variable precedence. (#1243 via #1305)
+
+### Docs
+
+* Added `CONTRIBUTING.md` to fix broken link in PR workflow template (#1231).
+* Updated docs to clarify the use of `INSTALLER_UNATTENDED` within the context of MSI installers, and updated minimum `briefcase` version to `0.4.3`. (#1278)
+
+### Other
+
+* Use the `InstallerTypes` enum instead of raw strings for installer type comparisons. (#1285, #1289)
+
+### Contributors
+
+* @maayanmatsliah-tech
+* @lrandersson
+
+
+
 ## 2026-07-07   3.16.2:
 ### Enhancements
 
