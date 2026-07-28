@@ -18,9 +18,6 @@
 
 * @maayanmatsliah-tech
 * @lrandersson
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
