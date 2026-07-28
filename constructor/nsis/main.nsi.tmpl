@@ -1468,7 +1468,11 @@ Section "Install"
     # being extracted into LOCALAPPDATA
     # See https://github.com/conda/constructor/issues/1243
     StrCpy $TmpDir "$INSTDIR\tmp"
+    # Since Windows API/Python Modules might read these variables in different orders
+    # we need to set all 3 for additional robustness.
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMP", "$TmpDir")'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TEMP", "$TmpDir")'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMPDIR", "$TmpDir")'
     CreateDirectory $TmpDir
 
 {% if needs_python_exe %}
@@ -1817,7 +1821,11 @@ Section "Uninstall"
     # being extracted into LOCALAPPDATA
     # See https://github.com/conda/constructor/issues/1243
     StrCpy $TmpDir "$INSTDIR\tmp"
+    # Since Windows API/Python Modules might read these variables in different orders
+    # we need to set all 3 for additional robustness.
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMP", "$TmpDir")'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TEMP", "$TmpDir")'
+    System::Call 'kernel32::SetEnvironmentVariable(t,t)i("TMPDIR", "$TmpDir")'
     CreateDirectory "$TmpDir"
 
     # Extra info for pre_uninstall scripts
