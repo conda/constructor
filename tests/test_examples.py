@@ -1075,7 +1075,8 @@ def test_example_noconda(tmp_path, request, installer_type):
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
-def test_example_osxpkg(tmp_path, request):
+@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("osxpkg")))
+def test_example_osxpkg(tmp_path, request, installer_type):
     input_path = _example_path("osxpkg")
     ownership_test_files_home = [
         ".bash_profile",
@@ -1094,7 +1095,7 @@ def test_example_osxpkg(tmp_path, request):
     # getpass.getuser is more reliable than os.getlogin:
     # https://docs.python.org/3/library/os.html#os.getlogin
     expected_owner = getpass.getuser()
-    installer, install_dir = create_single_installer(input_path, tmp_path)
+    installer, install_dir = create_single_installer(input_path, tmp_path, installer_type)
     _run_installer(input_path, installer, install_dir, request=request)
     expected = {}
     found = {}
