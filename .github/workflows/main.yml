@@ -56,30 +56,72 @@ jobs:
           - os: macos-15-intel
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
+            installer-filter: "not pkg"
+          - os: macos-15-intel
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+            installer-filter: "not sh"
           - os: macos-15-intel
             python-version: "3.11"
             conda-standalone: conda-standalone-onedir
+            installer-filter: "not pkg"
+          - os: macos-15-intel
+            python-version: "3.11"
+            conda-standalone: conda-standalone-onedir
+            installer-filter: "not sh"
           - os: macos-latest
             python-version: "3.12"
             conda-standalone: conda-standalone
+            installer-filter: "not pkg"
+          - os: macos-latest
+            python-version: "3.12"
+            conda-standalone: conda-standalone
+            installer-filter: "not sh"
           - os: macos-latest
             python-version: "3.13"
             conda-standalone: micromamba
+            installer-filter: "not pkg"
+          - os: macos-latest
+            python-version: "3.13"
+            conda-standalone: micromamba
+            installer-filter: "not sh"
           # WINDOWS
           - os: windows-2022
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
+            installer-filter: "not msi"
+          - os: windows-2022
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+            installer-filter: "not exe"
           - os: windows-2022
             python-version: "3.11"
             conda-standalone: conda-standalone
+            installer-filter: "not msi"
+          - os: windows-2022
+            python-version: "3.11"
+            conda-standalone: conda-standalone
+            installer-filter: "not exe"
           - os: windows-2022
             python-version: "3.12"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-nightly
+            installer-filter: "not msi"
+          - os: windows-2022
+            python-version: "3.12"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-nightly
+            installer-filter: "not exe"
           - os: windows-2022
             python-version: "3.13"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-onedir
+            installer-filter: "not msi"
+          - os: windows-2022
+            python-version: "3.13"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-onedir
+            installer-filter: "not exe"
 
     env:
       PYTHONUNBUFFERED: "1"
