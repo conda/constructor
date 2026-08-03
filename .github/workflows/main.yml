@@ -32,7 +32,7 @@ defaults:
     shell: bash -el {0}
 jobs:
   tests:
-    name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, ${{ matrix.conda-standalone }}
+    name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, ${{ matrix.conda-standalone }}${{ matrix.split-group && format(', group {0}/3', matrix.split-group) || '' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -65,21 +65,61 @@ jobs:
           - os: macos-latest
             python-version: "3.13"
             conda-standalone: micromamba
-          # WINDOWS
+          # WINDOWS (split into 3 groups per Python version)
           - os: windows-2022
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
+            split-group: 1
+          - os: windows-2022
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+            split-group: 2
+          - os: windows-2022
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+            split-group: 3
           - os: windows-2022
             python-version: "3.11"
             conda-standalone: conda-standalone
+            split-group: 1
+          - os: windows-2022
+            python-version: "3.11"
+            conda-standalone: conda-standalone
+            split-group: 2
+          - os: windows-2022
+            python-version: "3.11"
+            conda-standalone: conda-standalone
+            split-group: 3
           - os: windows-2022
             python-version: "3.12"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-nightly
+            split-group: 1
+          - os: windows-2022
+            python-version: "3.12"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-nightly
+            split-group: 2
+          - os: windows-2022
+            python-version: "3.12"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-nightly
+            split-group: 3
           - os: windows-2022
             python-version: "3.13"
             # conda-standalone: micromamba
             conda-standalone: conda-standalone-onedir
+            split-group: 1
+          - os: windows-2022
+            python-version: "3.13"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-onedir
+            split-group: 2
+          - os: windows-2022
+            python-version: "3.13"
+            # conda-standalone: micromamba
+            conda-standalone: conda-standalone-onedir
+            split-group: 3
 
     env:
       PYTHONUNBUFFERED: "1"
@@ -159,7 +199,13 @@ jobs:
           CONSTRUCTOR_VERBOSE: 0
         run: |
           rm -rf coverage.json
-          pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py
+          # Use pytest-split for Windows runners with split-group, run all tests otherwise
+          if [[ -n "${{ matrix.split-group }}" ]]; then
+            pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py \
+              --splits 3 --group ${{ matrix.split-group }}
+          else
+            pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py
+          fi
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
