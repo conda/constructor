@@ -1146,7 +1146,8 @@ def test_example_osxpkg_extra_pages(tmp_path, installer_type):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
 @pytest.mark.skipif("CI" not in os.environ, reason="CI only")
-def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
+@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages")))
+def test_macos_signing(tmp_path, self_signed_application_certificate_macos, installer_type):
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
     except subprocess.CalledProcessError:
@@ -1157,7 +1158,7 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     with open(input_path / "construct.yaml", "a") as f:
         f.write(f"notarization_identity_name: {self_signed_application_certificate_macos}\n")
     output_path = tmp_path / "output"
-    installer, _ = create_single_installer(input_path, output_path)
+    installer, _ = create_single_installer(input_path, output_path, installer_type)
 
     # Check component signatures
     expanded_path = output_path / "expanded"
