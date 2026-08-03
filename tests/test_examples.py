@@ -6,10 +6,9 @@ Integration tests that build and run example installers.
 CI Splitting Convention
 -----------------------
 Tests parameterized with `installer_types_for_example` are split across CI
-runners by installer type using pytest `-k` substring filtering:
-
-- Windows: EXE runner uses `-k "not msi"`, MSI runner uses `-k "not exe"`
-- macOS: SH runner uses `-k "not pkg"`, PKG runner uses `-k "not sh"`
+runners by installer type. The CI matrix uses `installer-type` (e.g., `exe`,
+`msi`, `sh`, `pkg`) which is converted to a pytest `-k` filter that excludes
+the other installer type on that platform.
 
 **Naming rule:** Avoid `msi`, `exe`, `pkg`, or `sh` as substrings in test
 names unless the test is for that installer type. A test named
