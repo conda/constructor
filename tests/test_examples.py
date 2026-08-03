@@ -1,5 +1,21 @@
 from __future__ import annotations
 
+"""
+Integration tests that build and run example installers.
+
+CI Splitting Convention
+-----------------------
+Tests parameterized with `installer_types_for_example` are split across CI
+runners by installer type using pytest `-k` substring filtering:
+
+- Windows: EXE runner uses `-k "not msi"`, MSI runner uses `-k "not exe"`
+- macOS: SH runner uses `-k "not pkg"`, PKG runner uses `-k "not sh"`
+
+**Naming rule:** Avoid `msi`, `exe`, `pkg`, or `sh` as substrings in test
+names unless the test is for that installer type. A test named
+`test_msix_future_format` would be incorrectly excluded by `-k "not msi"`.
+"""
+
 import getpass
 import json
 import os
@@ -1109,7 +1125,9 @@ def test_example_osxpkg(tmp_path, request, installer_type):
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
-@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages")))
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages"))
+)
 def test_example_osxpkg_extra_pages(tmp_path, installer_type):
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
@@ -1146,7 +1164,9 @@ def test_example_osxpkg_extra_pages(tmp_path, installer_type):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
 @pytest.mark.skipif("CI" not in os.environ, reason="CI only")
-@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages")))
+@pytest.mark.parametrize(
+    "installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages"))
+)
 def test_macos_signing(tmp_path, self_signed_application_certificate_macos, installer_type):
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
