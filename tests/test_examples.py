@@ -1109,7 +1109,8 @@ def test_example_osxpkg(tmp_path, request, installer_type):
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
-def test_example_osxpkg_extra_pages(tmp_path):
+@pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("osxpkg_extra_pages")))
+def test_example_osxpkg_extra_pages(tmp_path, installer_type):
     try:
         subprocess.run(["xcodebuild", "--help"], check=True, capture_output=True)
     except subprocess.CalledProcessError:
@@ -1118,7 +1119,7 @@ def test_example_osxpkg_extra_pages(tmp_path):
     input_path = tmp_path / "input"
     output_path = tmp_path / "output"
     shutil.copytree(str(recipe_path), str(input_path))
-    installer, install_dir = create_single_installer(input_path, output_path)
+    installer, install_dir = create_single_installer(input_path, output_path, installer_type)
     # expand-full is an undocumented option that extracts all archives,
     # including binary archives like the PlugIns file
     cmd = ["pkgutil", "--expand-full", installer, output_path / "expanded"]
