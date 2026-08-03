@@ -27,6 +27,8 @@ set "PAYLOAD_TAR=%INSTDIR%\{{ archive_name }}"
 set "CONDA_ROOT_PREFIX=%BASE_PATH%"
 rem Set CONDA_QUIET primarily to disable the spinners
 set CONDA_QUIET={{ 0 if add_debug else 1 }}
+rem Uninstaller should ignore system configuration files
+set CONDARC=
 
 rem Get the name of the install directory
 for %%I in ("%INSTDIR%") do set "APPNAME=%%~nxI"
