@@ -56,7 +56,7 @@ except ImportError:
 
 
 # Installer types that produce a single file named after the type (e.g. "foo.sh"),
-# in the order shell installers should run before GUI ones.
+# in the order shell installers should run before GUI ones
 FILE_INSTALLER_TYPES = (
     InstallerTypes.SH,
     InstallerTypes.PKG,
