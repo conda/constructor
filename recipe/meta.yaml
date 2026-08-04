@@ -47,6 +47,7 @@ test:
     - pip
     - pytest
     - pytest-mock
+    - pytest-split
     - pywin32        # [win]
   imports:
     - constructor
