@@ -615,6 +615,10 @@ def _run_installer(
             _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess)
         elif installer.suffix == ".exe":
             _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
+
+    if request and ON_CI:
+        # GitHub runners run out of disk space if installer files are not cleaned up
+        request.addfinalizer(lambda: installer.unlink(missing_ok=True))
     return process
 
 
@@ -1890,6 +1894,7 @@ def test_uninstallation_standalone(
     remove_caches: bool,
     remove_config_files: str | None,
     tmp_path: Path,
+    request,
 ):
     recipe_path = _example_path("uninstall_with_conda_exe")
     input_path = tmp_path / "input"
@@ -1949,6 +1954,7 @@ def test_uninstallation_standalone(
         input_path,
         installer,
         install_dir,
+        request=request,
         check_subprocess=True,
         uninstall=False,
     )
