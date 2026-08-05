@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* Split slow macOS/Windows integration tests to run in parallel, cutting CI time by roughly half. Also cleaned up leftover installer files during test runs to prevent CI runners from running out of disk space.
