@@ -73,11 +73,6 @@ CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 if CONDA_EXE_VERSION is not None:
     CONDA_EXE_VERSION = Version(CONDA_EXE_VERSION)
 CONSTRUCTOR_DEBUG = os.environ.get("CONSTRUCTOR_DEBUG", "").lower() in ("1", "true", "yes")
-if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
-    KEEP_ARTIFACTS_PATH = Path(artifacts_path)
-    KEEP_ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
-else:
-    KEEP_ARTIFACTS_PATH = None
 
 
 def _is_program_installed(partial_name: str) -> bool:
@@ -800,12 +795,6 @@ def create_installer(
             installer, input_dir, workspace, config_filename, with_spaces
         )
         yield installer, install_dir
-        if KEEP_ARTIFACTS_PATH:
-            try:
-                shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
-            except shutil.Error:
-                # Some tests reuse the examples for different checks; ignore errors
-                pass
 
 
 @cache
