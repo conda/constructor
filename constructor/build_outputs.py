@@ -31,15 +31,52 @@ def _validate_output(output):
         raise ValueError("'build_outputs' dicts can only have one key.")
     return {key: (value or {}) for (key, value) in output.items()}
 
+def _needed_hash_algorithms(info):
+    """Return hash algorithms required by the requested build outputs."""
+    algorithms = set()
+
+    for output in info.get("build_outputs", ()):
+        name, config = next(iter(_validate_output(output).items()))
+
+        if name == "info.json":
+            algorithms.add("sha256")
+        elif name == "hash":
+            algorithm = config.get("algorithm")
+
+            if isinstance(algorithm, str):
+                algorithms.add(algorithm)
+            elif algorithm:
+                algorithms.update(algorithm)
+
+    return algorithms
+
+
+def _installer_paths(info):
+    """Return generated installer paths as Path objects."""
+    outpath = info["_outpath"]
+
+    if isinstance(outpath, str):
+        return [Path(outpath)]
+
+    return [Path(path) for path in outpath]
+
 
 def process_build_outputs(info):
+    algorithms = _needed_hash_algorithms(info)
+
+    if algorithms:
+        info["_installer_hashes"] = hash_files(
+            info["_outpath"],
+            algorithms,
+        )
+
     for output in info.get("build_outputs", ()):
         output = _validate_output(output)
         name, config = output.popitem()
         handler = OUTPUT_HANDLERS.get(name)
         if not handler:
             raise ValueError(
-                f"'output_builds' key {name} is not recognized! "
+                f"'build_outputs' key {name} is not recognized! "
                 f"Available keys: {tuple(OUTPUT_HANDLERS.keys())}"
             )
         outpath = handler(info, **config)
@@ -56,16 +93,10 @@ def dump_hash(info, algorithm=None):
         algorithm = [algorithm]
 
     algorithms = set(algorithm)
-    checksums = hash_files(info["_outpath"], algorithms)
-
-    if isinstance(info["_outpath"], str):
-        installers = [Path(info["_outpath"])]
-    else:
-        installers = [Path(outpath) for outpath in info["_outpath"]]
-
+    checksums = info["_installer_hashes"]
     outpaths = []
 
-    for installer in installers:
+    for installer in _installer_paths(info):
         filehashes = checksums[str(installer)]
 
         for algo in algorithms:
