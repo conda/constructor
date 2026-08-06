@@ -67,7 +67,7 @@ def patch_prefix_data(monkeypatch):
         pytest.param(
             [
                 _make_package_record("numpy"),
-                _make_package_record("conda-standalone", version="24.11.0"),
+                _make_package_record("foobar", version="24.11.0"),
             ],
             id="multiple-packages",
         ),
@@ -88,11 +88,11 @@ def test_get_build_env_records_defaults_to_active_environment(
     (the environment currently running constructor), not construct.yaml's
     unrelated 'default_prefix' install-location setting."""
     monkeypatch.setattr("constructor.conda_interface.default_prefix", str(tmp_path))
-    patch_prefix_data([_make_package_record("conda-standalone", version="24.11.0")])
+    patch_prefix_data([_make_package_record("foobar", version="24.11.0")])
 
     result = get_build_env_records()
 
-    assert [rec.name for rec in result] == ["conda-standalone"]
+    assert [rec.name for rec in result] == ["foobar"]
 
 
 def test_get_build_env_records_includes_pip_installed_packages(tmp_path):
