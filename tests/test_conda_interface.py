@@ -2,6 +2,7 @@ import json
 
 import pytest
 from conda.base.context import context
+from conda.common.path.python import get_python_site_packages_short_path
 from conda.core.prefix_data import PrefixData
 from conda.models.records import PackageRecord, PrefixRecord
 
@@ -113,7 +114,7 @@ def test_get_build_env_records_includes_pip_installed_packages(tmp_path):
     )
     (meta_dir / "python-1.2.3-0.json").write_text(json.dumps(python_record.dump()))
 
-    site_packages = tmp_path / "lib" / "python1.2" / "site-packages"
+    site_packages = tmp_path / get_python_site_packages_short_path("1.2")
     site_packages.mkdir(parents=True)
     dist_info = site_packages / "fakepkg-1.0.0.dist-info"
     dist_info.mkdir()
