@@ -17,6 +17,7 @@ from conda.core.prefix_data import PrefixGraph
 
 from . import __version__
 from .conda_interface import VersionOrder
+from .utils import hash_files
 
 logger = logging.getLogger(__name__)
 
@@ -50,28 +51,29 @@ def dump_hash(info, algorithm=None):
     if not algorithm:
         logger.warning("`hash` requires an algorithm. No hash files will be output.")
         return ""
+
     if isinstance(algorithm, str):
         algorithm = [algorithm]
+
     algorithms = set(algorithm)
-    if any(algo not in hashlib.algorithms_available for algo in algorithms):
-        invalid = algorithms.difference(set(hashlib.algorithms_available))
-        raise ValueError(f"Invalid algorithm: {', '.join(invalid)}")
-    BUFFER_SIZE = 65536
+    checksums = hash_files(info["_outpath"], algorithms)
+
     if isinstance(info["_outpath"], str):
         installers = [Path(info["_outpath"])]
     else:
         installers = [Path(outpath) for outpath in info["_outpath"]]
+
     outpaths = []
+
     for installer in installers:
-        filehashes = {algo: hashlib.new(algo) for algo in algorithms}
-        with open(installer, "rb") as f:
-            while buffer := f.read(BUFFER_SIZE):
-                for algo in algorithms:
-                    filehashes[algo].update(buffer)
-        for algo, filehash in filehashes.items():
+        filehashes = checksums[str(installer)]
+
+        for algo in algorithms:
             outpath = Path(f"{installer}.{algo}")
+
             with open(outpath, "w", newline="\n") as f:
-                f.write(f"{filehash.hexdigest()}  {installer.name}\n")
+                f.write(f"{filehashes[algo]}  {installer.name}\n")
+
             outpaths.append(str(outpath.absolute()))
     return ", ".join(outpaths)
 
