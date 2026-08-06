@@ -102,7 +102,7 @@ if conda_interface_type == "conda":
     distro = None
     if sys.platform.startswith("linux"):
         try:
-            from conda._vendor import distro  # noqa
+            import distro  # noqa
         except ImportError:
             pass
 
