@@ -92,12 +92,14 @@ def dump_hash(info, algorithm=None):
     if isinstance(algorithm, str):
         algorithm = [algorithm]
 
-    algorithms = set(algorithm)
-    checksums = info["_installer_hashes"]
-    outpaths = []
+    installers = (
+        [Path(info["_outpath"])]
+        if isinstance(info["_outpath"], str)
+        else [Path(path) for path in info["_outpath"]]
+    )
 
-    for installer in _installer_paths(info):
-        filehashes = checksums[str(installer)]
+    for installer in installers:
+        filehashes = info["_installer_hashes"][str(installer)]
 
         for algo in algorithms:
             outpath = Path(f"{installer}.{algo}")
@@ -118,6 +120,12 @@ def dump_info(info):
         else:
             return repr(obj)
 
+    installer = Path(info["_outpath"])
+
+    output_info = info.copy()
+    output_info.pop("_installer_hashes", None)
+    output_info["_installer_hashes"] = info["_installer_hashes"][str(installer)]
+    
     outpath = os.path.join(info["_output_dir"], "info.json")
     with open(outpath, "w") as f:
         json.dump(info, f, indent=2, default=_serialize)
