@@ -32,12 +32,12 @@ defaults:
     shell: bash -el {0}
 jobs:
   tests:
-    name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, ${{ matrix.conda-standalone }}${{ matrix.split-group && format(', group {0}/3', matrix.split-group) || '' }}
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.config.os }}, Python ${{ matrix.config.python-version }}, ${{ matrix.config.conda-standalone }}, group ${{ matrix.split-group }}
+    runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        config:
           # UBUNTU
           - os: ubuntu-latest
             python-version: "3.10"
@@ -52,113 +52,37 @@ jobs:
             python-version: "3.13"
             conda-standalone: conda-standalone-onedir
             check-docs-schema: true
-          # MACOS (split into 3 groups per Python version)
+          # MACOS
           - os: macos-15-intel
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
-            split-group: 1
           - os: macos-15-intel
             python-version: "3.11"
             conda-standalone: conda-standalone-onedir
-            split-group: 1
           - os: macos-latest
             python-version: "3.12"
             conda-standalone: conda-standalone
-            split-group: 1
           - os: macos-latest
             python-version: "3.13"
             conda-standalone: micromamba
-            split-group: 1
-          - os: macos-15-intel
-            python-version: "3.10"
-            conda-standalone: conda-standalone-nightly
-            split-group: 2
-          - os: macos-15-intel
-            python-version: "3.11"
-            conda-standalone: conda-standalone-onedir
-            split-group: 2
-          - os: macos-latest
-            python-version: "3.12"
-            conda-standalone: conda-standalone
-            split-group: 2
-          - os: macos-latest
-            python-version: "3.13"
-            conda-standalone: micromamba
-            split-group: 2
-          - os: macos-15-intel
-            python-version: "3.10"
-            conda-standalone: conda-standalone-nightly
-            split-group: 3
-          - os: macos-15-intel
-            python-version: "3.11"
-            conda-standalone: conda-standalone-onedir
-            split-group: 3
-          - os: macos-latest
-            python-version: "3.12"
-            conda-standalone: conda-standalone
-            split-group: 3
-          - os: macos-latest
-            python-version: "3.13"
-            conda-standalone: micromamba
-            split-group: 3
-          # WINDOWS (split into 3 groups per Python version)
+          # WINDOWS
           - os: windows-2022
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
-            split-group: 1
-          - os: windows-2022
-            python-version: "3.10"
-            conda-standalone: conda-standalone-nightly
-            split-group: 2
-          - os: windows-2022
-            python-version: "3.10"
-            conda-standalone: conda-standalone-nightly
-            split-group: 3
           - os: windows-2022
             python-version: "3.11"
             conda-standalone: conda-standalone
-            split-group: 1
-          - os: windows-2022
-            python-version: "3.11"
-            conda-standalone: conda-standalone
-            split-group: 2
-          - os: windows-2022
-            python-version: "3.11"
-            conda-standalone: conda-standalone
-            split-group: 3
           - os: windows-2022
             python-version: "3.12"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-nightly
-            split-group: 1
-          - os: windows-2022
-            python-version: "3.12"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-nightly
-            split-group: 2
-          - os: windows-2022
-            python-version: "3.12"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-nightly
-            split-group: 3
+            conda-standalone: conda-standalone-nightly  # micromamba disabled
           - os: windows-2022
             python-version: "3.13"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-onedir
-            split-group: 1
-          - os: windows-2022
-            python-version: "3.13"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-onedir
-            split-group: 2
-          - os: windows-2022
-            python-version: "3.13"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-onedir
-            split-group: 3
-
+            conda-standalone: conda-standalone-onedir  # micromamba disabled
+        split-group: [1, 2, 3]
     env:
       PYTHONUNBUFFERED: "1"
+      # Keep in sync with split-group array above (to avoid hardcoding '3')
+      SPLIT_COUNT: "3"
     steps:
       - name: Retrieve the source code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -168,10 +92,10 @@ jobs:
         with:
           activate-environment: constructor-dev
           environment-file: dev/environment.yml
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.config.python-version }}
           miniconda-version: latest
       - name: Install AzureSignTool
-        if: startswith(matrix.os, 'windows')
+        if: startswith(matrix.config.os, 'windows')
         run: dotnet.exe tool install --global AzureSignTool
         shell: pwsh
       - name: Supply extra dependencies and install constructor
@@ -186,7 +110,7 @@ jobs:
           pip install -e . --no-deps --no-build-isolation
       - name: Set up conda executable
         run: |
-          if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
+          if [[ "${{ matrix.config.conda-standalone }}" == "micromamba" ]]; then
             # Pin to <2.6 due to cache regression: https://github.com/mamba-org/mamba/issues/4250
             conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge "micromamba<2.6"
             if [[ "${{ runner.os }}" == "Windows" ]]; then
@@ -194,10 +118,10 @@ jobs:
             else
               echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/bin/micromamba" >> $GITHUB_ENV
             fi
-          elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-nightly" ]]; then
+          elif [[ "${{ matrix.config.conda-standalone }}" == "conda-standalone-nightly" ]]; then
             conda create -yqp "${{ runner.temp }}/conda-standalone-nightly" -c conda-canary/label/dev "conda-standalone=*=*single*"
             echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/conda-standalone-nightly/standalone_conda/conda.exe" >> $GITHUB_ENV
-          elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-onedir" ]]; then
+          elif [[ "${{ matrix.config.conda-standalone }}" == "conda-standalone-onedir" ]]; then
             # Request a version newer than 25.1.1 due to an issue with newer versions getting deprioritized
             # because they are built with 'track_features'
             conda create -yqp "${{ runner.temp }}/conda-standalone-onedir" -c conda-canary/label/dev "conda-standalone>25.1.1=*onedir*"
@@ -234,13 +158,8 @@ jobs:
           CONSTRUCTOR_VERBOSE: 0
         run: |
           rm -rf coverage.json
-          # Use pytest-split for Windows runners with split-group, run all tests otherwise
-          if [[ -n "${{ matrix.split-group }}" ]]; then
-            pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py \
-              --splits 3 --group ${{ matrix.split-group }}
-          else
-            pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py
-          fi
+          pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py \
+            --splits $SPLIT_COUNT --group ${{ matrix.split-group }}
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
@@ -248,7 +167,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
       - name: Check docs and schema are up-to-date
-        if: matrix.check-docs-schema
+        if: matrix.config.check-docs-schema
         run: |
           python scripts/make_docs.py
           python constructor/_schema.py

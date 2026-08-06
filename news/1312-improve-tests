@@ -16,4 +16,4 @@
 
 ### Other
 
-* Split slow macOS/Windows integration tests to run in parallel, cutting CI time by roughly half. Also cleaned up leftover installer files during test runs to prevent CI runners from running out of disk space.
+* Split integration tests on all platforms to run in parallel using `pytest-split`, cutting CI time. Also cleaned up leftover installer files during test runs to prevent CI runners from running out of disk space.
