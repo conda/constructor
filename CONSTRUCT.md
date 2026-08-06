@@ -390,8 +390,9 @@ Path to a post-install script. Some notes:
   `%INSTALLER_PLAT%` environment variables. `%INSTALLER_TYPE%` is set to `EXE`.
   `%INSTALLER_UNATTENDED%` will be `"1"` in silent mode (`/S`), `"0"` otherwise.
 - For Windows `.msi` installers, the script must be a `.bat` file.
-  The same variables as `.exe` installers are available, except
-  `%INSTALLER_TYPE%` is set to `MSI` and `%INSTALLER_UNATTENDED%` is not available.
+  The same variables as `.exe` installers are available.
+  `%INSTALLER_TYPE%` is set to `MSI`.
+  `%INSTALLER_UNATTENDED%` will be `"1"` in silent mode (`msiexec /qn`), `"0"` otherwise.
 
 If necessary, you can activate the installed `base` environment like this:
 

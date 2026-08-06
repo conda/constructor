@@ -432,7 +432,7 @@
     },
     "build_outputs": {
       "default": [],
-      "description": "Additional artifacts to be produced after building the installer. It expects either a list of strings or single-key dictionaries.\nAllowed strings / keys: `hash`, `info.json`, `licenses`, `lockfile`, `pkgs_list`.",
+      "description": "Additional artifacts to be produced after building the installer. It expects either a list of strings or single-key dictionaries.\nRequesting `info.json` adds an `_installer_hashes` property containing the SHA256 digest of the generated installer. Hash algorithms requested through a `hash` build output are also included in this property.\nFor example:\n```json\n\"_installer_hashes\": {\n  \"sha256\": \"...\",\n  \"md5\": \"...\"\n}\n```\nThe `hash` output continues to create separate checksum files.\nAllowed strings / keys: `hash`, `info.json`, `licenses`, `lockfile`, `pkgs_list`.",
       "items": {
         "anyOf": [
           {
