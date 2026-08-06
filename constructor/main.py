@@ -25,7 +25,7 @@ from textwrap import dedent
 from . import __version__
 from ._schema import InstallerTypes
 from .build_outputs import process_build_outputs
-from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
+from .conda_interface import SUPPORTED_PLATFORMS, cc_platform, get_build_env_records
 from .conda_interface import VersionOrder as Version
 from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
@@ -279,6 +279,8 @@ def main_build(
         exe_version = Version(exe_version)
     info["_conda_exe_type"] = exe_type
     info["_conda_exe_version"] = exe_version
+    # Packages installed in the environment running constructor.
+    info["_build_environment_packages"] = get_build_env_records()
     if osname == "win" and exe_type == StandaloneExe.MAMBA:
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
