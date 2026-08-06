@@ -52,7 +52,7 @@ jobs:
             python-version: "3.13"
             conda-standalone: conda-standalone-onedir
             check-docs-schema: true
-          # MACOS (split into 2 groups per Python version)
+          # MACOS (split into 3 groups per Python version)
           - os: macos-15-intel
             python-version: "3.10"
             conda-standalone: conda-standalone-nightly
@@ -85,6 +85,22 @@ jobs:
             python-version: "3.13"
             conda-standalone: micromamba
             split-group: 2
+          - os: macos-15-intel
+            python-version: "3.10"
+            conda-standalone: conda-standalone-nightly
+            split-group: 3
+          - os: macos-15-intel
+            python-version: "3.11"
+            conda-standalone: conda-standalone-onedir
+            split-group: 3
+          - os: macos-latest
+            python-version: "3.12"
+            conda-standalone: conda-standalone
+            split-group: 3
+          - os: macos-latest
+            python-version: "3.13"
+            conda-standalone: micromamba
+            split-group: 3
           # WINDOWS (split into 3 groups per Python version)
           - os: windows-2022
             python-version: "3.10"
