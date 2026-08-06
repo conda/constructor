@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
@@ -46,7 +48,7 @@ def patch_prefix_data(monkeypatch):
         # building a new one each call.
         fake_instances = {}
 
-        def _fake_prefix_data_for(prefix):
+        def _fake_prefix_data_for(prefix, **kwargs):
             if prefix not in fake_instances:
                 fake_instances[prefix] = _fake_prefix_data(prefix, records)
             return fake_instances[prefix]
@@ -90,3 +92,35 @@ def test_get_build_env_records_defaults_to_active_environment(
     result = get_build_env_records()
 
     assert [rec.name for rec in result] == ["conda-standalone"]
+
+
+def test_get_build_env_records_includes_pip_installed_packages(tmp_path):
+    """Verify also pip packages are included among build environment deps."""
+    meta_dir = tmp_path / "conda-meta"
+    meta_dir.mkdir()
+
+    # Mock a conda package and a package installed via pip
+    python_record = PrefixRecord(
+        name="python",
+        version="1.2.3",
+        build="0",
+        build_number=0,
+        channel=None,
+        subdir=SUBDIR,
+        fn="python-1.2.3-0.conda",
+        paths_data={"paths": [], "paths_version": 1},
+        files=[],
+    )
+    (meta_dir / "python-1.2.3-0.json").write_text(json.dumps(python_record.dump()))
+
+    site_packages = tmp_path / "lib" / "python1.2" / "site-packages"
+    site_packages.mkdir(parents=True)
+    dist_info = site_packages / "fakepkg-1.0.0.dist-info"
+    dist_info.mkdir()
+    (dist_info / "METADATA").write_text("Metadata-Version: 2.1\nName: fakepkg\nVersion: 1.0.0\n")
+    (dist_info / "INSTALLER").write_text("pip\n")
+    (dist_info / "RECORD").write_text("")
+
+    result = get_build_env_records(prefix=str(tmp_path))
+
+    assert sorted(rec.name for rec in result) == ["fakepkg", "python"]

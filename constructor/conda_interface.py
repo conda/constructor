@@ -213,4 +213,5 @@ if conda_interface_type == "conda":
         """
         if prefix is None:
             prefix = default_prefix
-        return list(PrefixData(prefix).iter_records())
+        # interoperability=True also picks up pip-installed packages, not just conda ones.
+        return list(PrefixData(prefix, interoperability=True).iter_records())
