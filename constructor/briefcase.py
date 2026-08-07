@@ -308,7 +308,7 @@ def create_install_options_list(info: dict) -> list[dict]:
         options.append(
             {
                 "name": "initialize_conda",
-                "title": "Add installation to my PATH environment variable",
+                "title": "Add installation to my PATH environment variable (single-user installs only)",
                 "description": description,
                 "default": info.get("initialize_by_default", False),
             }
