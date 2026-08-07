@@ -16,7 +16,7 @@ from conda.common.url import remove_auth, split_anaconda_token
 from conda.core.prefix_data import PrefixGraph
 
 from . import __version__
-from .conda_interface import VersionOrder, get_build_env_records
+from .conda_interface import VersionOrder
 
 logger = logging.getLogger(__name__)
 
