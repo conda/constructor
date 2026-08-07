@@ -13,12 +13,27 @@ from pathlib import Path
 
 from conda.base.constants import UNKNOWN_CHANNEL
 from conda.common.url import remove_auth, split_anaconda_token
-from conda.core.prefix_data import PrefixGraph
+from conda.core.prefix_data import PrefixData, PrefixGraph
+from conda.exports import default_prefix
 
 from . import __version__
-from .conda_interface import VersionOrder, get_build_env_records
+from .conda_interface import VersionOrder
 
 logger = logging.getLogger(__name__)
+
+
+def get_build_env_records(prefix=None):
+    """Return the package records for the environment building the installer.
+
+    Defaults to the currently active conda environment (`default_prefix`,
+    i.e. the one running constructor) if no prefix is given. Not to be
+    confused with construct.yaml's unrelated `default_prefix` setting,
+    which is the end user's install location.
+    """
+    if prefix is None:
+        prefix = default_prefix
+    # interoperability=True also picks up pip-installed packages, not just conda ones.
+    return list(PrefixData(prefix, interoperability=True).iter_records())
 
 
 def _validate_output(output):

@@ -202,16 +202,3 @@ if conda_interface_type == "conda":
         cache_dir = join(PackageCacheData.first_writable().pkgs_dir, "cache")
         mkdir_p_sudo_safe(cache_dir)
         return cache_dir
-
-    def get_build_env_records(prefix=None):
-        """Return the package records for the environment building the installer.
-
-        Defaults to the currently active conda environment (`default_prefix`,
-        i.e. the one running constructor) if no prefix is given. Not to be
-        confused with construct.yaml's unrelated `default_prefix` setting,
-        which is the end user's install location.
-        """
-        if prefix is None:
-            prefix = default_prefix
-        # interoperability=True also picks up pip-installed packages, not just conda ones.
-        return list(PrefixData(prefix, interoperability=True).iter_records())

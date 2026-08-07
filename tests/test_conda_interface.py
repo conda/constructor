@@ -6,7 +6,7 @@ from conda.common.path.python import get_python_site_packages_short_path
 from conda.core.prefix_data import PrefixData
 from conda.models.records import PackageRecord, PrefixRecord
 
-from constructor.conda_interface import get_build_env_records
+from constructor.build_outputs import get_build_env_records
 
 # Match the current platform, since tests run on multiple platforms
 SUBDIR = context.subdir
@@ -39,7 +39,7 @@ def _fake_prefix_data(tmp_path, records):
 
 @pytest.fixture
 def patch_prefix_data(monkeypatch):
-    """Patch constructor.conda_interface.PrefixData so get_build_env_records()
+    """Patch constructor.build_outputs.PrefixData so get_build_env_records()
     returns records we control, without touching disk."""
 
     def _patch(records):
@@ -54,7 +54,7 @@ def patch_prefix_data(monkeypatch):
                 fake_instances[prefix] = _fake_prefix_data(prefix, records)
             return fake_instances[prefix]
 
-        monkeypatch.setattr("constructor.conda_interface.PrefixData", _fake_prefix_data_for)
+        monkeypatch.setattr("constructor.build_outputs.PrefixData", _fake_prefix_data_for)
 
     return _patch
 
@@ -87,7 +87,7 @@ def test_get_build_env_records_defaults_to_active_environment(
     """When prefix is not given, it must fall back to conda.exports.default_prefix
     (the environment currently running constructor), not construct.yaml's
     unrelated 'default_prefix' install-location setting."""
-    monkeypatch.setattr("constructor.conda_interface.default_prefix", str(tmp_path))
+    monkeypatch.setattr("constructor.build_outputs.default_prefix", str(tmp_path))
     patch_prefix_data([_make_package_record("foobar", version="24.11.0")])
 
     result = get_build_env_records()
