@@ -90,3 +90,7 @@ select = [
 markers = [
     "examples",
 ]
+addopts = [
+  "--store-durations",  # pytest-split, update duration cache
+  "--clean-durations",  # pytest-split, remove duration for tests no longer present
+]

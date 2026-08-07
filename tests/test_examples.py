@@ -56,7 +56,7 @@ except ImportError:
 
 
 # Installer types that produce a single file named after the type (e.g. "foo.sh"),
-# in the order shell installers should run before GUI ones.
+# in the order shell installers should run before GUI ones
 FILE_INSTALLER_TYPES = (
     InstallerTypes.SH,
     InstallerTypes.PKG,
@@ -73,11 +73,6 @@ CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 if CONDA_EXE_VERSION is not None:
     CONDA_EXE_VERSION = Version(CONDA_EXE_VERSION)
 CONSTRUCTOR_DEBUG = os.environ.get("CONSTRUCTOR_DEBUG", "").lower() in ("1", "true", "yes")
-if artifacts_path := os.environ.get("CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS"):
-    KEEP_ARTIFACTS_PATH = Path(artifacts_path)
-    KEEP_ARTIFACTS_PATH.mkdir(parents=True, exist_ok=True)
-else:
-    KEEP_ARTIFACTS_PATH = None
 
 
 def _is_program_installed(partial_name: str) -> bool:
@@ -620,6 +615,10 @@ def _run_installer(
             _run_uninstaller_msi(installer, install_dir, timeout=timeout, check=check_subprocess)
         elif installer.suffix == ".exe":
             _run_uninstaller_exe(install_dir, timeout=timeout, check=check_subprocess)
+
+    if request and ON_CI:
+        # GitHub runners run out of disk space if installer files are not cleaned up
+        request.addfinalizer(lambda: installer.unlink(missing_ok=True))
     return process
 
 
@@ -800,12 +799,6 @@ def create_installer(
             installer, input_dir, workspace, config_filename, with_spaces
         )
         yield installer, install_dir
-        if KEEP_ARTIFACTS_PATH:
-            try:
-                shutil.move(str(installer), str(KEEP_ARTIFACTS_PATH))
-            except shutil.Error:
-                # Some tests reuse the examples for different checks; ignore errors
-                pass
 
 
 @cache
@@ -1901,6 +1894,7 @@ def test_uninstallation_standalone(
     remove_caches: bool,
     remove_config_files: str | None,
     tmp_path: Path,
+    request,
 ):
     recipe_path = _example_path("uninstall_with_conda_exe")
     input_path = tmp_path / "input"
@@ -1960,6 +1954,7 @@ def test_uninstallation_standalone(
         input_path,
         installer,
         install_dir,
+        request=request,
         check_subprocess=True,
         uninstall=False,
     )
