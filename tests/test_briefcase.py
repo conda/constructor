@@ -26,6 +26,7 @@ from constructor.conda_interface import cc_platform
 """
     Here 'mock_info' is simply a 'mock' of the regular 'info' object that is used to create installers.
     It contains bare minimum in order to allow simple unit testing.
+    Dummy change.
 """
 mock_info = {
     "name": "MockInfo",
