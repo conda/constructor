@@ -24,6 +24,7 @@ requirements:
   run:
     - conda >=4.6
     - python  # >=3.10
+    - distro  # [linux]
     - ruamel.yaml >=0.11.14,<0.19
     - conda-standalone >=24.11.0
     - jinja2

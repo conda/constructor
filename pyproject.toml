@@ -13,6 +13,7 @@ dynamic = [
 ]
 dependencies = [
     "conda >=4.6",
+    "distro ; platform_system=='Linux'",
     "ruamel.yaml >=0.11.14,<0.19",
     "pillow >=3.1 ; platform_system=='Windows' or platform_system=='Darwin'",
     "jinja2",
