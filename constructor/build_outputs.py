@@ -16,7 +16,7 @@ from conda.common.url import remove_auth, split_anaconda_token
 from conda.core.prefix_data import PrefixGraph
 
 from . import __version__
-from .conda_interface import VersionOrder
+from .conda_interface import VersionOrder, get_build_env_records
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ def dump_info(info):
             return repr(obj)
 
     # Packages installed in the environment running constructor.
-    # info["_build_environment_packages"] = get_build_env_records()
+    info["_build_environment_packages"] = get_build_env_records()
     outpath = os.path.join(info["_output_dir"], "info.json")
     with open(outpath, "w") as f:
         json.dump(info, f, indent=2, default=_serialize)
