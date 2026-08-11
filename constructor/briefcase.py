@@ -24,6 +24,7 @@ else:
     write_images = None  # imaging.py requires PIL, which is only available on Windows
 
 from . import preconda
+from ._schema import InstallerTypes
 from .jinja import render_template
 from .signing import create_windows_signing_tool
 from .utils import (
@@ -307,7 +308,7 @@ def create_install_options_list(info: dict) -> list[dict]:
         options.append(
             {
                 "name": "initialize_conda",
-                "title": "Add installation to my PATH environment variable",
+                "title": "Add installation to my PATH environment variable (single-user installs only)",
                 "description": description,
                 "default": info.get("initialize_by_default", False),
             }
@@ -367,7 +368,8 @@ def create_install_options_list(info: dict) -> list[dict]:
                     "name": f"{script_type}_install_script",
                     "title": f"{script_type.capitalize()}-install script",
                     "description": script_description,
-                    "default": False,
+                    # Mirror NSIS: default to enabled when the script exists.
+                    "default": bool(script),
                 }
             )
 
@@ -433,7 +435,7 @@ class Payload:
         external_dir = self.root / EXTERNAL_PACKAGE_PATH
         external_dir.mkdir(parents=True, exist_ok=True)
 
-        write_images(self.info, self.root, installer_type="msi")
+        write_images(self.info, self.root, installer_type=InstallerTypes.MSI)
 
         # Note that the directory name "base" is also explicitly defined in `run_installation.bat`
         base_dir = external_dir / "base"

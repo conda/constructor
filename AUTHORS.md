@@ -34,6 +34,7 @@ Authors are sorted alphabetically.
 * Kale Franz
 * Katherine Kinnaman
 * Ken Odegard
+* Maayan Matsliah
 * Marcel Bargull
 * Marco Esters
 * Mariana Meireles

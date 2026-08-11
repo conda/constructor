@@ -193,7 +193,7 @@ class AzureSignTool(SigningTool):
             logger.error("Could not verify signature: PowerShell not found.")
             return
         command = (
-            f"$sig = Get-AuthenticodeSignature -LiteralPath {installer_file};"
+            f"$sig = Get-AuthenticodeSignature -LiteralPath '{installer_file}';"
             "$sig.Status.value__;"
             "$sig.StatusMessage"
         )

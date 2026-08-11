@@ -61,9 +61,6 @@ set "INSTALLER_NAME={{ installer_name }}"
 set "INSTALLER_VER={{ installer_version }}"
 set "INSTALLER_PLAT={{ installer_platform }}"
 set "INSTALLER_TYPE=MSI"
-rem INSTALLER_UNATTENDED is not available for MSI installers.
-rem Detecting silent mode requires UILevel from WiX, which would need
-rem changes to the briefcase-windows-app-template to pass to this script.
 
 {%- if add_debug %}
 >> "%LOG%" echo ==== run_installation start ====
@@ -163,9 +160,9 @@ rem because MSI expects the file to be there to clean the registry.
 del "%PAYLOAD_TAR%"
 if errorlevel 1 ( exit /b %errorlevel% )
 
-rem Add to PATH / run conda init if the option was selected
+rem Add to PATH / run conda init if the option was selected (single-user installs only)
 {%- set pathflag = "--condabin" if initialize_conda == "condabin" else "--classic" %}
-if "%OPTION_INITIALIZE_CONDA%"=="1" (
+if "%OPTION_INITIALIZE_CONDA%"=="1" if exist "%BASE_PATH%\.nonadmin" (
     {{ tee("Adding to PATH...") }}
     "%CONDA_EXE%" constructor windows path --prepend=user --prefix "%BASE_PATH%" {{ pathflag }} --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )

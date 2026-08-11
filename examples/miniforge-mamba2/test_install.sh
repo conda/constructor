@@ -41,24 +41,35 @@ if [ "$LIBMAMBAPY_VERSION" != "$EXPECTED_MAMBA_VERSION" ]; then
     exit 1
 fi
 
+# mamba occasionally fails to load libmamba.2.dylib on macOS CI right after
+# install (transient dyld resolution issue), so retry once before giving up.
+run_mamba() {
+    if mamba "$@"; then
+        return 0
+    fi
+    echo "mamba $* failed, retrying..." >&2
+    sleep 2
+    mamba "$@"
+}
+
 echo "+ Testing mamba 2 installation"
-mamba --version | grep -q "$EXPECTED_MAMBA_VERSION"
+run_mamba --version | grep -q "$EXPECTED_MAMBA_VERSION"
 
 echo "+ mamba info"
-mamba info
+run_mamba info
 
 echo "+ mamba config sources"
-mamba config sources
+run_mamba config sources
 
 echo "+ mamba config list"
-mamba config list
+run_mamba config list
 
 echo "+ Testing mamba 2 version"
-mamba info --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert info['mamba version'] == '$EXPECTED_MAMBA_VERSION', info"
+run_mamba info --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert info['mamba version'] == '$EXPECTED_MAMBA_VERSION', info"
 
 echo "+ Testing libmambapy 2 version"
 python -c "import libmambapy; assert libmambapy.__version__ == '$EXPECTED_MAMBA_VERSION', f'libmamba version got: {libmambapy.__version__}; expected: ${EXPECTED_MAMBA_VERSION}'"
 
 echo "+ Testing mamba channels"
-mamba info --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert any('conda-forge' in c for c in info['channels']), info"
+run_mamba info --json | python -c "import sys, json; info = json.loads(sys.stdin.read()); assert any('conda-forge' in c for c in info['channels']), info"
 echo "  OK"

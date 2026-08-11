@@ -32,12 +32,12 @@ defaults:
     shell: bash -el {0}
 jobs:
   tests:
-    name: ${{ matrix.os }}, Python ${{ matrix.python-version }}, ${{ matrix.conda-standalone }}
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.config.os }}, Python ${{ matrix.config.python-version }}, ${{ matrix.config.conda-standalone }}, group ${{ matrix.split-group }}
+    runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        config:
           # UBUNTU
           - os: ubuntu-latest
             python-version: "3.10"
@@ -74,28 +74,28 @@ jobs:
             conda-standalone: conda-standalone
           - os: windows-2022
             python-version: "3.12"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-nightly
+            conda-standalone: conda-standalone-nightly  # micromamba disabled
           - os: windows-2022
             python-version: "3.13"
-            # conda-standalone: micromamba
-            conda-standalone: conda-standalone-onedir
-
+            conda-standalone: conda-standalone-onedir  # micromamba disabled
+        split-group: [1, 2, 3]
     env:
       PYTHONUNBUFFERED: "1"
+      # Keep in sync with split-group array above (to avoid hardcoding '3')
+      SPLIT_COUNT: "3"
     steps:
       - name: Retrieve the source code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
           activate-environment: constructor-dev
           environment-file: dev/environment.yml
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.config.python-version }}
           miniconda-version: latest
       - name: Install AzureSignTool
-        if: startswith(matrix.os, 'windows')
+        if: startswith(matrix.config.os, 'windows')
         run: dotnet.exe tool install --global AzureSignTool
         shell: pwsh
       - name: Supply extra dependencies and install constructor
@@ -110,7 +110,7 @@ jobs:
           pip install -e . --no-deps --no-build-isolation
       - name: Set up conda executable
         run: |
-          if [[ "${{ matrix.conda-standalone }}" == "micromamba" ]]; then
+          if [[ "${{ matrix.config.conda-standalone }}" == "micromamba" ]]; then
             # Pin to <2.6 due to cache regression: https://github.com/mamba-org/mamba/issues/4250
             conda create -yqp "${{ runner.temp }}/micromamba" -c conda-forge "micromamba<2.6"
             if [[ "${{ runner.os }}" == "Windows" ]]; then
@@ -118,10 +118,10 @@ jobs:
             else
               echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/micromamba/bin/micromamba" >> $GITHUB_ENV
             fi
-          elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-nightly" ]]; then
+          elif [[ "${{ matrix.config.conda-standalone }}" == "conda-standalone-nightly" ]]; then
             conda create -yqp "${{ runner.temp }}/conda-standalone-nightly" -c conda-canary/label/dev "conda-standalone=*=*single*"
             echo "CONSTRUCTOR_CONDA_EXE=${{ runner.temp }}/conda-standalone-nightly/standalone_conda/conda.exe" >> $GITHUB_ENV
-          elif [[ "${{ matrix.conda-standalone }}" == "conda-standalone-onedir" ]]; then
+          elif [[ "${{ matrix.config.conda-standalone }}" == "conda-standalone-onedir" ]]; then
             # Request a version newer than 25.1.1 due to an issue with newer versions getting deprioritized
             # because they are built with 'track_features'
             conda create -yqp "${{ runner.temp }}/conda-standalone-onedir" -c conda-canary/label/dev "conda-standalone>25.1.1=*onedir*"
@@ -154,12 +154,12 @@ jobs:
           AZURE_SIGNTOOL_KEY_VAULT_SECRET: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_SECRET }}
           AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_TENANT_ID }}
           AZURE_SIGNTOOL_KEY_VAULT_URL: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_URL }}
-          CONSTRUCTOR_EXAMPLES_KEEP_ARTIFACTS: "${{ runner.temp }}/examples_artifacts"
           CONSTRUCTOR_SIGNTOOL_PATH: "C:/Program Files (x86)/Windows Kits/10/bin/10.0.26100.0/x86/signtool.exe"
           CONSTRUCTOR_VERBOSE: 0
         run: |
           rm -rf coverage.json
-          pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py
+          pytest -ra -vvv --cov=constructor --cov-branch tests/test_examples.py \
+            --splits $SPLIT_COUNT --group ${{ matrix.split-group }}
           coverage run --branch --append -m constructor -V
           coverage json
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
@@ -167,18 +167,11 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: integration
       - name: Check docs and schema are up-to-date
-        if: matrix.check-docs-schema
+        if: matrix.config.check-docs-schema
         run: |
           python scripts/make_docs.py
           python constructor/_schema.py
           git diff --exit-code
-      - name: Upload the example installers as artifacts
-        if: github.event_name == 'pull_request' && matrix.python-version == '3.10'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: installers-${{ runner.os }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}
-          path: "${{ runner.temp }}/examples_artifacts"
-          retention-days: 7
 
   report:
     name: Report failures
@@ -187,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Retrieve the source code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Report failures
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
@@ -223,21 +216,20 @@ jobs:
     steps:
       # Clean checkout of specific git ref needed for package metadata version
       # which needs env vars GIT_DESCRIBE_TAG and GIT_BUILD_STR:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.ref }}
           clean: true
           fetch-depth: 0
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       - name: Build Python sdist and wheel
         run: |
           python -m pip install build
           python -m build --sdist --wheel . --outdir dist
 
       - name: Create and upload canary build
-        uses: conda/actions/canary-release@7f6830b1428a9bd47f0b068892c77eae95207037 # v26.1.0
-        if: github.ref_name == 'main' || startsWith(github.ref_name, 'feature/')
+        uses: conda/actions/canary-release@0f4ec1506e74c12799813dc66e613a39077ea864 # v26.7.0
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}
@@ -245,3 +237,4 @@ jobs:
           anaconda-org-label: ${{ github.ref_name == 'main' && 'dev' || format('{0}-{1}', github.event.repository.name, github.ref_name) }}
           anaconda-org-token: ${{ secrets.ANACONDA_ORG_CONDA_CANARY_TOKEN }}
           conda-build-arguments: '--override-channels -c conda-forge -c defaults'
+          upload: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'feature/') }}

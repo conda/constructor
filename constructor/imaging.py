@@ -11,9 +11,12 @@ Utilities to generate images out of text, used in GUI installers as logo replace
 import sys
 from io import BytesIO
 from os.path import dirname, join
+from pathlib import Path
 from random import randint
 
 from PIL import Image, ImageDraw, ImageFont
+
+from ._schema import InstallerTypes
 
 ttf_path = join(dirname(__file__), "ttf", "Vera.ttf")
 with open(ttf_path, "rb") as f:
@@ -124,18 +127,18 @@ def _resize_for_msi_welcome(image_path):
     return canvas
 
 
-def write_images(info, dir_path, installer_type="exe"):
-    if installer_type == "exe":
+def write_images(info: dict, dir_path: Path, installer_type: InstallerTypes = InstallerTypes.EXE):
+    if installer_type == InstallerTypes.EXE:
         instructions = [
             ("welcome", welcome_size, mk_welcome_image, ".bmp"),
             ("header", header_size, mk_header_image, ".bmp"),
             ("icon", icon_size, mk_icon_image, ".ico"),
         ]
-    elif installer_type == "pkg":
+    elif installer_type == InstallerTypes.PKG:
         instructions = [
             ("welcome", welcome_size_osx, mk_welcome_image_osx, ".png"),
         ]
-    elif installer_type == "msi":
+    elif installer_type == InstallerTypes.MSI:
         # MSI uses WiX defaults; user-provided images handled separately below
         instructions = []
     else:
@@ -155,7 +158,7 @@ def write_images(info, dir_path, installer_type="exe"):
         im.save(join(dir_path, name + ext))
 
     # MSI: handle custom images if provided (no auto-generation)
-    if installer_type == "msi":
+    if installer_type == InstallerTypes.MSI:
         if info.get("welcome_image"):
             im = _resize_for_msi_welcome(info["welcome_image"])
             assert im.size == welcome_size_msi

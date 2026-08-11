@@ -23,6 +23,7 @@ from tempfile import TemporaryDirectory
 from textwrap import dedent
 
 from . import __version__
+from ._schema import InstallerTypes
 from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
@@ -30,6 +31,7 @@ from .construct import SCHEMA_PATH, ns_platform
 from .construct import parse as construct_parse
 from .construct import render as construct_render
 from .construct import verify as construct_verify
+from .exceptions import InvalidInstallerTypeError
 from .fcp import main as fcp_main
 from .utils import (
     StandaloneExe,
@@ -46,44 +48,58 @@ logger = logging.getLogger(__name__)
 
 
 def get_installer_type(info: dict):
+    """Return the installer type(s) to build for the given platform.
+
+    Raises
+    ------
+    InvalidInstallerTypeError
+        If the installer type is not valid for the target platform.
+    """
     osname, unused_arch = info["_platform"].split("-")
 
-    os_allowed = {"linux": ("sh",), "osx": ("sh", "pkg"), "win": ("exe", "msi")}
-    all_allowed = set(sum(os_allowed.values(), ("all", "docker")))
+    os_allowed = {
+        "linux": (InstallerTypes.SH,),
+        "osx": (InstallerTypes.SH, InstallerTypes.PKG),
+        "win": (InstallerTypes.EXE, InstallerTypes.MSI),
+    }
+    all_allowed = set(sum(os_allowed.values(), (InstallerTypes.ALL, InstallerTypes.DOCKER)))
 
     itype = info.get("installer_type")
 
     if not itype:
         return os_allowed[osname][:1]
-    elif itype == "all":
+    elif itype == InstallerTypes.ALL:
         return os_allowed[osname]
     elif isinstance(itype, (list, tuple)):
         # Handle list of installer types, e.g. [exe, msi]
         for t in itype:
             if t not in all_allowed:
                 all_allowed_str = ", ".join(sorted(all_allowed))
-                sys.exit("Error: invalid installer type '%s'; allowed: %s" % (t, all_allowed_str))
+                raise InvalidInstallerTypeError(
+                    f"invalid installer type '{t}'; allowed: {all_allowed_str}"
+                )
             if t not in os_allowed[osname]:
                 os_allowed_str = ", ".join(sorted(os_allowed[osname]))
-                sys.exit(
-                    "Error: invalid installer type '%s' for %s; allowed: %s"
-                    % (t, osname, os_allowed_str)
+                raise InvalidInstallerTypeError(
+                    f"invalid installer type '{t}' for {osname}; allowed: {os_allowed_str}"
                 )
         return tuple(itype)
     elif itype not in all_allowed:
-        all_allowed = ", ".join(sorted(all_allowed))
-        sys.exit("Error: invalid installer type '%s'; allowed: %s" % (itype, all_allowed))
-    elif itype == "docker":
+        all_allowed_str = ", ".join(sorted(all_allowed))
+        raise InvalidInstallerTypeError(
+            f"invalid installer type '{itype}'; allowed: {all_allowed_str}"
+        )
+    elif itype == InstallerTypes.DOCKER:
         if osname != "linux":
-            sys.exit(
-                "Error: Docker features are only supported for Linux target platforms. "
+            raise InvalidInstallerTypeError(
+                "Docker features are only supported for Linux target platforms. "
                 "Use --platform linux-ARCH to build a Docker artifact."
             )
-        return ("sh", "docker")
+        return (InstallerTypes.SH, InstallerTypes.DOCKER)
     elif itype not in os_allowed[osname]:
-        os_allowed = ", ".join(sorted(os_allowed[osname]))
-        sys.exit(
-            "Error: invalid installer type '%s' for %s; allowed: %s" % (itype, osname, os_allowed)
+        os_allowed_str = ", ".join(sorted(os_allowed[osname]))
+        raise InvalidInstallerTypeError(
+            f"invalid installer type '{itype}' for {osname}; allowed: {os_allowed_str}"
         )
     else:
         return (itype,)
@@ -99,8 +115,8 @@ def get_output_filename(info: dict) -> str:
     os_map = {"linux": "Linux", "osx": "MacOSX", "win": "Windows"}
     arch_name_map = {"64": "x86_64", "32": "x86"}
     ext = info["installer_type"]
-    if ext == "docker":
-        ext = "sh"
+    if ext == InstallerTypes.DOCKER:
+        ext = InstallerTypes.SH
     return "%s-%s-%s.%s" % (
         "%(name)s-%(version)s" % info,
         os_map.get(osname, osname),
@@ -211,6 +227,7 @@ def main_build(
     conda_exe: str = "conda.exe",
     config_filename: str = "construct.yaml",
     debug: bool = False,
+    installer_type: str | None = None,
 ):
     logger.info("platform: %s", platform)
     if not os.path.isfile(conda_exe):
@@ -231,9 +248,14 @@ def main_build(
     info["_download_dir"] = join(cache_dir, platform)
     info["_conda_exe"] = abspath(conda_exe)
     info["_debug"] = debug
-    itypes = get_installer_type(info)
+    if installer_type:
+        info["installer_type"] = installer_type
+    try:
+        itypes = get_installer_type(info)
+    except InvalidInstallerTypeError as e:
+        sys.exit(f"Error: {e}")
 
-    if "docker" in itypes:
+    if InstallerTypes.DOCKER in itypes:
         if not info.get("docker_base_image"):
             sys.exit(
                 "Error: docker_base_image is required when building Docker artifacts. "
@@ -245,8 +267,11 @@ def main_build(
                 "Install Docker Buildx to proceed, or remove `docker_image_format` to "
                 "generate the Dockerfile without building the portable image."
             )
-
-    if platform != cc_platform and "pkg" in itypes and not cc_platform.startswith("osx-"):
+    if (
+        platform != cc_platform
+        and InstallerTypes.PKG in itypes
+        and not cc_platform.startswith("osx-")
+    ):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
 
     exe_type, exe_version = identify_conda_exe(info.get("_conda_exe"))
@@ -377,7 +402,7 @@ def main_build(
         info["_conda_exe_type"],
     )
 
-    if "pkg" in itypes:
+    if InstallerTypes.PKG in itypes:
         if (domains := info.get("pkg_domains")) is not None:
             domains = {key: str(val).lower() for key, val in domains.items()}
             if str(domains.get("enable_localSystem", "")).lower() == "true" and not info.get(
@@ -431,26 +456,26 @@ def main_build(
     os.makedirs(output_dir, exist_ok=True)
     info_dicts = []
     for itype in itypes:
-        if itype == "sh":
+        if itype == InstallerTypes.SH:
             from .shar import create as shar_create
 
             create = shar_create
-        elif itype == "pkg":
+        elif itype == InstallerTypes.PKG:
             from .osxpkg import create as osxpkg_create
 
             create = osxpkg_create
-        elif itype == "exe":
+        elif itype == InstallerTypes.EXE:
             from .winexe import create as winexe_create
 
             create = winexe_create
-        elif itype == "msi":
+        elif itype == InstallerTypes.MSI:
             logger.warning(
                 "MSI installer support is experimental and may change in future releases."
             )
             from .briefcase import create as briefcase_create
 
             create = briefcase_create
-        elif itype == "docker":
+        elif itype == InstallerTypes.DOCKER:
             from .docker_build import create as docker_create
 
             create = docker_create
@@ -460,7 +485,7 @@ def main_build(
         create(info, verbose=verbose)
         if len(itypes) > 1:
             info_dicts.append(info.copy())
-        if itype == "docker":
+        if itype == InstallerTypes.DOCKER:
             logger.info(
                 "Docker output complete. Docker directory: '%s'",
                 Path(info["_output_dir"]),
@@ -619,6 +644,16 @@ def main(argv=None):
     )
 
     p.add_argument(
+        "--installer-type",
+        help="Build only this installer type (sh, pkg, exe, msi). "
+        "Primarily for testing; overrides 'installer_type' from the config.",
+        action="store",
+        metavar="TYPE",
+        dest="installer_type",
+        choices=[str(t) for t in InstallerTypes],
+    )
+
+    p.add_argument(
         "dir_path",
         help="directory containing construct.yaml",
         action="store",
@@ -690,6 +725,7 @@ https://github.com/conda/conda-standalone/releases""".lstrip()
         conda_exe=conda_exe,
         config_filename=args.config_filename,
         debug=args.debug,
+        installer_type=args.installer_type,
     )
 
 
