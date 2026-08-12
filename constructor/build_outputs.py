@@ -105,7 +105,9 @@ def dump_hash(info, algorithm=None):
         return ""
 
     if isinstance(algorithm, str):
-        algorithm = [algorithm]
+        algorithms = [algorithm]
+    else:
+        algorithms = algorithm
 
     installers = (
         [Path(info["_outpath"])]
@@ -113,6 +115,7 @@ def dump_hash(info, algorithm=None):
         else [Path(path) for path in info["_outpath"]]
     )
 
+    outpaths = []
     for installer in installers:
         filehashes = info["_installer_hashes"][str(installer)]
 
@@ -135,12 +138,18 @@ def dump_info(info):
         else:
             return repr(obj)
 
-    installer = Path(info["_outpath"])
+    installers = (
+        [Path(info["_outpath"])]
+        if isinstance(info["_outpath"], str)
+        else [Path(path) for path in info["_outpath"]]
+    )
 
-    output_info = info.copy()
-    output_info.pop("_installer_hashes", None)
-    output_info["_installer_hashes"] = info["_installer_hashes"][str(installer)]
-    
+    if info.get("_installer_hashes"):
+        info["hash"] = {
+            p.name: hashes for p, hashes in 
+            ((p, info["_installer_hashes"][str(p)]) for p in installers)
+        }
+
     # Packages installed in the environment running constructor.
     info["_build_environment_packages"] = get_build_env_records()
     outpath = os.path.join(info["_output_dir"], "info.json")
