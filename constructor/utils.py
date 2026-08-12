@@ -78,21 +78,22 @@ def fill_template(data, d, exceptions=[]):
 
 def hash_files(paths, algorithms):
     """
-    Calculate one or more hashes for each file in a single pass.
+    Calculate one or more hashes for the given files in a single pass.
     
     Parameters
     ----------
     paths 
-        A path or iterable of paths to hash
+        An iterable of paths to hash.
     algorithms
         An iterable of hashlib algorithm names, such as ``md5`` or ``sha256``
 
     Returns
     -------
-    dict[str, dict[str, str]]
-        A mapping of file paths to algorithm names and hexidecimal digest values.
+    dict[str, str]
+        A mapping of algorithm names to digest values.
     """
-    algorithms = set(algorithms)
+    if isinstance(algorithms, str):
+        algorithms = [algorithms]
 
     invalid = algorithms.difference(hashlib.algorithms_available)
     if invalid:
@@ -100,25 +101,22 @@ def hash_files(paths, algorithms):
 
     BUFFER_SIZE = 65536
 
-    if isinstance(paths, (str, Path)):
-        paths = [paths]
+    hashes = {algo: hashlib.new(algo) for algo in algorithms}
 
-    checksums = {}
-    
     for path in paths:
-        path = Path(path)
-        filehashes = {algo: hashlib.new(algo) for algo in algorithms}
-        with path.open("rb") as f:
-            while buffer := f.read(BUFFER_SIZE):
+        with open(path, "rb") as f:
+            while True:
+                chunk = f.read(BUFFER_SIZE)
+                if not chunk:
+                    break
+
                 for filehash in filehashes.values():
-                    filehash.update(buffer)
+                    filehash.update(chunk)
 
-        checksums[str(path)] = {
-            algorithm: filehash.hexdigest() 
-            for algorithm, filehash in filehashes.items()
-        }
-
-    return checksums
+    return {
+        algorithm: filehash.hexdigest() 
+        for algorithm, filehash in hashes.items()
+    }
 
 
 def make_VIProductVersion(version):
