@@ -71,7 +71,7 @@ def process_build_outputs(info: dict):
 
     if algorithms:
         info["_installer_hashes"] = hash_files(
-            info["_outpath"],
+            [info["_outpath"]],
             algorithms,
         )
 
@@ -109,7 +109,7 @@ def dump_hash(info: dict, algorithm: str | None = None):
         outpath = Path(f"{installer}.{algo}")
 
         with open(outpath, "w", newline="\n") as f:
-            f.write(f"{info['_installer_hashes'][algo]}  {installer_name}\n")
+            f.write(f"{info['_installer_hashes'][algo]}  {installer.name}\n")
 
         outpaths.append(str(outpath.absolute()))
 

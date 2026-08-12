@@ -28,26 +28,26 @@ TEST_FILES = {
     ),
 )
 def test_hash_dump(tmp_path, algorithm, context):
-    info = {"_outpath": [], "_installer_hashes": {}}
     for file, data in TEST_FILES.items():
         testfile = tmp_path / file
         testfile.write_text(data["content"])
-        info["_outpath"].append(str(testfile))
-        info["_installer_hashes"][str(testfile)] = {algo: data[algo] for algo in ("sha256", "md5")}
+    info = {
+        "_outpath": str(testfile),
+        "_installer_hashes": {algo: data[algo] for algo in ("sha256", "md5")},
+    }
     with context:
         dump_hash(info, algorithm=algorithm)
         if isinstance(algorithm, str):
             algorithm = [algorithm]
-        for file in info["_outpath"]:
-            for algo in algorithm:
-                hashfile = Path(f"{file}.{algo}")
-                assert hashfile.exists()
-                with open(hashfile, newline="") as f:
-                    content = f.read()
-                assert "\r" not in content
-                filehash, filename = content.strip().split()
-                assert filename == Path(file).name
-                assert filehash == TEST_FILES[filename][algo]
+        for algo in algorithm:
+            hashfile = Path(f"{testfile}.{algo}")
+            assert hashfile.exists()
+            with open(hashfile, newline="") as f:
+                content = f.read()
+            assert "\r" not in content
+            filehash, filename = content.strip().split()
+            assert filename == Path(file).name
+            assert filehash == TEST_FILES[filename][algo]
 
 
 @pytest.mark.parametrize(
