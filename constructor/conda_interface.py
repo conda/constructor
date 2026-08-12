@@ -168,8 +168,9 @@ if conda_interface_type == "conda":
                 data = deepcopy(full_repodata[original_key][original_package])
                 pkg_fn = join(info["_download_dir"], package)
                 data["size"] = os.stat(pkg_fn).st_size
-                data["sha256"] = hash_files([pkg_fn], algorithm="sha256")
-                data["md5"] = hash_files([pkg_fn])
+                hashes = hash_files([pkg_fn], ["sha256", "md5"])
+                data["sha256"] = hashes["sha256"]
+                data["md5"] = hashes["md5"]
                 used_repodata[key][package] = data
 
         # In conda <23.1, the first line of the JSON should contain cache metadata
