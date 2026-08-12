@@ -2027,6 +2027,16 @@ def test_output_files(tmp_path, installer_type):
         assert len(_records) > 0, f"Record for {env} is empty."
         assert isinstance(_records[0], dict), f"Record for {env} is not serialized."
 
+    expected_hashes = {
+        "sha256": hashlib.sha256((root_path / installer.name).read_bytes()).hexdigest(),
+        "md5": hashlib.md5((root_path / installer.name).read_bytes()).hexdigest(),
+    }
+    assert info_json.get("_installer_hashes") == expected_hashes
+    for algorithm, expected_hash in expected_hashes.items():
+        hash_file = root_path / f"{installer.name}.{algorithm}"
+        assert hash_file.exists()
+        assert hash_file.read_text() == f"{expected_hash}  {installer.name}\n"
+
 
 @pytest.mark.parametrize(
     "installer_type", installer_types_for_example(_example_path("regressions"))
