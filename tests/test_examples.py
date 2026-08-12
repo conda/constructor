@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import getpass
 import json
 import os
@@ -34,7 +35,6 @@ from constructor.utils import (
     format_conda_exe_name,
     has_docker_buildx,
     identify_conda_exe,
-    hash_files,
 )
 
 if TYPE_CHECKING:

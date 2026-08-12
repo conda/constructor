@@ -79,10 +79,10 @@ def fill_template(data, d, exceptions=[]):
 def hash_files(paths: list[Path], algorithms: list[str] | str) -> dict[str, str]:
     """
     Calculate one or more hashes for the given files in a single pass.
-    
+
     Parameters
     ----------
-    paths 
+    paths
         An iterable of paths to hash.
     algorithms
         An iterable of hashlib algorithm names, such as ``md5`` or ``sha256``
@@ -111,13 +111,10 @@ def hash_files(paths: list[Path], algorithms: list[str] | str) -> dict[str, str]
                 if not chunk:
                     break
 
-                for filehash in filehashes.values():
+                for filehash in hashes.values():
                     filehash.update(chunk)
 
-    return {
-        algorithm: filehash.hexdigest() 
-        for algorithm, filehash in hashes.items()
-    }
+    return {algorithm: filehash.hexdigest() for algorithm, filehash in hashes.items()}
 
 
 def make_VIProductVersion(version):

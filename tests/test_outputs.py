@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from constructor.build_outputs import dump_hash, _needed_hash_algorithms
+from constructor.build_outputs import _needed_hash_algorithms, dump_hash
 
 TEST_FILES = {
     "test.txt": {
@@ -55,7 +55,9 @@ def test_hash_dump(tmp_path, algorithm, context):
     (
         pytest.param([], set(), id="neither info.json nor hash request"),
         pytest.param(["info.json"], {"sha256"}, id="info.json only"),
-        pytest.param([{"hash": {"algorithm": "md5"}}], {"md5"}, id="no info.json, only md5 requested"),
+        pytest.param(
+            [{"hash": {"algorithm": "md5"}}], {"md5"}, id="no info.json, only md5 requested"
+        ),
         pytest.param(
             ["info.json", {"hash": {"algorithm": "md5"}}],
             {"sha256", "md5"},

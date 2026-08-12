@@ -4,7 +4,6 @@ Additional artifacts to be produced after building the installer.
 Update documentation in `construct.py` if any changes are made.
 """
 
-import hashlib
 import json
 import logging
 import os
@@ -45,6 +44,7 @@ def _validate_output(output):
     if len(output) > 1:
         raise ValueError("'build_outputs' dicts can only have one key.")
     return {key: (value or {}) for (key, value) in output.items()}
+
 
 def _needed_hash_algorithms(info: dict) -> set[str]:
     """Return hash algorithms required by the requested build outputs."""
@@ -87,7 +87,7 @@ def process_build_outputs(info: dict):
                 f"Available keys: {tuple(OUTPUT_HANDLERS.keys())}"
             )
 
-        outpath = handler(info, **config)''
+        outpath = handler(info, **config)
         if outpath:
             logger.info("build_outputs: '%s' created '%s'.", name, outpath)
 

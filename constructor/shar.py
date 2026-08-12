@@ -89,7 +89,10 @@ def get_header(conda_exec, tarball, info):
     variables["installer_name"] = name
     variables["installer_version"] = info["version"]
     variables["installer_platform"] = info["_platform"]
-    variables["installer_md5"] = hash_files([conda_exec, *info["_internal_conda_files"], tarball], "md5",)["md5"]
+    variables["installer_md5"] = hash_files(
+        [conda_exec, *info["_internal_conda_files"], tarball],
+        "md5",
+    )["md5"]
     variables["default_prefix"] = info.get("default_prefix", "${HOME:-/opt}/%s" % name.lower())
     variables["first_payload_size"] = getsize(conda_exec)
     variables["second_payload_size"] = getsize(tarball)

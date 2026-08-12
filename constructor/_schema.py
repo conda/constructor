@@ -873,9 +873,7 @@ class ConstructorConfiguration(BaseModel):
             The `hash` output continues to create separate checksum files.
 
             Allowed strings / keys: {}.
-            """.format(
-                ", ".join(f"`{member.value}`" for member in BuildOutputs)
-            )
+            """.format(", ".join(f"`{member.value}`" for member in BuildOutputs))
         ),
     )
     uninstall_with_conda_exe: bool | None = None
