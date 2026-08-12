@@ -76,7 +76,7 @@ def fill_template(data, d, exceptions=[]):
     return pat.sub(replace, data)
 
 
-def hash_files(paths, algorithms):
+def hash_files(paths: list[Path], algorithms: list[str] | str) -> dict[str, str]:
     """
     Calculate one or more hashes for the given files in a single pass.
     
@@ -95,6 +95,7 @@ def hash_files(paths, algorithms):
     if isinstance(algorithms, str):
         algorithms = [algorithms]
 
+    algorithms = set(algorithms)
     invalid = algorithms.difference(hashlib.algorithms_available)
     if invalid:
         raise ValueError(f"Invalid algorithm: {', '.join(sorted(invalid))}")

@@ -53,7 +53,7 @@ def test_hash_dump(tmp_path, algorithm, context):
 @pytest.mark.parametrize(
     "build_outputs, expected_algorithms",
     (
-        pytest.param("no hashes", set(), id="neither info.json nor hash request"),
+        pytest.param([], set(), id="neither info.json nor hash request"),
         pytest.param(["info.json"], {"sha256"}, id="info.json only"),
         pytest.param([{"hash": {"algorithm": "md5"}}], {"md5"}, id="no info.json, only md5 requested"),
         pytest.param(

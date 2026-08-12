@@ -46,18 +46,18 @@ def _validate_output(output):
         raise ValueError("'build_outputs' dicts can only have one key.")
     return {key: (value or {}) for (key, value) in output.items()}
 
-def _needed_hash_algorithms(info):
+def _needed_hash_algorithms(info: dict) -> set[str]:
     """Return hash algorithms required by the requested build outputs."""
     algorithms = set()
 
     for output in info.get("build_outputs", ()):
-        name, config = next(iter(_validate_output(output).items()))
+        output = _validate_output(output)
+        name, config = output.popitem()
 
         if name == "info.json":
             algorithms.add("sha256")
         elif name == "hash":
             algorithm = config.get("algorithm")
-
             if isinstance(algorithm, str):
                 algorithms.add(algorithm)
             elif algorithm:
@@ -66,17 +66,7 @@ def _needed_hash_algorithms(info):
     return algorithms
 
 
-def _installer_paths(info):
-    """Return generated installer paths as Path objects."""
-    outpath = info["_outpath"]
-
-    if isinstance(outpath, str):
-        return [Path(outpath)]
-
-    return [Path(path) for path in outpath]
-
-
-def process_build_outputs(info):
+def process_build_outputs(info: dict):
     algorithms = _needed_hash_algorithms(info)
 
     if algorithms:
@@ -87,19 +77,22 @@ def process_build_outputs(info):
 
     for output in info.get("build_outputs", ()):
         output = _validate_output(output)
+
         name, config = output.popitem()
+
         handler = OUTPUT_HANDLERS.get(name)
         if not handler:
             raise ValueError(
                 f"'build_outputs' key {name} is not recognized! "
                 f"Available keys: {tuple(OUTPUT_HANDLERS.keys())}"
             )
-        outpath = handler(info, **config)
+
+        outpath = handler(info, **config)''
         if outpath:
             logger.info("build_outputs: '%s' created '%s'.", name, outpath)
 
 
-def dump_hash(info, algorithm=None):
+def dump_hash(info: dict, algorithm: str | None = None):
     if not algorithm:
         logger.warning("`hash` requires an algorithm. No hash files will be output.")
         return ""
@@ -109,23 +102,17 @@ def dump_hash(info, algorithm=None):
     else:
         algorithms = algorithm
 
-    installers = (
-        [Path(info["_outpath"])]
-        if isinstance(info["_outpath"], str)
-        else [Path(path) for path in info["_outpath"]]
-    )
-
+    installer = Path(info["_outpath"])
     outpaths = []
-    for installer in installers:
-        filehashes = info["_installer_hashes"][str(installer)]
 
-        for algo in algorithms:
-            outpath = Path(f"{installer}.{algo}")
+    for algo in algorithms:
+        outpath = Path(f"{installer}.{algo}")
 
-            with open(outpath, "w", newline="\n") as f:
-                f.write(f"{filehashes[algo]}  {installer.name}\n")
+        with open(outpath, "w", newline="\n") as f:
+            f.write(f"{info['_installer_hashes'][algo]}  {installer.name}\n")
 
-            outpaths.append(str(outpath.absolute()))
+        outpaths.append(str(outpath.absolute()))
+
     return ", ".join(outpaths)
 
 
@@ -137,18 +124,6 @@ def dump_info(info):
             return obj.norm_version
         else:
             return repr(obj)
-
-    installers = (
-        [Path(info["_outpath"])]
-        if isinstance(info["_outpath"], str)
-        else [Path(path) for path in info["_outpath"]]
-    )
-
-    if info.get("_installer_hashes"):
-        info["hash"] = {
-            p.name: hashes for p, hashes in 
-            ((p, info["_installer_hashes"][str(p)]) for p in installers)
-        }
 
     # Packages installed in the environment running constructor.
     info["_build_environment_packages"] = get_build_env_records()
