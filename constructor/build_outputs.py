@@ -54,9 +54,9 @@ def _needed_hash_algorithms(info: dict) -> set[str]:
         output = _validate_output(output)
         name, config = output.popitem()
 
-        if name == "info.json":
+        if name == BuildOutputs.INFO_JSON:
             algorithms.add("sha256")
-        elif name == "hash":
+        elif name == BuildOutputs.HASH:
             algorithm = config.get("algorithm")
             if isinstance(algorithm, str):
                 algorithms.add(algorithm)
