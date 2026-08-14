@@ -22,7 +22,6 @@ TEST_FILES = {
 @pytest.mark.parametrize(
     "algorithm,context",
     (
-        pytest.param("not cached", pytest.raises(KeyError), id="invalid algorithm"),
         pytest.param("sha256", nullcontext(), id="string"),
         pytest.param(["sha256", "md5"], nullcontext(), id="list"),
     ),

@@ -6,6 +6,7 @@ from constructor.utils import (
     get_condarc_content,
     make_VIProductVersion,
     normalize_path,
+    hash_files,
 )
 
 
@@ -107,3 +108,15 @@ def test_get_condarc_content_returns_none():
     # write_condarc without channels should also return None
     info = {"write_condarc": True}
     assert get_condarc_content(info) is None
+
+
+def test_invalid_algorithm(tmp_path):
+    """Test that hash_files raises a ValueError for invalid algorithm names."""
+
+    path = tmp_path / "test.txt"
+    path.write_text("test string")
+    try:
+        hash_files([path], "bad_algorithm")
+        assert False, "Expected ValueError for invalid algorithm"
+    except ValueError as e:
+        assert "bad_algorithm" in str(e)

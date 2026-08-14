@@ -16,6 +16,7 @@ from conda.core.prefix_data import PrefixData, PrefixGraph
 from conda.exports import default_prefix
 
 from . import __version__
+from ._schema import BuildOutputs
 from .conda_interface import VersionOrder
 from .utils import hash_files
 

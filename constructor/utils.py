@@ -98,7 +98,7 @@ def hash_files(paths: list[Path], algorithms: list[str] | str) -> dict[str, str]
     algorithms = set(algorithms)
     invalid = algorithms.difference(hashlib.algorithms_available)
     if invalid:
-        raise ValueError(f"Invalid algorithm: {', '.join(sorted(invalid))}")
+        raise ValueError(f"Invalid algorithm(s): {', '.join(sorted(invalid))}")
 
     BUFFER_SIZE = 65536
 

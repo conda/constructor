@@ -857,21 +857,6 @@ class ConstructorConfiguration(BaseModel):
             Additional artifacts to be produced after building the installer.
             It expects either a list of strings or single-key dictionaries.
 
-            Requesting `info.json` adds an `_installer_hashes` property containing
-            the SHA256 digest of the generated installer. Hash algorithms requested
-            through a `hash` build output are also included in this property.
-
-            For example:
-
-            ```json
-            "_installer_hashes": {{
-              "sha256": "...",
-              "md5": "..."
-            }}
-            ```
-
-            The `hash` output continues to create separate checksum files.
-
             Allowed strings / keys: {}.
             """.format(", ".join(f"`{member.value}`" for member in BuildOutputs))
         ),

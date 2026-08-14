@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add installer hashes to `info.json` making it the single source of truth for installer checksums used in SBOM generation. (#1327)
+* Add installer hashes to `info.json` making it the single source of truth for installer checksums. (#1327)
 
 ### Bug fixes
 
