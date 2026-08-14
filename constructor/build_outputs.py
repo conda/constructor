@@ -107,10 +107,17 @@ def dump_hash(info: dict, algorithm: str | None = None):
     outpaths = []
 
     for algo in algorithms:
+        try:
+            filehash = info["_installer_hashes"][algo]
+        except KeyError:
+            raise RuntimeError(
+                f"Hash for algorithm '{algo}' not found. "
+                f"Available algorithms: {', '.join(info.get('_installer_hashes', {}).keys())}"
+            ) from None
         outpath = Path(f"{installer}.{algo}")
 
         with open(outpath, "w", newline="\n") as f:
-            f.write(f"{info['_installer_hashes'][algo]}  {installer.name}\n")
+            f.write(f"{filehash}  {installer.name}\n")
 
         outpaths.append(str(outpath.absolute()))
 
