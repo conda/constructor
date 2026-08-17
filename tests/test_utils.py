@@ -1,12 +1,14 @@
 from os import sep
 
+import pytest
+
 from constructor.utils import (
     bat_echo_esc,
     bat_env_var_esc,
     get_condarc_content,
+    hash_files,
     make_VIProductVersion,
     normalize_path,
-    hash_files,
 )
 
 
@@ -115,8 +117,5 @@ def test_invalid_algorithm(tmp_path):
 
     path = tmp_path / "test.txt"
     path.write_text("test string")
-    try:
+    with pytest.raises(ValueError, match="bad_algorithm"):
         hash_files([path], "bad_algorithm")
-        assert False, "Expected ValueError for invalid algorithm"
-    except ValueError as e:
-        assert "bad_algorithm" in str(e)
