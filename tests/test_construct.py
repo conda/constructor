@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from constructor.conda_interface import cc_platform
+from constructor.conda_interface import SUPPORTED_PLATFORMS, cc_platform
+from constructor.construct import ns_platform
 from constructor.construct import parse as construct_parse
 from constructor.construct import render as construct_render
 
@@ -110,3 +111,24 @@ def test_parse_error(tmp_path):
         construct_parse(construct_yaml_file, cc_platform)
     assert exc.value.code != 0
     assert "Unable to parse" in str(exc.getrepr())
+
+
+NS_PLATFORM_TRUE_FLAGS = {
+    "linux-64": {"linux", "linux64", "x86", "x86_64", "unix"},
+    "linux-aarch64": {"linux", "aarch64", "unix"},
+    "linux-ppc64le": {"linux", "ppc64le", "unix"},
+    "linux-s390x": {"linux", "s390x", "unix"},
+    "win-64": {"x86", "x86_64", "win", "win64"},
+    "win-arm64": {"win", "win_arm64"},
+    "osx-64": {"x86", "x86_64", "osx", "unix"},
+    "osx-arm64": {"arm64", "osx", "unix"},
+}
+
+
+@pytest.mark.parametrize("platform", SUPPORTED_PLATFORMS)
+def test_ns_platform(platform):
+    result = ns_platform(platform)
+    assert result
+    true_flags = NS_PLATFORM_TRUE_FLAGS[platform]
+    for flag, value in result.items():
+        assert value is (flag in true_flags), f"{platform}: expected {flag}={flag in true_flags}"

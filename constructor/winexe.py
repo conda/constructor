@@ -44,6 +44,15 @@ MAKENSIS_EXE = abspath(join(sys.prefix, "NSIS", "makensis.exe"))
 logger = logging.getLogger(__name__)
 
 
+def parse_arch(platform: str) -> tuple[str, int]:
+    """Return a tuple (display string, bit width) for a Windows platform string."""
+    arch = platform.split("-")[1]
+    if arch == "arm64":
+        return "ARM64", 64
+    bits = int(arch)
+    return "%d-bit" % bits, bits
+
+
 def read_nsi_tmpl(info) -> str:
     path = abspath(info.get("nsis_template", join(NSIS_DIR, "main.nsi.tmpl")))
     logger.info("Reading: %s", path)
@@ -155,7 +164,7 @@ def make_nsi(
         dists += env_info["_dists"]
     dists = list({dist: None for dist in dists})  # de-duplicate
 
-    arch = int(info["_platform"].split("-")[1])
+    display_arch, arch = parse_arch(info["_platform"])
     info["pre_install_desc"] = info.get("pre_install_desc", "")
     info["post_install_desc"] = info.get("post_install_desc", "")
 
@@ -164,7 +173,7 @@ def make_nsi(
         "installer_version": info["version"],
         "company": info.get("company", "Unknown, Inc."),
         "installer_platform": info["_platform"],
-        "arch": "%d-bit" % arch,
+        "arch": display_arch,
         "default_prefix": info.get("default_prefix", join("%USERPROFILE%", name.lower())),
         "default_prefix_domain_user": info.get(
             "default_prefix_domain_user", join("%LOCALAPPDATA%", name.lower())
@@ -413,17 +422,3 @@ def create(info, verbose=False):
 
     if not info.get("_debug"):
         shutil.rmtree(tmp_dir)
-
-
-if __name__ == "__main__":
-    make_nsi(
-        {
-            "name": "Maxi",
-            "version": "1.2",
-            "_platform": "win-64",
-            "_outpath": "dummy.exe",
-            "_download_dir": "dummy",
-            "_dists": ["python-2.7.9-0.tar.bz2", "vs2008_runtime-1.0-1.tar.bz2"],
-        },
-        ".",
-    )

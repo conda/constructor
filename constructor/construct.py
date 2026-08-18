@@ -52,6 +52,7 @@ def ns_platform(platform):
         win=p.startswith("win-"),
         win32=bool(p == "win-32"),
         win64=bool(p == "win-64"),
+        win_arm64=bool(p == "win-arm64"),
     )
 
 

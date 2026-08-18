@@ -129,7 +129,7 @@ def system_info():
         out["extra"] = platform.mac_ver()
     elif sys.platform.startswith("linux"):
         if conda_distro is not None:
-            out["extra"] = conda_distro.linux_distribution(full_distribution_name=False)
+            out["extra"] = (conda_distro.id(), conda_distro.version(), conda_distro.codename())
         elif hasattr(platform, "dist"):
             out["extra"] = platform.dist()
     elif sys.platform.startswith("win"):

@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Add `_build_environment_packages` to `info.json`, listing the packages (including pip-installed ones) present in the environment used to build the installer. (#1314)
+* Add `_build_environment_packages` to `info.json`, listing the packages (including pip-installed ones) present in the environment used to build the installer. (#1314, #1325)
 
 ### Bug fixes
 

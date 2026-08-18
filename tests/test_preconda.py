@@ -1,4 +1,8 @@
-from constructor.preconda import write_condarc
+import sys
+
+import pytest
+
+from constructor.preconda import system_info, write_condarc
 
 
 def test_write_condarc_with_condarc_dict(tmp_path):
@@ -56,3 +60,15 @@ def test_write_condarc_write_condarc_without_channels(tmp_path):
 
     condarc_file = tmp_path / ".condarc"
     assert not condarc_file.exists()
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux-only distro info")
+def test_system_info_includes_linux_distro():
+    """system_info() should report actual distro info on Linux. Previously conda_distro was imported from
+    the now-removed conda._vendor.distro, so the import silently failed and
+    'extra' was never set (see GitHub issue 1315)."""
+    import distro
+
+    info = system_info()
+
+    assert info["extra"] == (distro.id(), distro.version(), distro.codename())

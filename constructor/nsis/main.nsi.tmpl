@@ -658,12 +658,23 @@ Function .onInit
     # on whether it's a 32-bit or 64-bit installer
     SetRegView {{ BITS }}
 {%- if win64 %}
-    # If we're a 64-bit installer, make sure it's 64-bit Windows
-    ${IfNot} ${RunningX64}
+    # Make sure we're not on 32-bit or native ARM64 Windows (the latter would
+    # otherwise silently run this x64 installer under x64 emulation).
+    ${IfNot} ${IsNativeAMD64}
         MessageBox MB_OK|MB_ICONEXCLAMATION \
-            "This installer is for a 64-bit version for ${NAME}$\n\
-            but your system is 32-bit. Please use the 32-bit Windows$\n\
-            ${NAME} installer." \
+            "This installer is for the 64-bit (x86_64) version of ${NAME}$\n\
+            but your system is not x86_64. Please use the installer that$\n\
+            matches your system's architecture." \
+            /SD IDOK
+        Abort
+    ${EndIf}
+{%- elif win_arm64 %}
+    # Make sure we're actually on native ARM64 Windows.
+    ${IfNot} ${IsNativeARM64}
+        MessageBox MB_OK|MB_ICONEXCLAMATION \
+            "This installer is for the ARM64 version of ${NAME}$\n\
+            but your system is not ARM64. Please use the installer that$\n\
+            matches your system's architecture." \
             /SD IDOK
         Abort
     ${EndIf}

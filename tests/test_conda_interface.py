@@ -78,7 +78,8 @@ def test_get_build_env_records_with_explicit_prefix(tmp_path, patch_prefix_data,
 
     result = get_build_env_records(prefix=str(tmp_path))
 
-    assert sorted(rec.name for rec in result) == sorted(rec.name for rec in records)
+    assert sorted(rec["name"] for rec in result) == sorted(rec.name for rec in records)
+    assert all(isinstance(rec, dict) for rec in result)
 
 
 def test_get_build_env_records_defaults_to_active_environment(
@@ -92,7 +93,7 @@ def test_get_build_env_records_defaults_to_active_environment(
 
     result = get_build_env_records()
 
-    assert [rec.name for rec in result] == ["foobar"]
+    assert [rec["name"] for rec in result] == ["foobar"]
 
 
 def test_get_build_env_records_includes_pip_installed_packages(tmp_path):
@@ -124,4 +125,7 @@ def test_get_build_env_records_includes_pip_installed_packages(tmp_path):
 
     result = get_build_env_records(prefix=str(tmp_path))
 
-    assert sorted(rec.name for rec in result) == ["fakepkg", "python"]
+    assert sorted(rec["name"] for rec in result) == ["fakepkg", "python"]
+    python_rec = next(rec for rec in result if rec["name"] == "python")
+    assert "files" not in python_rec
+    assert "paths_data" not in python_rec

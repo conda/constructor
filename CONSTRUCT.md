@@ -744,6 +744,7 @@ The output filename will be:
 - `win`
 - `win32`
 - `win64`
+- `win_arm64`
 - `x86`
 - `x86_64`
 
@@ -755,5 +756,6 @@ If provided, this argument must be formated as `<platform>-<architecture>`, e.g.
 - `linux-ppc64le`
 - `linux-s390x`
 - `win-64`
+- `win-arm64`
 - `osx-64`
 - `osx-arm64`

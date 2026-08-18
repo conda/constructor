@@ -33,8 +33,21 @@ def get_build_env_records(prefix=None):
     """
     if prefix is None:
         prefix = default_prefix
+
+    # Define a set of keys that we don't need to include in info.json.
+    # The result of excluding these is a much smaller info.json (up to 70x).
+    to_exclude = (
+        "extracted_package_dir",
+        "files",
+        "link",
+        "package_tarball_full_path",
+        "paths_data",
+    )
     # interoperability=True also picks up pip-installed packages, not just conda ones.
-    return list(PrefixData(prefix, interoperability=True).iter_records())
+    prefix_records = PrefixData(prefix, interoperability=True).iter_records()
+    return [
+        {k: v for k, v in record.dump().items() if k not in to_exclude} for record in prefix_records
+    ]
 
 
 def _validate_output(output):

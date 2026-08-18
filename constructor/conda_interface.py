@@ -9,7 +9,6 @@ import json
 import os
 import sys
 from copy import deepcopy
-from itertools import chain
 from os.path import join
 
 from conda.gateways.disk import mkdir_p_sudo_safe
@@ -32,12 +31,13 @@ SUPPORTED_PLATFORMS = [
     "linux-ppc64le",
     "linux-s390x",
     "win-64",
+    "win-arm64",
     "osx-64",
     "osx-arm64",
 ]
 
 try:
-    from conda import __version__ as CONDA_INTERFACE_VERSION
+    from conda import __version__ as CONDA_INTERFACE_VERSION  # noqa
 
     conda_interface_type = "conda"
 except ImportError:
@@ -47,11 +47,6 @@ except ImportError:
 
 if conda_interface_type == "conda":
     # This import path has been stable since 2016
-    from conda.models.version import VersionOrder
-
-    _conda_version = VersionOrder(CONDA_INTERFACE_VERSION).version
-    # Flatten VersionOrder.version, skip epoch, and keep only major and minor
-    CONDA_MAJOR_MINOR = tuple(chain.from_iterable(_conda_version))[1:3]
 
     from conda.api import SubdirData  # noqa
     from conda.base.context import context as _conda_context
@@ -61,14 +56,15 @@ if conda_interface_type == "conda":
     from conda.core.package_cache_data import PackageCacheData as _PackageCacheData
     from conda.core.package_cache_data import ProgressiveFetchExtract as _ProgressiveFetchExtract
     from conda.core.prefix_data import PrefixData as _PrefixData
+    from conda.core.subdir_data import SubdirData as _SubdirData
     from conda.exports import MatchSpec as _MatchSpec
     from conda.exports import default_prefix as _default_prefix
     from conda.exports import download as _download
     from conda.gateways.disk.read import read_paths_json as _read_paths_json
-    from conda.models.channel import all_channel_urls as _all_channel_urls
+    from conda.models.channel import all_channel_urls as _all_channel_urls, Channel
     from conda.models.dist import Dist as _Dist
     from conda.models.prefix_graph import PrefixGraph as _PrefixGraph
-    from conda.models.version import VersionOrder
+    from conda.models.version import VersionOrder  # noqa
 
     try:
         from conda.models.records import PackageCacheRecord as _PackageCacheRecord
@@ -102,22 +98,13 @@ if conda_interface_type == "conda":
     distro = None
     if sys.platform.startswith("linux"):
         try:
-            from conda._vendor import distro  # noqa
+            import distro  # noqa: F401  # re-exported for use in preconda.py
         except ImportError:
             pass
 
     def get_repodata(url):
-        if CONDA_MAJOR_MINOR >= (23, 5):
-            from conda.core.subdir_data import SubdirData as _SubdirData
-            from conda.models.channel import Channel
-
-            subdir_data = _SubdirData(Channel(url))
-            raw_repodata_str, _ = subdir_data.repo_fetch.fetch_latest()
-        else:
-            # Backwards compatibility: for conda 4.6+
-            from conda.core.subdir_data import fetch_repodata_remote_request
-
-            raw_repodata_str = fetch_repodata_remote_request(url, None, None)
+        subdir_data = _SubdirData(Channel(url))
+        raw_repodata_str, _ = subdir_data.repo_fetch.fetch_latest()
 
         # noarch-only repos are valid. if the native subdir is not present,
         # we might get an empty repodata back. In that case, we need to add the minimal
