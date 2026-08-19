@@ -96,8 +96,8 @@ def get_header(conda_exec, tarball, info):
     variables["default_prefix"] = info.get("default_prefix", "${HOME:-/opt}/%s" % name.lower())
     variables["first_payload_size"] = getsize(conda_exec)
     variables["second_payload_size"] = getsize(tarball)
-    variables["conda_exe_payloads"] = info.get("_conda_exe_payloads", {})
-    variables["conda_exe_payloads_size"] = info.get("_conda_exe_payloads_size", 0)
+    variables["conda_exe_payloads"] = info["_conda_exe"].get("payloads", {})
+    variables["conda_exe_payloads_size"] = info["_conda_exe"].get("payloads_size", 0)
     variables["final_channels"] = get_final_channels(info)
     variables["conclusion_text"] = info.get("conclusion_text", "installation finished.")
     variables["pycache"] = "__pycache__"
