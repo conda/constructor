@@ -281,8 +281,7 @@ def main_build(
         exe_version = Version(exe_version)
     info["_conda_exe"]["type"] = exe_type
     info["_conda_exe"]["version"] = exe_version
-    info["_conda_exe"]["SHA256"] = hash_files([Path(exe_path)], "sha256")["sha256"],
-    }
+    info["_conda_exe"]["SHA256"] = (hash_files([Path(exe_path)], "sha256")["sha256"],)
     if osname == "win" and exe_type == StandaloneExe.MAMBA:
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
