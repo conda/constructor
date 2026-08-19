@@ -406,7 +406,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     variables["script_env_variables"] = info.get("script_env_variables", {})
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
-    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"])
+    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"]["path"])
 
     data = render_template(data, **variables)
 
@@ -636,8 +636,8 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    exe_name = format_conda_exe_name(info["_conda_exe"])
-    copy_conda_exe(prefix, exe_name, info["_conda_exe"])
+    exe_name = format_conda_exe_name(info["_conda_exe"]["path"])
+    copy_conda_exe(prefix, exe_name, info["_conda_exe"]["path"])
 
     # Sign conda-standalone so it can pass notarization
     codesigner = None

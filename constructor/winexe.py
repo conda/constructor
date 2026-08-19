@@ -113,7 +113,7 @@ def setup_envs_commands(info, dir_path):
         env_info = info["extra_envs"][env_name]
         # Needed for shortcuts_flags function
         if "_conda_exe_type" not in env_info:
-            env_info["_conda_exe_type"] = info.get("_conda_exe_type")
+            env_info["_conda_exe_type"] = info.get("_conda_exe", {}).get("type")
         channel_info = {
             "channels": env_info.get("channels", info.get("channels", ())),
             "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ())),
@@ -282,7 +282,7 @@ def make_nsi(
 
     # UPPERCASE variables are unescaped (and unquoted)
     variables["CONDA_LOG_ARG"] = (
-        '--log-file "${STEP_LOG}"' if info.get("_conda_exe_supports_logging") else ""
+        '--log-file "${STEP_LOG}"' if info.get("_conda_exe", {}).get("supports_logging") else ""
     )
     variables["NAME"] = name
     variables["NSIS_DIR"] = NSIS_DIR
@@ -376,7 +376,7 @@ def create(info, verbose=False):
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
-    extra_conda_exe_files = copy_conda_exe(tmp_dir, "_conda.exe", info["_conda_exe"])
+    extra_conda_exe_files = copy_conda_exe(tmp_dir, "_conda.exe", info["_conda_exe"]["path"])
 
     pre_dst = join(tmp_dir, "pre_install.bat")
     pre_install_script = info.get("pre_install")

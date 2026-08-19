@@ -225,7 +225,7 @@ def _setup_envs_commands(info: dict) -> list[dict]:
         env_config = info["extra_envs"][env_name]
         # Needed for shortcuts_flags function
         if "_conda_exe_type" not in env_config:
-            env_config["_conda_exe_type"] = info.get("_conda_exe_type")
+            env_config["_conda_exe_type"] = info.get("_conda_exe", {}).get("type")
         channel_info = {
             "channels": env_config.get("channels", info.get("channels", ())),
             "channels_remap": env_config.get("channels_remap", info.get("channels_remap", ())),
@@ -625,14 +625,14 @@ class Payload:
                 shutil.copy(script_path, pkgs_dir / dest_name)
 
     def _stage_conda(self, external_dir: Path) -> None:
-        copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"])
+        copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"]["path"])
 
 
 def create(info, verbose=False):
     if not IS_WINDOWS:
         raise OSError(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
 
-    if not info.get("_conda_exe_supports_logging"):
+    if not info.get("_conda_exe", {}).get("supports_logging"):
         raise ValueError("MSI installers require conda-standalone with logging support.")
 
     # Check briefcase exists before doing any work

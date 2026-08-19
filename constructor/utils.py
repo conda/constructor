@@ -216,7 +216,7 @@ def ensure_transmuted_ext(info, url):
     """
     if (
         info.get("transmute_file_type") == ".conda"
-        and info.get("_conda_exe_type") == StandaloneExe.MAMBA
+        and info.get("_conda_exe", {}).get("type") == StandaloneExe.MAMBA
     ):
         if url.lower().endswith(".tar.bz2"):
             url = url[:-8] + ".conda"
@@ -307,7 +307,7 @@ def shortcuts_flags(info) -> str:
         # not set: we create all shortcuts (default behaviour)
         return ""
     if menu_packages:
-        if info.get("_conda_exe_type") == StandaloneExe.MAMBA:
+        if info.get("_conda_exe", {}).get("type") == StandaloneExe.MAMBA:
             logger.warning(
                 "Micromamba does not support '--shortcuts-only'. Will install all shortcuts."
             )

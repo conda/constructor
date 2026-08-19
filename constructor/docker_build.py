@@ -69,7 +69,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
         base_image=info.get("docker_base_image"),
         default_prefix=info.get("default_prefix", f"/opt/{info['name'].lower()}"),
         installer_filename=Path(info["_outpath"]).name,
-        conda_exe_name=format_conda_exe_name(info["_conda_exe"]),
+        conda_exe_name=format_conda_exe_name(info["_conda_exe"]["path"]),
         name=info["name"],
         version=info["version"],
         labels=info.get("docker_labels", {}),

@@ -2005,7 +2005,7 @@ def test_output_files(tmp_path, installer_type):
 
     # Test that info.json contains serialized objects
     info_json = json.loads((root_path / "info.json").read_text())
-    assert isinstance(info_json.get("_conda_exe_version"), str)
+    assert isinstance(info_json.get("_conda_exe").get("version"), str)
     _build_environment_packages = info_json.get("_build_environment_packages")
     assert isinstance(_build_environment_packages, list), (
         "Build environment packages is not a list."

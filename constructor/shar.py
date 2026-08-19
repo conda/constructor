@@ -112,7 +112,7 @@ def get_header(conda_exec, tarball, info):
     virtual_specs = parse_virtual_specs(info)
     min_osx_version = virtual_specs.get("__osx", {}).get("min") or ""
     variables["min_osx_version"] = min_osx_version
-    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"])
+    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"]["path"])
     min_glibc_version = virtual_specs.get("__glibc", {}).get("min") or ""
     variables["min_glibc_version"] = min_glibc_version
 
@@ -210,7 +210,7 @@ def create(info, verbose=False):
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
     t.close()
 
-    info["_internal_conda_files"] = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"])
+    info["_internal_conda_files"] = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"]["path"])
     if info["_internal_conda_files"]:
         conda_exe_payloads: dict[str, tuple[int, int, bool]] = {}
         memfile = BytesIO()
@@ -231,7 +231,7 @@ def create(info, verbose=False):
         maybe_memfile = (memfile,)
     else:
         maybe_memfile = ()
-    conda_exec = info["_conda_exe"]
+    conda_exec = info["_conda_exe"]["path"]
     header = get_header(conda_exec, tarball, info)
     shar_path = info["_outpath"]
     with open(shar_path, "wb") as fo:

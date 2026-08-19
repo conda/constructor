@@ -37,6 +37,7 @@ from .utils import (
     StandaloneExe,
     check_version,
     has_docker_buildx,
+    hash_files,
     identify_conda_exe,
     normalize_path,
     yield_lines,
@@ -246,7 +247,7 @@ def main_build(
     info["_output_dir"] = output_dir
     info["_platform"] = platform
     info["_download_dir"] = join(cache_dir, platform)
-    info["_conda_exe"] = abspath(conda_exe)
+    info["_conda_exe"] = {"path": abspath(conda_exe)}
     info["_debug"] = debug
     if installer_type:
         info["installer_type"] = installer_type
@@ -274,11 +275,14 @@ def main_build(
     ):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
 
-    exe_type, exe_version = identify_conda_exe(info.get("_conda_exe"))
+    exe_path = info["_conda_exe"]["path"]
+    exe_type, exe_version = identify_conda_exe(exe_path)
     if exe_version is not None:
         exe_version = Version(exe_version)
-    info["_conda_exe_type"] = exe_type
-    info["_conda_exe_version"] = exe_version
+    info["_conda_exe"]["type"] = exe_type
+    info["_conda_exe"]["version"] = exe_version
+    info["_conda_exe"]["SHA256"] = hash_files([Path(exe_path)], "sha256")["sha256"],
+    }
     if osname == "win" and exe_type == StandaloneExe.MAMBA:
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
@@ -397,9 +401,9 @@ def main_build(
     else:
         info["_ignore_condarcs_arg"] = ""
 
-    info["_conda_exe_supports_logging"] = _conda_exe_supports_logging(
-        info["_conda_exe"],
-        info["_conda_exe_type"],
+    info["_conda_exe"]["supports_logging"] = _conda_exe_supports_logging(
+        exe_path,
+        exe_type,
     )
 
     if InstallerTypes.PKG in itypes:
@@ -422,8 +426,8 @@ def main_build(
 
     if osname == "win":
         info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(
-            info["_conda_exe"],
-            info["_conda_exe_type"],
+            exe_path,
+            exe_type,
         )
 
     info["installer_type"] = itypes[0]
