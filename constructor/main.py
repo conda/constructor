@@ -24,7 +24,7 @@ from textwrap import dedent
 
 from . import __version__
 from ._schema import InstallerTypes
-from .build_outputs import process_build_outputs
+from .build_outputs import process_build_outputs, _validate_output
 from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
 from .construct import SCHEMA_PATH, ns_platform
@@ -281,7 +281,8 @@ def main_build(
         exe_version = Version(exe_version)
     info["_conda_exe"]["type"] = exe_type
     info["_conda_exe"]["version"] = exe_version
-    info["_conda_exe"]["SHA256"] = (hash_files([Path(exe_path)], "sha256")["sha256"])
+    if any("info.json" in _validate_output(o) for o in info.get("build_outputs", ())):
+        info["_conda_exe"]["sha256"] = hash_files([Path(exe_path)], "sha256")["sha256"]
     if osname == "win" and exe_type == StandaloneExe.MAMBA:
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
