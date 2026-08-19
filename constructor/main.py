@@ -24,7 +24,7 @@ from textwrap import dedent
 
 from . import __version__
 from ._schema import InstallerTypes
-from .build_outputs import process_build_outputs, _validate_output
+from .build_outputs import _validate_output, process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
 from .construct import SCHEMA_PATH, ns_platform
