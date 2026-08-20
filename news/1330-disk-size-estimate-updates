@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Adjusts the way that the estimated disk usage is calculated, based on more `construct.yaml` variables.
+* Adjusts the way that the estimated disk usage is calculated, based on more `construct.yaml` variables. (#1330 via #1331)
 
 ### Bug fixes
 
