@@ -225,8 +225,8 @@ def create(info, verbose=False):
             conda_exe_payloads[relative_path] = (start, end, executable)
             start = end
 
-        info["_conda_exe_payloads"] = conda_exe_payloads
-        info["_conda_exe_payloads_size"] = end
+        info["_conda_exe"]["payloads"] = conda_exe_payloads
+        info["_conda_exe"]["payloads_size"] = end
         memfile.seek(0)
         maybe_memfile = (memfile,)
     else:
