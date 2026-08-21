@@ -112,8 +112,9 @@ def setup_envs_commands(info, dir_path):
     for env_name in info.get("_extra_envs_info", {}):
         env_info = info["extra_envs"][env_name]
         # Needed for shortcuts_flags function
-        if "_conda_exe_type" not in env_info:
-            env_info["_conda_exe_type"] = info.get("_conda_exe", {}).get("type")
+        if "_conda_exe" not in env_info:
+            env_info["_conda_exe"] = {}
+            env_info["_conda_exe"]["type"] = info.get("_conda_exe", {}).get("type")
         channel_info = {
             "channels": env_info.get("channels", info.get("channels", ())),
             "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ())),
