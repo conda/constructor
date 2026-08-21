@@ -2012,7 +2012,7 @@ def test_output_files(tmp_path, installer_type):
     assert isinstance(conda_exe.get("type"), str) and conda_exe["type"]
 
     expected_sha256 = hashlib.sha256(Path(conda_exe["path"]).read_bytes()).hexdigest()
-    assert conda_exe["sha256"] == expected_sha256
+    assert conda_exe["sha256"] == {"sha256": expected_sha256}
 
     _build_environment_packages = info_json.get("_build_environment_packages")
     assert isinstance(_build_environment_packages, list), (
