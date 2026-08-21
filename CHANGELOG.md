@@ -1,5 +1,34 @@
 [//]: # (current developments)
 
+## 2026-08-21   3.17.0:
+### Enhancements
+
+* Add `_build_environment_packages` to `info.json`, listing the packages (including pip-installed ones) present in the environment used to build the installer. (#1314, #1325)
+* Add support for Windows ARM64. (#1323)
+* Add installer hashes to `info.json` making it the single source of truth for installer checksums. (#1327)
+* Add SHA256 hash of bootstrapper to `info.json` and consolidate bootstrapper metadata under `_conda_exe`, including its hash, type, version, and path. (#1329)
+
+### Bug fixes
+
+* Unset `CONDARC` environment variable for uninstallations with `conda-standalone`. (#1313)
+* Replace deprecated use of `conda._vendor.distro`, which also restores the Linux distribution info in `info.json`. (#1315 via #1316)
+
+### Other
+
+* Split integration tests on all platforms to run in parallel using `pytest-split`, cutting CI time. Also cleaned up leftover installer files during test runs to prevent CI runners from running out of disk space.
+* Raise the minimum supported `conda` version to 24.1. (#1315 via #1316)
+
+### Contributors
+
+* @Jrice1317
+* @marcoesters
+* @lrandersson
+* @conda-bot
+* @dependabot[bot]
+* @pre-commit-ci[bot]
+
+
+
 ## 2026-07-28   3.16.3:
 ### Bug fixes
 
