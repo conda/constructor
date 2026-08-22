@@ -15,7 +15,7 @@
 
 ### Other
 
-* Split integration tests on all platforms to run in parallel using `pytest-split`, cutting CI time. Also cleaned up leftover installer files during test runs to prevent CI runners from running out of disk space.
+* Split integration tests on all platforms to run in parallel using `pytest-split`, cutting CI time. Also cleaned up leftover installer files during test runs to prevent CI runners from running out of disk space. (#1312)
 * Raise the minimum supported `conda` version to 24.1. (#1315 via #1316)
 
 ### Contributors
@@ -23,9 +23,6 @@
 * @Jrice1317
 * @marcoesters
 * @lrandersson
-* @conda-bot
-* @dependabot[bot]
-* @pre-commit-ci[bot]
 
 
 
