@@ -71,10 +71,10 @@ jobs:
             conda-standalone: conda-standalone-nightly
           - os: windows-2022
             python-version: "3.11"
-            conda-standalone: conda-standalone
+            conda-standalone: conda-standalone-nightly  # micromamba disabled
           - os: windows-2022
             python-version: "3.12"
-            conda-standalone: conda-standalone-nightly  # micromamba disabled
+            conda-standalone: conda-standalone
           - os: windows-2022
             python-version: "3.13"
             conda-standalone: conda-standalone-onedir  # micromamba disabled
@@ -148,6 +148,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unit
       - name: Run examples
+        timeout-minutes: 60
         env:
           AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CERTIFICATE }}
           AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID: ${{ secrets.AZURE_SIGNTOOL_KEY_VAULT_CLIENT_ID }}
@@ -162,6 +163,13 @@ jobs:
             --splits $SPLIT_COUNT --group ${{ matrix.split-group }}
           coverage run --branch --append -m constructor -V
           coverage json
+      - name: Dump running processes (Windows, on hang/failure)
+        if: failure() && startswith(matrix.config.os, 'windows')
+        shell: pwsh
+        run: |
+          Get-CimInstance Win32_Process |
+            Select-Object ProcessId, ParentProcessId, Name, CommandLine |
+            Format-List
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
