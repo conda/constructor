@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* <news item>
+* Mitigated a CWE-426 untrusted search path vulnerability in the example `custom.nsi.tmpl` by using a fully qualified path to `$SYSDIR\cmd.exe`.
 
 ### Deprecations
 
