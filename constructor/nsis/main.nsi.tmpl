@@ -190,9 +190,10 @@ var /global ICACLS_EXE
         StrCpy $CMD_EXE "$R1\System32\cmd.exe"
         StrCpy $ICACLS_EXE "$R1\System32\icacls.exe"
     ${Else}
-        # Cross our fingers binaries are in PATH
-        StrCpy $CMD_EXE "cmd.exe"
-        StrCpy $ICACLS_EXE "icacls.exe"
+        # Error out to prevent CWE-426 Untrusted Search Path vulnerabilities
+        ${Print} "::error:: Could not locate Windows system directory (SystemRoot or windir). Aborting for security."
+        MessageBox MB_OK|MB_ICONSTOP "Critical Error: Could not locate the Windows system directory. Installation cannot proceed safely." /SD IDOK
+        Abort
     ${EndIf}
 !macroend
 
@@ -1710,7 +1711,7 @@ Section "Install"
         # Force remove any leftovers, note that locked files may still remain
         # See https://github.com/conda/constructor/issues/1213
         ${If} ${FileExists} "$INSTDIR\pkgs"
-            nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR\pkgs"'
+            nsExec::Exec '"$CMD_EXE" /D /C RMDIR /Q /S "$INSTDIR\pkgs"'
         ${EndIf}
     ${EndIf}
 
@@ -1957,6 +1958,9 @@ Section "Uninstall"
         StrCpy $R0 "system"
     ${EndIf}
     # `type` is used to simulate a `tee`-like output in cmd.exe
+    # Note: 'cmd.exe' below is a literal string argument passed to the 'conda init'
+    # subcommand indicating the shell type. It is not an executable being launched
+    # by the system, so it does not pose a CWE-426 Untrusted Search Path vulnerability.
     push '"$INSTDIR\condabin\conda.bat" init cmd.exe --reverse --$R0 > "${STEP_LOG}" 2>&1 & SET ERR=!ERRORLEVEL! & type "${STEP_LOG}" & EXIT /B !ERR!'
     push 'Failed to clean AutoRun'
     push 'WithLog'
@@ -1964,7 +1968,7 @@ Section "Uninstall"
 {%- endif %}
 
     ${Print} "Removing files and folders..."
-    nsExec::Exec 'cmd.exe /D /C RMDIR /Q /S "$INSTDIR"'
+    nsExec::Exec '"$CMD_EXE" /D /C RMDIR /Q /S "$INSTDIR"'
 
     # Stop logging or the uninstaller will not remove the install.log file
     # without requiring a reboot
