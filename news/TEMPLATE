@@ -4,11 +4,11 @@
 
 ### Bug fixes
 
-* Mitigated a CWE-426 untrusted search path vulnerability in the example `custom.nsi.tmpl` by using a fully qualified path to `$SYSDIR\cmd.exe`.
+* Mitigated a CWE-426 untrusted search path vulnerability in the template `main.nsi.tmpl` by using a fully qualified path to `$CMD_EXE`. (#1341)
 
 ### Deprecations
 
-* <news item>
+* Marked the example custom NSIS template (`custom.nsi.tmpl`) as unmaintained and directed users to use `main.nsi.tmpl` as a blueprint.
 
 ### Docs
 
