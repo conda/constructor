@@ -224,6 +224,23 @@ def test_payload_layout():
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_payload_layout_pre_uninstall_survives_archiving(tmp_path):
+    """Test that user_pre_uninstall.bat is staged in external_dir."""
+    script = tmp_path / "pre_uninstall.bat"
+    script.write_text("@echo pre_uninstall")
+
+    info = mock_info.copy()
+    info["pre_uninstall"] = str(script)
+    payload = Payload(info)
+    payload.prepare()
+
+    external_dir = payload.root / "external"
+    staged_script = external_dir / "user_pre_uninstall.bat"
+    assert staged_script.is_file()
+    assert staged_script.read_text() == "@echo pre_uninstall"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_payload_archive(tmp_path: Path):
     """Test that the payload archive function works as expected."""
     info = mock_info.copy()
@@ -999,14 +1016,14 @@ def test_render_templates_without_user_scripts():
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
 @pytest.mark.parametrize(
-    "script_key,dest_name",
+    "script_key,dest_name,dest_dir_name",
     [
-        ("pre_install", "user_pre_install.bat"),
-        ("post_install", "user_post_install.bat"),
-        ("pre_uninstall", "user_pre_uninstall.bat"),
+        ("pre_install", "user_pre_install.bat", "pkgs"),
+        ("post_install", "user_post_install.bat", "pkgs"),
+        ("pre_uninstall", "user_pre_uninstall.bat", "external"),
     ],
 )
-def test_stage_user_scripts(tmp_path, script_key, dest_name):
+def test_stage_user_scripts(tmp_path, script_key, dest_name, dest_dir_name):
     """Test that user scripts are staged to the correct location."""
     script = tmp_path / f"{script_key}.bat"
     script.write_text(f"@echo {script_key}")
@@ -1017,9 +1034,12 @@ def test_stage_user_scripts(tmp_path, script_key, dest_name):
 
     pkgs_dir = tmp_path / "pkgs"
     pkgs_dir.mkdir()
-    payload._stage_user_scripts(pkgs_dir)
+    external_dir = tmp_path / "external"
+    external_dir.mkdir()
+    payload._stage_user_scripts(pkgs_dir, external_dir)
 
-    staged_script = pkgs_dir / dest_name
+    dest_dir = tmp_path / dest_dir_name
+    staged_script = dest_dir / dest_name
     assert staged_script.is_file()
     assert staged_script.read_text() == f"@echo {script_key}"
 
@@ -1036,9 +1056,11 @@ def test_stage_user_scripts_validates_bat_extension(tmp_path):
 
     pkgs_dir = tmp_path / "pkgs"
     pkgs_dir.mkdir()
+    external_dir = tmp_path / "external"
+    external_dir.mkdir()
 
     with pytest.raises(ValueError, match="must be an existing '.bat' file"):
-        payload._stage_user_scripts(pkgs_dir)
+        payload._stage_user_scripts(pkgs_dir, external_dir)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
