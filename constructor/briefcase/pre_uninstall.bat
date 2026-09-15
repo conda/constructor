@@ -101,7 +101,7 @@ if errorlevel 1 (
 {%- if has_pre_uninstall %}
 rem Run user-supplied pre-uninstall script
 {{ tee("Running pre-uninstall script...") }}
-call "%BASE_PATH%\pkgs\user_pre_uninstall.bat"
+call "%INSTDIR%\user_pre_uninstall.bat"
 if errorlevel 1 ( exit /b %errorlevel% )
 {%- endif %}
 

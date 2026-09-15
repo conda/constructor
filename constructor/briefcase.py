@@ -427,7 +427,8 @@ class Payload:
 
             <root>/                          (temporary directory, see :attr:`root`)
             ├── welcome.bmp, header.bmp, icon.ico  (branding images for WiX UI, not installed)
-            └── <EXTERNAL_PACKAGE_PATH>/     (external_dir: contains the payload archive and conda exe)
+            └── <EXTERNAL_PACKAGE_PATH>/     (external_dir: contains the payload archive, conda exe,
+                │                             and user_pre_uninstall.bat)
                 └── base/                    (base_dir: represents the base conda environment)
                     └── pkgs/                (pkgs_dir: staging area for conda package distributions)
 
@@ -454,7 +455,7 @@ class Payload:
         if license_file := self.info.get("license_file"):
             preconda.copy_extra_files([license_file], base_dir)
         self._stage_dists(pkgs_dir)
-        self._stage_user_scripts(pkgs_dir)
+        self._stage_user_scripts(pkgs_dir, external_dir)
         self._stage_conda(external_dir)
 
         archive_path = self.make_archive(base_dir, external_dir)
@@ -609,21 +610,26 @@ class Payload:
         for dist in sorted(dists):
             shutil.copy(download_dir / filename_dist(dist), pkgs_dir)
 
-    def _stage_user_scripts(self, pkgs_dir: Path) -> None:
-        """Copy user-supplied pre/post install scripts to the pkgs directory."""
+    def _stage_user_scripts(self, pkgs_dir: Path, external_dir: Path) -> None:
+        """Copy user-supplied pre/post install scripts to the pkgs directory.
+
+        pre_uninstall is staged in external_dir instead, since
+        pkgs_dir can be removed via install options, and must be present during
+        uninstall.
+        """
         script_mappings = [
-            ("pre_install", "user_pre_install.bat"),
-            ("post_install", "user_post_install.bat"),
-            ("pre_uninstall", "user_pre_uninstall.bat"),
+            ("pre_install", "user_pre_install.bat", pkgs_dir),
+            ("post_install", "user_post_install.bat", pkgs_dir),
+            ("pre_uninstall", "user_pre_uninstall.bat", external_dir),
         ]
-        for key, dest_name in script_mappings:
+        for key, dest_name, dest_dir in script_mappings:
             if script_path := self.info.get(key):
                 script_path = Path(script_path)
                 if not is_bat_file(script_path):
                     raise ValueError(
                         f"Specified {key} script '{script_path}' must be an existing '.bat' file."
                     )
-                shutil.copy(script_path, pkgs_dir / dest_name)
+                shutil.copy(script_path, dest_dir / dest_name)
 
     def _stage_conda(self, external_dir: Path) -> None:
         copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"]["path"])
