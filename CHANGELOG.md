@@ -13,10 +13,7 @@
 ### Contributors
 
 * @lrandersson
-* @conda-bot
-* @dependabot[bot]
 * @michalwyszynski93
-* @pre-commit-ci[bot]
 
 
 
