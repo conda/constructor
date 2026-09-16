@@ -78,5 +78,6 @@ Authors are sorted alphabetically.
 * dionizijefa
 * gabrielbusta
 * guimondmm
+* michalwyszynski93
 * pre-commit-ci[bot]
 * y2kbugger
