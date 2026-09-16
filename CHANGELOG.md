@@ -1,5 +1,22 @@
 [//]: # (current developments)
 
+## 2026-09-16   3.17.2:
+### Bug fixes
+
+* Mitigated a CWE-426 untrusted search path vulnerability in the template `main.nsi.tmpl` by using a fully qualified path to `$CMD_EXE`. (#1341)
+* MSI installers: fixed uninstallation failing when "Clear the package cache upon completion" was selected during install. (#1347)
+
+### Deprecations
+
+* Marked the example custom NSIS template (`custom.nsi.tmpl`) as unmaintained and directed users to use `main.nsi.tmpl` as a blueprint. (#1341)
+
+### Contributors
+
+* @lrandersson
+* @michalwyszynski93
+
+
+
 ## 2026-08-27   3.17.1:
 ### Enhancements
 
