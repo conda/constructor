@@ -8,11 +8,6 @@
 ### Contributors
 
 * @marcoesters
-* @lrandersson
-* @conda-bot
-* @dependabot[bot]
-* @michalwyszynski93
-* @pre-commit-ci[bot]
 
 
 
