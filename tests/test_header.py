@@ -172,3 +172,47 @@ def test_template_shellcheck(
     print(*findings, sep="\n")
     assert findings == []
     assert returncode == 0
+
+
+def _version_to_int_function():
+    template = read_header_template()
+    start = template.index("version_to_int() {")
+    end = template.index("\n}\n", start) + len("\n}\n")
+    return template[start:end]
+
+
+def _available_shells():
+    shells = []
+    for shell in ("sh", "bash", "dash", "zsh"):
+        if available_command(shell):
+            shells.append([shell])
+    if available_command("busybox"):
+        shells.append(["busybox", "sh"])
+    return shells
+
+
+@pytest.mark.parametrize(
+    "shell", [pytest.param(s, id="-".join(s)) for s in _available_shells()]
+)
+@pytest.mark.parametrize(
+    "version, expected",
+    [
+        ("2.17", "021700"),
+        ("2.39", "023900"),
+        ("2.28.0", "022800"),
+        ("10.13", "101300"),
+        ("15.6.1", "150601"),
+        ("26", "260000"),
+        ("0.0", "000000"),
+    ],
+)
+def test_version_to_int(shell, version, expected):
+    script = f'set -eu\n{_version_to_int_function()}version_to_int "$1"\n'
+    out = subprocess.run(
+        [*shell, "-c", script, "test", version],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert out.stdout == expected
+    assert out.stderr == ""
