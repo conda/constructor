@@ -24,7 +24,7 @@ from conda.core.prefix_data import PrefixData
 from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
-from constructor._schema import InstallerTypes
+from constructor._types import InstallerTypes
 from constructor.conda_interface import cc_platform
 from constructor.construct import parse as parse_construct
 from constructor.exceptions import InvalidInstallerTypeError
