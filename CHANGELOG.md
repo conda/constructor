@@ -1,5 +1,16 @@
 [//]: # (current developments)
 
+## 2026-09-25   3.17.3:
+### Bug fixes
+
+* Create reusable types to avoid importing from `_schema` since importing from `_schema` introduces an implicit runtime dependency on `pydantic`. (#1357 via #1358)
+
+### Contributors
+
+* @marcoesters
+
+
+
 ## 2026-09-16   3.17.2:
 ### Bug fixes
 
