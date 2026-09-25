@@ -16,7 +16,7 @@ from random import randint
 
 from PIL import Image, ImageDraw, ImageFont
 
-from ._schema import InstallerTypes
+from ._types import InstallerTypes
 
 ttf_path = join(dirname(__file__), "ttf", "Vera.ttf")
 with open(ttf_path, "rb") as f:

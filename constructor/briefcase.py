@@ -24,7 +24,7 @@ else:
     write_images = None  # imaging.py requires PIL, which is only available on Windows
 
 from . import preconda
-from ._schema import InstallerTypes
+from ._types import InstallerTypes
 from .jinja import render_template
 from .signing import create_windows_signing_tool
 from .utils import (

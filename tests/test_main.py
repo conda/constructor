@@ -3,7 +3,7 @@ from textwrap import dedent
 
 import pytest
 
-from constructor._schema import InstallerTypes
+from constructor._types import InstallerTypes
 from constructor.main import main
 
 _CONSTRUCT = dedent(
