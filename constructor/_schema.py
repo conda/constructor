@@ -14,9 +14,11 @@ import re
 from hashlib import algorithms_guaranteed
 from inspect import cleandoc
 from pathlib import Path
-from typing import Annotated, Literal, TypeAlias, Union  # noqa
+from typing import Annotated, Literal, TypeAlias  # noqa: TC003
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from constructor._types import BuildOutputs, InstallerTypes  # noqa: TC001
 
 try:
     from enum import StrEnum
@@ -46,17 +48,6 @@ class WinSignTools(StrEnum):
     AZURESIGNTOOL_EXE = "azuresigntool.exe"
     SIGNTOOL = "signtool"
     SIGNTOOL_EXE = "signtool.exe"
-
-
-class InstallerTypes(StrEnum):
-    # If you add a member that produces a single file named after itself (like
-    # EXE/MSI/PKG/SH), also update FILE_INSTALLER_TYPES in tests/test_examples.py.
-    ALL = "all"
-    EXE = "exe"
-    MSI = "msi"
-    PKG = "pkg"
-    SH = "sh"
-    DOCKER = "docker"
 
 
 class PkgDomains(StrEnum):
@@ -115,16 +106,6 @@ class ExtraEnv(BaseModel):
     """
     freeze_env: dict[Literal["conda"], dict] | None = None
     "Same as `freeze_base`, but for this conda environment."
-
-
-class BuildOutputs(StrEnum):
-    "Allowed keys in 'build_outputs' setting."
-
-    HASH = "hash"
-    INFO_JSON = "info.json"
-    LICENSES = "licenses"
-    LOCKFILE = "lockfile"
-    PKGS_LIST = "pkgs_list"
 
 
 _GuaranteedAlgorithmsEnum = StrEnum(

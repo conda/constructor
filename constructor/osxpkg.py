@@ -15,7 +15,7 @@ from plistlib import dump as plist_dump
 from tempfile import NamedTemporaryFile
 
 from . import preconda
-from ._schema import InstallerTypes
+from ._types import InstallerTypes
 from .conda_interface import conda_context
 from .construct import ns_platform, parse
 from .imaging import write_images
