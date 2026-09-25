@@ -29,14 +29,6 @@ repos:
     hooks:
       - id: shellcheck
         exclude: ^(constructor/header.sh|constructor/osx/.*sh)
-  - repo: local
-    hooks:
-      - id: no-schema-import
-        name: Prohibit direct _schema imports (use _types instead)
-        language: pygrep
-        entry: '(from\s+\._schema\b|from\s+constructor\._schema\b|import\s+constructor\._schema\b)'
-        files: \.py$
-        exclude: ^scripts/make_docs\.py$
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: c4654a7e007c9619a5eb63c39a456572a0fa1851  # frozen: 0.38.0
     hooks:

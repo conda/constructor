@@ -83,9 +83,13 @@ select = [
   "RUF100",  # Unused noqa directive
   "T10",  # flake8-debugger
   "TCH",  # flake8-type-checking
+  "TID251",  # flake8-tidy-imports
   "UP",  # pyupgrade
   "W",  # pycodestyle warnings
 ]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"constructor._schema".msg = "._schema imports are forbidden; if you need a model, put in _types.py and then import from there in _schema.py"
 
 [tool.pytest.ini_options]
 markers = [
