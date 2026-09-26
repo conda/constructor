@@ -191,9 +191,11 @@ def _available_shells():
     return shells
 
 
-@pytest.mark.parametrize(
-    "shell", [pytest.param(s, id="-".join(s)) for s in _available_shells()]
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="Shell installers are not used on Windows; bash may resolve to the WSL launcher",
 )
+@pytest.mark.parametrize("shell", [pytest.param(s, id="-".join(s)) for s in _available_shells()])
 @pytest.mark.parametrize(
     "version, expected",
     [
