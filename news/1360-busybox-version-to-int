@@ -1,0 +1,22 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* Fix the macOS and GLIBC minimum version checks in shell installers aborting with `invalid number
+  ''` when run with shells whose `printf` rejects missing arguments, such as busybox `ash` (the
+  default `sh` on many NAS and embedded Linux systems). Versions with fewer than three components
+  (e.g. `2.17`) are now parsed with `awk`, treating missing components as 0.
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>
