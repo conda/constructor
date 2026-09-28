@@ -20,14 +20,22 @@ if ! echo "$0" | grep '\.sh$' > /dev/null; then
     exit 1
 fi
 
+{%- if (osx and min_osx_version) or (linux and min_glibc_version) %}
+# Convert a dotted version (e.g. 2.17 or 10.13.6) to a zero-padded integer
+# (e.g. 021700 or 101306) for comparison with -lt. Missing components are
+# treated as 0. awk is used because printf with fewer arguments than format
+# specifiers errors out in some shells (e.g. busybox ash), aborting under set -e.
+version_to_int() {
+    echo "$1" | awk -F. '{ printf "%02d%02d%02d", $1, $2, $3 }'
+}
+{%- endif %}
+
 {%- if osx and min_osx_version %}
 if [ "$(uname)" = "Darwin" ]; then
     min_osx_version="{{ min_osx_version }}"
     system_osx_version="${CONDA_OVERRIDE_OSX:-$(SYSTEM_VERSION_COMPAT=0 sw_vers -productVersion)}"
-    # shellcheck disable=SC2183 disable=SC2046
-    int_min_osx_version="$(printf "%02d%02d%02d" $(echo "$min_osx_version" | sed 's/\./ /g'))"
-    # shellcheck disable=SC2183 disable=SC2046
-    int_system_osx_version="$(printf "%02d%02d%02d" $(echo "$system_osx_version" | sed 's/\./ /g'))"
+    int_min_osx_version="$(version_to_int "$min_osx_version")"
+    int_system_osx_version="$(version_to_int "$system_osx_version")"
     if [ "$int_system_osx_version" -lt "$int_min_osx_version" ]; then
         echo "Installer requires macOS >=${min_osx_version}, but system has ${system_osx_version}."
         exit 1
@@ -60,10 +68,8 @@ if [ "$(uname)" = "Linux" ]; then
             ;;
         esac
     fi
-    # shellcheck disable=SC2183 disable=SC2046
-    int_min_glibc_version="$(printf "%02d%02d%02d" $(echo "$min_glibc_version" | sed 's/\./ /g'))"
-    # shellcheck disable=SC2183 disable=SC2046
-    int_system_glibc_version="$(printf "%02d%02d%02d" $(echo "$system_glibc_version" | sed 's/\./ /g'))"
+    int_min_glibc_version="$(version_to_int "$min_glibc_version")"
+    int_system_glibc_version="$(version_to_int "$system_glibc_version")"
     if [ "$int_system_glibc_version" -lt "$int_min_glibc_version" ]; then
         echo "Installer requires GLIBC >=${min_glibc_version}, but system has ${system_glibc_version}."
         exit 1
