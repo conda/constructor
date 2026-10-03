@@ -281,7 +281,21 @@ def make_nsi(
     variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
     variables["needs_python_exe"] = info.get("_win_install_needs_python_exe", True)
 
-    approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
+    # - `keep_pkgs: true` + `always_copy: true` = tarballs + 2 * extracted
+    # - `keep_pkgs: true` + `always_copy: false` = tarballs + extracted
+    # - `keep_pkgs: false` = extracted only
+    # `keep_pkgs: true`
+    if info.get("keep_pkgs", False):
+        # tarballs in pkgs/
+        size_tarballs = info.get("_approx_tarballs_size", 0)
+        # extracted tarballs in pkgs/<name>/
+        size_extracted = info.get("_approx_pkgs_size", 0)
+        # `always_copy: true` in condarc means installed files are copies, not hard links
+        if info.get("condarc", {}).get("always_copy", False):
+            size_extracted = 2 * size_extracted
+        approx_pkgs_size_kb = int((size_tarballs + size_extracted) / 1000)
+    else:
+        approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
     # UPPERCASE variables are unescaped (and unquoted)
     variables["CONDA_LOG_ARG"] = (
