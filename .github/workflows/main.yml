@@ -229,7 +229,7 @@ jobs:
           python -m build --sdist --wheel . --outdir dist
 
       - name: Create and upload canary build
-        uses: conda/actions/canary-release@ade1a3a5e5b7d3d124a03bf5d8c841645fb92a37 # v26.9.4
+        uses: conda/actions/canary-release@c8ad4261cc1d49709cb774289c68e63663bdc9d5 # v26.9.5
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}
