@@ -102,9 +102,7 @@ def select_lines(data, namespace):
             lines.append(line)
             continue
 
-        if stripped.startswith("#"):
-            # Don't bother with comment only lines
-            continue
+        # Preserve comment-only lines (maintainer suggestion: comments don't hurt)
         m = sel_pat.match(line)
         if m:
             cond = m.group(3)
