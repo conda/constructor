@@ -1,0 +1,5 @@
+### Bug fixes
+
+* Fix a bug where comment-looking lines (starting with `#`) inside block scalars (`|` or `>`) in
+  `construct.yaml` were incorrectly skipped, causing YAML parse errors when block scalar values
+  contain `#` characters (e.g., in script content or hash notation).

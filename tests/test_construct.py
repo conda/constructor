@@ -132,3 +132,68 @@ def test_ns_platform(platform):
     true_flags = NS_PLATFORM_TRUE_FLAGS[platform]
     for flag, value in result.items():
         assert value is (flag in true_flags), f"{platform}: expected {flag}={flag in true_flags}"
+
+
+def test_select_lines_block_scalar_comments():
+    """Lines that look like comments inside a block scalar must be preserved.
+
+    Block scalars (| or >) treat all indented lines as content, including
+    lines starting with '#'. The old code incorrectly skipped those lines.
+    """
+    from constructor.construct import select_lines
+
+    data = """\
+key: |
+  first line
+  # comment-looking line inside block scalar
+  last line
+other: value
+"""
+    result = select_lines(data, {})
+    # The comment line should be preserved (block scalar content)
+    assert "# comment-looking line inside block scalar" in result
+    # Other block scalar lines preserved
+    assert "first line" in result
+    assert "last line" in result
+    # Non-block lines work normally
+    assert "other: value" in result
+
+
+def test_select_lines_block_scalar_ends_comment_skip_resumes():
+    """After a block scalar ends, normal comment skipping resumes.
+
+    A # comment outside any block scalar should still be skipped.
+    """
+    from constructor.construct import select_lines
+
+    data = """\
+key: |
+  inside block
+# this should be skipped
+other: value
+"""
+    result = select_lines(data, {})
+    # Outside block: comments are skipped
+    assert "# this should be skipped" not in result
+    # Block scalar content preserved
+    assert "inside block" in result
+    assert "other: value" in result
+
+
+def test_select_lines_block_scalar_folded():
+    """Both | (literal) and > (folded) block scalars must preserve # lines."""
+    from constructor.construct import select_lines
+
+    data = """\
+literal: |
+  content
+  # inside literal
+folded: >
+  content
+  # inside folded
+end: value
+"""
+    result = select_lines(data, {})
+    assert "# inside literal" in result
+    assert "# inside folded" in result
+    assert "end: value" in result
