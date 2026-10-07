@@ -64,45 +64,14 @@ sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$")
 
 def select_lines(data, namespace):
     lines = []
-    # Track block scalar context: indentation level of the last seen |
-    # or > indicator. None means we are not inside a block scalar.
-    block_scalar_indent = None
-    # Regex to detect a line that starts a block scalar with | or >
-    # Matches: "  key: |" or "key: >" etc.
-    block_scalar_re = re.compile(r"^(\s*)([^:#]+):\s*(\||>)")
 
     for i, line in enumerate(data.splitlines()):
         line = line.rstrip()
 
-        # Determine indentation of this line (number of leading spaces)
-        stripped = line.lstrip()
-        line_indent = len(line) - len(stripped)
-
         trailing_quote = ""
-        if stripped and stripped[-1] in ("'", '"'):
-            trailing_quote = stripped[-1]
+        if line and line[-1] in ("'", '"'):
+            trailing_quote = line[-1]
 
-        # Check if this line starts a block scalar
-        bs_match = block_scalar_re.match(line)
-        if bs_match is not None:
-            # Enter block scalar context at this indentation level
-            block_scalar_indent = line_indent
-            # Still process this line normally (don't skip it)
-        elif block_scalar_indent is not None:
-            # We are inside a block scalar.
-            # Exit if this line has LESS-OR-EQUAL indentation (non-empty, not block indicator)
-            # Note: block scalar content ends at the next non-empty line with
-            # indentation <= the block key's indentation.
-            if stripped and line_indent <= block_scalar_indent:
-                block_scalar_indent = None
-            # else: still inside block scalar, preserve all lines including # comments
-
-        if block_scalar_indent is not None:
-            # Inside a block scalar: preserve every line verbatim
-            lines.append(line)
-            continue
-
-        # Preserve comment-only lines (maintainer suggestion: comments don't hurt)
         m = sel_pat.match(line)
         if m:
             cond = m.group(3)

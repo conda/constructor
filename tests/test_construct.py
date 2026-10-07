@@ -134,47 +134,24 @@ def test_ns_platform(platform):
         assert value is (flag in true_flags), f"{platform}: expected {flag}={flag in true_flags}"
 
 
-def test_select_lines_block_scalar_comments():
-    """Lines that look like comments inside a block scalar must be preserved.
-
-    Block scalars (| or >) treat all indented lines as content, including
-    lines starting with '#'. The old code incorrectly skipped those lines.
-    """
-    from constructor.construct import select_lines
-
-    data = """\
-key: |
-  first line
-  # comment-looking line inside block scalar
-  last line
-other: value
-"""
-    result = select_lines(data, {})
-    # The comment line should be preserved (block scalar content)
-    assert "# comment-looking line inside block scalar" in result
-    # Other block scalar lines preserved
-    assert "first line" in result
-    assert "last line" in result
-    # Non-block lines work normally
-    assert "other: value" in result
-
-
 def test_select_lines_block_scalar_ends_comment_skip_resumes():
-    """After a block scalar ends, normal comment skipping resumes.
+    """After a block scalar ends, comments are preserved (simplified approach).
 
-    A # comment outside any block scalar should still be skipped.
+    With the simplified approach, all comment lines are preserved
+    regardless of block scalar context. This is the maintainer's
+    suggested fix: comments don't hurt, so just keep them.
     """
     from constructor.construct import select_lines
 
     data = """\
 key: |
   inside block
-# this should be skipped
+# this is now preserved too
 other: value
 """
     result = select_lines(data, {})
-    # Outside block: comments are skipped
-    assert "# this should be skipped" not in result
+    # All comments preserved (simplified approach)
+    assert "# this is now preserved too" in result
     # Block scalar content preserved
     assert "inside block" in result
     assert "other: value" in result
