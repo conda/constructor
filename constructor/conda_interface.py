@@ -13,6 +13,7 @@ from os.path import join
 
 from conda.gateways.disk import mkdir_p_sudo_safe
 
+from constructor.env_vars import env_vars  # noqa
 from constructor.utils import hash_files
 
 NAV_APPS = [
@@ -52,7 +53,6 @@ if conda_interface_type == "conda":
     from conda.base.context import context as _conda_context
     from conda.base.context import locate_prefix_by_name as _locate_prefix_by_name
     from conda.base.context import replace_context_default as _conda_replace_context_default
-    from conda.common.io import env_vars as _env_vars
     from conda.core.package_cache_data import PackageCacheData as _PackageCacheData
     from conda.core.package_cache_data import ProgressiveFetchExtract as _ProgressiveFetchExtract
     from conda.core.prefix_data import PrefixData as _PrefixData
@@ -83,7 +83,7 @@ if conda_interface_type == "conda":
     ProgressiveFetchExtract = _ProgressiveFetchExtract
     Solver, read_paths_json = _Solver, _read_paths_json
     all_channel_urls = _all_channel_urls
-    conda_context, env_vars = _conda_context, _env_vars
+    conda_context = _conda_context
     conda_replace_context_default = _conda_replace_context_default
     download, PackageCacheRecord = _download, _PackageCacheRecord
     locate_prefix_by_name = _locate_prefix_by_name
