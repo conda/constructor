@@ -13,7 +13,6 @@ from os.path import join
 
 from conda.gateways.disk import mkdir_p_sudo_safe
 
-from constructor.env_vars import env_vars  # noqa
 from constructor.utils import hash_files
 
 NAV_APPS = [
