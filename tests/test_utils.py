@@ -1,10 +1,11 @@
-from os import sep
+from os import environ, sep
 
 import pytest
 
 from constructor.utils import (
     bat_echo_esc,
     bat_env_var_esc,
+    env_vars,
     get_condarc_content,
     hash_files,
     make_VIProductVersion,
@@ -119,3 +120,45 @@ def test_invalid_algorithm(tmp_path):
     path.write_text("test string")
     with pytest.raises(ValueError, match="bad_algorithm"):
         hash_files([path], "bad_algorithm")
+
+
+VAR = "CONSTRUCTOR_TEST_ENV_VAR"
+
+
+def test_env_vars_sets_and_restores(monkeypatch):
+    """The variables are set inside the block and unset after it, and the callback sees both."""
+    monkeypatch.delenv(VAR, raising=False)
+    calls = []
+
+    def callback():
+        calls.append(environ.get(VAR))
+
+    with env_vars({VAR: "inner"}, callback):
+        assert environ[VAR] == "inner"
+        calls.append("inside")
+
+    assert VAR not in environ
+    assert calls == ["inner", "inside", None]
+
+
+def test_env_vars_restores_previous_value(monkeypatch):
+    """A variable that was already set keeps its old value once the block exits."""
+    monkeypatch.setenv(VAR, "outer")
+
+    with env_vars({VAR: "inner"}):
+        assert environ[VAR] == "inner"
+
+    assert environ[VAR] == "outer"
+
+
+def test_env_vars_restores_after_an_exception(monkeypatch):
+    """A failing block still restores the previous values and calls the callback on exit."""
+    monkeypatch.setenv(VAR, "outer")
+    calls = []
+
+    with pytest.raises(RuntimeError):
+        with env_vars({VAR: "inner"}, lambda: calls.append(environ.get(VAR))):
+            raise RuntimeError("boom")
+
+    assert environ[VAR] == "outer"
+    assert calls == ["inner", "outer"]

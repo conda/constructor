@@ -1,0 +1,21 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* Stop importing the deprecated `conda.common.io.env_vars` helper, which conda removes in 27.3;
+  constructor now uses a local context manager in `constructor.utils` with the same behaviour.
+  (#1321 via #1377)

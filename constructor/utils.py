@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import warnings
+from contextlib import contextmanager
 from io import StringIO
 from os import environ, sep, unlink
 from os.path import isdir, isfile, islink, join, normpath
@@ -455,6 +456,30 @@ def bat_echo_esc(s: str) -> str:
     for c in ("&", "<", ">", "|"):
         s = s.replace(c, f"^{c}")
     return s
+
+
+@contextmanager
+def env_vars(var_map, callback=None):
+    """Set environment variables temporarily, restoring the previous values on exit.
+
+    Variables that were not set before are removed again. When given, ``callback`` is called once
+    after the variables are set and once after they are restored; that is how the cached parts of
+    conda's context notice the change and then return to the values they had before.
+    """
+    saved_vars = {name: environ.get(name) for name in var_map}
+    environ.update(var_map)
+    try:
+        if callback is not None:
+            callback()
+        yield
+    finally:
+        for name, value in saved_vars.items():
+            if value is None:
+                environ.pop(name, None)
+            else:
+                environ[name] = value
+        if callback is not None:
+            callback()
 
 
 def check_required_env_vars(env_vars):

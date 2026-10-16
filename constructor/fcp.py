@@ -20,7 +20,7 @@ from os.path import abspath, basename, expanduser, isdir, join
 from subprocess import check_call
 from typing import TYPE_CHECKING
 
-from constructor.utils import filename_dist
+from constructor.utils import env_vars, filename_dist
 
 from .conda_interface import (
     PackageCacheData,
@@ -34,7 +34,6 @@ from .conda_interface import (
     cc_platform,
     conda_context,
     conda_replace_context_default,
-    env_vars,
     locate_prefix_by_name,
     read_paths_json,
 )
