@@ -66,9 +66,14 @@ def get_name_version(info):
     #
     # Hyphens aren't allowed in this format, but for compatibility with Miniconda's
     # version format, we treat them as dots.
+    #
+    # An "alpha" or "beta" tag, with an optional build number (for example, the
+    # ".beta0-0" in "1.2.3.beta0-0"), directly after a version is matched but not
+    # included in the version.
     matches = list(
         re.finditer(
-            r"(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?",
+            r"(?P<version>(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?)"
+            r"(\.?(alpha|beta)\d+(\.\d+)?)?",
             version.lower().replace("-", "."),
         )
     )
@@ -80,10 +85,10 @@ def get_name_version(info):
         return f"{name} {version}", DEFAULT_VERSION
 
     match = matches[-1]
-    version = match.group()
+    version = match.group("version")
 
     # Treat anything else in the version string as part of the name.
-    start, end = match.span()
+    start, end = match.span("version")
     strip_chars = " .-_"
     before = info["version"][:start].strip(strip_chars)
     after = info["version"][end:].strip(strip_chars)

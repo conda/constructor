@@ -72,6 +72,17 @@ mock_info = {
         ("Miniconda", "py313 1.2 and more", "Miniconda py313 and more", "1.2"),
         # Numbers in the name are not added to the version.
         ("Miniconda3", "1", "Miniconda3", "1"),
+        # An "alpha" or "beta" tag and build number are not part of the version.
+        ("Foo", "1.2.3.beta0-0", "Foo beta0-0", "1.2.3"),
+        ("Foo", "6.9.3.beta1-2", "Foo beta1-2", "6.9.3"),
+        ("Foo", "1.2.3-beta0-0", "Foo beta0-0", "1.2.3"),
+        ("Foo", "2026.07.beta0-0", "Foo beta0-0", "2026.07"),
+        ("Foo", "1.2.3.alpha2", "Foo alpha2", "1.2.3"),
+        ("Foo", "1.2.3.beta0", "Foo beta0", "1.2.3"),
+        # Build numbers without a tag are treated as dots.
+        ("Foo", "6.9.3-0", "Foo", "6.9.3.0"),
+        ("Foo", "2026.07-1", "Foo", "2026.07.1"),
+        ("Foo", "py314_26.7.0-0", "Foo py314", "26.7.0.0"),
     ],
 )
 def test_name_version(name_in, version_in, name_expected, version_expected):
