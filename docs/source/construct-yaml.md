@@ -740,6 +740,7 @@ The output filename will be:
 - `osx`
 - `ppc64le`
 - `s390x`
+- `riscv64`
 - `unix`
 - `win`
 - `win32`
