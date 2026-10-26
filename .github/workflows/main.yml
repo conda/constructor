@@ -32,7 +32,6 @@ defaults:
     shell: bash -el {0}
 jobs:
   tests:
-    if: false  # TEMPORARY: skip tests while debugging the canary build
     name: ${{ matrix.config.os }}, Python ${{ matrix.config.python-version }}, ${{ matrix.config.conda-standalone }}, group ${{ matrix.split-group }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -194,17 +193,23 @@ jobs:
 
   build:
     name: Canary Build
-    # TEMPORARY: 'needs: [tests]' removed
+    needs: [tests]
     # only upload canary build if
     # - prior steps succeeded,
     # - this is the main repo, and
     # - we are on the main (or feature) branch
     if: >-
-      !github.event.repository.fork
+      success()
+      && !github.event.repository.fork
     strategy:
       matrix:
         include:
-          # TEMPORARY: only win-64 while debugging
+          - runner: ubuntu-latest
+            subdir: linux-64
+          - runner: macos-15-intel
+            subdir: osx-64
+          - runner: macos-latest
+            subdir: osx-arm64
           - runner: windows-2022
             subdir: win-64
     runs-on: ${{ matrix.runner }}
