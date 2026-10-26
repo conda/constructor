@@ -4,7 +4,6 @@ Logic to build installers using Briefcase.
 
 import functools
 import logging
-import os
 import re
 import shutil
 import sys
@@ -636,19 +635,6 @@ class Payload:
         copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"]["path"])
 
 
-def _get_briefcase_env() -> dict[str, str]:
-    """Return the environment for briefcase, without SSL variables that point to missing paths.
-
-    Note: Workaround for https://github.com/beeware/briefcase/issues/3109.
-    """
-    env = os.environ.copy()
-    for var, exists in (("SSL_CERT_FILE", os.path.isfile), ("SSL_CERT_DIR", os.path.isdir)):
-        if var in env and not exists(env[var]):
-            logger.warning("Ignoring %s=%r because the path does not exist.", var, env[var])
-            del env[var]
-    return env
-
-
 def create(info, verbose=False):
     if not IS_WINDOWS:
         raise OSError(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
@@ -679,7 +665,6 @@ def create(info, verbose=False):
             [briefcase, "package"] + (["-v"] if verbose else []),
             cwd=payload.root,
             check=True,
-            env=_get_briefcase_env(),
         )
 
         dist_dir = payload.root / "dist"

@@ -4,8 +4,8 @@
 
 ### Bug fixes
 
-* Fix MSI builds on Windows failing with `FileNotFoundError` when `SSL_CERT_FILE` or
-  `SSL_CERT_DIR` points to a path that does not exist. (#1390)
+* Fix MSI builds on Windows failing with `FileNotFoundError` when `SSL_CERT_FILE` points to a
+  missing file. Briefcase 0.4.6 and later are now excluded until this is fixed upstream. (#1390)
 
 
 ### Deprecations
