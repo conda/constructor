@@ -43,7 +43,7 @@ def ns_platform(platform):
         armv7l=bool(p == "linux-armv7l"),
         aarch64=bool(p == "linux-aarch64"),
         ppc64le=bool(p == "linux-ppc64le"),
-        arm64=bool(p == "osx-arm64"),
+        arm64=bool(p.endswith("-arm64")),
         s390x=bool(p == "linux-s390x"),
         x86=p.endswith(("-32", "-64")),
         x86_64=p.endswith("-64"),
@@ -52,7 +52,6 @@ def ns_platform(platform):
         win=p.startswith("win-"),
         win32=bool(p == "win-32"),
         win64=bool(p == "win-64"),
-        win_arm64=bool(p == "win-arm64"),
     )
 
 

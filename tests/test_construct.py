@@ -119,7 +119,7 @@ NS_PLATFORM_TRUE_FLAGS = {
     "linux-ppc64le": {"linux", "ppc64le", "unix"},
     "linux-s390x": {"linux", "s390x", "unix"},
     "win-64": {"x86", "x86_64", "win", "win64"},
-    "win-arm64": {"win", "win_arm64"},
+    "win-arm64": {"win", "arm64"},
     "osx-64": {"x86", "x86_64", "osx", "unix"},
     "osx-arm64": {"arm64", "osx", "unix"},
 }
