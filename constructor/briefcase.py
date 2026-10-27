@@ -640,18 +640,25 @@ def _get_briefcase_env() -> dict[str, str]:
     """Return a copy of the environment for briefcase, without broken SSL variables.
 
     Since briefcase 0.4.6 `SSL_CERT_FILE` and `SSL_CERT_DIR` are passed to
-    Python's `ssl` module. If one of them points to a path that does not exist,
+    Python's `ssl` module. If `SSL_CERT_FILE` points to a file that does not exist,
     the download of WiX fails with `FileNotFoundError`.
-    By removing these invalid variables briefcase relies on the next valid source,
-    for example the system certificate store. Valid variables are not changed.
+    By removing this invalid variable briefcase relies on the next valid source,
+    for example the system certificate store. `SSL_CERT_DIR` is removed as well,
+    because it is usually set together with `SSL_CERT_FILE` and can be empty,
+    which makes every download fail. Valid variables are not changed.
 
     See https://github.com/beeware/briefcase/issues/3109.
     """
     env = os.environ.copy()
-    for var, exists in (("SSL_CERT_FILE", os.path.isfile), ("SSL_CERT_DIR", os.path.isdir)):
-        if var in env and not exists(env[var]):
-            logger.warning("Ignoring %s=%r because the path does not exist.", var, env[var])
-            del env[var]
+    cert_file = env.get("SSL_CERT_FILE")
+    broken_file = cert_file is not None and not os.path.isfile(cert_file)
+    if broken_file:
+        logger.warning("Ignoring SSL_CERT_FILE=%r because the file does not exist.", cert_file)
+        del env["SSL_CERT_FILE"]
+    cert_dir = env.get("SSL_CERT_DIR")
+    if cert_dir is not None and (broken_file or not os.path.isdir(cert_dir)):
+        logger.warning("Ignoring SSL_CERT_DIR=%r.", cert_dir)
+        del env["SSL_CERT_DIR"]
     return env
 
 

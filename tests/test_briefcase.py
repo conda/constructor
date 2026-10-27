@@ -1212,3 +1212,23 @@ def test_get_briefcase_env_unset_ssl_variables(monkeypatch):
     env = _get_briefcase_env()
     assert "SSL_CERT_FILE" not in env
     assert "SSL_CERT_DIR" not in env
+
+
+def test_get_briefcase_env_removes_ssl_dir_with_missing_ssl_file(monkeypatch, tmp_path):
+    """Test that a valid SSL_CERT_DIR is removed when SSL_CERT_FILE points to a missing file."""
+    monkeypatch.setenv("SSL_CERT_FILE", str(tmp_path / "missing.pem"))
+    monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path))
+    env = _get_briefcase_env()
+    assert "SSL_CERT_FILE" not in env
+    assert "SSL_CERT_DIR" not in env
+
+
+def test_get_briefcase_env_keeps_ssl_file_with_missing_ssl_dir(monkeypatch, tmp_path):
+    """Test that a valid SSL_CERT_FILE is kept when SSL_CERT_DIR points to a missing directory."""
+    cafile = tmp_path / "cacert.pem"
+    cafile.touch()
+    monkeypatch.setenv("SSL_CERT_FILE", str(cafile))
+    monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path / "missing"))
+    env = _get_briefcase_env()
+    assert env["SSL_CERT_FILE"] == str(cafile)
+    assert "SSL_CERT_DIR" not in env

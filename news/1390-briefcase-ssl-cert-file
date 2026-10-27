@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-* Fix MSI builds on Windows failing with `FileNotFoundError` when `SSL_CERT_FILE` or `SSL_CERT_DIR` points to a missing path. Such variables are now ignored while building the installer. (#1390)
+* Fix MSI builds on Windows failing when `SSL_CERT_FILE` points to a file that does not exist. (#1390)
 
 ### Deprecations
 
