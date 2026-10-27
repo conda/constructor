@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Allow `ruamel.yaml` 0.19.
+* Remove the upper bound on `ruamel.yaml`.
 
 ### Bug fixes
 
