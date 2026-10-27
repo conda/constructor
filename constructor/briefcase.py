@@ -4,6 +4,7 @@ Logic to build installers using Briefcase.
 
 import functools
 import logging
+import os
 import re
 import shutil
 import sys
@@ -635,6 +636,50 @@ class Payload:
         copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"]["path"])
 
 
+def _log_ssl_debug_info():
+    """TEMPORARY: print SSL/certificate environment to stderr (shown in pytest 'Captured stderr')."""
+    import ssl
+
+    lines = ["=== SSL DEBUG (constructor.briefcase) ==="]
+    lines.append(f"sys.prefix={sys.prefix}")
+    lines.append(f"sys.executable={sys.executable}")
+    for key in sorted(os.environ):
+        if any(t in key.upper() for t in ("SSL", "CERT", "CA_BUNDLE", "CURL", "CONDA", "PREFIX")):
+            val = os.environ[key]
+            lines.append(f"env {key}={val!r} exists={os.path.exists(val)}")
+    for key in ("SSL_CERT_FILE", "SSL_CERT_DIR"):
+        lines.append(f"{key} set={key in os.environ}")
+    try:
+        lines.append(f"ssl.get_default_verify_paths()={ssl.get_default_verify_paths()}")
+    except Exception as exc:
+        lines.append(f"get_default_verify_paths failed: {exc!r}")
+    try:
+        import certifi
+
+        lines.append(f"certifi.where()={certifi.where()} exists={os.path.exists(certifi.where())}")
+    except Exception as exc:
+        lines.append(f"certifi failed: {exc!r}")
+    for rel in ("Library/ssl/cacert.pem", "Library/ssl/cert.pem", "Library/ssl"):
+        path = Path(sys.prefix) / rel
+        lines.append(f"{path} exists={path.exists()}")
+    activate_d = Path(sys.prefix) / "etc" / "conda" / "activate.d"
+    if activate_d.is_dir():
+        lines.append(f"activate.d={sorted(f.name for f in activate_d.iterdir())}")
+        for f in activate_d.iterdir():
+            if "ca-cert" in f.name.lower() or "ssl" in f.name.lower():
+                lines.append(f"--- {f.name} ---\n{f.read_text(errors='replace')}")
+    for root in {
+        Path(sys.prefix),
+        Path(os.environ.get("CONDA_PREFIX", sys.prefix)),
+        Path("C:/Miniconda"),
+    }:
+        if root.is_dir():
+            found = [str(f) for f in root.rglob("cacert.pem")]
+            lines.append(f"cacert.pem under {root}: {found}")
+    lines.append("=== END SSL DEBUG ===")
+    print("\n".join(lines), file=sys.stderr, flush=True)
+
+
 def create(info, verbose=False):
     if not IS_WINDOWS:
         raise OSError(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
@@ -661,6 +706,10 @@ def create(info, verbose=False):
         payload.prepare()
 
         logger.info("Building MSI installer")
+        try:
+            _log_ssl_debug_info()
+        except Exception as exc:
+            print(f"SSL DEBUG failed: {exc!r}", file=sys.stderr, flush=True)
         run(
             [briefcase, "package"] + (["-v"] if verbose else []),
             cwd=payload.root,
