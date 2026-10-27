@@ -11,6 +11,7 @@ import pytest
 
 from constructor.briefcase import (
     Payload,
+    _get_briefcase_env,
     _get_python_info,
     _get_script_env_variables,
     _setup_envs_commands,
@@ -1182,3 +1183,52 @@ def test_get_license_scenarios(tmp_path, license_file, root_provided, expect_con
         assert "Segoe UI" in (root / "LICENSE.rtf").read_text(encoding="utf-8")
     else:
         assert result["file"] == str(tmp_path / license_file)
+
+
+def test_get_briefcase_env_removes_missing_ssl_paths(monkeypatch, tmp_path):
+    """Test that SSL variables pointing to missing paths are removed."""
+    monkeypatch.setenv("SSL_CERT_FILE", str(tmp_path / "missing.pem"))
+    monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path / "missing"))
+    env = _get_briefcase_env()
+    assert "SSL_CERT_FILE" not in env
+    assert "SSL_CERT_DIR" not in env
+
+
+def test_get_briefcase_env_keeps_existing_ssl_paths(monkeypatch, tmp_path):
+    """Test that SSL variables pointing to existing paths are kept."""
+    cafile = tmp_path / "cacert.pem"
+    cafile.touch()
+    monkeypatch.setenv("SSL_CERT_FILE", str(cafile))
+    monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path))
+    env = _get_briefcase_env()
+    assert env["SSL_CERT_FILE"] == str(cafile)
+    assert env["SSL_CERT_DIR"] == str(tmp_path)
+
+
+def test_get_briefcase_env_unset_ssl_variables(monkeypatch):
+    """Test that unset SSL variables stay unset."""
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+    monkeypatch.delenv("SSL_CERT_DIR", raising=False)
+    env = _get_briefcase_env()
+    assert "SSL_CERT_FILE" not in env
+    assert "SSL_CERT_DIR" not in env
+
+
+def test_get_briefcase_env_removes_ssl_dir_with_missing_ssl_file(monkeypatch, tmp_path):
+    """Test that a valid SSL_CERT_DIR is removed when SSL_CERT_FILE points to a missing file."""
+    monkeypatch.setenv("SSL_CERT_FILE", str(tmp_path / "missing.pem"))
+    monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path))
+    env = _get_briefcase_env()
+    assert "SSL_CERT_FILE" not in env
+    assert "SSL_CERT_DIR" not in env
+
+
+def test_get_briefcase_env_keeps_ssl_file_with_missing_ssl_dir(monkeypatch, tmp_path):
+    """Test that a valid SSL_CERT_FILE is kept when SSL_CERT_DIR points to a missing directory."""
+    cafile = tmp_path / "cacert.pem"
+    cafile.touch()
+    monkeypatch.setenv("SSL_CERT_FILE", str(cafile))
+    monkeypatch.setenv("SSL_CERT_DIR", str(tmp_path / "missing"))
+    env = _get_briefcase_env()
+    assert env["SSL_CERT_FILE"] == str(cafile)
+    assert "SSL_CERT_DIR" not in env
