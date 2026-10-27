@@ -739,8 +739,8 @@ The output filename will be:
 - `linux64`
 - `osx`
 - `ppc64le`
-- `s390x`
 - `riscv64`
+- `s390x`
 - `unix`
 - `win`
 - `win32`
@@ -756,6 +756,7 @@ If provided, this argument must be formated as `<platform>-<architecture>`, e.g.
 - `linux-aarch64`
 - `linux-ppc64le`
 - `linux-s390x`
+- `linux-riscv64`
 - `win-64`
 - `win-arm64`
 - `osx-64`
