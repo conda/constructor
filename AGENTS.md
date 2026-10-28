@@ -31,6 +31,7 @@ generative AI policy above still applies.
   otherwise describe code changes visible in the diff. Do not paste test or linter commands,
   output, or results; CI is the record of verification. If the change is self-explanatory from
   the title, a single sentence is enough.
+- Prefer ASD-STE100 Simplified Technical English.
 
 ## Changelog (`news/`)
 
