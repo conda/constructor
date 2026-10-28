@@ -55,4 +55,4 @@ generative AI policy above still applies.
 - Parameterize tests to reduce repetition.
 - Don't use section comments or other dividers to group code.
 - Don't use test classes to group tests; single functions are preferred.
-- Do not bypass tests; ensure changes actually fix the underlying problem rather than altering tests to make t
+- Do not bypass tests; ensure changes actually fix the underlying problem rather than altering tests to make them pass.
