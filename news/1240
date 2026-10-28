@@ -1,0 +1,6 @@
+### Bug fixes
+
+* Fix a bug where comment-only lines in `construct.yaml` were dropped by `select_lines()`, which
+  corrupted YAML block scalars (e.g. `condarc: |`) whose value legitimately contains lines
+  starting with `#`. Comment lines are now preserved, as suggested in
+  conda/constructor#1240.

@@ -73,9 +73,6 @@ def select_lines(data, namespace):
         if line and line[-1] in ("'", '"'):
             trailing_quote = line[-1]
 
-        if line.lstrip().startswith("#"):
-            # Don't bother with comment only lines
-            continue
         m = sel_pat.match(line)
         if m:
             cond = m.group(3)

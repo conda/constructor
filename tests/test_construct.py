@@ -133,3 +133,49 @@ def test_ns_platform(platform):
     true_flags = NS_PLATFORM_TRUE_FLAGS[platform]
     for flag, value in result.items():
         assert value is (flag in true_flags), f"{platform}: expected {flag}={flag in true_flags}"
+
+
+def test_select_lines_preserves_comment_only_lines():
+    """Comment-only lines must survive select_lines().
+
+    ``select_lines`` used to drop every line whose first non-space character
+    was ``#``. Inside a YAML block scalar (``|`` or ``>``) such a line is
+    literal string content, not a comment, so dropping it corrupted the
+    rendered file -- e.g. a ``condarc: |`` value in ``construct.yaml`` lost
+    its comment lines and the result no longer parsed as the author wrote it.
+    """
+    from constructor.construct import select_lines
+
+    data = """\
+condarc: |
+  # This config file should be located in `C:\\Python\\Miniforge3\\.condarc`.
+  #
+  # There is another config file in `C:\\ProgramData\\conda\\condarc.d`.
+  #
+allow_other_channels: yes
+report_errors: no
+"""
+    result = select_lines(data, {})
+    assert "# This config file should be located in `C:\\Python\\Miniforge3\\.condarc`." in result
+    assert "# There is another config file in `C:\\ProgramData\\conda\\condarc.d`." in result
+    # Non-comment content is untouched.
+    assert "allow_other_channels: yes" in result
+    assert "report_errors: no" in result
+
+
+def test_select_lines_preserves_top_level_comments():
+    """Comments outside a block scalar are preserved too.
+
+    They are valid YAML and dropping them loses information for anyone
+    reading the generated file.
+    """
+    from constructor.construct import select_lines
+
+    data = """\
+# a leading comment
+name: example
+version: "1.0"
+"""
+    result = select_lines(data, {})
+    assert "# a leading comment" in result
+    assert "name: example" in result
