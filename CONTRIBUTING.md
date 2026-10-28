@@ -3,6 +3,9 @@
 Thank you for your interest in contributing to Constructor!
 
 Please refer to the [conda contributing guide](https://docs.conda.io/projects/conda/en/latest/dev-guide/contributing.html) for general guidelines on how to contribute to conda projects.
+Using generative AI is generally allows, but must follow `conda`'s [generative AI
+policy](https://docs.conda.io/projects/conda/en/latest/dev-guide/contributing.html#generative-ai).
+
 
 For Constructor-specific questions or issues, please open an issue on the [issue tracker](https://github.com/conda/constructor/issues) or start a discussion.
 
