@@ -222,14 +222,14 @@ jobs:
           clean: true
           fetch-depth: 0
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       - name: Build Python sdist and wheel
         run: |
           python -m pip install build
           python -m build --sdist --wheel . --outdir dist
 
       - name: Create and upload canary build
-        uses: conda/actions/canary-release@c8ad4261cc1d49709cb774289c68e63663bdc9d5 # v26.9.5
+        uses: conda/actions/canary-release@8153f7f73472ac36d654d5111be19abaecc48cc6 # v26.10.0
         with:
           package-name: ${{ github.event.repository.name }}
           subdir: ${{ matrix.subdir }}

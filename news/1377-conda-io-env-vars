@@ -1,0 +1,19 @@
+### Enhancements
+
+* <news item>
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* Ensure compatibility with conda 27.3 by no longer importing the deprecated `conda.common.io.env_vars`. (#1321 via #1377)

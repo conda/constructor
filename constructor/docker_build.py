@@ -22,6 +22,7 @@ DOCKER_PLATFORM_MAP = {
     "linux-32": "linux/386",
     "linux-ppc64le": "linux/ppc64le",
     "linux-s390x": "linux/s390x",
+    "linux-riscv64": "linux/riscv64",
 }
 
 

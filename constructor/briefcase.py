@@ -4,6 +4,7 @@ Logic to build installers using Briefcase.
 
 import functools
 import logging
+import os
 import re
 import shutil
 import sys
@@ -66,9 +67,14 @@ def get_name_version(info):
     #
     # Hyphens aren't allowed in this format, but for compatibility with Miniconda's
     # version format, we treat them as dots.
+    #
+    # An "alpha" or "beta" tag, with an optional build number (for example, the
+    # ".beta0-0" in "1.2.3.beta0-0"), directly after a version is matched but not
+    # included in the version.
     matches = list(
         re.finditer(
-            r"(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?",
+            r"(?P<version>(\d+!)?\d+(\.\d+)*((a|b|rc)\d+)?(\.post\d+)?(\.dev\d+)?)"
+            r"(\.?(alpha|beta)\d+(\.\d+)?)?",
             version.lower().replace("-", "."),
         )
     )
@@ -80,10 +86,10 @@ def get_name_version(info):
         return f"{name} {version}", DEFAULT_VERSION
 
     match = matches[-1]
-    version = match.group()
+    version = match.group("version")
 
     # Treat anything else in the version string as part of the name.
-    start, end = match.span()
+    start, end = match.span("version")
     strip_chars = " .-_"
     before = info["version"][:start].strip(strip_chars)
     after = info["version"][end:].strip(strip_chars)
@@ -635,6 +641,32 @@ class Payload:
         copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"]["path"])
 
 
+def _get_briefcase_env() -> dict[str, str]:
+    """Return a copy of the environment for briefcase, without broken SSL variables.
+
+    Since briefcase 0.4.6 `SSL_CERT_FILE` and `SSL_CERT_DIR` are passed to
+    Python's `ssl` module. If `SSL_CERT_FILE` points to a file that does not exist,
+    the download of WiX fails with `FileNotFoundError`.
+    By removing this invalid variable briefcase relies on the next valid source,
+    for example the system certificate store. `SSL_CERT_DIR` is removed as well,
+    because it is usually set together with `SSL_CERT_FILE` and can be empty,
+    which makes every download fail. Valid variables are not changed.
+
+    See https://github.com/beeware/briefcase/issues/3109.
+    """
+    env = os.environ.copy()
+    cert_file = env.get("SSL_CERT_FILE")
+    broken_file = cert_file is not None and not os.path.isfile(cert_file)
+    if broken_file:
+        logger.warning("Ignoring SSL_CERT_FILE=%r because the file does not exist.", cert_file)
+        del env["SSL_CERT_FILE"]
+    cert_dir = env.get("SSL_CERT_DIR")
+    if cert_dir is not None and (broken_file or not os.path.isdir(cert_dir)):
+        logger.warning("Ignoring SSL_CERT_DIR=%r.", cert_dir)
+        del env["SSL_CERT_DIR"]
+    return env
+
+
 def create(info, verbose=False):
     if not IS_WINDOWS:
         raise OSError(f"Invalid platform '{sys.platform}'. MSI installers require Windows.")
@@ -665,6 +697,7 @@ def create(info, verbose=False):
             [briefcase, "package"] + (["-v"] if verbose else []),
             cwd=payload.root,
             check=True,
+            env=_get_briefcase_env(),
         )
 
         dist_dir = payload.root / "dist"
