@@ -189,7 +189,7 @@ jobs:
 
   analyze:
     name: Report failures
-    needs: [tests]
+    needs: [tests, build]
     if: '!cancelled()'
     runs-on: ubuntu-slim
     steps:
@@ -203,7 +203,11 @@ jobs:
           allowed-skips: ${{ toJSON(needs) }}
           jobs: ${{ toJSON(needs) }}
       - name: Report failures
-        if: always() && github.event_name == 'push' && github.ref_name == 'main' && needs.tests.result == 'failure'
+        if: |
+          always()
+          && github.event_name == 'push'
+          && github.ref_name == 'main'
+          && (needs.tests.result == 'failure' || needs.build.result == 'failure')
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.CONSTRUCTOR_ISSUES }}
@@ -228,6 +232,8 @@ jobs:
         include:
           - runner: ubuntu-latest
             subdir: linux-64
+          - runner: ubuntu-26.04-arm
+            subdir: linux-aarch64
           - runner: macos-15-intel
             subdir: osx-64
           - runner: macos-latest
