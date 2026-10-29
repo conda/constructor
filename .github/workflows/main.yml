@@ -52,6 +52,20 @@ jobs:
             python-version: "3.14"
             conda-standalone: conda-standalone-onedir
             check-docs-schema: true
+          # UBUNTU ARM
+          - os: ubuntu-26.04-arm
+            python-version: "3.11"
+            conda-standalone: conda-standalone
+          - os: ubuntu-26.04-arm
+            python-version: "3.12"
+            conda-standalone: conda-standalone-nightly
+          - os: ubuntu-26.04-arm
+            python-version: "3.13"
+            conda-standalone: micromamba
+          - os: ubuntu-26.04-arm
+            python-version: "3.14"
+            conda-standalone: conda-standalone-onedir
+            check-docs-schema: true
           # MACOS
           - os: macos-15-intel
             python-version: "3.11"
