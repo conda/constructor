@@ -17,13 +17,13 @@ build:
 
 requirements:
   host:
-    - python >=3.11
+    - python  # >=3.11
     - pip
     - setuptools >=70.1
     - setuptools_scm >=6.2
   run:
     - conda >=24.1
-    - python >=3.11
+    - python  # >=3.11
     - distro  # [linux]
     - ruamel.yaml >=0.11.14
     - conda-standalone >=24.11.0
