@@ -2,7 +2,7 @@ name: constructor-dev
 channels:
   - conda-forge
 dependencies:
-  - python
+  - python >=3.11
   - pip
   - conda >=24.1
   - ruamel.yaml >=0.11.14

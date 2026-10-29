@@ -40,43 +40,43 @@ jobs:
         config:
           # UBUNTU
           - os: ubuntu-latest
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone
           - os: ubuntu-latest
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: conda-standalone-nightly
           - os: ubuntu-latest
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: micromamba
           - os: ubuntu-latest
-            python-version: "3.13"
+            python-version: "3.14"
             conda-standalone: conda-standalone-onedir
             check-docs-schema: true
           # MACOS
           - os: macos-15-intel
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone-nightly
           - os: macos-15-intel
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: conda-standalone-onedir
           - os: macos-latest
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: conda-standalone
           - os: macos-latest
-            python-version: "3.13"
+            python-version: "3.14"
             conda-standalone: micromamba
           # WINDOWS
           - os: windows-2022
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone-nightly
           - os: windows-2022
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: conda-standalone
           - os: windows-2022
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: conda-standalone-nightly  # micromamba disabled
           - os: windows-2022
-            python-version: "3.13"
+            python-version: "3.14"
             conda-standalone: conda-standalone-onedir  # micromamba disabled
         split-group: [1, 2, 3]
     env:
