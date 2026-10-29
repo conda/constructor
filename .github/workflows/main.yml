@@ -173,15 +173,23 @@ jobs:
           python constructor/_schema.py
           git diff --exit-code
 
-  report:
+  analyze:
     name: Report failures
     needs: [tests]
-    if: always() && github.event_name == 'push' && github.ref_name == 'main' && needs.tests.result == 'failure'
-    runs-on: ubuntu-latest
+    if: '!cancelled()'
+    runs-on: ubuntu-slim
     steps:
       - name: Retrieve the source code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Determine Success
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        id: alls-green
+        with:
+          # permit jobs to be skipped if there are no code changes (see changes job)
+          allowed-skips: ${{ toJSON(needs) }}
+          jobs: ${{ toJSON(needs) }}
       - name: Report failures
+        if: always() && github.event_name == 'push' && github.ref_name == 'main' && needs.tests.result == 'failure'
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.CONSTRUCTOR_ISSUES }}
