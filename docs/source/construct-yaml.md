@@ -745,6 +745,7 @@ The output filename will be:
 - `win`
 - `win32`
 - `win64`
+- `win_arm64` (deprecated; use `win and arm64`)
 - `x86`
 - `x86_64`
 

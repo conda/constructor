@@ -8,7 +8,7 @@
 
 ### Deprecations
 
-* Remove the `win_arm64` selector. Use `win and arm64` instead. (#1392)
+* Mark the `win_arm64` selector as deprecated. Use `win and arm64` instead. (#1392)
 
 ### Docs
 

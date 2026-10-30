@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 HERE = Path(__file__).parent
 SCHEMA_PATH = HERE / "data" / "construct.schema.json"
 
+# Maps deprecated selectors to their replacements
+DEPRECATED_SELECTORS = {
+    "win_arm64": "win and arm64",
+}
+
 
 def ns_platform(platform):
     p = platform
@@ -53,6 +58,7 @@ def ns_platform(platform):
         win=p.startswith("win-"),
         win32=bool(p == "win-32"),
         win64=bool(p == "win-64"),
+        win_arm64=bool(p == "win-arm64"),
     )
 
 
@@ -78,6 +84,13 @@ def select_lines(data, namespace):
         m = sel_pat.match(line)
         if m:
             cond = m.group(3)
+            for selector, replacement in DEPRECATED_SELECTORS.items():
+                if re.search(rf"\b{selector}\b", cond):
+                    logger.warning(
+                        "The '%s' selector is deprecated. Use '%s' instead.",
+                        selector,
+                        replacement,
+                    )
             try:
                 if eval(cond, namespace, {}):
                     lines.append(m.group(1) + trailing_quote)
