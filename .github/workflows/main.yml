@@ -40,43 +40,56 @@ jobs:
         config:
           # UBUNTU
           - os: ubuntu-latest
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone
           - os: ubuntu-latest
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: conda-standalone-nightly
           - os: ubuntu-latest
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: micromamba
           - os: ubuntu-latest
-            python-version: "3.13"
+            python-version: "3.14"
             conda-standalone: conda-standalone-onedir
             check-docs-schema: true
+          # UBUNTU ARM
+          - os: ubuntu-26.04-arm
+            python-version: "3.11"
+            conda-standalone: conda-standalone
+          - os: ubuntu-26.04-arm
+            python-version: "3.12"
+            conda-standalone: conda-standalone-nightly
+          - os: ubuntu-26.04-arm
+            python-version: "3.13"
+            conda-standalone: micromamba
+          - os: ubuntu-26.04-arm
+            python-version: "3.14"
+            conda-standalone: conda-standalone-onedir
           # MACOS
           - os: macos-15-intel
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone-nightly
           - os: macos-15-intel
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: conda-standalone-onedir
           - os: macos-latest
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: conda-standalone
           - os: macos-latest
-            python-version: "3.13"
+            python-version: "3.14"
             conda-standalone: micromamba
           # WINDOWS
           - os: windows-2022
-            python-version: "3.10"
+            python-version: "3.11"
             conda-standalone: conda-standalone-nightly
           - os: windows-2022
-            python-version: "3.11"
+            python-version: "3.12"
             conda-standalone: conda-standalone
           - os: windows-2022
-            python-version: "3.12"
+            python-version: "3.13"
             conda-standalone: conda-standalone-nightly  # micromamba disabled
           - os: windows-2022
-            python-version: "3.13"
+            python-version: "3.14"
             conda-standalone: conda-standalone-onedir  # micromamba disabled
         split-group: [1, 2, 3]
     env:
@@ -169,19 +182,32 @@ jobs:
       - name: Check docs and schema are up-to-date
         if: matrix.config.check-docs-schema
         run: |
+          conda install --file dev/extra-requirements-schema.txt
           python scripts/make_docs.py
           python constructor/_schema.py
           git diff --exit-code
 
-  report:
+  analyze:
     name: Report failures
-    needs: [tests]
-    if: always() && github.event_name == 'push' && github.ref_name == 'main' && needs.tests.result == 'failure'
-    runs-on: ubuntu-latest
+    needs: [tests, build]
+    if: '!cancelled()'
+    runs-on: ubuntu-slim
     steps:
       - name: Retrieve the source code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Determine Success
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        id: alls-green
+        with:
+          # permit jobs to be skipped if there are no code changes (see changes job)
+          allowed-skips: ${{ toJSON(needs) }}
+          jobs: ${{ toJSON(needs) }}
       - name: Report failures
+        if: |
+          always()
+          && github.event_name == 'push'
+          && github.ref_name == 'main'
+          && (needs.tests.result == 'failure' || needs.build.result == 'failure')
         uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.CONSTRUCTOR_ISSUES }}
@@ -206,6 +232,8 @@ jobs:
         include:
           - runner: ubuntu-latest
             subdir: linux-64
+          - runner: ubuntu-26.04-arm
+            subdir: linux-aarch64
           - runner: macos-15-intel
             subdir: osx-64
           - runner: macos-latest
