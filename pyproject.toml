@@ -7,7 +7,7 @@ name = "constructor"
 description = "create installer from conda packages"
 readme = "README.md"
 license = {text = "BSD-3-Clause"}
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dynamic = [
     "version",
 ]
@@ -50,7 +50,7 @@ constructor = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 exclude = [
   "constructor/nsis/*.py",
 ]

@@ -3,16 +3,7 @@
 This avoids requiring pydantic as a run dependency.
 """
 
-try:
-    from enum import StrEnum
-except ImportError:  # Python < 3.11
-    # Since StrEnums were added in Python 3.11, we need to have a temporary wrapper class
-    # to handle Python 3.10 until we remove the support of it.
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        def __str__(self):
-            return str(self.value)
+from enum import StrEnum
 
 
 class InstallerTypes(StrEnum):
