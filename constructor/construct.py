@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 HERE = Path(__file__).parent
 SCHEMA_PATH = HERE / "data" / "construct.schema.json"
 
+# Maps deprecated selectors to their replacements
+DEPRECATED_SELECTORS = {
+    "win_arm64": "win and arm64",
+}
+
 
 def ns_platform(platform):
     p = platform
@@ -44,7 +49,7 @@ def ns_platform(platform):
         aarch64=bool(p == "linux-aarch64"),
         ppc64le=bool(p == "linux-ppc64le"),
         riscv64=bool(p == "linux-riscv64"),
-        arm64=bool(p == "osx-arm64"),
+        arm64=bool(p.endswith("-arm64")),
         s390x=bool(p == "linux-s390x"),
         x86=p.endswith(("-32", "-64")),
         x86_64=p.endswith("-64"),
@@ -65,6 +70,7 @@ sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$")
 
 def select_lines(data, namespace):
     lines = []
+    warned_selectors = set()
 
     for i, line in enumerate(data.splitlines()):
         line = line.rstrip()
@@ -79,6 +85,14 @@ def select_lines(data, namespace):
         m = sel_pat.match(line)
         if m:
             cond = m.group(3)
+            for selector, replacement in DEPRECATED_SELECTORS.items():
+                if selector not in warned_selectors and re.search(rf"\b{selector}\b", cond):
+                    warned_selectors.add(selector)
+                    logger.warning(
+                        "The '%s' selector is deprecated. Use '%s' instead.",
+                        selector,
+                        replacement,
+                    )
             try:
                 if eval(cond, namespace, {}):
                     lines.append(m.group(1) + trailing_quote)

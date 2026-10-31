@@ -9,7 +9,7 @@ import jinja2
 
 from constructor._schema import ConstructorConfiguration  # noqa: TID251
 from constructor.conda_interface import SUPPORTED_PLATFORMS
-from constructor.construct import ns_platform
+from constructor.construct import DEPRECATED_SELECTORS, ns_platform
 
 REPO_ROOT = dirname(dirname(__file__))
 
@@ -68,7 +68,7 @@ are not available here.
 ## Available selectors
 
 {%- for key, val in selectors|dictsort %}
-- `{{key}}`
+- `{{key}}`{% if key in deprecated_selectors %} (deprecated; use `{{deprecated_selectors[key]}}`){% endif %}
 {%- endfor %}
 
 ## Available Platforms
@@ -89,6 +89,7 @@ def generate_key_info_dict():
 
 output = jinja2.Template(template).render(
     selectors=valid_selectors,
+    deprecated_selectors=DEPRECATED_SELECTORS,
     key_info_dict=generate_key_info_dict(),
     supported_platforms=SUPPORTED_PLATFORMS,
 )

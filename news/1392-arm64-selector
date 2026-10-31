@@ -1,0 +1,19 @@
+### Enhancements
+
+* The `arm64` selector is now also true for `win-arm64`, matching `conda-build`. (#1392)
+
+### Bug fixes
+
+* <news item>
+
+### Deprecations
+
+* Mark the `win_arm64` selector as deprecated. Use `win and arm64` instead. (#1392)
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>

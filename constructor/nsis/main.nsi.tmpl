@@ -683,7 +683,7 @@ Function .onInit
             /SD IDOK
         Abort
     ${EndIf}
-{%- elif win_arm64 %}
+{%- elif win and arm64 %}
     # Make sure we're actually on native ARM64 Windows.
     ${IfNot} ${IsNativeARM64}
         ${Print} "::error::This installer is for the ARM64 version of ${NAME} \
