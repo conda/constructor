@@ -70,6 +70,7 @@ sel_pat = re.compile(r"(.+?)\s*(#.*)?\[([^\[\]]+)\](?(2)[^\(\)]*)$")
 
 def select_lines(data, namespace):
     lines = []
+    warned_selectors = set()
 
     for i, line in enumerate(data.splitlines()):
         line = line.rstrip()
@@ -85,7 +86,8 @@ def select_lines(data, namespace):
         if m:
             cond = m.group(3)
             for selector, replacement in DEPRECATED_SELECTORS.items():
-                if re.search(rf"\b{selector}\b", cond):
+                if selector not in warned_selectors and re.search(rf"\b{selector}\b", cond):
+                    warned_selectors.add(selector)
                     logger.warning(
                         "The '%s' selector is deprecated. Use '%s' instead.",
                         selector,

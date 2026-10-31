@@ -143,3 +143,10 @@ def test_deprecated_selector_warns(selector, warns, caplog):
     result = select_lines(f"key: value  # [{selector}]", ns_platform("win-arm64"))
     assert ("value" in result) is (selector != "not win_arm64")
     assert ("'win_arm64' selector is deprecated" in caplog.text) is warns
+
+
+@pytest.mark.parametrize("platform", SUPPORTED_PLATFORMS)
+def test_deprecated_selector_warns_once(platform, caplog):
+    data = "a: 1  # [win_arm64]\nb: 2  # [not win_arm64]\nc: 3  # [win_arm64 or osx]\n"
+    select_lines(data, ns_platform(platform))
+    assert caplog.text.count("'win_arm64' selector is deprecated") == 1
