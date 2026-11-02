@@ -106,7 +106,6 @@ SKIP_SHORTCUTS=0
 {%- endif %}
 INIT_CONDA=0
 TEST=0
-REINSTALL=0
 USAGE="
 usage: $0 [options]
 
@@ -448,10 +447,8 @@ esac
 
 if [ "$FORCE" = "0" ] && [ -e "$PREFIX" ]; then
     printf "ERROR: File or directory already exists: '%s'\\n" "$PREFIX" >&2
-    printf "If you want to update an existing installation, use the -u option.\\n" >&2
+    printf "Choose a different install prefix with the -p option.\\n" >&2
     exit 1
-elif [ "$FORCE" = "1" ] && [ -e "$PREFIX" ]; then
-    REINSTALL=1
 fi
 
 total_installation_size_kb="{{ total_installation_size_kb }}"
@@ -610,7 +607,6 @@ fi
 
 MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
-export FORCE
 
 {#-
 # original issue report:
