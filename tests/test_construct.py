@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from constructor.conda_interface import SUPPORTED_PLATFORMS, cc_platform
-from constructor.construct import ns_platform
+from constructor.construct import ns_platform, select_lines
 from constructor.construct import parse as construct_parse
 from constructor.construct import render as construct_render
 
@@ -120,7 +120,7 @@ NS_PLATFORM_TRUE_FLAGS = {
     "linux-s390x": {"linux", "s390x", "unix"},
     "linux-riscv64": {"linux", "riscv64", "unix"},
     "win-64": {"x86", "x86_64", "win", "win64"},
-    "win-arm64": {"win", "win_arm64"},
+    "win-arm64": {"win", "arm64", "win_arm64"},
     "osx-64": {"x86", "x86_64", "osx", "unix"},
     "osx-arm64": {"arm64", "osx", "unix"},
 }
@@ -133,3 +133,20 @@ def test_ns_platform(platform):
     true_flags = NS_PLATFORM_TRUE_FLAGS[platform]
     for flag, value in result.items():
         assert value is (flag in true_flags), f"{platform}: expected {flag}={flag in true_flags}"
+
+
+@pytest.mark.parametrize(
+    "selector, warns",
+    [("win_arm64", True), ("win and arm64", False), ("not win_arm64", True)],
+)
+def test_deprecated_selector_warns(selector, warns, caplog):
+    result = select_lines(f"key: value  # [{selector}]", ns_platform("win-arm64"))
+    assert ("value" in result) is (selector != "not win_arm64")
+    assert ("'win_arm64' selector is deprecated" in caplog.text) is warns
+
+
+@pytest.mark.parametrize("platform", SUPPORTED_PLATFORMS)
+def test_deprecated_selector_warns_once(platform, caplog):
+    data = "a: 1  # [win_arm64]\nb: 2  # [not win_arm64]\nc: 3  # [win_arm64 or osx]\n"
+    select_lines(data, ns_platform(platform))
+    assert caplog.text.count("'win_arm64' selector is deprecated") == 1
