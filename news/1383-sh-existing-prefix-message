@@ -1,7 +1,3 @@
 ### Bug fixes
 
 * Remove the misleading "use the -u option" hint from the `.sh` installer error shown when the install prefix already exists. (#1383)
-
-### Other
-
-* Remove the unused `REINSTALL` variable and stop exporting the `FORCE` variable in the `.sh` installer. (#1383)

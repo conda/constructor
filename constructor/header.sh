@@ -607,6 +607,7 @@ fi
 
 MSGS="$PREFIX/.messages.txt"
 touch "$MSGS"
+export FORCE
 
 {#-
 # original issue report:
