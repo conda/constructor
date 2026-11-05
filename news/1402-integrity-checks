@@ -1,0 +1,20 @@
+### Enhancements
+
+* Use SHA256 for SH installer integrity checks instead of MD5. (#1400 via #1402)
+
+### Bug fixes
+
+* <news item>
+
+
+### Deprecations
+
+* <news item>
+
+### Docs
+
+* <news item>
+
+### Other
+
+* <news item>

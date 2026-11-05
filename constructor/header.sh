@@ -2,10 +2,10 @@
 #
 # Created by constructor {{ constructor_version }}
 #
-# NAME:  {{ installer_name }}
-# VER:   {{ installer_version }}
-# PLAT:  {{ installer_platform }}
-# MD5:   {{ installer_md5 }}
+# NAME:   {{ installer_name }}
+# VER:    {{ installer_version }}
+# PLAT:   {{ installer_platform }}
+# SHA256: {{ installer_sha256 }}
 
 set -eu
 
@@ -514,13 +514,14 @@ boundary2=$(( boundary1 + {{ conda_exe_payloads_size }} ))
 # the end of the third payload, plus one
 boundary3=$(( boundary2 + {{ second_payload_size }} ))
 
-# verify the MD5 sum of the tarball appended to this header
-MD5=$(extract_range "${boundary0}" "${boundary3}" | {{ "md5" if osx else "md5sum -" }})
+# verify the SHA256 sum of the tarball appended to this header
+SHA256=$(extract_range "${boundary0}" "${boundary3}" | {{ "sha256sum" if osx else "shasum -a 256" }})
 
-if ! echo "$MD5" | grep {{ installer_md5 }} >/dev/null; then
-    printf "WARNING: md5sum mismatch of tar archive\\n" >&2
-    printf "expected: {{ installer_md5 }}\\n" >&2
-    printf "     got: %s\\n" "$MD5" >&2
+if ! echo "$SHA256" | grep {{ installer_sha256 }} >/dev/null; then
+    printf "ERROR: checksum mismatch of tar archive\\n" >&2
+    printf "expected: {{ installer_sha256 }}\\n" >&2
+    printf "     got: %s\\n" "$SHA256" >&2
+    exit 1
 fi
 
 cd "$PREFIX"
