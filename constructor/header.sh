@@ -515,7 +515,7 @@ boundary2=$(( boundary1 + {{ conda_exe_payloads_size }} ))
 boundary3=$(( boundary2 + {{ second_payload_size }} ))
 
 # verify the SHA256 sum of the tarball appended to this header
-SHA256=$(extract_range "${boundary0}" "${boundary3}" | {{ "sha256sum" if osx else "shasum -a 256" }})
+SHA256=$(extract_range "${boundary0}" "${boundary3}" | {{ "shasum -a 256" if osx else "sha256sum" }})
 
 if ! echo "$SHA256" | grep {{ installer_sha256 }} >/dev/null; then
     printf "ERROR: checksum mismatch of tar archive\\n" >&2
