@@ -1,6 +1,6 @@
 ### Enhancements
 
-* Use SHA256 for SH installer integrity checks instead of MD5. (#1400 via #1402)
+* Use SHA256 for SH installer integrity checks instead of MD5. Checksum failures now fail the installation instead of just issuing a warning. (#1400 via #1402)
 
 ### Bug fixes
 
