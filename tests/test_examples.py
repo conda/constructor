@@ -300,6 +300,8 @@ def _run_installer_sh(
             cmd.append("-x")
         cmd += [installer, "-b", *options, "-p", install_dir]
     process = _execute(cmd, installer_input=installer_input, timeout=timeout, check=check)
+    if "ERROR: checksum mismatch of tar archive" in process.stdout + process.stderr:
+        raise AssertionError("Checksum mismatch in SH payload!")
     return process
 
 

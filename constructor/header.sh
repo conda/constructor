@@ -5,6 +5,7 @@
 # NAME:   {{ installer_name }}
 # VER:    {{ installer_version }}
 # PLAT:   {{ installer_platform }}
+# MD5:    {{ installer_md5 }}
 # SHA256: {{ installer_sha256 }}
 
 set -eu
@@ -514,13 +515,26 @@ boundary2=$(( boundary1 + {{ conda_exe_payloads_size }} ))
 # the end of the third payload, plus one
 boundary3=$(( boundary2 + {{ second_payload_size }} ))
 
-# verify the SHA256 sum of the tarball appended to this header
-SHA256=$(extract_range "${boundary0}" "${boundary3}" | {{ "shasum -a 256" if osx else "sha256sum" }})
+CHECKSUM=""
+EXPECTED_CHECKSUM=""
+{%- set md5_cmd = "md5" if osx else "md5sum" %}
+{%- set sha256_cmd = "shasum" if osx else "sha256sum" %}
+if command -v {{ sha256_cmd }}; then
+    EXPECTED_CHECKSUM="{{ installer_sha256 }}"
+    CHECKSUM=$(extract_range "${boundary0}" "${boundary3}" | {{ "shasum -a 256" if osx else "sha256sum" }})
+elif command -v {{ md5_cmd }}; then
+    EXPECTED_CHECKSUM="{{ installer_md5 }}"
+    CHECKSUM=$(extract_range "${boundary0}" "${boundary3}" | {{ "md5" if osx else "md5sum -" }})
+fi
 
-if ! echo "$SHA256" | grep {{ installer_sha256 }} >/dev/null; then
+# verify the checksum of the tarball appended to this header
+if [ -z "${CHECKSUM}" ]; then
+    printf "WARNING: could not verify integrity of installer payload. " >&2
+    printf "Install {{ md5_cmd }} or {{ sha256_cmd }} to enable verification.\\n" >&2
+elif ! echo "$CHECKSUM" | grep "$EXPECTED_CHECKSUM" >/dev/null; then
     printf "ERROR: checksum mismatch of tar archive\\n" >&2
-    printf "expected: {{ installer_sha256 }}\\n" >&2
-    printf "     got: %s\\n" "$SHA256" >&2
+    printf "expected: %s\\n" "$EXPECTED_CHECKSUM" >&2
+    printf "     got: %s\\n" "$CHECKSUM" >&2
     exit 1
 fi
 

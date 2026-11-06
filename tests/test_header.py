@@ -149,6 +149,7 @@ def test_template_shellcheck(
             "installer_name": "Example",
             "installer_version": "1.2.3",
             "installer_platform": "linux-64",
+            "installer_md5": "a0098a2c837f4cf50180cfc0a041b2af",
             "installer_sha256": "df4afd72c81d9eb40e11de7c9e532dc7467765dbfe89fc4163ac817e13c3e4da",
             "script_env_variables": {},  # TODO: Fill this in with actual value
             "default_prefix": "/opt/Example",
