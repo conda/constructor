@@ -403,7 +403,6 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["enable_shortcuts"] = str(info["_enable_shortcuts"]).lower()
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
     variables["virtual_specs"] = shlex.join(virtual_specs)
-    variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     variables["script_env_variables"] = info.get("script_env_variables", {})
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
     variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"]["path"])

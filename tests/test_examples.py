@@ -1050,16 +1050,6 @@ def _check_miniforge(
             _run_uninstaller_msi(installer, install_dir)
 
 
-_MINIFORGE_XFAIL = pytest.mark.xfail(
-    (
-        CONDA_EXE == StandaloneExe.CONDA
-        and not check_version(CONDA_EXE_VERSION, min_version="23.11.0a0")
-    ),
-    reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
-)
-
-
-@_MINIFORGE_XFAIL
 @pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("miniforge")))
 def test_example_miniforge(tmp_path, request, installer_type):
     _check_miniforge(
@@ -1067,7 +1057,6 @@ def test_example_miniforge(tmp_path, request, installer_type):
     )
 
 
-@_MINIFORGE_XFAIL
 @pytest.mark.parametrize(
     "installer_type", installer_types_for_example(_example_path("miniforge-mamba2"))
 )
@@ -1232,13 +1221,7 @@ def test_example_scripts(tmp_path, request, installer_type):
     _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(
-    (
-        CONDA_EXE == StandaloneExe.MAMBA
-        and not check_version(CONDA_EXE_VERSION, min_version="23.11.0a0")
-    ),
-    reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
-)
+@pytest.mark.skipif(CONDA_EXE == StandaloneExe.MAMBA, reason="micromamba is not supported yet")
 @pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("shortcuts")))
 def test_example_shortcuts(tmp_path, request, installer_type):
     input_path = _example_path("shortcuts")
@@ -1846,10 +1829,6 @@ def test_allusers_exe(tmp_path, request, installer_type):
         assert files == [], f"Files must have generic execute and read for {acct}"
 
 
-@pytest.mark.xfail(
-    CONDA_EXE == StandaloneExe.CONDA and not check_version(CONDA_EXE_VERSION, min_version="24.9.0"),
-    reason="Pre-existing .condarc breaks installation",
-)
 @pytest.mark.parametrize(
     "installer_type", installer_types_for_example(_example_path("customize_controls"))
 )
@@ -1899,11 +1878,6 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
         assert proc.stderr.count("Bad conversion of configurable") == 4
 
 
-@pytest.mark.skipif(
-    CONDA_EXE == StandaloneExe.CONDA
-    and not check_version(CONDA_EXE_VERSION, min_version="24.11.0"),
-    reason=f"Requires conda-standalone 24.11.x or newer (is {CONDA_EXE_VERSION})",
-)
 @pytest.mark.skipif(not sys.platform == "win32", reason="Windows only")
 @pytest.mark.skipif(not ON_CI, reason="CI only - Interacts with system files")
 @pytest.mark.parametrize(

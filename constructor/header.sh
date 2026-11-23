@@ -582,7 +582,7 @@ mkdir -p "$TMP"
     CONDA_QUIET="$BATCH" \
     CONDA_SOLVER="classic" \
     CONDA_PKGS_DIRS="$(mktemp -d)" \
-    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }}
+    "$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --no-rc --offline {{ virtual_specs }}
 {%- endif %}
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions
@@ -660,7 +660,7 @@ CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="{{ channels }}" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 CONDA_QUIET="$BATCH" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }} || exit 1
+"$CONDA_EXEC" install --offline --no-rc --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts
 
 {%- if has_conda %}
 mkdir -p "$PREFIX/envs"
@@ -700,7 +700,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
     CONDA_QUIET="$BATCH" \
-    "$CONDA_EXEC" install --offline --file "$PREFIX/envs/$env_name/conda-meta/initial-state.explicit.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
+    "$CONDA_EXEC" install --offline --no-rc --file "$PREFIX/envs/$env_name/conda-meta/initial-state.explicit.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
 done
 {%- endif %}
 

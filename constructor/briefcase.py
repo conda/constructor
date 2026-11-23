@@ -517,8 +517,6 @@ class Payload:
             "pyver_components": pyver_components,
             # --- OPTION_INITIALIZE_CONDA ---
             "initialize_conda": self.info.get("initialize_conda", "classic"),
-            # --- OPTION_CLEAR_PACKAGE_CACHE / OPTION_ENABLE_SHORTCUTS ---
-            "no_rcs_arg": self.info.get("_ignore_condarcs_arg", ""),
             # --- OPTION_ENABLE_SHORTCUTS ---
             # shortcuts_flags returns the appropriate --shortcuts-only=... flags,
             # an empty string (all shortcuts), or --no-shortcuts (none).

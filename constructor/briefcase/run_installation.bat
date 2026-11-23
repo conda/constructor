@@ -19,9 +19,9 @@ echo {{ message }}
 {{ tee("Setting up " ~ env.name ~ " environment...") }}
 set "CONDA_CHANNELS={{ env.channels }}"
 if "%OPTION_ENABLE_SHORTCUTS%"=="1" (
-    "%CONDA_EXE%" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile }}" {{ env.shortcuts }} {{ no_rcs_arg }} --log-file "%LOG%"
+    "%CONDA_EXE%" install --offline --no-rc -yp "{{ env.prefix }}" --file "{{ env.lockfile }}" {{ env.shortcuts }} --log-file "%LOG%"
 ) else (
-    "%CONDA_EXE%" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile }}" --no-shortcuts {{ no_rcs_arg }} --log-file "%LOG%"
+    "%CONDA_EXE%" install --offline --no-rc -yp "{{ env.prefix }}" --file "{{ env.lockfile }}" --no-shortcuts --log-file "%LOG%"
 )
 set "INSTALL_ERRORLEVEL=%errorlevel%"
 if %INSTALL_ERRORLEVEL% neq 0 ( exit /b %INSTALL_ERRORLEVEL% )
@@ -105,7 +105,7 @@ set "CONDA_SOLVER=classic"
 set "CONDA_PKGS_DIRS=%TEMP%\constructor_vspecs"
 echo Checking virtual specs compatibility: {{ virtual_specs_debug_bat }}
 >> "%LOG%" echo Checking virtual specs compatibility: {{ virtual_specs_debug_bat }}
-"%CONDA_EXE%" create --dry-run --prefix "%BASE_PATH%\envs\_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }} --log-file "%LOG%"
+"%CONDA_EXE%" create --dry-run --prefix "%BASE_PATH%\envs\_virtual_specs_checks" --offline --no-rc {{ virtual_specs }} --log-file "%LOG%"
 if errorlevel 1 (
     echo [ERROR] Failed to check virtual specs: {{ virtual_specs_debug_bat }}
     >> "%LOG%" echo [ERROR] Failed to check virtual specs: {{ virtual_specs_debug_bat }}
@@ -214,7 +214,7 @@ if "%OPTION_POST_INSTALL_SCRIPT%"=="1" (
 rem Clear the package cache if the option was selected
 if "%OPTION_CLEAR_PACKAGE_CACHE%"=="1" (
     {{ tee("Clearing package cache...") }}
-    "%CONDA_EXE%" clean --all --force-pkgs-dirs --yes {{ no_rcs_arg }} --log-file "%LOG%"
+    "%CONDA_EXE%" clean --all --force-pkgs-dirs --yes --no-rc --log-file "%LOG%"
     if errorlevel 1 ( exit /b %errorlevel% )
 )
 

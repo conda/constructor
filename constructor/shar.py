@@ -107,7 +107,6 @@ def get_header(conda_exec, tarball, info):
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
     variables["total_installation_size_kb"] = str(approx_size_kb(info, "total"))
     variables["virtual_specs"] = shlex.join(virtual_specs)
-    variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     if has_license:
         variables["license"] = read_ascii_only(info["license_file"])
 

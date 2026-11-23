@@ -288,11 +288,6 @@ def main_build(
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
 
-    if info.get("uninstall_with_conda_exe") and not (
-        exe_type == StandaloneExe.CONDA and check_version(exe_version, min_version="24.11.0")
-    ):
-        sys.exit("Error: uninstalling with conda.exe requires conda-standalone 24.11.0 or newer.")
-
     logger.debug("conda packages download: %s", info["_download_dir"])
 
     for key in ("welcome_image_text", "header_image_text"):
@@ -381,26 +376,11 @@ def main_build(
         info.get("menu_packages", True)
         or any(env.get("menu_packages", True) for env in info.get("extra_envs", {}).values())
     )
-    if info["_enable_shortcuts"]:
-        if exe_type is None or exe_version is None:
-            logger.warning(
-                "Could not identify conda-standalone / micromamba version. "
-                "Will assume it is compatible with shortcuts."
-            )
-        elif sys.platform != "win32" and (
-            exe_type != StandaloneExe.CONDA or check_version(exe_version, max_version="23.11.0")
-        ):
-            logger.warning("conda-standalone 23.11.0 or above is required for shortcuts on Unix.")
-            info["_enable_shortcuts"] = "incompatible"
-
-    # Add --no-rc option to CONDA_EXE command so that existing
-    # .condarc files do not pollute the installation process.
-    if exe_type == StandaloneExe.CONDA and check_version(exe_version, min_version="24.9.0"):
-        info["_ignore_condarcs_arg"] = "--no-rc"
-    elif exe_type == StandaloneExe.MAMBA:
-        info["_ignore_condarcs_arg"] = "--no-rc"
-    else:
-        info["_ignore_condarcs_arg"] = ""
+    if info["_enable_shortcuts"] and (exe_type is None or exe_version is None):
+        logger.warning(
+            "Could not identify conda-standalone / micromamba version. "
+            "Will assume it is compatible with shortcuts."
+        )
 
     info["_conda_exe"]["supports_logging"] = _conda_exe_supports_logging(
         exe_path,

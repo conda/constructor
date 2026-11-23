@@ -105,7 +105,6 @@ def setup_envs_commands(info, dir_path):
             "final_channels": get_final_channels(info),
             "shortcuts": shortcuts_flags(info),
             "register_envs": str(info.get("register_envs", True)).lower(),
-            "no_rcs_arg": info.get("_ignore_condarcs_arg", ""),
         }
     )
     # Now we generate one item per extra env, if present
@@ -137,7 +136,6 @@ def setup_envs_commands(info, dir_path):
                 "final_channels": get_final_channels(channel_info),
                 "shortcuts": shortcuts_flags(env_info),
                 "register_envs": str(info.get("register_envs", True)).lower(),
-                "no_rcs_arg": info.get("_ignore_condarcs_arg", ""),
             }
         )
 
@@ -320,7 +318,6 @@ def make_nsi(
     # This is the same but without quotes so we can print it fine
     variables["VIRTUAL_SPECS_DEBUG"] = " ".join([spec for spec in info.get("virtual_specs", ())])
     variables["LICENSEFILENAME"] = basename(info.get("license_file", "placeholder_license.txt"))
-    variables["NO_RCS_ARG"] = info.get("_ignore_condarcs_arg", "")
 
     data = render_template(read_nsi_tmpl(info), **variables)
     if info["_platform"].startswith("win") and sys.platform != "win32":
