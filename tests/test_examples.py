@@ -31,7 +31,6 @@ from constructor.main import get_installer_type
 from constructor.utils import (
     StandaloneExeType,
     check_version,
-    format_conda_exe_name,
     has_docker_buildx,
     identify_conda_exe,
 )
@@ -1163,6 +1162,10 @@ def test_example_osxpkg_extra_pages(tmp_path):
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
+@pytest.mark.skipif(
+    not CONDA_EXE_DATA.get("target_name"),
+    reason="standalone binary not fully identified",
+)
 @pytest.mark.skipif("CI" not in os.environ, reason="CI only")
 def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     try:
@@ -1183,7 +1186,7 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     # including binary archives like the PlugIns file
     cmd = ["pkgutil", "--expand-full", installer, expanded_path]
     _execute(cmd)
-    conda_exe_name = format_conda_exe_name(CONSTRUCTOR_CONDA_EXE)
+    conda_exe_name = CONDA_EXE_DATA.get("target_name", "")
     components = [
         Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", conda_exe_name),
         Path(expanded_path, "Plugins", "ExtraPage.bundle"),

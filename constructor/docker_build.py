@@ -9,7 +9,7 @@ from pathlib import Path
 from jinja2 import Template
 
 from . import __version__
-from .utils import check_version, format_conda_exe_name
+from .utils import check_version
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
         base_image=info.get("docker_base_image"),
         default_prefix=info.get("default_prefix", f"/opt/{info['name'].lower()}"),
         installer_filename=Path(info["_outpath"]).name,
-        conda_exe_name=format_conda_exe_name(info["_conda_exe"]["path"]),
+        conda_exe_name=info["_conda_exe"]["target_name"],
         name=info["name"],
         version=info["version"],
         labels=info.get("docker_labels", {}),
@@ -147,7 +147,7 @@ def build_image(info: dict, docker_dir: Path) -> Path:
     return tarball_dest
 
 
-def create(info: dict, verbose: bool = False) -> None:
+def create(info: dict) -> None:
     """Build a Docker output from a previously built ``.sh`` installer.
 
     The ``.sh`` installer is built and must exist at ``info["_outpath"]``
@@ -157,9 +157,6 @@ def create(info: dict, verbose: bool = False) -> None:
     ----------
     info: dict
         Constructor installer info dict.
-    verbose: bool, optional
-        If ``True``, enables verbose logging.
-        Defaults to ``False``.
 
     """
     with tempfile.TemporaryDirectory() as temp_dir:

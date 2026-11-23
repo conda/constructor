@@ -51,6 +51,7 @@ if TYPE_CHECKING:
         path: Path
         sha256: str
         supports_logging: bool
+        target_name: str
         type: StandaloneExeType
         version: VersionOrder
 
@@ -383,15 +384,18 @@ def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
         output_version = output_version.strip()
         fields = output_version.split()
         if "conda" in fields:
+            conda_exe_data["target_name"] = "_conda"
             conda_exe_data["type"] = StandaloneExeType.CONDA
             conda_exe_data["version"] = VersionOrder(fields[1])
         else:
             # micromamba only returns the version number
             output_help = check_output([conda_exe, "--help"], text=True)
             if "mamba" in output_help:
+                conda_exe_data["target_name"] = "micromamba"
                 conda_exe_data["type"] = StandaloneExeType.MAMBA
                 conda_exe_data["version"] = VersionOrder(output_version)
     except (CalledProcessError, OSError) as exc:
+        conda_exe_data["target_name"] = conda_exe.name
         logger.debug("Exception while identifying binary", exc_info=exc)
         logger.warning("Could not identify standalone binary: %s", exc)
         return conda_exe_data
@@ -417,31 +421,6 @@ def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
     conda_exe_data["has_windows_subcommand"] = results.returncode == 2
 
     return conda_exe_data
-
-
-def format_conda_exe_name(conda_exe: str | Path) -> str:
-    """Return a formatted alias for given stand-alone executable.
-
-      - If given executable cannot be identified, returns the basename of given executable.
-      - If stand-alone conda is identified, returns '_conda'.
-      - If stand-alone mamba/micromamba is identified, returns 'micromamba'.
-
-    Parameters::
-      - conda_exe: str | Path
-      Path to the conda executable to be accounted for.
-    """
-    conda_exe_name, _ = identify_conda_exe(conda_exe)
-    if conda_exe_name is None:
-        # This implies that identify_conda_exe failed
-        return Path(conda_exe).name
-    if conda_exe_name == StandaloneExeType.CONDA:
-        return "_conda"
-    elif conda_exe_name == StandaloneExeType.MAMBA:
-        return "micromamba"
-    else:
-        # This should never happen, but as a safe-guard in case `identify_conda_exe` is changed without
-        # accounting for this function.
-        raise RuntimeError("Unable to format conda exe name")
 
 
 def check_version(

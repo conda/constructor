@@ -26,7 +26,6 @@ from .utils import (
     approx_size_kb,
     copy_conda_exe,
     explained_check_call,
-    format_conda_exe_name,
     get_final_channels,
     parse_virtual_specs,
     rm_rf,
@@ -405,7 +404,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["virtual_specs"] = shlex.join(virtual_specs)
     variables["script_env_variables"] = info.get("script_env_variables", {})
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
-    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"]["path"])
+    variables["conda_exe_name"] = info["_conda_exe"]["target_name"]
 
     data = render_template(data, **variables)
 
@@ -635,7 +634,7 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    exe_name = format_conda_exe_name(info["_conda_exe"]["path"])
+    exe_name = info["_conda_exe"]["target_name"]
     copy_conda_exe(prefix, exe_name, info["_conda_exe"]["path"])
 
     # Sign conda-standalone so it can pass notarization

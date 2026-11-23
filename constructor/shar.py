@@ -29,7 +29,6 @@ from .utils import (
     approx_size_kb,
     copy_conda_exe,
     filename_dist,
-    format_conda_exe_name,
     get_final_channels,
     hash_files,
     parse_virtual_specs,
@@ -113,7 +112,7 @@ def get_header(conda_exec, tarball, info):
     virtual_specs = parse_virtual_specs(info)
     min_osx_version = virtual_specs.get("__osx", {}).get("min") or ""
     variables["min_osx_version"] = min_osx_version
-    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"]["path"])
+    variables["conda_exe_name"] = info["_conda_exe"]["target_name"]
     min_glibc_version = virtual_specs.get("__glibc", {}).get("min") or ""
     variables["min_glibc_version"] = min_glibc_version
 
