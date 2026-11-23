@@ -17,6 +17,7 @@ import tempfile
 from collections import defaultdict
 from itertools import groupby
 from os.path import abspath, basename, expanduser, isdir, join
+from pathlib import Path
 from subprocess import check_call
 from typing import TYPE_CHECKING
 
@@ -278,7 +279,7 @@ def _solve_precs(
     environment=None,
     environment_file=None,
     verbose=True,
-    conda_exe="conda.exe",
+    conda_exe: Path | None = None,
     extra_env=False,
     input_dir="",
     base_needs_python=True,
@@ -310,6 +311,8 @@ def _solve_precs(
                 # We need a conda for the native platform in order to do environment
                 # based installations.
                 sys.exit("CONDA_EXE env variable is empty. Need to activate a conda env.")
+        else:
+            user_conda = Path(user_conda).resolve()
     # make the environment, if needed
     if environment_file:
         environment = tempfile.mkdtemp()
@@ -327,7 +330,7 @@ def _solve_precs(
             )
         check_call(
             [
-                user_conda,
+                str(user_conda),
                 *subcommand,
                 "--file",
                 environment_file,
@@ -537,7 +540,7 @@ def _main(
     )
 
 
-def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
+def main(info, verbose=True, dry_run=False, conda_exe: Path | None = None):
     name = info["name"]
     input_dir = info["_input_dir"]
     version = info["version"]
@@ -554,7 +557,7 @@ def main(info, verbose=True, dry_run=False, conda_exe="conda.exe"):
     transmute_file_type = info.get("transmute_file_type", "")
     extra_envs = info.get("extra_envs", {})
     check_path_spaces = info.get("check_path_spaces", True)
-    base_needs_python = info.get("_win_install_needs_python_exe", False)
+    base_needs_python = info["_conda_exe"].get("has_windows_subcommand", False)
 
     if not channel_urls and not channels_remap and not (environment or environment_file):
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")

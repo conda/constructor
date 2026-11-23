@@ -15,16 +15,14 @@ import argparse
 import json
 import logging
 import os
-import subprocess
 import sys
 from os.path import abspath, expanduser, isdir, join
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from textwrap import dedent
 
 from . import __version__
 from ._types import InstallerTypes
-from .build_outputs import _validate_output, process_build_outputs
+from .build_outputs import process_build_outputs
 from .conda_interface import SUPPORTED_PLATFORMS, cc_platform
 from .conda_interface import VersionOrder as Version
 from .construct import SCHEMA_PATH, ns_platform
@@ -37,7 +35,6 @@ from .utils import (
     StandaloneExeType,
     check_version,
     has_docker_buildx,
-    hash_files,
     identify_conda_exe,
     normalize_path,
     yield_lines,
@@ -126,37 +123,10 @@ def get_output_filename(info: dict) -> str:
     )
 
 
-def _conda_exe_supports_logging(conda_exe: str, conda_exe_type: StandaloneExeType | None) -> bool:
-    """Test if the standalone binary supports the the --log-file argument.
-
-    Only available for conda-standalone.
-    """
-    if not conda_exe_type:
-        return False
-    with TemporaryDirectory() as tmpdir:
-        logfile = Path(tmpdir, "conda.log")
-        subprocess.run([conda_exe, "--version", f"--log-file={logfile}"])
-        return logfile.exists()
-
-
-def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExeType | None) -> bool:
-    if not conda_exe_type:
-        return True
-    results = subprocess.run(
-        [conda_exe, "constructor", "windows", "--help"],
-        capture_output=True,
-        check=False,
-    )
-    # Argparse uses return code 2 if a subcommand does not exist
-    # If the windows subcommand does not exist, python.exe is still
-    # required in the base environment.
-    return results.returncode == 2
-
-
 # Validate frozen environments
 def validate_frozen_envs(
     info: dict, exe_type: StandaloneExeType | None, exe_version: Version | None
-) -> bool:
+) -> None:
     """Validate frozen environments.
 
     Checks:
@@ -225,14 +195,12 @@ def main_build(
     verbose: bool = True,
     cache_dir: str = DEFAULT_CACHE_DIR,
     dry_run: bool = False,
-    conda_exe: str = "conda.exe",
+    conda_exe: Path | None = None,
     config_filename: str = "construct.yaml",
     debug: bool = False,
     installer_type: str | None = None,
 ):
     logger.info("platform: %s", platform)
-    if not os.path.isfile(conda_exe):
-        sys.exit("Error: Conda executable '%s' does not exist!" % conda_exe)
     cache_dir = abspath(expanduser(cache_dir))
     try:
         osname, unused_arch = platform.split("-")
@@ -275,14 +243,8 @@ def main_build(
     ):
         sys.exit("Error: cannot construct a macOS 'pkg' installer on '%s'" % cc_platform)
 
-    exe_path = info["_conda_exe"]["path"]
-    exe_type, exe_version = identify_conda_exe(exe_path)
-    if exe_version is not None:
-        exe_version = Version(exe_version)
-    info["_conda_exe"]["type"] = exe_type
-    info["_conda_exe"]["version"] = exe_version
-    if any("info.json" in _validate_output(o) for o in info.get("build_outputs", ())):
-        info["_conda_exe"]["sha256"] = hash_files([Path(exe_path)], "sha256")["sha256"]
+    exe_type = info["_conda_exe"].get("type")
+    exe_version = info["_conda_exe"].get("version")
 
     if osname == "win" and exe_type == StandaloneExeType.MAMBA:
         # TODO: Investigate errors on Windows and re-enable
@@ -382,11 +344,6 @@ def main_build(
             "Will assume it is compatible with shortcuts."
         )
 
-    info["_conda_exe"]["supports_logging"] = _conda_exe_supports_logging(
-        exe_path,
-        exe_type,
-    )
-
     if InstallerTypes.PKG in itypes:
         if (domains := info.get("pkg_domains")) is not None:
             domains = {key: str(val).lower() for key, val in domains.items()}
@@ -404,12 +361,6 @@ def main_build(
                 "enable_anywhere": "true",
                 "enable_currentUserHome": "true",
             }
-
-    if osname == "win":
-        info["_win_install_needs_python_exe"] = _win_install_needs_python_exe(
-            exe_path,
-            exe_type,
-        )
 
     info["installer_type"] = itypes[0]
     fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
@@ -678,15 +629,14 @@ def main(argv=None):
         return
 
     conda_exe = args.conda_exe
-    conda_exe_default_path = os.path.join(sys.prefix, "standalone_conda", "conda.exe")
-    conda_exe_default_path = normalize_path(conda_exe_default_path)
+    conda_exe_default_path = Path(sys.prefix, "standalone_conda", "conda.exe").resolve()
     if conda_exe:
-        conda_exe = normalize_path(os.path.abspath(conda_exe))
+        conda_exe = Path(conda_exe).resolve()
     elif args.platform != cc_platform:
         p.error("setting --conda-exe is required for building a non-native installer")
     else:
         conda_exe = conda_exe_default_path
-    if not os.path.isfile(conda_exe):
+    if not conda_exe.is_file():
         if conda_exe != conda_exe_default_path:
             p.error("file not found: %s" % args.conda_exe)
         p.error(
