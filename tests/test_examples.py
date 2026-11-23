@@ -30,7 +30,7 @@ from constructor.construct import parse as parse_construct
 from constructor.exceptions import InvalidInstallerTypeError
 from constructor.main import get_installer_type
 from constructor.utils import (
-    StandaloneExe,
+    StandaloneExeType,
     check_version,
     format_conda_exe_name,
     has_docker_buildx,
@@ -819,7 +819,7 @@ def _example_path(example_name):
 
 def _is_micromamba(path) -> bool:
     name, _ = identify_conda_exe(path)
-    return name == StandaloneExe.MAMBA
+    return name == StandaloneExeType.MAMBA
 
 
 def _entry_point_launchers(prefix: Path) -> list[Path]:
@@ -1221,7 +1221,7 @@ def test_example_scripts(tmp_path, request, installer_type):
     _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(CONDA_EXE == StandaloneExe.MAMBA, reason="micromamba is not supported yet")
+@pytest.mark.skipif(CONDA_EXE == StandaloneExeType.MAMBA, reason="micromamba is not supported yet")
 @pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("shortcuts")))
 def test_example_shortcuts(tmp_path, request, installer_type):
     input_path = _example_path("shortcuts")
@@ -1839,7 +1839,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
     # HOME or USERPROFILE breaks installer builds.
     # mamba does not search this directory, so use HOME as a fallback.
     # Since micromamba is not supported on Windows, this is not a problem.
-    if CONDA_EXE == StandaloneExe.MAMBA:
+    if CONDA_EXE == StandaloneExeType.MAMBA:
         monkeypatch.setenv("HOME", str(tmp_path))
         condarc = tmp_path / ".condarc"
     else:
@@ -1869,7 +1869,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
         check_subprocess=True,
         uninstall=True,
     )
-    if CONDA_EXE == StandaloneExe.MAMBA and installer_type == InstallerTypes.SH:
+    if CONDA_EXE == StandaloneExeType.MAMBA and installer_type == InstallerTypes.SH:
         # micromamba loads the rc files even for constructor subcommands.
         # This cannot be turned off with --no-rc, which causes four errors
         # in stderr. If there are more, other micromamba calls have read
@@ -2108,7 +2108,7 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry, installer_t
 
 @pytest.mark.xfail(
     condition=(
-        CONDA_EXE == StandaloneExe.CONDA
+        CONDA_EXE == StandaloneExeType.CONDA
         and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
     ),
     reason="conda-standalone 25.5.x fails with protected environments",

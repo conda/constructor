@@ -34,7 +34,7 @@ from .construct import verify as construct_verify
 from .exceptions import InvalidInstallerTypeError
 from .fcp import main as fcp_main
 from .utils import (
-    StandaloneExe,
+    StandaloneExeType,
     check_version,
     has_docker_buildx,
     hash_files,
@@ -126,7 +126,7 @@ def get_output_filename(info: dict) -> str:
     )
 
 
-def _conda_exe_supports_logging(conda_exe: str, conda_exe_type: StandaloneExe | None) -> bool:
+def _conda_exe_supports_logging(conda_exe: str, conda_exe_type: StandaloneExeType | None) -> bool:
     """Test if the standalone binary supports the the --log-file argument.
 
     Only available for conda-standalone.
@@ -139,7 +139,7 @@ def _conda_exe_supports_logging(conda_exe: str, conda_exe_type: StandaloneExe | 
         return logfile.exists()
 
 
-def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExe | None) -> bool:
+def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExeType | None) -> bool:
     if not conda_exe_type:
         return True
     results = subprocess.run(
@@ -155,7 +155,7 @@ def _win_install_needs_python_exe(conda_exe: str, conda_exe_type: StandaloneExe 
 
 # Validate frozen environments
 def validate_frozen_envs(
-    info: dict, exe_type: StandaloneExe | None, exe_version: Version | None
+    info: dict, exe_type: StandaloneExeType | None, exe_version: Version | None
 ) -> bool:
     """Validate frozen environments.
 
@@ -209,7 +209,7 @@ def validate_frozen_envs(
         )
 
     # Conda-standalone version validation
-    if exe_type == StandaloneExe.CONDA and check_version(
+    if exe_type == StandaloneExeType.CONDA and check_version(
         exe_version, min_version="25.5.0", max_version="25.7.0"
     ):
         raise RuntimeError(
@@ -247,7 +247,7 @@ def main_build(
     info["_output_dir"] = output_dir
     info["_platform"] = platform
     info["_download_dir"] = join(cache_dir, platform)
-    info["_conda_exe"] = {"path": abspath(conda_exe)}
+    info["_conda_exe"] = identify_conda_exe(conda_exe)
     info["_debug"] = debug
     if installer_type:
         info["installer_type"] = installer_type
@@ -284,7 +284,7 @@ def main_build(
     if any("info.json" in _validate_output(o) for o in info.get("build_outputs", ())):
         info["_conda_exe"]["sha256"] = hash_files([Path(exe_path)], "sha256")["sha256"]
 
-    if osname == "win" and exe_type == StandaloneExe.MAMBA:
+    if osname == "win" and exe_type == StandaloneExeType.MAMBA:
         # TODO: Investigate errors on Windows and re-enable
         sys.exit("Error: micromamba is not supported on Windows installers.")
 

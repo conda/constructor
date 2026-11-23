@@ -36,7 +36,7 @@ yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
 
 
-class StandaloneExe:
+class StandaloneExeType:
     CONDA = "conda"
     MAMBA = "mamba"
 
@@ -217,7 +217,7 @@ def ensure_transmuted_ext(info, url):
     """
     if (
         info.get("transmute_file_type") == ".conda"
-        and info.get("_conda_exe", {}).get("type") == StandaloneExe.MAMBA
+        and info.get("_conda_exe", {}).get("type") == StandaloneExeType.MAMBA
     ):
         if url.lower().endswith(".tar.bz2"):
             url = url[:-8] + ".conda"
@@ -308,7 +308,7 @@ def shortcuts_flags(info) -> str:
         # not set: we create all shortcuts (default behaviour)
         return ""
     if menu_packages:
-        if info.get("_conda_exe", {}).get("type") == StandaloneExe.MAMBA:
+        if info.get("_conda_exe", {}).get("type") == StandaloneExeType.MAMBA:
             logger.warning(
                 "Micromamba does not support '--shortcuts-only'. Will install all shortcuts."
             )
@@ -353,7 +353,7 @@ def copy_conda_exe(
     return []
 
 
-def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneExe, str]:
+def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneExeType, str]:
     if conda_exe is None:
         conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
     if isinstance(conda_exe, Path):
@@ -363,11 +363,11 @@ def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneE
         output_version = output_version.strip()
         fields = output_version.split()
         if "conda" in fields:
-            return StandaloneExe.CONDA, fields[1]
+            return StandaloneExeType.CONDA, fields[1]
         # micromamba only returns the version number
         output_help = check_output([conda_exe, "--help"], text=True)
         if "mamba" in output_help:
-            return StandaloneExe.MAMBA, output_version
+            return StandaloneExeType.MAMBA, output_version
     except (CalledProcessError, OSError) as exc:
         logger.debug("Exception while identifying binary", exc_info=exc)
         logger.warning("Could not identify standalone binary: %s", exc)
@@ -389,9 +389,9 @@ def format_conda_exe_name(conda_exe: str | Path) -> str:
     if conda_exe_name is None:
         # This implies that identify_conda_exe failed
         return Path(conda_exe).name
-    if conda_exe_name == StandaloneExe.CONDA:
+    if conda_exe_name == StandaloneExeType.CONDA:
         return "_conda"
-    elif conda_exe_name == StandaloneExe.MAMBA:
+    elif conda_exe_name == StandaloneExeType.MAMBA:
         return "micromamba"
     else:
         # This should never happen, but as a safe-guard in case `identify_conda_exe` is changed without
