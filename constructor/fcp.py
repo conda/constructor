@@ -282,7 +282,7 @@ def _solve_precs(
     conda_exe: Path | None = None,
     extra_env=False,
     input_dir="",
-    base_needs_python=True,
+    base_needs_python=False,
 ):
     if not extra_env and base_needs_python:
         specs = (*specs, "python")
@@ -435,12 +435,12 @@ def _main(
     environment_file=None,
     verbose=True,
     dry_run=False,
-    conda_exe="conda.exe",
+    conda_exe: Path | None = None,
     transmute_file_type="",
     extra_envs=None,
     check_path_spaces=True,
     input_dir="",
-    base_needs_python=True,
+    base_needs_python=False,
 ):
     precs = _solve_precs(
         name,
@@ -557,7 +557,7 @@ def main(info, verbose=True, dry_run=False, conda_exe: Path | None = None):
     transmute_file_type = info.get("transmute_file_type", "")
     extra_envs = info.get("extra_envs", {})
     check_path_spaces = info.get("check_path_spaces", True)
-    base_needs_python = info["_conda_exe"].get("has_windows_subcommand", True)
+    base_needs_python = info["_conda_exe"].get("has_windows_subcommand", False)
 
     if not channel_urls and not channels_remap and not (environment or environment_file):
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")

@@ -48,16 +48,16 @@ class StandaloneExeType:
 
 
 if TYPE_CHECKING:
-    from typing import Required, TypedDict
+    from typing import NotRequired, TypedDict
 
-    class StandaloneExe(TypedDict, total=False):
+    class StandaloneExe(TypedDict):
         has_windows_subcommand: bool
-        path: Required[Path]
-        sha256: Required[str]
+        path: Path
+        sha256: str
         supports_logging: bool
-        target_name: Required[str]
-        type: StandaloneExeType
-        version: VersionOrder
+        target_name: str
+        type: NotRequired[StandaloneExeType]
+        version: NotRequired[VersionOrder]
 
 
 def explained_check_call(args):
@@ -369,8 +369,10 @@ def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
     if not conda_exe.is_file():
         raise FileNotFoundError(f"Conda executable {conda_exe} does not exist.")
     conda_exe_data: StandaloneExe = {
+        "has_windows_subcommand": False,
         "path": conda_exe,
         "sha256": hash_files([conda_exe], "sha256")["sha256"],
+        "supports_logging": False,
         "target_name": conda_exe.name,
     }
 
@@ -400,7 +402,7 @@ def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
         logger.warning("Could not identify standalone binary: %s", exc)
         return conda_exe_data
 
-    if conda_exe_data.get("type") == StandaloneExeType.MAMBA:
+    if sys.platform != "win32" or conda_exe_data.get("type") == StandaloneExeType.MAMBA:
         return conda_exe_data
 
     # Check logging
@@ -409,12 +411,12 @@ def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
         subprocess.run([conda_exe, "--version", f"--log-file={logfile}"])
         conda_exe_data["supports_logging"] = logfile.exists()
 
-        # Check if Windows needs Python
-        results = subprocess.run(
-            [conda_exe, "constructor", "windows", "--help"],
-            capture_output=True,
-            check=False,
-        )
+    # Check if Windows needs Python
+    results = subprocess.run(
+        [conda_exe, "constructor", "windows", "--help"],
+        capture_output=True,
+        check=False,
+    )
     # Argparse uses return code 2 if a subcommand does not exist
     # If the windows subcommand does not exist, python.exe is still
     # required in the base environment.
