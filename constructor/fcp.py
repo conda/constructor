@@ -557,7 +557,7 @@ def main(info, verbose=True, dry_run=False, conda_exe: Path | None = None):
     transmute_file_type = info.get("transmute_file_type", "")
     extra_envs = info.get("extra_envs", {})
     check_path_spaces = info.get("check_path_spaces", True)
-    base_needs_python = info["_conda_exe"].get("has_windows_subcommand", False)
+    base_needs_python = info["_conda_exe"].get("has_windows_subcommand", True)
 
     if not channel_urls and not channels_remap and not (environment or environment_file):
         sys.exit("Error: at least one entry in 'channels' or 'channels_remap' is required")
