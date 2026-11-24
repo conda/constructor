@@ -19,6 +19,7 @@ import tempfile
 from contextlib import nullcontext
 from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
+from pathlib import Path
 
 from .construct import ns_platform
 from .jinja import render_template
@@ -237,7 +238,11 @@ def create(info, verbose=False):
     with shar_path.open(mode="wb") as fo:
         fo.write(header.encode("utf-8"))
         for payload in [conda_exec, *maybe_memfile, tarball]:
-            with open(payload, "rb") if isinstance(payload, str) else nullcontext(payload) as fi:
+            with (
+                open(payload, "rb")
+                if isinstance(payload, (Path, str))
+                else nullcontext(payload) as fi
+            ):
                 while True:
                     chunk = fi.read(262144)
                     if not chunk:

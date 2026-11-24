@@ -17,7 +17,6 @@ from conda.exports import default_prefix
 
 from . import __version__
 from ._types import BuildOutputs
-from .conda_interface import VersionOrder
 from .utils import hash_files
 
 logger = logging.getLogger(__name__)
@@ -141,8 +140,8 @@ def dump_info(info):
     def _serialize(obj):
         if hasattr(obj, "dump"):
             return obj.dump()
-        elif isinstance(obj, VersionOrder):
-            return obj.norm_version
+        elif hasattr(obj, "__str__"):
+            return str(obj)
         else:
             return repr(obj)
 
