@@ -38,6 +38,10 @@ yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
 
 
+# Taken from meta.yaml
+MINIMUM_CONDA_STANDALONE = VersionOrder("24.11.0")
+
+
 class StandaloneExeType:
     CONDA = "conda"
     MAMBA = "mamba"
@@ -379,6 +383,11 @@ def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
             conda_exe_data["target_name"] = f"_conda{ext}"
             conda_exe_data["type"] = StandaloneExeType.CONDA
             conda_exe_data["version"] = VersionOrder(fields[1])
+            if conda_exe_data["version"] < MINIMUM_CONDA_STANDALONE:
+                raise RuntimeError(
+                    f"conda-standalone must be at least {MINIMUM_CONDA_STANDALONE} "
+                    f"(is {conda_exe_data['version']})."
+                )
         else:
             # micromamba only returns the version number
             output_help = check_output([conda_exe, "--help"], text=True)
