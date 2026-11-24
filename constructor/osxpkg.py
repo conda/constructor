@@ -635,7 +635,7 @@ def create(info, verbose=False):
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
     exe_name = info["_conda_exe"]["target_name"]
-    copy_conda_exe(prefix, exe_name, info["_conda_exe"]["path"])
+    copy_conda_exe(prefix, info["_conda_exe"])
 
     # Sign conda-standalone so it can pass notarization
     codesigner = None

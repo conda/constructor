@@ -376,7 +376,7 @@ def create(info, verbose=False):
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
-    extra_conda_exe_files = copy_conda_exe(tmp_dir, "_conda.exe", info["_conda_exe"]["path"])
+    extra_conda_exe_files = copy_conda_exe(tmp_dir, info["_conda_exe"])
 
     pre_dst = join(tmp_dir, "pre_install.bat")
     pre_install_script = info.get("pre_install")

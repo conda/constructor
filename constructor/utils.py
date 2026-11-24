@@ -20,7 +20,7 @@ import warnings
 from contextlib import contextmanager
 from io import StringIO
 from os import environ, sep, unlink
-from os.path import isdir, isfile, islink, join, normpath
+from os.path import isdir, isfile, islink, normpath
 from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
@@ -44,14 +44,14 @@ class StandaloneExeType:
 
 
 if TYPE_CHECKING:
-    from typing import TypedDict
+    from typing import Required, TypedDict
 
     class StandaloneExe(TypedDict, total=False):
         has_windows_subcommand: bool
-        path: Path
-        sha256: str
+        path: Required[Path]
+        sha256: Required[str]
         supports_logging: bool
-        target_name: str
+        target_name: Required[str]
         type: StandaloneExeType
         version: VersionOrder
 
@@ -353,15 +353,10 @@ def approx_size_kb(info, which="pkgs"):
 
 def copy_conda_exe(
     target_directory: str | Path,
-    target_conda_exe_name: str | None = None,
-    conda_exe: str | Path | None = None,
+    conda_exe: StandaloneExe,
 ) -> list[Path]:
-    if conda_exe is None:
-        conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
-    if target_conda_exe_name is None:
-        target_conda_exe_name = Path(conda_exe).name
-    shutil.copyfile(conda_exe, join(target_directory, target_conda_exe_name))
-    if (internal_dir := Path(conda_exe).parent / "_internal").is_dir():
+    shutil.copyfile(conda_exe["path"], Path(target_directory, conda_exe["target_name"]))
+    if (internal_dir := conda_exe["path"].parent / "_internal").is_dir():
         # onedir conda-standalone variant, copy that too
         shutil.copytree(internal_dir, Path(target_directory, "_internal"), dirs_exist_ok=True)
         return sorted([p for p in Path(target_directory, "_internal").glob("**/*") if p.is_file()])
@@ -377,30 +372,31 @@ def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
     conda_exe_data: StandaloneExe = {
         "path": conda_exe,
         "sha256": hash_files([conda_exe], "sha256")["sha256"],
+        "target_name": conda_exe.name,
     }
 
     try:
         output_version = check_output([conda_exe, "--version"], text=True)
         output_version = output_version.strip()
         fields = output_version.split()
+        ext = ".exe" if sys.platform == "win32" else ""
         if "conda" in fields:
-            conda_exe_data["target_name"] = "_conda"
+            conda_exe_data["target_name"] = f"_conda{ext}"
             conda_exe_data["type"] = StandaloneExeType.CONDA
             conda_exe_data["version"] = VersionOrder(fields[1])
         else:
             # micromamba only returns the version number
             output_help = check_output([conda_exe, "--help"], text=True)
             if "mamba" in output_help:
-                conda_exe_data["target_name"] = "micromamba"
+                conda_exe_data["target_name"] = f"micromamba{ext}"
                 conda_exe_data["type"] = StandaloneExeType.MAMBA
                 conda_exe_data["version"] = VersionOrder(output_version)
     except (CalledProcessError, OSError) as exc:
-        conda_exe_data["target_name"] = conda_exe.name
         logger.debug("Exception while identifying binary", exc_info=exc)
         logger.warning("Could not identify standalone binary: %s", exc)
         return conda_exe_data
 
-    if conda_exe_data["type"] == StandaloneExeType.MAMBA:
+    if conda_exe_data.get("type") == StandaloneExeType.MAMBA:
         return conda_exe_data
 
     # Check logging

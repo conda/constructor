@@ -210,7 +210,7 @@ def create(info, verbose=False):
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
     t.close()
 
-    info["_internal_conda_files"] = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"]["path"])
+    info["_internal_conda_files"] = copy_conda_exe(tmp_dir, info["_conda_exe"])
     if info["_internal_conda_files"]:
         conda_exe_payloads: dict[str, tuple[int, int, bool]] = {}
         memfile = BytesIO()

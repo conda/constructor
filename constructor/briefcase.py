@@ -636,7 +636,7 @@ class Payload:
                 shutil.copy(script_path, dest_dir / dest_name)
 
     def _stage_conda(self, external_dir: Path) -> None:
-        copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"]["path"])
+        copy_conda_exe(external_dir, self.info["_conda_exe"])
 
 
 def _get_briefcase_env() -> dict[str, str]:
