@@ -116,7 +116,7 @@ def dump_hash(info: dict, algorithm: str | None = None):
     else:
         algorithms = algorithm
 
-    installer = Path(info["_outpath"])
+    installer = info["_outpath"]
     outpaths = []
 
     for algo in algorithms:
@@ -148,10 +148,10 @@ def dump_info(info):
 
     # Packages installed in the environment running constructor.
     info["_build_environment_packages"] = get_build_env_records()
-    outpath = os.path.join(info["_output_dir"], "info.json")
-    with open(outpath, "w") as f:
+    outpath = info["_output_dir"] / "info.json"
+    with outpath.open(mode="w") as f:
         json.dump(info, f, indent=2, default=_serialize)
-    return os.path.abspath(outpath)
+    return outpath.resolve()
 
 
 def dump_packages_list(info, env="base"):
@@ -162,11 +162,11 @@ def dump_packages_list(info, env="base"):
     else:
         raise ValueError(f"env='{env}' is not a valid env name.")
 
-    outpath = os.path.join(info["_output_dir"], f"pkg-list.{env}.txt")
-    with open(outpath, "w") as fo:
+    outpath = info["_output_dir"] / f"pkg-list.{env}.txt"
+    with outpath.open(mode="w") as fo:
         fo.write(f"# {info['name']} {info['version']}, env={env}\n")
         fo.write("\n".join(dists))
-    return os.path.abspath(outpath)
+    return outpath.resolve()
 
 
 def dump_lockfile(info, env="base"):
@@ -195,10 +195,10 @@ def dump_lockfile(info, env="base"):
         hash_value = record.get("md5")
         lines.append(url + (f"#{hash_value}" if hash_value else ""))
 
-    outpath = os.path.join(info["_output_dir"], f"lockfile.{env}.txt")
-    with open(outpath, "w") as f:
+    outpath = info["_output_dir"] / f"lockfile.{env}.txt"
+    with outpath.open(mode="w") as f:
         f.write("\n".join(lines))
-    return os.path.abspath(outpath)
+    return outpath.resolve()
 
 
 def dump_licenses(info, include_text=False, text_errors=None):
@@ -245,10 +245,10 @@ def dump_licenses(info, include_text=False, text_errors=None):
                     license_file["text"] = Path(license_path).read_text(errors=text_errors)
                 license_files.append(license_file)
 
-    outpath = os.path.join(info["_output_dir"], "licenses.json")
-    with open(outpath, "w") as f:
+    outpath = info["_output_dir"] / "licenses.json"
+    with outpath.open(mode="w") as f:
         json.dump(licenses, f, indent=2, default=repr)
-    return os.path.abspath(outpath)
+    return outpath.resolve()
 
 
 OUTPUT_HANDLERS = {

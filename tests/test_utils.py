@@ -1,4 +1,4 @@
-from os import environ, sep
+from os import environ
 
 import pytest
 
@@ -9,7 +9,6 @@ from constructor.utils import (
     get_condarc_content,
     hash_files,
     make_VIProductVersion,
-    normalize_path,
 )
 
 
@@ -22,14 +21,6 @@ def test_make_VIProductVersion():
     assert f("5.2dev") == "5.0.0.0"
     assert f("5.26.8.9.3") == "5.26.8.9"
     assert f("x") == "0.0.0.0"
-
-
-def test_normalize_path():
-    path = "//test//test/test".replace("/", sep)
-    assert normalize_path(path) == "/test/test/test".replace("/", sep)
-
-    path = "test///test/test".replace("/", sep)
-    assert normalize_path(path) == "test/test/test".replace("/", sep)
 
 
 def test_bat_env_var_esc():

@@ -122,7 +122,7 @@ def get_header(conda_exec, tarball, info):
 
 
 def create(info, verbose=False):
-    tmp_dir_base_path = join(dirname(info["_outpath"]), "tmp")
+    tmp_dir_base_path = info["_outpath"].parent / "tmp"
     try:
         os.makedirs(tmp_dir_base_path)
     except Exception:
@@ -234,7 +234,7 @@ def create(info, verbose=False):
     conda_exec = info["_conda_exe"]["path"]
     header = get_header(conda_exec, tarball, info)
     shar_path = info["_outpath"]
-    with open(shar_path, "wb") as fo:
+    with shar_path.open(mode="wb") as fo:
         fo.write(header.encode("utf-8"))
         for payload in [conda_exec, *maybe_memfile, tarball]:
             with open(payload, "rb") if isinstance(payload, str) else nullcontext(payload) as fi:
@@ -245,6 +245,6 @@ def create(info, verbose=False):
                     fo.write(chunk)
 
     os.unlink(tarball)
-    os.chmod(shar_path, 0o755)
+    shar_path.chmod(0o755)
     if not info.get("_debug"):
         shutil.rmtree(tmp_dir)

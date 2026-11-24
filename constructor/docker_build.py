@@ -69,7 +69,7 @@ def generate_dockerfile(info: dict, docker_dir: Path) -> Path:
         constructor_version=__version__,
         base_image=info.get("docker_base_image"),
         default_prefix=info.get("default_prefix", f"/opt/{info['name'].lower()}"),
-        installer_filename=Path(info["_outpath"]).name,
+        installer_filename=info["_outpath"].name,
         conda_exe_name=info["_conda_exe"]["target_name"],
         name=info["name"],
         version=info["version"],
@@ -110,7 +110,7 @@ def build_image(info: dict, docker_dir: Path) -> Path:
         )
 
     tag = info.get("docker_tag", f"{info['name'].lower()}:{info['version']}")
-    tarball_dest = docker_dir / f"{Path(info['_outpath']).stem}-docker.tar"
+    tarball_dest = docker_dir / f"{info['_outpath'].stem}-docker.tar"
 
     cmd = [
         "docker",
@@ -147,7 +147,7 @@ def build_image(info: dict, docker_dir: Path) -> Path:
     return tarball_dest
 
 
-def create(info: dict) -> None:
+def create(info: dict, verbose: bool = False) -> None:
     """Build a Docker output from a previously built ``.sh`` installer.
 
     The ``.sh`` installer is built and must exist at ``info["_outpath"]``
@@ -157,12 +157,17 @@ def create(info: dict) -> None:
     ----------
     info: dict
         Constructor installer info dict.
+    verbose: bool, optional
+        If ``True``, enables verbose logging.
+        Defaults to ``False``.
+        Unused - only needed to create identical function signature
+        with other installer types.
 
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         docker_tmp_dir = Path(temp_dir)
 
-        installer_path = Path(info["_outpath"])
+        installer_path = info["_outpath"]
         if not installer_path.exists():
             raise RuntimeError(f"Expected .sh installer not found: {installer_path}")
         shutil.copy(installer_path, docker_tmp_dir / installer_path.name)
@@ -178,8 +183,8 @@ def create(info: dict) -> None:
             output_dir.mkdir(parents=True, exist_ok=True)
             shutil.copy(docker_tmp_dir / "Dockerfile", output_dir / "Dockerfile")
             shutil.copy(
-                docker_tmp_dir / Path(info["_outpath"]).name,
-                output_dir / Path(info["_outpath"]).name,
+                docker_tmp_dir / info["_outpath"].name,
+                output_dir / info["_outpath"].name,
             )
 
     logger.info("Docker output complete. Docker directory: '%s'", info["_output_dir"])

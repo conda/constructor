@@ -707,7 +707,7 @@ def create(info, verbose=False):
             signing_tool.sign(msi_paths[0])
             signing_tool.verify_signature(msi_paths[0])
 
-        outpath = Path(info["_outpath"])
+        outpath = info["_outpath"]
         outpath.unlink(missing_ok=True)
         shutil.move(msi_paths[0], outpath)
     finally:

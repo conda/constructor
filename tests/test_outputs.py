@@ -31,7 +31,7 @@ def test_hash_dump(tmp_path, algorithm, context):
         testfile = tmp_path / file
         testfile.write_text(data["content"])
     info = {
-        "_outpath": str(testfile),
+        "_outpath": testfile,
         "_installer_hashes": {algo: data[algo] for algo in ("sha256", "md5")},
     }
     with context:

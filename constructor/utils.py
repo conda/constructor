@@ -19,8 +19,8 @@ import sys
 import warnings
 from contextlib import contextmanager
 from io import StringIO
-from os import environ, sep, unlink
-from os.path import isdir, isfile, islink, normpath
+from os import environ, unlink
+from os.path import isdir, isfile, islink
 from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
@@ -286,11 +286,6 @@ def get_final_channels(info):
             continue
         mapped_channels.append(url)
     return mapped_channels
-
-
-def normalize_path(path):
-    new_path = normpath(path)
-    return new_path.replace(sep + sep, sep)
 
 
 def rm_rf(path):

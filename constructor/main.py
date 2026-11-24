@@ -36,7 +36,6 @@ from .utils import (
     check_version,
     has_docker_buildx,
     identify_conda_exe,
-    normalize_path,
     yield_lines,
 )
 
@@ -190,7 +189,7 @@ def validate_frozen_envs(
 
 def main_build(
     dir_path: str,
-    output_dir: str = ".",
+    output_dir: Path = Path("."),
     platform: str = cc_platform,
     verbose: bool = True,
     cache_dir: str = DEFAULT_CACHE_DIR,
@@ -389,7 +388,7 @@ def main_build(
                     "Error: 'initialize_conda == condabin' requires 'conda >=25.5.0' in base env."
                 )
 
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     info_dicts = []
     for itype in itypes:
         if itype == InstallerTypes.SH:
@@ -416,7 +415,7 @@ def main_build(
 
             create = docker_create
         info["installer_type"] = itype
-        info["_outpath"] = abspath(join(output_dir, get_output_filename(info)))
+        info["_outpath"] = output_dir / get_output_filename(info)
 
         create(info, verbose=verbose)
         if len(itypes) > 1:
@@ -424,7 +423,7 @@ def main_build(
         if itype == InstallerTypes.DOCKER:
             logger.info(
                 "Docker output complete. Docker directory: '%s'",
-                Path(info["_output_dir"]),
+                info["_output_dir"],
             )
         else:
             logger.info("Successfully created '%(_outpath)s'.", info)
@@ -649,7 +648,7 @@ downloaded from https://repo.anaconda.com/pkgs/misc/conda-execs/ and/or
 https://github.com/conda/conda-standalone/releases""".lstrip()
         )
 
-    out_dir = normalize_path(args.output_dir)
+    out_dir = Path(args.output_dir).resolve()
     main_build(
         dir_path,
         output_dir=out_dir,
