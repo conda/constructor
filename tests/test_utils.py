@@ -318,7 +318,7 @@ def test_identify_conda_exe_windows_capabilities(
 def test_win_str_esc_accepts_paths():
     assert (
         win_str_esc(Path("C:/Program Files/constructor.exe"))
-        == '"C:/Program Files/constructor.exe"'
+        == '"C:\\Program Files\\constructor.exe"'
     )
 
 
