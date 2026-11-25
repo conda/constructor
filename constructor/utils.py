@@ -317,6 +317,10 @@ def yield_lines(path):
 
 
 def shortcuts_flags(info, exe_type: StandaloneExeType | None = None) -> str:
+    if exe_type is None:
+        # Fallback in case exe_type is not passed.
+        # This will not work if info is only an extra environment
+        exe_type = info.get("_conda_exe", {}).get("type")
     menu_packages = info.get("menu_packages")
     if menu_packages is None:
         # not set: we create all shortcuts (default behaviour)

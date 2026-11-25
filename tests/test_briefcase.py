@@ -32,8 +32,8 @@ mock_info = {
     "name": "MockInfo",
     "version": "1.0.0",
     "_conda_exe": {
-        "path": Path(sys.prefix, "standalone_conda", "_conda.exe"),
-        "target_name": "conda.exe",
+        "path": Path(sys.prefix, "standalone_conda", "conda.exe"),
+        "target_name": "_conda.exe",
     },
     "_download_dir": "",
     "_dists": [],

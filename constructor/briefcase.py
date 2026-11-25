@@ -518,7 +518,7 @@ class Payload:
             # an empty string (all shortcuts), or --no-shortcuts (none).
             # In the .bat template this is used in the "shortcuts enabled" branch,
             # so passing an empty string here is correct when all shortcuts are wanted.
-            "shortcuts": shortcuts_flags(self.info),
+            "shortcuts": shortcuts_flags(self.info, self.info["_conda_exe"].get("type")),
             # --- setup_envs ---
             "setup_envs": _setup_envs_commands(self.info),
             # --- virtual_specs ---

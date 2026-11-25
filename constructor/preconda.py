@@ -339,9 +339,9 @@ def write_channels_txt(info: dict, dst_dir: str, env_config: dict):
 
 def write_shortcuts_txt(info: dict, dst_dir: str, env_config: dict):
     if "menu_packages" in env_config:
-        contents = shortcuts_flags(env_config)
+        contents = shortcuts_flags(env_config, info["_conda_exe"].get("type"))
     else:
-        contents = shortcuts_flags(info)
+        contents = shortcuts_flags(info, info["_conda_exe"].get("type"))
     with open(join(dst_dir, "shortcuts.txt"), "w") as f:
         f.write(contents)
 
