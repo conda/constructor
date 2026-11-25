@@ -1924,7 +1924,7 @@ def test_uninstallation_standalone(
 
     user_rc = tmp_path / ".condarc"
     system_rc = Path("C:/ProgramData/conda/.condarc")
-    system_rc.parent.mkdir(parents=True)
+    system_rc.parent.mkdir(parents=True, exist_ok=True)
     condarc = f"pkgs_dirs:\n  - {pkg_cache}\n"
     user_rc.write_text(condarc)
     system_rc.write_text(condarc)

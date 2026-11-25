@@ -65,7 +65,7 @@ def explained_check_call(args):
     """
     Execute a system process and debug the invocation
     """
-    logger.debug("Executing: %s", " ".join(args))
+    logger.debug("Executing: %s", " ".join(map(str, args)))
     return check_call(args)
 
 
@@ -450,6 +450,7 @@ def check_version(
 
 
 def win_str_esc(s, newlines=True):
+    s = str(s)
     maps = [("$", "$$"), ('"', '$\\"'), ("\t", "$\\t")]
     if newlines:
         maps.extend([("\n", "$\\n"), ("\r", "$\\r")])

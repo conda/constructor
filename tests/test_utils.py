@@ -10,11 +10,13 @@ from constructor.utils import (
     bat_echo_esc,
     bat_env_var_esc,
     env_vars,
+    explained_check_call,
     get_condarc_content,
     hash_files,
     identify_conda_exe,
     make_VIProductVersion,
     shortcuts_flags,
+    win_str_esc,
 )
 
 
@@ -311,6 +313,22 @@ def test_identify_conda_exe_windows_capabilities(
     assert data["target_name"] == "_conda.exe"
     assert data["supports_logging"] is expected_logging
     assert data["has_windows_subcommand"] is expected_subcommand
+
+
+def test_win_str_esc_accepts_paths():
+    assert (
+        win_str_esc(Path("C:/Program Files/constructor.exe"))
+        == '"C:/Program Files/constructor.exe"'
+    )
+
+
+def test_explained_check_call_logs_path_arguments(mocker):
+    check_call = mocker.patch("constructor.utils.check_call")
+    mocker.patch("constructor.utils.logger.debug")
+
+    explained_check_call(["productbuild", Path("installer.pkg")])
+
+    check_call.assert_called_once_with(["productbuild", Path("installer.pkg")])
 
 
 def test_identify_conda_exe_missing_file(tmp_path):
