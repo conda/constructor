@@ -316,13 +316,13 @@ def yield_lines(path):
         yield line
 
 
-def shortcuts_flags(info) -> str:
+def shortcuts_flags(info, exe_type: StandaloneExeType | None = None) -> str:
     menu_packages = info.get("menu_packages")
     if menu_packages is None:
         # not set: we create all shortcuts (default behaviour)
         return ""
     if menu_packages:
-        if info.get("_conda_exe", {}).get("type") == StandaloneExeType.MAMBA:
+        if exe_type == StandaloneExeType.MAMBA:
             logger.warning(
                 "Micromamba does not support '--shortcuts-only'. Will install all shortcuts."
             )

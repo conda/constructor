@@ -222,17 +222,13 @@ def _setup_envs_commands(info: dict) -> list[dict]:
             "prefix": "%BASE_PATH%",
             "lockfile": r"%BASE_PATH%\conda-meta\initial-state.explicit.txt",
             "channels": ",".join(get_final_channels(info)),
-            "shortcuts": shortcuts_flags(info),
+            "shortcuts": shortcuts_flags(info, info["_conda_exe"].get("type")),
         }
     )
 
     # Extra environments
     for env_name in info.get("_extra_envs_info", {}):
         env_config = info["extra_envs"][env_name]
-        # Needed for shortcuts_flags function
-        if "_conda_exe" not in env_config:
-            env_config["_conda_exe"] = {}
-            env_config["_conda_exe"]["type"] = info.get("_conda_exe", {}).get("type")
         channel_info = {
             "channels": env_config.get("channels", info.get("channels", ())),
             "channels_remap": env_config.get("channels_remap", info.get("channels_remap", ())),
@@ -243,7 +239,7 @@ def _setup_envs_commands(info: dict) -> list[dict]:
                 "prefix": rf"%BASE_PATH%\envs\{env_name}",
                 "lockfile": rf"%BASE_PATH%\envs\{env_name}\conda-meta\initial-state.explicit.txt",
                 "channels": ",".join(get_final_channels(channel_info)),
-                "shortcuts": shortcuts_flags(env_config),
+                "shortcuts": shortcuts_flags(env_config, info["_conda_exe"].get("type")),
             }
         )
 

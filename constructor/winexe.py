@@ -103,17 +103,13 @@ def setup_envs_commands(info, dir_path):
             if info.get("freeze_base", {}).get("conda") is not None
             else "",
             "final_channels": get_final_channels(info),
-            "shortcuts": shortcuts_flags(info),
+            "shortcuts": shortcuts_flags(info, info["_conda_exe"].get("type")),
             "register_envs": str(info.get("register_envs", True)).lower(),
         }
     )
     # Now we generate one item per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
         env_info = info["extra_envs"][env_name]
-        # Needed for shortcuts_flags function
-        if "_conda_exe" not in env_info:
-            env_info["_conda_exe"] = {}
-            env_info["_conda_exe"]["type"] = info.get("_conda_exe", {}).get("type")
         channel_info = {
             "channels": env_info.get("channels", info.get("channels", ())),
             "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ())),
@@ -134,7 +130,7 @@ def setup_envs_commands(info, dir_path):
                 if env_info.get("freeze_env", {}).get("conda") is not None
                 else "",
                 "final_channels": get_final_channels(channel_info),
-                "shortcuts": shortcuts_flags(env_info),
+                "shortcuts": shortcuts_flags(env_info, info["_conda_exe"].get("type")),
                 "register_envs": str(info.get("register_envs", True)).lower(),
             }
         )
@@ -277,7 +273,7 @@ def make_nsi(
     variables["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     variables["has_license"] = bool(info.get("license_file"))
     variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
-    variables["needs_python_exe"] = not info["_conda_exe"].get("has_windows_subcommand", False)
+    variables["needs_python_exe"] = not info["_conda_exe"]["has_windows_subcommand"]
 
     approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 

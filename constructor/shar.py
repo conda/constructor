@@ -103,7 +103,7 @@ def get_header(conda_exec, tarball, info):
     variables["final_channels"] = get_final_channels(info)
     variables["conclusion_text"] = info.get("conclusion_text", "installation finished.")
     variables["pycache"] = "__pycache__"
-    variables["shortcuts"] = shortcuts_flags(info)
+    variables["shortcuts"] = shortcuts_flags(info, info["_conda_exe"].get("type"))
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
     variables["total_installation_size_kb"] = str(approx_size_kb(info, "total"))
     variables["virtual_specs"] = shlex.join(virtual_specs)

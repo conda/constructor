@@ -398,7 +398,7 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["progress_notifications"] = info.get("progress_notifications", False)
     variables["pre_or_post"] = user_script_type or "__PRE_OR_POST__"
     variables["constructor_version"] = info["CONSTRUCTOR_VERSION"]
-    variables["shortcuts"] = shortcuts_flags(info)
+    variables["shortcuts"] = shortcuts_flags(info, info["_conda_exe"].get("type"))
     variables["enable_shortcuts"] = str(info["_enable_shortcuts"]).lower()
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
     variables["virtual_specs"] = shlex.join(virtual_specs)
