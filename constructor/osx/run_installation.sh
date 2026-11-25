@@ -59,7 +59,7 @@ CONDA_SAFETY_CHECKS=disabled \
 CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS={{ channels }} \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-"$CONDA_EXEC" install --offline --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts {{ no_rcs_arg }}; then
+"$CONDA_EXEC" install --offline --no-rc --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts; then
     echo "ERROR: could not complete the conda install"
     exit 1
 fi
@@ -106,7 +106,7 @@ for env_pkgs in "${PREFIX}"/pkgs/envs/*/; do
     CONDA_EXTRA_SAFETY_CHECKS=no \
     CONDA_CHANNELS="$env_channels" \
     CONDA_PKGS_DIRS="$PREFIX/pkgs" \
-    "$CONDA_EXEC" install --offline --file "$PREFIX/envs/$env_name/conda-meta/initial-state.explicit.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts {{ no_rcs_arg }} || exit 1
+    "$CONDA_EXEC" install --offline --no-rc --file "$PREFIX/envs/$env_name/conda-meta/initial-state.explicit.txt" -yp "$PREFIX/envs/$env_name" $env_shortcuts || exit 1
 
     # Restore history file as provided by installer
     mv "$PREFIX/envs/$env_name/conda-meta/history.bak" "$PREFIX/envs/$env_name/conda-meta/history"

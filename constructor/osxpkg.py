@@ -26,7 +26,6 @@ from .utils import (
     approx_size_kb,
     copy_conda_exe,
     explained_check_call,
-    format_conda_exe_name,
     get_final_channels,
     parse_virtual_specs,
     rm_rf,
@@ -399,14 +398,13 @@ def move_script(src, dst, info, ensure_shebang=False, user_script_type=None):
     variables["progress_notifications"] = info.get("progress_notifications", False)
     variables["pre_or_post"] = user_script_type or "__PRE_OR_POST__"
     variables["constructor_version"] = info["CONSTRUCTOR_VERSION"]
-    variables["shortcuts"] = shortcuts_flags(info)
+    variables["shortcuts"] = shortcuts_flags(info, info["_conda_exe"].get("type"))
     variables["enable_shortcuts"] = str(info["_enable_shortcuts"]).lower()
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
     variables["virtual_specs"] = shlex.join(virtual_specs)
-    variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     variables["script_env_variables"] = info.get("script_env_variables", {})
     variables["initialize_conda"] = info.get("initialize_conda", "classic")
-    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"]["path"])
+    variables["conda_exe_name"] = info["_conda_exe"]["target_name"]
 
     data = render_template(data, **variables)
 
@@ -636,8 +634,8 @@ def create(info, verbose=False):
     for dist in all_dists:
         os.link(join(CACHE_DIR, dist), join(pkgs_dir, dist))
 
-    exe_name = format_conda_exe_name(info["_conda_exe"]["path"])
-    copy_conda_exe(prefix, exe_name, info["_conda_exe"]["path"])
+    exe_name = info["_conda_exe"]["target_name"]
+    copy_conda_exe(prefix, info["_conda_exe"])
 
     # Sign conda-standalone so it can pass notarization
     codesigner = None

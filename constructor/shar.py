@@ -19,6 +19,7 @@ import tempfile
 from contextlib import nullcontext
 from io import BytesIO
 from os.path import basename, dirname, getsize, isdir, join, relpath
+from pathlib import Path
 
 from .construct import ns_platform
 from .jinja import render_template
@@ -29,7 +30,6 @@ from .utils import (
     approx_size_kb,
     copy_conda_exe,
     filename_dist,
-    format_conda_exe_name,
     get_final_channels,
     hash_files,
     parse_virtual_specs,
@@ -103,18 +103,17 @@ def get_header(conda_exec, tarball, info):
     variables["final_channels"] = get_final_channels(info)
     variables["conclusion_text"] = info.get("conclusion_text", "installation finished.")
     variables["pycache"] = "__pycache__"
-    variables["shortcuts"] = shortcuts_flags(info)
+    variables["shortcuts"] = shortcuts_flags(info, info["_conda_exe"].get("type"))
     variables["register_envs"] = str(info.get("register_envs", True)).lower()
     variables["total_installation_size_kb"] = str(approx_size_kb(info, "total"))
     variables["virtual_specs"] = shlex.join(virtual_specs)
-    variables["no_rcs_arg"] = info.get("_ignore_condarcs_arg", "")
     if has_license:
         variables["license"] = read_ascii_only(info["license_file"])
 
     virtual_specs = parse_virtual_specs(info)
     min_osx_version = virtual_specs.get("__osx", {}).get("min") or ""
     variables["min_osx_version"] = min_osx_version
-    variables["conda_exe_name"] = format_conda_exe_name(info["_conda_exe"]["path"])
+    variables["conda_exe_name"] = info["_conda_exe"]["target_name"]
     min_glibc_version = virtual_specs.get("__glibc", {}).get("min") or ""
     variables["min_glibc_version"] = min_glibc_version
 
@@ -124,7 +123,7 @@ def get_header(conda_exec, tarball, info):
 
 
 def create(info, verbose=False):
-    tmp_dir_base_path = join(dirname(info["_outpath"]), "tmp")
+    tmp_dir_base_path = info["_outpath"].parent / "tmp"
     try:
         os.makedirs(tmp_dir_base_path)
     except Exception:
@@ -212,7 +211,7 @@ def create(info, verbose=False):
         t.add(join(info["_download_dir"], fn), "pkgs/" + fn)
     t.close()
 
-    info["_internal_conda_files"] = copy_conda_exe(tmp_dir, "_conda", info["_conda_exe"]["path"])
+    info["_internal_conda_files"] = copy_conda_exe(tmp_dir, info["_conda_exe"])
     if info["_internal_conda_files"]:
         conda_exe_payloads: dict[str, tuple[int, int, bool]] = {}
         memfile = BytesIO()
@@ -236,10 +235,14 @@ def create(info, verbose=False):
     conda_exec = info["_conda_exe"]["path"]
     header = get_header(conda_exec, tarball, info)
     shar_path = info["_outpath"]
-    with open(shar_path, "wb") as fo:
+    with shar_path.open(mode="wb") as fo:
         fo.write(header.encode("utf-8"))
         for payload in [conda_exec, *maybe_memfile, tarball]:
-            with open(payload, "rb") if isinstance(payload, str) else nullcontext(payload) as fi:
+            with (
+                open(payload, "rb")
+                if isinstance(payload, (Path, str))
+                else nullcontext(payload) as fi
+            ):
                 while True:
                     chunk = fi.read(262144)
                     if not chunk:
@@ -247,6 +250,6 @@ def create(info, verbose=False):
                     fo.write(chunk)
 
     os.unlink(tarball)
-    os.chmod(shar_path, 0o755)
+    shar_path.chmod(0o755)
     if not info.get("_debug"):
         shutil.rmtree(tmp_dir)

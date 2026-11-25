@@ -222,17 +222,13 @@ def _setup_envs_commands(info: dict) -> list[dict]:
             "prefix": "%BASE_PATH%",
             "lockfile": r"%BASE_PATH%\conda-meta\initial-state.explicit.txt",
             "channels": ",".join(get_final_channels(info)),
-            "shortcuts": shortcuts_flags(info),
+            "shortcuts": shortcuts_flags(info, info.get("_conda_exe", {}).get("type")),
         }
     )
 
     # Extra environments
     for env_name in info.get("_extra_envs_info", {}):
         env_config = info["extra_envs"][env_name]
-        # Needed for shortcuts_flags function
-        if "_conda_exe" not in env_config:
-            env_config["_conda_exe"] = {}
-            env_config["_conda_exe"]["type"] = info.get("_conda_exe", {}).get("type")
         channel_info = {
             "channels": env_config.get("channels", info.get("channels", ())),
             "channels_remap": env_config.get("channels_remap", info.get("channels_remap", ())),
@@ -243,7 +239,7 @@ def _setup_envs_commands(info: dict) -> list[dict]:
                 "prefix": rf"%BASE_PATH%\envs\{env_name}",
                 "lockfile": rf"%BASE_PATH%\envs\{env_name}\conda-meta\initial-state.explicit.txt",
                 "channels": ",".join(get_final_channels(channel_info)),
-                "shortcuts": shortcuts_flags(env_config),
+                "shortcuts": shortcuts_flags(env_config, info.get("_conda_exe", {}).get("type")),
             }
         )
 
@@ -517,14 +513,12 @@ class Payload:
             "pyver_components": pyver_components,
             # --- OPTION_INITIALIZE_CONDA ---
             "initialize_conda": self.info.get("initialize_conda", "classic"),
-            # --- OPTION_CLEAR_PACKAGE_CACHE / OPTION_ENABLE_SHORTCUTS ---
-            "no_rcs_arg": self.info.get("_ignore_condarcs_arg", ""),
             # --- OPTION_ENABLE_SHORTCUTS ---
             # shortcuts_flags returns the appropriate --shortcuts-only=... flags,
             # an empty string (all shortcuts), or --no-shortcuts (none).
             # In the .bat template this is used in the "shortcuts enabled" branch,
             # so passing an empty string here is correct when all shortcuts are wanted.
-            "shortcuts": shortcuts_flags(self.info),
+            "shortcuts": shortcuts_flags(self.info, self.info["_conda_exe"].get("type")),
             # --- setup_envs ---
             "setup_envs": _setup_envs_commands(self.info),
             # --- virtual_specs ---
@@ -638,7 +632,7 @@ class Payload:
                 shutil.copy(script_path, dest_dir / dest_name)
 
     def _stage_conda(self, external_dir: Path) -> None:
-        copy_conda_exe(external_dir, self.conda_exe_name, self.info["_conda_exe"]["path"])
+        copy_conda_exe(external_dir, self.info["_conda_exe"])
 
 
 def _get_briefcase_env() -> dict[str, str]:
@@ -709,7 +703,7 @@ def create(info, verbose=False):
             signing_tool.sign(msi_paths[0])
             signing_tool.verify_signature(msi_paths[0])
 
-        outpath = Path(info["_outpath"])
+        outpath = info["_outpath"]
         outpath.unlink(missing_ok=True)
         shutil.move(msi_paths[0], outpath)
     finally:

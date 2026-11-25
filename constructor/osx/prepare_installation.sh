@@ -51,7 +51,7 @@ notify "Checking virtual specs compatibility: {{ virtual_specs }}"
 CONDA_SOLVER="classic" \
 CONDA_PKGS_DIRS="$(mktemp -d)" \
 SYSTEM_VERSION_COMPAT=0 \
-"$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --offline {{ virtual_specs }} {{ no_rcs_arg }}
+"$CONDA_EXEC" create --dry-run --prefix "$PREFIX/envs/_virtual_specs_checks" --no-rc --offline {{ virtual_specs }}
 {%- endif %}
 
 # Create $PREFIX/.nonadmin if the installation didn't require superuser permissions

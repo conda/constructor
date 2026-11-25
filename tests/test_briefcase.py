@@ -31,7 +31,10 @@ from constructor.conda_interface import cc_platform
 mock_info = {
     "name": "MockInfo",
     "version": "1.0.0",
-    "_conda_exe": {"path": str(Path(sys.prefix) / "standalone_conda" / "conda.exe")},
+    "_conda_exe": {
+        "path": Path(sys.prefix, "standalone_conda", "conda.exe"),
+        "target_name": "_conda.exe",
+    },
     "_download_dir": "",
     "_dists": [],
     "_platform": cc_platform,
@@ -393,21 +396,6 @@ def test_render_templates_add_to_path_flags(initialize_conda, expected_flag):
     text = run_installation.read_text(encoding="utf-8")
     assert expected_flag in text
     assert "constructor windows path" in text
-
-
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
-@pytest.mark.parametrize("no_rcs_arg", ["--no-rc", ""])
-def test_render_templates_no_rcs_arg(no_rcs_arg):
-    """Verify that no_rcs_arg is rendered into the template correctly."""
-    info = mock_info.copy()
-    info["_ignore_condarcs_arg"] = no_rcs_arg
-    payload = Payload(info)
-    rendered_templates = payload.render_templates()
-
-    run_installation = next(f for f in rendered_templates if f.name == "run_installation.bat")
-    text = run_installation.read_text(encoding="utf-8")
-    if no_rcs_arg:
-        assert no_rcs_arg in text
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only")

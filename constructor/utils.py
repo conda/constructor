@@ -18,12 +18,15 @@ import subprocess
 import sys
 import warnings
 from contextlib import contextmanager
+from enum import StrEnum
 from io import StringIO
-from os import environ, sep, unlink
-from os.path import isdir, isfile, islink, join, normpath
+from os import environ, unlink
+from os.path import isdir, isfile, islink
 from pathlib import Path
 from shutil import rmtree
 from subprocess import CalledProcessError, check_call, check_output
+from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING
 
 from conda.models.version import VersionOrder
 from ruamel.yaml import YAML
@@ -36,16 +39,33 @@ yaml.default_flow_style = False
 yaml.indent(mapping=2, sequence=4, offset=2)
 
 
-class StandaloneExe:
+# Taken from meta.yaml
+MINIMUM_CONDA_STANDALONE = VersionOrder("24.11.0")
+
+
+class StandaloneExeType(StrEnum):
     CONDA = "conda"
     MAMBA = "mamba"
+
+
+if TYPE_CHECKING:
+    from typing import NotRequired, TypedDict
+
+    class StandaloneExe(TypedDict):
+        has_windows_subcommand: NotRequired[bool]
+        path: Path
+        sha256: str
+        supports_logging: bool
+        target_name: str
+        type: NotRequired[StandaloneExeType]
+        version: NotRequired[VersionOrder]
 
 
 def explained_check_call(args):
     """
     Execute a system process and debug the invocation
     """
-    logger.debug("Executing: %s", " ".join(args))
+    logger.debug("Executing: %s", " ".join(map(str, args)))
     return check_call(args)
 
 
@@ -217,7 +237,7 @@ def ensure_transmuted_ext(info, url):
     """
     if (
         info.get("transmute_file_type") == ".conda"
-        and info.get("_conda_exe", {}).get("type") == StandaloneExe.MAMBA
+        and info.get("_conda_exe", {}).get("type") == StandaloneExeType.MAMBA
     ):
         if url.lower().endswith(".tar.bz2"):
             url = url[:-8] + ".conda"
@@ -273,11 +293,6 @@ def get_final_channels(info):
     return mapped_channels
 
 
-def normalize_path(path):
-    new_path = normpath(path)
-    return new_path.replace(sep + sep, sep)
-
-
 def rm_rf(path):
     """
     try to delete path, but never fail
@@ -302,13 +317,17 @@ def yield_lines(path):
         yield line
 
 
-def shortcuts_flags(info) -> str:
+def shortcuts_flags(info, exe_type: StandaloneExeType | None = None) -> str:
+    if exe_type is None:
+        # Fallback in case exe_type is not passed.
+        # This will not work if info is only an extra environment
+        exe_type = info.get("_conda_exe", {}).get("type")
     menu_packages = info.get("menu_packages")
     if menu_packages is None:
         # not set: we create all shortcuts (default behaviour)
         return ""
     if menu_packages:
-        if info.get("_conda_exe", {}).get("type") == StandaloneExe.MAMBA:
+        if exe_type == StandaloneExeType.MAMBA:
             logger.warning(
                 "Micromamba does not support '--shortcuts-only'. Will install all shortcuts."
             )
@@ -338,65 +357,76 @@ def approx_size_kb(info, which="pkgs"):
 
 def copy_conda_exe(
     target_directory: str | Path,
-    target_conda_exe_name: str | None = None,
-    conda_exe: str | Path | None = None,
+    conda_exe: StandaloneExe,
 ) -> list[Path]:
-    if conda_exe is None:
-        conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
-    if target_conda_exe_name is None:
-        target_conda_exe_name = Path(conda_exe).name
-    shutil.copyfile(conda_exe, join(target_directory, target_conda_exe_name))
-    if (internal_dir := Path(conda_exe).parent / "_internal").is_dir():
+    shutil.copyfile(conda_exe["path"], Path(target_directory, conda_exe["target_name"]))
+    if (internal_dir := conda_exe["path"].parent / "_internal").is_dir():
         # onedir conda-standalone variant, copy that too
         shutil.copytree(internal_dir, Path(target_directory, "_internal"), dirs_exist_ok=True)
         return sorted([p for p in Path(target_directory, "_internal").glob("**/*") if p.is_file()])
     return []
 
 
-def identify_conda_exe(conda_exe: str | Path | None = None) -> tuple[StandaloneExe, str]:
-    if conda_exe is None:
-        conda_exe = normalize_path(join(sys.prefix, "standalone_conda", "conda.exe"))
-    if isinstance(conda_exe, Path):
-        conda_exe = str(conda_exe)
+def identify_conda_exe(conda_exe: Path | str | None = None) -> StandaloneExe:
+    if isinstance(conda_exe, str):
+        conda_exe = Path(conda_exe)
+    conda_exe = conda_exe or Path(sys.prefix, "standalone_conda", "conda.exe").resolve()
+    if not conda_exe.is_file():
+        raise FileNotFoundError(f"Conda executable {conda_exe} does not exist.")
+    conda_exe_data: StandaloneExe = {
+        "path": conda_exe,
+        "sha256": hash_files([conda_exe], "sha256")["sha256"],
+        "supports_logging": False,
+        "target_name": conda_exe.name,
+    }
+
     try:
         output_version = check_output([conda_exe, "--version"], text=True)
         output_version = output_version.strip()
         fields = output_version.split()
+        ext = ".exe" if sys.platform == "win32" else ""
         if "conda" in fields:
-            return StandaloneExe.CONDA, fields[1]
-        # micromamba only returns the version number
-        output_help = check_output([conda_exe, "--help"], text=True)
-        if "mamba" in output_help:
-            return StandaloneExe.MAMBA, output_version
+            conda_exe_data["target_name"] = f"_conda{ext}"
+            conda_exe_data["type"] = StandaloneExeType.CONDA
+            conda_exe_data["version"] = VersionOrder(fields[1])
+            if conda_exe_data["version"] < MINIMUM_CONDA_STANDALONE:
+                raise RuntimeError(
+                    f"conda-standalone must be at least {MINIMUM_CONDA_STANDALONE} "
+                    f"(is {conda_exe_data['version']})."
+                )
+        else:
+            # micromamba only returns the version number
+            output_help = check_output([conda_exe, "--help"], text=True)
+            if "mamba" in output_help:
+                conda_exe_data["target_name"] = f"micromamba{ext}"
+                conda_exe_data["type"] = StandaloneExeType.MAMBA
+                conda_exe_data["version"] = VersionOrder(output_version)
     except (CalledProcessError, OSError) as exc:
         logger.debug("Exception while identifying binary", exc_info=exc)
         logger.warning("Could not identify standalone binary: %s", exc)
-    return None, None
+        return conda_exe_data
 
+    if sys.platform != "win32" or conda_exe_data.get("type") == StandaloneExeType.MAMBA:
+        return conda_exe_data
 
-def format_conda_exe_name(conda_exe: str | Path) -> str:
-    """Return a formatted alias for given stand-alone executable.
+    # Check logging
+    with TemporaryDirectory() as tmpdir:
+        logfile = Path(tmpdir, "conda.log")
+        subprocess.run([conda_exe, "--version", f"--log-file={logfile}"])
+        conda_exe_data["supports_logging"] = logfile.exists()
 
-      - If given executable cannot be identified, returns the basename of given executable.
-      - If stand-alone conda is identified, returns '_conda'.
-      - If stand-alone mamba/micromamba is identified, returns 'micromamba'.
+    # Check if Windows needs Python
+    results = subprocess.run(
+        [conda_exe, "constructor", "windows", "--help"],
+        capture_output=True,
+        check=False,
+    )
+    # Argparse uses return code 2 if a subcommand does not exist
+    # If the windows subcommand does not exist, python.exe is still
+    # required in the base environment.
+    conda_exe_data["has_windows_subcommand"] = results.returncode != 2
 
-    Parameters::
-      - conda_exe: str | Path
-      Path to the conda executable to be accounted for.
-    """
-    conda_exe_name, _ = identify_conda_exe(conda_exe)
-    if conda_exe_name is None:
-        # This implies that identify_conda_exe failed
-        return Path(conda_exe).name
-    if conda_exe_name == StandaloneExe.CONDA:
-        return "_conda"
-    elif conda_exe_name == StandaloneExe.MAMBA:
-        return "micromamba"
-    else:
-        # This should never happen, but as a safe-guard in case `identify_conda_exe` is changed without
-        # accounting for this function.
-        raise RuntimeError("Unable to format conda exe name")
+    return conda_exe_data
 
 
 def check_version(
@@ -420,6 +450,7 @@ def check_version(
 
 
 def win_str_esc(s, newlines=True):
+    s = str(s)
     maps = [("$", "$$"), ('"', '$\\"'), ("\t", "$\\t")]
     if newlines:
         maps.extend([("\n", "$\\n"), ("\r", "$\\r")])

@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 import pytest
 from conda.base.context import context
 from conda.core.prefix_data import PrefixData
-from conda.models.version import VersionOrder as Version
 from ruamel.yaml import YAML
 
 from constructor._types import InstallerTypes
@@ -30,9 +29,8 @@ from constructor.construct import parse as parse_construct
 from constructor.exceptions import InvalidInstallerTypeError
 from constructor.main import get_installer_type
 from constructor.utils import (
-    StandaloneExe,
+    StandaloneExeType,
     check_version,
-    format_conda_exe_name,
     has_docker_buildx,
     identify_conda_exe,
 )
@@ -70,10 +68,18 @@ REPO_DIR = Path(__file__).parent.parent
 ON_CI = bool(os.environ.get("CI")) and os.environ.get("CI") != "0"
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
 CONSTRUCTOR_VERBOSE = os.environ.get("CONSTRUCTOR_VERBOSE", "").lower() in ("1", "true", "yes")
-CONDA_EXE, CONDA_EXE_VERSION = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
-if CONDA_EXE_VERSION is not None:
-    CONDA_EXE_VERSION = Version(CONDA_EXE_VERSION)
+try:
+    CONDA_EXE_DATA = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
+except FileNotFoundError as exc:
+    pytest.skip(
+        f"Could not find conda-standalone for integration tests: {exc}",
+        allow_module_level=True,
+    )
+
+CONDA_EXE = CONDA_EXE_DATA.get("type")
+CONDA_EXE_VERSION = CONDA_EXE_DATA.get("version")
 CONSTRUCTOR_DEBUG = os.environ.get("CONSTRUCTOR_DEBUG", "").lower() in ("1", "true", "yes")
+IS_MICROMAMBA = CONDA_EXE == StandaloneExeType.MAMBA
 
 
 def _is_program_installed(partial_name: str) -> bool:
@@ -639,8 +645,15 @@ def _build_installers(
     installer_type=None builds all applicable types (current behavior); a value
     passes --installer-type to build exactly one.
     """
-    if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
-        pytest.skip("Micromamba is not supported on Windows yet.")
+    if sys.platform.startswith("win"):
+        # Only re-run check if conda-standalone is not the default conda-standalone
+        _is_micromamba = (
+            IS_MICROMAMBA
+            if conda_exe == CONSTRUCTOR_CONDA_EXE
+            else identify_conda_exe(conda_exe).get("type") == StandaloneExeType.MAMBA
+        )
+        if _is_micromamba:
+            pytest.skip("Micromamba is not supported on Windows yet.")
 
     output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -815,11 +828,6 @@ def _self_signed_certificate_windows(path: str, password: str = None):
 
 def _example_path(example_name):
     return REPO_DIR / "examples" / example_name
-
-
-def _is_micromamba(path) -> bool:
-    name, _ = identify_conda_exe(path)
-    return name == StandaloneExe.MAMBA
 
 
 def _entry_point_launchers(prefix: Path) -> list[Path]:
@@ -1050,16 +1058,6 @@ def _check_miniforge(
             _run_uninstaller_msi(installer, install_dir)
 
 
-_MINIFORGE_XFAIL = pytest.mark.xfail(
-    (
-        CONDA_EXE == StandaloneExe.CONDA
-        and not check_version(CONDA_EXE_VERSION, min_version="23.11.0a0")
-    ),
-    reason="Known issue with conda-standalone<=23.10: shortcuts are created but not removed.",
-)
-
-
-@_MINIFORGE_XFAIL
 @pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("miniforge")))
 def test_example_miniforge(tmp_path, request, installer_type):
     _check_miniforge(
@@ -1067,7 +1065,6 @@ def test_example_miniforge(tmp_path, request, installer_type):
     )
 
 
-@_MINIFORGE_XFAIL
 @pytest.mark.parametrize(
     "installer_type", installer_types_for_example(_example_path("miniforge-mamba2"))
 )
@@ -1175,6 +1172,10 @@ def test_example_osxpkg_extra_pages(tmp_path):
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
+@pytest.mark.skipif(
+    not CONDA_EXE_DATA.get("type"),
+    reason="standalone binary not fully identified",
+)
 @pytest.mark.skipif("CI" not in os.environ, reason="CI only")
 def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     try:
@@ -1195,7 +1196,7 @@ def test_macos_signing(tmp_path, self_signed_application_certificate_macos):
     # including binary archives like the PlugIns file
     cmd = ["pkgutil", "--expand-full", installer, expanded_path]
     _execute(cmd)
-    conda_exe_name = format_conda_exe_name(CONSTRUCTOR_CONDA_EXE)
+    conda_exe_name = CONDA_EXE_DATA.get("target_name", "")
     components = [
         Path(expanded_path, "prepare_installation.pkg", "Payload", "osx-pkg-test", conda_exe_name),
         Path(expanded_path, "Plugins", "ExtraPage.bundle"),
@@ -1232,13 +1233,7 @@ def test_example_scripts(tmp_path, request, installer_type):
     _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(
-    (
-        CONDA_EXE == StandaloneExe.MAMBA
-        and not check_version(CONDA_EXE_VERSION, min_version="23.11.0a0")
-    ),
-    reason="menuinst v2 requires conda-standalone>=23.11.0; micromamba is not supported yet",
-)
+@pytest.mark.skipif(IS_MICROMAMBA, reason="micromamba is not supported yet")
 @pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("shortcuts")))
 def test_example_shortcuts(tmp_path, request, installer_type):
     input_path = _example_path("shortcuts")
@@ -1846,10 +1841,6 @@ def test_allusers_exe(tmp_path, request, installer_type):
         assert files == [], f"Files must have generic execute and read for {acct}"
 
 
-@pytest.mark.xfail(
-    CONDA_EXE == StandaloneExe.CONDA and not check_version(CONDA_EXE_VERSION, min_version="24.9.0"),
-    reason="Pre-existing .condarc breaks installation",
-)
 @pytest.mark.parametrize(
     "installer_type", installer_types_for_example(_example_path("customize_controls"))
 )
@@ -1860,7 +1851,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
     # HOME or USERPROFILE breaks installer builds.
     # mamba does not search this directory, so use HOME as a fallback.
     # Since micromamba is not supported on Windows, this is not a problem.
-    if CONDA_EXE == StandaloneExe.MAMBA:
+    if IS_MICROMAMBA:
         monkeypatch.setenv("HOME", str(tmp_path))
         condarc = tmp_path / ".condarc"
     else:
@@ -1890,7 +1881,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
         check_subprocess=True,
         uninstall=True,
     )
-    if CONDA_EXE == StandaloneExe.MAMBA and installer_type == InstallerTypes.SH:
+    if IS_MICROMAMBA and installer_type == InstallerTypes.SH:
         # micromamba loads the rc files even for constructor subcommands.
         # This cannot be turned off with --no-rc, which causes four errors
         # in stderr. If there are more, other micromamba calls have read
@@ -1899,11 +1890,6 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
         assert proc.stderr.count("Bad conversion of configurable") == 4
 
 
-@pytest.mark.skipif(
-    CONDA_EXE == StandaloneExe.CONDA
-    and not check_version(CONDA_EXE_VERSION, min_version="24.11.0"),
-    reason=f"Requires conda-standalone 24.11.x or newer (is {CONDA_EXE_VERSION})",
-)
 @pytest.mark.skipif(not sys.platform == "win32", reason="Windows only")
 @pytest.mark.skipif(not ON_CI, reason="CI only - Interacts with system files")
 @pytest.mark.parametrize(
@@ -1938,7 +1924,7 @@ def test_uninstallation_standalone(
 
     user_rc = tmp_path / ".condarc"
     system_rc = Path("C:/ProgramData/conda/.condarc")
-    system_rc.parent.mkdir(parents=True)
+    system_rc.parent.mkdir(parents=True, exist_ok=True)
     condarc = f"pkgs_dirs:\n  - {pkg_cache}\n"
     user_rc.write_text(condarc)
     system_rc.write_text(condarc)
@@ -2134,7 +2120,7 @@ def test_not_in_installed_menu_list_(tmp_path, request, no_registry, installer_t
 
 @pytest.mark.xfail(
     condition=(
-        CONDA_EXE == StandaloneExe.CONDA
+        CONDA_EXE == StandaloneExeType.CONDA
         and check_version(CONDA_EXE_VERSION, min_version="25.5.0", max_version="25.7.0")
     ),
     reason="conda-standalone 25.5.x fails with protected environments",

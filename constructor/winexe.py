@@ -103,18 +103,13 @@ def setup_envs_commands(info, dir_path):
             if info.get("freeze_base", {}).get("conda") is not None
             else "",
             "final_channels": get_final_channels(info),
-            "shortcuts": shortcuts_flags(info),
+            "shortcuts": shortcuts_flags(info, info["_conda_exe"].get("type")),
             "register_envs": str(info.get("register_envs", True)).lower(),
-            "no_rcs_arg": info.get("_ignore_condarcs_arg", ""),
         }
     )
     # Now we generate one item per extra env, if present
     for env_name in info.get("_extra_envs_info", {}):
         env_info = info["extra_envs"][env_name]
-        # Needed for shortcuts_flags function
-        if "_conda_exe" not in env_info:
-            env_info["_conda_exe"] = {}
-            env_info["_conda_exe"]["type"] = info.get("_conda_exe", {}).get("type")
         channel_info = {
             "channels": env_info.get("channels", info.get("channels", ())),
             "channels_remap": env_info.get("channels_remap", info.get("channels_remap", ())),
@@ -135,9 +130,8 @@ def setup_envs_commands(info, dir_path):
                 if env_info.get("freeze_env", {}).get("conda") is not None
                 else "",
                 "final_channels": get_final_channels(channel_info),
-                "shortcuts": shortcuts_flags(env_info),
+                "shortcuts": shortcuts_flags(env_info, info["_conda_exe"].get("type")),
                 "register_envs": str(info.get("register_envs", True)).lower(),
-                "no_rcs_arg": info.get("_ignore_condarcs_arg", ""),
             }
         )
 
@@ -279,7 +273,7 @@ def make_nsi(
     variables["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     variables["has_license"] = bool(info.get("license_file"))
     variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
-    variables["needs_python_exe"] = info.get("_win_install_needs_python_exe", True)
+    variables["needs_python_exe"] = not info["_conda_exe"].get("has_windows_subcommand")
 
     approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
@@ -320,7 +314,6 @@ def make_nsi(
     # This is the same but without quotes so we can print it fine
     variables["VIRTUAL_SPECS_DEBUG"] = " ".join([spec for spec in info.get("virtual_specs", ())])
     variables["LICENSEFILENAME"] = basename(info.get("license_file", "placeholder_license.txt"))
-    variables["NO_RCS_ARG"] = info.get("_ignore_condarcs_arg", "")
 
     data = render_template(read_nsi_tmpl(info), **variables)
     if info["_platform"].startswith("win") and sys.platform != "win32":
@@ -379,7 +372,7 @@ def create(info, verbose=False):
     preconda_write_files(info, tmp_dir)
     copied_extra_files = copy_extra_files(info.get("extra_files", []), tmp_dir)
     copied_temp_extra_files = copy_extra_files(info.get("temp_extra_files", []), tmp_dir)
-    extra_conda_exe_files = copy_conda_exe(tmp_dir, "_conda.exe", info["_conda_exe"]["path"])
+    extra_conda_exe_files = copy_conda_exe(tmp_dir, info["_conda_exe"])
 
     pre_dst = join(tmp_dir, "pre_install.bat")
     pre_install_script = info.get("pre_install")

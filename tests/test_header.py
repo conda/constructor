@@ -67,7 +67,6 @@ def test_osxpkg_scripts_shellcheck(arch, check_path_spaces, script):
         enable_shortcuts=True,
         register_envs=True,
         virtual_specs="__osx>=10.13",
-        no_rcs_arg="",
         script_env_variables={},
         initialize_conda="condabin",
         conda_exe_name="_conda",
@@ -159,7 +158,6 @@ def test_template_shellcheck(
             "shortcuts": "",
             "register_envs": "1",
             "channels": "conda-forge",
-            "no_rcs_arg": "",
             "install_commands": "",  # TODO: Fill this in with actual value
             "conclusion_text": "Something",
             "final_channels": "",

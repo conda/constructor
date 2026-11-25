@@ -1602,7 +1602,7 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic")'
     SetDetailsPrint TextOnly
     ${Print} "Checking virtual specs compatibility: {{ VIRTUAL_SPECS_DEBUG }}"
-    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline {{ VIRTUAL_SPECS }} {{ NO_RCS_ARG }} {{ CONDA_LOG_ARG }}'
+    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline --no-rc  {{ VIRTUAL_SPECS }} {{ CONDA_LOG_ARG }}'
     push 'Failed to check virtual specs: {{ VIRTUAL_SPECS_DEBUG }}'
     push 'WithLog'
     call AbortRetryNSExecWait
@@ -1653,10 +1653,10 @@ Section "Install"
     # Run conda install
     ${If} $Ana_CreateShortcuts_State = ${BST_CHECKED}
         ${Print} "Installing packages for {{ env.name }}, creating shortcuts if necessary..."
-        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile_txt }}" {{ env.shortcuts }} {{ env.no_rcs_arg }} {{ CONDA_LOG_ARG }}'
+        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile_txt }}" {{ env.shortcuts }} --no-rc {{ CONDA_LOG_ARG }}'
     ${Else}
         ${Print} "Installing packages for {{ env.name }}..."
-        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile_txt }}" --no-shortcuts {{ env.no_rcs_arg }} {{ CONDA_LOG_ARG }}'
+        push '"$INSTDIR\_conda.exe" install --offline -yp "{{ env.prefix }}" --file "{{ env.lockfile_txt }}" --no-shortcuts --no-rc {{ CONDA_LOG_ARG }}'
     ${EndIf}
     push 'Failed to link extracted packages to {{ env.prefix }}!'
     push 'WithLog'
@@ -1703,7 +1703,7 @@ Section "Install"
 
     ${If} $Ana_ClearPkgCache_State = ${BST_CHECKED}
         ${Print} "Clearing package cache..."
-        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes {{ NO_RCS_ARG }} {{ CONDA_LOG_ARG }}'
+        push '"$INSTDIR\_conda.exe" clean --all --force-pkgs-dirs --yes --no-rc {{ CONDA_LOG_ARG }}'
         push 'Failed to clear package cache'
         push 'WithLog'
         call AbortRetryNSExecWait
