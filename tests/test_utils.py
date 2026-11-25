@@ -1,3 +1,4 @@
+import sys
 from os import environ
 from pathlib import Path
 from types import SimpleNamespace
@@ -315,6 +316,7 @@ def test_identify_conda_exe_windows_capabilities(
     assert data["has_windows_subcommand"] is expected_subcommand
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
 def test_win_str_esc_accepts_paths():
     assert (
         win_str_esc(Path("C:/Program Files/constructor.exe"))
