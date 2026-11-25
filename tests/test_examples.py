@@ -72,6 +72,7 @@ CONDA_EXE_DATA = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
 CONDA_EXE = CONDA_EXE_DATA.get("type")
 CONDA_EXE_VERSION = CONDA_EXE_DATA.get("version")
 CONSTRUCTOR_DEBUG = os.environ.get("CONSTRUCTOR_DEBUG", "").lower() in ("1", "true", "yes")
+IS_MICROMAMBA = CONDA_EXE == StandaloneExeType.MAMBA
 
 
 def _is_program_installed(partial_name: str) -> bool:
@@ -637,7 +638,7 @@ def _build_installers(
     installer_type=None builds all applicable types (current behavior); a value
     passes --installer-type to build exactly one.
     """
-    if sys.platform.startswith("win") and conda_exe and _is_micromamba(conda_exe):
+    if sys.platform.startswith("win") and conda_exe and IS_MICROMAMBA:
         pytest.skip("Micromamba is not supported on Windows yet.")
 
     output_dir = workspace / "installer"
@@ -813,11 +814,6 @@ def _self_signed_certificate_windows(path: str, password: str = None):
 
 def _example_path(example_name):
     return REPO_DIR / "examples" / example_name
-
-
-def _is_micromamba(path) -> bool:
-    name, _ = identify_conda_exe(path)
-    return name == StandaloneExeType.MAMBA
 
 
 def _entry_point_launchers(prefix: Path) -> list[Path]:
@@ -1223,7 +1219,7 @@ def test_example_scripts(tmp_path, request, installer_type):
     _run_installer(input_path, installer, install_dir, request=request)
 
 
-@pytest.mark.skipif(CONDA_EXE == StandaloneExeType.MAMBA, reason="micromamba is not supported yet")
+@pytest.mark.skipif(IS_MICROMAMBA, reason="micromamba is not supported yet")
 @pytest.mark.parametrize("installer_type", installer_types_for_example(_example_path("shortcuts")))
 def test_example_shortcuts(tmp_path, request, installer_type):
     input_path = _example_path("shortcuts")
@@ -1841,7 +1837,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
     # HOME or USERPROFILE breaks installer builds.
     # mamba does not search this directory, so use HOME as a fallback.
     # Since micromamba is not supported on Windows, this is not a problem.
-    if CONDA_EXE == StandaloneExeType.MAMBA:
+    if IS_MICROMAMBA:
         monkeypatch.setenv("HOME", str(tmp_path))
         condarc = tmp_path / ".condarc"
     else:
@@ -1871,7 +1867,7 @@ def test_ignore_condarc_files(tmp_path, monkeypatch, request, installer_type):
         check_subprocess=True,
         uninstall=True,
     )
-    if CONDA_EXE == StandaloneExeType.MAMBA and installer_type == InstallerTypes.SH:
+    if IS_MICROMAMBA and installer_type == InstallerTypes.SH:
         # micromamba loads the rc files even for constructor subcommands.
         # This cannot be turned off with --no-rc, which causes four errors
         # in stderr. If there are more, other micromamba calls have read
