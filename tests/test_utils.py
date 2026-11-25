@@ -1,14 +1,20 @@
 from os import environ
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from conda.models.version import VersionOrder
 
 from constructor.utils import (
+    StandaloneExeType,
     bat_echo_esc,
     bat_env_var_esc,
     env_vars,
     get_condarc_content,
     hash_files,
+    identify_conda_exe,
     make_VIProductVersion,
+    shortcuts_flags,
 )
 
 
@@ -153,3 +159,200 @@ def test_env_vars_restores_after_an_exception(monkeypatch):
 
     assert environ[VAR] == "outer"
     assert calls == ["inner", "outer"]
+
+
+def _mock_identify_commands(mocker, version_output, help_output=""):
+    def fake_check_output(cmd, **_kwargs):
+        if cmd[1] == "--version":
+            return version_output
+        if cmd[1] == "--help":
+            return help_output
+        raise AssertionError(f"unexpected command: {cmd}")
+
+    return mocker.patch("constructor.utils.check_output", side_effect=fake_check_output)
+
+
+@pytest.mark.parametrize(
+    (
+        "platform",
+        "version_output",
+        "help_output",
+        "expected_type",
+        "expected_version",
+        "expected_target_name",
+    ),
+    [
+        pytest.param(
+            "linux",
+            "conda 24.11.0",
+            "",
+            StandaloneExeType.CONDA,
+            "24.11.0",
+            "_conda",
+            id="conda-standalone",
+        ),
+        pytest.param(
+            "linux",
+            "conda 26.10.0",
+            "",
+            StandaloneExeType.CONDA,
+            "26.10.0",
+            "_conda",
+            id="conda-standalone-newer",
+        ),
+        pytest.param(
+            "linux",
+            "1.5.10",
+            "micromamba: help",
+            StandaloneExeType.MAMBA,
+            "1.5.10",
+            "micromamba",
+            id="micromamba-below-conda-minimum",
+        ),
+        pytest.param(
+            "win32",
+            "2.0.0",
+            "micromamba: help",
+            StandaloneExeType.MAMBA,
+            "2.0.0",
+            "micromamba.exe",
+            id="micromamba-windows",
+        ),
+        pytest.param(
+            "linux",
+            "unidentified 1.0",
+            "not a known binary",
+            None,
+            None,
+            "conda.exe",
+            id="unidentified-binary",
+        ),
+    ],
+)
+def test_identify_conda_exe(
+    tmp_path,
+    mocker,
+    platform,
+    version_output,
+    help_output,
+    expected_type,
+    expected_version,
+    expected_target_name,
+):
+    exe = tmp_path / "conda.exe"
+    exe.write_bytes(b"standalone")
+    mocker.patch("constructor.utils.sys.platform", platform)
+    _mock_identify_commands(mocker, version_output, help_output)
+    # Non-Windows binaries and micromamba never need the capability probes.
+    mocker.patch(
+        "constructor.utils.subprocess.run",
+        side_effect=AssertionError("unexpected capability probe"),
+    )
+
+    data = identify_conda_exe(exe)
+
+    assert data["path"] == exe
+    assert data.get("type") == expected_type
+    assert data.get("version") == (VersionOrder(expected_version) if expected_version else None)
+    assert data["target_name"] == expected_target_name
+    assert data["supports_logging"] is False
+    assert "has_windows_subcommand" not in data
+
+
+@pytest.mark.parametrize(
+    ("version_output", "error"),
+    [
+        pytest.param("conda 24.10.9", True, id="below-minimum"),
+        pytest.param("conda 24.11.0", False, id="at-minimum"),
+        pytest.param("conda 26.10.0", False, id="above-minimum"),
+    ],
+)
+def test_identify_conda_exe_enforces_minimum_version(tmp_path, mocker, version_output, error):
+    exe = tmp_path / "conda.exe"
+    exe.write_bytes(b"standalone")
+    mocker.patch("constructor.utils.sys.platform", "linux")
+    _mock_identify_commands(mocker, version_output)
+
+    if error:
+        with pytest.raises(RuntimeError, match="at least 24.11.0"):
+            identify_conda_exe(exe)
+    else:
+        data = identify_conda_exe(exe)
+        assert data["version"] == VersionOrder(version_output.split()[1])
+
+
+@pytest.mark.parametrize(
+    ("log_written", "returncode", "expected_logging", "expected_subcommand"),
+    [
+        pytest.param(True, 0, True, True, id="logging-and-subcommand"),
+        pytest.param(False, 2, False, False, id="no-logging-no-subcommand"),
+    ],
+)
+def test_identify_conda_exe_windows_capabilities(
+    tmp_path, mocker, log_written, returncode, expected_logging, expected_subcommand
+):
+    exe = tmp_path / "conda.exe"
+    exe.write_bytes(b"standalone")
+    mocker.patch("constructor.utils.sys.platform", "win32")
+    _mock_identify_commands(mocker, "conda 26.10.0")
+
+    def fake_run(cmd, **_kwargs):
+        for arg in cmd:
+            if str(arg).startswith("--log-file="):
+                if log_written:
+                    Path(str(arg).split("=", 1)[1]).touch()
+                return SimpleNamespace(returncode=0)
+        return SimpleNamespace(returncode=returncode)
+
+    mocker.patch("constructor.utils.subprocess.run", side_effect=fake_run)
+
+    data = identify_conda_exe(exe)
+
+    assert data["target_name"] == "_conda.exe"
+    assert data["supports_logging"] is expected_logging
+    assert data["has_windows_subcommand"] is expected_subcommand
+
+
+def test_identify_conda_exe_missing_file(tmp_path):
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        identify_conda_exe(tmp_path / "conda.exe")
+
+
+@pytest.mark.parametrize(
+    ("menu_packages", "exe_type", "expected"),
+    [
+        pytest.param(None, StandaloneExeType.CONDA, "", id="unset-conda"),
+        pytest.param(None, StandaloneExeType.MAMBA, "", id="unset-micromamba"),
+        pytest.param(
+            ["console_shortcut"],
+            StandaloneExeType.CONDA,
+            "--shortcuts-only=console_shortcut",
+            id="conda-subset",
+        ),
+        pytest.param(
+            ["console_shortcut", "other"],
+            StandaloneExeType.CONDA,
+            "--shortcuts-only=console_shortcut --shortcuts-only=other",
+            id="conda-subset-multiple",
+        ),
+        pytest.param(
+            ["console_shortcut"],
+            StandaloneExeType.MAMBA,
+            "",
+            id="micromamba-unsupported-subset",
+        ),
+        pytest.param([], StandaloneExeType.CONDA, "--no-shortcuts", id="empty-conda"),
+        pytest.param([], StandaloneExeType.MAMBA, "--no-shortcuts", id="empty-micromamba"),
+    ],
+)
+def test_shortcuts_flags(menu_packages, exe_type, expected):
+    info = {} if menu_packages is None else {"menu_packages": menu_packages}
+    assert shortcuts_flags(info, exe_type) == expected
+
+
+def test_shortcuts_flags_falls_back_to_info_type():
+    info = {
+        "_conda_exe": {"type": StandaloneExeType.MAMBA},
+        "menu_packages": ["console_shortcut"],
+    }
+    assert shortcuts_flags(info) == ""
