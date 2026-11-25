@@ -366,7 +366,7 @@ def main_build(
             }
 
     info["installer_type"] = itypes[0]
-    fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=conda_exe)
+    fcp_main(info, verbose=verbose, dry_run=dry_run, conda_exe=info["_conda_exe"]["path"])
     if dry_run:
         logger.info("Dry run, no installers or build outputs created.")
         return

@@ -68,7 +68,14 @@ REPO_DIR = Path(__file__).parent.parent
 ON_CI = bool(os.environ.get("CI")) and os.environ.get("CI") != "0"
 CONSTRUCTOR_CONDA_EXE = os.environ.get("CONSTRUCTOR_CONDA_EXE")
 CONSTRUCTOR_VERBOSE = os.environ.get("CONSTRUCTOR_VERBOSE", "").lower() in ("1", "true", "yes")
-CONDA_EXE_DATA = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
+try:
+    CONDA_EXE_DATA = identify_conda_exe(CONSTRUCTOR_CONDA_EXE)
+except FileNotFoundError as exc:
+    pytest.skip(
+        f"Could not find conda-standalone for integration tests: {exc}",
+        allow_module_level=True,
+    )
+
 CONDA_EXE = CONDA_EXE_DATA.get("type")
 CONDA_EXE_VERSION = CONDA_EXE_DATA.get("version")
 CONSTRUCTOR_DEBUG = os.environ.get("CONSTRUCTOR_DEBUG", "").lower() in ("1", "true", "yes")

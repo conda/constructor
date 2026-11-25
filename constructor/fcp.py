@@ -303,7 +303,7 @@ def _solve_precs(
         # standalone, if needed
         user_conda = os.environ.get("CONDA_EXE", "")
         if not user_conda:
-            if cc_platform == platform:
+            if cc_platform == platform and conda_exe:
                 # We can use the standalone conda for native platforms if there is no
                 # conda to be installed in the environment.
                 user_conda = conda_exe
