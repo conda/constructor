@@ -1173,7 +1173,7 @@ def test_example_osxpkg_extra_pages(tmp_path):
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS only")
 @pytest.mark.skipif(not shutil.which("xcodebuild"), reason="requires xcodebuild")
 @pytest.mark.skipif(
-    not CONDA_EXE_DATA.get("target_name"),
+    not CONDA_EXE_DATA.get("type"),
     reason="standalone binary not fully identified",
 )
 @pytest.mark.skipif("CI" not in os.environ, reason="CI only")

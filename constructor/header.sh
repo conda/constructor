@@ -660,7 +660,7 @@ CONDA_EXTRA_SAFETY_CHECKS=no \
 CONDA_CHANNELS="{{ channels }}" \
 CONDA_PKGS_DIRS="$PREFIX/pkgs" \
 CONDA_QUIET="$BATCH" \
-"$CONDA_EXEC" install --offline --no-rc --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts
+"$CONDA_EXEC" install --offline --no-rc --file "$PREFIX/conda-meta/initial-state.explicit.txt" -yp "$PREFIX" $shortcuts || exit 1
 
 {%- if has_conda %}
 mkdir -p "$PREFIX/envs"

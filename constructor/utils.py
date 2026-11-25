@@ -18,6 +18,7 @@ import subprocess
 import sys
 import warnings
 from contextlib import contextmanager
+from enum import StrEnum
 from io import StringIO
 from os import environ, unlink
 from os.path import isdir, isfile, islink
@@ -42,7 +43,7 @@ yaml.indent(mapping=2, sequence=4, offset=2)
 MINIMUM_CONDA_STANDALONE = VersionOrder("24.11.0")
 
 
-class StandaloneExeType:
+class StandaloneExeType(StrEnum):
     CONDA = "conda"
     MAMBA = "mamba"
 
