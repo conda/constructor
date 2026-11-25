@@ -1602,7 +1602,7 @@ Section "Install"
     System::Call 'kernel32::SetEnvironmentVariable(t,t)i("CONDA_SOLVER", "classic")'
     SetDetailsPrint TextOnly
     ${Print} "Checking virtual specs compatibility: {{ VIRTUAL_SPECS_DEBUG }}"
-    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline --no-rc--no-rc  {{ VIRTUAL_SPECS }} {{ CONDA_LOG_ARG }}'
+    push '"$INSTDIR\_conda.exe" create --dry-run --prefix "$INSTDIR\envs\_virtual_specs_checks" --offline --no-rc  {{ VIRTUAL_SPECS }} {{ CONDA_LOG_ARG }}'
     push 'Failed to check virtual specs: {{ VIRTUAL_SPECS_DEBUG }}'
     push 'WithLog'
     call AbortRetryNSExecWait

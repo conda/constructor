@@ -273,7 +273,7 @@ def make_nsi(
     variables["custom_conclusion"] = info.get("conclusion_file", "").endswith(".nsi")
     variables["has_license"] = bool(info.get("license_file"))
     variables["uninstall_with_conda_exe"] = bool(info.get("uninstall_with_conda_exe"))
-    variables["needs_python_exe"] = not info["_conda_exe"]["has_windows_subcommand"]
+    variables["needs_python_exe"] = not info["_conda_exe"].get("has_windows_subcommand")
 
     approx_pkgs_size_kb = approx_size_kb(info, "pkgs")
 
