@@ -140,10 +140,7 @@ def dump_info(info):
     def _serialize(obj):
         if hasattr(obj, "dump"):
             return obj.dump()
-        elif hasattr(obj, "__str__"):
-            return str(obj)
-        else:
-            return repr(obj)
+        return str(obj)
 
     # Packages installed in the environment running constructor.
     info["_build_environment_packages"] = get_build_env_records()
