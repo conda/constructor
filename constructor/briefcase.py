@@ -222,7 +222,7 @@ def _setup_envs_commands(info: dict) -> list[dict]:
             "prefix": "%BASE_PATH%",
             "lockfile": r"%BASE_PATH%\conda-meta\initial-state.explicit.txt",
             "channels": ",".join(get_final_channels(info)),
-            "shortcuts": shortcuts_flags(info, info["_conda_exe"].get("type")),
+            "shortcuts": shortcuts_flags(info, info.get("_conda_exe", {}).get("type")),
         }
     )
 
@@ -239,7 +239,7 @@ def _setup_envs_commands(info: dict) -> list[dict]:
                 "prefix": rf"%BASE_PATH%\envs\{env_name}",
                 "lockfile": rf"%BASE_PATH%\envs\{env_name}\conda-meta\initial-state.explicit.txt",
                 "channels": ",".join(get_final_channels(channel_info)),
-                "shortcuts": shortcuts_flags(env_config, info["_conda_exe"].get("type")),
+                "shortcuts": shortcuts_flags(env_config, info.get("_conda_exe", {}).get("type")),
             }
         )
 
