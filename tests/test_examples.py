@@ -638,8 +638,15 @@ def _build_installers(
     installer_type=None builds all applicable types (current behavior); a value
     passes --installer-type to build exactly one.
     """
-    if sys.platform.startswith("win") and conda_exe and IS_MICROMAMBA:
-        pytest.skip("Micromamba is not supported on Windows yet.")
+    if sys.platform.startswith("win"):
+        # Only re-run check if conda-standalone is not the default conda-standalone
+        _is_micromamba = (
+            IS_MICROMAMBA
+            if conda_exe == CONSTRUCTOR_CONDA_EXE
+            else identify_conda_exe(conda_exe).get("type") == StandaloneExeType.MAMBA
+        )
+        if _is_micromamba:
+            pytest.skip("Micromamba is not supported on Windows yet.")
 
     output_dir = workspace / "installer"
     output_dir.mkdir(parents=True, exist_ok=True)

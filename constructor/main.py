@@ -337,11 +337,15 @@ def main_build(
         info.get("menu_packages", True)
         or any(env.get("menu_packages", True) for env in info.get("extra_envs", {}).values())
     )
-    if info["_enable_shortcuts"] and (exe_type is None or exe_version is None):
-        logger.warning(
-            "Could not identify conda-standalone / micromamba version. "
-            "Will assume it is compatible with shortcuts."
-        )
+    if info["_enable_shortcuts"]:
+        if exe_type is None or exe_version is None:
+            logger.warning(
+                "Could not identify conda-standalone / micromamba version. "
+                "Will assume it is compatible with shortcuts."
+            )
+        elif osname == "win" and exe_type != StandaloneExeType.CONDA:
+            logger.warning("conda-standalone is required for shortcuts in Unix.")
+            info["_enable_shortcuts"] = "incompatible"
 
     if InstallerTypes.PKG in itypes:
         if (domains := info.get("pkg_domains")) is not None:
